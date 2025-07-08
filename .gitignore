@@ -1,5 +1,5 @@
 __pycache__/
-config/
+config/*.yml
 models/
 downloads/
 mlruns/

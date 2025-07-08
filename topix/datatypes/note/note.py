@@ -1,3 +1,5 @@
+"""Classes representing a note object with properties and content."""
+
 from datetime import datetime
 
 from pydantic import BaseModel, Field
@@ -7,16 +9,14 @@ from topix.utils.common import gen_uid
 
 
 class Content(BaseModel):
-    """
-    Content of a note.
-    """
+    """Content of a note."""
+
     markdown: str
 
 
 class Note(BaseModel):
-    """
-    Note object.
-    """
+    """Note object."""
+
     uid: str = Field(default_factory=lambda: f"note_{gen_uid()}")
     type: str = "note"
 

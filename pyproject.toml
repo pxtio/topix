@@ -1,0 +1,30 @@
+[project]
+dynamic = ["version"]
+name = "inteXtellia"
+description = "AI  API for building and managing tools and services"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    'pydantic>=2.11.7',
+    'qdrant-client>=1.14.3',
+    'openai>=1.93.2',
+    'mistralai>=1.9.1',
+    'psycopg>=3.2.9'
+]
+
+[project.optional-dependencies]
+dev = [
+    'pytest>=8.4.1',
+    'pytest-asyncio>=1.0.0',
+    'flake8>=7.3.0',
+    'ruff>=0.12.2',
+    'black>=25.1.0'
+]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "semver2"
+version = "0.0.1"
+update_changelog_on_bump = true
+major_version_zero = true

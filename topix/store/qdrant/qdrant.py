@@ -1,4 +1,5 @@
 from typing import TypeVar, Sequence
+
 from pydantic import BaseModel
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import (
@@ -141,7 +142,7 @@ class QdrantStore:
             with_vectors=True,
         )
 
-    async def filter(
+    async def filt(
         self,
         collection_name: str,
         filter: dict | Filter,

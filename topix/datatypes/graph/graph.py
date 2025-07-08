@@ -1,3 +1,5 @@
+"""Classes representing a graph structure with nodes and edges."""
+
 from pydantic import BaseModel, Field
 
 from topix.datatypes.graph.edge import EdgeData
@@ -6,11 +8,15 @@ from topix.utils.common import gen_uid
 
 
 class Position(BaseModel):
+    """Position of a node in the graph."""
+
     x: float
     y: float
 
 
 class Node(BaseModel):
+    """Node in a graph."""
+
     id: str
     data: NodeData
     position: Position
@@ -18,6 +24,8 @@ class Node(BaseModel):
 
 
 class Edge(BaseModel):
+    """Edge in a graph."""
+
     id: str
     source: str
     target: str
@@ -26,6 +34,8 @@ class Edge(BaseModel):
 
 
 class Graph(BaseModel):
+    """Graph object containing nodes and edges."""
+
     uid: str = Field(default_factory=lambda: f"graph_{gen_uid()}")
     type: str = "graph"
     label: str | None = None

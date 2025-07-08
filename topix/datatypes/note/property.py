@@ -1,19 +1,24 @@
+"""Property classes."""
+
 from __future__ import annotations
 
 import abc
-from typing import Type
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
+
 from topix.datatypes.enum import CustomEnum
 from topix.datatypes.lang import LangCodeEnum
 from topix.datatypes.mime import MimeTypeEnum
 from topix.utils.common import gen_uid
 
+if TYPE_CHECKING:
+    import builtins
+
 
 class PropertyTypeEnum(str, CustomEnum):
-    """
-    Property type enum
-    """
+    """Property type enum."""
+
     NUMBER = "number"
     DATE = "date"
     BOOLEAN = "boolean"
@@ -33,45 +38,59 @@ class PropertyTypeEnum(str, CustomEnum):
 
 
 class Property(abc.ABC, BaseModel):
-    """
-    Base class for all property types.
-    """
+    """Base class for all property types."""
+
     uid: str = Field(default_factory=lambda: f"property_{gen_uid()}")
     type: PropertyTypeEnum
 
 
 class NumberProperty(Property):
+    """Property for numeric values."""
+
     type: PropertyTypeEnum = PropertyTypeEnum.NUMBER
     number: int | float | None = None
 
 
 class DateProperty(Property):
+    """Property for date values."""
+
     type: PropertyTypeEnum = PropertyTypeEnum.DATE
     date: str | None = None
 
 
 class BooleanProperty(Property):
+    """Property for boolean values."""
+
     type: PropertyTypeEnum = PropertyTypeEnum.BOOLEAN
     boolean: bool | None = None
 
 
 class TextProperty(Property):
+    """Property for text values."""
+
     type: PropertyTypeEnum = PropertyTypeEnum.TEXT
     text: str | None = None
     searchable: bool | None = None
 
 
 class SearchableTextProperty(TextProperty):
+    """Property for text values that are searchable."""
+
     searchable: bool = True
 
 
 class IconProperty(Property):
+    """Property for icon or emoji values."""
 
     class Icon(BaseModel):
+        """Icon data model."""
+
         type: str
         icon: str
 
     class Emoji(BaseModel):
+        """Emoji data model."""
+
         emoji: str
 
     type: PropertyTypeEnum = PropertyTypeEnum.ICON
@@ -79,8 +98,11 @@ class IconProperty(Property):
 
 
 class ImageProperty(Property):
+    """Property for image values."""
 
     class Image(BaseModel):
+        """Image data model."""
+
         url: str
         caption: str | None = None
 
@@ -89,8 +111,11 @@ class ImageProperty(Property):
 
 
 class FileProperty(Property):
+    """Property for file values."""
 
     class File(BaseModel):
+        """File data model."""
+
         url: str
         name: str
         size: float | None = None
@@ -101,8 +126,11 @@ class FileProperty(Property):
 
 
 class URLProperty(Property):
+    """Property for URL values."""
 
     class URL(BaseModel):
+        """URL data model."""
+
         url: str
 
     type: PropertyTypeEnum = PropertyTypeEnum.URL
@@ -110,34 +138,47 @@ class URLProperty(Property):
 
 
 class MultiTextProperty(Property):
+    """Property for multiple text values."""
+
     type: PropertyTypeEnum = PropertyTypeEnum.MULTI_TEXT
     texts: list[str] = []  # list of str
 
 
 class KeywordProperty(Property):
+    """Property for keyword values."""
+
     type: PropertyTypeEnum = PropertyTypeEnum.KEYWORD
     value: int | str | None = None
-    value_type: Type[CustomEnum] | None = None
+    value_type: builtins.type[CustomEnum] | None = None
 
 
 class LanguageProperty(KeywordProperty):
+    """Property for language values."""
+
     type: PropertyTypeEnum = PropertyTypeEnum.KEYWORD
-    value_type: Type[CustomEnum] = LangCodeEnum
+    value_type: builtins.type[CustomEnum] = LangCodeEnum
 
 
 class MimeTypeProperty(KeywordProperty):
-    value_type: Type[CustomEnum] = MimeTypeEnum
+    """Property for MIME type values."""
+
+    value_type: type[CustomEnum] = MimeTypeEnum
 
 
 class MultiKeywordProperty(Property):
+    """Property for multiple keyword values."""
+
     type: PropertyTypeEnum = PropertyTypeEnum.MULTI_KEYWORD
     values: list[int | str] = []
-    value_type: Type[CustomEnum] | None = None
+    value_type: builtins.type[CustomEnum] | None = None
 
 
 class LocationProperty(Property):
+    """Property for location values."""
 
     class Location(BaseModel):
+        """Location data model."""
+
         latitude: float
         longitude: float
 
@@ -146,8 +187,11 @@ class LocationProperty(Property):
 
 
 class PositionProperty(Property):
+    """Property for position values."""
 
     class Position(BaseModel):
+        """Position data model."""
+
         x: float
         y: float
 
@@ -156,8 +200,11 @@ class PositionProperty(Property):
 
 
 class SizeProperty(Property):
+    """Property for size values."""
 
     class Size(BaseModel):
+        """Size data model."""
+
         width: float
         height: float
 

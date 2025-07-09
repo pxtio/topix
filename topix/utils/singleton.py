@@ -73,7 +73,7 @@ class SingletonMeta(type):
                 raise TypeError(f"Subclassing of {base.__name__} is forbidden as it is a singleton class")
         return super().__new__(cls, name, bases, class_dict)
 
-    def get_instance(cls):
+    def instance(cls):
         """Get the instance of the singleton class if it is initialized, otherwise raise an exception
 
         Arguments:

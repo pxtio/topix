@@ -9,7 +9,8 @@ dependencies = [
     'qdrant-client>=1.14.3',
     'openai>=1.93.2',
     'mistralai>=1.9.1',
-    'psycopg>=3.2.9'
+    'psycopg>=3.2.9',
+    'aiohttp>=3.12.13'
 ]
 
 [project.optional-dependencies]
@@ -18,7 +19,8 @@ dev = [
     'pytest-asyncio>=1.0.0',
     'flake8>=7.3.0',
     'ruff>=0.12.2',
-    'black>=25.1.0'
+    'black>=25.1.0',
+    'datasets>=3.6.0'
 ]
 
 [tool.commitizen]

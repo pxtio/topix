@@ -1,3 +1,6 @@
+"""QdrantStore class for managing a Qdrant database."""
+
+import logging
 from typing import TypeVar, Sequence
 
 from pydantic import BaseModel
@@ -11,6 +14,9 @@ from qdrant_client.models import (
 )
 
 from topix.config.config import Config
+from topix.utils.timeit import async_timeit
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -22,6 +28,7 @@ class QdrantStore:
         port: int = 6333,
         https: bool = False,
         api_key: str | None = None,
+        collection: str = "topix"
     ):
         self.client = AsyncQdrantClient(
             host=host,
@@ -29,51 +36,67 @@ class QdrantStore:
             https=https,
             api_key=api_key,
         )
+        self.collection = collection
 
     @classmethod
-    async def from_config(cls):
-        config = Config.get_instance()
+    def from_config(cls):
+        config = Config.instance()
         qdrant_config = config.run.databases.qdrant
         return cls(**qdrant_config.model_dump(exclude_none=True))
 
     async def create_collection(
         self,
-        collection_name: str,
         vector_size: int,
         distance: Distance = Distance.COSINE,
         force_recreate: bool = False,
     ) -> None:
-        exists = await self.client.collection_exists(collection_name)
+        exists = await self.client.collection_exists(self.collection)
         if force_recreate and exists:
-            await self.client.delete_collection(collection_name)
+            await self.client.delete_collection(self.collection)
 
         if force_recreate or not exists:
             await self.client.create_collection(
-                collection_name=collection_name,
+                collection_name=self.collection,
                 vectors_config=VectorParams(size=vector_size, distance=distance),
             )
 
+    async def _add_batch(
+        self,
+        objects: Sequence[T],
+        embeddings: Sequence[list[float] | None] | None = None,
+    ) -> None:
+        if not objects:
+            raise ValueError("No objects provided to add.")
+
+        points = []
+        for i, obj in enumerate(objects):
+            point_id = getattr(obj, "uid", getattr(obj, "id", None))
+            if point_id is None:
+                raise ValueError("Object must have a 'uid' or 'id' field.")
+            vector = embeddings[i] if embeddings else None
+            points.append(PointStruct(id=point_id, payload=obj.model_dump(exclude_none=True), vector=vector))
+
+        await self.client.upsert(collection_name=self.collection, points=points)
+
+    @async_timeit
     async def add(
         self,
-        collection_name: str,
-        obj: T,
-        embedding: list[float] | None = None,
+        objects: Sequence[T],
+        embeddings: Sequence[list[float] | None] | None = None,
+        batch_size: int = 1000
     ) -> None:
-        point_id = getattr(obj, "uid", getattr(obj, "id", None))
-        if point_id is None:
-            raise ValueError("Object must have a 'uid' or 'id' field.")
+        """Add a batch of objects to the Qdrant collection."""
+        if not objects:
+            raise ValueError("No objects provided to add.")
 
-        point = PointStruct(
-            id=point_id,
-            payload=obj.dict(exclude_none=True),
-            vector=embedding,
-        )
-
-        await self.client.upsert(collection_name=collection_name, points=[point])
+        for i in range(0, len(objects), batch_size):
+            batch = objects[i:i + batch_size]
+            batch_embeddings = embeddings[i:i + batch_size] if embeddings else None
+            logger.info(f"Adding batch {i // batch_size + 1} of size {len(batch)}")
+            await self._add_batch(batch, batch_embeddings)
 
     async def update_fields(
         self,
-        collection_name: str,
         point_id: str | int,
         fields: dict,
     ) -> None:
@@ -81,30 +104,28 @@ class QdrantStore:
             raise ValueError("No fields provided to update.")
 
         await self.client.set_payload(
-            collection_name=collection_name,
+            collection_name=self.collection,
             payload=fields,
             points=[point_id],
         )
 
     async def delete(
         self,
-        collection_name: str,
         point_id: str | int,
     ) -> None:
         await self.client.delete(
-            collection_name=collection_name,
+            collection_name=self.collection,
             points_selector={"points": [point_id]},
         )
 
     async def get(
         self,
-        collection_name: str,
         point_id: str | int,
         include: dict | None = None,
         with_vector: bool = False,
     ) -> ScoredPoint | None:
         result = await self.client.retrieve(
-            collection_name=collection_name,
+            collection_name=self.collection,
             ids=[point_id],
             with_payload=include or False,
             with_vectors=with_vector,
@@ -113,39 +134,39 @@ class QdrantStore:
 
     async def mget(
         self,
-        collection_name: str,
         point_ids: Sequence[str | int],
         include: dict | None = None,
         with_vector: bool = False,
     ) -> list[ScoredPoint]:
         return await self.client.retrieve(
-            collection_name=collection_name,
+            collection_name=self.collection,
             ids=point_ids,
             with_payload=include or False,
             with_vectors=with_vector,
         )
 
+    @async_timeit
     async def search(
         self,
-        collection_name: str,
         embedding: list[float],
         limit: int = 5,
         filters: dict | Filter | None = None,
         include: dict | None = None,
+        with_vector: bool = False,
     ) -> list[ScoredPoint]:
         return await self.client.search(
-            collection_name=collection_name,
+            collection_name=self.collection,
             query_vector=embedding,
             limit=limit,
             query_filter=filters,
             with_payload=include or False,
-            with_vectors=True,
+            with_vectors=with_vector,
         )
 
+    @async_timeit
     async def filt(
         self,
-        collection_name: str,
-        filter: dict | Filter,
+        filters: dict | Filter,
         include: dict | None = None,
         order: list[dict] | None = None,
         limit: int = 1000,
@@ -156,8 +177,8 @@ class QdrantStore:
 
         while len(results) < limit:
             points, next_offset = await self.client.scroll(
-                collection_name=collection_name,
-                scroll_filter=filter,
+                collection_name=self.collection,
+                scroll_filter=filters,
                 limit=page_size,
                 offset=next_offset,
                 with_payload=include or False,
@@ -172,12 +193,11 @@ class QdrantStore:
 
     async def count(
         self,
-        collection_name: str,
-        filter: dict | Filter | None = None,
+        filters: dict | Filter | None = None,
     ) -> int:
         result = await self.client.count(
-            collection_name=collection_name,
-            count_filter=filter,
+            collection_name=self.collection,
+            count_filter=filters,
             exact=True,
         )
         return result.count

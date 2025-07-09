@@ -17,7 +17,7 @@ class Content(BaseModel):
 class Note(BaseModel):
     """Note object."""
 
-    uid: str = Field(default_factory=lambda: f"note_{gen_uid()}")
+    id: str = Field(default_factory=lambda: f"note_{gen_uid()}")
     type: str = "note"
 
     created_at: datetime | None = Field(default_factory=datetime.now)

@@ -1,3 +1,5 @@
+"""Chat datatypes."""
+
 from datetime import datetime
 import json
 from typing import Literal
@@ -20,7 +22,8 @@ class Message(BaseModel):
     def to_chat_message(self) -> dict:
         return {
             "role": self.role,
-            "content": self.content if isinstance(self.content, str) else json.dumps(self.content),
+            "content": self.content if isinstance(self.content, str)
+            else json.dumps(self.content),
         }
 
 

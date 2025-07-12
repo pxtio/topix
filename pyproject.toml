@@ -1,7 +1,7 @@
 [project]
 dynamic = ["version"]
-name = "inteXtellia"
-description = "AI  API for building and managing tools and services"
+name = "topix"
+description = "Learn - Note - Share with AI"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -20,7 +20,8 @@ dev = [
     'flake8>=7.3.0',
     'ruff>=0.12.2',
     'black>=25.1.0',
-    'datasets>=3.6.0'
+    'datasets>=3.6.0',
+    'openai-agents>=0.1.0'
 ]
 
 [tool.commitizen]
@@ -30,3 +31,7 @@ version_scheme = "semver2"
 version = "0.0.1"
 update_changelog_on_bump = true
 major_version_zero = true
+
+
+[tool.ruff]
+lint.select = ["F", "E", "W", "C90", "C4"]

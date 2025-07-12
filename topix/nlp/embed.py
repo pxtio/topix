@@ -34,7 +34,11 @@ class OpenAIEmbedder:
         # The embeddings are in response.data, ordered same as input
         return [e.embedding for e in response.data]
 
-    async def embed(self, texts: list[str], batch_size: int = 1000) -> list[list[float]]:
+    async def embed(
+        self,
+        texts: list[str],
+        batch_size: int = 1000
+    ) -> list[list[float]]:
         """Embed a list of texts using OpenAI embeddings."""
         if not texts:
             return []

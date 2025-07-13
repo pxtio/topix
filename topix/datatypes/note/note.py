@@ -20,8 +20,9 @@ class Note(BaseModel):
     id: str = Field(default_factory=lambda: f"note_{gen_uid()}")
     type: str = "note"
 
-    created_at: datetime | None = Field(default_factory=datetime.now)
-    deleted_at: datetime | None = None
+    created_at: str | None = Field(default_factory=lambda: datetime.now().isoformat())
+    updated_at: str | None = None
+    deleted_at: str | None = None
 
     # properties
     properties: dict[str, Property] | None = None

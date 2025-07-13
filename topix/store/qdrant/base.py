@@ -16,6 +16,7 @@ from qdrant_client.models import (
 )
 
 from topix.config.config import Config
+from topix.store.qdrant.utils import payload_dict_to_field_list
 from topix.utils.timeit import async_timeit
 
 logger = logging.getLogger(__name__)
@@ -128,6 +129,7 @@ class QdrantStore:
         self,
         point_id: str | int,
         fields: dict,
+        embedding: list[float] | None = None
     ) -> None:
         """Update specific fields of a point in the collection."""
         if not fields:
@@ -138,6 +140,16 @@ class QdrantStore:
             payload=fields,
             points=[point_id],
         )
+
+        # Update vector if embedding is provided
+        if embedding is not None:
+            await self.client.update_vectors(
+                collection_name=self.collection,
+                points=[{
+                    "id": point_id,
+                    "vector": embedding,
+                }]
+            )
 
     async def delete(
         self,
@@ -152,10 +164,13 @@ class QdrantStore:
     async def get(
         self,
         point_id: str | int,
-        include: dict | None = None,
+        include: dict | bool | None = None,
         with_vector: bool = False,
     ) -> ScoredPoint | None:
         """Retrieve a point from the collection by its ID."""
+        if isinstance(include, dict):
+            include = payload_dict_to_field_list(include)
+
         result = await self.client.retrieve(
             collection_name=self.collection,
             ids=[point_id],
@@ -167,10 +182,13 @@ class QdrantStore:
     async def mget(
         self,
         point_ids: Sequence[str | int],
-        include: dict | None = None,
+        include: dict | bool | None = None,
         with_vector: bool = False,
     ) -> list[ScoredPoint]:
         """Retrieve multiple points from the collection by their IDs."""
+        if isinstance(include, dict):
+            include = payload_dict_to_field_list(include)
+
         return await self.client.retrieve(
             collection_name=self.collection,
             ids=point_ids,
@@ -183,10 +201,13 @@ class QdrantStore:
         embedding: list[float],
         limit: int = 5,
         filters: dict | Filter | None = None,
-        include: dict | None = None,
+        include: dict | bool | None = None,
         with_vector: bool = False,
     ) -> list[ScoredPoint]:
         """Search for points in the collection based on the given embedding."""
+        if isinstance(include, dict):
+            include = payload_dict_to_field_list(include)
+
         return await self.client.search(
             collection_name=self.collection,
             query_vector=embedding,
@@ -200,7 +221,7 @@ class QdrantStore:
     async def filt(
         self,
         filters: dict | Filter,
-        include: dict | None = None,
+        include: dict | bool | None = None,
         order: list[dict] | None = None,
         limit: int = 1000,
     ) -> list[ScoredPoint]:
@@ -208,6 +229,9 @@ class QdrantStore:
         results = []
         next_offset = None
         page_size = min(limit, 1000)
+
+        if isinstance(include, dict):
+            include = payload_dict_to_field_list(include)
 
         while len(results) < limit:
             points, next_offset = await self.client.scroll(

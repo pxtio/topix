@@ -24,3 +24,5 @@ site/
 backups/
 *.egg-info/
 notebooks.exclude/
+.ruff_cache/
+*.pyc

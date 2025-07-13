@@ -1,6 +1,7 @@
 """Classes representing a note object with properties and content."""
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -17,8 +18,8 @@ class Content(BaseModel):
 class Note(BaseModel):
     """Note object."""
 
-    id: str = Field(default_factory=lambda: f"note_{gen_uid()}")
-    type: str = "note"
+    id: str = Field(default_factory=gen_uid)
+    type: Literal["note"] = "note"
 
     created_at: str | None = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str | None = None

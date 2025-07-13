@@ -40,7 +40,7 @@ class PropertyTypeEnum(str, CustomEnum):
 class Property(abc.ABC, BaseModel):
     """Base class for all property types."""
 
-    id: str = Field(default_factory=lambda: f"property_{gen_uid()}")
+    id: str = Field(default_factory=gen_uid)
     type: PropertyTypeEnum
 
 

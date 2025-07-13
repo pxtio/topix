@@ -12,7 +12,7 @@ from qdrant_client.models import (
     Filter,
     ScalarQuantization,
     ScalarQuantizationConfig,
-    ScoredPoint
+    ScoredPoint,
 )
 
 from topix.config.config import Config
@@ -75,6 +75,26 @@ class QdrantStore:
                     )
                 ) if quantized else None,
             )
+            await self.client.create_payload_index(
+                collection_name=self.collection,
+                field_name="created_at",
+                field_type="datetime",
+            )
+            await self.client.create_payload_index(
+                collection_name=self.collection,
+                field_name="updated_at",
+                field_type="datetime",
+            )
+            await self.client.create_payload_index(
+                collection_name=self.collection,
+                field_name="deleted_at",
+                field_type="datetime",
+            )
+            await self.client.create_payload_index(
+                collection_name=self.collection,
+                field_name="type",
+                field_type="keyword",
+            )
 
     async def drop_collection(self) -> None:
         """Drop the Qdrant collection if it exists."""
@@ -98,7 +118,9 @@ class QdrantStore:
         for i, obj in enumerate(objects):
             point_id = getattr(obj, "uid", getattr(obj, "id", None))
             if point_id is None:
-                raise ValueError("Object must have a 'uid' or 'id' field.")
+                raise ValueError(
+                    f"Object must have a 'uid' or 'id' field. Received: {obj}"
+                )
             vector = embeddings[i] if embeddings else None
             points.append(PointStruct(
                 id=point_id,
@@ -222,7 +244,7 @@ class QdrantStore:
         self,
         filters: dict | Filter,
         include: dict | bool | None = None,
-        order: list[dict] | None = None,
+        order: str | dict | None = None,
         limit: int = 1000,
     ) -> list[ScoredPoint]:
         """Filter points in the collection based on the given filters."""
@@ -232,6 +254,8 @@ class QdrantStore:
 
         if isinstance(include, dict):
             include = payload_dict_to_field_list(include)
+            if "created_at" not in include:
+                include.append("created_at")
 
         while len(results) < limit:
             points, next_offset = await self.client.scroll(

@@ -21,27 +21,17 @@ class ContentStore:
         self.embedder = OpenAIEmbedder.from_config()
 
     @staticmethod
-    def convert_entry_to_payload(entry: Entry) -> dict:
-        """Convert a note or message to a payload for Qdrant."""
-        return entry.model_dump(
-            exclude_none=True,
-            exclude={"id"}
-        )
-
-    @staticmethod
     def convert_point_to_entry(point: ScoredPoint) -> Entry:
         """Convert a Qdrant point to a note or message."""
-        if point.payload["type"] == "note":
-            return Note(
-                **point.payload,
-                id=point.id
-            )
-        elif point.payload["type"] == "message":
-            return Message.model_construct(
-                **point.payload,
-                id=point.id
-            )
-        raise ValueError("Unknown type in payload. Expected 'note' or 'message'.")
+        match point.payload.get("type"):
+            case "note":
+                return Note.model_construct(**point.payload)
+            case "message":
+                return Message.model_construct(**point.payload)
+            case _:
+                raise ValueError(
+                    f"Unknown type in payload: {point.payload.get('type')}"
+                )
 
     @staticmethod
     def extract_text_from_dict(entry: dict) -> str:
@@ -75,7 +65,7 @@ class ContentStore:
     async def add(self, entries: list[Entry]):
         """Create a new note in the Qdrant store."""
         await self.qdrant_client.add(
-            objects=[self.convert_entry_to_payload(entry) for entry in entries],
+            objects=entries,
             embeddings=await self.embedder.embed(
                 [self.extract_text(entry) for entry in entries]
             )
@@ -112,12 +102,37 @@ class ContentStore:
     async def filt(
         self,
         filters: dict | None = None,
-
+        limit: int = 1000,
+        include: dict | bool | None = True,
+        order: dict | str | None = None
     ) -> list[Entry]:
         """Retrieve all notes from the Qdrant store."""
+        if order is None:
+            order = {"key": "created_at", "direction": "desc"}
         results = await self.qdrant_client.filt(
             filters=filters,
-            include=True,
+            include=include,
+            limit=limit,
+            order=order
+        )
+        return [
+            self.convert_point_to_entry(point) for point in results
+        ]
+
+    async def search(
+        self,
+        query: str,
+        limit: int = 5,
+        filters: dict | None = None,
+        include: dict | bool | None = True
+    ) -> list[Entry]:
+        """Search for notes in the Qdrant store."""
+        embedding = await self.embedder.embed([query])
+        results = await self.qdrant_client.search(
+            embedding=embedding[0],
+            limit=limit,
+            filters=filters,
+            include=include
         )
         return [
             self.convert_point_to_entry(point) for point in results

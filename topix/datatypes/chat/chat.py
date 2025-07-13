@@ -11,7 +11,7 @@ from topix.utils.common import gen_uid
 
 class Message(BaseModel):
     type: Literal["message"] = "message"
-    id: str = Field(default_factory=lambda: f"message_{gen_uid()}")
+    id: str = Field(default_factory=gen_uid)
     chat_uid: str
     role: Literal["system", "user", "assistant", "tool"]
     content: str | dict
@@ -32,7 +32,7 @@ class Chat(BaseModel):
     """Chat object representing a conversation."""
 
     id: int | None = None
-    uid: str = Field(default_factory=lambda: f"chat_{gen_uid()}")
+    uid: str = Field(default_factory=gen_uid)
     type: Literal["chat"] = "chat"
     label: str | None = None
 

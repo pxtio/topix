@@ -38,7 +38,7 @@ class Graph(BaseModel):
     """Graph object containing nodes and edges."""
 
     id: int
-    uid: str = Field(default_factory=lambda: f"graph_{gen_uid()}")
+    uid: str = Field(default_factory=gen_uid)
     type: str = "graph"
     label: str | None = None
 

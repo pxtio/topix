@@ -39,6 +39,7 @@ class Chat(BaseModel):
     label: str | None = None
 
     user_uid: str
+    graph_uid: str | None = None
 
     created_at: str | None = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str | None = None

@@ -11,6 +11,11 @@ CREATE TABLE users (
 CREATE INDEX idx_users_uid ON users(uid);
 
 
+INSERT INTO users (uid, email, username, name)
+VALUES ('root', 'root@localhost', 'root', 'Root User')
+ON CONFLICT (uid) DO NOTHING;
+
+
 CREATE TABLE graphs (
     id SERIAL PRIMARY KEY,
     uid TEXT NOT NULL UNIQUE,
@@ -41,9 +46,11 @@ CREATE TABLE chats (
     uid TEXT NOT NULL UNIQUE,
     label TEXT,
     user_uid TEXT NOT NULL REFERENCES users(uid) ON DELETE CASCADE,
+    graph_uid TEXT REFERENCES graphs(uid) ON DELETE CASCADE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP
 );
 CREATE INDEX idx_chats_uid ON chats(uid);
 CREATE INDEX idx_chats_user_uid ON chats(user_uid);
+CREATE INDEX idx_chats_graph_uid ON chats(graph_uid);

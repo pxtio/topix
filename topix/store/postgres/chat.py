@@ -15,8 +15,9 @@ async def create_chat(
     Insert a new chat using user_uid as FK and set its id after creation.
     """
     query = (
-        "INSERT INTO chats (uid, label, user_uid, created_at, updated_at, deleted_at) "
-        "VALUES (%s, %s, %s, %s, %s, %s) "
+        "INSERT INTO chats (uid, label, user_uid, graph_uid, "
+        "created_at, updated_at, deleted_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s) "
         "RETURNING id"
     )
     async with conn.cursor() as cur:
@@ -26,6 +27,7 @@ async def create_chat(
                 chat.uid,
                 chat.label,
                 chat.user_uid,
+                chat.graph_uid,
                 chat.created_at,
                 chat.updated_at,
                 chat.deleted_at,
@@ -46,7 +48,8 @@ async def get_chat_by_uid(
     Fetch a chat by its UID. Returns None if not found.
     """
     query = (
-        "SELECT id, uid, label, user_uid, created_at, updated_at, deleted_at "
+        "SELECT id, uid, label, user_uid, "
+        "graph_uid, created_at, updated_at, deleted_at "
         "FROM chats WHERE uid = %s"
     )
     async with conn.cursor() as cur:
@@ -59,9 +62,10 @@ async def get_chat_by_uid(
             uid=row[1],
             label=row[2],
             user_uid=row[3],
-            created_at=row[4].isoformat() if row[4] else None,
-            updated_at=row[5].isoformat() if row[5] else None,
-            deleted_at=row[6].isoformat() if row[6] else None
+            graph_uid=row[4],
+            created_at=row[5].isoformat() if row[5] else None,
+            updated_at=row[6].isoformat() if row[6] else None,
+            deleted_at=row[7].isoformat() if row[7] else None
         )
 
 
@@ -132,7 +136,8 @@ async def list_chats_for_user_uid(
     Returns a list of Chat objects.
     """
     query = (
-        "SELECT id, uid, label, user_uid, created_at, updated_at, deleted_at "
+        "SELECT id, uid, label, user_uid, "
+        "graph_uid, created_at, updated_at, deleted_at "
         "FROM chats WHERE user_uid = %s "
         "ORDER BY created_at DESC"
     )
@@ -145,8 +150,9 @@ async def list_chats_for_user_uid(
                 uid=row[1],
                 label=row[2],
                 user_uid=row[3],
-                created_at=row[4].isoformat() if row[4] else None,
-                updated_at=row[5].isoformat() if row[5] else None,
-                deleted_at=row[6].isoformat() if row[6] else None
+                graph_uid=row[4],
+                created_at=row[5].isoformat() if row[5] else None,
+                updated_at=row[6].isoformat() if row[6] else None,
+                deleted_at=row[7].isoformat() if row[7] else None
             ) for row in rows
         ]

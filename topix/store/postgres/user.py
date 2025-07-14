@@ -1,3 +1,4 @@
+from datetime import datetime
 from psycopg import AsyncConnection
 from psycopg.errors import UniqueViolation
 
@@ -66,12 +67,23 @@ async def get_user_by_uid(conn: AsyncConnection, uid: str) -> User | None:
 async def update_user_by_uid(conn: AsyncConnection, uid: str, updated_data: dict):
     """
     Update one or more user fields by uid.
+    Excludes date fields from manual updates.
+    Always updates updated_at to now.
     Raises ValueError if a unique constraint is violated.
     """
-    if not updated_data:
+    # Exclude any date fields from being updated manually
+    forbidden_fields = {"created_at", "updated_at", "deleted_at"}
+    data = {k: v for k, v in updated_data.items() if k not in forbidden_fields}
+    if not data:
         return
-    set_clause = ', '.join(f"{k} = %s" for k in updated_data)
-    values = list(updated_data.values())
+
+    set_clause = ', '.join(f"{k} = %s" for k in data)
+    values = list(data.values())
+
+    # Always set updated_at to now
+    set_clause += ", updated_at = %s"
+    values.append(datetime.now())
+
     values.append(uid)
     query = f"UPDATE users SET {set_clause} WHERE uid = %s"
     try:

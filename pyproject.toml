@@ -5,11 +5,12 @@ description = "Learn - Note - Share with AI"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    'pydantic>=2.11.7',
+    'pydantic[email]>=2.11.7',
     'qdrant-client>=1.14.3',
     'openai>=1.93.2',
     'mistralai>=1.9.1',
     'psycopg>=3.2.9',
+    'psycopg-pool>=3.2.6',
     'aiohttp>=3.12.13'
 ]
 

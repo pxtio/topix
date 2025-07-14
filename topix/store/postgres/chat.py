@@ -71,14 +71,23 @@ async def update_chat_by_uid(
     updated_data: dict
 ):
     """
-    Update chat fields by UID. Supports partial updates.
+    Update non-date chat fields by UID.
+    Always updates updated_at to now.
     """
-    if not updated_data:
+    # Exclude any date fields from being updated manually
+    forbidden_fields = {"created_at", "updated_at", "deleted_at"}
+    data = {k: v for k, v in updated_data.items() if k not in forbidden_fields}
+    if not data:
         return
-    set_clause = ', '.join(f"{k} = %s" for k in updated_data)
-    values = list(updated_data.values())
-    values.append(uid)
 
+    set_clause = ', '.join(f"{k} = %s" for k in data)
+    values = list(data.values())
+
+    # Always set updated_at to now
+    set_clause += ", updated_at = %s"
+    values.append(datetime.now())
+
+    values.append(uid)
     query = f"UPDATE chats SET {set_clause} WHERE uid = %s"
     async with conn.cursor() as cur:
         await cur.execute(query, tuple(values))
@@ -112,3 +121,32 @@ async def _dangerous_hard_delete_chat_by_uid(
     async with conn.cursor() as cur:
         await cur.execute(query, (uid,))
     await conn.commit()
+
+
+async def list_chats_for_user_uid(
+    conn: AsyncConnection,
+    user_uid: str
+) -> list[Chat]:
+    """
+    List all chats for a given user UID.
+    Returns a list of Chat objects.
+    """
+    query = (
+        "SELECT id, uid, label, user_uid, created_at, updated_at, deleted_at "
+        "FROM chats WHERE user_uid = %s "
+        "ORDER BY created_at DESC"
+    )
+    async with conn.cursor() as cur:
+        await cur.execute(query, (user_uid,))
+        rows = await cur.fetchall()
+        return [
+            Chat(
+                id=row[0],
+                uid=row[1],
+                label=row[2],
+                user_uid=row[3],
+                created_at=row[4].isoformat() if row[4] else None,
+                updated_at=row[5].isoformat() if row[5] else None,
+                deleted_at=row[6].isoformat() if row[6] else None
+            ) for row in rows
+        ]

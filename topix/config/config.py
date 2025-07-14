@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from urllib.parse import quote_plus
 
 from pydantic import BaseModel
 from yaml import safe_load
@@ -22,6 +23,18 @@ class PostgresConfig(BaseModel):
     port: int = 5432
     database: str = "topix"
     user: str = "topix"
+    password: str | None = None
+
+    def dsn(self) -> str:
+        """
+        Returns a properly encoded PostgreSQL connection string.
+        """
+        user_enc = quote_plus(self.user)
+        pwd_enc = quote_plus(self.password) if self.password else ""
+        if pwd_enc:
+            return f"postgresql://{user_enc}:{pwd_enc}@{self.hostname}:{self.port}/{self.database}"
+        else:
+            return f"postgresql://{user_enc}@{self.hostname}:{self.port}/{self.database}"
 
 
 class DatabasesConfig(BaseModel):

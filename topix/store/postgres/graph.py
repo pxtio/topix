@@ -1,57 +1,41 @@
-"""Graph management functions for PostgreSQL backend."""
-
 from psycopg import AsyncConnection
 from psycopg.types.json import Json
+from datetime import datetime
 
-from topix.datatypes.graph.graph import Graph
+from topix.datatypes.graph.graph import Edge, Graph, Node
 
 
-async def create_graph_with_owner(
+async def create_graph(
     conn: AsyncConnection,
-    graph: Graph,
-    owner_user_uid: str
+    graph: Graph
 ) -> Graph:
     """
-    Create a graph and associate the owner by UID.
-    Updates graph.id with the DB-generated ID.
+    Insert a graph and return it with id set.
     """
-    user_id_query = "SELECT id FROM users WHERE uid = %s"
-    async with conn.cursor() as cur:
-        await cur.execute(user_id_query, (owner_user_uid,))
-        user_row = await cur.fetchone()
-        if not user_row:
-            raise ValueError("Owner UID not found")
-        owner_user_id = user_row[0]
-
-    insert_graph_query = (
-        "INSERT INTO graphs (uid, name, readonly, label, graph_data, graph_version) "
-        "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id"
+    query = (
+        "INSERT INTO graphs (uid, label, nodes, edges, format_version, readonly, "
+        "created_at, updated_at, deleted_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
+        "RETURNING id"
     )
-    graph_data = {
-        "nodes": graph.nodes.model_dump(exclude_none=True),
-        "edges": graph.edges.model_dump(exclude_none=True)
-    }
     async with conn.cursor() as cur:
         await cur.execute(
-            insert_graph_query,
+            query,
             (
                 graph.uid,
-                graph.name,
-                graph.readonly,
                 graph.label,
-                Json(graph_data),
-                graph.graph_version
-            )
+                Json([n.model_dump(exclude_none=True) for n in graph.nodes]),
+                Json([e.model_dump(exclude_none=True) for e in graph.edges]),
+                graph.format_version,
+                graph.readonly,
+                datetime.fromisoformat(graph.created_at) if graph.created_at else None,
+                datetime.fromisoformat(graph.updated_at) if graph.updated_at else None,
+                datetime.fromisoformat(graph.deleted_at) if graph.deleted_at else None,
+            ),
         )
         row = await cur.fetchone()
         graph.id = row[0]
-
-    insert_owner_query = (
-        "INSERT INTO graph_user (graph_id, user_id, role) VALUES (%s, %s, 'owner')"
-    )
-    async with conn.cursor() as cur:
-        await cur.execute(insert_owner_query, (graph.id, owner_user_id))
-
+    await conn.commit()
     return graph
 
 
@@ -60,28 +44,29 @@ async def get_graph_by_uid(
     uid: str
 ) -> Graph | None:
     """
-    Retrieve a graph by UID. Returns None if not found.
+    Fetch a graph by UID.
     """
     query = (
-        "SELECT id, uid, name, readonly, label, graph_data, graph_version, created_at "
-        "FROM graphs WHERE uid = %s"
+        "SELECT id, uid, label, nodes, edges, format_version, readonly, "
+        "created_at, updated_at, deleted_at "
+        "FROM graphs WHERE uid = %s AND deleted_at IS NULL"
     )
     async with conn.cursor() as cur:
         await cur.execute(query, (uid,))
         row = await cur.fetchone()
         if not row:
             return None
-        graph_data = row[5] or {"nodes": [], "edges": []}
         return Graph(
             id=row[0],
             uid=row[1],
-            name=row[2],
-            readonly=row[3],
-            label=row[4],
-            nodes=graph_data.get("nodes", []),
-            edges=graph_data.get("edges", []),
-            graph_version=row[6],
-            created_at=row[7]
+            label=row[2],
+            nodes=[Node(**n) for n in row[3] or []],
+            edges=[Edge(**e) for e in row[4] or []],
+            format_version=row[5],
+            readonly=row[6],
+            created_at=row[7].isoformat() if row[7] else None,
+            updated_at=row[8].isoformat() if row[8] else None,
+            deleted_at=row[9].isoformat() if row[9] else None,
         )
 
 
@@ -91,33 +76,41 @@ async def update_graph_by_uid(
     updated_data: dict
 ):
     """
-    Update one or more fields of a graph by UID.
-    Handles partial update for JSONB nodes/edges.
+    Update non-date fields of a graph by UID.
+    Always sets updated_at to now. Does NOT allow updating created_at or deleted_at.
     """
     set_clauses = []
     values = []
-    if "nodes" in updated_data or "edges" in updated_data:
-        select_query = "SELECT graph_data FROM graphs WHERE uid = %s"
-        async with conn.cursor() as cur:
-            await cur.execute(select_query, (uid,))
-            row = await cur.fetchone()
-            current = row[0] if row else {"nodes": [], "edges": []}
-        if "nodes" in updated_data:
-            current["nodes"] = updated_data.pop("nodes")
-        if "edges" in updated_data:
-            current["edges"] = updated_data.pop("edges")
-        set_clauses.append("graph_data = %s")
-        values.append(Json(current))
+
+    # Only allow certain fields
+    allowed_fields = {"label", "format_version", "readonly", "nodes", "edges"}
+
+    # Nodes/edges as JSONB
+    if "nodes" in updated_data:
+        set_clauses.append("nodes = %s")
+        values.append(Json(updated_data.pop("nodes")))
+    if "edges" in updated_data:
+        set_clauses.append("edges = %s")
+        values.append(Json(updated_data.pop("edges")))
+
+    # Other allowed fields (non-date)
     for k, v in updated_data.items():
-        if k in ("name", "readonly", "label", "graph_version"):
+        if k in allowed_fields - {"nodes", "edges"}:
             set_clauses.append(f"{k} = %s")
             values.append(v)
+
+    # Always update updated_at
+    now = datetime.now()
+    set_clauses.append("updated_at = %s")
+    values.append(now)
+
     if not set_clauses:
         return
     values.append(uid)
     query = f"UPDATE graphs SET {', '.join(set_clauses)} WHERE uid = %s"
     async with conn.cursor() as cur:
         await cur.execute(query, tuple(values))
+    await conn.commit()
 
 
 async def delete_graph_by_uid(
@@ -125,8 +118,23 @@ async def delete_graph_by_uid(
     uid: str
 ):
     """
-    Delete a graph by its UID.
+    Soft-delete a graph by setting deleted_at to now.
+    """
+    now = datetime.now()
+    query = "UPDATE graphs SET deleted_at = %s WHERE uid = %s"
+    async with conn.cursor() as cur:
+        await cur.execute(query, (now, uid))
+    await conn.commit()
+
+
+async def _dangerous_hard_delete_graph_by_uid(
+    conn: AsyncConnection,
+    uid: str
+) -> None:
+    """
+    Permanently delete a graph by UID.
     """
     query = "DELETE FROM graphs WHERE uid = %s"
     async with conn.cursor() as cur:
         await cur.execute(query, (uid,))
+    await conn.commit()

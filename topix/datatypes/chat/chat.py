@@ -10,6 +10,8 @@ from topix.utils.common import gen_uid
 
 
 class Message(BaseModel):
+    """Message in a chat."""
+
     type: Literal["message"] = "message"
     id: str = Field(default_factory=gen_uid)
     chat_uid: str

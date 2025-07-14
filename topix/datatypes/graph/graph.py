@@ -1,6 +1,7 @@
 """Classes representing a graph structure with nodes and edges."""
 
 from datetime import datetime
+from typing import Literal
 from pydantic import BaseModel, Field
 
 from topix.datatypes.graph.edge import EdgeData
@@ -37,9 +38,9 @@ class Edge(BaseModel):
 class Graph(BaseModel):
     """Graph object containing nodes and edges."""
 
-    id: int
+    id: int | None = None
     uid: str = Field(default_factory=gen_uid)
-    type: str = "graph"
+    type: Literal["graph"] = "graph"
     label: str | None = None
 
     nodes: list[Node] = Field(default_factory=list)

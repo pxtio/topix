@@ -1,5 +1,7 @@
 """Chat management functions for PostgreSQL backend."""
 
+from datetime import datetime
+
 from psycopg import AsyncConnection
 
 from topix.datatypes.chat.chat import Chat
@@ -31,7 +33,9 @@ async def create_chat(
         )
         row = await cur.fetchone()
         chat.id = row[0]
-        return chat
+
+    await conn.commit()
+    return chat
 
 
 async def get_chat_by_uid(
@@ -55,9 +59,9 @@ async def get_chat_by_uid(
             uid=row[1],
             label=row[2],
             user_uid=row[3],
-            created_at=row[4],
-            updated_at=row[5],
-            deleted_at=row[6]
+            created_at=row[4].isoformat() if row[4] else None,
+            updated_at=row[5].isoformat() if row[5] else None,
+            deleted_at=row[6].isoformat() if row[6] else None
         )
 
 
@@ -74,9 +78,11 @@ async def update_chat_by_uid(
     set_clause = ', '.join(f"{k} = %s" for k in updated_data)
     values = list(updated_data.values())
     values.append(uid)
+
     query = f"UPDATE chats SET {set_clause} WHERE uid = %s"
     async with conn.cursor() as cur:
         await cur.execute(query, tuple(values))
+    await conn.commit()
 
 
 async def delete_chat_by_uid(
@@ -86,8 +92,23 @@ async def delete_chat_by_uid(
     """
     Soft-delete a chat by setting deleted_at to now.
     """
-    from datetime import datetime
     now = datetime.now()
     query = "UPDATE chats SET deleted_at = %s WHERE uid = %s"
+
     async with conn.cursor() as cur:
         await cur.execute(query, (now, uid))
+
+    await conn.commit()
+
+
+async def _dangerous_hard_delete_chat_by_uid(
+    conn: AsyncConnection,
+    uid: str
+):
+    """
+    Hard delete a chat by UID. Use with caution!
+    """
+    query = "DELETE FROM chats WHERE uid = %s"
+    async with conn.cursor() as cur:
+        await cur.execute(query, (uid,))
+    await conn.commit()

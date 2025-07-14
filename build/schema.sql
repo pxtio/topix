@@ -4,7 +4,9 @@ CREATE TABLE users (
     email TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL UNIQUE,
     name TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP
 );
 CREATE INDEX idx_users_uid ON users(uid);
 
@@ -12,12 +14,12 @@ CREATE INDEX idx_users_uid ON users(uid);
 CREATE TABLE graphs (
     id SERIAL PRIMARY KEY,
     uid TEXT NOT NULL UNIQUE,
-    name TEXT NOT NULL,
-    readonly BOOLEAN DEFAULT FALSE,
     label TEXT,
-    graph_data JSONB,
-    format_version INT DEFAULT 1,
-    created_at TIMESTAMP DEFAULT NOW(),
+    nodes JSONB NOT NULL DEFAULT '[]',
+    edges JSONB NOT NULL DEFAULT '[]',
+    format_version INT NOT NULL DEFAULT 1,
+    readonly BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP
 );

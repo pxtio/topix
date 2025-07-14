@@ -11,6 +11,7 @@ from topix.store.postgres.graph import (
     create_graph,
     delete_graph_by_uid,
     get_graph_by_uid,
+    get_graph_id_by_uid,
     update_graph_by_uid
 )
 from topix.utils.common import gen_uid
@@ -86,6 +87,10 @@ async def test_graph_crud(conn: AsyncConnection):
     assert len(loaded_graph.nodes) == 1
     assert len(loaded_graph.edges) == 1
     assert loaded_graph.nodes[0].id == node.id
+
+    # GET ID
+    graph_id = await get_graph_id_by_uid(conn, graph_uid)
+    assert graph_id == created_graph.id
 
     # UPDATE
     new_label = "Graph Updated"

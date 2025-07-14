@@ -9,6 +9,7 @@ from topix.store.postgres.user import (
     _dangerous_hard_delete_user_by_uid,
     create_user,
     get_user_by_uid,
+    get_user_id_by_uid,
     update_user_by_uid,
     delete_user_by_uid,
 )
@@ -44,6 +45,10 @@ async def test_user_crud(conn: AsyncConnection, user_uid: str):
     assert loaded.uid == user.uid
     assert loaded.email == email
     assert loaded.name == "Test User"
+
+    # GET ID
+    user_id = await get_user_id_by_uid(conn, user.uid)
+    assert user_id == created_user.id
 
     # UPDATE
     new_name = "Renamed User"

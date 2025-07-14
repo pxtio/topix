@@ -39,6 +39,21 @@ async def create_graph(
     return graph
 
 
+async def get_graph_id_by_uid(
+    conn: AsyncConnection,
+    uid: str
+) -> int | None:
+    """
+    Fetch a graph ID by its unique UID.
+    Returns None if not found.
+    """
+    query = "SELECT id FROM graphs WHERE uid = %s AND deleted_at IS NULL"
+    async with conn.cursor() as cur:
+        await cur.execute(query, (uid,))
+        row = await cur.fetchone()
+        return row[0] if row else None
+
+
 async def get_graph_by_uid(
     conn: AsyncConnection,
     uid: str

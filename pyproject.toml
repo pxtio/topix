@@ -12,7 +12,8 @@ dependencies = [
     'psycopg>=3.2.9',
     'psycopg-pool>=3.2.6',
     'aiohttp>=3.12.13',
-    'fastapi>=0.116.1'
+    'fastapi>=0.116.1',
+    'rich>=14.0.0'
 ]
 
 [project.optional-dependencies]
@@ -36,4 +37,22 @@ major_version_zero = true
 
 
 [tool.ruff]
-lint.select = ["F", "E", "W", "C90", "C4"]
+lint.select = [
+  "I",     # isort
+  "F",     # pyflakes
+  "E",     # pycodestyle errors
+  "W",     # pycodestyle warnings
+  "C90",   # mccabe
+  "C4",    # flake8-comprehensions
+  # "B",     # flake8-bugbear
+  # "UP",    # pyupgrade
+  # "SIM",   # flake8-simplify
+  "ERA",   # eradicate
+  # "D",     # pydocstyle
+  "N"      # pep8-naming
+]
+line-length = 150
+
+[tool.ruff.lint.isort]
+known-first-party = ["topix"]
+lines-between-types = 1

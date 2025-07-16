@@ -9,7 +9,6 @@ from topix.datatypes.note.note import Note
 from topix.nlp.embed import OpenAIEmbedder
 from topix.store.qdrant.base import QdrantStore
 
-
 type Entry = Note | Message
 
 

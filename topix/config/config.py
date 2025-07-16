@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+
 from urllib.parse import quote_plus
 
 from pydantic import BaseModel
@@ -26,9 +27,7 @@ class PostgresConfig(BaseModel):
     password: str | None = None
 
     def dsn(self) -> str:
-        """
-        Returns a properly encoded PostgreSQL connection string.
-        """
+        """Returns a properly encoded PostgreSQL connection string."""
         user_enc = quote_plus(self.user)
         pwd_enc = quote_plus(self.password) if self.password else ""
         if pwd_enc:
@@ -89,7 +88,7 @@ class Config(BaseModel, metaclass=ConfigMeta):
             config_file_path = os.path.join("config", f"{stage}.yml")
         if not os.path.exists(config_file_path):
             raise FileNotFoundError(f"Configuration file not found: {config_file_path}")
-        with open(config_file_path, "r") as f:
+        with open(config_file_path) as f:
             config_data = safe_load(f)
         return cls(
             stage=stage,

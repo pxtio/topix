@@ -1,8 +1,9 @@
+"""Graph API Router."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Request
-from fastapi.params import Query, Path
-
+from fastapi.params import Path, Query
 
 router = APIRouter(
     prefix="/graph",
@@ -16,9 +17,7 @@ def create_graph(
     request: Request,
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    Create a new graph for the user.
-    """
+    """Create a new graph for the user."""
     pass
 
 
@@ -28,9 +27,7 @@ def update_graph(
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    Update an existing graph by its ID.
-    """
+    """Update an existing graph by its ID."""
     pass
 
 
@@ -40,9 +37,7 @@ def delete_graph(
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    Delete a graph by its ID.
-    """
+    """Delete a graph by its ID."""
     pass
 
 
@@ -52,9 +47,7 @@ def get_graph(
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    Get a graph by its ID.
-    """
+    """Get a graph by its ID."""
     pass
 
 
@@ -63,7 +56,5 @@ def list_graphs(
     request: Request,
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    List all graphs for the user.
-    """
+    """List all graphs for the user."""
     pass

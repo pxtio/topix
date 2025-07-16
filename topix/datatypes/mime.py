@@ -3,6 +3,7 @@ from topix.datatypes.enum import CustomEnum
 
 class MimeTypeEnum(str, CustomEnum):
     """Enum for the different types of media"""
+
     PDF = 'application/pdf'
     VIDEO = 'video/mp4'
     AUDIO = 'audio/mp3'

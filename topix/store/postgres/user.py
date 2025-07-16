@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from psycopg import AsyncConnection
 from psycopg.errors import UniqueViolation
 
@@ -6,8 +7,7 @@ from topix.datatypes.user import User
 
 
 async def create_user(conn: AsyncConnection, user: User) -> User:
-    """
-    Insert a new user and return the user with its assigned database id.
+    """Insert a new user and return the user with its assigned database id.
     Raises ValueError if uid/email/username already exists.
     """
     query = (
@@ -38,8 +38,7 @@ async def create_user(conn: AsyncConnection, user: User) -> User:
 
 
 async def get_user_by_uid(conn: AsyncConnection, uid: str) -> User | None:
-    """
-    Fetch a user by their unique uid.
+    """Fetch a user by their unique uid.
     Returns None if not found.
     """
     query = (
@@ -65,8 +64,7 @@ async def get_user_by_uid(conn: AsyncConnection, uid: str) -> User | None:
 
 
 async def update_user_by_uid(conn: AsyncConnection, uid: str, updated_data: dict):
-    """
-    Update one or more user fields by uid.
+    """Update one or more user fields by uid.
     Excludes date fields from manual updates.
     Always updates updated_at to now.
     Raises ValueError if a unique constraint is violated.
@@ -103,8 +101,7 @@ async def update_user_by_uid(conn: AsyncConnection, uid: str, updated_data: dict
 
 
 async def delete_user_by_uid(conn: AsyncConnection, uid: str):
-    """
-    Soft delete a user by setting deleted_at to now.
+    """Soft delete a user by setting deleted_at to now.
     """
     query = "UPDATE users SET deleted_at = NOW() WHERE uid = %s"
     async with conn.cursor() as cur:
@@ -113,8 +110,7 @@ async def delete_user_by_uid(conn: AsyncConnection, uid: str):
 
 
 async def get_user_id_by_uid(conn: AsyncConnection, user_uid: str) -> int | None:
-    """
-    Fetch user integer ID from their UID.
+    """Fetch user integer ID from their UID.
     Returns None if not found.
     """
     query = "SELECT id FROM users WHERE uid = %s"
@@ -128,8 +124,7 @@ async def _dangerous_hard_delete_user_by_uid(
     conn: AsyncConnection,
     uid: str
 ) -> None:
-    """
-    Hard delete a user by UID. Use with caution!
+    """Hard delete a user by UID. Use with caution!
     """
     query = "DELETE FROM users WHERE uid = %s"
     async with conn.cursor() as cur:

@@ -1,6 +1,7 @@
 """Utility functions for Qdrant."""
 
 from typing import TypeVar
+
 from pydantic import BaseModel
 from qdrant_client.models import PointStruct
 
@@ -9,7 +10,8 @@ T = TypeVar("T", bound=BaseModel)
 
 def to_struct_point(obj: T, embedding: list[float] | None = None) -> PointStruct:
     """Convert a Pydantic model to Qdrant PointStruct.
-    If `embedding` is None, no vector is included (metadata-only)."""
+    If `embedding` is None, no vector is included (metadata-only).
+    """
     point_id = getattr(obj, "uid", getattr(obj, "id", None))
     if point_id is None:
         raise ValueError("Object must have 'uid' or 'id' attribute.")
@@ -26,8 +28,7 @@ def to_struct_point(obj: T, embedding: list[float] | None = None) -> PointStruct
 
 
 def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str]:
-    """
-    Convert a nested dict like { "a": True, "b": { "c": { "d": True, "e": True }}}
+    """Convert a nested dict like { "a": True, "b": { "c": { "d": True, "e": True }}}
     to a list of dot-notation field paths: ["a", "b.c.d", "b.c.e"].
     """
     fields = []

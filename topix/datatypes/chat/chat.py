@@ -1,12 +1,21 @@
 """Chat datatypes."""
 
 from datetime import datetime
-import json
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from topix.datatypes.enum import CustomEnum
 from topix.utils.common import gen_uid
+
+
+class MessageRole(str, CustomEnum):
+    """Enum for message roles."""
+
+    SYSTEM = "system"
+    USER = "user"
+    ASSISTANT = "assistant"
+    TOOL = "tool"
 
 
 class Message(BaseModel):
@@ -15,7 +24,7 @@ class Message(BaseModel):
     type: Literal["message"] = "message"
     id: str = Field(default_factory=gen_uid)
     chat_uid: str
-    role: Literal["system", "user", "assistant", "tool"]
+    role: MessageRole
     content: str | dict
 
     created_at: str | None = Field(default_factory=lambda: datetime.now().isoformat())
@@ -25,8 +34,7 @@ class Message(BaseModel):
     def to_chat_message(self) -> dict:
         return {
             "role": self.role,
-            "content": self.content if isinstance(self.content, str)
-            else json.dumps(self.content),
+            "content": self.content
         }
 
 

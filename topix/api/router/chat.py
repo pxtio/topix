@@ -1,8 +1,9 @@
+"""Chat API Router."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Request
-from fastapi.params import Query, Path
-
+from fastapi.params import Path, Query
 
 router = APIRouter(
     prefix="/chats",
@@ -16,9 +17,7 @@ def create_chat(
     request: Request,
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    Create a new chat for the user.
-    """
+    """Create a new chat for the user."""
     pass
 
 
@@ -28,9 +27,7 @@ def describe_chat(
     chat_id: Annotated[str, Path(description="Chat ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    Describe a chat by its ID.
-    """
+    """Describe a chat by its ID."""
     pass
 
 
@@ -40,9 +37,7 @@ def update_chat(
     chat_id: Annotated[str, Path(description="Chat ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    Update an existing chat by its ID.
-    """
+    """Update an existing chat by its ID."""
     pass
 
 
@@ -52,9 +47,7 @@ def get_chat(
     chat_id: Annotated[str, Path(description="Chat ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    Get a chat by its ID.
-    """
+    """Get a chat by its ID."""
     pass
 
 
@@ -63,9 +56,7 @@ def list_chats(
     request: Request,
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    List all chats for the user.
-    """
+    """List all chats for the user."""
     pass
 
 
@@ -75,9 +66,7 @@ def delete_chat(
     chat_id: Annotated[str, Path(description="Chat ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    Delete a chat by its ID.
-    """
+    """Delete a chat by its ID."""
     pass
 
 
@@ -87,21 +76,17 @@ def send_message(
     chat_id: Annotated[str, Path(description="Chat ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    Send a message to a chat.
-    """
+    """Send a message to a chat."""
     pass
 
 
 @router.get("/{chat_id}/messages")
-def list_messages(
+def list_message_queue(
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    List all messages in a chat.
-    """
+    """List all messages in a chat."""
     pass
 
 
@@ -112,7 +97,5 @@ def get_message(
     message_id: Annotated[str, Path(description="Message ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
-    """
-    Get a specific message by its ID in a chat.
-    """
+    """Get a specific message by its ID in a chat."""
     pass

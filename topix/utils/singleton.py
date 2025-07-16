@@ -5,14 +5,18 @@ import threading
 
 class SingletonNotInitializedError(Exception):
     """Exception raised when trying to get an instance of a singleton class
-    that is not initialized"""
+    that is not initialized
+    """
+
     def __init__(self, message):
         super().__init__(message)
 
 
 class SingletonAlreadyInitializedError(Exception):
     """Exception raised when trying to initialize a singleton class that is
-    already initialized"""
+    already initialized
+    """
+
     def __init__(self, message):
         super().__init__(message)
 
@@ -54,13 +58,15 @@ class SingletonMeta(type):
     except SingletonAlreadyInitializedError as e:
         print(e)
     """
+
     __instances = {}
 
     __lock = threading.Lock()
 
     def __call__(cls, *args, **kwargs):
         """Create a new instance of the singleton class if it is not initialized,
-        otherwise raise an exception"""
+        otherwise raise an exception
+        """
         with cls.__lock:
             if cls not in cls.__instances:
                 cls.__instances[cls] = super(SingletonMeta, cls).__call__(
@@ -97,6 +103,7 @@ class SingletonMeta(type):
 
         Raises:
             SingletonNotInitializedError: If the singleton class is not initialized
+
         """
         if cls not in cls.__instances:
             raise SingletonNotInitializedError(f"{cls.__name__} is not initialized")
@@ -104,7 +111,8 @@ class SingletonMeta(type):
 
     def teardown(cls) -> bool:
         """Remove the instance of the singleton class. Returns True if the instance
-        existed and was removed, False it was not found to begin with."""
+        existed and was removed, False it was not found to begin with.
+        """
         with cls.__lock:
             if cls in cls.__instances:
                 del cls.__instances[cls]

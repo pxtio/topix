@@ -6,6 +6,7 @@ from topix.datatypes.enum import CustomEnum
 
 class LangCodeEnum(str, CustomEnum):
     """Language Enum"""
+
     ENGLISH = "en"
     FRENCH = "fr"
     SPANISH = "es"
@@ -16,6 +17,7 @@ class LangCodeEnum(str, CustomEnum):
 
 class LangEnum(str, CustomEnum):
     """Language Enum"""
+
     ENGLISH = "English"
     FRENCH = "French"
     SPANISH = "Spanish"

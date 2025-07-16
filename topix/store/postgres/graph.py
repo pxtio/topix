@@ -1,6 +1,7 @@
+from datetime import datetime
+
 from psycopg import AsyncConnection
 from psycopg.types.json import Json
-from datetime import datetime
 
 from topix.datatypes.graph.graph import Edge, Graph, Node
 
@@ -9,8 +10,7 @@ async def create_graph(
     conn: AsyncConnection,
     graph: Graph
 ) -> Graph:
-    """
-    Insert a graph and return it with id set.
+    """Insert a graph and return it with id set.
     """
     query = (
         "INSERT INTO graphs (uid, label, nodes, edges, format_version, readonly, "
@@ -43,8 +43,7 @@ async def get_graph_id_by_uid(
     conn: AsyncConnection,
     uid: str
 ) -> int | None:
-    """
-    Fetch a graph ID by its unique UID.
+    """Fetch a graph ID by its unique UID.
     Returns None if not found.
     """
     query = "SELECT id FROM graphs WHERE uid = %s AND deleted_at IS NULL"
@@ -58,8 +57,7 @@ async def get_graph_by_uid(
     conn: AsyncConnection,
     uid: str
 ) -> Graph | None:
-    """
-    Fetch a graph by UID.
+    """Fetch a graph by UID.
     """
     query = (
         "SELECT id, uid, label, nodes, edges, format_version, readonly, "
@@ -90,8 +88,7 @@ async def update_graph_by_uid(
     uid: str,
     updated_data: dict
 ):
-    """
-    Update non-date fields of a graph by UID.
+    """Update non-date fields of a graph by UID.
     Always sets updated_at to now. Does NOT allow updating created_at or deleted_at.
     """
     set_clauses = []
@@ -132,8 +129,7 @@ async def delete_graph_by_uid(
     conn: AsyncConnection,
     uid: str
 ):
-    """
-    Soft-delete a graph by setting deleted_at to now.
+    """Soft-delete a graph by setting deleted_at to now.
     """
     now = datetime.now()
     query = "UPDATE graphs SET deleted_at = %s WHERE uid = %s"
@@ -146,8 +142,7 @@ async def _dangerous_hard_delete_graph_by_uid(
     conn: AsyncConnection,
     uid: str
 ) -> None:
-    """
-    Permanently delete a graph by UID.
+    """Permanently delete a graph by UID.
     """
     query = "DELETE FROM graphs WHERE uid = %s"
     async with conn.cursor() as cur:

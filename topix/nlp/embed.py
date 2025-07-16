@@ -1,11 +1,11 @@
 """Embedding class."""
 
 import asyncio
+
 from openai import AsyncOpenAI
 
 from topix.config.config import Config
 from topix.utils.timeit import async_timeit
-
 
 MODEL_NAME = "text-embedding-3-small"
 DIMENSIONS = 1024

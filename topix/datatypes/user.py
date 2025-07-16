@@ -10,6 +10,7 @@ from topix.utils.common import gen_uid
 
 class User(BaseModel):
     """User model representing a user in the system."""
+
     type: Literal["user"] = "user"
 
     id: int | None = None

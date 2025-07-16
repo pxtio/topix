@@ -31,6 +31,12 @@ class ToolExecutionState(str, CustomEnum):
     FAILED = "failed"
 
 
+class StreamDelta(BaseModel):
+    """Stream delta for token streaming."""
+
+    content: str
+
+
 class AgentStreamMessage(BaseModel):
     """Agent stream message for streaming results."""
 
@@ -40,9 +46,8 @@ class AgentStreamMessage(BaseModel):
     tool_name: AgentToolName
 
     execution_state: ToolExecutionState | None = None
-
     status_message: str | None = None
-    content: str | None = None
+    delta: StreamDelta | None = None
 
 
 class Context(BaseModel):

@@ -22,6 +22,7 @@ from topix.agents.datatypes import (
     AgentStreamMessage,
     AgentToolName,
     Context,
+    StreamDelta,
     StreamMessageType,
 )
 from topix.agents.prompt_utils import render_prompt
@@ -132,7 +133,9 @@ class AssistantManager:
                             type=StreamMessageType.TOKEN,
                             tool_id=id_,
                             tool_name=AgentToolName.RAW_MESSAGE,
-                            content=event.data.delta
+                            delta=StreamDelta(
+                                content=event.data.delta
+                            )
                         )
                     )
             await context._message_queue.put("<END_OF_AGENT>")

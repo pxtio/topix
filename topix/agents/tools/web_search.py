@@ -20,6 +20,7 @@ from topix.agents.datatypes import (
     AgentStreamMessage,
     AgentToolName,
     Context,
+    StreamDelta,
     StreamMessageType,
     ToolExecutionState,
 )
@@ -68,7 +69,9 @@ class WebSearch(BaseAgentManager):
             model=self.model_name,
             name=self.name,
             instructions=render_prompt(self.prompts),
-            tools=[WebSearchTool(search_context_size="low")],
+            tools=[
+                WebSearchTool(search_context_size="medium")
+            ],
             model_settings=ModelSettings(
                 tool_choice="required",
                 temperature=0.0
@@ -141,7 +144,9 @@ class WebSearch(BaseAgentManager):
                         type=StreamMessageType.TOKEN,
                         tool_id=id_,
                         tool_name=AgentToolName.WEB_SEARCH,
-                        content=event.data.delta
+                        delta=StreamDelta(
+                            content=event.data.delta
+                        )
                     )
                 )
 

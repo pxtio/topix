@@ -10,6 +10,7 @@ from topix.agents.datatypes import (
     AgentStreamMessage,
     AgentToolName,
     Context,
+    StreamDelta,
     StreamMessageType,
     ToolExecutionState,
 )
@@ -106,7 +107,9 @@ class AnswerReformulate(BaseAgentManager):
                         type=StreamMessageType.TOKEN,
                         tool_id=id_,
                         tool_name=AgentToolName.ANSWER_REFORMULATE,
-                        content=event.data.delta
+                        delta=StreamDelta(
+                            content=event.data.delta
+                        )
                     )
                 )
 

@@ -1,5 +1,6 @@
-from datetime import datetime
 import logging
+
+from datetime import datetime
 
 from psycopg import AsyncConnection
 
@@ -12,10 +13,9 @@ from topix.store.postgres.graph import (
     delete_graph_by_uid,
     get_graph_by_uid,
     get_graph_id_by_uid,
-    update_graph_by_uid
+    update_graph_by_uid,
 )
 from topix.utils.common import gen_uid
-
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ async def test_graph_crud(conn: AsyncConnection):
     assert len(updated_graph.nodes) == 1
     assert updated_graph.nodes[0].id == "node2"
 
-    # DELETE (soft)
+    # DELETE
     await delete_graph_by_uid(conn, graph_uid)
     deleted_graph = await get_graph_by_uid(conn, graph_uid)
     assert deleted_graph is None

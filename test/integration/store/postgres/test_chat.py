@@ -8,9 +8,9 @@ from topix.datatypes.user import User
 from topix.store.postgres.chat import (
     _dangerous_hard_delete_chat_by_uid,
     create_chat,
+    delete_chat_by_uid,
     get_chat_by_uid,
     update_chat_by_uid,
-    delete_chat_by_uid,
 )
 from topix.store.postgres.user import create_user, delete_user_by_uid
 from topix.utils.common import gen_uid

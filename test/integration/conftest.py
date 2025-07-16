@@ -1,6 +1,7 @@
 import pytest
-from psycopg import AsyncConnection
 import pytest_asyncio
+
+from psycopg import AsyncConnection
 
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum

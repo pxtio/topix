@@ -7,8 +7,6 @@ from collections.abc import AsyncGenerator
 from datetime import datetime
 from typing import Any
 
-from openai.types.responses import ResponseTextDeltaEvent
-
 from agents import (
     Agent,
     AgentHooks,
@@ -18,13 +16,10 @@ from agents import (
     Tool,
     function_tool,
 )
-from topix.agents.datatypes import (
-    AgentStreamMessage,
-    AgentToolName,
-    Context,
-    StreamDelta,
-    StreamMessageType,
-)
+from topix.agents.base import BaseAgentManager
+from topix.agents.datatypes.context import ReasoningContext
+from topix.agents.datatypes.stream import AgentStreamMessage
+from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.prompt_utils import render_prompt
 from topix.agents.tools.answer_reformulate import AnswerReformulate
 from topix.agents.tools.web_search import WebSearch
@@ -35,8 +30,8 @@ class AssistantAgentHook(AgentHooks):
 
     async def on_end(
         self,
-        context: RunContextWrapper[Context],
-        agent: Agent[Context],
+        context: RunContextWrapper[ReasoningContext],
+        agent: Agent[ReasoningContext],
         output: Any
     ):
         """Reset the agent's tool use behavior and enable all tools."""
@@ -46,8 +41,8 @@ class AssistantAgentHook(AgentHooks):
 
     async def on_tool_start(
         self,
-        context: RunContextWrapper[Context],
-        agent: Agent[Context],
+        context: RunContextWrapper[ReasoningContext],
+        agent: Agent[ReasoningContext],
         tool: Tool
     ):
         """Handle tool calls and update the context with the results."""
@@ -58,8 +53,8 @@ class AssistantAgentHook(AgentHooks):
 
     async def on_tool_end(
         self,
-        context: RunContextWrapper[Context],
-        agent: Agent[Context],
+        context: RunContextWrapper[ReasoningContext],
+        agent: Agent[ReasoningContext],
         tool: Tool,
         result: str
     ):
@@ -68,7 +63,7 @@ class AssistantAgentHook(AgentHooks):
             agent.model_settings.tool_choice = "required"
 
 
-class AssistantManager:
+class AssistantManager(BaseAgentManager):
     """Manager for the reflection agent."""
 
     name = "Reflection Agent"
@@ -80,7 +75,7 @@ class AssistantManager:
         self.web_manager = WebSearch()
         self.answer_reformulate_manager = AnswerReformulate()
 
-        self.agent = Agent[Context](
+        self.agent = Agent[ReasoningContext](
             name=self.name,
             instructions=render_prompt(self.prompts).format(
                 time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -97,7 +92,7 @@ class AssistantManager:
             model_settings=ModelSettings(temperature=0.0)
         )
 
-    async def run(self, context: Context, query: str, max_turns: int = 5):
+    async def run(self, context: ReasoningContext, query: str, max_turns: int = 5):
         """Run the reflection agent with the provided context and query."""
         result = await Runner.run(
             self.agent,
@@ -110,7 +105,7 @@ class AssistantManager:
     async def stream(
         self,
         query: str,
-        context: Context,
+        context: ReasoningContext,
         max_turns: int = 5
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Stream the results of the reflection agent."""
@@ -125,19 +120,12 @@ class AssistantManager:
 
         async def stream_events():
 
-            async for event in streamed_answer.stream_events():
-                if event.type == "raw_response_event" and \
-                        isinstance(event.data, ResponseTextDeltaEvent):
-                    await context._message_queue.put(
-                        AgentStreamMessage(
-                            type=StreamMessageType.TOKEN,
-                            tool_id=id_,
-                            tool_name=AgentToolName.RAW_MESSAGE,
-                            delta=StreamDelta(
-                                content=event.data.delta
-                            )
-                        )
-                    )
+            async for stream_chunk in self.handle_stream_events(
+                streamed_answer,
+                tool_id=id_,
+                tool_name=AgentToolName.RAW_MESSAGE
+            ):
+                await context._message_queue.put(stream_chunk)
             await context._message_queue.put("<END_OF_AGENT>")
 
         # Start the streaming tasks

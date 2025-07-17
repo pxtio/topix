@@ -1,19 +1,7 @@
-"""Agent datatypes."""
+from pydantic import BaseModel
 
-import asyncio
-
-from pydantic import BaseModel, PrivateAttr
-
+from topix.agents.datatypes.tools import AgentToolName
 from topix.datatypes.enum import CustomEnum
-
-
-class AgentToolName(str, CustomEnum):
-    """Enumeration for tool names used in the agent manager."""
-
-    ANSWER_REFORMULATE = "answer_reformulate"
-    KNOWLEDGE_BASE_SEARCH = "knowledge_base_search"
-    WEB_SEARCH = "web_search"
-    RAW_MESSAGE = "raw_message"
 
 
 class StreamMessageType(str, CustomEnum):
@@ -48,14 +36,3 @@ class AgentStreamMessage(BaseModel):
     execution_state: ToolExecutionState | None = None
     status_message: str | None = None
     delta: StreamDelta | None = None
-
-
-class Context(BaseModel):
-    """Agent context for managing state and results."""
-
-    search_results_limit: int = 5
-
-    kb_search_results: list[str] = []
-    web_search_results: list[str] = []
-
-    _message_queue: asyncio.Queue = PrivateAttr(default_factory=asyncio.Queue)

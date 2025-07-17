@@ -2,23 +2,16 @@
 
 import uuid
 
-from openai.types.responses import ResponseTextDeltaEvent
-
 from agents import Agent, ModelSettings, RunContextWrapper, Runner
-from topix.agents.base import BaseAgentManager
-from topix.agents.datatypes import (
-    AgentStreamMessage,
-    AgentToolName,
-    Context,
-    StreamDelta,
-    StreamMessageType,
-    ToolExecutionState,
-)
+from topix.agents.base import BaseToolAgentManager
+from topix.agents.datatypes.context import ReasoningContext
+from topix.agents.datatypes.stream import AgentStreamMessage, StreamMessageType, ToolExecutionState
+from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.prompt_utils import render_prompt
-from topix.agents.utils import format_tool_finished_message, format_tool_start_message
+from topix.agents.utils import format_tool_completed_message, format_tool_start_message
 
 
-class AnswerReformulate(BaseAgentManager):
+class AnswerReformulate(BaseToolAgentManager):
     """A manager for the answer reformulation agent."""
 
     name = "Answer Reformulation"
@@ -30,7 +23,7 @@ class AnswerReformulate(BaseAgentManager):
 
     def __init__(self):
         """Init method."""
-        self.agent = Agent[Context](
+        self.agent = Agent[ReasoningContext](
             name=self.name,
             instructions=render_prompt(self.prompts["system"]),
             model=self.model_name,
@@ -39,7 +32,7 @@ class AnswerReformulate(BaseAgentManager):
         )
 
     @classmethod
-    def _input_format(cls, context: Context, query: str) -> str:
+    def _input_format(cls, context: ReasoningContext, query: str) -> str:
         """Format the input for the answer reformulation agent."""
         kb_search_results = "\n\n".join(context.kb_search_results) \
             if context.kb_search_results else ""
@@ -53,7 +46,7 @@ class AnswerReformulate(BaseAgentManager):
             kb_search_results=kb_search_results
         )
 
-    async def run(self, context: Context, query: str) -> str:
+    async def run(self, context: ReasoningContext, query: str) -> str:
         """Run the answer reformulation agent with the provided context and query.
 
         Returns:
@@ -68,7 +61,7 @@ class AnswerReformulate(BaseAgentManager):
 
     async def as_tool(
         self,
-        wrapper: RunContextWrapper[Context],
+        wrapper: RunContextWrapper[ReasoningContext],
         query: str
     ) -> str:
         """Run the answer reformulation agent as a tool with the provided query.
@@ -83,13 +76,20 @@ class AnswerReformulate(BaseAgentManager):
 
         """
         id_ = uuid.uuid4().hex
+        fixed_params = {
+            "tool_id": id_,
+            "tool_name": AgentToolName.ANSWER_REFORMULATE,
+        }
+
         await wrapper.context._message_queue.put(
             AgentStreamMessage(
                 type=StreamMessageType.STATE,
-                tool_id=id_,
-                tool_name=AgentToolName.ANSWER_REFORMULATE,
                 execution_state=ToolExecutionState.STARTED,
-                status_message=format_tool_start_message(self.name, query)
+                status_message=format_tool_start_message(
+                    self.name,
+                    f"Query: `{query}`."
+                ),
+                **fixed_params
             )
         )
 
@@ -99,30 +99,18 @@ class AnswerReformulate(BaseAgentManager):
             input=self._input_format(wrapper.context, query),
             max_turns=2,
         )
-        async for event in res.stream_events():
-            if event.type == "raw_response_event" and \
-                    isinstance(event.data, ResponseTextDeltaEvent):
-                await wrapper.context._message_queue.put(
-                    AgentStreamMessage(
-                        type=StreamMessageType.TOKEN,
-                        tool_id=id_,
-                        tool_name=AgentToolName.ANSWER_REFORMULATE,
-                        delta=StreamDelta(
-                            content=event.data.delta
-                        )
-                    )
-                )
+        async for stream_chunk in self.handle_stream_events(res, **fixed_params):
+            await wrapper.context._message_queue.put(stream_chunk)
 
         await wrapper.context._message_queue.put(
             AgentStreamMessage(
                 type=StreamMessageType.STATE,
-                tool_id=id_,
-                tool_name=AgentToolName.ANSWER_REFORMULATE,
                 execution_state=ToolExecutionState.COMPLETED,
-                status_message=format_tool_finished_message(
+                status_message=format_tool_completed_message(
                     self.name,
                     "Answer reformulation completed successfully."
-                )
+                ),
+                **fixed_params
             )
         )
 

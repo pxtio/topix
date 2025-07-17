@@ -7,6 +7,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 from qdrant_client import AsyncQdrantClient
+from qdrant_client.http.models import FilterSelector
 from qdrant_client.models import (
     Distance,
     Filter,
@@ -286,3 +287,14 @@ class QdrantStore:
             exact=True,
         )
         return result.count
+
+    async def delete_by_filters(
+        self,
+        filters: dict
+    ):
+        """Delete points in the collection that match the given filters."""
+        await self.client.delete(
+            collection_name=self.collection,
+            points_selector=FilterSelector(filter=filters),
+        )
+        logger.info(f"Deleted points matching filters: {filters}")

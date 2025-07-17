@@ -136,3 +136,10 @@ class ContentStore:
         return [
             self.convert_point_to_entry(point) for point in results
         ]
+
+    async def delete_by_filters(
+        self,
+        filters: dict
+    ):
+        """Delete notes in the Qdrant store that match the given filters."""
+        await self.qdrant_client.delete_by_filters(filters=filters)

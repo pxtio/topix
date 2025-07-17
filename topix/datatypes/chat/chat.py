@@ -1,5 +1,7 @@
 """Chat datatypes."""
 
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Literal
 
@@ -25,7 +27,7 @@ class Message(BaseModel):
     id: str = Field(default_factory=gen_uid)
     chat_uid: str
     role: MessageRole
-    content: str | dict
+    content: str | dict | list
 
     created_at: str | None = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str | None = None

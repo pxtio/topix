@@ -18,9 +18,10 @@ from agents import (
 )
 from topix.agents.base import BaseAgentManager
 from topix.agents.datatypes.context import ReasoningContext
-from topix.agents.datatypes.stream import AgentStreamMessage
+from topix.agents.datatypes.stream import AgentStreamMessage, StreamMessageType
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.prompt_utils import render_prompt
+from topix.agents.sessions import AssistantSession
 from topix.agents.tools.answer_reformulate import AnswerReformulate
 from topix.agents.tools.web_search import WebSearch
 
@@ -92,27 +93,50 @@ class AssistantManager(BaseAgentManager):
             model_settings=ModelSettings(temperature=0.0)
         )
 
-    async def run(self, context: ReasoningContext, query: str, max_turns: int = 5):
+    async def run(
+        self,
+        context: ReasoningContext,
+        query: str,
+        max_turns: int = 5
+    ):
         """Run the reflection agent with the provided context and query."""
         result = await Runner.run(
             self.agent,
             context=context,
             input=query,
-            max_turns=max_turns,
+            max_turns=max_turns
         )
         return result.final_output
+
+    @staticmethod
+    def is_delta(message: str | AgentStreamMessage) -> bool:
+        """Check if the message is a delta."""
+        return isinstance(message, AgentStreamMessage) and \
+            message.type == StreamMessageType.TOKEN
 
     async def stream(
         self,
         query: str,
         context: ReasoningContext,
-        max_turns: int = 5
+        max_turns: int = 5,
+        session: AssistantSession | None = None
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Stream the results of the reflection agent."""
+
+        if session:
+            await session.add_items([
+                {
+                    "role": "user",
+                    "content": query
+                }
+            ])
+            history = await session.get_items()
+        else:
+            history = [{"role": "user", "content": query}]
         streamed_answer = Runner.run_streamed(
             self.agent,
             context=context,
-            input=query,
+            input=history,
             max_turns=max_turns,
         )
 
@@ -131,8 +155,24 @@ class AssistantManager(BaseAgentManager):
         # Start the streaming tasks
         asyncio.create_task(stream_events())
 
+        final_answer = ""
+        raw_answer = ""
+
         while True:
             message = await context._message_queue.get()
+            if AssistantManager.is_delta(message):
+                if message.tool_name == AgentToolName.RAW_MESSAGE:
+                    raw_answer += message.delta.content
+                elif message.tool_name == AgentToolName.ANSWER_REFORMULATE:
+                    final_answer += message.delta.content
             if message == "<END_OF_AGENT>":
+                if session:
+                    # If a session is provided, store the final answer
+                    await session.add_items([
+                        {
+                            "role": "assistant",
+                            "content": final_answer if final_answer else raw_answer
+                        }
+                    ])
                 break
             yield message

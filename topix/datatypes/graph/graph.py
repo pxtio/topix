@@ -5,35 +5,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from topix.datatypes.graph.edge import EdgeData
-from topix.datatypes.graph.node import NodeData
+from topix.datatypes.note.link import Link
+from topix.datatypes.note.note import Note
 from topix.utils.common import gen_uid
-
-
-class Position(BaseModel):
-    """Position of a node in the graph."""
-
-    x: float
-    y: float
-
-
-class Node(BaseModel):
-    """Node in a graph."""
-
-    id: str
-    data: NodeData
-    position: Position
-    type: str | None = None
-
-
-class Edge(BaseModel):
-    """Edge in a graph."""
-
-    id: str
-    source: str
-    target: str
-    data: EdgeData | None = None
-    type: str | None = None
 
 
 class Graph(BaseModel):
@@ -44,8 +18,8 @@ class Graph(BaseModel):
     type: Literal["graph"] = "graph"
     label: str | None = None
 
-    nodes: list[Node] = Field(default_factory=list)
-    edges: list[Edge] = Field(default_factory=list)
+    nodes: list[Note] = []
+    edges: list[Link] = []
 
     format_version: int = 1
     readonly: bool = False

@@ -12,7 +12,7 @@ CREATE INDEX idx_users_uid ON users(uid);
 
 
 INSERT INTO users (uid, email, username, name)
-VALUES ('root', 'root@localhost', 'root', 'Root User')
+VALUES ('root', 'root@root.ai', 'root', 'Root User')
 ON CONFLICT (uid) DO NOTHING;
 
 
@@ -20,8 +20,6 @@ CREATE TABLE graphs (
     id SERIAL PRIMARY KEY,
     uid TEXT NOT NULL UNIQUE,
     label TEXT,
-    nodes JSONB NOT NULL DEFAULT '[]',
-    edges JSONB NOT NULL DEFAULT '[]',
     format_version INT NOT NULL DEFAULT 1,
     readonly BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),

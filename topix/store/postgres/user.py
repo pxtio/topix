@@ -7,9 +7,7 @@ from topix.datatypes.user import User
 
 
 async def create_user(conn: AsyncConnection, user: User) -> User:
-    """Insert a new user and return the user with its assigned database id.
-    Raises ValueError if uid/email/username already exists.
-    """
+    """Create a new user in the database."""
     query = (
         "INSERT INTO users (uid, email, username, name, created_at) "
         "VALUES (%s, %s, %s, %s, %s) RETURNING id"
@@ -38,9 +36,7 @@ async def create_user(conn: AsyncConnection, user: User) -> User:
 
 
 async def get_user_by_uid(conn: AsyncConnection, uid: str) -> User | None:
-    """Fetch a user by their unique uid.
-    Returns None if not found.
-    """
+    """Fetch a user by their unique identifier (UID)."""
     query = (
         "SELECT id, uid, email, username, name, created_at, "
         "updated_at, deleted_at "
@@ -64,11 +60,7 @@ async def get_user_by_uid(conn: AsyncConnection, uid: str) -> User | None:
 
 
 async def update_user_by_uid(conn: AsyncConnection, uid: str, updated_data: dict):
-    """Update one or more user fields by uid.
-    Excludes date fields from manual updates.
-    Always updates updated_at to now.
-    Raises ValueError if a unique constraint is violated.
-    """
+    """Update user information by UID."""
     # Exclude any date fields from being updated manually
     forbidden_fields = {"created_at", "updated_at", "deleted_at"}
     data = {k: v for k, v in updated_data.items() if k not in forbidden_fields}
@@ -101,8 +93,7 @@ async def update_user_by_uid(conn: AsyncConnection, uid: str, updated_data: dict
 
 
 async def delete_user_by_uid(conn: AsyncConnection, uid: str):
-    """Soft delete a user by setting deleted_at to now.
-    """
+    """Soft delete a user by setting deleted_at to now."""
     query = "UPDATE users SET deleted_at = NOW() WHERE uid = %s"
     async with conn.cursor() as cur:
         await cur.execute(query, (uid,))
@@ -110,9 +101,7 @@ async def delete_user_by_uid(conn: AsyncConnection, uid: str):
 
 
 async def get_user_id_by_uid(conn: AsyncConnection, user_uid: str) -> int | None:
-    """Fetch user integer ID from their UID.
-    Returns None if not found.
-    """
+    """Fetch user integer ID from their UID."""
     query = "SELECT id FROM users WHERE uid = %s"
     async with conn.cursor() as cur:
         await cur.execute(query, (user_uid,))
@@ -124,8 +113,7 @@ async def _dangerous_hard_delete_user_by_uid(
     conn: AsyncConnection,
     uid: str
 ) -> None:
-    """Hard delete a user by UID. Use with caution!
-    """
+    """Hard delete a user by UID (use with caution!)."""
     query = "DELETE FROM users WHERE uid = %s"
     async with conn.cursor() as cur:
         await cur.execute(query, (uid,))

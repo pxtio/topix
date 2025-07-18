@@ -1,8 +1,35 @@
-"""Class representing the style of a node in a graph."""
-
-from typing import Literal
+"""Classes representing the style of a node in a graph."""
 
 from pydantic import BaseModel
+
+from topix.datatypes.enum import CustomEnum
+
+
+class NodeType(str, CustomEnum):
+    """Enumeration for node types."""
+
+    RECTANGLE = "rectangle"
+
+
+class StrokeStyle(str, CustomEnum):
+    """Enumeration for stroke styles."""
+
+    SOLID = "solid"
+    DASHED = "dashed"
+
+
+class FillStyle(str, CustomEnum):
+    """Enumeration for fill styles."""
+
+    SOLID = "solid"
+
+
+class TextAlign(str, CustomEnum):
+    """Enumeration for text alignment."""
+
+    LEFT = "left"
+    CENTER = "center"
+    RIGHT = "right"
 
 
 class Style(BaseModel):
@@ -26,16 +53,16 @@ class Style(BaseModel):
 
     """
 
-    type: str = "rectangle"
-    angle: float
-    stroke_color: str
-    background_color: str
-    fill_style: str
-    stroke_width: int
-    stroke_style: Literal["solid", "dashed"] = "solid"
+    type: NodeType = NodeType.RECTANGLE
+    angle: float = 0.0
+    stroke_color: str | None = None
+    stroke_width: int = 1
+    stroke_style: StrokeStyle = StrokeStyle.SOLID
+    background_color: str | None = None
+    fill_style: FillStyle = FillStyle.SOLID
     roughness: float = 1.0
     opacity: int = 100
     group_ids: list[str] = []
-    font_family: str
-    text_align: Literal["left", "center", "right"] = "left"
+    font_family: str | None = None
+    text_align: TextAlign = TextAlign.LEFT
     color: str | None = None

@@ -5,11 +5,12 @@ import json
 from qdrant_client.models import ScoredPoint
 
 from topix.datatypes.chat.chat import Message
+from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.nlp.embed import OpenAIEmbedder
 from topix.store.qdrant.base import QdrantStore
 
-type Entry = Note | Message
+type Entry = Note | Link | Message
 
 
 class ContentStore:
@@ -25,6 +26,8 @@ class ContentStore:
         match point.payload.get("type"):
             case "note":
                 return Note.model_construct(**point.payload)
+            case "link":
+                return Link.model_construct(**point.payload)
             case "message":
                 return Message.model_construct(**point.payload)
             case _:
@@ -35,12 +38,14 @@ class ContentStore:
     @staticmethod
     def extract_text_from_dict(entry: dict) -> str:
         """Extract text content from a dictionary entry."""
-        if "type" not in entry or entry["type"] not in ["note", "message"]:
+        if "type" not in entry or entry["type"] not in ["note", "link", "message"]:
             raise ValueError(
-                "Entry must have a 'type' field with 'note' or 'message'."
+                "Entry must have a 'type' field with 'note', 'link' or 'message'."
             )
         if entry["type"] == "note" and "content" in entry:
             return entry["content"].get("markdown", "")
+        elif entry["type"] == "link":
+            return entry.get("label", "")
         elif entry["type"] == "message":
             content = entry.get("content", "")
             if isinstance(content, str):
@@ -54,6 +59,8 @@ class ContentStore:
         """Extract text content from a note or message."""
         if isinstance(entry, Note) and entry.content:
             return entry.content.markdown
+        elif isinstance(entry, Link):
+            return entry.label or ""
         elif isinstance(entry, Message):
             if isinstance(entry.content, str):
                 return entry.content
@@ -73,12 +80,16 @@ class ContentStore:
     async def update(self, idx: str, data: dict):
         """Update existing notes in the Qdrant store."""
         new_embedding: list[float] | None = None
-        text = self.extract_text_from_dict(data)
-        if text:
-            new_embedding = await self.embedder.embed([text])
+
+        # If the entry is a note or message, extract text for embedding
+        if "type" in data and data["type"] in ["note", "message"]:
+            text = self.extract_text_from_dict(data)
+            if text:
+                new_embedding = await self.embedder.embed([text])
+
         await self.qdrant_client.update_fields(
             point_id=idx,
-            payload=data,
+            fields=data,
             embedding=new_embedding
         )
 

@@ -11,6 +11,7 @@ from qdrant_client.http.models import FilterSelector
 from qdrant_client.models import (
     Distance,
     Filter,
+    PointIdsList,
     PointStruct,
     ScalarQuantization,
     ScalarQuantizationConfig,
@@ -19,12 +20,29 @@ from qdrant_client.models import (
 )
 
 from topix.config.config import Config
+from topix.nlp.embed import DIMENSIONS
 from topix.store.qdrant.utils import payload_dict_to_field_list
 from topix.utils.timeit import async_timeit
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
+
+
+INDEX_FIELDS = [
+    ("created_at", "datetime"),
+    ("updated_at", "datetime"),
+    ("deleted_at", "datetime"),
+    ("type", "keyword"),
+    # message
+    ("chat_uid", "keyword"),
+    # note
+    ("graph_uid", "keyword"),
+    # link
+    ("graph_uid", "keyword")
+]
+
+DEFAULT_COLLECTION = "topix"
 
 
 class QdrantStore:
@@ -36,7 +54,7 @@ class QdrantStore:
         port: int = 6333,
         https: bool = False,
         api_key: str | None = None,
-        collection: str = "topix"
+        collection: str = DEFAULT_COLLECTION
     ):
         """Init method."""
         self.client = AsyncQdrantClient(
@@ -56,7 +74,7 @@ class QdrantStore:
 
     async def create_collection(
         self,
-        vector_size: int,
+        vector_size: int = DIMENSIONS,
         distance: Distance = Distance.COSINE,
         force_recreate: bool = False,
         quantized: bool = True
@@ -78,26 +96,12 @@ class QdrantStore:
                     )
                 ) if quantized else None,
             )
-            await self.client.create_payload_index(
-                collection_name=self.collection,
-                field_name="created_at",
-                field_type="datetime",
-            )
-            await self.client.create_payload_index(
-                collection_name=self.collection,
-                field_name="updated_at",
-                field_type="datetime",
-            )
-            await self.client.create_payload_index(
-                collection_name=self.collection,
-                field_name="deleted_at",
-                field_type="datetime",
-            )
-            await self.client.create_payload_index(
-                collection_name=self.collection,
-                field_name="type",
-                field_type="keyword",
-            )
+            for field_name, field_type in INDEX_FIELDS:
+                await self.client.create_payload_index(
+                    collection_name=self.collection,
+                    field_name=field_name,
+                    field_type=field_type,
+                )
 
     async def drop_collection(self) -> None:
         """Drop the Qdrant collection if it exists."""
@@ -111,7 +115,7 @@ class QdrantStore:
     async def _add_batch(
         self,
         objects: Sequence[T],
-        embeddings: Sequence[list[float] | None] | None = None,
+        embeddings: Sequence[list[float]],
     ) -> None:
         """Add a batch of objects to the Qdrant collection."""
         if not objects:
@@ -183,7 +187,7 @@ class QdrantStore:
         """Delete a point from the collection by its ID."""
         await self.client.delete(
             collection_name=self.collection,
-            points_selector={"points": [point_id]},
+            points_selector=PointIdsList(points=[point_id]),
         )
 
     async def get(

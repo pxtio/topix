@@ -1,21 +1,19 @@
 from datetime import datetime
 
 from psycopg import AsyncConnection
-from psycopg.types.json import Json
 
-from topix.datatypes.graph.graph import Edge, Graph, Node
+from topix.datatypes.graph.graph import Graph
 
 
 async def create_graph(
     conn: AsyncConnection,
     graph: Graph
 ) -> Graph:
-    """Insert a graph and return it with id set.
-    """
+    """Insert a graph and return it with id set."""
     query = (
-        "INSERT INTO graphs (uid, label, nodes, edges, format_version, readonly, "
+        "INSERT INTO graphs (uid, label, format_version, readonly, "
         "created_at, updated_at, deleted_at) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s) "
         "RETURNING id"
     )
     async with conn.cursor() as cur:
@@ -24,8 +22,6 @@ async def create_graph(
             (
                 graph.uid,
                 graph.label,
-                Json([n.model_dump(exclude_none=True) for n in graph.nodes]),
-                Json([e.model_dump(exclude_none=True) for e in graph.edges]),
                 graph.format_version,
                 graph.readonly,
                 datetime.fromisoformat(graph.created_at) if graph.created_at else None,
@@ -43,9 +39,7 @@ async def get_graph_id_by_uid(
     conn: AsyncConnection,
     uid: str
 ) -> int | None:
-    """Fetch a graph ID by its unique UID.
-    Returns None if not found.
-    """
+    """Fetch a graph ID by its unique UID."""
     query = "SELECT id FROM graphs WHERE uid = %s AND deleted_at IS NULL"
     async with conn.cursor() as cur:
         await cur.execute(query, (uid,))
@@ -57,10 +51,9 @@ async def get_graph_by_uid(
     conn: AsyncConnection,
     uid: str
 ) -> Graph | None:
-    """Fetch a graph by UID.
-    """
+    """Fetch a graph by UID."""
     query = (
-        "SELECT id, uid, label, nodes, edges, format_version, readonly, "
+        "SELECT id, uid, label, format_version, readonly, "
         "created_at, updated_at, deleted_at "
         "FROM graphs WHERE uid = %s AND deleted_at IS NULL"
     )
@@ -73,13 +66,11 @@ async def get_graph_by_uid(
             id=row[0],
             uid=row[1],
             label=row[2],
-            nodes=[Node(**n) for n in row[3] or []],
-            edges=[Edge(**e) for e in row[4] or []],
-            format_version=row[5],
-            readonly=row[6],
-            created_at=row[7].isoformat() if row[7] else None,
-            updated_at=row[8].isoformat() if row[8] else None,
-            deleted_at=row[9].isoformat() if row[9] else None,
+            format_version=row[3],
+            readonly=row[4],
+            created_at=row[5].isoformat() if row[5] else None,
+            updated_at=row[6].isoformat() if row[6] else None,
+            deleted_at=row[7].isoformat() if row[7] else None,
         )
 
 
@@ -88,26 +79,16 @@ async def update_graph_by_uid(
     uid: str,
     updated_data: dict
 ):
-    """Update non-date fields of a graph by UID.
-    Always sets updated_at to now. Does NOT allow updating created_at or deleted_at.
-    """
+    """Update non-date fields of a graph by UID."""
     set_clauses = []
     values = []
 
     # Only allow certain fields
-    allowed_fields = {"label", "format_version", "readonly", "nodes", "edges"}
-
-    # Nodes/edges as JSONB
-    if "nodes" in updated_data:
-        set_clauses.append("nodes = %s")
-        values.append(Json(updated_data.pop("nodes")))
-    if "edges" in updated_data:
-        set_clauses.append("edges = %s")
-        values.append(Json(updated_data.pop("edges")))
+    allowed_fields = {"label", "format_version", "readonly"}
 
     # Other allowed fields (non-date)
     for k, v in updated_data.items():
-        if k in allowed_fields - {"nodes", "edges"}:
+        if k in allowed_fields:
             set_clauses.append(f"{k} = %s")
             values.append(v)
 
@@ -129,8 +110,7 @@ async def delete_graph_by_uid(
     conn: AsyncConnection,
     uid: str
 ):
-    """Soft-delete a graph by setting deleted_at to now.
-    """
+    """Soft-delete a graph by setting deleted_at to now."""
     now = datetime.now()
     query = "UPDATE graphs SET deleted_at = %s WHERE uid = %s"
     async with conn.cursor() as cur:
@@ -142,8 +122,7 @@ async def _dangerous_hard_delete_graph_by_uid(
     conn: AsyncConnection,
     uid: str
 ) -> None:
-    """Permanently delete a graph by UID.
-    """
+    """Permanently delete a graph by UID (use with caution!)."""
     query = "DELETE FROM graphs WHERE uid = %s"
     async with conn.cursor() as cur:
         await cur.execute(query, (uid,))

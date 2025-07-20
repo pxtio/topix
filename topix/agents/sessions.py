@@ -1,3 +1,5 @@
+"""Assistant session management."""
+
 from agents.memory import Session
 from topix.datatypes.chat.chat import Message
 from topix.store.qdrant.store import ContentStore
@@ -8,10 +10,10 @@ MAX_RETRIEVAL_MESSAGES = 20
 class AssistantSession(Session):
     """Session for the assistant agent."""
 
-    def __init__(self, session_id: str):
+    def __init__(self, session_id: str, content_store: ContentStore):
         """Init method."""
         self._session_id = session_id
-        self._content_store = ContentStore()
+        self._content_store = content_store
 
     async def get_items(self, limit: int = MAX_RETRIEVAL_MESSAGES) -> list[dict]:
         """Get items from the session."""

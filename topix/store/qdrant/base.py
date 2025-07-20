@@ -302,3 +302,8 @@ class QdrantStore:
             points_selector=FilterSelector(filter=filters),
         )
         logger.info(f"Deleted points matching filters: {filters}")
+
+    async def close(self):
+        """Close the Qdrant client connection."""
+        await self.client.close()
+        logger.info("Qdrant client connection closed.")

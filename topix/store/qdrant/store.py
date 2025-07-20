@@ -154,3 +154,7 @@ class ContentStore:
     ):
         """Delete notes in the Qdrant store that match the given filters."""
         await self.qdrant_client.delete_by_filters(filters=filters)
+
+    async def close(self):
+        """Close the Qdrant client connection."""
+        await self.qdrant_client.close()

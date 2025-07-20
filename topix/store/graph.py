@@ -107,3 +107,4 @@ class GraphStore:
     async def close(self):
         """Close the database connection pool."""
         await self._pg_pool.close()
+        await self._content_store.close()

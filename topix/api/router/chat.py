@@ -5,6 +5,12 @@ from typing import Annotated
 from fastapi import APIRouter, Request
 from fastapi.params import Path, Query
 
+from topix.agents.describe_chat import DescribeChat
+from topix.agents.sessions import AssistantSession
+from topix.api.helpers import format_response
+from topix.datatypes.chat.chat import Chat
+from topix.store.chat import ChatStore
+
 router = APIRouter(
     prefix="/chats",
     tags=["chats"],
@@ -13,22 +19,34 @@ router = APIRouter(
 
 
 @router.put("")
-def create_chat(
+async def create_chat(
     request: Request,
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
     """Create a new chat for the user."""
-    pass
+    new_chat = Chat(user_uid=user_id)
+    return await format_response(request.app.chat_store.create_chat, new_chat)
 
 
 @router.post("/{chat_id}:describe")
-def describe_chat(
+async def describe_chat(
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
     """Describe a chat by its ID."""
-    pass
+    session = AssistantSession(session_id=chat_id, content_store=request.app.content_store)
+
+    async def describe_chat():
+        """Describe the chat using the DescribeChat agent."""
+        chat_describer = DescribeChat()
+        title = await chat_describer.run(await session.get_items())
+
+        store: ChatStore = request.app.chat_store
+        store.update_chat(chat_id, {"label": title})
+        return {"title": title}
+
+    return await format_response(describe_chat)
 
 
 @router.post("/{chat_id}")
@@ -42,7 +60,7 @@ def update_chat(
 
 
 @router.get("/{chat_id}")
-def get_chat(
+async def get_chat(
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
@@ -52,26 +70,26 @@ def get_chat(
 
 
 @router.get("/")
-def list_chats(
+async def list_chats(
     request: Request,
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
     """List all chats for the user."""
-    pass
+    return await format_response(request.app.chat_store.list_chats, user_id)
 
 
 @router.delete("/{chat_id}")
-def delete_chat(
+async def delete_chat(
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
     """Delete a chat by its ID."""
-    pass
+    return await format_response(request.app.chat_store.delete_chat, chat_id)
 
 
 @router.post("/{chat_id}/messages")
-def send_message(
+async def send_message(
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
@@ -81,21 +99,11 @@ def send_message(
 
 
 @router.get("/{chat_id}/messages")
-def list_message_queue(
+async def list_messages(
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
     """List all messages in a chat."""
-    pass
-
-
-@router.get("/{chat_id}/messages/{message_id}")
-def get_message(
-    request: Request,
-    chat_id: Annotated[str, Path(description="Chat ID")],
-    message_id: Annotated[str, Path(description="Message ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")]
-):
-    """Get a specific message by its ID in a chat."""
-    pass
+    session = AssistantSession(session_id=chat_id, content_store=request.app.content_store)
+    return await format_response(session.get_items)

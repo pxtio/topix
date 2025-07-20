@@ -122,7 +122,7 @@ async def _dangerous_hard_delete_chat_by_uid(
     await conn.commit()
 
 
-async def list_chats_for_user_uid(
+async def list_chats_by_user_uid(
     conn: AsyncConnection,
     user_uid: str
 ) -> list[Chat]:

@@ -33,7 +33,7 @@ async def test_graph_crud_lifecycle(config, init_collection):
         # 3. Add nodes
         node1 = Note(label="First Node", graph_uid=graph.uid, content=Content(markdown="# Hello"))
         node2 = Note(label="Second Node", graph_uid=graph.uid, content=Content(markdown="World!"))
-        await store.add_nodes([node1, node2])
+        await store.add_notes([node1, node2])
 
         # 4. Fetch nodes and verify
         nodes = await store.get_nodes([node1.id, node2.id])
@@ -83,7 +83,7 @@ async def test_hard_delete_graph_deletes_nodes_and_links(config):
 
         node = Note(label="To be deleted", graph_uid=graph.uid, content=Content(markdown="delete me"))
         link = Link(source=node.id, target=node.id, graph_uid=graph.uid)
-        await store.add_nodes([node])
+        await store.add_notes([node])
         await store.add_links([link])
 
         # Hard delete

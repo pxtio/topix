@@ -4,7 +4,7 @@ from topix.store.postgres.graph import get_graph_id_by_uid
 from topix.store.postgres.user import get_user_id_by_uid
 
 
-async def associate_user_to_graph_by_uid(
+async def add_user_to_graph_by_uid(
     conn: AsyncConnection,
     graph_uid: str,
     user_uid: str,
@@ -35,26 +35,29 @@ async def associate_user_to_graph_by_uid(
         return True
 
 
-async def list_graphs_for_user_uid(
+async def list_graphs_by_user_uid(
     conn: AsyncConnection,
     user_uid: str
-):
+) -> list[tuple[str, str | None, str]]:
     """Return list of (graph_uid, role) for all graphs the user has access to.
     """
     user_id = await get_user_id_by_uid(conn, user_uid)
     if user_id is None:
         return []
     query = (
-        "SELECT g.uid, gu.role "
+        "SELECT g.uid, g.label, gu.role "
         "FROM graph_user gu JOIN graphs g ON gu.graph_id = g.id "
-        "WHERE gu.user_id = %s"
+        "WHERE gu.user_id = %s "
+        "ORDER BY COALESCE(g.updated_at, g.created_at) DESC"
     )
     async with conn.cursor() as cur:
         await cur.execute(query, (user_id,))
-        return await cur.fetchall()  # List of tuples (graph_uid, role)
+        res = await cur.fetchall()
+    # List of tuples (graph_uid, graph_label, role)
+    return [(r[0], r[1], r[2]) for r in res]
 
 
-async def list_users_for_graph_uid(
+async def list_users_by_graph_uid(
     conn: AsyncConnection,
     graph_uid: str
 ):
@@ -70,7 +73,9 @@ async def list_users_for_graph_uid(
     )
     async with conn.cursor() as cur:
         await cur.execute(query, (graph_id,))
-        return await cur.fetchall()  # List of tuples (user_uid, role)
+        res = await cur.fetchall()
+    # List of tuples (user_uid, role)
+    return [(r[0], r[1]) for r in res]
 
 
 async def remove_user_from_graph_by_uid(

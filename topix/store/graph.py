@@ -4,7 +4,7 @@ from topix.datatypes.graph.graph import Graph
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.store.postgres.graph import _dangerous_hard_delete_graph_by_uid, create_graph, delete_graph_by_uid, get_graph_by_uid, update_graph_by_uid
-from topix.store.postgres.graph_user import associate_user_to_graph_by_uid
+from topix.store.postgres.graph_user import add_user_to_graph_by_uid, list_graphs_by_user_uid
 from topix.store.postgres.pool import create_pool
 from topix.store.qdrant.store import ContentStore
 
@@ -21,7 +21,7 @@ class GraphStore:
         """Open the database connection pool."""
         await self._pg_pool.open()
 
-    async def add_nodes(self, nodes: list[Note]):
+    async def add_notes(self, nodes: list[Note]):
         """Add nodes to the graph."""
         await self._content_store.add(nodes)
 
@@ -81,7 +81,7 @@ class GraphStore:
         """Create a new graph."""
         async with self._pg_pool.connection() as conn:
             await create_graph(conn, graph)
-            await associate_user_to_graph_by_uid(conn, graph.uid, user_uid, "owner")
+            await add_user_to_graph_by_uid(conn, graph.uid, user_uid, "owner")
 
     async def update_graph(self, graph_uid: str, data: dict):
         """Update an existing graph."""
@@ -103,6 +103,12 @@ class GraphStore:
                 ]
             }
         )
+
+    async def list_graphs(self, user_uid: str) -> list[tuple[str, str | None]]:
+        """List all graphs' ids and labels for a user."""
+        async with self._pg_pool.connection() as conn:
+            graphs = await list_graphs_by_user_uid(conn, user_uid)
+        return [(idx, label) for idx, label, _ in graphs]
 
     async def close(self):
         """Close the database connection pool."""

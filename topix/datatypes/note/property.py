@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import abc
 
-from typing import TYPE_CHECKING
+from typing import Literal, Type
 
 from pydantic import BaseModel, Field
 
@@ -12,9 +12,6 @@ from topix.datatypes.enum import CustomEnum
 from topix.datatypes.lang import LangCodeEnum
 from topix.datatypes.mime import MimeTypeEnum
 from topix.utils.common import gen_uid
-
-if TYPE_CHECKING:
-    import builtins
 
 
 class PropertyTypeEnum(str, CustomEnum):
@@ -48,28 +45,28 @@ class Property(abc.ABC, BaseModel):
 class NumberProperty(Property):
     """Property for numeric values."""
 
-    type: PropertyTypeEnum = PropertyTypeEnum.NUMBER
+    type: Literal[PropertyTypeEnum.NUMBER] = PropertyTypeEnum.NUMBER
     number: int | float | None = None
 
 
 class DateProperty(Property):
     """Property for date values."""
 
-    type: PropertyTypeEnum = PropertyTypeEnum.DATE
+    type: Literal[PropertyTypeEnum.DATE] = PropertyTypeEnum.DATE
     date: str | None = None
 
 
 class BooleanProperty(Property):
     """Property for boolean values."""
 
-    type: PropertyTypeEnum = PropertyTypeEnum.BOOLEAN
+    type: Literal[PropertyTypeEnum.BOOLEAN] = PropertyTypeEnum.BOOLEAN
     boolean: bool | None = None
 
 
 class TextProperty(Property):
     """Property for text values."""
 
-    type: PropertyTypeEnum = PropertyTypeEnum.TEXT
+    type: Literal[PropertyTypeEnum.TEXT] = PropertyTypeEnum.TEXT
     text: str | None = None
     searchable: bool | None = None
 
@@ -94,7 +91,7 @@ class IconProperty(Property):
 
         emoji: str
 
-    type: PropertyTypeEnum = PropertyTypeEnum.ICON
+    type: Literal[PropertyTypeEnum.ICON] = PropertyTypeEnum.ICON
     icon: Icon | Emoji | None = None
 
 
@@ -107,7 +104,7 @@ class ImageProperty(Property):
         url: str
         caption: str | None = None
 
-    type: PropertyTypeEnum = PropertyTypeEnum.IMAGE
+    type: Literal[PropertyTypeEnum.IMAGE] = PropertyTypeEnum.IMAGE
     image: Image | None = None
 
 
@@ -122,7 +119,7 @@ class FileProperty(Property):
         size: float | None = None
         mime_type: MimeTypeEnum | None = None
 
-    type: PropertyTypeEnum = PropertyTypeEnum.FILE
+    type: Literal[PropertyTypeEnum.FILE] = PropertyTypeEnum.FILE
     file: File | None = None
 
 
@@ -134,44 +131,44 @@ class URLProperty(Property):
 
         url: str
 
-    type: PropertyTypeEnum = PropertyTypeEnum.URL
+    type: Literal[PropertyTypeEnum.URL] = PropertyTypeEnum.URL
     url: URL | None = None
 
 
 class MultiTextProperty(Property):
     """Property for multiple text values."""
 
-    type: PropertyTypeEnum = PropertyTypeEnum.MULTI_TEXT
+    type: Literal[PropertyTypeEnum.MULTI_TEXT] = PropertyTypeEnum.MULTI_TEXT
     texts: list[str] = []  # list of str
 
 
 class KeywordProperty(Property):
     """Property for keyword values."""
 
-    type: PropertyTypeEnum = PropertyTypeEnum.KEYWORD
+    type: Literal[PropertyTypeEnum.KEYWORD] = PropertyTypeEnum.KEYWORD
     value: int | str | None = None
-    value_type: builtins.type[CustomEnum] | None = None
+    value_type: Type[CustomEnum] | None = None
 
 
 class LanguageProperty(KeywordProperty):
     """Property for language values."""
 
-    type: PropertyTypeEnum = PropertyTypeEnum.KEYWORD
-    value_type: builtins.type[CustomEnum] = LangCodeEnum
+    type: Literal[PropertyTypeEnum.KEYWORD] = PropertyTypeEnum.KEYWORD
+    value_type: Type[CustomEnum] = LangCodeEnum
 
 
 class MimeTypeProperty(KeywordProperty):
     """Property for MIME type values."""
 
-    value_type: type[CustomEnum] = MimeTypeEnum
+    value_type: Type[CustomEnum] = MimeTypeEnum
 
 
 class MultiKeywordProperty(Property):
     """Property for multiple keyword values."""
 
-    type: PropertyTypeEnum = PropertyTypeEnum.MULTI_KEYWORD
+    type: Literal[PropertyTypeEnum.MULTI_KEYWORD] = PropertyTypeEnum.MULTI_KEYWORD
     values: list[int | str] = []
-    value_type: builtins.type[CustomEnum] | None = None
+    value_type: Type[CustomEnum] | None = None
 
 
 class LocationProperty(Property):
@@ -183,7 +180,7 @@ class LocationProperty(Property):
         latitude: float
         longitude: float
 
-    type: PropertyTypeEnum = PropertyTypeEnum.LOCATION
+    type: Literal[PropertyTypeEnum.LOCATION] = PropertyTypeEnum.LOCATION
     location: Location | None = None
 
 
@@ -196,7 +193,7 @@ class PositionProperty(Property):
         x: float
         y: float
 
-    type: PropertyTypeEnum = PropertyTypeEnum.POSITION
+    type: Literal[PropertyTypeEnum.POSITION] = PropertyTypeEnum.POSITION
     position: Position | None = None
 
 
@@ -209,5 +206,32 @@ class SizeProperty(Property):
         width: float
         height: float
 
-    type: PropertyTypeEnum = PropertyTypeEnum.SIZE
+    type: Literal[PropertyTypeEnum.SIZE] = PropertyTypeEnum.SIZE
     size: Size | None = None
+
+
+type DataProperty = (
+    NumberProperty
+    | DateProperty
+    | BooleanProperty
+    | TextProperty
+    | SearchableTextProperty
+    | IconProperty
+    | ImageProperty
+    | FileProperty
+    | URLProperty
+    | MultiTextProperty
+    | KeywordProperty
+    | LanguageProperty
+    | MimeTypeProperty
+    | MultiKeywordProperty
+    | LocationProperty
+    | PositionProperty
+    | SizeProperty
+)
+
+
+class Prop(BaseModel):
+    """Property class for generic data properties."""
+
+    prop: DataProperty = Field(..., discriminator="type")

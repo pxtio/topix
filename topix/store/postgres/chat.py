@@ -78,8 +78,6 @@ async def update_chat_by_uid(
     # Exclude any date fields from being updated manually
     forbidden_fields = {"created_at", "updated_at", "deleted_at"}
     data = {k: v for k, v in updated_data.items() if k not in forbidden_fields}
-    if not data:
-        return
 
     set_clause = ', '.join(f"{k} = %s" for k in data)
     values = list(data.values())
@@ -133,7 +131,7 @@ async def list_chats_by_user_uid(
         "SELECT id, uid, label, user_uid, "
         "graph_uid, created_at, updated_at, deleted_at "
         "FROM chats WHERE user_uid = %s "
-        "ORDER BY created_at DESC"
+        "ORDER BY COALESCE(updated_at, created_at) DESC"
     )
     async with conn.cursor() as cur:
         await cur.execute(query, (user_uid,))

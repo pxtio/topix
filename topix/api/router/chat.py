@@ -138,6 +138,8 @@ async def send_message(
             session=session
         ):
             yield data.model_dump_json(exclude_none=True) + "\n"
+        chat_store: ChatStore = request.app.chat_store
+        await chat_store.update_chat(chat_id, {})
 
     return StreamingResponse(stream(), media_type="text/event-stream")
 

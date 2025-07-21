@@ -7,9 +7,9 @@ from topix.datatypes.graph.graph import Graph
 from topix.datatypes.user import User
 from topix.store.postgres.graph import create_graph
 from topix.store.postgres.graph_user import (
-    associate_user_to_graph_by_uid,
-    list_graphs_for_user_uid,
-    list_users_for_graph_uid,
+    add_user_to_graph_by_uid,
+    list_graphs_by_user_uid,
+    list_users_by_graph_uid,
 )
 from topix.store.postgres.user import create_user
 from topix.utils.common import gen_uid
@@ -53,19 +53,19 @@ async def test_graph_user_assoc_and_listing(conn, user_obj, graph_obj):
     graph_uid = graph_obj.uid
 
     # 1. Associate user to graph as owner
-    result = await associate_user_to_graph_by_uid(conn, graph_uid, user_uid, "owner")
+    result = await add_user_to_graph_by_uid(conn, graph_uid, user_uid, "owner")
     assert result is True
 
     # 2. Cannot associate again (should be False, no duplicate)
-    result2 = await associate_user_to_graph_by_uid(conn, graph_uid, user_uid, "owner")
+    result2 = await add_user_to_graph_by_uid(conn, graph_uid, user_uid, "owner")
     assert result2 is False
 
     # 3. List graphs for user
-    user_graphs = await list_graphs_for_user_uid(conn, user_uid)
-    assert (graph_uid, "owner") in user_graphs
+    user_graphs = await list_graphs_by_user_uid(conn, user_uid)
+    assert (graph_uid, graph_obj.label, "owner") in user_graphs
 
     # 4. List users for graph
-    graph_users = await list_users_for_graph_uid(conn, graph_uid)
+    graph_users = await list_users_by_graph_uid(conn, graph_uid)
     assert (user_uid, "owner") in graph_users
 
     # 5. Add a second user as member
@@ -78,12 +78,12 @@ async def test_graph_user_assoc_and_listing(conn, user_obj, graph_obj):
         created_at=datetime.now(),
     )
     await create_user(conn, user2)
-    result3 = await associate_user_to_graph_by_uid(conn, graph_uid, user2_uid, "member")
+    result3 = await add_user_to_graph_by_uid(conn, graph_uid, user2_uid, "member")
     assert result3 is True
 
     # 6. Check new associations
-    graph_users2 = await list_users_for_graph_uid(conn, graph_uid)
+    graph_users2 = await list_users_by_graph_uid(conn, graph_uid)
     assert (user2_uid, "member") in graph_users2
 
-    user2_graphs = await list_graphs_for_user_uid(conn, user2_uid)
-    assert (graph_uid, "member") in user2_graphs
+    user2_graphs = await list_graphs_by_user_uid(conn, user2_uid)
+    assert (graph_uid, graph_obj.label, "member") in user2_graphs

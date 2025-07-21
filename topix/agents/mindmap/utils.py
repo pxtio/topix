@@ -3,7 +3,7 @@
 from topix.agents.mindmap.datatypes import SimpleNode
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Content, Note
-from topix.datatypes.note.property import IconProperty, PropertyTypeEnum
+from topix.datatypes.note.property import IconProperty, Prop
 
 
 def convert_root_to_graph(root: SimpleNode) -> tuple[list[Note], list[Link]]:
@@ -12,12 +12,14 @@ def convert_root_to_graph(root: SimpleNode) -> tuple[list[Note], list[Link]]:
     links = []
 
     def traverse(node: SimpleNode, parent_id: str | None = None):
-        node_id = node.label  # Use label as a unique identifier
-        nodes.append(Note(
+        """Recursively traverse the SimpleNode and build notes and links."""
+        note = Note(
             properties={
-                "emoji": IconProperty(
-                    type=PropertyTypeEnum(
-                        value=node.emoji
+                "emoji": Prop(
+                    prop=IconProperty(
+                        icon=IconProperty.Emoji(
+                            emoji=node.emoji
+                        )
                     )
                 )
             },
@@ -25,14 +27,15 @@ def convert_root_to_graph(root: SimpleNode) -> tuple[list[Note], list[Link]]:
             content=Content(
                 markdown=node.note
             )
-        ))
+        )
+        nodes.append(note)
         if parent_id:
             links.append(Link(
                 source=parent_id,
-                target=node_id
+                target=note.id
             ))
         for child in node.children:
-            traverse(child, node_id)
+            traverse(child, note.id)
 
     traverse(root)
 

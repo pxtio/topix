@@ -35,5 +35,5 @@ class Note(BaseModel):
     content: Content | None = None
 
     # graph attributes
-    graph_uid: str
+    graph_uid: str | None = None
     style: Style = Field(default_factory=Style)

@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from topix.api.router import chat, graph
+from topix.api.router import boards, chats, tools
 from topix.setup import setup
 from topix.store.chat import ChatStore
 from topix.store.graph import GraphStore
@@ -44,7 +44,8 @@ def create_app(**kwargs):
         allow_headers=["*"],
     )
 
-    app.include_router(graph.router)
-    app.include_router(chat.router)
+    app.include_router(boards.router)
+    app.include_router(chats.router)
+    app.include_router(tools.router)
 
     return app

@@ -32,3 +32,9 @@ class AddLinksRequest(BaseModel):
     """Request model for adding links to a graph."""
 
     links: list[Link]
+
+
+class ConvertToMindMapRequest(BaseModel):
+    """Request model for converting a graph to a mind map."""
+
+    answer: str

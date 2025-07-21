@@ -114,7 +114,10 @@ async def add_notes_to_graph(
 
     async def add_notes():
         """Add notes to the specified graph."""
-        await store.add_notes(nodes=body.notes)
+        notes = body.notes
+        for note in notes:
+            note.graph_uid = graph_id
+        await store.add_notes(nodes=notes)
         return {"message": "Notes added to board successfully"}
 
     return await format_response(add_notes)
@@ -152,7 +155,10 @@ async def add_links_to_graph(
 
     async def add_links():
         """Add links to the specified graph."""
-        await store.add_links(links=body.links)
+        links = body.links
+        for link in links:
+            link.graph_uid = graph_id
+        await store.add_links(links=links)
         return {"message": "Links added to board successfully"}
 
     return await format_response(add_links)

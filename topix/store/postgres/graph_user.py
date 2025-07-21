@@ -48,6 +48,7 @@ async def list_graphs_by_user_uid(
         "SELECT g.uid, g.label, gu.role "
         "FROM graph_user gu JOIN graphs g ON gu.graph_id = g.id "
         "WHERE gu.user_id = %s "
+        "AND g.deleted_at IS NULL "
         "ORDER BY COALESCE(g.updated_at, g.created_at) DESC"
     )
     async with conn.cursor() as cur:

@@ -12,7 +12,7 @@ from topix.store.postgres.chat import (
     get_chat_by_uid,
     update_chat_by_uid,
 )
-from topix.store.postgres.user import create_user, delete_user_by_uid
+from topix.store.postgres.user import _dangerous_hard_delete_user_by_uid, create_user
 from topix.utils.common import gen_uid
 
 
@@ -73,4 +73,4 @@ async def test_chat_crud(conn, chat_uid):
     gone = await get_chat_by_uid(conn, chat_uid)
     assert gone is None
 
-    await delete_user_by_uid(conn, user_uid)
+    await _dangerous_hard_delete_user_by_uid(conn, user_uid)

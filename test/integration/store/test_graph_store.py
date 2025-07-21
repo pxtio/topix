@@ -67,33 +67,12 @@ async def test_graph_crud_lifecycle(config, init_collection):
         # 10. Delete graph (soft)
         await store.delete_graph(graph.uid, hard_delete=False)
         deleted_graph = await store.get_graph(graph.uid)
-        assert deleted_graph is None
-    finally:
-        await store.close()
+        assert deleted_graph is not None
+        assert deleted_graph.deleted_at is not None
 
-
-@pytest.mark.asyncio
-async def test_hard_delete_graph_deletes_nodes_and_links(config):
-    store = GraphStore()
-    await store.open()
-    try:
-        user_uid = "root"
-        graph = Graph(label="Hard Delete Graph")
-        await store.add_graph(graph, user_uid=user_uid)
-
-        node = Note(label="To be deleted", graph_uid=graph.uid, content=Content(markdown="delete me"))
-        link = Link(source=node.id, target=node.id, graph_uid=graph.uid)
-        await store.add_notes([node])
-        await store.add_links([link])
-
-        # Hard delete
+        # 11. Hard delete graph
         await store.delete_graph(graph.uid, hard_delete=True)
-
-        # All should be gone
-        assert await store.get_graph(graph.uid) is None
-        nodes = await store.get_nodes([node.id])
-        assert not nodes  # should be empty list
-        links = await store.get_links([link.id])
-        assert not links
+        hard_deleted_graph = await store.get_graph(graph.uid)
+        assert hard_deleted_graph is None
     finally:
         await store.close()

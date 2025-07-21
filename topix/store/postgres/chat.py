@@ -131,6 +131,7 @@ async def list_chats_by_user_uid(
         "SELECT id, uid, label, user_uid, "
         "graph_uid, created_at, updated_at, deleted_at "
         "FROM chats WHERE user_uid = %s "
+        "AND deleted_at IS NULL "
         "ORDER BY COALESCE(updated_at, created_at) DESC"
     )
     async with conn.cursor() as cur:

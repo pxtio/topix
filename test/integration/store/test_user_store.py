@@ -43,7 +43,6 @@ async def test_add_get_update_delete_user(config):
         assert deleted and deleted.deleted_at is not None
 
         # 5. Hard delete user
-        print("User id:", user.uid)
         await user_store.delete_user(user.uid, hard_delete=True)
         hard_deleted = await user_store.get_user(user.uid)
         assert hard_deleted is None

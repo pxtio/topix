@@ -5,13 +5,13 @@ import pytest_asyncio
 
 from topix.datatypes.graph.graph import Graph
 from topix.datatypes.user import User
-from topix.store.postgres.graph import create_graph
+from topix.store.postgres.graph import _dangerous_hard_delete_graph_by_uid, create_graph
 from topix.store.postgres.graph_user import (
     add_user_to_graph_by_uid,
     list_graphs_by_user_uid,
     list_users_by_graph_uid,
 )
-from topix.store.postgres.user import create_user
+from topix.store.postgres.user import _dangerous_hard_delete_user_by_uid, create_user
 from topix.utils.common import gen_uid
 
 
@@ -87,3 +87,8 @@ async def test_graph_user_assoc_and_listing(conn, user_obj, graph_obj):
 
     user2_graphs = await list_graphs_by_user_uid(conn, user2_uid)
     assert (graph_uid, graph_obj.label, "member") in user2_graphs
+
+    # 7. Clean up: delete user and graph
+    await _dangerous_hard_delete_graph_by_uid(conn, graph_uid)
+    await _dangerous_hard_delete_user_by_uid(conn, user_uid)
+    await _dangerous_hard_delete_user_by_uid(conn, user2_uid)

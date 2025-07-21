@@ -61,7 +61,7 @@ async def delete_graph(
     async def delete_graph():
         """Delete the graph from the store."""
         await store.delete_graph(graph_uid=graph_id, hard_delete=True)
-        return {"message": "Graph deleted successfully"}
+        return {"message": "Board deleted successfully"}
 
     return await format_response(delete_graph)
 
@@ -115,7 +115,7 @@ async def add_notes_to_graph(
     async def add_notes():
         """Add notes to the specified graph."""
         await store.add_notes(nodes=body.notes)
-        return {"message": "Notes added to graph successfully"}
+        return {"message": "Notes added to board successfully"}
 
     return await format_response(add_notes)
 
@@ -134,7 +134,7 @@ async def remove_note_from_graph(
     async def remove_note():
         """Remove notes from the specified graph."""
         await store.delete_node(node_id=note_id)
-        return {"message": "Note removed from graph successfully"}
+        return {"message": "Note removed from board successfully"}
 
     return await format_response(remove_note)
 
@@ -153,7 +153,7 @@ async def add_links_to_graph(
     async def add_links():
         """Add links to the specified graph."""
         await store.add_links(links=body.links)
-        return {"message": "Links added to graph successfully"}
+        return {"message": "Links added to board successfully"}
 
     return await format_response(add_links)
 
@@ -172,6 +172,6 @@ async def remove_link_from_graph(
     async def remove_link():
         """Remove links from the specified graph."""
         await store.delete_link(link_id=link_id)
-        return {"message": "Link removed from graph successfully"}
+        return {"message": "Link removed from board successfully"}
 
     return await format_response(remove_link)

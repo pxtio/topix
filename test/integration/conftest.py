@@ -10,7 +10,7 @@ from topix.datatypes.stage import StageEnum
 @pytest.fixture(scope="session")
 def config() -> Config:
     """Fixture to provide the application configuration."""
-    return Config.load(stage=StageEnum.TEST, config_file_path="config/local.sample.yml")
+    return Config.load(stage=StageEnum.TEST)
 
 
 @pytest_asyncio.fixture

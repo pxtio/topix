@@ -26,7 +26,6 @@ dev = [
     'ruff>=0.12.2',
     'black>=25.1.0',
     'datasets>=3.6.0',
-    'openai-agents>=0.1.0'
 ]
 
 [tool.commitizen]
@@ -50,8 +49,12 @@ lint.select = [
   # "UP",    # pyupgrade
   # "SIM",   # flake8-simplify
   "ERA",   # eradicate
-  # "D",     # pydocstyle
+  "D",     # pydocstyle
   "N"      # pep8-naming
+]
+lint.ignore = [
+  "D203",  # Exclude 'incorrect-blank-line-before-class'
+  "D213"   # Exclude 'multi-line-summary-second-line'
 ]
 line-length = 150
 

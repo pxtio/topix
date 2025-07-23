@@ -8,8 +8,7 @@ from topix.store.qdrant.base import QdrantStore
 
 
 async def setup(stage: StageEnum):
-    """Setup the application configuration and environment variables."""
-
+    """Set up the application configuration and environment variables."""
     config = Config.load(stage=stage)
 
     os.environ['OPENAI_API_KEY'] = config.run.apis.openai.api_key

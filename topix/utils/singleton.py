@@ -4,26 +4,25 @@ import threading
 
 
 class SingletonNotInitializedError(Exception):
-    """Exception raised when trying to get an instance of a singleton class
-    that is not initialized
-    """
+    """Exception raised when trying to get an instance of a singleton class that is not initialized."""
 
     def __init__(self, message):
+        """Initialize the exception with a message."""
         super().__init__(message)
 
 
 class SingletonAlreadyInitializedError(Exception):
-    """Exception raised when trying to initialize a singleton class that is
-    already initialized
-    """
+    """Exception raised when trying to initialize a singleton class that is already initialized."""
 
     def __init__(self, message):
+        """Initialize the exception with a message."""
         super().__init__(message)
 
 
 class SingletonMeta(type):
-    """This metaclass can be used to create a singleton class. Here is an example
-    of how to use it:
+    """Metaclass to create a singleton class.
+
+    Here is an example of how to use it:
 
     ```python
     from pydantic import BaseModel
@@ -57,6 +56,7 @@ class SingletonMeta(type):
         SingletonClass(value=43)
     except SingletonAlreadyInitializedError as e:
         print(e)
+
     """
 
     __instances = {}
@@ -64,9 +64,7 @@ class SingletonMeta(type):
     __lock = threading.Lock()
 
     def __call__(cls, *args, **kwargs):
-        """Create a new instance of the singleton class if it is not initialized,
-        otherwise raise an exception
-        """
+        """Create a new instance of the singleton class if it is not initialized."""
         with cls.__lock:
             if cls not in cls.__instances:
                 cls.__instances[cls] = super(SingletonMeta, cls).__call__(
@@ -81,7 +79,7 @@ class SingletonMeta(type):
                 )
 
     def __new__(cls, name, bases, class_dict):
-        """Check if the singleton class is not subclassing another singleton class"""
+        """Check if the singleton class is not subclassing another singleton class."""
         for base in bases:
             if isinstance(base, SingletonMeta):
                 # Subclassing of a singleton class is forbidden
@@ -92,8 +90,7 @@ class SingletonMeta(type):
         return super().__new__(cls, name, bases, class_dict)
 
     def instance(cls):
-        """Get the instance of the singleton class if it is initialized,
-        otherwise raise an exception
+        """Get the instance of the singleton class if it is initialized, otherwise raise an exception.
 
         Arguments:
             cls: The singleton class
@@ -110,9 +107,7 @@ class SingletonMeta(type):
         return cls.__instances[cls]
 
     def teardown(cls) -> bool:
-        """Remove the instance of the singleton class. Returns True if the instance
-        existed and was removed, False it was not found to begin with.
-        """
+        """Remove the instance of the singleton class if it is initialized."""
         with cls.__lock:
             if cls in cls.__instances:
                 del cls.__instances[cls]

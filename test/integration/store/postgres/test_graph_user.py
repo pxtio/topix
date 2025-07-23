@@ -1,3 +1,4 @@
+"""Integration tests for the graph-user association."""
 from datetime import datetime
 
 import pytest
@@ -17,6 +18,7 @@ from topix.utils.common import gen_uid
 
 @pytest_asyncio.fixture
 async def user_obj(conn):
+    """Fixture to create a user for testing graph associations."""
     user_uid = gen_uid()
     user = User(
         uid=user_uid,
@@ -31,6 +33,7 @@ async def user_obj(conn):
 
 @pytest_asyncio.fixture
 async def graph_obj(conn):
+    """Fixture to create a graph for testing user associations."""
     graph_uid = gen_uid()
     graph = Graph(
         id=None,
@@ -49,6 +52,7 @@ async def graph_obj(conn):
 
 @pytest.mark.asyncio
 async def test_graph_user_assoc_and_listing(conn, user_obj, graph_obj):
+    """Test user association with a graph and listing functionalities."""
     user_uid = user_obj.uid
     graph_uid = graph_obj.uid
 

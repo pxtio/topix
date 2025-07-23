@@ -61,7 +61,7 @@ def create_app(stage: StageEnum):
 
 
 async def main(args):
-    """Main entry point for the application."""
+    """Run the application entry point."""
     await setup(stage=args.stage)
     app = create_app(stage=args.stage)
 

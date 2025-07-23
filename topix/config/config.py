@@ -32,7 +32,7 @@ class PostgresConfig(BaseModel):
     password: str | None = None
 
     def dsn(self) -> str:
-        """Returns a properly encoded PostgreSQL connection string."""
+        """Return a properly encoded PostgreSQL connection string."""
         user_enc = quote_plus(self.user)
         pwd_enc = quote_plus(self.password) if self.password else ""
         if pwd_enc:

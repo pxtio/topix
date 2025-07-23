@@ -1,3 +1,4 @@
+"""Integration tests for the Graph model."""
 import logging
 
 from datetime import datetime
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 async def test_graph_crud(conn: AsyncConnection):
+    """Test the CRUD operations for the Graph model in the Postgres store."""
     # 1. Create a graph
     graph_uid = gen_uid()
     graph = Graph(

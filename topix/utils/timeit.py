@@ -1,3 +1,5 @@
+"""Decorators for timing function execution."""
+
 import inspect
 import logging
 import time
@@ -8,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def timeit(func):
+    """Time the execution of a function."""
     @wraps(func)
     def wrapper(*args, **kwargs):
         start = time.perf_counter()
@@ -30,6 +33,7 @@ def timeit(func):
 
 
 def async_timeit(func):
+    """Time asynchronous functions."""
     @wraps(func)
     async def wrapper(*args, **kwargs):
         start = time.perf_counter()

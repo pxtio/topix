@@ -1,3 +1,4 @@
+"""Integration tests for the chat store."""
 from datetime import datetime
 
 import pytest
@@ -18,11 +19,13 @@ from topix.utils.common import gen_uid
 
 @pytest_asyncio.fixture
 async def chat_uid():
+    """Fixture to generate a unique chat UID for testing."""
     return gen_uid()
 
 
 @pytest.mark.asyncio
 async def test_chat_crud(conn, chat_uid):
+    """Test the CRUD operations for the Chat model in the Postgres store."""
     # Assumes a user with this uid exists, or create a test user first.
     user_uid = gen_uid()  # In real tests, ensure the user exists!
 

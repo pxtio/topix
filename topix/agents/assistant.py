@@ -122,7 +122,6 @@ class AssistantManager(BaseAgentManager):
         session: AssistantSession | None = None
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Stream the results of the reflection agent."""
-
         if session:
             await session.add_items([
                 {

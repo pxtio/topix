@@ -1,3 +1,5 @@
+"""API Request Models."""
+
 from pydantic import BaseModel
 
 from topix.datatypes.note.link import Link

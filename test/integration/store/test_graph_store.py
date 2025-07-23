@@ -1,3 +1,4 @@
+""""Integration tests for the GraphStore class."""
 import pytest
 
 from topix.datatypes.graph.graph import Graph
@@ -9,11 +10,13 @@ from topix.store.qdrant.base import QdrantStore
 
 @pytest.fixture(scope="module")
 async def init_collection():
+    """Initialize the Qdrant collection for graph tests."""
     await QdrantStore.from_config().create_collection()
 
 
 @pytest.mark.asyncio
 async def test_graph_crud_lifecycle(config, init_collection):
+    """Test the CRUD lifecycle of a graph."""
     store = GraphStore()
     await store.open()
     user_uid = "root"

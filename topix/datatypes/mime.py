@@ -1,8 +1,10 @@
+"""Mime Type Enum for Media Types."""
+
 from topix.datatypes.enum import CustomEnum
 
 
 class MimeTypeEnum(str, CustomEnum):
-    """Enum for the different types of media"""
+    """Enum for the different types of media."""
 
     PDF = 'application/pdf'
     VIDEO = 'video/mp4'
@@ -19,5 +21,5 @@ class MimeTypeEnum(str, CustomEnum):
     JSON = 'application/json'
 
     def is_media(self) -> bool:
-        """Check if the mime type is a media type"""
+        """Check if the mime type is a media type."""
         return self in [MimeTypeEnum.VIDEO, MimeTypeEnum.AUDIO]

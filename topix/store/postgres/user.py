@@ -1,3 +1,4 @@
+"""User Base Postgres Store."""
 from datetime import datetime
 
 from psycopg import AsyncConnection

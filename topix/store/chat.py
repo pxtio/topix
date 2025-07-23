@@ -1,3 +1,5 @@
+"""Chat Store Module."""
+
 from topix.datatypes.chat.chat import Chat
 from topix.store.postgres.chat import (
     _dangerous_hard_delete_chat_by_uid,

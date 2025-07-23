@@ -1,3 +1,4 @@
+"""Helper functions for API responses."""
 import logging
 
 logger = logging.getLogger(__name__)

@@ -1,3 +1,4 @@
+"""Logging configuration utilities."""
 import inspect
 import logging
 import os
@@ -14,7 +15,7 @@ def logging_config(
     local_file_logs: bool = False,
     log_dir: str = DEFAULT_LOG_DIR
 ):
-    """Setup logging config globally."""
+    """Set up logging configuration."""
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
     handlers = []

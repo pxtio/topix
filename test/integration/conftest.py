@@ -1,3 +1,4 @@
+"""Integration tests setup."""
 import pytest
 import pytest_asyncio
 
@@ -15,6 +16,7 @@ def config() -> Config:
 
 @pytest_asyncio.fixture
 async def conn(config: Config):
+    """Fixture to provide a database connection for tests."""
     # Set up your database URL
     connection = await AsyncConnection.connect(config.run.databases.postgres.dsn())
     try:

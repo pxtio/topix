@@ -1,3 +1,4 @@
+"""Test utilities for Qdrant store."""
 import pytest
 
 from topix.store.qdrant.utils import payload_dict_to_field_list
@@ -29,4 +30,5 @@ from topix.store.qdrant.utils import payload_dict_to_field_list
     ]
 )
 def test_payload_dict_to_field_list(payload_dict, expected):
+    """Test conversion of payload dictionary to field list."""
     assert sorted(payload_dict_to_field_list(payload_dict)) == sorted(expected)

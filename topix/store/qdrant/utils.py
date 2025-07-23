@@ -2,8 +2,11 @@
 
 
 def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str]:
-    """Convert a nested dict like { "a": True, "b": { "c": { "d": True, "e": True }}}
+    """Convert a nested dict to a list of dot-notation field paths.
+
+    Convert a nested dict like { "a": True, "b": { "c": { "d": True, "e": True }}}
     to a list of dot-notation field paths: ["a", "b.c.d", "b.c.e"].
+
     """
     fields = []
     for key, value in payload_dict.items():

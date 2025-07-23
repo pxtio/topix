@@ -1,3 +1,4 @@
+"""Graph User Base Postgres Store."""
 from psycopg import AsyncConnection
 
 from topix.store.postgres.graph import get_graph_id_by_uid
@@ -11,6 +12,7 @@ async def add_user_to_graph_by_uid(
     role: str,
 ) -> bool:
     """Associate a user (by uid) to a graph (by uid) with a role.
+
     Returns True if added, False if already exists.
     """
     graph_id = await get_graph_id_by_uid(conn, graph_uid)
@@ -39,8 +41,7 @@ async def list_graphs_by_user_uid(
     conn: AsyncConnection,
     user_uid: str
 ) -> list[tuple[str, str | None, str]]:
-    """Return list of (graph_uid, role) for all graphs the user has access to.
-    """
+    """Return list of (graph_uid, role) for all graphs the user has access to."""
     user_id = await get_user_id_by_uid(conn, user_uid)
     if user_id is None:
         return []
@@ -62,8 +63,7 @@ async def list_users_by_graph_uid(
     conn: AsyncConnection,
     graph_uid: str
 ):
-    """Return list of (user_uid, role) for all users having access to this graph.
-    """
+    """Return list of (user_uid, role) for all users having access to this graph."""
     graph_id = await get_graph_id_by_uid(conn, graph_uid)
     if graph_id is None:
         return []
@@ -85,6 +85,7 @@ async def remove_user_from_graph_by_uid(
     graph_uid: str
 ) -> int:
     """Remove a user (by uid) from a graph's access list.
+
     Returns number of rows deleted (0 or 1).
     """
     user_id = await get_user_id_by_uid(conn, user_uid)

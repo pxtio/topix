@@ -75,7 +75,7 @@ if __name__ == "__main__":
         "--stage",
         default=StageEnum.LOCAL,
         help="The stage to run the application in.",
-        choices=[stage.value for stage in StageEnum]
+        choices=list(StageEnum)
     )
     args = args.parse_args()
     app, port = asyncio.run(main(args))

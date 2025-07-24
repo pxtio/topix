@@ -80,14 +80,10 @@ async def update_chat_by_uid(
     # Exclude any date fields from being updated manually
     forbidden_fields = {"created_at", "updated_at", "deleted_at"}
     data = {k: v for k, v in updated_data.items() if k not in forbidden_fields}
-
+    # Always set updated_at to now
+    data['updated_at'] = datetime.now()
     set_clause = ', '.join(f"{k} = %s" for k in data)
     values = list(data.values())
-
-    # Always set updated_at to now
-    set_clause += ", updated_at = %s"
-    values.append(datetime.now())
-
     values.append(uid)
     query = f"UPDATE chats SET {set_clause} WHERE uid = %s"
     async with conn.cursor() as cur:

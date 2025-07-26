@@ -16,7 +16,6 @@ from topix.datatypes.stage import StageEnum
 from topix.setup import setup
 from topix.store.chat import ChatStore
 from topix.store.graph import GraphStore
-from topix.store.qdrant.store import ContentStore
 from topix.store.user import UserStore
 from topix.utils.logging import logging_config
 
@@ -34,12 +33,10 @@ def create_app(stage: StageEnum):
         await app.user_store.open()
         app.chat_store = ChatStore()
         await app.chat_store.open()
-        app.content_store = ContentStore()
         yield
         await app.graph_store.close()
         await app.user_store.close()
         await app.chat_store.close()
-        await app.content_store.close()
 
     app = FastAPI(lifespan=lifespan)
 

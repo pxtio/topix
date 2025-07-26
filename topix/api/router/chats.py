@@ -13,7 +13,6 @@ from topix.api.datatypes.requests import ChatUpdateRequest, SendMessageRequest
 from topix.api.helpers import with_standard_response, with_streaming
 from topix.datatypes.chat.chat import Chat
 from topix.store.chat import ChatStore
-from topix.store.qdrant.store import ContentStore
 
 router = APIRouter(
     prefix="/chats",
@@ -48,13 +47,12 @@ async def describe_chat(
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
     """Describe a chat by its ID."""
-    content_store: ContentStore = request.app.content_store
-    session = AssistantSession(session_id=chat_id, content_store=content_store)
+    store: ChatStore = request.app.chat_store
+    session = AssistantSession(session_id=chat_id, chat_store=store)
 
     chat_describer = DescribeChat()
     label = await chat_describer.run(await session.get_items())
 
-    store: ChatStore = request.app.chat_store
     await store.update_chat(chat_id, {"label": label})
     return {"label": label}
 
@@ -125,7 +123,8 @@ async def send_message(
     body: Annotated[SendMessageRequest, Body(description="Message content")]
 ):
     """Send a message to a chat."""
-    session = AssistantSession(session_id=chat_id, content_store=request.app.content_store)
+    chat_store: ChatStore = request.app.chat_store
+    session = AssistantSession(session_id=chat_id, chat_store=chat_store)
     assistant = AssistantManager()
     async for data in assistant.stream(
         query=body.query,
@@ -135,7 +134,6 @@ async def send_message(
         yield data
 
     # After streaming, update the chat's updated_at timestamp
-    chat_store: ChatStore = request.app.chat_store
     await chat_store.update_chat(chat_id, {})
 
 
@@ -149,6 +147,6 @@ async def list_messages(
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
     """List all messages in a chat."""
-    session = AssistantSession(session_id=chat_id, content_store=request.app.content_store)
-
-    return {"messages": await session.get_items()}
+    chat_store: ChatStore = request.app.chat_store
+    messages = await chat_store.get_messages(chat_uid=chat_id)
+    return {"messages": [msg.model_dump(exclude_none=True) for msg in messages]}

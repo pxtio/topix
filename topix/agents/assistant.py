@@ -1,7 +1,6 @@
 """Main agent manager."""
 
 import asyncio
-import uuid
 
 from collections.abc import AsyncGenerator
 from datetime import datetime
@@ -24,6 +23,7 @@ from topix.agents.prompt_utils import render_prompt
 from topix.agents.sessions import AssistantSession
 from topix.agents.tools.answer_reformulate import AnswerReformulate
 from topix.agents.tools.web_search import WebSearch
+from topix.utils.common import gen_uid
 
 
 class AssistantAgentHook(AgentHooks):
@@ -139,7 +139,7 @@ class AssistantManager(BaseAgentManager):
             max_turns=max_turns,
         )
 
-        id_ = uuid.uuid4().hex
+        id_ = gen_uid()
 
         async def stream_events():
 
@@ -169,6 +169,7 @@ class AssistantManager(BaseAgentManager):
                     # If a session is provided, store the final answer
                     await session.add_items([
                         {
+                            "id": id_,
                             "role": "assistant",
                             "content": final_answer if final_answer else raw_answer
                         }

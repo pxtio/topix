@@ -119,12 +119,14 @@ class AssistantManager(BaseAgentManager):
         query: str,
         context: ReasoningContext,
         max_turns: int = 5,
-        session: AssistantSession | None = None
+        session: AssistantSession | None = None,
+        message_id: str | None = None
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Stream the results of the reflection agent."""
         if session:
             await session.add_items([
                 {
+                    "id": message_id or gen_uid(),
                     "role": "user",
                     "content": query
                 }

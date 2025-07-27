@@ -1,5 +1,7 @@
 """Chat API Router."""
 
+import logging
+
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Request, Response
@@ -13,6 +15,8 @@ from topix.api.datatypes.requests import ChatUpdateRequest, SendMessageRequest
 from topix.api.helpers import with_standard_response, with_streaming
 from topix.datatypes.chat.chat import Chat
 from topix.store.chat import ChatStore
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/chats",
@@ -126,15 +130,26 @@ async def send_message(
     chat_store: ChatStore = request.app.chat_store
     session = AssistantSession(session_id=chat_id, chat_store=chat_store)
     assistant = AssistantManager()
-    async for data in assistant.stream(
-        query=body.query,
-        context=ReasoningContext(),
-        session=session
-    ):
-        yield data
+    try:
+        async for data in assistant.stream(
+            query=body.query,
+            context=ReasoningContext(),
+            session=session,
+            message_id=body.message_id
+        ):
+            yield data
 
-    # After streaming, update the chat's updated_at timestamp
-    await chat_store.update_chat(chat_id, {})
+        # After streaming, update the chat's updated_at timestamp
+        await chat_store.update_chat(chat_id, {})
+    except Exception as e:
+        # Handle any exceptions that occur during streaming
+        logger.error(
+            "Error while sending message in chat %s: %s",
+            chat_id,
+            str(e),
+            exc_info=True
+        )
+        return
 
 
 @router.get("/{chat_id}/messages/", include_in_schema=False)

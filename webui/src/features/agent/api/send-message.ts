@@ -1,7 +1,12 @@
-import { API_URL } from "@/config/api";
-import type { AgentStreamMessage } from "../types/stream";
-import type { SendMessageRequestPayload } from "./types";
-import { handleStreamingResponse } from "../utils/stream";
+import { API_URL } from "@/config/api"
+import type { AgentStreamMessage } from "../types/stream"
+import type { SendMessageRequestPayload } from "./types"
+import { buildResponse, handleStreamingResponse } from "../utils/stream"
+import { useChatStore } from "../store/chat-store"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
+import type { ChatMessage } from "../types/chat"
+import { generateUuid } from "@/lib/common"
 
 
 /**
@@ -26,4 +31,55 @@ export async function* sendMessage(
     })
 
     yield* handleStreamingResponse<AgentStreamMessage>(response)
+}
+
+
+/**
+ * Custom hook to send a message to the AI assistant.
+ *
+ * @returns An object containing the sendMessage function and its state.
+ */
+export const useSendMessage = () => {
+    const setStream = useChatStore((state) => state.setStream)
+
+    const queryClient = useQueryClient()
+
+    const [isStreaming, setIsStreaming] = useState(false)
+
+    const mutation = useMutation({
+        mutationFn: async ({
+            payload,
+            chatId
+        }: {
+            payload: SendMessageRequestPayload,
+            chatId: string
+        }) => {
+            setIsStreaming(true)
+            // Optimistically update the chat messages in the query cache
+            try {
+                queryClient.setQueryData<ChatMessage[]>(
+                    ["listMessages", chatId],
+                    (oldMessages) => [
+                        ...(oldMessages || []),
+                        { id: generateUuid(), role: "user", content: payload.query, chatUid: chatId }
+                    ]
+                )
+                const stream = sendMessage(payload, chatId)
+                const response = buildResponse(stream)
+                for await (const resp of response) {
+                    if (resp.steps.length === 0) continue
+                    const step = resp.steps[0]
+                    const responseId = step.id
+                    setStream(responseId, resp)
+                }
+            } finally {
+                setIsStreaming(false)
+            }
+        }
+    })
+    return {
+        sendMessage: mutation.mutate,
+        isStreaming,
+        ...mutation
+    }
 }

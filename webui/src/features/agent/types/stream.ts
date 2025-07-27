@@ -38,3 +38,26 @@ export interface AgentStreamMessage {
     statusMessage?: string
     delta?: StreamDelta
 }
+
+
+/**
+ * ReasoningStep represents a step in the agent's reasoning process.
+ */
+export interface ReasoningStep {
+  id: string;
+  name: string;
+  content?: string;
+  state: ToolExecutionState;
+  message?: string;
+}
+
+
+/**
+ * AgentResponse represents the response from the agent, containing reasoning steps.
+ */
+export interface AgentResponse {
+  steps: ReasoningStep[];
+}
+
+
+export const RAW_RESPONSE = "raw_response"

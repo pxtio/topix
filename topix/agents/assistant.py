@@ -17,7 +17,7 @@ from agents import (
 )
 from topix.agents.base import BaseAgentManager
 from topix.agents.datatypes.context import ReasoningContext
-from topix.agents.datatypes.stream import AgentStreamMessage, StreamMessageType
+from topix.agents.datatypes.stream import AgentStreamMessage, StreamMessageType, ToolExecutionState
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.prompt_utils import render_prompt
 from topix.agents.sessions import AssistantSession
@@ -143,8 +143,18 @@ class AssistantManager(BaseAgentManager):
 
         id_ = gen_uid()
 
-        async def stream_events():
+        # Notify the start of the agent stream
+        await context._message_queue.put(
+            AgentStreamMessage(
+                type=StreamMessageType.STATE,
+                tool_id=id_,
+                tool_name=AgentToolName.RAW_MESSAGE,
+                execution_state=ToolExecutionState.STARTED,
+            )
+        )
 
+        async def stream_events():
+            """Stream the events from the agent."""
             async for stream_chunk in self.handle_stream_events(
                 streamed_answer,
                 tool_id=id_,

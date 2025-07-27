@@ -1,5 +1,5 @@
-import camelcaseKeys from 'camelcase-keys';
-import { RAW_RESPONSE, type AgentResponse, type AgentStreamMessage, type ReasoningStep } from '../types/stream';
+import camelcaseKeys from 'camelcase-keys'
+import { RAW_RESPONSE, type AgentResponse, type AgentStreamMessage, type ReasoningStep } from '../types/stream'
 
 
 /**
@@ -13,7 +13,7 @@ import { RAW_RESPONSE, type AgentResponse, type AgentStreamMessage, type Reasoni
  */
 export async function* handleStreamingResponse<T>(response: Response): AsyncGenerator<T>{
   if (!response.body) {
-    throw new Error("ReadableStream not supported in this browser.");
+    throw new Error("ReadableStream not supported in this browser.")
   }
 
   const reader = response.body.getReader()
@@ -91,6 +91,20 @@ export async function* buildResponse(
         currentStep.message = chunk.statusMessage
       }
     }
-    yield newResponse;
+    yield newResponse
   }
+}
+
+
+/**
+ * Extracts the description from a ReasoningStep.
+ *
+ * @param step - The ReasoningStep from which to extract the description.
+ * @returns The description of the step, or an empty string if not available.
+ */
+export function extractStepDescription(step: ReasoningStep): string {
+  if (step.name !== RAW_RESPONSE) {
+    return step.message || `Running \`${step.name}\``
+  }
+  return step.content || ""
 }

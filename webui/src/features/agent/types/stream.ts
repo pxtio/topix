@@ -44,11 +44,11 @@ export interface AgentStreamMessage {
  * ReasoningStep represents a step in the agent's reasoning process.
  */
 export interface ReasoningStep {
-  id: string;
-  name: string;
-  content?: string;
-  state: ToolExecutionState;
-  message?: string;
+  id: string
+  name: string
+  content?: string
+  state: ToolExecutionState
+  message?: string
 }
 
 
@@ -56,7 +56,7 @@ export interface ReasoningStep {
  * AgentResponse represents the response from the agent, containing reasoning steps.
  */
 export interface AgentResponse {
-  steps: ReasoningStep[];
+  steps: ReasoningStep[]
 }
 
 

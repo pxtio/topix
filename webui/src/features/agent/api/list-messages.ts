@@ -1,7 +1,7 @@
-import camelcaseKeys from "camelcase-keys";
-import type { ChatMessage, MessageRole } from "../types/chat";
-import { API_URL } from "@/config/api";
-import { useQuery } from "@tanstack/react-query";
+import camelcaseKeys from "camelcase-keys"
+import type { ChatMessage, MessageRole } from "../types/chat"
+import { API_URL } from "@/config/api"
+import { useQuery } from "@tanstack/react-query"
 
 
 /**
@@ -11,30 +11,30 @@ import { useQuery } from "@tanstack/react-query";
  * @param userId - The ID of the user requesting the messages.
  */
 export async function listMessages(
-    chatId: string,
-    userId: string
+  chatId: string,
+  userId: string
 ): Promise<ChatMessage[]> {
-    const headers = new Headers();
-    headers.set("Content-Type", "application/json");
-    const response = await fetch(`${API_URL}/chats/${chatId}/messages?user_id=${userId}`, {
-        method: "GET",
-        headers
-    })
+  const headers = new Headers()
+  headers.set("Content-Type", "application/json")
+  const response = await fetch(`${API_URL}/chats/${chatId}/messages?user_id=${userId}`, {
+    method: "GET",
+    headers
+  })
 
-    if (!response.ok) {
-        throw new Error(`Failed to fetch messages: ${response.statusText}`)
-    }
+  if (!response.ok) {
+    throw new Error(`Failed to fetch messages: ${response.statusText}`)
+  }
 
-    const data = await response.json();
-    return data.data.messages.map((message: {
-        id: string,
-        role: MessageRole,
-        content: string,
-        created_at?: string,
-        updated_at?: string,
-        deleted_at?: string,
-        chat_uid: string
-    }) => camelcaseKeys(message, { deep: true })) as ChatMessage[]
+  const data = await response.json()
+  return data.data.messages.map((message: {
+    id: string,
+    role: MessageRole,
+    content: string,
+    created_at?: string,
+    updated_at?: string,
+    deleted_at?: string,
+    chat_uid: string
+  }) => camelcaseKeys(message, { deep: true })) as ChatMessage[]
 }
 
 
@@ -47,16 +47,16 @@ export async function listMessages(
  * @returns A query object containing the list of messages.
  */
 export const useListMessages = ({
-    chatId,
-    userId
+  chatId,
+  userId
 }: {
-    chatId: string,
-    userId: string
+  chatId: string,
+  userId: string
 }) => {
-    return useQuery<ChatMessage[]>({
-        queryKey: ["listMessages", chatId, userId],
-        queryFn: () => listMessages(chatId, userId),
-        enabled: !!chatId && !!userId,
-        staleTime: 1000 * 60 * 5 // 5 minutes
-    });
+  return useQuery<ChatMessage[]>({
+    queryKey: ["listMessages", chatId, userId],
+    queryFn: () => listMessages(chatId, userId),
+    enabled: !!chatId && !!userId,
+    staleTime: 1000 * 60 * 5 // 5 minutes
+  })
 }

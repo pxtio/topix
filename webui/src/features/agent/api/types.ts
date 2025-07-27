@@ -5,7 +5,7 @@ import type { Chat } from "../types/chat"
  * Request payload for sending a message.
  */
 export interface SendMessageRequestPayload {
-    query: string
+  query: string
 }
 
 
@@ -13,7 +13,7 @@ export interface SendMessageRequestPayload {
  * Response type for sending a message.
  */
 export interface VoidSuccessResponse {
-    success: boolean
+  success: boolean
 }
 
 
@@ -21,7 +21,7 @@ export interface VoidSuccessResponse {
  * Response type for listing chats.
  */
 export interface ListChatsResponse extends VoidSuccessResponse {
-    data: {
-        chats: Chat[]
-    }
+  data: {
+    chats: Chat[]
+  }
 }

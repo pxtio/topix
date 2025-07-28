@@ -15,7 +15,7 @@ class MindmapConversion(BaseAgentManager):
     """Mindmap Conversion Agent."""
 
     name = "Mindmap Conversion"
-    model_name = "gpt-4.1-mini"
+    model_name = "gpt-4o-mini"
     prompts = {
         "system": "mindmap_conversion.system.jinja",
         "user": "mindmap_conversion.user.jinja"

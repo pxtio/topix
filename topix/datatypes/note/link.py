@@ -25,4 +25,4 @@ class Link(BaseModel):
     updated_at: str | None = None
     deleted_at: str | None = None
 
-    graph_uid: str
+    graph_uid: str | None = None

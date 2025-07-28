@@ -1,3 +1,4 @@
+"""Integration tests for the user store."""
 from datetime import datetime
 
 import pytest
@@ -19,11 +20,13 @@ from topix.utils.common import gen_uid
 
 @pytest_asyncio.fixture
 async def user_uid():
+    """Fixture to generate a unique user UID for testing."""
     return gen_uid()
 
 
 @pytest.mark.asyncio
 async def test_user_crud(conn: AsyncConnection, user_uid: str):
+    """Test the CRUD operations for the User model in the Postgres store."""
     email = f"{user_uid}@test.com"
     now = datetime.now().isoformat()
     user = User(

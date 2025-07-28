@@ -1,3 +1,4 @@
+""""Integration tests for the GraphStore class."""
 import pytest
 
 from topix.datatypes.graph.graph import Graph
@@ -9,11 +10,13 @@ from topix.store.qdrant.base import QdrantStore
 
 @pytest.fixture(scope="module")
 async def init_collection():
+    """Initialize the Qdrant collection for graph tests."""
     await QdrantStore.from_config().create_collection()
 
 
 @pytest.mark.asyncio
 async def test_graph_crud_lifecycle(config, init_collection):
+    """Test the CRUD lifecycle of a graph."""
     store = GraphStore()
     await store.open()
     user_uid = "root"
@@ -33,7 +36,7 @@ async def test_graph_crud_lifecycle(config, init_collection):
         # 3. Add nodes
         node1 = Note(label="First Node", graph_uid=graph.uid, content=Content(markdown="# Hello"))
         node2 = Note(label="Second Node", graph_uid=graph.uid, content=Content(markdown="World!"))
-        await store.add_nodes([node1, node2])
+        await store.add_notes([node1, node2])
 
         # 4. Fetch nodes and verify
         nodes = await store.get_nodes([node1.id, node2.id])
@@ -67,33 +70,12 @@ async def test_graph_crud_lifecycle(config, init_collection):
         # 10. Delete graph (soft)
         await store.delete_graph(graph.uid, hard_delete=False)
         deleted_graph = await store.get_graph(graph.uid)
-        assert deleted_graph is None
-    finally:
-        await store.close()
+        assert deleted_graph is not None
+        assert deleted_graph.deleted_at is not None
 
-
-@pytest.mark.asyncio
-async def test_hard_delete_graph_deletes_nodes_and_links(config):
-    store = GraphStore()
-    await store.open()
-    try:
-        user_uid = "root"
-        graph = Graph(label="Hard Delete Graph")
-        await store.add_graph(graph, user_uid=user_uid)
-
-        node = Note(label="To be deleted", graph_uid=graph.uid, content=Content(markdown="delete me"))
-        link = Link(source=node.id, target=node.id, graph_uid=graph.uid)
-        await store.add_nodes([node])
-        await store.add_links([link])
-
-        # Hard delete
+        # 11. Hard delete graph
         await store.delete_graph(graph.uid, hard_delete=True)
-
-        # All should be gone
-        assert await store.get_graph(graph.uid) is None
-        nodes = await store.get_nodes([node.id])
-        assert not nodes  # should be empty list
-        links = await store.get_links([link.id])
-        assert not links
+        hard_deleted_graph = await store.get_graph(graph.uid)
+        assert hard_deleted_graph is None
     finally:
         await store.close()

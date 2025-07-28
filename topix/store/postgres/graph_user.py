@@ -1,16 +1,18 @@
+"""Graph User Base Postgres Store."""
 from psycopg import AsyncConnection
 
 from topix.store.postgres.graph import get_graph_id_by_uid
 from topix.store.postgres.user import get_user_id_by_uid
 
 
-async def associate_user_to_graph_by_uid(
+async def add_user_to_graph_by_uid(
     conn: AsyncConnection,
     graph_uid: str,
     user_uid: str,
     role: str,
 ) -> bool:
     """Associate a user (by uid) to a graph (by uid) with a role.
+
     Returns True if added, False if already exists.
     """
     graph_id = await get_graph_id_by_uid(conn, graph_uid)
@@ -35,31 +37,33 @@ async def associate_user_to_graph_by_uid(
         return True
 
 
-async def list_graphs_for_user_uid(
+async def list_graphs_by_user_uid(
     conn: AsyncConnection,
     user_uid: str
-):
-    """Return list of (graph_uid, role) for all graphs the user has access to.
-    """
+) -> list[tuple[str, str | None, str]]:
+    """Return list of (graph_uid, role) for all graphs the user has access to."""
     user_id = await get_user_id_by_uid(conn, user_uid)
     if user_id is None:
         return []
     query = (
-        "SELECT g.uid, gu.role "
+        "SELECT g.uid, g.label, gu.role "
         "FROM graph_user gu JOIN graphs g ON gu.graph_id = g.id "
-        "WHERE gu.user_id = %s"
+        "WHERE gu.user_id = %s "
+        "AND g.deleted_at IS NULL "
+        "ORDER BY COALESCE(g.updated_at, g.created_at) DESC"
     )
     async with conn.cursor() as cur:
         await cur.execute(query, (user_id,))
-        return await cur.fetchall()  # List of tuples (graph_uid, role)
+        res = await cur.fetchall()
+    # List of tuples (graph_uid, graph_label, role)
+    return [(r[0], r[1], r[2]) for r in res]
 
 
-async def list_users_for_graph_uid(
+async def list_users_by_graph_uid(
     conn: AsyncConnection,
     graph_uid: str
 ):
-    """Return list of (user_uid, role) for all users having access to this graph.
-    """
+    """Return list of (user_uid, role) for all users having access to this graph."""
     graph_id = await get_graph_id_by_uid(conn, graph_uid)
     if graph_id is None:
         return []
@@ -70,7 +74,9 @@ async def list_users_for_graph_uid(
     )
     async with conn.cursor() as cur:
         await cur.execute(query, (graph_id,))
-        return await cur.fetchall()  # List of tuples (user_uid, role)
+        res = await cur.fetchall()
+    # List of tuples (user_uid, role)
+    return [(r[0], r[1]) for r in res]
 
 
 async def remove_user_from_graph_by_uid(
@@ -79,6 +85,7 @@ async def remove_user_from_graph_by_uid(
     graph_uid: str
 ) -> int:
     """Remove a user (by uid) from a graph's access list.
+
     Returns number of rows deleted (0 or 1).
     """
     user_id = await get_user_id_by_uid(conn, user_uid)

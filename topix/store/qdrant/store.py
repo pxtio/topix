@@ -17,6 +17,7 @@ class ContentStore:
     """Manager for handling notes in the Qdrant store."""
 
     def __init__(self):
+        """Init method."""
         self.qdrant_client = QdrantStore.from_config()
         self.embedder = OpenAIEmbedder.from_config()
 

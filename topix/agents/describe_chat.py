@@ -1,3 +1,4 @@
+"""Agent to describe a chat."""
 import logging
 
 from pydantic import BaseModel

@@ -1,11 +1,11 @@
-"""This module contains the language enum and language code enum."""
+"""Language Enum Types."""
 from __future__ import annotations
 
 from topix.datatypes.enum import CustomEnum
 
 
 class LangCodeEnum(str, CustomEnum):
-    """Language Enum"""
+    """Language Code Enum."""
 
     ENGLISH = "en"
     FRENCH = "fr"
@@ -16,7 +16,7 @@ class LangCodeEnum(str, CustomEnum):
 
 
 class LangEnum(str, CustomEnum):
-    """Language Enum"""
+    """Language Enum."""
 
     ENGLISH = "English"
     FRENCH = "French"

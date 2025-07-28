@@ -1,3 +1,4 @@
+"""Integration tests setup."""
 import pytest
 import pytest_asyncio
 
@@ -10,11 +11,12 @@ from topix.datatypes.stage import StageEnum
 @pytest.fixture(scope="session")
 def config() -> Config:
     """Fixture to provide the application configuration."""
-    return Config.load(stage=StageEnum.TEST, config_file_path="config/local.sample.yml")
+    return Config.load(stage=StageEnum.TEST)
 
 
 @pytest_asyncio.fixture
 async def conn(config: Config):
+    """Fixture to provide a database connection for tests."""
     # Set up your database URL
     connection = await AsyncConnection.connect(config.run.databases.postgres.dsn())
     try:

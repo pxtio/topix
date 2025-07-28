@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from topix.datatypes.graph.style import Style
-from topix.datatypes.note.property import Property
+from topix.datatypes.note.property import Prop
 from topix.utils.common import gen_uid
 
 
@@ -28,12 +28,12 @@ class Note(BaseModel):
     deleted_at: str | None = None
 
     # properties
-    properties: dict[str, Property] | None = None
+    properties: dict[str, Prop] | None = None
 
     # content
     label: str | None = None
     content: Content | None = None
 
     # graph attributes
-    graph_uid: str
+    graph_uid: str | None = None
     style: Style = Field(default_factory=Style)

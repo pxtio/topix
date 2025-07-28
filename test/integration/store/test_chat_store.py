@@ -1,3 +1,4 @@
+"""Integration tests for the ChatStore class."""
 import pytest
 
 from topix.datatypes.chat.chat import Chat
@@ -6,6 +7,7 @@ from topix.store.chat import ChatStore
 
 @pytest.mark.asyncio
 async def test_chatstore_crud_flow(config):
+    """Test the CRUD operations of the ChatStore."""
     store = ChatStore()
     await store.open()
     try:

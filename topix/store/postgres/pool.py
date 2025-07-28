@@ -12,5 +12,6 @@ def create_pool() -> AsyncConnectionPool:
     return AsyncConnectionPool(
         postgres_url,
         min_size=1,
-        max_size=100
+        max_size=100,
+        open=False
     )

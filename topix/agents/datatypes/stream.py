@@ -1,3 +1,4 @@
+"""Agent stream datatypes for token streaming."""
 from pydantic import BaseModel
 
 from topix.agents.datatypes.tools import AgentToolName

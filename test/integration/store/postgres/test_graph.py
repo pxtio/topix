@@ -1,3 +1,4 @@
+"""Integration tests for the Graph model."""
 import logging
 
 from datetime import datetime
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 async def test_graph_crud(conn: AsyncConnection):
+    """Test the CRUD operations for the Graph model in the Postgres store."""
     # 1. Create a graph
     graph_uid = gen_uid()
     graph = Graph(
@@ -62,7 +64,8 @@ async def test_graph_crud(conn: AsyncConnection):
     # DELETE
     await delete_graph_by_uid(conn, graph_uid)
     deleted_graph = await get_graph_by_uid(conn, graph_uid)
-    assert deleted_graph is None
+    assert deleted_graph is not None
+    assert deleted_graph.deleted_at is not None
 
     # HARD DELETE
     await _dangerous_hard_delete_graph_by_uid(conn, graph_uid)

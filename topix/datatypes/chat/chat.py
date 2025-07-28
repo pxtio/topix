@@ -34,6 +34,7 @@ class Message(BaseModel):
     deleted_at: str | None = None
 
     def to_chat_message(self) -> dict:
+        """Convert to a chat message format."""
         return {
             "role": self.role,
             "content": self.content

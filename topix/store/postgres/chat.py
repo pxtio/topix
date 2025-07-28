@@ -11,8 +11,7 @@ async def create_chat(
     conn: AsyncConnection,
     chat: Chat
 ) -> Chat:
-    """Insert a new chat using user_uid as FK and set its id after creation.
-    """
+    """Insert a new chat using user_uid as FK and set its id after creation."""
     query = (
         "INSERT INTO chats (uid, label, user_uid, graph_uid, "
         "created_at, updated_at, deleted_at) "
@@ -43,7 +42,9 @@ async def get_chat_by_uid(
     conn: AsyncConnection,
     uid: str
 ) -> Chat | None:
-    """Fetch a chat by its UID. Returns None if not found.
+    """Fetch a chat by its UID.
+
+    Returns None if not found.
     """
     query = (
         "SELECT id, uid, label, user_uid, "
@@ -73,21 +74,16 @@ async def update_chat_by_uid(
     updated_data: dict
 ):
     """Update non-date chat fields by UID.
+
     Always updates updated_at to now.
     """
     # Exclude any date fields from being updated manually
     forbidden_fields = {"created_at", "updated_at", "deleted_at"}
     data = {k: v for k, v in updated_data.items() if k not in forbidden_fields}
-    if not data:
-        return
-
+    # Always set updated_at to now
+    data['updated_at'] = datetime.now()
     set_clause = ', '.join(f"{k} = %s" for k in data)
     values = list(data.values())
-
-    # Always set updated_at to now
-    set_clause += ", updated_at = %s"
-    values.append(datetime.now())
-
     values.append(uid)
     query = f"UPDATE chats SET {set_clause} WHERE uid = %s"
     async with conn.cursor() as cur:
@@ -99,8 +95,7 @@ async def delete_chat_by_uid(
     conn: AsyncConnection,
     uid: str
 ):
-    """Soft-delete a chat by setting deleted_at to now.
-    """
+    """Soft-delete a chat by setting deleted_at to now."""
     now = datetime.now()
     query = "UPDATE chats SET deleted_at = %s WHERE uid = %s"
 
@@ -114,8 +109,7 @@ async def _dangerous_hard_delete_chat_by_uid(
     conn: AsyncConnection,
     uid: str
 ):
-    """Hard delete a chat by UID. Use with caution!
-    """
+    """Hard delete a chat by UID. Use with caution."""
     query = "DELETE FROM chats WHERE uid = %s"
     async with conn.cursor() as cur:
         await cur.execute(query, (uid,))
@@ -127,13 +121,15 @@ async def list_chats_by_user_uid(
     user_uid: str
 ) -> list[Chat]:
     """List all chats for a given user UID.
+
     Returns a list of Chat objects.
     """
     query = (
         "SELECT id, uid, label, user_uid, "
         "graph_uid, created_at, updated_at, deleted_at "
         "FROM chats WHERE user_uid = %s "
-        "ORDER BY created_at DESC"
+        "AND deleted_at IS NULL "
+        "ORDER BY COALESCE(updated_at, created_at) DESC"
     )
     async with conn.cursor() as cur:
         await cur.execute(query, (user_uid,))

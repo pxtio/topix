@@ -1,3 +1,4 @@
+"""Integration tests for the chat store."""
 from datetime import datetime
 
 import pytest
@@ -12,17 +13,19 @@ from topix.store.postgres.chat import (
     get_chat_by_uid,
     update_chat_by_uid,
 )
-from topix.store.postgres.user import create_user, delete_user_by_uid
+from topix.store.postgres.user import _dangerous_hard_delete_user_by_uid, create_user
 from topix.utils.common import gen_uid
 
 
 @pytest_asyncio.fixture
 async def chat_uid():
+    """Fixture to generate a unique chat UID for testing."""
     return gen_uid()
 
 
 @pytest.mark.asyncio
 async def test_chat_crud(conn, chat_uid):
+    """Test the CRUD operations for the Chat model in the Postgres store."""
     # Assumes a user with this uid exists, or create a test user first.
     user_uid = gen_uid()  # In real tests, ensure the user exists!
 
@@ -73,4 +76,4 @@ async def test_chat_crud(conn, chat_uid):
     gone = await get_chat_by_uid(conn, chat_uid)
     assert gone is None
 
-    await delete_user_by_uid(conn, user_uid)
+    await _dangerous_hard_delete_user_by_uid(conn, user_uid)

@@ -1,3 +1,5 @@
+"""Graph Base Postgres Store."""
+
 from datetime import datetime
 
 from psycopg import AsyncConnection
@@ -55,7 +57,7 @@ async def get_graph_by_uid(
     query = (
         "SELECT id, uid, label, format_version, readonly, "
         "created_at, updated_at, deleted_at "
-        "FROM graphs WHERE uid = %s AND deleted_at IS NULL"
+        "FROM graphs WHERE uid = %s"
     )
     async with conn.cursor() as cur:
         await cur.execute(query, (uid,))

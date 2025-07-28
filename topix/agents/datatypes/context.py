@@ -1,3 +1,4 @@
+"""Agent context datatypes."""
 import asyncio
 
 from pydantic import BaseModel, PrivateAttr

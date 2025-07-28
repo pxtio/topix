@@ -1,7 +1,6 @@
 """Main agent manager."""
 
 import asyncio
-import uuid
 
 from collections.abc import AsyncGenerator
 from datetime import datetime
@@ -18,12 +17,13 @@ from agents import (
 )
 from topix.agents.base import BaseAgentManager
 from topix.agents.datatypes.context import ReasoningContext
-from topix.agents.datatypes.stream import AgentStreamMessage, StreamMessageType
+from topix.agents.datatypes.stream import AgentStreamMessage, StreamMessageType, ToolExecutionState
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.prompt_utils import render_prompt
 from topix.agents.sessions import AssistantSession
 from topix.agents.tools.answer_reformulate import AnswerReformulate
 from topix.agents.tools.web_search import WebSearch
+from topix.utils.common import gen_uid
 
 
 class AssistantAgentHook(AgentHooks):
@@ -119,12 +119,14 @@ class AssistantManager(BaseAgentManager):
         query: str,
         context: ReasoningContext,
         max_turns: int = 5,
-        session: AssistantSession | None = None
+        session: AssistantSession | None = None,
+        message_id: str | None = None
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Stream the results of the reflection agent."""
         if session:
             await session.add_items([
                 {
+                    "id": message_id or gen_uid(),
                     "role": "user",
                     "content": query
                 }
@@ -139,10 +141,20 @@ class AssistantManager(BaseAgentManager):
             max_turns=max_turns,
         )
 
-        id_ = uuid.uuid4().hex
+        id_ = gen_uid()
+
+        # Notify the start of the agent stream
+        await context._message_queue.put(
+            AgentStreamMessage(
+                type=StreamMessageType.STATE,
+                tool_id=id_,
+                tool_name=AgentToolName.RAW_MESSAGE,
+                execution_state=ToolExecutionState.STARTED,
+            )
+        )
 
         async def stream_events():
-
+            """Stream the events from the agent."""
             async for stream_chunk in self.handle_stream_events(
                 streamed_answer,
                 tool_id=id_,
@@ -169,6 +181,7 @@ class AssistantManager(BaseAgentManager):
                     # If a session is provided, store the final answer
                     await session.add_items([
                         {
+                            "id": id_,
                             "role": "assistant",
                             "content": final_answer if final_answer else raw_answer
                         }

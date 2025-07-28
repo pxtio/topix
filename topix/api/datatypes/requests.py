@@ -9,6 +9,7 @@ from topix.datatypes.note.note import Note
 class SendMessageRequest(BaseModel):
     """Request model for sending a message to a chat."""
 
+    message_id: str | None = None
     query: str
 
 

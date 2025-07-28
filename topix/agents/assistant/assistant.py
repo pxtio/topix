@@ -144,7 +144,7 @@ class AssistantManager(BaseAgentManager):
 
         async def stream_events():
 
-            async for stream_chunk in self.handle_stream_events(
+            async for stream_chunk in self._handle_stream_events(
                 streamed_answer,
                 tool_id=id_,
                 tool_name=AgentToolName.RAW_MESSAGE

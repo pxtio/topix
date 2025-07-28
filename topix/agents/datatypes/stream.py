@@ -9,6 +9,7 @@ class StreamMessageType(str, CustomEnum):
 
     TOKEN = "token"
     STATE = "state"
+    CHUNK = "chunk"
 
 
 class ToolExecutionState(str, CustomEnum):
@@ -20,8 +21,12 @@ class ToolExecutionState(str, CustomEnum):
 
 
 class StreamDelta(BaseModel):
-    """Stream delta for token streaming."""
+    """Token-level update during streaming (e.g., partial token from model)."""
+    content: str
 
+
+class MessageChunk(BaseModel):
+    """Chunk of finalized content (e.g., finalized sentence or paragraph)."""
     content: str
 
 
@@ -36,3 +41,4 @@ class AgentStreamMessage(BaseModel):
     execution_state: ToolExecutionState | None = None
     status_message: str | None = None
     delta: StreamDelta | None = None
+    chunk: MessageChunk | None = None

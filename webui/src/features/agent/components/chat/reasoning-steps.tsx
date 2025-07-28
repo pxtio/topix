@@ -30,21 +30,21 @@ const ReasoningStepView = ({
   step,
   isLoading
 }: { step: ReasoningStep, isLoading?: boolean }) => {
-  const message = extractStepDescription(step);
-  const trimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 200);
-  const longerTrimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 800);
+  const message = extractStepDescription(step)
+  const trimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 200)
+  const longerTrimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 800)
 
-  const [viewMore, setViewMore] = useState<boolean>(false);
+  const [viewMore, setViewMore] = useState<boolean>(false)
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    setViewMore(!viewMore);
+    event.preventDefault()
+    setViewMore(!viewMore)
   }
 
   const messageClass =
     viewMore ?
     'transition-all h-auto min-h-2 p-2 rounded-xl bg-white border border-stone-300' :
-    'transition-all h-auto min-h-2 p-2 rounded-xl border border-transparent';
+    'transition-all h-auto min-h-2 p-2 rounded-xl border border-transparent'
 
   return (
     <div
@@ -95,8 +95,8 @@ const ReasoningStepView = ({
  * @property {AgentResponse} response - The response from the agent containing reasoning steps.
  */
 export interface ReasoningStepsViewProps {
-  isStreaming: boolean;
-  response?: AgentResponse;
+  isStreaming: boolean
+  response?: AgentResponse
 }
 
 
@@ -106,7 +106,7 @@ export interface ReasoningStepsViewProps {
  * @param {ReasoningStepsViewProps} props - The properties for the component.
  */
 export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsViewProps) => {
-  const [isOpen, setIsOpen] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState<boolean>(true)
 
   if (!response || response.steps.length === 0) {
     return (

@@ -1,15 +1,15 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { GeistSans } from 'geist/font/sans'
-import { GeistMono } from 'geist/font/mono'
 import './index.css'
 import App from './App.tsx'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-document.documentElement.classList.add(GeistSans.variable)
-document.documentElement.classList.add(GeistMono.variable)
+const queryClient = new QueryClient()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
   </StrictMode>,
 )

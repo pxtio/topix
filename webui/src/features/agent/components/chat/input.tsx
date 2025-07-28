@@ -1,6 +1,5 @@
-"use client"
 import React, { useState, type KeyboardEvent } from 'react'
-import { Command, CommandInput, CommandList, CommandIcon } from '../../../../components/ui/command'
+import { Command, CommandInput, CommandList } from '../../../../components/ui/command'
 import {
   Select,
   SelectContent,
@@ -20,6 +19,8 @@ import { useChatStore } from '../../store/chat-store'
 import { LlmDescription, LlmModels, LlmName, type LlmModel } from '../../types/llm'
 import { useSendMessage } from '../../api/send-message'
 import { generateUuid } from '@/lib/common'
+import { useAppStore } from '@/store'
+import { SendButton } from './send-button'
 
 
 /**
@@ -78,15 +79,14 @@ const ModelChoiceMenu = () => {
 
 
 /**
- * SearchBar is a component that provides a search input field
- * and a button to trigger the search. It uses the Command component
- * from the UI library to create a styled input and button.
+ * Component that renders an input bar for sending messages in a chat interface.
  */
-const InputBar: React.FC = () => {
-  const isStreaming = useChatStore((state) => state.isStreaming)
-  const currentChatId = useChatStore((state) => state.currentChatId)
+export const InputBar: React.FC = () => {
+  const userId = useAppStore((state) => state.userId)
 
-  const [input, setInput] = useState<string>('')
+  const isStreaming = useChatStore((state) => state.isStreaming)
+
+  const [input, setInput] = useState<string>("")
 
   const { sendMessage } = useSendMessage()
 
@@ -99,11 +99,8 @@ const InputBar: React.FC = () => {
       query: input.trim(),
       message_id: generateUuid()
     }
-    sendMessage({
-      payload,
-      chatId: currentChatId
-    })
-    setInput('') // Clear the input after search
+    sendMessage({ payload, userId })
+    setInput("") // Clear the input after search
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -147,7 +144,7 @@ const InputBar: React.FC = () => {
               </div>
               <div className='flex justify-start'>
                 <ModelChoiceMenu />
-                <CommandIcon
+                <SendButton
                   loadingStatus={isStreaming ? "loading": "loaded"}
                   disabled={isStreaming}
                   onClick={handleSearch}
@@ -164,5 +161,3 @@ const InputBar: React.FC = () => {
     </div>
   )
 }
-
-export default InputBar

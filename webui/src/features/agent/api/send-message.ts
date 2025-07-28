@@ -6,6 +6,7 @@ import { useChatStore } from "../store/chat-store"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { ChatMessage } from "../types/chat"
 import { generateUuid } from "@/lib/common"
+import { createNewChat } from "./create-chat"
 
 
 /**
@@ -18,12 +19,13 @@ import { generateUuid } from "@/lib/common"
  */
 export async function* sendMessage(
   payload: SendMessageRequestPayload,
-  chatId: string
+  chatId: string,
+  userId: string
 ): AsyncGenerator<AgentStreamMessage> {
   const headers = new Headers()
   headers.set("Content-Type", "application/json")
 
-  const response = await fetch(`${API_URL}/chats/${chatId}/messages`, {
+  const response = await fetch(`${API_URL}/chats/${chatId}/messages?user_id=${userId}`, {
     method: "POST",
     headers,
     body: JSON.stringify(payload),
@@ -41,20 +43,31 @@ export async function* sendMessage(
 export const useSendMessage = () => {
   const setStream = useChatStore((state) => state.setStream)
   const setIsStreaming = useChatStore((state) => state.setIsStreaming)
+  const setCurrentChatId = useChatStore((state) => state.setCurrentChatId)
+  const currentChatId = useChatStore((state) => state.currentChatId)
 
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
     mutationFn: async ({
       payload,
-      chatId
+      userId
     }: {
       payload: SendMessageRequestPayload,
-      chatId: string
+      userId: string
     }) => {
       setIsStreaming(true)
       // Optimistically update the chat messages in the query cache
       try {
+        let chatId = currentChatId
+        if (!chatId) {
+          chatId = await createNewChat(userId)
+          setCurrentChatId(chatId)
+        }
+
+        if (!chatId) {
+          return
+        }
         queryClient.setQueryData<ChatMessage[]>(
           ["listMessages", chatId],
           (oldMessages) => [
@@ -62,7 +75,7 @@ export const useSendMessage = () => {
             { id: generateUuid(), role: "user", content: payload.query, chatUid: chatId }
           ]
         )
-        const stream = sendMessage(payload, chatId)
+        const stream = sendMessage(payload, chatId, userId)
         const response = buildResponse(stream)
         for await (const resp of response) {
           if (resp.steps.length === 0) continue

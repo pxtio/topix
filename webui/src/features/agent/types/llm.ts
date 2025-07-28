@@ -27,4 +27,4 @@ export const LlmDescription: Record<LlmModel, string> = {
     "gpt-4.1": 'An enhanced version of GPT-4 with better performance and capabilities.',
     "mistral-large-latest": 'Best for those who prefer a French-based AI solution.',
     "gemini-2.0-flash": 'Ideal for cost-effective, factual responses, perfect for concise and straightforward answers.',
-};
+}

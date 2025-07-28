@@ -12,7 +12,7 @@ class QueryRewrite(BaseAgent):
 
     def __init__(
         self,
-        model: str,
+        model: str = "openai/gpt-4o-mini",
         instructions_template: str = "query_rewrite.system.jinja",
         model_settings: ModelSettings | None = None,
     ):

@@ -67,7 +67,7 @@ class AgentRunner:
             session=session,
         )
 
-        return res
+        return await starting_agent._output_extractor(context=context, output=res)
 
     @classmethod
     async def run_streamed(

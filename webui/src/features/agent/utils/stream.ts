@@ -63,7 +63,7 @@ export async function* buildResponse(
 
     // If no step exists for the current toolId or if the reasoning continues after a tool call
     // (marked by last tool name not being RAW_RESPONSE and current tool name being RAW_RESPONSE),
-    if (steps.length === 0 || (steps[steps.length - 1].name !== RAW_RESPONSE && chunk.toolName === RAW_RESPONSE)) {
+    if (steps.length === 0 || (newResponse.steps[newResponse.steps.length - 1].name !== RAW_RESPONSE && chunk.toolName === RAW_RESPONSE)) {
       const newStep: ReasoningStep = {
         id: chunk.toolId,
         name: chunk.toolName,

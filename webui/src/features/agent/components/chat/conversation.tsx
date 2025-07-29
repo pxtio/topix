@@ -53,7 +53,7 @@ export const Conversation = ({ chatId }: { chatId: string }) => {
       <div className='mt-32 flex flex-col items-end space-y-8'>
         {items}
         {/* Placeholder for additional content or spacing */}
-        <div className='h-120'>
+        <div className='h-screen'>
         </div>
       </div>
     </>

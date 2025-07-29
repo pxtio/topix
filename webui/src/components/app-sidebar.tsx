@@ -26,10 +26,14 @@ import { CollapsibleContent } from "@radix-ui/react-collapsible"
 function NewChatItem() {
   const setCurrentChatId = useChatStore((state) => state.setCurrentChatId)
 
+  const currentChatId = useChatStore((state) => state.currentChatId)
+
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200' + (currentChatId === undefined ? ' bg-stone-200/70' : '')
+
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
-        className='text-xs font-medium'
+        className={itemClass}
         onClick={() => setCurrentChatId(undefined)}
       >
         <PencilLine className='text-xs shrink-0' strokeWidth={1.75} />

@@ -33,7 +33,8 @@ const extractText = (children: React.ReactNode): string => {
   }
 
   if (React.isValidElement(children)) {
-    return extractText(children.props.children)
+    const element = children as React.ReactElement<{ children?: React.ReactNode }>
+    return extractText(element.props.children)
   }
 
   return ''

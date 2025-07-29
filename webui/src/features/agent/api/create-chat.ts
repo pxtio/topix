@@ -10,10 +10,9 @@ export async function createNewChat(userId: string): Promise<string> {
   const headers = new Headers()
   headers.set("Content-Type", "application/json")
 
-  const response = await fetch(`${API_URL}/chats`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ user_id: userId }),
+  const response = await fetch(`${API_URL}/chats?user_id=${userId}`, {
+    method: "PUT",
+    headers
   })
 
   if (!response.ok) {

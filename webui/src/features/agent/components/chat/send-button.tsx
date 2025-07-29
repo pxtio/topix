@@ -1,11 +1,11 @@
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { LoaderCircle, Send } from "lucide-react";
-import type React from "react";
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { LoaderCircle, Send } from "lucide-react"
+import type React from "react"
 
 
 interface SendButtonProps extends React.ComponentProps<typeof Button> {
-  loadingStatus?: "loaded" | "loading";
+  loadingStatus?: "loaded" | "loading"
 }
 
 
@@ -15,14 +15,14 @@ export function SendButton({  className,
 }: SendButtonProps) {
   return (
     <Button
-      className={cn("rounded-full flex items-center text-xs font-medium p-2 h-auto shadow-none", className)}
+      className={cn("rounded-full flex items-center justify-center h-8 w-8 shadow-none", className)}
       {...props}
       variant={loadingStatus === "loaded" ? 'outline' : "ghost"}
     >
       {
         loadingStatus === "loaded" ?
-        <Send className="h-4 w-4 shrink-0" /> :
-        <LoaderCircle className="h-4 w-4 shrink-0 animate-spin" />
+        <Send className="size-4 shrink-0" strokeWidth={1.75} /> :
+        <LoaderCircle className="size-4 shrink-0 animate-spin" strokeWidth={1.75} />
       }
     </Button>
   )

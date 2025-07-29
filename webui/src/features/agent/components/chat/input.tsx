@@ -53,12 +53,11 @@ const ModelChoiceMenu = () => {
 
   const handleModelChange = (model: LlmModel) => {
     setLlmModel(model)
-    console.log('Model changed to:', model)
   }
 
   return (
     <Select onValueChange={handleModelChange} defaultValue={llmModel}>
-      <SelectTrigger className="w-24 rounded-full bg-stone-100 border-none text-xs w-auto h-auto">
+      <SelectTrigger className="h-8 w-auto rounded-full bg-stone-100 border border-stone-300 text-xs px-3 shadow-none">
         <SelectValue defaultValue={llmModel} />
       </SelectTrigger>
       <SelectContent className='overflow-visible'>
@@ -119,7 +118,7 @@ export const InputBar: React.FC = () => {
   )
 
   return (
-    <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 p-4 z-50 flex justify-center items-center">
+    <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 p-4 z-50 flex justify-center items-center">
       <div className='flex flex-col space-y-2'>
         <div>
           <Command
@@ -128,9 +127,9 @@ export const InputBar: React.FC = () => {
               md:min-w-[800px]
               rounded-3xl
               p-3 pt-0
-              bg-stone-50
-              text-lg
-              border border-stone-300
+              bg-stone-100
+              text-base
+              border
             `}
           >
             <div className="flex flex-col items-center space-y-1 items-stretch">
@@ -139,7 +138,7 @@ export const InputBar: React.FC = () => {
                   placeholder='Enter your query ...'
                   value={input}
                   onValueChange={setInput}
-                  className='text-md'
+                  className='border-b-none'
                 />
               </div>
               <div className='flex justify-start'>

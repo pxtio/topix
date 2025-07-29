@@ -123,6 +123,17 @@ class AssistantManager(BaseAgentManager):
         message_id: str | None = None
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Stream the results of the reflection agent."""
+        id_ = gen_uid()
+
+        # Notify the start of the agent stream
+        start_msg = AgentStreamMessage(
+            type=StreamMessageType.STATE,
+            tool_id=id_,
+            tool_name=AgentToolName.RAW_MESSAGE,
+            execution_state=ToolExecutionState.STARTED
+        )
+        await context._message_queue.put(start_msg)
+        yield start_msg
         if session:
             await session.add_items([
                 {
@@ -139,18 +150,6 @@ class AssistantManager(BaseAgentManager):
             context=context,
             input=history,
             max_turns=max_turns,
-        )
-
-        id_ = gen_uid()
-
-        # Notify the start of the agent stream
-        await context._message_queue.put(
-            AgentStreamMessage(
-                type=StreamMessageType.STATE,
-                tool_id=id_,
-                tool_name=AgentToolName.RAW_MESSAGE,
-                execution_state=ToolExecutionState.STARTED,
-            )
         )
 
         async def stream_events():

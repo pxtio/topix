@@ -1,12 +1,11 @@
 import Layout from './components/layout'
+import { ChatView } from './features/agent/components/chat-view'
 
 function App() {
 
   return (
     <Layout>
-      <div className="App">
-        <h1>Hello world!</h1>
-      </div>
+      <ChatView />
     </Layout>
   )
 }

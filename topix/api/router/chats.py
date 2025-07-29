@@ -114,7 +114,7 @@ async def delete_chat(
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
     """Delete a chat by its ID."""
-    return await request.app.chat_store.delete_chat(chat_id)
+    return await request.app.chat_store.delete_chat(chat_id, hard_delete=True)
 
 
 @router.post("/{chat_id}/messages/", include_in_schema=False)

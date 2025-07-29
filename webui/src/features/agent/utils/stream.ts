@@ -93,6 +93,12 @@ export async function* buildResponse(
     }
     yield newResponse
   }
+  response.steps.forEach((step) => {
+    if (step.state === "started") {
+      step.state = "completed"
+    }
+  })
+  yield response
 }
 
 
@@ -106,5 +112,5 @@ export function extractStepDescription(step: ReasoningStep): string {
   if (step.name !== RAW_RESPONSE) {
     return step.message || `Running \`${step.name}\``
   }
-  return step.content || ""
+  return step.content || "Reasoning..."
 }

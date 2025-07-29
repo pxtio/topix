@@ -4,9 +4,10 @@ import type { SendMessageRequestPayload } from "./types"
 import { buildResponse, handleStreamingResponse } from "../utils/stream"
 import { useChatStore } from "../store/chat-store"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import type { ChatMessage } from "../types/chat"
-import { generateUuid } from "@/lib/common"
+import type { Chat, ChatMessage } from "../types/chat"
+import { generateUuid, trimText } from "@/lib/common"
 import { createNewChat } from "./create-chat"
+import { describeChat } from "./describe-chat"
 
 
 /**
@@ -59,9 +60,22 @@ export const useSendMessage = () => {
       setIsStreaming(true)
       // Optimistically update the chat messages in the query cache
       try {
+        let newChatCreated = false
         let chatId = currentChatId
         if (!chatId) {
+          newChatCreated = true
           chatId = await createNewChat(userId)
+          if (chatId) {
+            const newId = chatId
+            queryClient.setQueryData<Chat[]>(
+              ["listChats", userId],
+              (oldChats) => {
+                const newChat = { id: -1, uid: newId, label: trimText(payload.query, 20), createdAt: new Date().toISOString(), userId }
+                return [newChat, ...(oldChats || [])]
+              }
+            )
+          }
+
           setCurrentChatId(chatId)
         }
 
@@ -69,7 +83,7 @@ export const useSendMessage = () => {
           return
         }
         queryClient.setQueryData<ChatMessage[]>(
-          ["listMessages", chatId],
+          ["listMessages", chatId, userId],
           (oldMessages) => [
             ...(oldMessages || []),
             { id: generateUuid(), role: "user", content: payload.query, chatUid: chatId }
@@ -77,11 +91,37 @@ export const useSendMessage = () => {
         )
         const stream = sendMessage(payload, chatId, userId)
         const response = buildResponse(stream)
+        let setNewAssistantMessageId = false
         for await (const resp of response) {
           if (resp.steps.length === 0) continue
           const step = resp.steps[0]
           const responseId = step.id
+          if (!setNewAssistantMessageId) {
+            setNewAssistantMessageId = true
+            queryClient.setQueryData<ChatMessage[]>(
+              ["listMessages", chatId, userId],
+              (oldMessages) => [
+                ...(oldMessages || []),
+                { id: responseId, role: "assistant", content: "", chatUid: chatId }
+              ]
+            )
+          }
           setStream(responseId, resp)
+        }
+        if (newChatCreated) {
+          // describe chat after creating it
+          const label = await describeChat(chatId, userId)
+          queryClient.setQueryData<Chat[]>(
+            ["listChats", userId],
+            (oldChats) => {
+              if (!oldChats) return []
+              return oldChats.map(chat =>
+                chat.uid === chatId
+                  ? { ...chat, label } // Replace with a new object
+                  : chat
+              )
+            }
+          )
         }
       } finally {
         setIsStreaming(false)

@@ -60,4 +60,4 @@ export interface AgentResponse {
 }
 
 
-export const RAW_RESPONSE = "raw_response"
+export const RAW_RESPONSE = "raw_message"

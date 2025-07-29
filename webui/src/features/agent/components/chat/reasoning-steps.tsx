@@ -31,6 +31,7 @@ const ReasoningStepView = ({
   isLoading
 }: { step: ReasoningStep, isLoading?: boolean }) => {
   const message = extractStepDescription(step)
+
   const trimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 200)
   const longerTrimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 800)
 
@@ -59,7 +60,11 @@ const ReasoningStepView = ({
           isLoading &&
           <div className='absolute animate-ping w-2 h-2 rounded-full bg-stone-500 z-20' />
         }
-        <div className='relative w-2 h-2 rounded-full bg-stone-700 z-20' />
+        {
+          isLoading ?
+          <div className='relative w-2 h-2 rounded-full bg-stone-700 z-20' /> :
+          <div className='relative w-2 h-2 rounded-full bg-teal-700 z-20' />
+        }
       </div>
       <div className={messageClass}>
         {
@@ -95,7 +100,6 @@ const ReasoningStepView = ({
  * @property {AgentResponse} response - The response from the agent containing reasoning steps.
  */
 export interface ReasoningStepsViewProps {
-  isStreaming: boolean
   response?: AgentResponse
 }
 
@@ -105,7 +109,7 @@ export interface ReasoningStepsViewProps {
  * It allows toggling between showing the last step or all steps.
  * @param {ReasoningStepsViewProps} props - The properties for the component.
  */
-export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsViewProps) => {
+export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(true)
 
   if (!response || response.steps.length === 0) {
@@ -122,9 +126,9 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
         relative
         w-full
         p-4
-        bg-stone-50
+        bg-stone-100
         rounded-xl
-        border border-stone-300
+        border border-stone-200
       `}
     >
       <div
@@ -139,7 +143,7 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
           !isOpen &&
           <ReasoningStepView
             step={response.steps[response.steps.length - 1]}
-            isLoading={response.steps[response.steps.length - 1].state === "started" && isStreaming}
+            isLoading={response.steps[response.steps.length - 1].state === "started"}
           />
         }
         {
@@ -147,7 +151,7 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
           response.steps.map((step, index) => <ReasoningStepView
             key={index}
             step={step}
-            isLoading={step.state === "started" && isStreaming}
+            isLoading={step.state === "started"}
           />)
         }
         {

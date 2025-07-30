@@ -63,7 +63,7 @@ async def main(args):
     app = create_app(stage=args.stage)
 
     config = Config.instance()
-    return app, config.app.settings.port
+    return app, args.port or config.app.settings.port
 
 
 if __name__ == "__main__":
@@ -73,6 +73,12 @@ if __name__ == "__main__":
         default=StageEnum.LOCAL,
         help="The stage to run the application in.",
         choices=list(StageEnum)
+    )
+    args.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="Port to run the application on."
     )
     args = args.parse_args()
     app, port = asyncio.run(main(args))

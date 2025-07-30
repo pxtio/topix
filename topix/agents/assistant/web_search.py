@@ -14,6 +14,7 @@ from agents import (
 )
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
+from topix.agents.datatypes.model_enum import ModelEnum
 
 
 class WebSearchAgentHook(AgentHooks):
@@ -49,7 +50,7 @@ class WebSearch(BaseAgent[str]):
 
     def __init__(
         self,
-        model: str = "openai/gpt-4o-mini",
+        model: str = ModelEnum.OpenAI.GPT_4O_MINI,
         instructions_template: str = "web_search.jinja",
         model_settings: ModelSettings | None = None,
     ):
@@ -84,6 +85,6 @@ class WebSearch(BaseAgent[str]):
 
     async def _output_extractor(
         self, context: ReasoningContext, output: RunResult
-    ) -> Any:
+    ) -> str:
         context.web_search_results.append(output.final_output)
         return output.final_output

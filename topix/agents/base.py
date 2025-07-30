@@ -28,10 +28,10 @@ from topix.agents.utils import tool_execution_handler
 
 RAW_RESPONSE_EVENT = "raw_response_event"
 PROMPT_DIR = Path(__file__).parent.parent / "prompts"
-TInput = TypeVar("TInput", BaseModel, str)
+TOutput = TypeVar("TOutput", BaseModel, str)
 
 
-class BaseAgent(Agent[Context], Generic[TInput]):
+class BaseAgent(Agent[Context], Generic[TOutput]):
     """Base class for agents. Inherit from Openai Agent"""
 
     def __post_init__(self):
@@ -79,7 +79,7 @@ class BaseAgent(Agent[Context], Generic[TInput]):
             name_override=tool_name,
             description_override=tool_description or "",
         )
-        async def run_agent(context: RunContextWrapper[Context], input: TInput) -> str:
+        async def run_agent(context: RunContextWrapper[Context], input: BaseModel | str) -> str:
             """
             Execute the agent with the provided context and input.
 
@@ -143,27 +143,19 @@ class BaseAgent(Agent[Context], Generic[TInput]):
     async def _as_tool_hook(
         self,
         context: Context,
-        input: TInput,
+        input: Any,
         tool_id: str
     ) -> Any | None:
         return None
 
-    async def _input_formatter(self, context: Context, input: TInput) -> str:
+    async def _input_formatter(self, context: Context, input: BaseModel | str) -> str:
         if isinstance(input, str):
             return input
         else:
             raise NotImplementedError
 
-    async def _output_extractor(self, context: Context, output: RunResult) -> Any:
+    async def _output_extractor(self, context: Context, output: RunResult) -> TOutput:
         return output.final_output
-
-    @staticmethod
-    def is_delta(message: str | AgentStreamMessage) -> bool:
-        """Check if the message is a delta."""
-        return (
-            isinstance(message, AgentStreamMessage)
-            and message.type == StreamMessageType.TOKEN
-        )
 
     @classmethod
     def _render_prompt(cls, filename: str, **kwargs) -> str:

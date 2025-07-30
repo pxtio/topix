@@ -9,7 +9,7 @@ from topix.agents.datatypes.stream import (
     StreamMessageType,
 )
 from topix.agents.datatypes.tools import AgentToolName
-from topix.agents.prompt_utils import render_prompt
+from topix.agents.datatypes.model_enum import ModelEnum
 
 
 class AnswerReformulate(BaseAgent[str]):
@@ -22,7 +22,7 @@ class AnswerReformulate(BaseAgent[str]):
 
     def __init__(
         self,
-        model: str = "openai/gpt-4o",
+        model: str = ModelEnum.OpenAI.GPT_4O,
         instructions_template: str = "answer_reformulation.system.jinja",
         model_settings: ModelSettings | None = None,
     ):
@@ -50,7 +50,7 @@ class AnswerReformulate(BaseAgent[str]):
             else ""
         )
 
-        return render_prompt(
+        return self._render_prompt(
             "answer_reformulation.user.jinja",
             query=input,
             web_search_results=web_search_results,

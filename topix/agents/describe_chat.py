@@ -1,11 +1,13 @@
 """Agent to describe a chat."""
+
 import logging
 
 from pydantic import BaseModel
 
-from agents import ModelSettings
+from agents import ModelSettings, RunResult
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import Context
+from topix.agents.datatypes.model_enum import ModelEnum
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ class DescribeChat(BaseAgent):
 
     def __init__(
         self,
-        model: str = "openai/gpt-4.1-nano",
+        model: str = ModelEnum.OpenAI.GPT_4_1_NANO,
         instructions_template: str = "describe_chat.jinja",
         model_settings: ModelSettings | None = None,
     ):
@@ -40,5 +42,7 @@ class DescribeChat(BaseAgent):
             instructions=instructions,
         )
 
-    async def _output_extractor(self, context: Context, output: ChatDescription):
+    async def _output_extractor(
+        self, context: Context, output: RunResult
+    ) -> str | None:
         return output.final_output.title if output.final_output else None

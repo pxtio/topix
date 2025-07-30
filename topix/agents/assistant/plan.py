@@ -12,8 +12,9 @@ from agents import (
 )
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
-from topix.agents.assistant.agents.answer_reformulate import AnswerReformulate
-from topix.agents.assistant.agents.web_search import WebSearch
+from topix.agents.assistant.answer_reformulate import AnswerReformulate
+from topix.agents.assistant.web_search import WebSearch
+from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName
 
 
@@ -38,7 +39,7 @@ class PlanHooks(AgentHooks):
         tool: Tool,
     ):
         """Handle tool calls and update the context with the results."""
-        if tool.name == "answer_reformulate":
+        if tool.name == AgentToolName.ANSWER_REFORMULATE:
             # If the tool is the answer reformulation tool,
             # we do not need to recall the LLM
             agent.tool_use_behavior = "stop_on_first_tool"
@@ -51,16 +52,16 @@ class PlanHooks(AgentHooks):
         result: str,
     ):
         """Handle tool calls and update the context with the results."""
-        if tool.name == "web_search":
+        if tool.name == AgentToolName.WEB_SEARCH:
             agent.model_settings.tool_choice = "required"
 
 
-class Plan(BaseAgent):
+class Plan(BaseAgent[str]):
     """Manager for the reflection agent."""
 
     def __init__(
         self,
-        model: str = "openai/gpt-4o",
+        model: str = ModelEnum.OpenAI.GPT_4O,
         instructions_template: str = "plan.jinja",
         model_settings: ModelSettings | None = None,
     ):

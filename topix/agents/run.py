@@ -1,11 +1,11 @@
 import asyncio
 from collections.abc import AsyncGenerator
 import uuid
-from agents import RunConfig, RunHooks, RunResult, Runner, TContext, TResponseInputItem
+from agents import RunConfig, RunHooks, Runner, TContext, TResponseInputItem
 from agents.memory import Session
 from pydantic import BaseModel
 
-from topix.agents.base import BaseAgent
+from topix.agents.base import BaseAgent, TOutput
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.stream import AgentStreamMessage
 from topix.agents.datatypes.tools import AgentToolName
@@ -17,7 +17,7 @@ class AgentRunner:
     @classmethod
     async def run(
         cls,
-        starting_agent: BaseAgent,
+        starting_agent: BaseAgent[TOutput],
         input: str | list[TResponseInputItem] | BaseModel,
         *,
         context: TContext | None = None,
@@ -26,7 +26,7 @@ class AgentRunner:
         run_config: RunConfig | None = None,
         previous_response_id: str | None = None,
         session: Session | None = None,
-    ) -> RunResult:
+    ) -> TOutput:
         """Run a workflow starting at the given agent. The agent will run in a loop until a final
         output is generated. The loop runs like so:
         1. The agent is invoked with the given input.

@@ -2,9 +2,10 @@ from agents import ModelSettings
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.inputs import QueryRewriteInput
+from topix.agents.datatypes.model_enum import ModelEnum
 
 
-class QueryRewrite(BaseAgent):
+class QueryRewrite(BaseAgent[str]):
     """
     A manager for query decompose operations.
     This class is responsible for managing the query decompose agent and its operations.
@@ -12,7 +13,7 @@ class QueryRewrite(BaseAgent):
 
     def __init__(
         self,
-        model: str = "openai/gpt-4o-mini",
+        model: str = ModelEnum.OpenAI.GPT_4O_MINI,
         instructions_template: str = "query_rewrite.system.jinja",
         model_settings: ModelSettings | None = None,
     ):

@@ -74,7 +74,7 @@ class Plan(BaseAgent[str]):
             model_settings = ModelSettings(temperature=0.01)
         tools = [
             WebSearch().as_tool(AgentToolName.WEB_SEARCH, streamed=True),
-            AnswerReformulate().as_tool(
+            AnswerReformulate(model=model).as_tool(
                 AgentToolName.ANSWER_REFORMULATE,
                 streamed=True,
             ),

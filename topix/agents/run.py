@@ -133,6 +133,7 @@ class AgentRunner:
 
         while True:
             message = await context._message_queue.get()
-            yield message
-            if message == "<END_OF_AGENT>":
+            if message != "<END_OF_AGENT>":
+                yield message
+            else:
                 break

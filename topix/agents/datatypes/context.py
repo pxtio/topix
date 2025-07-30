@@ -17,3 +17,4 @@ class ReasoningContext(Context):
 
     kb_search_results: list[str] = []
     web_search_results: list[str] = []
+    code_interpreter_results: list[str] = []

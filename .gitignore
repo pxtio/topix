@@ -19,7 +19,6 @@ apicache-py3/
 throttle.ctrl
 logs/
 default.sqlite
-lib/
 site/
 backups/
 *.egg-info/

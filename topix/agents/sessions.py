@@ -1,8 +1,7 @@
 """Assistant session management."""
 
 from agents.memory import Session
-from topix.datatypes.chat.chat import Message
-from topix.store.qdrant.store import ContentStore
+from topix.store.chat import ChatStore
 
 MAX_RETRIEVAL_MESSAGES = 20
 
@@ -10,63 +9,36 @@ MAX_RETRIEVAL_MESSAGES = 20
 class AssistantSession(Session):
     """Session for the assistant agent."""
 
-    def __init__(self, session_id: str, content_store: ContentStore):
+    def __init__(self, session_id: str, chat_store: ChatStore):
         """Init method."""
         self._session_id = session_id
-        self._content_store = content_store
+        self._chat_store = chat_store
 
     async def get_items(self, limit: int = MAX_RETRIEVAL_MESSAGES) -> list[dict]:
         """Get items from the session."""
-        res: list[Message] = await self._content_store.filt(
-            filters={
-                "must": [
-                    {
-                        "key": "type",
-                        "match": {"value": "message"}
-                    },
-                    {
-                        "key": "chat_uid",
-                        "match": {"value": self._session_id}
-                    }
-                ]
-            },
-            include=True,
+        messages = await self._chat_store.get_messages(
+            chat_uid=self._session_id,
             limit=limit
         )
-        return [item.to_chat_message() for item in res[::-1]]
+        return [msg.to_chat_message() for msg in messages]
 
     async def add_items(self, items: list[dict]) -> None:
         """Add items to the session."""
-        messages = []
-        for item in items:
-            if "id" in item:
-                del item["id"]
-            item["chat_uid"] = self._session_id
-            messages.append(Message(**item))
-
-        await self._content_store.add(messages)
+        await self._chat_store.add_messages(
+            chat_uid=self._session_id,
+            messages=items
+        )
 
     async def pop_item(self) -> dict | None:
         """Pop the last item from the session."""
-        items = await self.get_items(1)
-        if not items:
-            return None
-        await self._content_store.delete(items[0]["id"])
-        return items[0]
+        res = await self._chat_store.pop_message(chat_uid=self._session_id)
+        if res:
+            return res.to_chat_message()
+        return None
 
     async def clear_session(self) -> None:
         """Clear the session."""
-        await self._content_store.delete_by_filters(
-            filters={
-                "must": [
-                    {
-                        "key": "type",
-                        "match": {"value": "message"}
-                    },
-                    {
-                        "key": "chat_uid",
-                        "match": {"value": self._session_id}
-                    }
-                ]
-            }
+        await self._chat_store.delete_chat(
+            chat_uid=self._session_id,
+            hard_delete=True
         )

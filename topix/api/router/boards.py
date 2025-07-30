@@ -2,11 +2,11 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 from fastapi.params import Body, Path, Query
 
 from topix.api.datatypes.requests import AddLinksRequest, AddNotesRequest, GraphUpdateRequest
-from topix.api.helpers import format_response
+from topix.api.helpers import with_standard_response
 from topix.datatypes.graph.graph import Graph
 from topix.store.graph import GraphStore
 
@@ -19,25 +19,25 @@ router = APIRouter(
 
 @router.put("/", include_in_schema=False)
 @router.put("")
+@with_standard_response
 async def create_graph(
+    response: Response,
     request: Request,
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
     """Create a new graph for the user."""
     store: GraphStore = request.app.graph_store
 
-    async def create_graph():
-        """Create a new graph in the store."""
-        new_graph = Graph(user_uid=user_id)
-        await store.add_graph(graph=new_graph, user_uid=user_id)
-        return {"graph_id": new_graph.uid}
-
-    return await format_response(create_graph)
+    new_graph = Graph(user_uid=user_id)
+    await store.add_graph(graph=new_graph, user_uid=user_id)
+    return {"graph_id": new_graph.uid}
 
 
 @router.post("/{graph_id}/", include_in_schema=False)
 @router.post("/{graph_id}")
+@with_standard_response
 async def update_graph(
+    response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Query(description="User Unique ID")],
@@ -45,12 +45,14 @@ async def update_graph(
 ):
     """Update an existing graph by its ID."""
     store: GraphStore = request.app.graph_store
-    return await format_response(store.update_graph, graph_id, body.data)
+    return await store.update_graph(graph_uid=graph_id, data=body.data)
 
 
 @router.delete("/{graph_id}/", include_in_schema=False)
 @router.delete("/{graph_id}")
+@with_standard_response
 async def delete_graph(
+    response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
@@ -58,17 +60,15 @@ async def delete_graph(
     """Delete a graph by its ID."""
     store: GraphStore = request.app.graph_store
 
-    async def delete_graph():
-        """Delete the graph from the store."""
-        await store.delete_graph(graph_uid=graph_id, hard_delete=True)
-        return {"message": "Board deleted successfully"}
-
-    return await format_response(delete_graph)
+    await store.delete_graph(graph_uid=graph_id, hard_delete=True)
+    return {"message": "Board deleted successfully"}
 
 
 @router.get("/{graph_id}/", include_in_schema=False)
 @router.get("/{graph_id}")
+@with_standard_response
 async def get_graph(
+    response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Query(description="User Unique ID")]
@@ -76,34 +76,30 @@ async def get_graph(
     """Get a graph by its ID."""
     store: GraphStore = request.app.graph_store
 
-    async def get_graph():
-        """Retrieve the graph from the store."""
-        graph = await store.get_graph(graph_uid=graph_id)
-        return graph.model_dump(exclude_none=True)
-
-    return await format_response(get_graph)
+    graph = await store.get_graph(graph_uid=graph_id)
+    return graph.model_dump(exclude_none=True)
 
 
 @router.get("/", include_in_schema=False)
 @router.get("")
+@with_standard_response
 async def list_graphs(
+    response: Response,
     request: Request,
     user_id: Annotated[str, Query(description="User Unique ID")]
 ):
     """List all graphs for the user."""
     store: GraphStore = request.app.graph_store
 
-    async def list_graphs():
-        """List all graphs for the user."""
-        graphs = await store.list_graphs(user_uid=user_id)
-        return {"graphs": [{"id": idx, "label": label} for idx, label in graphs]}
-
-    return await format_response(list_graphs)
+    graphs = await store.list_graphs(user_uid=user_id)
+    return {"graphs": [{"id": idx, "label": label} for idx, label in graphs]}
 
 
 @router.post("/{graph_id}/notes/", include_in_schema=False)
 @router.post("/{graph_id}/notes")
+@with_standard_response
 async def add_notes_to_graph(
+    response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Query(description="User Unique ID")],
@@ -112,20 +108,19 @@ async def add_notes_to_graph(
     """Add notes to a graph."""
     store: GraphStore = request.app.graph_store
 
-    async def add_notes():
-        """Add notes to the specified graph."""
-        notes = body.notes
-        for note in notes:
-            note.graph_uid = graph_id
-        await store.add_notes(nodes=notes)
-        return {"message": "Notes added to board successfully"}
+    notes = body.notes
+    for note in notes:
+        note.graph_uid = graph_id
 
-    return await format_response(add_notes)
+    await store.add_notes(nodes=notes)
+    return {"message": "Notes added to board successfully"}
 
 
 @router.delete("/{graph_id}/notes/{note_id}/", include_in_schema=False)
 @router.delete("/{graph_id}/notes/{note_id}")
+@with_standard_response
 async def remove_note_from_graph(
+    response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     note_id: Annotated[str, Path(description="Note ID")],
@@ -134,17 +129,15 @@ async def remove_note_from_graph(
     """Remove notes from a graph."""
     store: GraphStore = request.app.graph_store
 
-    async def remove_note():
-        """Remove notes from the specified graph."""
-        await store.delete_node(node_id=note_id)
-        return {"message": "Note removed from board successfully"}
-
-    return await format_response(remove_note)
+    await store.delete_node(node_id=note_id)
+    return {"message": "Note removed from board successfully"}
 
 
 @router.post("/{graph_id}/links/", include_in_schema=False)
 @router.post("/{graph_id}/links")
+@with_standard_response
 async def add_links_to_graph(
+    response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Query(description="User Unique ID")],
@@ -153,20 +146,19 @@ async def add_links_to_graph(
     """Add links to a graph."""
     store: GraphStore = request.app.graph_store
 
-    async def add_links():
-        """Add links to the specified graph."""
-        links = body.links
-        for link in links:
-            link.graph_uid = graph_id
-        await store.add_links(links=links)
-        return {"message": "Links added to board successfully"}
+    links = body.links
+    for link in links:
+        link.graph_uid = graph_id
 
-    return await format_response(add_links)
+    await store.add_links(links=links)
+    return {"message": "Links added to board successfully"}
 
 
 @router.delete("/{graph_id}/links/{link_id}/", include_in_schema=False)
 @router.delete("/{graph_id}/links/{link_id}")
+@with_standard_response
 async def remove_link_from_graph(
+    response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     link_id: Annotated[str, Path(description="Link ID")],
@@ -175,9 +167,5 @@ async def remove_link_from_graph(
     """Remove links from a graph."""
     store: GraphStore = request.app.graph_store
 
-    async def remove_link():
-        """Remove links from the specified graph."""
-        await store.delete_link(link_id=link_id)
-        return {"message": "Link removed from board successfully"}
-
-    return await format_response(remove_link)
+    await store.delete_link(link_id=link_id)
+    return {"message": "Link removed from board successfully"}

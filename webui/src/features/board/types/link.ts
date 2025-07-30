@@ -1,0 +1,49 @@
+import { generateUuid } from "@/lib/common"
+import { defaultStyle, type Style } from "./style"
+
+
+/**
+ * Interface for a link between nodes in the board.
+ */
+export interface Link {
+  id: string
+  type: "link"
+  version: number
+
+  source: string
+  target: string
+  label?: string
+  style: Style
+
+  createdAt: string
+  updatedAt?: string
+  deletedAt?: string
+
+  graphUid?: string
+  saved?: boolean
+}
+
+
+/**
+ * Function to create a default link.
+ *
+ * @param boardId - The ID of the board to which the link belongs.
+ * @param source - The ID of the source node.
+ * @param target - The ID of the target node.
+ * @returns A new link with default properties.
+ */
+export const createDefaultLink = (
+  boardId: string,
+  source: string,
+  target: string
+): Link => ({
+  id: generateUuid(),
+  type: "link",
+  version: 1,
+  source,
+  target,
+  style: defaultStyle(),
+  createdAt: new Date().toISOString(),
+  graphUid: boardId,
+  saved: false
+})

@@ -23,6 +23,7 @@ from topix.agents.prompt_utils import render_prompt
 from topix.agents.sessions import AssistantSession
 from topix.agents.tools.answer_reformulate import AnswerReformulate
 from topix.agents.tools.web_search import WebSearch
+from topix.agents.tools.code_interpreter import CodeInterpreter
 from topix.utils.common import gen_uid
 
 
@@ -75,6 +76,7 @@ class AssistantManager(BaseAgentManager):
         """Initialize the reflection agent manager."""
         self.web_manager = WebSearch()
         self.answer_reformulate_manager = AnswerReformulate()
+        self.code_interpreter_manager = CodeInterpreter()
 
         self.agent = Agent[ReasoningContext](
             name=self.name,
@@ -82,11 +84,18 @@ class AssistantManager(BaseAgentManager):
                 time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             ),
             tools=[
-                function_tool(self.web_manager.as_tool, name_override="run_web_search"),
+                function_tool(
+                    self.web_manager.as_tool,
+                    name_override="run_web_search"
+                ),
                 function_tool(
                     self.answer_reformulate_manager.as_tool,
                     name_override="run_answer_reformulate"
                 ),
+                function_tool(
+                    self.code_interpreter_manager.as_tool,
+                    name_override="run_code_interpreter"
+                )
             ],
             hooks=AssistantAgentHook(),
             model=self.model_name,

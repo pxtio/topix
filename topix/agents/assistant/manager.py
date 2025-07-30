@@ -2,26 +2,22 @@
 
 from collections.abc import AsyncGenerator
 
-from topix.agents.datatypes.context import ReasoningContext
-from topix.agents.datatypes.stream import (
-    AgentStreamMessage,
-    ContentType
-)
-from topix.agents.datatypes.tools import AgentToolName
-from topix.agents.sessions import AssistantSession
-from topix.agents.assistant.query_rewrite import QueryRewrite
 from topix.agents.assistant.plan import Plan
+from topix.agents.assistant.query_rewrite import QueryRewrite
+from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.inputs import QueryRewriteInput
+from topix.agents.datatypes.stream import AgentStreamMessage, ContentType
+from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
+from topix.agents.sessions import AssistantSession
 from topix.utils.common import gen_uid
 
 
 class AssistantManager:
-    """
-    Orchestrates the full flow: query rewrite, planning, searching ...
-    """
+    """Orchestrates the full flow: query rewrite, planning, searching ..."""
 
     def __init__(self, query_rewrite_agent: QueryRewrite, plan_agent: Plan):
+        """Init method."""
         self.query_rewrite_agent = query_rewrite_agent
         self.plan_agent = plan_agent
 
@@ -53,7 +49,7 @@ class AssistantManager:
         message_id: str | None = None,
         max_turns: int = 5,
     ) -> str:
-        id_ = gen_uid()
+        """Run the assistant agent with the provided context and query."""
         new_query = await self._rewrite_query(context, query, session)
 
         if session:
@@ -65,7 +61,9 @@ class AssistantManager:
             self.plan_agent, input=new_query, context=context, max_turns=max_turns
         )
         if session:
-            await session.add_items([{"id": id_, "role": "assistant", "content": res}])
+            await session.add_items(
+                [{"id": gen_uid(), "role": "assistant", "content": res}]
+            )
         return res
 
     async def run_streamed(
@@ -76,16 +74,15 @@ class AssistantManager:
         message_id: str | None = None,
         max_turns: int = 5,
     ) -> AsyncGenerator[AgentStreamMessage, str]:
-        """
-        Run the assistant agent with the provided context and query.
+        """Run the assistant agent with the provided context and query.
 
         If a session is provided, use it to store the user query and retrieve the chat history.
         Otherwise, do not use any chat history.
 
         Yields:
             AgentStreamMessage: The messages from the agent.
-        """
 
+        """
         # Notify the start of the agent stream
         new_query = await self._rewrite_query(context, query, session)
 
@@ -104,7 +101,7 @@ class AssistantManager:
             if self._is_response(message):
                 if message.tool_name in [
                     AgentToolName.RAW_MESSAGE,
-                    AgentToolName.ANSWER_REFORMULATE
+                    AgentToolName.ANSWER_REFORMULATE,
                 ]:
                     raw_answer += message.content.text
             yield message
@@ -125,8 +122,6 @@ class AssistantManager:
     def _is_response(message: str | AgentStreamMessage) -> bool:
         """Check if the message is a response."""
         return isinstance(message, AgentStreamMessage) and (
-            message.content and message.content.type in [
-                ContentType.MESSAGE,
-                ContentType.TOKEN
-            ]
+            message.content
+            and message.content.type in [ContentType.MESSAGE, ContentType.TOKEN]
         )

@@ -1,3 +1,5 @@
+"""Query Rewrite Agent."""
+
 from agents import ModelSettings
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
@@ -6,10 +8,7 @@ from topix.agents.datatypes.model_enum import ModelEnum
 
 
 class QueryRewrite(BaseAgent[str]):
-    """
-    A manager for query decompose operations.
-    This class is responsible for managing the query decompose agent and its operations.
-    """
+    """Query Rewrite Agent."""
 
     def __init__(
         self,
@@ -17,6 +16,7 @@ class QueryRewrite(BaseAgent[str]):
         instructions_template: str = "query_rewrite.system.jinja",
         model_settings: ModelSettings | None = None,
     ):
+        """Init method."""
         name = "Query Rewrite"
         instructions = self._render_prompt(instructions_template)
         if model_settings is None:
@@ -33,15 +33,15 @@ class QueryRewrite(BaseAgent[str]):
     async def _input_formatter(
         self, context: ReasoningContext, input: QueryRewriteInput
     ) -> str:
-        """
-        Format the input for the query decomposition agent.
+        """Format the input for the query decomposition agent.
 
         Args:
             context (ReasoningContext): The agent context.
-            query (str): The user's query.
+            input (QueryRewriteInput): The input to format.
 
         Returns:
             str: The formatted input string.
+
         """
         chat_history, new_query = input.chat_history, input.query
         user_prompt = self._render_prompt(

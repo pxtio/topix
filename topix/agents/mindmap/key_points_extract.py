@@ -18,6 +18,7 @@ class KeyPointsExtract(BaseAgent[str]):
         instructions_template: str = "answer_reformulation.system.jinja",
         model_settings: ModelSettings | None = None,
     ):
+        """Init method."""
         name = "Key Points Extraction"
         instructions = self._render_prompt(instructions_template)
         if model_settings is None:

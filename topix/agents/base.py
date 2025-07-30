@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any, AsyncGenerator, Generic, TypeVar
 
 from jinja2 import Template
-
 from openai.types.responses import ResponseTextDeltaEvent
 from pydantic import BaseModel
 
@@ -19,11 +18,7 @@ from agents import (
 )
 from agents.extensions.models.litellm_model import LitellmModel
 from topix.agents.datatypes.context import Context
-from topix.agents.datatypes.stream import (
-    AgentStreamMessage,
-    Content,
-    ContentType
-)
+from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.agents.utils import tool_execution_handler
 
 RAW_RESPONSE_EVENT = "raw_response_event"
@@ -32,12 +27,10 @@ TOutput = TypeVar("TOutput", BaseModel, str)
 
 
 class BaseAgent(Agent[Context], Generic[TOutput]):
-    """Base class for agents. Inherit from Openai Agent"""
+    """Base class for agents. Inherit from Openai Agent."""
 
     def __post_init__(self):
-        """
-        Automatically load Litellm Model if model is a string
-        """
+        """Automatically load Litellm Model if model is a string."""
         if isinstance(self.model, str):
             model_type = self.model.split("/")[0]
             if model_type != "openai":
@@ -73,6 +66,7 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
 
         Returns:
             Tool: The tool that can be used by other agents.
+
         """
 
         @function_tool(
@@ -82,8 +76,7 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
         async def run_agent(
             context: RunContextWrapper[Context], input: BaseModel | str
         ) -> str:
-            """
-            Execute the agent with the provided context and input.
+            """Execute the agent with the provided context and input.
 
             Args:
                 context: The context wrapper for the agent.
@@ -91,6 +84,7 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
 
             Returns:
                 The final output from the agent as a string.
+
             """
             # Determine the name to override, using tool_name or defaulting
             # to the agent's name
@@ -180,5 +174,5 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
                 yield AgentStreamMessage(
                     content=Content(type=ContentType.TOKEN, text=event.data.delta),
                     **fixed_params,
-                    is_stop=False
+                    is_stop=False,
                 )

@@ -3,22 +3,13 @@
 from agents import ModelSettings
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
-from topix.agents.datatypes.stream import (
-    AgentStreamMessage,
-    Content,
-    ContentType
-)
-from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.datatypes.model_enum import ModelEnum
+from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
+from topix.agents.datatypes.tools import AgentToolName
 
 
 class AnswerReformulate(BaseAgent[str]):
-    """
-    Answer reformulate tool
-    Only needing of entering the question, the answer reformulate automatically
-    extract the gathered information from the context and reformulate
-    to create a final answer
-    """
+    """Answer reformulate tool."""
 
     def __init__(
         self,
@@ -26,6 +17,7 @@ class AnswerReformulate(BaseAgent[str]):
         instructions_template: str = "answer_reformulation.system.jinja",
         model_settings: ModelSettings | None = None,
     ):
+        """Init method."""
         name = "Answer Reformulate"
         instructions = self._render_prompt(instructions_template)
         if model_settings is None:

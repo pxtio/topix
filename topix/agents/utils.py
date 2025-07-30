@@ -1,13 +1,9 @@
-""" "Utility functions for agents."""
+"""Utility functions for agents."""
 
 from contextlib import asynccontextmanager
 
 from topix.agents.datatypes.context import Context
-from topix.agents.datatypes.stream import (
-    AgentStreamMessage,
-    Content,
-    ContentType
-)
+from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.utils.common import gen_uid
 
 
@@ -39,9 +35,7 @@ def format_tool_failed_message(tool_name: str, message: str | None = None) -> st
 async def tool_execution_handler(
     context: Context, tool_name: str, input_str: str | None = None
 ):
-    """
-    async context manager to handle tool execution
-    """
+    """Async context manager to handle tool execution."""
     fixed_params = {
         "tool_id": gen_uid(),
         "tool_name": tool_name,
@@ -55,9 +49,7 @@ async def tool_execution_handler(
         AgentStreamMessage(
             content=Content(
                 type=ContentType.STATUS,
-                text=format_tool_start_message(
-                    tool_name, start_message
-                )
+                text=format_tool_start_message(tool_name, start_message),
             ),
             is_stop=False,
             **fixed_params,

@@ -10,10 +10,10 @@ from agents import (
     RunContextWrapper,
     Tool,
 )
-from topix.agents.base import BaseAgent
-from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.assistant.answer_reformulate import AnswerReformulate
 from topix.agents.assistant.web_search import WebSearch
+from topix.agents.base import BaseAgent
+from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName
 
@@ -65,6 +65,7 @@ class Plan(BaseAgent[str]):
         instructions_template: str = "plan.jinja",
         model_settings: ModelSettings | None = None,
     ):
+        """Init method."""
         name = "Plan"
         instructions = self._render_prompt(
             instructions_template,

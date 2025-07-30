@@ -19,6 +19,7 @@ class MindmapConversion(BaseAgent[SimpleNode]):
         instructions_template: str = "mindmap_conversion.system.jinja",
         model_settings: ModelSettings | None = None,
     ):
+        """Init method."""
         name = "Mindmap Conversion"
         instructions = self._render_prompt(instructions_template)
         if model_settings is None:

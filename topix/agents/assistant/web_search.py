@@ -1,6 +1,7 @@
 """Web Search Agent."""
 
 import datetime
+
 from typing import Any
 
 from agents import (
@@ -54,15 +55,7 @@ class WebSearch(BaseAgent[str]):
         instructions_template: str = "web_search.jinja",
         model_settings: ModelSettings | None = None,
     ):
-        """
-        Initialize the WebSearch agent.
-
-        Args:
-            instructions_template (str, optional): The instructions template to use.
-                Defaults to "web_search.jinja".
-            model_settings (ModelSettings, optional): The model settings to use.
-                Defaults to ModelSettings(temperature=0.01).
-        """
+        """Initialize the WebSearch agent."""
         name = "Web Search"
         instructions_dict = {"time": datetime.datetime.now().strftime("%Y-%m-%d")}
         instructions = self._render_prompt(instructions_template, **instructions_dict)

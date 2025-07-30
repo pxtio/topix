@@ -1,9 +1,12 @@
+"""Agent runner supporting streaming mode."""
 import asyncio
+
 from collections.abc import AsyncGenerator
-from agents import RunConfig, RunHooks, Runner, TContext, TResponseInputItem
-from agents.memory import Session
+
 from pydantic import BaseModel
 
+from agents import RunConfig, RunHooks, Runner, TContext, TResponseInputItem
+from agents.memory import Session
 from topix.agents.base import BaseAgent, TOutput
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.stream import AgentStreamMessage
@@ -14,6 +17,8 @@ DEFAULT_MAX_TURNS = 5
 
 
 class AgentRunner:
+    """Agent runner supporting streaming mode."""
+
     @classmethod
     async def run(
         cls,
@@ -27,17 +32,18 @@ class AgentRunner:
         previous_response_id: str | None = None,
         session: Session | None = None,
     ) -> TOutput:
-        """Run a workflow starting at the given agent. The agent will run in a loop until a final
-        output is generated. The loop runs like so:
-        1. The agent is invoked with the given input.
-        2. If there is a final output (i.e. the agent produces something of type
-            `agent.output_type`, the loop terminates.
-        3. If there's a handoff, we run the loop again, with the new agent.
-        4. Else, we run tool calls (if any), and re-run the loop.
-        In two cases, the agent may raise an exception:
-        1. If the max_turns is exceeded, a MaxTurnsExceeded exception is raised.
-        2. If a guardrail tripwire is triggered, a GuardrailTripwireTriggered exception is raised.
-        Note that only the first agent's input guardrails are run.
+        """Run a workflow starting at the given agent. The agent will run in a loop until a final output is generated.
+
+            1. The agent is invoked with the given input.
+            2. If there is a final output (i.e. the agent produces something of type
+                `agent.output_type`, the loop terminates.
+            3. If there's a handoff, we run the loop again, with the new agent.
+            4. Else, we run tool calls (if any), and re-run the loop.
+            In two cases, the agent may raise an exception:
+            1. If the max_turns is exceeded, a MaxTurnsExceeded exception is raised.
+            2. If a guardrail tripwire is triggered, a GuardrailTripwireTriggered exception is raised.
+            Note that only the first agent's input guardrails are run.
+
         Args:
             starting_agent: The starting agent to run.
             input: The initial input to the agent. You can pass a single string for a user message,
@@ -49,10 +55,12 @@ class AgentRunner:
             run_config: Global settings for the entire agent run.
             previous_response_id: The ID of the previous response, if using OpenAI models via the
                 Responses API, this allows you to skip passing in input from the previous turn.
+            session: The session to use for the run.
+
         Returns:
-            A run result containing all the inputs, guardrail results and the output of the last
-            agent. Agents may perform handoffs, so we don't know the specific type of the output.
-        """
+            A run result containing all the inputs, guardrail results and the output of the last agent. Agents may perform handoffs, so we don't know the specific type of the output.
+
+        """  # noqa: E501
         if isinstance(input, str) or isinstance(input, BaseModel):
             input = await starting_agent._input_formatter(context=context, input=input)
 
@@ -81,18 +89,21 @@ class AgentRunner:
         previous_response_id: str | None = None,
         session: Session | None = None,
     ) -> AsyncGenerator[AgentStreamMessage, str]:
-        """Run a workflow starting at the given agent in streaming mode. The returned result object
-        contains a method you can use to stream semantic events as they are generated.
+        """Run a workflow starting at the given agent in streaming mode.
+
+        The returned result object contains a method you can use to stream semantic events as they are generated.
+
         The agent will run in a loop until a final output is generated. The loop runs like so:
-        1. The agent is invoked with the given input.
-        2. If there is a final output (i.e. the agent produces something of type
-            `agent.output_type`, the loop terminates.
-        3. If there's a handoff, we run the loop again, with the new agent.
-        4. Else, we run tool calls (if any), and re-run the loop.
-        In two cases, the agent may raise an exception:
-        1. If the max_turns is exceeded, a MaxTurnsExceeded exception is raised.
-        2. If a guardrail tripwire is triggered, a GuardrailTripwireTriggered exception is raised.
-        Note that only the first agent's input guardrails are run.
+            1. The agent is invoked with the given input.
+            2. If there is a final output (i.e. the agent produces something of type
+                `agent.output_type`, the loop terminates.
+            3. If there's a handoff, we run the loop again, with the new agent.
+            4. Else, we run tool calls (if any), and re-run the loop.
+            In two cases, the agent may raise an exception:
+            1. If the max_turns is exceeded, a MaxTurnsExceeded exception is raised.
+            2. If a guardrail tripwire is triggered, a GuardrailTripwireTriggered exception is raised.
+            Note that only the first agent's input guardrails are run.
+
         Args:
             starting_agent: The starting agent to run.
             input: The initial input to the agent. You can pass a single string for a user message,
@@ -101,12 +112,15 @@ class AgentRunner:
             max_turns: The maximum number of turns to run the agent for. A turn is defined as one
                 AI invocation (including any tool calls that might occur).
             hooks: An object that receives callbacks on various lifecycle events.
-        run_config: Global settings for the entire agent run.
+            run_config: Global settings for the entire agent run.
             previous_response_id: The ID of the previous response, if using OpenAI models via the
                 Responses API, this allows you to skip passing in input from the previous turn.
+            session: The session to use for the run.
+
         Returns:
             A result object that contains data about the run, as well as a method to stream events.
-        """
+
+        """  # noqa: D205, E501
         if isinstance(input, str):
             input_msg = input
         else:
@@ -117,9 +131,7 @@ class AgentRunner:
 
         async def stream_events():
             async with tool_execution_handler(
-                context,
-                tool_name=AgentToolName.RAW_MESSAGE,
-                input_str=input_msg
+                context, tool_name=AgentToolName.RAW_MESSAGE, input_str=input_msg
             ) as p:
                 res = Runner.run_streamed(
                     starting_agent,

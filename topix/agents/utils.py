@@ -1,16 +1,14 @@
 """ "Utility functions for agents."""
 
 from contextlib import asynccontextmanager
-import uuid
-
-from agents import RunContextWrapper
 
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.stream import (
     AgentStreamMessage,
-    ToolExecutionState,
-    StreamMessageType,
+    Content,
+    ContentType
 )
+from topix.utils.common import gen_uid
 
 
 def format_tool_start_message(tool_name: str, message: str | None = None) -> str:
@@ -39,24 +37,29 @@ def format_tool_failed_message(tool_name: str, message: str | None = None) -> st
 
 @asynccontextmanager
 async def tool_execution_handler(
-    context: RunContextWrapper[Context], tool_name, input_str
+    context: Context, tool_name: str, input_str: str | None = None
 ):
     """
     async context manager to handle tool execution
     """
     fixed_params = {
-        "tool_id": uuid.uuid4().hex,
+        "tool_id": gen_uid(),
         "tool_name": tool_name,
     }
-
+    if input_str:
+        start_message = f"Calling with: `{input_str}`."
+    else:
+        start_message = ""
     # __aenter__:
-    await context.context._message_queue.put(
+    await context._message_queue.put(
         AgentStreamMessage(
-            type=StreamMessageType.STATE,
-            execution_state=ToolExecutionState.STARTED,
-            status_message=format_tool_start_message(
-                tool_name, f"Calling with: `{input_str}`."
+            content=Content(
+                type=ContentType.STATUS,
+                text=format_tool_start_message(
+                    tool_name, start_message
+                )
             ),
+            is_stop=False,
             **fixed_params,
         )
     )
@@ -64,26 +67,30 @@ async def tool_execution_handler(
     try:
         yield fixed_params
     except Exception as e:
-        await context.context._message_queue.put(
+        await context._message_queue.put(
             AgentStreamMessage(
-                type=StreamMessageType.STATE,
-                execution_state=ToolExecutionState.FAILED,
-                status_message=format_tool_completed_message(
-                    tool_name, f"Failed with error: {e}"
+                content=Content(
+                    type=ContentType.STATUS,
+                    text=format_tool_completed_message(
+                        tool_name, f"Failed with error: {e}"
+                    ),
                 ),
+                is_stop="error",
                 **fixed_params,
             )
         )
         raise e
     else:
         # __aexit__:
-        await context.context._message_queue.put(
+        await context._message_queue.put(
             AgentStreamMessage(
-                type=StreamMessageType.STATE,
-                execution_state=ToolExecutionState.COMPLETED,
-                status_message=format_tool_completed_message(
-                    tool_name, "Completed successfully."
+                content=Content(
+                    type=ContentType.STATUS,
+                    text=format_tool_completed_message(
+                        tool_name, "Completed successfully."
+                    ),
                 ),
+                is_stop=True,
                 **fixed_params,
             )
         )

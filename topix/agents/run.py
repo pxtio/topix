@@ -1,6 +1,5 @@
 import asyncio
 from collections.abc import AsyncGenerator
-import uuid
 from agents import RunConfig, RunHooks, Runner, TContext, TResponseInputItem
 from agents.memory import Session
 from pydantic import BaseModel
@@ -9,6 +8,7 @@ from topix.agents.base import BaseAgent, TOutput
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.stream import AgentStreamMessage
 from topix.agents.datatypes.tools import AgentToolName
+from topix.agents.utils import tool_execution_handler
 
 DEFAULT_MAX_TURNS = 5
 
@@ -107,33 +107,41 @@ class AgentRunner:
         Returns:
             A result object that contains data about the run, as well as a method to stream events.
         """
+        if isinstance(input, str):
+            input_msg = input
+        else:
+            input_msg = ""
+
         if isinstance(input, str) or isinstance(input, BaseModel):
             input = await starting_agent._input_formatter(context=context, input=input)
-        res = Runner.run_streamed(
-            starting_agent,
-            input,
-            context=context,
-            max_turns=max_turns,
-            hooks=hooks,
-            run_config=run_config,
-            previous_response_id=previous_response_id,
-            session=session,
-        )
-
-        id_ = uuid.uuid4().hex
 
         async def stream_events():
-            async for stream_chunk in starting_agent._handle_stream_events(
-                res, tool_id=id_, tool_name=AgentToolName.RAW_MESSAGE
-            ):
-                await context._message_queue.put(stream_chunk)
-            await context._message_queue.put("<END_OF_AGENT>")
+            async with tool_execution_handler(
+                context,
+                tool_name=AgentToolName.RAW_MESSAGE,
+                input_str=input_msg
+            ) as p:
+                res = Runner.run_streamed(
+                    starting_agent,
+                    input,
+                    context=context,
+                    max_turns=max_turns,
+                    hooks=hooks,
+                    run_config=run_config,
+                    previous_response_id=previous_response_id,
+                    session=session,
+                )
+
+                async for stream_chunk in starting_agent._handle_stream_events(
+                    res, **p
+                ):
+                    await context._message_queue.put(stream_chunk)
 
         asyncio.create_task(stream_events())
 
         while True:
-            message = await context._message_queue.get()
-            if message != "<END_OF_AGENT>":
-                yield message
-            else:
-                break
+            message: AgentStreamMessage = await context._message_queue.get()
+            yield message
+            if message.is_stop:
+                if message.tool_name == AgentToolName.RAW_MESSAGE:
+                    break

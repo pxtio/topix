@@ -5,8 +5,8 @@ from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.stream import (
     AgentStreamMessage,
-    MessageChunk,
-    StreamMessageType,
+    Content,
+    ContentType
 )
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.datatypes.model_enum import ModelEnum
@@ -69,10 +69,13 @@ class AnswerReformulate(BaseAgent[str]):
         if len(context.kb_search_results) == 0 and len(context.web_search_results) == 1:
             await context._message_queue.put(
                 AgentStreamMessage(
-                    type=StreamMessageType.CHUNK,
                     tool_id=tool_id,
                     tool_name=AgentToolName.ANSWER_REFORMULATE,
-                    chunk=MessageChunk(content=context.web_search_results[0]),
+                    content=Content(
+                        type=ContentType.MESSAGE,
+                        text=context.web_search_results[0],
+                    ),
+                    is_stop=True,
                 )
             )
             return context.web_search_results[0]

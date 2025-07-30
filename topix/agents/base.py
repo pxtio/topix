@@ -21,8 +21,8 @@ from agents.extensions.models.litellm_model import LitellmModel
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.stream import (
     AgentStreamMessage,
-    StreamDelta,
-    StreamMessageType,
+    Content,
+    ContentType
 )
 from topix.agents.utils import tool_execution_handler
 
@@ -107,7 +107,7 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
                     )
 
             # Handle tool execution within an async context manager
-            async with tool_execution_handler(context, name_override, msg) as p:
+            async with tool_execution_handler(context.context, name_override, msg) as p:
                 # Handle tool hooks, for specialized behavior
                 hook_result = await self._as_tool_hook(
                     context.context, input, tool_id=p["tool_id"]
@@ -178,7 +178,7 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
                 event.data, ResponseTextDeltaEvent
             ):
                 yield AgentStreamMessage(
-                    type=StreamMessageType.TOKEN,
-                    delta=StreamDelta(content=event.data.delta),
+                    content=Content(type=ContentType.TOKEN, text=event.data.delta),
                     **fixed_params,
+                    is_stop=False
                 )

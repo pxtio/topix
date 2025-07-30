@@ -5,8 +5,7 @@ from collections.abc import AsyncGenerator
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.stream import (
     AgentStreamMessage,
-    StreamMessageType,
-    ToolExecutionState,
+    ContentType
 )
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.sessions import AssistantSession
@@ -86,7 +85,6 @@ class AssistantManager:
         Yields:
             AgentStreamMessage: The messages from the agent.
         """
-        id_ = gen_uid()
 
         # Notify the start of the agent stream
         new_query = await self._rewrite_query(context, query, session)
@@ -96,32 +94,19 @@ class AssistantManager:
                 [{"id": message_id or gen_uid(), "role": "user", "content": query}]
             )
 
-        start_msg = AgentStreamMessage(
-            type=StreamMessageType.STATE,
-            tool_id=id_,
-            tool_name=AgentToolName.RAW_MESSAGE,
-            execution_state=ToolExecutionState.STARTED,
-            status_message=f"✅ [Answering for query] `{new_query}`",
-        )
-        await context._message_queue.put(start_msg)
-        yield start_msg
-
         # launch plan:
         res = AgentRunner.run_streamed(
             self.plan_agent, input=new_query, context=context, max_turns=max_turns
         )
 
         raw_answer = ""
-        final_answer = ""
         async for message in res:
-            if self._is_content(message):
-                if message.tool_name == AgentToolName.RAW_MESSAGE:
-                    raw_answer += message.delta.content
-                elif message.tool_name == AgentToolName.ANSWER_REFORMULATE:
-                    if message.delta:
-                        final_answer += message.delta.content
-                    if message.chunk:
-                        final_answer += message.chunk.content
+            if self._is_response(message):
+                if message.tool_name in [
+                    AgentToolName.RAW_MESSAGE,
+                    AgentToolName.ANSWER_REFORMULATE
+                ]:
+                    raw_answer += message.content.text
             yield message
 
         if session:
@@ -129,16 +114,19 @@ class AssistantManager:
             await session.add_items(
                 [
                     {
-                        "id": id_,
+                        "id": gen_uid(),
                         "role": "assistant",
-                        "content": final_answer if final_answer else raw_answer,
+                        "content": raw_answer,
                     }
                 ]
             )
 
     @staticmethod
-    def _is_content(message: str | AgentStreamMessage) -> bool:
-        """Check if the message is a content."""
+    def _is_response(message: str | AgentStreamMessage) -> bool:
+        """Check if the message is a response."""
         return isinstance(message, AgentStreamMessage) and (
-            message.type in [StreamMessageType.TOKEN, StreamMessageType.CHUNK]
+            message.content and message.content.type in [
+                ContentType.MESSAGE,
+                ContentType.TOKEN
+            ]
         )

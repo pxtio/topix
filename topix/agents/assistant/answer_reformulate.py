@@ -39,7 +39,9 @@ class AnswerReformulate(BaseAgent[str]):
         )
         super().__post_init__()
 
-    async def _input_formatter(self, context: ReasoningContext, input: str) -> str:
+    async def _input_formatter(
+        self, context: ReasoningContext, input: str
+    ) -> list[dict[str, str]]:
         """Format the input for the answer reformulation agent."""
         kb_search_results = (
             "\n\n".join(context.kb_search_results) if context.kb_search_results else ""
@@ -49,13 +51,16 @@ class AnswerReformulate(BaseAgent[str]):
             if context.web_search_results
             else ""
         )
-
-        return self._render_prompt(
+        prompt = self._render_prompt(
             "answer_reformulation.user.jinja",
             query=input,
             web_search_results=web_search_results,
             kb_search_results=kb_search_results,
         )
+        if context.chat_history:
+            return context.chat_history + [{"role": "user", "content": prompt}]
+        else:
+            return [{"role": "user", "content": prompt}]
 
     async def _as_tool_hook(
         self, context: ReasoningContext, input: str, tool_id: str

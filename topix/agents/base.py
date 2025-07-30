@@ -49,7 +49,7 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
         tool_description: str | None = None,
         max_turns: int = 5,
         streamed: bool = False,
-        start_msg: str | None = None
+        start_msg: str | None = None,
     ) -> Tool:
         """Transform this agent into a tool, callable by other agents.
 
@@ -79,7 +79,9 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
             name_override=tool_name,
             description_override=tool_description or "",
         )
-        async def run_agent(context: RunContextWrapper[Context], input: BaseModel | str) -> str:
+        async def run_agent(
+            context: RunContextWrapper[Context], input: BaseModel | str
+        ) -> str:
             """
             Execute the agent with the provided context and input.
 
@@ -108,7 +110,7 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
             async with tool_execution_handler(context, name_override, msg) as p:
                 # Handle tool hooks, for specialized behavior
                 hook_result = await self._as_tool_hook(
-                    context.context, input, tool_id=p['tool_id']
+                    context.context, input, tool_id=p["tool_id"]
                 )
                 if hook_result is not None:
                     return hook_result
@@ -141,15 +143,16 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
         return run_agent
 
     async def _as_tool_hook(
-        self,
-        context: Context,
-        input: Any,
-        tool_id: str
+        self, context: Context, input: Any, tool_id: str
     ) -> Any | None:
         return None
 
-    async def _input_formatter(self, context: Context, input: BaseModel | str) -> str:
+    async def _input_formatter(
+        self, context: Context, input: BaseModel | str
+    ) -> str | list[dict[str, str]]:
         if isinstance(input, str):
+            return input
+        if isinstance(input, list):
             return input
         else:
             raise NotImplementedError

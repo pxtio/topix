@@ -7,7 +7,9 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Request, Response
 from fastapi.params import Path, Query
 
-from topix.agents.assistant import AssistantManager
+from topix.agents.assistant.manager import AssistantManager
+from topix.agents.assistant.plan import Plan
+from topix.agents.assistant.query_rewrite import QueryRewrite
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.describe_chat import DescribeChat
 from topix.agents.sessions import AssistantSession
@@ -129,9 +131,10 @@ async def send_message(
     """Send a message to a chat."""
     chat_store: ChatStore = request.app.chat_store
     session = AssistantSession(session_id=chat_id, chat_store=chat_store)
-    assistant = AssistantManager()
+
+    assistant = AssistantManager(QueryRewrite(), Plan())
     try:
-        async for data in assistant.stream(
+        async for data in assistant.run_streamed(
             query=body.query,
             context=ReasoningContext(),
             session=session,

@@ -10,7 +10,7 @@ from topix.datatypes.note.note import Note
 from topix.nlp.embed import OpenAIEmbedder
 from topix.store.qdrant.base import QdrantStore
 
-Entry = Note | Link | Message
+type Entry = Note | Link | Message
 
 
 class ContentStore:

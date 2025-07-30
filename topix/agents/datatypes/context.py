@@ -15,5 +15,7 @@ class ReasoningContext(Context):
 
     search_results_limit: int = 5
 
+    chat_history: list[dict[str, str]] = []
+
     kb_search_results: list[str] = []
     web_search_results: list[str] = []

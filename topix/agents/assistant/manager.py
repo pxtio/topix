@@ -26,6 +26,7 @@ class AssistantManager:
 
     async def _rewrite_query(
         self,
+        context: ReasoningContext,
         query: str,
         session: AssistantSession | None = None
     ) -> str:
@@ -38,6 +39,7 @@ class AssistantManager:
                 }
             ])
             if history:
+                context.chat_history = history
                 query_input = QueryRewriteInput(query=query, chat_history=history)
                 # launch query rewrite:
                 return await AgentRunner.run(
@@ -55,7 +57,7 @@ class AssistantManager:
         session: AssistantSession | None = None,
         max_turns: int = 5
     ) -> str:
-        new_query = await self._rewrite_query(query, session)
+        new_query = await self._rewrite_query(context, query, session)
         # launch plan:
         res = await AgentRunner.run(
             self.plan_agent,
@@ -88,7 +90,7 @@ class AssistantManager:
         Yields:
             AgentStreamMessage: The messages from the agent.
         """
-        new_query = await self._rewrite_query(query, session)
+        new_query = await self._rewrite_query(context, query, session)
 
         # launch plan:
         res = AgentRunner.run_streamed(

@@ -44,7 +44,7 @@ const ReasoningStepView = ({
 
   const messageClass =
     viewMore ?
-    'transition-all h-auto min-h-2 p-2 rounded-xl bg-white border border-stone-300' :
+    'transition-all h-auto min-h-2 p-2 rounded-xl bg-card text-card-foreground border border-border' :
     'transition-all h-auto min-h-2 p-2 rounded-xl border border-transparent'
 
   return (

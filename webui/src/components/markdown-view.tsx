@@ -100,7 +100,7 @@ const CustomLink: React.FC<CustomLinkProps> = ({ children, ...props }) => {
   return (
     <a
       href="#"
-      className="text-sky-600 inline-block rounded-full p-1 text-center bg-gray-100 font-mono hover:underline transition-all text-sm"
+      className="inline-block rounded-full p-1 text-center text-primary text-sm font-mono hover:underline transition-all"
       {...props}
       target="_blank"
     >

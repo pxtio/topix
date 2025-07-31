@@ -58,7 +58,7 @@ const ReasoningStepView = ({
       <div className='relative flex-shrink-0'>
         {
           isLoading &&
-          <div className='absolute animate-ping w-2 h-2 rounded-full bg-ring z-20' />
+          <div className='absolute animate-ping w-2 h-2 rounded-full bg-muted-foreground z-20' />
         }
         {
           isLoading ?

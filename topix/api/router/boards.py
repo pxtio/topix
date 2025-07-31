@@ -95,7 +95,7 @@ async def list_graphs(
     store: GraphStore = request.app.graph_store
 
     graphs = await store.list_graphs(user_uid=user_id)
-    return {"graphs": [{"id": idx, "label": label} for idx, label in graphs]}
+    return {"graphs": [{"id": idx, "label": label} if label else {"id": idx} for idx, label in graphs]}
 
 
 @router.post("/{graph_id}/notes/", include_in_schema=False)

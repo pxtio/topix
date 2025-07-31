@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query"
  */
 export async function listBoards(
   userId: string
-): Promise<{ id: string, label: string }[]> {
+): Promise<{ id: string, label?: string }[]> {
   const headers = new Headers()
   headers.set("Content-Type", "application/json")
 
@@ -40,7 +40,7 @@ export const useListBoards = ({
 }: {
   userId: string
 }) => {
-  return useQuery<{ id: string, label: string }[]>({
+  return useQuery<{ id: string, label?: string }[]>({
     queryKey: ["listBoards", userId],
     queryFn: () => listBoards(userId),
     enabled: !!userId,

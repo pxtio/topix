@@ -28,9 +28,15 @@ import { CollapsibleContent } from "@radix-ui/react-collapsible"
 
 
 function NewBoardItem() {
+  const setView = useAppStore((state) => state.setView)
   const userId = useAppStore((state) => state.userId)
 
   const { createBoard } = useCreateBoard()
+
+  const handleClick = () => {
+    createBoard({ userId })
+    setView("board")  // Switch to board view when creating a new board
+  }
 
   const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200'
 
@@ -38,7 +44,7 @@ function NewBoardItem() {
     <SidebarMenuItem>
       <SidebarMenuButton
         className={itemClass}
-        onClick={() => createBoard({ userId })}
+        onClick={handleClick}
       >
         <PaintRoller className='text-xs shrink-0' strokeWidth={1.75} />
         <span>New Board</span>
@@ -49,17 +55,24 @@ function NewBoardItem() {
 
 
 function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
+  const view = useAppStore((state) => state.view)
+  const setView = useAppStore((state) => state.setView)
   const userId = useAppStore((state) => state.userId)
   const setCurrentBoardId = useBoardStore((state) => state.setCurrentBoardId)
   const currentBoardId = useBoardStore((state) => state.currentBoardId)
 
   const { deleteBoard } = useDeleteBoard()
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200' + (currentBoardId === boardId ? ' bg-stone-200/70' : '')
+  const handleClick = () => {
+    setCurrentBoardId(boardId)
+    setView("board")  // Switch to board view when selecting a board
+  }
+
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200' + (currentBoardId === boardId && view === "board" ? ' bg-stone-200/70' : '')
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton onClick={() => setCurrentBoardId(boardId)} className={itemClass} >
+      <SidebarMenuButton onClick={handleClick} className={itemClass} >
         <Palette className='shrink-0' strokeWidth={1.75} />
         <span>{trimText(label || "Untitled Board", 20)}</span>
       </SidebarMenuButton>
@@ -81,17 +94,24 @@ function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
 
 
 function NewChatItem() {
+  const view = useAppStore((state) => state.view)
   const setCurrentChatId = useChatStore((state) => state.setCurrentChatId)
+  const setView = useAppStore((state) => state.setView)
 
   const currentChatId = useChatStore((state) => state.currentChatId)
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200' + (currentChatId === undefined ? ' bg-stone-200/70' : '')
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200' + (currentChatId === undefined && view === "chat" ? ' bg-stone-200/70' : '')
+
+  const handleClick = () => {
+    setCurrentChatId(undefined)
+    setView("chat")  // Switch to chat view when creating a new chat
+  }
 
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
         className={itemClass}
-        onClick={() => setCurrentChatId(undefined)}
+        onClick={handleClick}
       >
         <BotMessageSquare className='text-xs shrink-0' strokeWidth={1.75} />
         <span>New Chat</span>
@@ -105,9 +125,16 @@ function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
   const { deleteChat } = useDeleteChat()
 
   const userId = useAppStore((state) => state.userId)
+  const view = useAppStore((state) => state.view)
+  const setView = useAppStore((state) => state.setView)
 
   const currentChatId = useChatStore((state) => state.currentChatId)
   const setCurrentChatId = useChatStore((state) => state.setCurrentChatId)
+
+  const handleClick = () => {
+    setCurrentChatId(chatId)
+    setView("chat")  // Switch to chat view when selecting a chat
+  }
 
   const handleDeleteChat = (chatId: string) => {
     deleteChat({ chatId, userId })
@@ -115,11 +142,11 @@ function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
 
   const chatLabel = trimText(label || "Untitled Chat", 20)
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200' + (currentChatId === chatId ? ' bg-stone-200/70' : '')
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200' + (currentChatId === chatId && view === "chat" ? ' bg-stone-200/70' : '')
 
   return (
     <SidebarMenuSubItem>
-      <SidebarMenuSubButton asChild className={itemClass} onClick={() => setCurrentChatId(chatId)}>
+      <SidebarMenuSubButton asChild className={itemClass} onClick={handleClick}>
         <span>{chatLabel}</span>
       </SidebarMenuSubButton>
       <DropdownMenu>

@@ -11,7 +11,7 @@ export interface Graph {
   type: "graph"
   label?: string
   nodes?: Note[]
-  links?: Link[]
+  edges?: Link[]
   readonly: boolean
   createdAt: string
   updatedAt?: string
@@ -28,7 +28,7 @@ export const createDefaultGraph = (uid: string): Graph => ({
   uid,
   type: "graph",
   nodes: [],
-  links: [],
+  edges: [],
   readonly: false,
   createdAt: new Date().toISOString()
 })

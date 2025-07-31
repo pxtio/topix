@@ -52,9 +52,9 @@ export const useRemoveLink = () => {
       queryClient.setQueryData<Graph>(["getBoard", boardId, userId], (oldBoard) => {
         if (!oldBoard) return oldBoard
 
-        // Remove the link from the board's links array
-        const updatedLinks = oldBoard.links?.filter(link => link.id !== linkId)
-        return { ...oldBoard, links: updatedLinks }
+        // Remove the edge from the board's edges array
+        const updatedEdges = oldBoard.edges?.filter(edge => edge.id !== linkId)
+        return { ...oldBoard, edges: updatedEdges }
       })
 
       await removeLink(boardId, userId, linkId)

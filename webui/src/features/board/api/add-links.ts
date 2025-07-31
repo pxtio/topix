@@ -1,8 +1,8 @@
-import { API_URL } from "@/config/api";
-import type { Link } from "../types/link";
-import type { Graph } from "../types/board";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import snakecaseKeys from "snakecase-keys";
+import { API_URL } from "@/config/api"
+import type { Link } from "../types/link"
+import type { Graph } from "../types/board"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import snakecaseKeys from "snakecase-keys"
 
 
 /**
@@ -65,7 +65,7 @@ export const useAddLinks = () => {
 
           return {
             ...oldData,
-            links: [...(oldData.links || []), ...links]
+            edges: [...(oldData.edges || []), ...links]
           }
         }
       )

@@ -16,13 +16,15 @@ import { useDeleteChat } from "@/features/agent/api/delete-chat"
 import { useListChats } from "@/features/agent/api/list-chats"
 import { useAppStore } from "@/store"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
-import { BotMessageSquare, History, MoreHorizontal, PaintRoller, Palette } from "lucide-react"
+import { BotMessageSquare, History, Minus, MoreHorizontal, PaintRoller, Palette, Plus } from "lucide-react"
 import { useChatStore } from "@/features/agent/store/chat-store"
 import { trimText } from "@/lib/common"
 import { useBoardStore } from "@/features/board/store/board-store"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { useCreateBoard } from "@/features/board/api/create-board"
 import { useDeleteBoard } from "@/features/board/api/delete-board"
+import { Collapsible, CollapsibleTrigger } from "./ui/collapsible"
+import { CollapsibleContent } from "@radix-ui/react-collapsible"
 
 
 function NewBoardItem() {
@@ -168,15 +170,26 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <NewChatItem />
-              <SidebarMenuItem>
-                <SidebarMenuButton className='font-medium text-xs'>
-                  <History className='shrink-0' strokeWidth={1.75}/>
-                  <span>Chat History</span>
-                </SidebarMenuButton>
-                <SidebarMenuSub>
-                  {chatItems}
-                </SidebarMenuSub>
-              </SidebarMenuItem>
+              <Collapsible
+                defaultOpen={true}
+                className="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuSubButton className='font-medium text-xs flex flex-row items-center w-full'>
+                      <History className='shrink-0' strokeWidth={1.75} />
+                      <span>Chat History</span>
+                      <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
+                      <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
+                    </SidebarMenuSubButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {chatItems}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

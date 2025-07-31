@@ -27,7 +27,7 @@ export function deleteBoard(
 
 
 export const useDeleteBoard = () => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const mutation = useMutation({
     mutationFn: async ({ boardId, userId }: { boardId: string, userId: string }) => {

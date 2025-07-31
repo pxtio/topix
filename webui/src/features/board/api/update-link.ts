@@ -53,14 +53,14 @@ export const useUpdateLink = () => {
       // Optimistically update the board in the cache
       queryClient.setQueryData<Graph>(["getBoard", boardId, userId], (oldBoard) => {
         if (!oldBoard) return oldBoard
-        if (!oldBoard.links) return oldBoard
+        if (!oldBoard.edges) return oldBoard
 
-        // Find and update the link in the board's links array
-        const updatedLinks = oldBoard.links.map(link =>
-          link.id === linkId ? { ...link, ...linkData } : link
+        // Find and update the edge in the board's edges array
+        const updatedEdges = oldBoard.edges.map(edge =>
+          edge.id === linkId ? { ...edge, ...linkData } : edge
         )
 
-        return { ...oldBoard, links: updatedLinks }
+        return { ...oldBoard, edges: updatedEdges }
       })
 
       await updateLink(boardId, userId, linkId, linkData)

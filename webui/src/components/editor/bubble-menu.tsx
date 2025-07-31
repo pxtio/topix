@@ -26,8 +26,8 @@ const EditorMenuButton: React.FC<EditorMenuButtonProps> = ({
   if (!editor) {
     return null;
   }
-  const styleClassName = isActive ? "transition-all p-1 w-6 h-6 rounded flex items-center hover:bg-stone-50 text-rose-600":
-    "transition-all p-1 w-6 h-6 rounded flex items-center hover:bg-stone-50 text-stone-600";
+  const styleClassName = isActive ? "transition-all p-1 w-6 h-6 rounded flex items-center hover:bg-accent text-accent-foreground" :
+    "transition-all p-1 w-6 h-6 rounded flex items-center hover:bg-accent text-accent-foreground";
   return (
     <button
       onClick={handleClick}

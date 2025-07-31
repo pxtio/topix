@@ -38,7 +38,7 @@ function NewBoardItem() {
     setView("board")  // Switch to board view when creating a new board
   }
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200'
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent'
 
   return (
     <SidebarMenuItem>
@@ -68,7 +68,7 @@ function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
     setView("board")  // Switch to board view when selecting a board
   }
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200' + (currentBoardId === boardId && view === "board" ? ' bg-stone-200/70' : '')
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent' + (currentBoardId === boardId && view === "board" ? ' bg-sidebar-accent/70' : '')
 
   return (
     <SidebarMenuItem>
@@ -100,7 +100,7 @@ function NewChatItem() {
 
   const currentChatId = useChatStore((state) => state.currentChatId)
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200' + (currentChatId === undefined && view === "chat" ? ' bg-stone-200/70' : '')
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent' + (currentChatId === undefined && view === "chat" ? ' bg-sidebar-accent/70' : '')
 
   const handleClick = () => {
     setCurrentChatId(undefined)
@@ -142,7 +142,7 @@ function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
 
   const chatLabel = trimText(label || "Untitled Chat", 20)
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-stone-200' + (currentChatId === chatId && view === "chat" ? ' bg-stone-200/70' : '')
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent' + (currentChatId === chatId && view === "chat" ? ' bg-sidebar-accent/70' : '')
 
   return (
     <SidebarMenuSubItem>

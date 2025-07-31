@@ -58,24 +58,24 @@ const ReasoningStepView = ({
       <div className='relative flex-shrink-0'>
         {
           isLoading &&
-          <div className='absolute animate-ping w-2 h-2 rounded-full bg-stone-500 z-20' />
+          <div className='absolute animate-ping w-2 h-2 rounded-full bg-ring z-20' />
         }
         {
           isLoading ?
-          <div className='relative w-2 h-2 rounded-full bg-stone-700 z-20' /> :
-          <div className='relative w-2 h-2 rounded-full bg-teal-700 z-20' />
+          <div className='relative w-2 h-2 rounded-full bg-primary z-20' /> :
+          <div className='relative w-2 h-2 rounded-full bg-primary z-20' />
         }
       </div>
       <div className={messageClass}>
         {
           viewMore &&
-          <span className='text-xs text-stone-600 whitespace-pre-line'>
+          <span className='text-xs text-card-foreground whitespace-pre-line'>
             {longerTrimmedMessage}
           </span>
         }
         {
           !viewMore &&
-          <span className='text-xs text-stone-600 whitespace-pre-line'>
+          <span className='text-xs text-card-foreground whitespace-pre-line'>
             {trimmedMessage}
           </span>
         }
@@ -126,9 +126,10 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         relative
         w-full
         p-4
-        bg-stone-100
+        bg-muted
+        text-muted-foreground
         rounded-xl
-        border border-stone-200
+        border border-border
       `}
     >
       <div
@@ -157,7 +158,7 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         {
           isOpen &&
           <div
-            className='absolute left-[0.73rem] top-0 w-[1px] h-full bg-stone-300 rounded-lg z-10'
+            className='absolute left-[0.73rem] top-0 w-[1px] h-full bg-muted-foreground rounded-lg z-10'
           >
           </div>
         }
@@ -166,7 +167,7 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         className='absolute bottom-0 right-1/2 transform translate-x-1/2'
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className='transition-all text-xs text-stone-400 hover:text-stone-600'>
+        <span className='transition-all text-xs text-secondary-foreground hover:text-secondary-foreground'>
           {isOpen ? <ChevronUp className='w-4 h-4 flex-shrink-0' /> : <ChevronDown className='w-4 h-4 flex-shrink-0' />}
         </span>
       </button>

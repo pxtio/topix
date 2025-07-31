@@ -64,29 +64,23 @@ const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) 
 
   return isBlock ? (
     <pre
-      className={cn('text-sm text-mono !rounded-2xl p-4 bg-stone-100 relative my-4 border overflow-x-auto', className)}
-      style={{ background: '#f5f5f4', padding: '1em', borderRadius: '5px' }}
+      className={cn('text-sm text-mono !rounded-2xl p-4 bg-muted relative my-4 border-none overflow-x-auto', className)}
     >
       <button
         onClick={() => handleCopy(codeContent)}
-        className="transition-all absolute top-1 right-1 text-sm bg-transparent hover:bg-stone-200 p-2 rounded-xl text-stone-500"
+        className="transition-all absolute top-1 right-1 text-sm bg-transparent hover:bg-accent p-2 rounded-xl text-accent-foreground"
         aria-label="Copy to clipboard"
       >
         <Copy strokeWidth={1.75} className='h-4 w-4' />
       </button>
-      {
-        language !== 'plaintext' && (
-          <span className="absolute top-0 left-0 w-auto bg-transparent px-4 py-2 text-stone-500 text-xs font-mono">
-            {language}
-          </span>
-        )
-      }
+      <span className="absolute top-0 left-0 w-auto px-4 py-2 text-xs font-mono">
+        {language}
+      </span>
       <code className={language !== 'plaintext' ? "block mt-6": "block"}>{children}</code>
     </pre>
   ) : (
     <code
-      className={cn('text-left text-sm text-mono text-red-700 bg-stone-100', className)}
-      style={{ background: '#f5f5f4', padding: '0.2em 0.4em', borderRadius: '3px' }}
+      className={cn('text-left text-sm text-mono text-red-700 bg-muted text-muted-foreground rounded-lg', className)}
     >
       {children}
     </code>

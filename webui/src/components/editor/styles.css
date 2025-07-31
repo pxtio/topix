@@ -97,12 +97,12 @@
 
   /* Inline Code */
   code:not(pre code) {
-    @apply text-sm font-mono text-red-700 bg-stone-100 px-1 py-0.5 rounded;
+    @apply text-sm font-mono text-red-700 bg-muted px-1 py-0.5 rounded;
   }
 
   /* Code Blocks */
   pre {
-    @apply relative my-4 p-4 pt-8 overflow-x-auto bg-stone-100 border rounded-xl text-base font-mono whitespace-pre overflow-x-auto;
+    @apply relative my-4 p-4 pt-8 overflow-x-auto bg-muted border rounded-xl text-base font-mono whitespace-pre overflow-x-auto;
 
     code {
       @apply bg-transparent text-inherit text-sm p-0 whitespace-pre;
@@ -116,7 +116,7 @@
 
   /* Tiptap Pro Math Editor Styles */
   .Tiptap-mathematics-editor {
-    @apply bg-stone-100 text-red-700 px-2 py-1 rounded inline-block;
+    @apply bg-muted text-muted-foreground px-2 py-1 rounded inline-block;
     font-family: var(--font-dm-mono);
   }
 
@@ -129,7 +129,7 @@
   }
 
   .Tiptap-mathematics-render--editable:hover {
-    @apply bg-stone-200;
+    @apply bg-muted text-muted-foreground;
   }
 
   ul[data-type="taskList"] {

@@ -32,7 +32,7 @@ const ModelCard: React.FC<{ model: LlmModel }> = ({ model }) => {
   return (
     <HoverCard openDelay={200}>
       <HoverCardTrigger className='text-mono'>{LlmName[model]}</HoverCardTrigger>
-      <HoverCardContent className='w-48 rounded-xl border border-stone-200 bg-stone-100 shadow' side="left" sideOffset={15}>
+      <HoverCardContent className='w-48 rounded-xl border border-border bg-popover text-popover-foreground shadow' side="left" sideOffset={15}>
         <div className=''>
           {LlmDescription[model]}
         </div>
@@ -57,7 +57,7 @@ const ModelChoiceMenu = () => {
 
   return (
     <Select onValueChange={handleModelChange} defaultValue={llmModel}>
-      <SelectTrigger className="h-8 w-auto rounded-full bg-stone-100 border border-stone-300 text-xs px-3 shadow-none">
+      <SelectTrigger className="h-8 w-auto rounded-full bg-card text-card-foreground border border-border text-xs px-3 shadow-none">
         <SelectValue defaultValue={llmModel} />
       </SelectTrigger>
       <SelectContent className='overflow-visible'>
@@ -111,10 +111,10 @@ export const InputBar: React.FC = () => {
   }
 
   const commandIconClass = clsx(
-    'ml-auto border-none',
+    'ml-auto',
     isStreaming
-      ? 'cursor-not-allowed bg-stone-100'
-      : 'cursor-pointer bg-stone-800 text-stone-50 hover:bg-stone-900 hover:text-stone-100'
+      ? 'cursor-not-allowed'
+      : 'cursor-pointer'
   )
 
   return (
@@ -127,9 +127,9 @@ export const InputBar: React.FC = () => {
               md:min-w-[800px]
               rounded-3xl
               p-3 pt-0
-              bg-stone-100
-              text-base
-              border
+              bg-card
+              text-card-foreground text-base
+              border border-border
               shadow-sm
             `}
           >

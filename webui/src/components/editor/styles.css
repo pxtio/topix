@@ -1,0 +1,166 @@
+.tiptap {
+  > * {
+    &:first-child {
+      @apply mt-0;
+    }
+  }
+  /* Headings */
+  h1 {
+    @apply font-heading mt-10 scroll-m-20 border-b pb-2 text-3xl font-bold tracking-tight first:mt-0;
+  }
+
+  h2 {
+    @apply font-heading mt-8 scroll-m-20 text-2xl font-bold tracking-tight;
+  }
+
+  h3 {
+    @apply font-heading mt-6 scroll-m-20 text-xl font-bold tracking-tight;
+  }
+
+  h4 {
+    @apply font-heading mt-6 scroll-m-20 text-lg font-bold tracking-tight;
+  }
+
+  /* Paragraphs */
+  p {
+    @apply leading-7 text-base mt-5;
+  }
+
+  a {
+    @apply text-sky-600 inline-block rounded-full p-1 text-center bg-gray-100 font-mono hover:underline transition-all text-xs;
+  }
+
+  ul {
+    @apply ml-6 list-disc my-6;
+
+    li {
+      @apply mt-2;
+
+      p {
+        @apply mt-0;
+      }
+
+      /* Nested unordered lists */
+      ul {
+        @apply list-[circle] ml-6 my-0;
+      }
+
+      ul ul {
+        @apply list-[square] ml-6 my-0;
+      }
+    }
+  }
+
+  ol {
+    @apply ml-6 list-decimal;
+
+    li {
+      @apply mt-2;
+
+      p {
+        @apply mt-0;
+      }
+
+      /* Nested ordered lists */
+      ol {
+        @apply list-[lower-alpha] ml-6 my-0;
+      }
+
+      ol ol {
+        @apply list-[lower-roman] ml-6 my-0;
+      }
+    }
+  }
+
+
+  /* Blockquotes */
+  blockquote {
+    @apply mt-4 border-l-2 pl-6 italic text-sm text-stone-700;
+  }
+
+  /* Tables */
+  table {
+    @apply my-8 w-full text-base border-b;
+  }
+
+  tr {
+    @apply border-t even:bg-muted;
+  }
+
+  th {
+    @apply border-b px-4 py-2 text-left font-bold text-sm text-stone-700;
+  }
+
+  td {
+    @apply px-4 py-2 text-left text-sm text-stone-600;
+  }
+
+  /* Inline Code */
+  code:not(pre code) {
+    @apply text-sm font-mono text-red-700 bg-stone-100 px-1 py-0.5 rounded;
+  }
+
+  /* Code Blocks */
+  pre {
+    @apply relative my-4 p-4 pt-8 overflow-x-auto bg-stone-100 border rounded-xl text-base font-mono whitespace-pre overflow-x-auto;
+
+    code {
+      @apply bg-transparent text-inherit text-sm p-0 whitespace-pre;
+    }
+  }
+
+  /* Horizontal Rule */
+  hr {
+    @apply border-t border-stone-200 my-6;
+  }
+
+  /* Tiptap Pro Math Editor Styles */
+  .Tiptap-mathematics-editor {
+    @apply bg-stone-100 text-red-700 px-2 py-1 rounded inline-block;
+    font-family: var(--font-dm-mono);
+  }
+
+  .Tiptap-mathematics-render {
+    @apply px-1 rounded inline-block;
+  }
+
+  .Tiptap-mathematics-render--editable {
+    @apply cursor-pointer transition-colors;
+  }
+
+  .Tiptap-mathematics-render--editable:hover {
+    @apply bg-stone-200;
+  }
+
+  ul[data-type="taskList"] {
+    @apply list-none m-0 p-0;
+
+    li {
+      @apply flex items-start;
+
+      > label {
+        @apply flex-none mr-2 ml-1 select-none block flex items-center flex-row h-full m-auto;
+      }
+
+      > div {
+        @apply flex-grow;
+      }
+
+      input[type="checkbox"] {
+        @apply cursor-pointer w-4 h-4;
+      }
+
+      ul[data-type="taskList"] {
+        @apply m-0;
+      }
+    }
+
+    li[data-checked="true"] {
+      @apply line-through text-stone-400;
+    }
+  }
+}
+
+.ProseMirror:focus {
+  outline: none;
+}

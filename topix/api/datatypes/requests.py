@@ -25,6 +25,18 @@ class GraphUpdateRequest(BaseModel):
     data: dict
 
 
+class NoteUpdateRequest(BaseModel):
+    """Request model for updating a note."""
+
+    data: dict
+
+
+class LinkUpdateRequest(BaseModel):
+    """Request model for updating a link."""
+
+    data: dict
+
+
 class AddNotesRequest(BaseModel):
     """Request model for adding notes to a graph."""
 

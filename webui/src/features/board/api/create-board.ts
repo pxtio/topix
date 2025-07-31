@@ -1,0 +1,53 @@
+import { API_URL } from "@/config/api"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useBoardStore } from "../store/board-store"
+
+
+/**
+ * Create a new board for the user.
+ *
+ * @param userId - The ID of the user for whom the board is being created.
+ */
+export async function createBoard(
+  userId: string
+): Promise<string> {
+  const headers = new Headers()
+  headers.set("Content-Type", "application/json")
+
+  const response = await fetch(`${API_URL}/boards?user_id=${userId}`, {
+    method: "PUT",
+    headers
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to create board: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  return data.data.graph_id
+}
+
+
+/**
+ * Custom hook to create a new board for the user.
+ *
+ * @returns An object containing the createBoard function and its mutation state.
+ */
+export const useCreateBoard = () => {
+  const queryClient = useQueryClient()
+
+  const setCurrentBoardId = useBoardStore((state) => state.setCurrentBoardId)
+
+  const mutation = useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      const boardId = await createBoard(userId)
+      queryClient.setQueryData(["listBoards", userId], (oldBoards: { id: string, label?: string }[] | undefined) => {
+        const newBoard = { id: boardId } // Temporary ID until the server responds
+        return [newBoard, ...(oldBoards || [])] // Prepend the new board to the list
+      })
+      setCurrentBoardId(boardId) // Set the current board ID to the newly created board
+    }
+  })
+
+  return { createBoard: mutation.mutate, ...mutation }
+}

@@ -8,22 +8,24 @@ export const ChatView = () => {
   const currentChatId = useChatStore((state) => state.currentChatId)
 
   return (
-    <div className="fixed w-screen h-screen top-0 left-0 z-0">
-      <ScrollArea
-        className="h-full w-full bg-background"
+    <>
+      <div
+        className="absolute inset-0 h-full w-full overflow-hidden"
       >
-        <div className='w-full h-full flex flex-col items-center justify-center'>
-          <div
-            className='h-full sm:max-w-[800px] w-[800px]'
-          >
-            {
-              currentChatId && <Conversation chatId={currentChatId} />
-            }
+        <ScrollArea className='h-full w-full'>
+          <div className='w-full h-full flex flex-col items-center justify-center'>
+            <div
+              className='h-full sm:max-w-[800px] w-[800px]'
+            >
+              {
+                currentChatId && <Conversation chatId={currentChatId} />
+              }
 
+            </div>
           </div>
-        </div>
-      </ScrollArea>
-      <InputBar />
-    </div>
+        </ScrollArea>
+        <InputBar />
+      </div>
+    </>
   )
 }

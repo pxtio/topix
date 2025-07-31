@@ -130,6 +130,7 @@ export const InputBar: React.FC = () => {
               bg-stone-100
               text-base
               border
+              shadow-sm
             `}
           >
             <div className="flex flex-col items-center space-y-1 items-stretch">

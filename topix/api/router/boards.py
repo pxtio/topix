@@ -2,10 +2,10 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.params import Body, Path, Query
 
-from topix.api.datatypes.requests import AddLinksRequest, AddNotesRequest, GraphUpdateRequest
+from topix.api.datatypes.requests import AddLinksRequest, AddNotesRequest, GraphUpdateRequest, LinkUpdateRequest, NoteUpdateRequest
 from topix.api.helpers import with_standard_response
 from topix.datatypes.graph.graph import Graph
 from topix.store.graph import GraphStore
@@ -77,7 +77,10 @@ async def get_graph(
     store: GraphStore = request.app.graph_store
 
     graph = await store.get_graph(graph_uid=graph_id)
-    return graph.model_dump(exclude_none=True)
+    if not graph:
+        raise HTTPException(status_code=404, detail="Graph not found")
+
+    return {"graph": graph.model_dump(exclude_none=True)}
 
 
 @router.get("/", include_in_schema=False)
@@ -92,7 +95,7 @@ async def list_graphs(
     store: GraphStore = request.app.graph_store
 
     graphs = await store.list_graphs(user_uid=user_id)
-    return {"graphs": [{"id": idx, "label": label} for idx, label in graphs]}
+    return {"graphs": [{"id": idx, "label": label} if label else {"id": idx} for idx, label in graphs]}
 
 
 @router.post("/{graph_id}/notes/", include_in_schema=False)
@@ -114,6 +117,24 @@ async def add_notes_to_graph(
 
     await store.add_notes(nodes=notes)
     return {"message": "Notes added to board successfully"}
+
+
+@router.patch("/{graph_id}/notes/{note_id}/", include_in_schema=False)
+@router.patch("/{graph_id}/notes/{note_id}")
+@with_standard_response
+async def update_note(
+    response: Response,
+    request: Request,
+    graph_id: Annotated[str, Path(description="Graph ID")],
+    note_id: Annotated[str, Path(description="Note ID")],
+    user_id: Annotated[str, Query(description="User Unique ID")],
+    body: Annotated[NoteUpdateRequest, Body(description="Note update data")]
+):
+    """Update a note in a graph."""
+    store: GraphStore = request.app.graph_store
+
+    await store.update_node(node_id=note_id, data=body.data)
+    return {"message": "Note updated successfully"}
 
 
 @router.delete("/{graph_id}/notes/{note_id}/", include_in_schema=False)
@@ -152,6 +173,24 @@ async def add_links_to_graph(
 
     await store.add_links(links=links)
     return {"message": "Links added to board successfully"}
+
+
+@router.patch("/{graph_id}/links/{link_id}/", include_in_schema=False)
+@router.patch("/{graph_id}/links/{link_id}")
+@with_standard_response
+async def update_link(
+    response: Response,
+    request: Request,
+    graph_id: Annotated[str, Path(description="Graph ID")],
+    link_id: Annotated[str, Path(description="Link ID")],
+    user_id: Annotated[str, Query(description="User Unique ID")],
+    body: Annotated[LinkUpdateRequest, Body(description="Link update data")]
+):
+    """Update a link in a graph."""
+    store: GraphStore = request.app.graph_store
+
+    await store.update_link(link_id=link_id, data=body.data)
+    return {"message": "Link updated successfully"}
 
 
 @router.delete("/{graph_id}/links/{link_id}/", include_in_schema=False)

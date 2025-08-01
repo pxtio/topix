@@ -10,7 +10,7 @@ from topix.agents.mindmap.datatypes import SimpleNode
 logger = logging.getLogger(__name__)
 
 
-class MindmapConversion(BaseAgent[SimpleNode]):
+class MindmapConversion(BaseAgent):
     """Mindmap Conversion Agent."""
 
     def __init__(
@@ -38,5 +38,5 @@ class MindmapConversion(BaseAgent[SimpleNode]):
         answer = input.answer
         key_points = input.key_points
         return self._render_prompt(
-            self.prompts["user"], answer=answer, key_points=key_points
+            "mindmap_conversion.user.jinja", answer=answer, key_points=key_points
         )

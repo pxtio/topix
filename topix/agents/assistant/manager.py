@@ -108,6 +108,12 @@ class AssistantManager:
 
         if session:
             # If a session is provided, store the final answer
+            if not raw_answer.strip():
+                # Answer is empty, use the result from web search
+                if context.tool_calls:
+                    for tool_call in context.tool_calls:
+                        if tool_call.tool_name == AgentToolName.WEB_SEARCH:
+                            raw_answer = tool_call.output
             await session.add_items(
                 [
                     {

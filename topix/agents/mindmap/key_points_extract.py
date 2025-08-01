@@ -9,7 +9,7 @@ from topix.agents.datatypes.model_enum import ModelEnum
 logger = logging.getLogger(__name__)
 
 
-class KeyPointsExtract(BaseAgent[str]):
+class KeyPointsExtract(BaseAgent):
     """Key Points Extraction Agent."""
 
     def __init__(

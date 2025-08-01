@@ -2,48 +2,41 @@
 
 import logging
 
-from agents import Agent, ModelSettings, Runner
-from topix.agents.base import BaseAgentManager
-from topix.agents.datatypes.context import ReasoningContext
+from agents import ModelSettings
+from topix.agents.base import BaseAgent
+from topix.agents.datatypes.inputs import MindMapConversionInput
 from topix.agents.mindmap.datatypes import SimpleNode
-from topix.agents.prompt_utils import render_prompt
 
 logger = logging.getLogger(__name__)
 
 
-class MindmapConversion(BaseAgentManager):
+class MindmapConversion(BaseAgent):
     """Mindmap Conversion Agent."""
 
-    name = "Mindmap Conversion"
-    model_name = "gpt-4o-mini"
-    prompts = {
-        "system": "mindmap_conversion.system.jinja",
-        "user": "mindmap_conversion.user.jinja"
-    }
+    def __init__(
+        self,
+        model: str = "gpt-4o-mini",
+        instructions_template: str = "mindmap_conversion.system.jinja",
+        model_settings: ModelSettings | None = None,
+    ):
+        """Init method."""
+        name = "Mindmap Conversion"
+        instructions = self._render_prompt(instructions_template)
+        if model_settings is None:
+            model_settings = ModelSettings(temperature=0.1)
 
-    def __init__(self):
-        """Initialize the Mindmap Conversion agent."""
-        self.agent = Agent[ReasoningContext](
-            name=self.name,
-            instructions=render_prompt(self.prompts["system"]),
-            model=self.model_name,
+        super().__init__(
+            name=name,
+            model=model,
+            model_settings=model_settings,
+            instructions=instructions,
             output_type=SimpleNode,
-            model_settings=ModelSettings(temperature=0.1)
         )
+        super().__post_init__()
 
-    async def run(self, answer: str, key_points: str) -> SimpleNode | None:
-        """Run the Mindmap Conversion agent with the provided key points."""
-        try:
-            result = await Runner.run(
-                starting_agent=self.agent,
-                input=render_prompt(self.prompts["user"], answer=answer, key_points=key_points),
-                max_turns=1
-            )
-            return result.final_output
-        except Exception as e:
-            logger.warning(
-                "Error running Mindmap Conversion agent: %s",
-                str(e),
-                exc_info=True
-            )
-            return None
+    async def _input_formatter(self, context, input: MindMapConversionInput):
+        answer = input.answer
+        key_points = input.key_points
+        return self._render_prompt(
+            "mindmap_conversion.user.jinja", answer=answer, key_points=key_points
+        )

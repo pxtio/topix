@@ -1,5 +1,5 @@
 import React, { memo, useRef } from "react"
-import { Handle, type NodeProps, Position, useReactFlow } from "@xyflow/react"
+import { Handle, type NodeProps, Position, useConnection, useReactFlow } from "@xyflow/react"
 import type { NoteNode } from "../types/flow"
 import { RoughRect } from "@/components/rough/rect"
 import { NodeLabel } from "./node-label"
@@ -17,7 +17,12 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
   const { getNode, setNodes, screenToFlowPosition } = useReactFlow()
 
+  const connection = useConnection()
+
+  const isTarget = connection.inProgress && connection.fromNode.id !== id
+
   const node = getNode(id)
+
   if (!node) return null
 
   const { width, height, position } = node
@@ -120,20 +125,32 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     startResize(e.nativeEvent, handle)
   }
 
-  const nodeViewClassName = 'relative font-handwriting drag-handle pointer-events-auto bg-transparent' + (hasResizedRef.current ? ' max-w-none' : ' max-w-[400px]')
+  const handleClassRight = "w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none -translate-x-[calc(50%-10px)] border-none"
+  const handleClassLeft = "w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none translate-x-1/2 border-none"
+
+  const nodeClass = 'relative font-handwriting drag-handle pointer-events-auto bg-transparent' + (hasResizedRef.current ? ' max-w-none' : ' max-w-[400px]')
 
   return (
-    <>
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="w-3 h-3 !bg-transparent hover:bg-accent border-none rounded-full"
-      />
-      <Handle
-        position={Position.Right}
-        type="source"
-        className="w-3 h-3 !bg-transparent hover:bg-accent border-none rounded-full"
-      />
+    <div className='border-none relative p-2'>
+      <div
+        className='absolute inset-0 h-full w-full overflow-visible'
+      >
+        {!connection.inProgress && (
+          <Handle
+            className={handleClassRight}
+            position={Position.Right}
+            type="source"
+          />
+        )}
+        {(!connection.inProgress || isTarget) && (
+          <Handle
+            className={handleClassLeft}
+            position={Position.Left}
+            type="target"
+            isConnectableStart={false}
+          />
+        )}
+      </div>
       <RoughRect
         rounded="rounded-2xl"
         roughness={data.style.roughness}
@@ -143,11 +160,11 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
         <div
           ref={containerRef}
           style={{ width, height }}
-          className={nodeViewClassName}
+          className={nodeClass}
         >
           <NodeLabel note={data} />
           {selected && (
-            <div className="absolute -inset-1 -left-3 border border-blue-500 pointer-events-none rounded z-10" />
+            <div className="absolute -inset-1 border border-blue-500 pointer-events-none rounded z-10" />
           )}
         </div>
       </RoughRect>
@@ -167,7 +184,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
           />
         ))
       }
-    </>
+    </div>
   )
 }
 

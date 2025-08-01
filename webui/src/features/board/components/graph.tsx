@@ -7,17 +7,19 @@ import {
   useEdgesState,
   ReactFlow,
   BackgroundVariant,
-  type ReactFlowInstance,
-  useReactFlow,
+  addEdge,
+  type Connection,
+  MarkerType
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import NodeView from './node-view'
 import { ActionPanel } from './action-panel'
-import { createDefaultNote } from '../types/note'
 import { useBoardStore } from '../store/board-store'
-import { convertNoteToNode } from '../utils/graph'
-import { useCallback } from 'react'
 import { type LinkEdge, type NoteNode } from '../types/flow'
+import { useAddNoteNode } from '../hooks/add-node'
+import { EdgeView } from './edge-view'
+import { useCallback } from 'react'
+import { CustomConnectionLine } from './connection'
 
 
 const proOptions = { hideAttribution: true }
@@ -26,42 +28,40 @@ const nodeTypes = {
   default: NodeView
 }
 
+const edgeTypes = {
+  default: EdgeView,
+}
 
+const defaultEdgeOptions = {
+  type: 'default',
+  style: { stroke: '#636363', strokeWidth: 1 },
+  markerEnd: {
+    type: MarkerType.ArrowClosed,
+    color: '#636363',
+    width: 20,
+    height: 20
+  },
+}
+const connectionLineStyle = {
+  stroke: '#636363',
+}
+
+
+/**
+ * GraphEditor component to render the graph with nodes and edges.
+ */
 export default function GraphEditor() {
   const currentBoardId = useBoardStore((state) => state.currentBoardId)
 
   const [nodes, setNodes, onNodesChange] = useNodesState<NoteNode>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<LinkEdge>([])
 
-  const { getViewport } = useReactFlow()
+  const handleAddNode = useAddNoteNode(currentBoardId, setNodes)
 
-  const handleAddNode = useCallback(() => {
-    if (!currentBoardId) return
-    const newNote = createDefaultNote(currentBoardId)
-    const jitter = () => Math.random() * 100 - 50
-
-    const container = document.querySelector('.react-flow__viewport')?.getBoundingClientRect()
-    const cw = container?.width ?? 800
-    const ch = container?.height ?? 600
-
-    const screenX = cw / 3 + jitter()
-    const screenY = ch / 3 + jitter()
-
-    const { x: vx, y: vy, zoom } = getViewport()
-
-    const graphX = (screenX - vx) / zoom
-    const graphY = (screenY - vy) / zoom
-
-    if (!newNote.properties) {
-      newNote.properties = {}
-    }
-    if (!newNote.properties.nodePosition) {
-      newNote.properties.nodePosition = { prop: { position: { x: 0, y: 0 }, type: 'position' } }
-    }
-    newNote.properties.nodePosition.prop.position = { x: graphX, y: graphY }
-    const newNode = convertNoteToNode(newNote)
-    setNodes((nds) => [...nds, newNode])
-  }, [setNodes, currentBoardId, getViewport])
+  const onConnect = useCallback(
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges],
+  )
 
   if (!currentBoardId) {
     return null
@@ -77,8 +77,12 @@ export default function GraphEditor() {
         onEdgesChange={onEdgesChange}
         proOptions={proOptions}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        defaultEdgeOptions={defaultEdgeOptions}
+        onConnect={onConnect}
         fitView
-
+        connectionLineComponent={CustomConnectionLine}
+        connectionLineStyle={connectionLineStyle}
       >
         <MiniMap />
         <Controls />

@@ -127,16 +127,16 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 bg-blue-500 border-2 border-white"
+        className="w-3 h-3 !bg-transparent hover:bg-accent border-none rounded-full"
       />
       <Handle
         position={Position.Right}
         type="source"
-        className="w-3 h-3 bg-blue-500 border-2 border-white"
+        className="w-3 h-3 !bg-transparent hover:bg-accent border-none rounded-full"
       />
       <RoughRect
         rounded="rounded-2xl"
-        roughness={1.5}
+        roughness={data.style.roughness}
         fill={data.style.backgroundColor || 'white'}
         fillStyle={data.style.fillStyle}
       >

@@ -63,7 +63,7 @@ export const createDefaultNote = (boardId: string): Note => ({
   version: 1,
   createdAt: new Date().toISOString(),
   graphUid: boardId,
-  style: { ...defaultStyle },
+  style: { ...defaultStyle() },
   minWidth: 100,
   minHeight: 100,
   properties: {

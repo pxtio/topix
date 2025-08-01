@@ -7,8 +7,10 @@ import {
   useEdgesState,
   ReactFlow,
   BackgroundVariant,
+  type ReactFlowInstance,
+  useReactFlow,
 } from '@xyflow/react'
-import '@xyflow/react/dist/style.css'
+import '@xyflow/react/dist/base.css'
 import NodeView from './node-view'
 import { ActionPanel } from './action-panel'
 import { createDefaultNote } from '../types/note'
@@ -31,13 +33,35 @@ export default function GraphEditor() {
   const [nodes, setNodes, onNodesChange] = useNodesState<NoteNode>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<LinkEdge>([])
 
+  const { getViewport } = useReactFlow()
 
   const handleAddNode = useCallback(() => {
     if (!currentBoardId) return
     const newNote = createDefaultNote(currentBoardId)
+    const jitter = () => Math.random() * 100 - 50
+
+    const container = document.querySelector('.react-flow__viewport')?.getBoundingClientRect()
+    const cw = container?.width ?? 800
+    const ch = container?.height ?? 600
+
+    const screenX = cw / 3 + jitter()
+    const screenY = ch / 3 + jitter()
+
+    const { x: vx, y: vy, zoom } = getViewport()
+
+    const graphX = (screenX - vx) / zoom
+    const graphY = (screenY - vy) / zoom
+
+    if (!newNote.properties) {
+      newNote.properties = {}
+    }
+    if (!newNote.properties.nodePosition) {
+      newNote.properties.nodePosition = { prop: { position: { x: 0, y: 0 }, type: 'position' } }
+    }
+    newNote.properties.nodePosition.prop.position = { x: graphX, y: graphY }
     const newNode = convertNoteToNode(newNote)
     setNodes((nds) => [...nds, newNode])
-  }, [setNodes, currentBoardId])
+  }, [setNodes, currentBoardId, getViewport])
 
   if (!currentBoardId) {
     return null

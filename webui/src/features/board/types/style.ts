@@ -29,15 +29,15 @@ export type TextAlign = "left" | "center" | "right"
 export interface Style {
   type?: NodeType
   angle?: number
-  strokeColor?: string | null
+  strokeColor?: string
   strokeWidth?: number
   strokeStyle?: StrokeStyle
-  backgroundColor?: string | null
-  fillStyle?: FillStyle
-  roughness?: number
+  backgroundColor?: string
+  fillStyle: FillStyle
+  roughness: number
   opacity?: number
   groupIds?: string[]
-  fontFamily?: string | null
+  fontFamily?: string
   textAlign?: TextAlign
   color?: string | null
 }
@@ -49,15 +49,15 @@ export interface Style {
 export const defaultStyle = (): Style => ({
   type: "rectangle",
   angle: 0.0,
-  strokeColor: null,
+  strokeColor: "transparent",
   strokeWidth: 1,
   strokeStyle: "solid",
-  backgroundColor: null,
+  backgroundColor: "oklch(.901 .076 70.697)",
   fillStyle: "solid",
-  roughness: 1.0,
+  roughness: 1.2,
   opacity: 100,
   groupIds: [],
-  fontFamily: null,
-  textAlign: "left",
-  color: null,
+  fontFamily: undefined,
+  textAlign: "center",
+  color: "black",
 })

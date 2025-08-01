@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
-import { type Options as RoughOptions } from 'roughjs/bin/core'
-
 
 /**
  * RoughRect is a React component that draws a rough rectangle with optional rounded corners
@@ -24,7 +22,7 @@ export type RoughRectProps = {
   stroke?: string
   strokeWidth?: number
   fill?: string
-  fillStyle?: RoughOptions['fillStyle']
+  fillStyle?: 'solid'
 }
 
 
@@ -36,7 +34,7 @@ export type RoughRectProps = {
 export const RoughRect: React.FC<RoughRectProps> = ({
   children,
   rounded = 'none',
-  roughness = 0.5,
+  roughness = 1.2,
   stroke = 'transparent',
   strokeWidth = 1,
   fill,
@@ -98,17 +96,31 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   )
 }
 
-function roundedRectPath(x: number, y: number, width: number, height: number, r: number): string {
-  return `
-    M${x + r},${y}
-    h${width - 2 * r}
-    a${r},${r} 0 0 1 ${r},${r}
-    v${height - 2 * r}
-    a${r},${r} 0 0 1 -${r},${r}
-    h-${width - 2 * r}
-    a${r},${r} 0 0 1 -${r},-${r}
-    v-${height - 2 * r}
-    a${r},${r} 0 0 1 ${r},-${r}
-    z
-  `.trim()
+
+function roundedRectPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  r: number
+): string {
+  if (r === 0) {
+    return `M${x},${y} h${width} v${height} h-${width} Z`
+  }
+
+  // Clamp radius to not exceed half width or half height
+  const radius = Math.max(0, Math.min(r, width / 2, height / 2))
+
+  return [
+    `M${x + radius},${y}`,
+    `h${width - 2 * radius}`,
+    `a${radius},${radius} 0 0 1 ${radius},${radius}`,
+    `v${height - 2 * radius}`,
+    `a${radius},${radius} 0 0 1 -${radius},${radius}`,
+    `h-${width - 2 * radius}`,
+    `a${radius},${radius} 0 0 1 -${radius},-${radius}`,
+    `v-${height - 2 * radius}`,
+    `a${radius},${radius} 0 0 1 ${radius},-${radius}`,
+    `Z`
+  ].join(' ')
 }

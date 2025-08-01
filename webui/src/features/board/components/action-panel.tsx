@@ -15,7 +15,8 @@ export function ActionPanel({ onAddNode }: GraphControlPanelProps) {
       className={`
         absolute top-4 left-1/2 -translate-x-1/2 z-10
         bg-card text-card-foreground
-        p-4 rounded-xl shadow-md
+        p-1
+        rounded-xl shadow-md
         flex flex-row items-center justify-center gap-2
       `}
     >

@@ -1,14 +1,20 @@
+"""Evaluate an agent on a dataset."""
+
 import asyncio
+
 from typing import Any, Awaitable, Callable
 
-from datasets import load_dataset
 import mlflow
 import pandas as pd
+
+from datasets import load_dataset
 
 from topix.agents.base import BaseAgent
 
 
 class Evaluator:
+    """Evaluate an agent on a dataset."""
+
     @classmethod
     async def evaluate(
         cls,
@@ -20,6 +26,7 @@ class Evaluator:
         metrics: list,
         mlflow_tracking_uri: str,
     ):
+        """Evaluate the agent on a dataset."""
         mlflow.set_tracking_uri(mlflow_tracking_uri)
         mlflow.set_experiment(agent.name)
         mlflow.openai.autolog()

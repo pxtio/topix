@@ -1,11 +1,11 @@
 """Base class for agent managers in the Topix application."""
 
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, AsyncGenerator, Generic, TypeVar
+from typing import Any, AsyncGenerator
 
 from jinja2 import Template
 from openai.types.responses import ResponseTextDeltaEvent
-from pydantic import BaseModel
 
 from agents import (
     Agent,
@@ -17,16 +17,16 @@ from agents import (
     function_tool,
 )
 from agents.extensions.models.litellm_model import LitellmModel
-from topix.agents.datatypes.context import Context
+from topix.agents.datatypes.context import Context, ToolCall
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.agents.utils import tool_execution_handler
 
 RAW_RESPONSE_EVENT = "raw_response_event"
 PROMPT_DIR = Path(__file__).parent.parent / "prompts"
-TOutput = TypeVar("TOutput", BaseModel, str)
 
 
-class BaseAgent(Agent[Context], Generic[TOutput]):
+@dataclass
+class BaseAgent(Agent[Context]):
     """Base class for agents. Inherit from Openai Agent."""
 
     def __post_init__(self):
@@ -42,7 +42,6 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
         tool_description: str | None = None,
         max_turns: int = 5,
         streamed: bool = False,
-        start_msg: str | None = None,
     ) -> Tool:
         """Transform this agent into a tool, callable by other agents.
 
@@ -68,14 +67,13 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
             Tool: The tool that can be used by other agents.
 
         """
+        name_override = tool_name or self.name
 
         @function_tool(
-            name_override=tool_name,
+            name_override=name_override,
             description_override=tool_description or "",
         )
-        async def run_agent(
-            context: RunContextWrapper[Context], input: BaseModel | str
-        ) -> str:
+        async def run_agent(context: RunContextWrapper[Context], input: str) -> str:
             """Execute the agent with the provided context and input.
 
             Args:
@@ -88,28 +86,25 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
             """
             # Determine the name to override, using tool_name or defaulting
             # to the agent's name
-            name_override = tool_name or self.name
 
-            # Format input message based on its type
-            msg = start_msg
-            if msg is None:
-                if isinstance(input, str):
-                    msg = input
-                else:
-                    msg = "\n".join(
-                        f"{key}: {value}" for key, value in input.model_dump().items()
-                    )
-
-            # Handle tool execution within an async context manager
-            async with tool_execution_handler(context.context, name_override, msg) as p:
-                # Handle tool hooks, for specialized behavior
+            # Format the input for the agent
+            try:
+                input_str = await self._input_formatter(context.context, input)
+            except Exception:
+                raise TypeError(
+                    f"The agent {self.name} does not accept string inputs \
+                        and cannot be used as a function tool."
+                )
+            async with tool_execution_handler(
+                context.context, name_override, input
+            ) as p:
+                # Handle tool execution within an async context manager
                 hook_result = await self._as_tool_hook(
                     context.context, input, tool_id=p["tool_id"]
                 )
                 if hook_result is not None:
                     return hook_result
-                # Format the input for the agent
-                input_str = await self._input_formatter(context.context, input)
+
                 if streamed:
                     # Run the agent in streaming mode
                     output = Runner.run_streamed(
@@ -132,6 +127,16 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
 
             # Extract the final output from the agent
             output = await self._output_extractor(context.context, output)
+
+            context.context.tool_calls.append(
+                ToolCall(
+                    tool_id=p["tool_id"],
+                    tool_name=name_override,
+                    arguments={"input": input},
+                    output=output,
+                )
+            )
+
             return output
 
         return run_agent
@@ -142,16 +147,15 @@ class BaseAgent(Agent[Context], Generic[TOutput]):
         return None
 
     async def _input_formatter(
-        self, context: Context, input: BaseModel | str
+        self, context: Context, input: Any
     ) -> str | list[dict[str, str]]:
         if isinstance(input, str):
             return input
-        if isinstance(input, list):
+        elif isinstance(input, list):
             return input
-        else:
-            raise NotImplementedError
+        raise NotImplementedError("_input_formatter method is not implemented")
 
-    async def _output_extractor(self, context: Context, output: RunResult) -> TOutput:
+    async def _output_extractor(self, context: Context, output: RunResult) -> Any:
         return output.final_output
 
     @classmethod

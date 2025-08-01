@@ -1,6 +1,6 @@
 """Answer Reformulation Agent."""
 
-from agents import ModelSettings
+from agents import ModelSettings, RunResult
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
@@ -8,7 +8,7 @@ from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentTy
 from topix.agents.datatypes.tools import AgentToolName
 
 
-class AnswerReformulate(BaseAgent[str]):
+class AnswerReformulate(BaseAgent):
     """Answer reformulate tool."""
 
     def __init__(
@@ -35,40 +35,46 @@ class AnswerReformulate(BaseAgent[str]):
         self, context: ReasoningContext, input: str
     ) -> list[dict[str, str]]:
         """Format the input for the answer reformulation agent."""
-        kb_search_results = (
-            "\n\n".join(context.kb_search_results) if context.kb_search_results else ""
-        )
-        web_search_results = (
-            "\n\n".join(context.web_search_results)
-            if context.web_search_results
-            else ""
-        )
+        input_items = context.chat_history
+        code_items = []
+        tool_calls = context.tool_calls
+        if not tool_calls:
+            tool_trace = ""
+        else:
+            for idx, tool_call in enumerate(tool_calls):
+                if tool_call.tool_name != AgentToolName.CODE_INTERPRETER:
+                    tool_step = f"""Step {idx + 1}: Calling {tool_call.tool_name}
+                    - Arguments: {tool_call.arguments}
+                    - Output: {tool_call.output} \n\n
+                    """
+                    tool_trace += tool_step
+                else:
+                    output: RunResult = tool_call.output
+                    code_items.extend(output.new_items)
+
         prompt = self._render_prompt(
             "answer_reformulation.user.jinja",
             query=input,
-            web_search_results=web_search_results,
-            kb_search_results=kb_search_results,
+            tool_trace=tool_trace,
         )
-        if context.chat_history:
-            return context.chat_history + [{"role": "user", "content": prompt}]
-        else:
-            return [{"role": "user", "content": prompt}]
+        input_items += [{"role": "user", "content": prompt}]
 
     async def _as_tool_hook(
         self, context: ReasoningContext, input: str, tool_id: str
     ) -> str | None:
         # No need to launch the answer_reformulate if there is only one search result
-        if len(context.kb_search_results) == 0 and len(context.web_search_results) == 1:
-            await context._message_queue.put(
-                AgentStreamMessage(
-                    tool_id=tool_id,
-                    tool_name=AgentToolName.ANSWER_REFORMULATE,
-                    content=Content(
-                        type=ContentType.MESSAGE,
-                        text=context.web_search_results[0],
-                    ),
-                    is_stop=True,
+        if len(context.tool_calls) == 1:
+            if context.tool_calls[0].tool_name == AgentToolName.WEB_SEARCH:
+                await context._message_queue.put(
+                    AgentStreamMessage(
+                        tool_id=tool_id,
+                        tool_name=AgentToolName.ANSWER_REFORMULATE,
+                        content=Content(
+                            type=ContentType.MESSAGE,
+                            text=context.tool_calls[0].output,
+                        ),
+                        is_stop=True,
+                    )
                 )
-            )
-            return context.web_search_results[0]
+            return context.tool_calls[0].output
         return None

@@ -7,7 +7,7 @@ from topix.agents.datatypes.inputs import QueryRewriteInput
 from topix.agents.datatypes.model_enum import ModelEnum
 
 
-class QueryRewrite(BaseAgent[str]):
+class QueryRewrite(BaseAgent):
     """Query Rewrite Agent."""
 
     def __init__(
@@ -26,7 +26,7 @@ class QueryRewrite(BaseAgent[str]):
             name=name,
             model=model,
             model_settings=model_settings,
-            instructions=instructions,
+            instructions=instructions
         )
         super().__post_init__()
 

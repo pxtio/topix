@@ -11,6 +11,7 @@ from agents import (
     Tool,
 )
 from topix.agents.assistant.answer_reformulate import AnswerReformulate
+from topix.agents.assistant.code_interpreter import CodeInterpreter
 from topix.agents.assistant.web_search import WebSearch
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
@@ -56,7 +57,7 @@ class PlanHooks(AgentHooks):
             agent.model_settings.tool_choice = "required"
 
 
-class Plan(BaseAgent[str]):
+class Plan(BaseAgent):
     """Manager for the reflection agent."""
 
     def __init__(
@@ -79,6 +80,7 @@ class Plan(BaseAgent[str]):
                 AgentToolName.ANSWER_REFORMULATE,
                 streamed=True,
             ),
+            CodeInterpreter().as_tool(AgentToolName.CODE_INTERPRETER, streamed=True),
         ]
         hooks = PlanHooks()
 

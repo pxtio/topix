@@ -2,12 +2,13 @@
 import asyncio
 
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from pydantic import BaseModel
 
 from agents import RunConfig, RunHooks, Runner, TContext, TResponseInputItem
 from agents.memory import Session
-from topix.agents.base import BaseAgent, TOutput
+from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.stream import AgentStreamMessage
 from topix.agents.datatypes.tools import AgentToolName
@@ -22,7 +23,7 @@ class AgentRunner:
     @classmethod
     async def run(
         cls,
-        starting_agent: BaseAgent[TOutput],
+        starting_agent: BaseAgent,
         input: str | list[TResponseInputItem] | BaseModel,
         *,
         context: TContext | None = None,
@@ -31,7 +32,7 @@ class AgentRunner:
         run_config: RunConfig | None = None,
         previous_response_id: str | None = None,
         session: Session | None = None,
-    ) -> TOutput:
+    ) -> Any:
         """Run a workflow starting at the given agent. The agent will run in a loop until a final output is generated.
 
             1. The agent is invoked with the given input.
@@ -81,7 +82,7 @@ class AgentRunner:
     async def run_streamed(
         cls,
         starting_agent: BaseAgent,
-        input: str | list[TResponseInputItem],
+        input: str | list[TResponseInputItem] | BaseModel,
         context: Context,
         max_turns: int = DEFAULT_MAX_TURNS,
         hooks: RunHooks[TContext] | None = None,
@@ -126,12 +127,11 @@ class AgentRunner:
         else:
             input_msg = ""
 
-        if isinstance(input, str) or isinstance(input, BaseModel):
-            input = await starting_agent._input_formatter(context=context, input=input)
+        input = await starting_agent._input_formatter(context=context, input=input)
 
         async def stream_events():
             async with tool_execution_handler(
-                context, tool_name=AgentToolName.RAW_MESSAGE, input_str=input_msg
+                context, tool_name=AgentToolName.RAW_MESSAGE, start_msg=input_msg
             ) as p:
                 res = Runner.run_streamed(
                     starting_agent,

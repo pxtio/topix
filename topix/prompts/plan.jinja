@@ -9,6 +9,10 @@ You are an expert Research Planner. Your primary function is to create and execu
 
 - `web_search(query: str)`: Searches the public web. Returns a string summarizing relevant information.
 - `answer_reformulation(query: str)`: The final step. Call this tool when you have gathered sufficient information to proceed. You only need to pass a clear version of user's query, then it will automatically extract information from context to reformulate for final answer.
+- `run_web_search(query: str)`: Searches the public web. Returns a string summarizing relevant information.
+- `run_code_interpreter(query: str)`: Execute code to perform calculations and generate graphical explanations.
+- `run_answer_reformulation(query: str)`: The final step. Call this tool when you have gathered sufficient information to proceed.
+
 ---
 
 ### Process

@@ -7,18 +7,20 @@ from typing import Any
 from agents import (
     Agent,
     AgentHooks,
+    CodeInterpreterTool,
+    ItemHelpers,
     ModelSettings,
     RunContextWrapper,
+    RunResult,
     Tool,
-    WebSearchTool,
 )
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 
 
-class WebSearchAgentHook(AgentHooks):
-    """Custom hook to handle the context and results of the web search agent."""
+class CodeInterpreterAgentHook(AgentHooks):
+    """Custom hook to handle the context and results of the Code Interpreter agent."""
 
     async def on_end(
         self,
@@ -42,7 +44,7 @@ class WebSearchAgentHook(AgentHooks):
         tool.is_enabled = False
 
 
-class WebSearch(BaseAgent):
+class CodeInterpreter(BaseAgent):
     """An Agent for web search operations.
 
     This class is responsible for managing the web search agent and its operations.
@@ -50,16 +52,20 @@ class WebSearch(BaseAgent):
 
     def __init__(
         self,
-        model: str = ModelEnum.OpenAI.GPT_4O_MINI,
-        instructions_template: str = "web_search.jinja",
+        model: str = ModelEnum.OpenAI.GPT_4O,
+        instructions_template: str = "code_interpreter.jinja",
         model_settings: ModelSettings | None = None,
     ):
-        """Initialize the WebSearch agent."""
-        name = "Web Search"
+        """Initialize the gent."""
+        name = "Code Interpreter"
         instructions_dict = {"time": datetime.datetime.now().strftime("%Y-%m-%d")}
         instructions = self._render_prompt(instructions_template, **instructions_dict)
-        tools = [WebSearchTool(search_context_size="medium")]
-        hooks = WebSearchAgentHook()
+        tools = [
+            CodeInterpreterTool(
+                tool_config={"type": "code_interpreter", "container": {"type": "auto"}}
+            )
+        ]
+        hooks = CodeInterpreterAgentHook()
 
         if model_settings is None:
             model_settings = ModelSettings(temperature=0.01)
@@ -74,3 +80,8 @@ class WebSearch(BaseAgent):
         )
 
         super().__post_init__()
+
+    async def _output_extractor(
+        self, context: ReasoningContext, output: RunResult
+    ) -> RunResult:
+        return ItemHelpers.text_message_outputs(output.new_items)

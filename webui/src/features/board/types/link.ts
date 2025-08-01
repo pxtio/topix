@@ -5,7 +5,7 @@ import { defaultStyle, type Style } from "./style"
 /**
  * Interface for a link between nodes in the board.
  */
-export interface Link {
+export interface Link extends Record<string, unknown> {
   id: string
   type: "link"
   version: number
@@ -20,7 +20,6 @@ export interface Link {
   deletedAt?: string
 
   graphUid?: string
-  saved?: boolean
 }
 
 
@@ -45,5 +44,4 @@ export const createDefaultLink = (
   style: defaultStyle(),
   createdAt: new Date().toISOString(),
   graphUid: boardId,
-  saved: false
 })

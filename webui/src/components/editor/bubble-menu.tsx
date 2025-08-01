@@ -6,11 +6,11 @@ import { Separator } from '@/components/ui/separator'
 
 
 interface EditorMenuButtonProps {
-  handleClick: () => void;
-  editor: Editor;
-  isActive: boolean;
-  className?: string;
-  children?: React.ReactNode;
+  handleClick: () => void
+  editor: Editor
+  isActive: boolean
+  className?: string
+  children?: React.ReactNode
 }
 
 
@@ -24,10 +24,10 @@ const EditorMenuButton: React.FC<EditorMenuButtonProps> = ({
   children
 }) => {
   if (!editor) {
-    return null;
+    return null
   }
   const styleClassName = isActive ? "transition-all p-1 w-6 h-6 rounded flex items-center hover:bg-accent text-accent-foreground" :
-    "transition-all p-1 w-6 h-6 rounded flex items-center hover:bg-accent text-accent-foreground";
+    "transition-all p-1 w-6 h-6 rounded flex items-center hover:bg-accent text-accent-foreground"
   return (
     <button
       onClick={handleClick}
@@ -35,10 +35,8 @@ const EditorMenuButton: React.FC<EditorMenuButtonProps> = ({
     >
       {children}
     </button>
-  );
-};
-export default EditorMenuButton;
-
+  )
+}
 
 /**
  * Props for the EditorMenu component.

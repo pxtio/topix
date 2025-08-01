@@ -30,7 +30,7 @@ export interface Content {
 /**
  * Interface for a note.
  */
-export interface Note {
+export interface Note extends Record<string, unknown> {
   id: string
   type: "note"
   version: number
@@ -47,7 +47,8 @@ export interface Note {
   graphUid: string
   style: Style
 
-  saved?: boolean
+  minWidth?: number
+  minHeight?: number
 }
 
 
@@ -63,5 +64,20 @@ export const createDefaultNote = (boardId: string): Note => ({
   createdAt: new Date().toISOString(),
   graphUid: boardId,
   style: { ...defaultStyle },
-  saved: false
+  minWidth: 100,
+  minHeight: 100,
+  properties: {
+    nodePosition: {
+      prop: {
+        position: { x: 0, y: 0 },
+        type: "position",
+      },
+    },
+    nodeSize: {
+      prop: {
+        size: { width: 100, height: 100 },
+        type: "size",
+      },
+    },
+  }
 })

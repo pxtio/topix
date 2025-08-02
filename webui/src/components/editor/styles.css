@@ -27,7 +27,7 @@
   }
 
   a {
-    @apply text-sky-600 inline-block rounded-full p-1 text-center bg-gray-100 font-mono hover:underline transition-all text-xs;
+    @apply text-primary inline-block rounded-full p-1 text-center font-mono hover:underline transition-all text-xs;
   }
 
   ul {
@@ -75,7 +75,7 @@
 
   /* Blockquotes */
   blockquote {
-    @apply mt-4 border-l-2 pl-6 italic text-sm text-stone-700;
+    @apply mt-4 border-l-2 pl-6 italic text-sm text-card-foreground;
   }
 
   /* Tables */
@@ -88,11 +88,11 @@
   }
 
   th {
-    @apply border-b px-4 py-2 text-left font-bold text-sm text-stone-700;
+    @apply border-b px-4 py-2 text-left font-bold text-sm text-card-foreground;
   }
 
   td {
-    @apply px-4 py-2 text-left text-sm text-stone-600;
+    @apply px-4 py-2 text-left text-sm text-card-foreground;
   }
 
   /* Inline Code */
@@ -111,7 +111,7 @@
 
   /* Horizontal Rule */
   hr {
-    @apply border-t border-stone-200 my-6;
+    @apply border-t border-border my-6;
   }
 
   /* Tiptap Pro Math Editor Styles */
@@ -156,7 +156,7 @@
     }
 
     li[data-checked="true"] {
-      @apply line-through text-stone-400;
+      @apply line-through text-accent-foreground;
     }
   }
 }

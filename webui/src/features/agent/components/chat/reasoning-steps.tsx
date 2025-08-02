@@ -82,7 +82,7 @@ const ReasoningStepView = ({
         {
           message.length > 200 &&
           <button
-            className='text-xs text-blue-500 hover:underline ml-2'
+            className='text-xs text-primary hover:underline ml-2'
             onClick={handleClick}
           >
             {viewMore ? "Show less" : "Show more"}

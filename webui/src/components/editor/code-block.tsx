@@ -32,12 +32,12 @@ export const CodeBlockComponent: React.FC<CodeBlockComponentProps> = ({ node }) 
       <div style={{ position: 'relative' }}>
         <button
           onClick={() => handleCopy()}
-          className="transition-all absolute top-1 right-1 text-sm bg-transparent hover:bg-stone-200 p-2 rounded-xl text-stone-500 z-10"
+          className="transition-all absolute top-1 right-1 text-sm bg-transparent hover:bg-accent p-2 rounded-xl text-accent-foreground z-10"
           aria-label="Copy to clipboard"
         >
           <Clipboard strokeWidth={1.75} className='h-4 w-4' />
         </button>
-        <span className="absolute top-0 left-0 w-auto bg-transparent text-[11px] px-4 py-2 text-stone-500 text-sm z-10">
+        <span className="absolute top-0 left-0 w-auto bg-transparent text-[11px] px-4 py-2 text-accent-foreground text-sm z-10">
           {language}
         </span>
         <pre>

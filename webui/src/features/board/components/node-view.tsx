@@ -164,7 +164,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
         >
           <NodeLabel note={data} />
           {selected && (
-            <div className="absolute -inset-1 border border-blue-500 pointer-events-none rounded z-10" />
+            <div className="absolute -inset-1 border border-primary pointer-events-none rounded z-10" />
           )}
         </div>
       </RoughRect>
@@ -175,7 +175,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
             key={pos}
             onMouseDown={handleDown(pos)}
             onTouchStart={handleDown(pos)}
-            className={`absolute w-3 h-3 bg-white border border-blue-500 rounded-full ${posClass} z-20`}
+            className={`absolute w-3 h-3 bg-transparent border border-primary rounded-full ${posClass} z-20`}
             style={{
               transform: `translate(${pos.includes('right') ? '50%' : '-50%'}, ${
                 pos.includes('bottom') ? '50%' : '-50%'

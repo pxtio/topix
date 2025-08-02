@@ -60,7 +60,7 @@ export const EditorMenu = ({ editor }: EditorMenuProps) => {
   }
   return (
     <BubbleMenu
-      className='bg-white rounded-xl shadow-md px-3 py-1 border'
+      className='bg-card rounded-xl shadow-md px-3 py-1 border'
       editor={editor}
       tippyOptions={{
         duration: 100,

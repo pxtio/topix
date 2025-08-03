@@ -1,31 +1,39 @@
 """Agent stream datatypes for token streaming."""
-from typing import Literal
-
 from pydantic import BaseModel
 
 from topix.agents.datatypes.tools import AgentToolName
 from topix.datatypes.enum import CustomEnum
 
 
-class ContentType(str, CustomEnum):
-    """Agent stream content types."""
+class StreamMessageType(str, CustomEnum):
+    """Enumeration for token message types."""
 
     TOKEN = "token"
-    STATUS = "status"
-    MESSAGE = "message"
+    STATE = "state"
 
 
-class Content(BaseModel):
-    """Agent stream content."""
+class ToolExecutionState(str, CustomEnum):
+    """Enumeration for tool call states."""
 
-    type: ContentType = ContentType.TOKEN
-    text: str = ""
+    STARTED = "started"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class StreamDelta(BaseModel):
+    """Stream delta for token streaming."""
+
+    content: str
 
 
 class AgentStreamMessage(BaseModel):
     """Agent stream message for streaming results."""
 
+    type: StreamMessageType = StreamMessageType.TOKEN
+
     tool_id: str
     tool_name: AgentToolName
-    content: Content | None = None
-    is_stop: bool | Literal["error"] | None = None
+
+    execution_state: ToolExecutionState | None = None
+    status_message: str | None = None
+    delta: StreamDelta | None = None

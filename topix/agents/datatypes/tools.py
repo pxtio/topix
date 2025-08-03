@@ -9,7 +9,6 @@ class AgentToolName(str, CustomEnum):
     ANSWER_REFORMULATE = "answer_reformulate"
     KNOWLEDGE_BASE_SEARCH = "knowledge_base_search"
     WEB_SEARCH = "web_search"
-    CODE_INTERPRETER = "code_interpreter"
 
     KEY_POINTS_EXTRACT = "key_points_extract"
     GRAPH_CONVERSION = "graph_conversion"

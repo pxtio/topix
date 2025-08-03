@@ -19,34 +19,18 @@ export function SkeletonCard() {
 
 
 export const MiniLinkCard = ({
-  url
+  url,
+  siteName
 }: {
   url: string
+  siteName: string
 }) => {
-  const userId = useAppStore((state) => state.userId)
-  const {
-    data: preview,
-    isLoading: loadingPreview,
-    isError: errorPreview
-  } = usePreviewWebpage({ userId, url })
-
-  if (loadingPreview || errorPreview) {
-    return null
-  }
-
   return (
-    <div className="transition-all p-2 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs flex flex-row items-center gap-2 shadow-sm">
-      {preview && preview.image && (
-        <img
-          src={preview.image}
-          alt="Preview"
-          className="h-4 w-4 rounded-full shrink-0 object-cover"
-        />
-      )}
+    <div className="transition-all p-3 rounded-lg bg-muted hover:bg-accent text-muted-foreground text-xs flex flex-row items-center gap-2">
       <HoverCard>
         <HoverCardTrigger asChild>
           <a className="font-medium inline-block" href={url} target="_blank" rel="noopener noreferrer">
-            {preview && preview.siteName ? trimText(preview.siteName, 20) : trimText(url, 20)}
+            {trimText(siteName, 30)}
           </a>
         </HoverCardTrigger>
         <HoverCardContent>

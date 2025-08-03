@@ -104,7 +104,7 @@ const CustomLink: React.FC<CustomLinkProps> = ({ isStreaming = false, children, 
     return (
       <a
         href={props.href}
-        className="inline-block px-2 py-1 text-primary text-xs font-medium bg-accent hover:underline rounded-full"
+        className="inline-block px-2 py-1 text-muted-foreground text-xs font-medium border border-border hover:underline rounded-lg"
         target="_blank"
       >
         {contentWithoutBrackets}
@@ -117,7 +117,7 @@ const CustomLink: React.FC<CustomLinkProps> = ({ isStreaming = false, children, 
       <HoverCardTrigger asChild>
         <a
           href={props.href}
-          className="inline-block px-2 py-1 text-primary text-xs font-medium bg-accent hover:underline rounded-full"
+          className="inline-block px-2 py-1 text-muted-foreground text-xs font-medium border border-border hover:underline rounded-lg"
           target="_blank"
         >
           {contentWithoutBrackets}

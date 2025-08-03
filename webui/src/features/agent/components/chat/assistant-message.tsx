@@ -1,10 +1,10 @@
 import { MarkdownView } from "@/components/markdown-view"
 import { useChatStore } from "../../store/chat-store"
 import { ReasoningStepsView } from "./reasoning-steps"
-import { extractUrlsFromMarkdown } from "../../utils/md"
 import { MiniLinkCard } from "../link-preview"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { MousePointerClick } from "lucide-react"
+import { extractNamedLinksFromMarkdown } from "../../utils/md"
 
 
 const SourcesView = ({
@@ -12,7 +12,7 @@ const SourcesView = ({
 }: {
   answer: string
 }) => {
-  const links = extractUrlsFromMarkdown(answer)
+  const links = extractNamedLinksFromMarkdown(answer)
   if (links.length === 0) {
     return null
   }
@@ -24,7 +24,7 @@ const SourcesView = ({
       </div>
       <ScrollArea className='w-full' >
         <div className="flex flex-row gap-1 px-2 py-4">
-          {links.map((link, index) => <MiniLinkCard key={index} url={link} />)}
+          {links.map((link, index) => <MiniLinkCard key={index} url={link.url} siteName={link.siteName} />)}
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>

@@ -53,3 +53,9 @@ class ConvertToMindMapRequest(BaseModel):
     """Request model for converting a graph to a mind map."""
 
     answer: str
+
+
+class WebPagePreviewRequest(BaseModel):
+    """Request model for fetching a preview of a webpage."""
+
+    url: str

@@ -9,6 +9,8 @@ import { Copy } from "lucide-react"
 import { toast } from "sonner"
 import React from "react"
 import { cn } from "@/lib/utils"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card"
+import { LinkPreviewCard } from "@/features/agent/components/link-preview"
 
 
 /**
@@ -89,23 +91,42 @@ const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) 
 
 
 interface CustomLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  isStreaming?: boolean
   children?: React.ReactNode
 }
 
-const CustomLink: React.FC<CustomLinkProps> = ({ children, ...props }) => {
+const CustomLink: React.FC<CustomLinkProps> = ({ isStreaming = false, children, ...props }) => {
   // Ensure children is an array and get the first element as a string
   const content = Array.isArray(children) ? children[0] : children
   const contentWithoutBrackets = typeof content === 'string' ? content.replace(/^\[|\]$/g, '') : "KB"
 
+  if (isStreaming) {
+    return (
+      <a
+        href={props.href}
+        className="inline-block px-2 py-1 text-primary text-xs font-medium bg-accent hover:underline rounded-full"
+        target="_blank"
+      >
+        {contentWithoutBrackets}
+      </a>
+    )
+  }
+
   return (
-    <a
-      href="#"
-      className="inline-block rounded-full p-1 text-center text-primary text-sm font-mono hover:underline transition-all"
-      {...props}
-      target="_blank"
-    >
-      {contentWithoutBrackets}
-    </a>
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <a
+          href={props.href}
+          className="inline-block px-2 py-1 text-primary text-xs font-medium bg-accent hover:underline rounded-full"
+          target="_blank"
+        >
+          {contentWithoutBrackets}
+        </a>
+      </HoverCardTrigger>
+      <HoverCardContent>
+        <LinkPreviewCard url={props.href || ''} />
+      </HoverCardContent>
+    </HoverCard>
   )
 }
 
@@ -116,6 +137,7 @@ const CustomLink: React.FC<CustomLinkProps> = ({ children, ...props }) => {
  * @property content - The markdown content to be rendered.
  */
 export interface MarkdownViewProps {
+  isStreaming?: boolean
   content: string
 }
 
@@ -123,7 +145,7 @@ export interface MarkdownViewProps {
 /**
  * MarkdownView is a React component that renders markdown content.
  */
-export const MarkdownView =({ content }: MarkdownViewProps) => {
+export const MarkdownView =({ isStreaming = false, content }: MarkdownViewProps) => {
   return (
     <>
       <ReactMarkdown
@@ -142,7 +164,7 @@ export const MarkdownView =({ content }: MarkdownViewProps) => {
           ul: ({ ...props }) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props} />,
           ol: ({ ...props }) => <ul className="my-6 ml-6 list-decimal [&>li]:mt-2" {...props} />,
           li: ({ ...props }) => <li className="" {...props} />,
-          a: CustomLink,
+          a: ({ ...props }) => <CustomLink {...props} isStreaming={isStreaming} />,
           // Custom rendering for code blocks
           code: CustomCodeView,
           table: ({ ...props }) => <div className='my-8 w-full overflow-y-auto'><table className="w-full text-base border-b" {...props} /></div>,

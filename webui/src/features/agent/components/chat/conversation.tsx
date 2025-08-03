@@ -3,6 +3,7 @@ import { useListMessages } from "../../api/list-messages"
 import { UserMessage } from "./user-message"
 import { AssistantMessage } from "./assistant-message"
 import type { ChatMessage } from "../../types/chat"
+import { useChatStore } from "../../store/chat-store"
 
 
 /**
@@ -10,13 +11,19 @@ import type { ChatMessage } from "../../types/chat"
  */
 const MessageView = ({
   chatMessage,
-  isLatestUserMessage
-}: { chatMessage: ChatMessage, isLatestUserMessage: boolean }) => {
+  isLatestUserMessage,
+  isLatestAssistantMessage
+}: { chatMessage: ChatMessage, isLatestUserMessage: boolean, isLatestAssistantMessage: boolean }) => {
+  const isStreaming = useChatStore((state) => state.isStreaming)
   switch (chatMessage.role) {
     case "user":
       return <UserMessage message={chatMessage.content} isLatest={isLatestUserMessage} />
     case "assistant":
-      return <AssistantMessage message_id={chatMessage.id} message={chatMessage.content} />
+      return <AssistantMessage
+        message_id={chatMessage.id}
+        message={chatMessage.content}
+        isStreaming={isLatestAssistantMessage && isStreaming}
+      />
     default:
       return null
   }
@@ -43,6 +50,15 @@ export const Conversation = ({ chatId }: { chatId: string }) => {
         ) || (
           message.id === messages[messages.length - 2]?.id
           && message.role === "user"
+        )
+      }
+      isLatestAssistantMessage={
+        (
+          message.id === messages[messages.length - 1]?.id
+          && message.role === "assistant"
+        ) || (
+          message.id === messages[messages.length - 2]?.id
+          && message.role === "assistant"
         )
       }
     />

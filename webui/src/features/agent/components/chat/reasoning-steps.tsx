@@ -126,7 +126,7 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         relative
         w-full
         p-4
-        bg-muted
+        bg-background
         text-muted-foreground
         rounded-xl
         border border-border
@@ -158,7 +158,7 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         {
           isOpen &&
           <div
-            className='absolute left-[0.73rem] top-0 w-[1px] h-full bg-muted-foreground rounded-lg z-10'
+            className='absolute left-[0.73rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
           >
           </div>
         }

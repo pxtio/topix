@@ -1,13 +1,11 @@
 """Agent to describe a chat."""
-
 import logging
 
 from pydantic import BaseModel
 
-from agents import ModelSettings, RunResult
-from topix.agents.base import BaseAgent
-from topix.agents.datatypes.context import Context
-from topix.agents.datatypes.model_enum import ModelEnum
+from agents import Agent, ModelSettings, Runner
+from topix.agents.base import BaseAgentManager
+from topix.agents.prompt_utils import render_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -18,31 +16,36 @@ class ChatDescription(BaseModel):
     title: str
 
 
-class DescribeChat(BaseAgent):
+class DescribeChat(BaseAgentManager):
     """Agent to describe a chat."""
 
-    def __init__(
-        self,
-        model: str = ModelEnum.OpenAI.GPT_4_1_NANO,
-        instructions_template: str = "describe_chat.jinja",
-        model_settings: ModelSettings | None = None,
-    ):
+    name = "Describe Chat"
+    model_name = "gpt-4.1-nano"
+    prompts = "describe_chat.jinja"
+
+    def __init__(self):
         """Init method."""
-        name = "Describe Chat"
-        instructions = self._render_prompt(instructions_template)
-
-        if model_settings is None:
-            model_settings = ModelSettings(temperature=0.5)
-
-        super().__init__(
-            name=name,
-            model=model,
-            model_settings=model_settings,
+        self.agent = Agent(
+            name=self.name,
+            instructions=render_prompt(self.prompts),
+            model=self.model_name,
             output_type=ChatDescription,
-            instructions=instructions,
+            model_settings=ModelSettings(temperature=0.5)
         )
 
-    async def _output_extractor(
-        self, context: Context, output: RunResult
-    ) -> str | None:
-        return output.final_output.title if output.final_output else None
+    async def run(self, messages: list[dict]) -> str | None:
+        """Run the agent with the provided messages."""
+        try:
+            result = await Runner.run(
+                starting_agent=self.agent,
+                input=messages,
+                max_turns=1
+            )
+            return result.final_output.title if result.final_output else None
+        except Exception as e:
+            logger.warning(
+                "Error running Describe Chat agent: %s",
+                str(e),
+                exc_info=True
+            )
+            return None

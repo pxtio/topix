@@ -17,13 +17,17 @@ class AssistantSession(Session):
     async def get_items(self, limit: int = MAX_RETRIEVAL_MESSAGES) -> list[dict]:
         """Get items from the session."""
         messages = await self._chat_store.get_messages(
-            chat_uid=self._session_id, limit=limit
+            chat_uid=self._session_id,
+            limit=limit
         )
         return [msg.to_chat_message() for msg in messages]
 
     async def add_items(self, items: list[dict]) -> None:
         """Add items to the session."""
-        await self._chat_store.add_messages(chat_uid=self._session_id, messages=items)
+        await self._chat_store.add_messages(
+            chat_uid=self._session_id,
+            messages=items
+        )
 
     async def pop_item(self) -> dict | None:
         """Pop the last item from the session."""
@@ -34,4 +38,7 @@ class AssistantSession(Session):
 
     async def clear_session(self) -> None:
         """Clear the session."""
-        await self._chat_store.delete_chat(chat_uid=self._session_id, hard_delete=True)
+        await self._chat_store.delete_chat(
+            chat_uid=self._session_id,
+            hard_delete=True
+        )

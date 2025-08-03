@@ -11,6 +11,7 @@ class SendMessageRequest(BaseModel):
 
     message_id: str | None = None
     query: str
+    model: str = "openai/gpt-4o"
 
 
 class ChatUpdateRequest(BaseModel):

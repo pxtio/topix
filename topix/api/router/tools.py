@@ -4,9 +4,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Query, Request, Response
 
+from topix.agents.datatypes.inputs import MindMapConversionInput
 from topix.agents.mindmap.key_points_extract import KeyPointsExtract
 from topix.agents.mindmap.mindmap_conversion import MindmapConversion
 from topix.agents.mindmap.utils import convert_root_to_graph
+from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.helpers import with_standard_response
 from topix.utils.web import preview_webpage
@@ -29,9 +31,12 @@ async def convert_mindmap(
 ):
     """Convert a mindmap to a graph."""
     key_points_extractor = KeyPointsExtract()
-    res = await key_points_extractor.run(body.answer)
+    res = await AgentRunner.run(key_points_extractor, body.answer)
     converter = MindmapConversion()
-    mindmap = await converter.run(body.answer, res)
+    mindmap = await AgentRunner.run(converter, MindMapConversionInput(
+        answer=body.answer,
+        key_points=res
+    ))
 
     if not mindmap:
         raise ValueError("Failed to convert mindmap")

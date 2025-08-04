@@ -88,13 +88,7 @@ class BaseAgent(Agent[Context]):
             # to the agent's name
 
             # Format the input for the agent
-            try:
-                input_str = await self._input_formatter(context.context, input)
-            except Exception:
-                raise TypeError(
-                    f"The agent {self.name} does not accept string inputs \
-                        and cannot be used as a function tool."
-                )
+            input_str = await self._input_formatter(context.context, input)
             async with tool_execution_handler(
                 context.context, name_override, input
             ) as p:

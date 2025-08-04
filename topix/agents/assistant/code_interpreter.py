@@ -2,15 +2,16 @@
 
 import datetime
 import logging
+import os
+import secrets
 
 from typing import Any
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 from agents import (
     Agent,
     AgentHooks,
     CodeInterpreterTool,
-    # ItemHelpers,
     ModelSettings,
     RunContextWrapper,
     RunResult,
@@ -19,6 +20,7 @@ from agents import (
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
+from topix.datatypes.chat.schema import ChatMessage, ImageMessageContent, ImageUrl, TextMessageContent
 
 logger = logging.getLogger(__name__)
 
@@ -85,31 +87,48 @@ class CodeInterpreter(BaseAgent):
 
         super().__post_init__()
 
-    async def _output_extractor(self, context: ReasoningContext, output: RunResult) -> str:
+    async def _output_extractor(self, context: ReasoningContext, output: RunResult) -> ChatMessage:
         """Format the output of the code interpreter agent."""
-        media = ""
+        media = []
         for item in output.new_items:
             if hasattr(item, 'raw_item') and hasattr(item.raw_item, 'content'):
                 for content in item.raw_item.content:
                     if hasattr(content, 'annotations'):
                         for annotation in content.annotations:
                             logger.info(f"Saving image: {annotation}")
-                            media += save_generated_image(annotation) + " "
-        return output.final_output + " " + media
+                            media.append(annotation)
 
+        return ChatMessage(
+            role="user",
+            content=await self._return_chatmessage_with_media(media, output.final_output),
+        )
 
-def save_generated_image(
-    media
-) -> str:
-    """Save an image to disk, returning the file path"""
+    async def _return_chatmessage_with_media(
+        self,
+        media: list,
+        text: str,
+    ) -> list[TextMessageContent | ImageMessageContent]:
+        """Return a list of text and image message contents"""
 
-    client = OpenAI()
-    file_content = client.containers.files.content.retrieve(
-        container_id=media.container_id, file_id=media.file_id
-    )
-    image_data = file_content.read()
-    filepath = f"data/images/{media.file_id}.png"
-    with open(filepath, "wb") as f:
-        f.write(image_data)
+        content = [TextMessageContent(text=text)]
+        if media:
+            client = AsyncOpenAI()
+            for item in media:
+                file_content = await client.containers.files.content.retrieve(
+                    container_id=item.container_id, file_id=item.file_id
+                )
+                image_data = file_content.read()
+                # Generate a unique image ID and ensure it doesn't already exist in the folder
+                os.makedirs("data/images", exist_ok=True)
+                images_dir = "data/images"
+                while True:
+                    image_id = secrets.token_hex(3)
+                    filepath = os.path.join(images_dir, f"{image_id}.png")
+                    if not os.path.exists(filepath):
+                        break
+                with open(filepath, "wb") as f:
+                    f.write(image_data)
 
-    return f"[{filepath}]({media.filename})"
+                content.append(ImageMessageContent(image_url=ImageUrl(url=filepath)))
+
+        return content

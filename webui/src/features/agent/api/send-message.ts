@@ -8,6 +8,7 @@ import type { Chat, ChatMessage } from "../types/chat"
 import { generateUuid, trimText } from "@/lib/common"
 import { createNewChat } from "./create-chat"
 import { describeChat } from "./describe-chat"
+import snakecaseKeys from "snakecase-keys"
 
 
 /**
@@ -29,7 +30,12 @@ export async function* sendMessage(
   const response = await fetch(`${API_URL}/chats/${chatId}/messages?user_id=${userId}`, {
     method: "POST",
     headers,
-    body: JSON.stringify(payload),
+    body: JSON.stringify(snakecaseKeys(
+      payload as unknown as Record<string, unknown>,
+      { deep: true }
+    )),
+    cache: 'no-store',
+    keepalive: false
   })
 
   yield* handleStreamingResponse<AgentStreamMessage>(response)
@@ -92,10 +98,15 @@ export const useSendMessage = () => {
         const stream = sendMessage(payload, chatId, userId)
         const response = buildResponse(stream)
         let setNewAssistantMessageId = false
+        const streamingBatchSize = 10
+
+        let iterations = 0
         for await (const resp of response) {
-          if (resp.steps.length === 0) continue
-          const step = resp.steps[0]
+          iterations++
+          if (resp.response.steps.length === 0) continue
+          const step = resp.response.steps[0]
           const responseId = step.id
+
           if (!setNewAssistantMessageId) {
             setNewAssistantMessageId = true
             queryClient.setQueryData<ChatMessage[]>(
@@ -106,7 +117,9 @@ export const useSendMessage = () => {
               ]
             )
           }
-          setStream(responseId, resp)
+          if (iterations % streamingBatchSize === 1 || resp.toolEvent) {
+            setStream(responseId, resp.response)
+          }
         }
         if (newChatCreated) {
           // describe chat after creating it
@@ -123,6 +136,9 @@ export const useSendMessage = () => {
             }
           )
         }
+      } catch (error) {
+        console.error("Error sending message:", error)
+        throw error
       } finally {
         setIsStreaming(false)
       }

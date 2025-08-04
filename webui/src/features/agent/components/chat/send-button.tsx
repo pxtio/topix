@@ -15,9 +15,10 @@ export function SendButton({  className,
 }: SendButtonProps) {
   return (
     <Button
-      className={cn("rounded-full flex items-center justify-center h-8 w-8 shadow-none", className)}
+      className={cn("rounded-full flex items-center justify-center shadow-none", className)}
       {...props}
-      variant={loadingStatus === "loaded" ? 'outline' : "ghost"}
+      variant={loadingStatus === "loaded" ? 'default' : "ghost"}
+      size="icon"
     >
       {
         loadingStatus === "loaded" ?

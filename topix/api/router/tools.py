@@ -9,8 +9,9 @@ from topix.agents.mindmap.key_points_extract import KeyPointsExtract
 from topix.agents.mindmap.mindmap_conversion import MindmapConversion
 from topix.agents.mindmap.utils import convert_root_to_graph
 from topix.agents.run import AgentRunner
-from topix.api.datatypes.requests import ConvertToMindMapRequest
+from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.helpers import with_standard_response
+from topix.utils.web import preview_webpage
 
 router = APIRouter(
     prefix="/tools",
@@ -45,3 +46,17 @@ async def convert_mindmap(
         "notes": [note.model_dump(exclude_none=True) for note in notes],
         "links": [link.model_dump(exclude_none=True) for link in links]
     }
+
+
+@router.post("/webpage/preview/", include_in_schema=False)
+@router.post("/webpage/preview")
+@with_standard_response
+async def link_preview(
+    response: Response,
+    request: Request,
+    user_id: Annotated[str, Query(description="User Unique ID")],
+    body: Annotated[WebPagePreviewRequest, Body(description="Webpage URL to preview")]
+):
+    """Fetch a preview of the webpage at the given URL."""
+    res = preview_webpage(body.url)
+    return res.model_dump(exclude_none=True)

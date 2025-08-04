@@ -14,7 +14,7 @@ from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.describe_chat import DescribeChat
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
-from topix.api.datatypes.requests import ChatUpdateRequest, SendMessageRequest
+from topix.api.datatypes.requests import ChatUpdateRequest, MessageUpdateRequest, SendMessageRequest
 from topix.api.helpers import with_standard_response, with_streaming
 from topix.datatypes.chat.chat import Chat
 from topix.store.chat import ChatStore
@@ -28,7 +28,7 @@ router = APIRouter(
 )
 
 
-@router.post("/", include_in_schema=False)
+@router.put("/", include_in_schema=False)
 @router.put("")
 @with_standard_response
 async def create_chat(
@@ -64,8 +64,8 @@ async def describe_chat(
     return {"label": label}
 
 
-@router.post("/{chat_id}/", include_in_schema=False)
-@router.post("/{chat_id}")
+@router.patch("/{chat_id}/", include_in_schema=False)
+@router.patch("/{chat_id}")
 @with_standard_response
 async def update_chat(
     response: Response,
@@ -154,6 +154,23 @@ async def send_message(
             exc_info=True
         )
         return
+
+
+@router.patch("/{chat_id}/messages/{message_id}/", include_in_schema=False)
+@router.patch("/{chat_id}/messages/{message_id}")
+@with_standard_response
+async def update_message(
+    response: Response,
+    request: Request,
+    chat_id: Annotated[str, Path(description="Chat ID")],
+    message_id: Annotated[str, Path(description="Message ID")],
+    user_id: Annotated[str, Query(description="User Unique ID")],
+    body: Annotated[MessageUpdateRequest, Body(description="Message update data")]
+):
+    """Update a message in a chat."""
+    chat_store: ChatStore = request.app.chat_store
+    await chat_store.update_message(message_id, body.data)
+    return {"message": "Message updated successfully"}
 
 
 @router.get("/{chat_id}/messages/", include_in_schema=False)

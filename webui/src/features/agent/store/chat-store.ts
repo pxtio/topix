@@ -33,7 +33,7 @@ export interface ChatStore {
 export const useChatStore = create<ChatStore>((set) => ({
   streams: new Map(),
 
-  llmModel: "gpt-4o",
+  llmModel: "openai/gpt-4o",
 
   isStreaming: false,
 

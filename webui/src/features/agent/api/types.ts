@@ -1,11 +1,14 @@
 import type { Chat } from "../types/chat"
+import type { LlmModel } from "../types/llm"
 
 
 /**
  * Request payload for sending a message.
  */
 export interface SendMessageRequestPayload {
-  query: string
+  query: string,
+  messageId: string,
+  model: LlmModel
 }
 
 

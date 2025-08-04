@@ -1,30 +1,34 @@
 export const LlmModels = [
-  "gpt-4",
-  "gpt-4o",
-  "gpt-4o-mini",
-  "gpt-4.1",
+  "openai/gpt-4o",
+  "openai/gpt-4o-mini",
+  "openai/gpt-4.1",
+  "openai/gpt-4.1-mini",
+  "openai/gpt-4.1-nano",
   "gemini-2.0-flash",
-  "mistral-large-latest"
+  "gemini-2.5-flash",
+  "gemini-2.5-pro"
 ] as const
 
 export type LlmModel = typeof LlmModels[number]
 
-
 export const LlmName: Record<LlmModel, string> = {
-    "gpt-4": "GPT-4",
-    "gpt-4o": "GPT-4o",
-    "gpt-4o-mini": "GPT-4o Mini",
-    "gpt-4.1": "GPT-4.1",
-    "gemini-2.0-flash": "Gemini 2.0 Flash",
-    "mistral-large-latest": "Mistral Large Latest"
+  "openai/gpt-4o": "GPT-4o",
+  "openai/gpt-4o-mini": "GPT-4o Mini",
+  "openai/gpt-4.1": "GPT-4.1",
+  "openai/gpt-4.1-mini": "GPT-4.1 Mini",
+  "openai/gpt-4.1-nano": "GPT-4.1 Nano",
+  "gemini-2.0-flash": "Gemini 2.0 Flash",
+  "gemini-2.5-flash": "Gemini 2.5 Flash",
+  "gemini-2.5-pro": "Gemini 2.5 Pro"
 }
 
-
 export const LlmDescription: Record<LlmModel, string> = {
-    "gpt-4": 'The latest version of GPT-4, offering improved performance and capabilities.',
-    "gpt-4o": 'Great for high-quality, reliable responses with minimal hallucination, making it a solid default choice.',
-    "gpt-4o-mini": 'A more affordable option with similar reliability, suitable for less demanding tasks.',
-    "gpt-4.1": 'An enhanced version of GPT-4 with better performance and capabilities.',
-    "mistral-large-latest": 'Best for those who prefer a French-based AI solution.',
-    "gemini-2.0-flash": 'Ideal for cost-effective, factual responses, perfect for concise and straightforward answers.',
+  "openai/gpt-4o": "High-quality, fast, and capable model with strong reasoning skills and low latency",
+  "openai/gpt-4o-mini": "A lighter, more affordable variant of GPT-4o for less intensive tasks",
+  "openai/gpt-4.1": "Enhanced GPT-4 model with strong general capabilities",
+  "openai/gpt-4.1-mini": "Smaller GPT-4.1 model optimized for cost-effective and fast responses",
+  "openai/gpt-4.1-nano": "Ultra-lightweight GPT-4.1 model ideal for very fast, basic tasks",
+  "gemini-2.0-flash": "Efficient and affordable model ideal for factual, concise answers",
+  "gemini-2.5-flash": "Faster Gemini model offering improved quality over 2.0 Flash",
+  "gemini-2.5-pro": "Flagship Gemini model with high accuracy and rich reasoning capabilities"
 }

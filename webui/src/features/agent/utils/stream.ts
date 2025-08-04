@@ -50,13 +50,14 @@ export async function* handleStreamingResponse<T>(response: Response): AsyncGene
  */
 export async function* buildResponse(
   chunks: AsyncGenerator<AgentStreamMessage>
-): AsyncGenerator<{ response: AgentResponse; finished: boolean }> {
+): AsyncGenerator<{ response: AgentResponse; toolEvent: boolean }> {
   // Initialize an empty response object
   const response: AgentResponse = { steps: [] }
 
   // Iterate over each chunk from the async generator
   for await (const chunk of chunks) {
     // Filter steps to find the one matching the toolId
+    let isNewStep: boolean = false
     const steps = response.steps.filter(step => step.id === chunk.toolId)
 
     // If no step exists for the current toolId or if the reasoning continues after a tool call
@@ -83,6 +84,7 @@ export async function* buildResponse(
         newStep.state = "completed"
       }
       response.steps.push(newStep)
+      isNewStep = true
 
       // mark all previous steps of same id as completed
       steps.forEach((step, idx) => {
@@ -116,12 +118,12 @@ export async function* buildResponse(
         }
       }
     }
-    yield { response: { ...response }, finished: false }
+    yield { response: { ...response }, toolEvent: chunk.isStop || isNewStep }
   }
   response.steps.forEach(step => {
     step.state = "completed"
   })
-  yield { response, finished: true }
+  yield { response, toolEvent: true }
 }
 
 

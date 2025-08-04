@@ -83,6 +83,7 @@ const ModelChoiceMenu = () => {
 export const InputBar: React.FC = () => {
   const userId = useAppStore((state) => state.userId)
 
+  const llmModel = useChatStore((state) => state.llmModel)
   const isStreaming = useChatStore((state) => state.isStreaming)
 
   const [input, setInput] = useState<string>("")
@@ -96,7 +97,8 @@ export const InputBar: React.FC = () => {
     }
     const payload = {
       query: input.trim(),
-      message_id: generateUuid()
+      messageId: generateUuid(),
+      model: llmModel
     }
     sendMessage({ payload, userId })
     setInput("") // Clear the input after search

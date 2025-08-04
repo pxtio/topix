@@ -8,6 +8,7 @@ import type { Chat, ChatMessage } from "../types/chat"
 import { generateUuid, trimText } from "@/lib/common"
 import { createNewChat } from "./create-chat"
 import { describeChat } from "./describe-chat"
+import snakecaseKeys from "snakecase-keys"
 
 
 /**
@@ -29,7 +30,10 @@ export async function* sendMessage(
   const response = await fetch(`${API_URL}/chats/${chatId}/messages?user_id=${userId}`, {
     method: "POST",
     headers,
-    body: JSON.stringify(payload),
+    body: JSON.stringify(snakecaseKeys(
+      payload as unknown as Record<string, unknown>,
+      { deep: true }
+    )),
     cache: 'no-store',
     keepalive: false
   })
@@ -113,7 +117,7 @@ export const useSendMessage = () => {
               ]
             )
           }
-          if (iterations % streamingBatchSize === 1 || resp.finished) {
+          if (iterations % streamingBatchSize === 1 || resp.toolEvent) {
             setStream(responseId, resp.response)
           }
         }

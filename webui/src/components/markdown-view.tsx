@@ -1,6 +1,6 @@
 import ReactMarkdown from "react-markdown"
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
+// import remarkMath from 'remark-math'
+// import rehypeKatex from 'rehype-katex'
 import rehypeHighlight from 'rehype-highlight'
 import remarkGfm from 'remark-gfm'
 import 'katex/dist/katex.min.css'
@@ -151,8 +151,8 @@ export const MarkdownView =({ isStreaming = false, content }: MarkdownViewProps)
   return (
     <>
       <ReactMarkdown
-        remarkPlugins={[remarkMath, remarkGfm]}
-        rehypePlugins={[rehypeKatex, rehypeHighlight]}
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeHighlight]}
         components={{
           h1: ({ ...props }) => <h1 className="mt-10 scroll-m-20 border-b pb-2 text-3xl font-heading font-semibold tracking-tight transition-colors first:mt-0" {...props} />,
           h2: ({ ...props }) => <h2

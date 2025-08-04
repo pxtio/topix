@@ -151,7 +151,7 @@ class WebSearch(BaseAgent):
                             search_results = chunk.search_results
 
                 else:
-                    response = await self._call_perplexity(stream=False, input=input)
+                    response = await self._call_litellm(stream=False, input=input)
                     content = response.choices[0].message.content
                     search_results = response.search_results
 

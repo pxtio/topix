@@ -1,7 +1,7 @@
 /**
  * Represents the type of streaming message in the agent response.
  */
-export type StreamingMessageType = "token" | "status" | "chunk"
+export type StreamingMessageType = "token" | "status" | "message"
 
 
 /**
@@ -84,3 +84,8 @@ export type ToolName =
 
 // The RAW_MESSAGE tool name is used to indicate raw messages in the stream.
 export const RAW_MESSAGE: ToolName = "raw_message"
+
+
+export function isMainResponse(toolName: ToolName): boolean {
+  return toolName === "raw_message" || toolName === "answer_reformulate"
+}

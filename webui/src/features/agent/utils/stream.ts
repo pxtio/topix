@@ -73,7 +73,7 @@ export async function* buildResponse(
         eventMessages: []
       }
       if (chunk.content) {
-        if (chunk.content.type === "token" || chunk.content.type === "chunk") {
+        if (chunk.content.type === "token" || chunk.content.type === "message") {
           newStep.response = chunk.content.text
         } else if (chunk.content.type === "status") {
           newStep.eventMessages.push(chunk.content.text)
@@ -95,7 +95,7 @@ export async function* buildResponse(
       const currentStep = steps[steps.length - 1]
 
       if (chunk.content) {
-        if (chunk.content.type === "token" || chunk.content.type === "chunk") {
+        if (chunk.content.type === "token" || chunk.content.type === "message") {
           currentStep.response = (currentStep.response || "") + chunk.content.text
         } else if (chunk.content.type === "status") {
           currentStep.eventMessages.push(chunk.content.text)

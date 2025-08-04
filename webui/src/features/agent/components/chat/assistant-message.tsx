@@ -8,6 +8,7 @@ import { extractNamedLinksFromMarkdown } from "../../utils/md"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import type { ChatMessage } from "../../types/chat"
+import { isMainResponse } from "../../types/stream"
 
 
 const SourcesView = ({
@@ -76,7 +77,9 @@ export const AssistantMessage = ({
     streamingMessage.steps.length > 0
   ) || message
 
-  const messageContent = message.content || lastStep?.response || ''
+  const messageContent = message.content ? message.content
+    : lastStep?.response && isMainResponse(lastStep.name) ? lastStep.response
+    : ""
 
   const agentResponse = streamingMessage ? streamingMessage : message.reasoningSteps ? { steps: message.reasoningSteps } : undefined
 

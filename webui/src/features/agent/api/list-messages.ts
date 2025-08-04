@@ -26,15 +26,18 @@ export async function listMessages(
   }
 
   const data = await response.json()
-  return data.data.messages.map((message: {
+
+  const resp =  data.data.messages.map((message: {
     id: string,
     role: MessageRole,
     content: string,
     created_at?: string,
     updated_at?: string,
     deleted_at?: string,
-    chat_uid: string
+    chat_uid: string,
+    reasoning_steps?: unknown
   }) => camelcaseKeys(message, { deep: true })) as ChatMessage[]
+  return resp
 }
 
 

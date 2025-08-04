@@ -77,6 +77,10 @@ class ChatStore:
         chat_messages = [Message(**msg) for msg in messages]
         await self._content_store.add(chat_messages)
 
+    async def update_message(self, message_id: str, data: dict):
+        """Update a message in the chat store."""
+        await self._content_store.update(message_id, data)
+
     async def get_messages(self, chat_uid: str, limit: int = 100) -> list[Message]:
         """Get latest messages for a specific chat."""
         messages = await self._content_store.filt(

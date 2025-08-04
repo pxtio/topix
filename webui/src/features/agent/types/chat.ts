@@ -1,3 +1,5 @@
+import type { ReasoningStep } from "./stream"
+
 export type MessageRole = "user" | "assistant" | "system" | "tool"
 
 
@@ -9,6 +11,7 @@ export interface ChatMessage {
     updatedAt?: string
     deletedAt?: string
     chatUid: string
+    reasoningSteps?: ReasoningStep[]
 }
 
 

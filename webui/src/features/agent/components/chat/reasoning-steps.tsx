@@ -4,6 +4,8 @@ import { extractStepDescription } from "../../utils/stream"
 import { trimText } from "@/lib/common"
 import type { AgentResponse, ReasoningStep } from "../../types/stream"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { extractNamedLinksFromMarkdown } from "../../utils/md"
 
 
 /**
@@ -32,6 +34,8 @@ const ReasoningStepView = ({
   isLoading
 }: { step: ReasoningStep, isLoading?: boolean }) => {
   const message = extractStepDescription(step)
+
+  const sources = extractNamedLinksFromMarkdown(step.response || "")
 
   const trimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 200)
   const longerTrimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 800)
@@ -92,25 +96,27 @@ const ReasoningStepView = ({
           }
         </div>
         {
-          step.sources && step.sources.length > 0 &&
+          sources && sources.length > 0 &&
           <div className='w-full flex flex-row flex-wrap items-start gap-1'>
             {
-              step.sources.map((source, index) => (
+              sources.map((source, index) => (
                 <HoverCard key={index}>
                   <HoverCardTrigger asChild>
                     <a
-                      href={source.webpage.url}
+                      href={source.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className='transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-medium border border-border hover:bg-accent rounded-lg'
+                      className='transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-medium border border-border bg-card hover:bg-accent rounded-lg'
                     >
-                      {trimText(source.webpage.name, 20)}
+                      {trimText(source.siteName, 20)}
                     </a>
                   </HoverCardTrigger>
-                  <HoverCardContent>
-                    <div className='w-64'>
-                      <p className='text-xs text-muted-foreground'>{trimText(source.webpage.url, 50)}</p>
-                    </div>
+                  <HoverCardContent asChild>
+                    <ScrollArea>
+                      <div className='w-full'>
+                        <a className='text-xs text-muted-foreground' href={source.url}>{trimText(source.url, 50)}</a>
+                      </div>
+                    </ScrollArea>
                   </HoverCardContent>
                 </HoverCard>
               ))

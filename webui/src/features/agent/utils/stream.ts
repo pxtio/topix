@@ -24,14 +24,13 @@ export async function* handleStreamingResponse<T>(response: Response): AsyncGene
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
-
     buffer += decoder.decode(value, { stream: true })
     const lines = buffer.split('\n')
     buffer = lines.pop() || ''
 
     for (const line of lines) {
       if (line.trim()) {
-        yield camelcaseKeys(JSON.parse(line)) as T
+        yield camelcaseKeys(JSON.parse(line), { deep: true }) as T
       }
     }
   }
@@ -51,37 +50,39 @@ export async function* handleStreamingResponse<T>(response: Response): AsyncGene
  */
 export async function* buildResponse(
   chunks: AsyncGenerator<AgentStreamMessage>
-): AsyncGenerator<AgentResponse> {
+): AsyncGenerator<{ response: AgentResponse; finished: boolean }> {
   // Initialize an empty response object
   const response: AgentResponse = { steps: [] }
 
   // Iterate over each chunk from the async generator
   for await (const chunk of chunks) {
     // Filter steps to find the one matching the toolId
-    const newResponse = { ...response }
-    const steps = newResponse.steps.filter(step => step.id === chunk.toolId)
+    const steps = response.steps.filter(step => step.id === chunk.toolId)
 
     // If no step exists for the current toolId or if the reasoning continues after a tool call
     // (marked by last tool name not being RAW_MESSAGE and current tool name being RAW_MESSAGE),
-    if (steps.length === 0 || (newResponse.steps[newResponse.steps.length - 1].name !== "raw_message" && chunk.toolName === "raw_message")) {
+    if (
+      steps.length === 0 ||
+      (response.steps[response.steps.length - 1].name !== "raw_message" && chunk.toolName === "raw_message" && !chunk.isStop)
+    ) {
       const newStep: ReasoningStep = {
         id: chunk.toolId,
         name: chunk.toolName,
-        content: "",
+        response: "",
         state: "started",
-        message: ""
+        eventMessages: []
       }
       if (chunk.content) {
         if (chunk.content.type === "token" || chunk.content.type === "chunk") {
-          newStep.content = chunk.content.text
+          newStep.response = chunk.content.text
         } else if (chunk.content.type === "status") {
-          newStep.message = chunk.content.text
+          newStep.eventMessages.push(chunk.content.text)
         }
       }
       if (chunk.isStop) {
         newStep.state = "completed"
       }
-      newResponse.steps.push(newStep)
+      response.steps.push(newStep)
 
       // mark all previous steps of same id as completed
       steps.forEach((step, idx) => {
@@ -92,17 +93,19 @@ export async function* buildResponse(
     } else {
       // If a step with the same toolId exists, update it
       const currentStep = steps[steps.length - 1]
+
       if (chunk.content) {
         if (chunk.content.type === "token" || chunk.content.type === "chunk") {
-          currentStep.content = (currentStep.content || "") + chunk.content.text
+          currentStep.response = (currentStep.response || "") + chunk.content.text
         } else if (chunk.content.type === "status") {
-          currentStep.message = chunk.content.text
+          currentStep.eventMessages.push(chunk.content.text)
         }
       }
+
       if (chunk.isStop) {
         currentStep.state = "completed"
         if (currentStep.name === "web_search") {
-          const links = extractNamedLinksFromMarkdown(currentStep.content || "")
+          const links = extractNamedLinksFromMarkdown(currentStep.response || "")
           currentStep.sources = links.map(link => ({
             type: "webpage",
             webpage: {
@@ -113,14 +116,12 @@ export async function* buildResponse(
         }
       }
     }
-    yield newResponse
+    yield { response: { ...response }, finished: false }
   }
-  response.steps.forEach((step) => {
-    if (step.state === "started") {
-      step.state = "completed"
-    }
+  response.steps.forEach(step => {
+    step.state = "completed"
   })
-  yield response
+  yield { response, finished: true }
 }
 
 
@@ -132,7 +133,10 @@ export async function* buildResponse(
  */
 export function extractStepDescription(step: ReasoningStep): string {
   if (step.name !== RAW_MESSAGE) {
-    return step.message || `Running \`${step.name}\``
+    if (step.eventMessages && step.eventMessages.length > 0) {
+      return step.eventMessages[step.eventMessages.length - 1]
+    }
+    return `Running \`${step.name}\``
   }
-  return step.content || "Reasoning..."
+  return step.response || "Reasoning..."
 }

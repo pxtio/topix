@@ -20,8 +20,7 @@ const MessageView = ({
       return <UserMessage message={chatMessage.content} isLatest={isLatestUserMessage} />
     case "assistant":
       return <AssistantMessage
-        message_id={chatMessage.id}
-        message={chatMessage.content}
+        message={chatMessage}
         isStreaming={isLatestAssistantMessage && isStreaming}
       />
     default:

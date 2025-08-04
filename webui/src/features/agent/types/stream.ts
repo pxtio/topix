@@ -48,9 +48,9 @@ export interface AgentStreamMessage {
 export interface ReasoningStep {
   id: string
   name: ToolName
-  content?: string
+  response: string
   state: ToolExecutionState
-  message?: string
+  eventMessages: string[]
   sources?: {
     type: "webpage",
     webpage: {

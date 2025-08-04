@@ -20,6 +20,12 @@ class ChatUpdateRequest(BaseModel):
     data: dict
 
 
+class MessageUpdateRequest(BaseModel):
+    """Request model for updating a message."""
+
+    data: dict
+
+
 class GraphUpdateRequest(BaseModel):
     """Request model for updating a graph."""
 

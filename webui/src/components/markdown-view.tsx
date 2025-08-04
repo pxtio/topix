@@ -78,7 +78,7 @@ const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) 
       <span className="absolute top-0 left-0 w-auto px-4 py-2 text-xs font-mono">
         {language}
       </span>
-      <code className={language !== 'plaintext' ? "block mt-6": "block"}>{children}</code>
+      <code className={"block mt-6"}>{children}</code>
     </pre>
   ) : (
     <code

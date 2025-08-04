@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp } from "lucide-react"
 import { extractStepDescription } from "../../utils/stream"
 import { trimText } from "@/lib/common"
 import type { AgentResponse, ReasoningStep } from "../../types/stream"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 
 
 /**
@@ -66,27 +67,55 @@ const ReasoningStepView = ({
           <div className='relative w-2 h-2 rounded-full bg-primary z-20' />
         }
       </div>
-      <div className={messageClass}>
+      <div className='flex-1 flex flex-col items-start gap-1'>
+        <div className={messageClass}>
+          {
+            viewMore &&
+            <span className='text-xs text-card-foreground whitespace-pre-line'>
+              {longerTrimmedMessage}
+            </span>
+          }
+          {
+            !viewMore &&
+            <span className='text-xs text-card-foreground whitespace-pre-line'>
+              {trimmedMessage}
+            </span>
+          }
+          {
+            message.length > 200 &&
+            <button
+              className='text-xs text-primary hover:underline ml-2'
+              onClick={handleClick}
+            >
+              {viewMore ? "Show less" : "Show more"}
+            </button>
+          }
+        </div>
         {
-          viewMore &&
-          <span className='text-xs text-card-foreground whitespace-pre-line'>
-            {longerTrimmedMessage}
-          </span>
-        }
-        {
-          !viewMore &&
-          <span className='text-xs text-card-foreground whitespace-pre-line'>
-            {trimmedMessage}
-          </span>
-        }
-        {
-          message.length > 200 &&
-          <button
-            className='text-xs text-primary hover:underline ml-2'
-            onClick={handleClick}
-          >
-            {viewMore ? "Show less" : "Show more"}
-          </button>
+          step.sources && step.sources.length > 0 &&
+          <div className='w-full flex flex-row flex-wrap items-start gap-1'>
+            {
+              step.sources.map((source, index) => (
+                <HoverCard key={index}>
+                  <HoverCardTrigger asChild>
+                    <a
+                      href={source.webpage.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className='transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-medium border border-border hover:bg-accent rounded-lg'
+                    >
+                      {trimText(source.webpage.name, 20)}
+                    </a>
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    <div className='w-64'>
+                      <p className='text-xs text-muted-foreground'>{trimText(source.webpage.url, 50)}</p>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              ))
+            }
+          </div>
         }
       </div>
     </div>
@@ -132,6 +161,11 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         border border-border
       `}
     >
+      <div className='font-medium text-base text-center'>
+        <span className='text-base text-card-foreground'>
+          Thinking
+        </span>
+      </div>
       <div
         className={`
           flex flex-col items-start gap-2
@@ -168,7 +202,11 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className='transition-all text-xs text-secondary-foreground hover:text-secondary-foreground'>
-          {isOpen ? <ChevronUp className='w-4 h-4 flex-shrink-0' /> : <ChevronDown className='w-4 h-4 flex-shrink-0' />}
+          {
+            isOpen ?
+            <ChevronUp className='w-4 h-4 flex-shrink-0' /> :
+            <ChevronDown className='w-4 h-4 flex-shrink-0' />
+          }
         </span>
       </button>
     </div>

@@ -1,7 +1,7 @@
 /**
  * Represents the type of streaming message in the agent response.
  */
-export type StreamingMessageType = "token" | "state"
+export type StreamingMessageType = "token" | "status" | "chunk"
 
 
 /**
@@ -23,20 +23,22 @@ export interface StreamDelta {
 /**
  * Represents a message in the agent streaming response.
  *
- * @property type - The type of the streaming message, which can be either "token" or "state".
- * @property toolId - The ID of the tool associated with the message.
- * @property toolName - The name of the tool associated with the message.
- * @property executionState - The execution state of the tool, which can be "started", "completed", or "failed".
- * @property statusMessage - An optional status message providing additional context about the tool's execution.
- * @property delta - An optional delta object containing the content of the
+ * @property toolId - The ID of the tool that generated the message.
+ * @property toolName - The name of the tool that generated the message.
+ * @property content - The content of the message, which can be of type StreamingMessageType and contains text.
+ * @property is_stop - A boolean indicating whether the streaming has stopped.
+ *
+ * This interface is used to represent messages that are part of a stream from an agent, typically in a conversational AI context.
+ * It includes information about the tool that generated the message, the type of content being streamed, and whether the streaming has stopped.
  */
 export interface AgentStreamMessage {
-    type: StreamingMessageType
     toolId: string
-    toolName: string
-    executionState?: ToolExecutionState
-    statusMessage?: string
-    delta?: StreamDelta
+    toolName: ToolName
+    content?: {
+      type: StreamingMessageType
+      text: string
+    }
+    isStop: boolean
 }
 
 
@@ -45,10 +47,17 @@ export interface AgentStreamMessage {
  */
 export interface ReasoningStep {
   id: string
-  name: string
+  name: ToolName
   content?: string
   state: ToolExecutionState
   message?: string
+  sources?: {
+    type: "webpage",
+    webpage: {
+      name: string
+      url: string
+    }
+  }[]
 }
 
 
@@ -60,4 +69,18 @@ export interface AgentResponse {
 }
 
 
-export const RAW_RESPONSE = "raw_message"
+/**
+ * Agent tool names enum
+ */
+export type ToolName =
+  | "answer_reformulate"
+  | "knowledge_base_search"
+  | "web_search"
+  | "code_interpreter"
+  | "key_points_extract"
+  | "graph_conversion"
+  | "raw_message"
+
+
+// The RAW_MESSAGE tool name is used to indicate raw messages in the stream.
+export const RAW_MESSAGE: ToolName = "raw_message"

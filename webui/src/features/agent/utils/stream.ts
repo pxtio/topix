@@ -1,5 +1,6 @@
 import camelcaseKeys from 'camelcase-keys'
-import { RAW_RESPONSE, type AgentResponse, type AgentStreamMessage, type ReasoningStep } from '../types/stream'
+import { RAW_MESSAGE, type AgentResponse, type AgentStreamMessage, type ReasoningStep } from '../types/stream'
+import { extractNamedLinksFromMarkdown } from './md'
 
 
 /**
@@ -56,20 +57,29 @@ export async function* buildResponse(
 
   // Iterate over each chunk from the async generator
   for await (const chunk of chunks) {
-
     // Filter steps to find the one matching the toolId
     const newResponse = { ...response }
     const steps = newResponse.steps.filter(step => step.id === chunk.toolId)
 
     // If no step exists for the current toolId or if the reasoning continues after a tool call
-    // (marked by last tool name not being RAW_RESPONSE and current tool name being RAW_RESPONSE),
-    if (steps.length === 0 || (newResponse.steps[newResponse.steps.length - 1].name !== RAW_RESPONSE && chunk.toolName === RAW_RESPONSE)) {
+    // (marked by last tool name not being RAW_MESSAGE and current tool name being RAW_MESSAGE),
+    if (steps.length === 0 || (newResponse.steps[newResponse.steps.length - 1].name !== "raw_message" && chunk.toolName === "raw_message")) {
       const newStep: ReasoningStep = {
         id: chunk.toolId,
         name: chunk.toolName,
-        content: chunk.delta?.content || "",
-        state: chunk.executionState || "started",
-        message: chunk.statusMessage || ""
+        content: "",
+        state: "started",
+        message: ""
+      }
+      if (chunk.content) {
+        if (chunk.content.type === "token" || chunk.content.type === "chunk") {
+          newStep.content = chunk.content.text
+        } else if (chunk.content.type === "status") {
+          newStep.message = chunk.content.text
+        }
+      }
+      if (chunk.isStop) {
+        newStep.state = "completed"
       }
       newResponse.steps.push(newStep)
 
@@ -82,13 +92,25 @@ export async function* buildResponse(
     } else {
       // If a step with the same toolId exists, update it
       const currentStep = steps[steps.length - 1]
-
-      currentStep.content = (currentStep.content || "") + (chunk.delta?.content || "")
-      if (chunk.executionState) {
-        currentStep.state = chunk.executionState
+      if (chunk.content) {
+        if (chunk.content.type === "token" || chunk.content.type === "chunk") {
+          currentStep.content = (currentStep.content || "") + chunk.content.text
+        } else if (chunk.content.type === "status") {
+          currentStep.message = chunk.content.text
+        }
       }
-      if (chunk.statusMessage) {
-        currentStep.message = chunk.statusMessage
+      if (chunk.isStop) {
+        currentStep.state = "completed"
+        if (currentStep.name === "web_search") {
+          const links = extractNamedLinksFromMarkdown(currentStep.content || "")
+          currentStep.sources = links.map(link => ({
+            type: "webpage",
+            webpage: {
+              name: link.siteName,
+              url: link.url
+            }
+          }))
+        }
       }
     }
     yield newResponse
@@ -109,7 +131,7 @@ export async function* buildResponse(
  * @returns The description of the step, or an empty string if not available.
  */
 export function extractStepDescription(step: ReasoningStep): string {
-  if (step.name !== RAW_RESPONSE) {
+  if (step.name !== RAW_MESSAGE) {
     return step.message || `Running \`${step.name}\``
   }
   return step.content || "Reasoning..."

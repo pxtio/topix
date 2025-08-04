@@ -65,7 +65,7 @@ class Plan(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4O,
         instructions_template: str = "plan.jinja",
         model_settings: ModelSettings | None = None,
-        search_choice: Literal["openai", "perplexity"] = "openai",
+        search_choice: Literal["openai", "perplexity"] = "perlexity",
     ):
         """Init method."""
         name = "Plan"

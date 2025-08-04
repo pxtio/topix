@@ -8,6 +8,7 @@ from typing import Any, Callable
 
 from pydantic import BaseModel
 
+from agents import RunContextWrapper
 from topix.agents.datatypes.context import Context, ToolCall
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.utils.common import gen_uid
@@ -114,13 +115,15 @@ def tool_execution_decorator(tool_name: str):
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
-        async def wrapper(context: Context, *args: Any, **kwargs: Any) -> Any:
+        async def wrapper(
+            wrapper: RunContextWrapper[Context], *args: Any, **kwargs: Any
+        ) -> Any:
             log_params = {}
             try:
-                bound_args = inspect.signature(func).bind(context, *args, **kwargs)
+                bound_args = inspect.signature(func).bind(wrapper, *args, **kwargs)
                 bound_args.apply_defaults()
                 for name, value in bound_args.arguments.items():
-                    if name == "context":
+                    if name in ("context", "tool_id"):
                         continue
                     if isinstance(value, BaseModel):
                         log_params[name] = value.model_dump()
@@ -136,9 +139,12 @@ def tool_execution_decorator(tool_name: str):
                 start_message = ""
 
             async with tool_execution_handler(
-                context, tool_name, start_msg=start_message
+                wrapper.context, tool_name, start_msg=start_message
             ) as fixed_params:
-                result = await func(context, *args, **kwargs)
+                sig = inspect.signature(func)
+                if "tool_id" in sig.parameters:
+                    kwargs["tool_id"] = fixed_params["tool_id"]
+                    result = await func(wrapper, *args, **kwargs)
 
             tool_call = ToolCall(
                 tool_id=fixed_params["tool_id"],
@@ -146,7 +152,7 @@ def tool_execution_decorator(tool_name: str):
                 arguments=log_params,
                 output=result,
             )
-            context.tool_calls.append(tool_call)
+            wrapper.context.tool_calls.append(tool_call)
 
         return wrapper
 

@@ -1,7 +1,7 @@
 """Main agent manager."""
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from agents import (
     Agent,
@@ -65,6 +65,7 @@ class Plan(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4O,
         instructions_template: str = "plan.jinja",
         model_settings: ModelSettings | None = None,
+        search_choice: Literal["openai", "perplexity"] = "openai",
     ):
         """Init method."""
         name = "Plan"
@@ -74,8 +75,12 @@ class Plan(BaseAgent):
         )
         if model_settings is None:
             model_settings = ModelSettings(temperature=0.01)
+        if search_choice == "openai":
+            web_search = WebSearch()
+        else:
+            web_search = WebSearch(model="perplexity/sonar")
         tools = [
-            WebSearch().as_tool(AgentToolName.WEB_SEARCH, streamed=True),
+            web_search.as_tool(AgentToolName.WEB_SEARCH, streamed=True),
             AnswerReformulate(model=model).as_tool(
                 AgentToolName.ANSWER_REFORMULATE,
                 streamed=True,

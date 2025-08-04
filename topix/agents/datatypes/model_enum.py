@@ -20,8 +20,15 @@ class GeminiModel(str, Enum):
     GEMINI_2_5_PRO = "gemini-2.5-pro"
 
 
+class PerplexityModel(str, Enum):
+    """Perplexity Models."""
+
+    PERPLEXITY_SONAR = "perplexity/sonar"
+
+
 class ModelEnum:
     """Model Enum."""
 
     OpenAI = OpenAIModel
     Gemini = GeminiModel
+    Perplexity = PerplexityModel

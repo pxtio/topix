@@ -20,8 +20,26 @@ class ChatUpdateRequest(BaseModel):
     data: dict
 
 
+class MessageUpdateRequest(BaseModel):
+    """Request model for updating a message."""
+
+    data: dict
+
+
 class GraphUpdateRequest(BaseModel):
     """Request model for updating a graph."""
+
+    data: dict
+
+
+class NoteUpdateRequest(BaseModel):
+    """Request model for updating a note."""
+
+    data: dict
+
+
+class LinkUpdateRequest(BaseModel):
+    """Request model for updating a link."""
 
     data: dict
 
@@ -42,3 +60,9 @@ class ConvertToMindMapRequest(BaseModel):
     """Request model for converting a graph to a mind map."""
 
     answer: str
+
+
+class WebPagePreviewRequest(BaseModel):
+    """Request model for fetching a preview of a webpage."""
+
+    url: str

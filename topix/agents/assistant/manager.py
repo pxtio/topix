@@ -10,6 +10,7 @@ from topix.agents.datatypes.stream import AgentStreamMessage, ContentType
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
+from topix.datatypes.chat.reasoning import ReasoningStep, ReasoningStepState
 from topix.utils.common import gen_uid
 
 
@@ -67,6 +68,29 @@ class AssistantManager:
             )
         return res
 
+    @staticmethod
+    def _update_reasoning_step(
+        steps: dict[str, ReasoningStep],
+        message: AgentStreamMessage
+    ) -> ReasoningStep:
+        """Update the reasoning step based on the message."""
+        if message.tool_id not in steps:
+            steps[message.tool_id] = ReasoningStep(
+                id=message.tool_id,
+                name=message.tool_name,
+                response="",
+                event_messages=[],
+                state=ReasoningStepState.STARTED,
+            )
+        if message.content:
+            if message.content.type != ContentType.STATUS:
+                steps[message.tool_id].response += message.content.text
+            else:
+                steps[message.tool_id].event_messages.append(message.content.text)
+        if message.is_stop:
+            steps[message.tool_id].state = ReasoningStepState.COMPLETED
+        return steps[message.tool_id]
+
     async def run_streamed(
         self,
         context: ReasoningContext,
@@ -98,7 +122,9 @@ class AssistantManager:
         )
 
         raw_answer = ""
+        steps = {}
         async for message in res:
+            self._update_reasoning_step(steps, message)
             if self._is_response(message):
                 if message.tool_name in [
                     AgentToolName.RAW_MESSAGE,
@@ -121,6 +147,7 @@ class AssistantManager:
                         "id": gen_uid(),
                         "role": "assistant",
                         "content": raw_answer,
+                        "reasoning_steps": [val.model_dump(exclude_none=True) for val in steps.values()],
                     }
                 ]
             )

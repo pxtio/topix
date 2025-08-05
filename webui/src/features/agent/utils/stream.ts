@@ -1,5 +1,6 @@
 import camelcaseKeys from 'camelcase-keys'
-import { RAW_RESPONSE, type AgentResponse, type AgentStreamMessage, type ReasoningStep } from '../types/stream'
+import { RAW_MESSAGE, type AgentResponse, type AgentStreamMessage, type ReasoningStep } from '../types/stream'
+import { extractNamedLinksFromMarkdown } from './md'
 
 
 /**
@@ -23,14 +24,13 @@ export async function* handleStreamingResponse<T>(response: Response): AsyncGene
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
-
     buffer += decoder.decode(value, { stream: true })
     const lines = buffer.split('\n')
     buffer = lines.pop() || ''
 
     for (const line of lines) {
       if (line.trim()) {
-        yield camelcaseKeys(JSON.parse(line)) as T
+        yield camelcaseKeys(JSON.parse(line), { deep: true }) as T
       }
     }
   }
@@ -50,28 +50,41 @@ export async function* handleStreamingResponse<T>(response: Response): AsyncGene
  */
 export async function* buildResponse(
   chunks: AsyncGenerator<AgentStreamMessage>
-): AsyncGenerator<AgentResponse> {
+): AsyncGenerator<{ response: AgentResponse; toolEvent: boolean }> {
   // Initialize an empty response object
   const response: AgentResponse = { steps: [] }
 
   // Iterate over each chunk from the async generator
   for await (const chunk of chunks) {
-
     // Filter steps to find the one matching the toolId
-    const newResponse = { ...response }
-    const steps = newResponse.steps.filter(step => step.id === chunk.toolId)
+    let isNewStep: boolean = false
+    const steps = response.steps.filter(step => step.id === chunk.toolId)
 
     // If no step exists for the current toolId or if the reasoning continues after a tool call
-    // (marked by last tool name not being RAW_RESPONSE and current tool name being RAW_RESPONSE),
-    if (steps.length === 0 || (newResponse.steps[newResponse.steps.length - 1].name !== RAW_RESPONSE && chunk.toolName === RAW_RESPONSE)) {
+    // (marked by last tool name not being RAW_MESSAGE and current tool name being RAW_MESSAGE),
+    if (
+      steps.length === 0 ||
+      (response.steps[response.steps.length - 1].name !== "raw_message" && chunk.toolName === "raw_message" && !chunk.isStop)
+    ) {
       const newStep: ReasoningStep = {
         id: chunk.toolId,
         name: chunk.toolName,
-        content: chunk.delta?.content || "",
-        state: chunk.executionState || "started",
-        message: chunk.statusMessage || ""
+        response: "",
+        state: "started",
+        eventMessages: []
       }
-      newResponse.steps.push(newStep)
+      if (chunk.content) {
+        if (chunk.content.type === "token" || chunk.content.type === "message") {
+          newStep.response = chunk.content.text
+        } else if (chunk.content.type === "status") {
+          newStep.eventMessages.push(chunk.content.text)
+        }
+      }
+      if (chunk.isStop) {
+        newStep.state = "completed"
+      }
+      response.steps.push(newStep)
+      isNewStep = true
 
       // mark all previous steps of same id as completed
       steps.forEach((step, idx) => {
@@ -83,22 +96,34 @@ export async function* buildResponse(
       // If a step with the same toolId exists, update it
       const currentStep = steps[steps.length - 1]
 
-      currentStep.content = (currentStep.content || "") + (chunk.delta?.content || "")
-      if (chunk.executionState) {
-        currentStep.state = chunk.executionState
+      if (chunk.content) {
+        if (chunk.content.type === "token" || chunk.content.type === "message") {
+          currentStep.response = (currentStep.response || "") + chunk.content.text
+        } else if (chunk.content.type === "status") {
+          currentStep.eventMessages.push(chunk.content.text)
+        }
       }
-      if (chunk.statusMessage) {
-        currentStep.message = chunk.statusMessage
+
+      if (chunk.isStop) {
+        currentStep.state = "completed"
+        if (currentStep.name === "web_search") {
+          const links = extractNamedLinksFromMarkdown(currentStep.response || "")
+          currentStep.sources = links.map(link => ({
+            type: "webpage",
+            webpage: {
+              name: link.siteName,
+              url: link.url
+            }
+          }))
+        }
       }
     }
-    yield newResponse
+    yield { response: { ...response }, toolEvent: chunk.isStop || isNewStep }
   }
-  response.steps.forEach((step) => {
-    if (step.state === "started") {
-      step.state = "completed"
-    }
+  response.steps.forEach(step => {
+    step.state = "completed"
   })
-  yield response
+  yield { response, toolEvent: true }
 }
 
 
@@ -109,8 +134,11 @@ export async function* buildResponse(
  * @returns The description of the step, or an empty string if not available.
  */
 export function extractStepDescription(step: ReasoningStep): string {
-  if (step.name !== RAW_RESPONSE) {
-    return step.message || `Running \`${step.name}\``
+  if (step.name !== RAW_MESSAGE) {
+    if (step.eventMessages && step.eventMessages.length > 0) {
+      return step.eventMessages[step.eventMessages.length - 1]
+    }
+    return `Running \`${step.name}\``
   }
-  return step.content || "Reasoning..."
+  return step.response || "Reasoning..."
 }

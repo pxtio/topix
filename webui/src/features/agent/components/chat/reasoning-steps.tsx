@@ -3,6 +3,9 @@ import { ChevronDown, ChevronUp } from "lucide-react"
 import { extractStepDescription } from "../../utils/stream"
 import { trimText } from "@/lib/common"
 import type { AgentResponse, ReasoningStep } from "../../types/stream"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { extractNamedLinksFromMarkdown } from "../../utils/md"
 
 
 /**
@@ -32,6 +35,8 @@ const ReasoningStepView = ({
 }: { step: ReasoningStep, isLoading?: boolean }) => {
   const message = extractStepDescription(step)
 
+  const sources = extractNamedLinksFromMarkdown(step.response || "")
+
   const trimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 200)
   const longerTrimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 800)
 
@@ -44,7 +49,7 @@ const ReasoningStepView = ({
 
   const messageClass =
     viewMore ?
-    'transition-all h-auto min-h-2 p-2 rounded-xl bg-white border border-stone-300' :
+    'transition-all h-auto min-h-2 p-2 rounded-xl bg-card text-card-foreground border border-border' :
     'transition-all h-auto min-h-2 p-2 rounded-xl border border-transparent'
 
   return (
@@ -58,35 +63,65 @@ const ReasoningStepView = ({
       <div className='relative flex-shrink-0'>
         {
           isLoading &&
-          <div className='absolute animate-ping w-2 h-2 rounded-full bg-stone-500 z-20' />
+          <div className='absolute animate-ping w-2 h-2 rounded-full bg-muted-foreground z-20' />
         }
         {
           isLoading ?
-          <div className='relative w-2 h-2 rounded-full bg-stone-700 z-20' /> :
-          <div className='relative w-2 h-2 rounded-full bg-teal-700 z-20' />
+          <div className='relative w-2 h-2 rounded-full bg-primary z-20' /> :
+          <div className='relative w-2 h-2 rounded-full bg-primary z-20' />
         }
       </div>
-      <div className={messageClass}>
+      <div className='flex-1 flex flex-col items-start gap-1'>
+        <div className={messageClass}>
+          {
+            viewMore &&
+            <span className='text-xs text-card-foreground whitespace-pre-line'>
+              {longerTrimmedMessage}
+            </span>
+          }
+          {
+            !viewMore &&
+            <span className='text-xs text-card-foreground whitespace-pre-line'>
+              {trimmedMessage}
+            </span>
+          }
+          {
+            message.length > 200 &&
+            <button
+              className='text-xs text-primary hover:underline ml-2'
+              onClick={handleClick}
+            >
+              {viewMore ? "Show less" : "Show more"}
+            </button>
+          }
+        </div>
         {
-          viewMore &&
-          <span className='text-xs text-stone-600 whitespace-pre-line'>
-            {longerTrimmedMessage}
-          </span>
-        }
-        {
-          !viewMore &&
-          <span className='text-xs text-stone-600 whitespace-pre-line'>
-            {trimmedMessage}
-          </span>
-        }
-        {
-          message.length > 200 &&
-          <button
-            className='text-xs text-blue-500 hover:underline ml-2'
-            onClick={handleClick}
-          >
-            {viewMore ? "Show less" : "Show more"}
-          </button>
+          sources && sources.length > 0 &&
+          <div className='w-full flex flex-row flex-wrap items-start gap-1'>
+            {
+              sources.map((source, index) => (
+                <HoverCard key={index}>
+                  <HoverCardTrigger asChild>
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className='transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-medium border border-border bg-card hover:bg-accent rounded-lg'
+                    >
+                      {trimText(source.siteName, 20)}
+                    </a>
+                  </HoverCardTrigger>
+                  <HoverCardContent asChild>
+                    <ScrollArea>
+                      <div className='w-full'>
+                        <a className='text-xs text-muted-foreground' href={source.url}>{trimText(source.url, 50)}</a>
+                      </div>
+                    </ScrollArea>
+                  </HoverCardContent>
+                </HoverCard>
+              ))
+            }
+          </div>
         }
       </div>
     </div>
@@ -126,11 +161,17 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         relative
         w-full
         p-4
-        bg-stone-100
+        bg-background
+        text-muted-foreground
         rounded-xl
-        border border-stone-200
+        border border-border
       `}
     >
+      <div className='font-medium text-base text-center'>
+        <span className='text-base text-card-foreground'>
+          Thinking
+        </span>
+      </div>
       <div
         className={`
           flex flex-col items-start gap-2
@@ -157,7 +198,7 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         {
           isOpen &&
           <div
-            className='absolute left-[0.73rem] top-0 w-[1px] h-full bg-stone-300 rounded-lg z-10'
+            className='absolute left-[0.73rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
           >
           </div>
         }
@@ -166,8 +207,12 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         className='absolute bottom-0 right-1/2 transform translate-x-1/2'
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className='transition-all text-xs text-stone-400 hover:text-stone-600'>
-          {isOpen ? <ChevronUp className='w-4 h-4 flex-shrink-0' /> : <ChevronDown className='w-4 h-4 flex-shrink-0' />}
+        <span className='transition-all text-xs text-secondary-foreground hover:text-secondary-foreground'>
+          {
+            isOpen ?
+            <ChevronUp className='w-4 h-4 flex-shrink-0' /> :
+            <ChevronDown className='w-4 h-4 flex-shrink-0' />
+          }
         </span>
       </button>
     </div>

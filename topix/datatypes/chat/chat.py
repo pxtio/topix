@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from topix.datatypes.chat.reasoning import ReasoningStep
 from topix.datatypes.enum import CustomEnum
 from topix.utils.common import gen_uid
 
@@ -32,6 +33,8 @@ class Message(BaseModel):
     created_at: str | None = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str | None = None
     deleted_at: str | None = None
+
+    reasoning_steps: list[ReasoningStep] | None = None
 
     def to_chat_message(self) -> dict:
         """Convert to a chat message format."""

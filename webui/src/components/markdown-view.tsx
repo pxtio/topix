@@ -1,6 +1,6 @@
 import ReactMarkdown from "react-markdown"
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
+// import remarkMath from 'remark-math'
+// import rehypeKatex from 'rehype-katex'
 import rehypeHighlight from 'rehype-highlight'
 import remarkGfm from 'remark-gfm'
 import 'katex/dist/katex.min.css'
@@ -9,6 +9,8 @@ import { Copy } from "lucide-react"
 import { toast } from "sonner"
 import React from "react"
 import { cn } from "@/lib/utils"
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card"
+import { LinkPreviewCard } from "@/features/agent/components/link-preview"
 
 
 /**
@@ -64,29 +66,23 @@ const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) 
 
   return isBlock ? (
     <pre
-      className={cn('text-sm text-mono !rounded-2xl p-4 bg-stone-100 relative my-4 border overflow-x-auto', className)}
-      style={{ background: '#f5f5f4', padding: '1em', borderRadius: '5px' }}
+      className={cn('text-sm text-mono !rounded-2xl p-4 bg-muted relative my-4 border-none overflow-x-auto', className)}
     >
       <button
         onClick={() => handleCopy(codeContent)}
-        className="transition-all absolute top-1 right-1 text-sm bg-transparent hover:bg-stone-200 p-2 rounded-xl text-stone-500"
+        className="transition-all absolute top-1 right-1 text-sm bg-transparent hover:bg-accent p-2 rounded-xl text-accent-foreground"
         aria-label="Copy to clipboard"
       >
         <Copy strokeWidth={1.75} className='h-4 w-4' />
       </button>
-      {
-        language !== 'plaintext' && (
-          <span className="absolute top-0 left-0 w-auto bg-transparent px-4 py-2 text-stone-500 text-xs font-mono">
-            {language}
-          </span>
-        )
-      }
-      <code className={language !== 'plaintext' ? "block mt-6": "block"}>{children}</code>
+      <span className="absolute top-0 left-0 w-auto px-4 py-2 text-xs font-mono">
+        {language}
+      </span>
+      <code className={"block mt-6"}>{children}</code>
     </pre>
   ) : (
     <code
-      className={cn('text-left text-sm text-mono text-red-700 bg-stone-100', className)}
-      style={{ background: '#f5f5f4', padding: '0.2em 0.4em', borderRadius: '3px' }}
+      className={cn('text-left text-sm text-mono text-red-700 bg-muted text-muted-foreground rounded-lg', className)}
     >
       {children}
     </code>
@@ -95,23 +91,44 @@ const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) 
 
 
 interface CustomLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  isStreaming?: boolean
   children?: React.ReactNode
 }
 
-const CustomLink: React.FC<CustomLinkProps> = ({ children, ...props }) => {
+const CustomLink: React.FC<CustomLinkProps> = ({ isStreaming = false, children, ...props }) => {
   // Ensure children is an array and get the first element as a string
   const content = Array.isArray(children) ? children[0] : children
   const contentWithoutBrackets = typeof content === 'string' ? content.replace(/^\[|\]$/g, '') : "KB"
 
+  const aClass = "transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-mono font-medium border border-border hover:bg-accent rounded-lg"
+
+  if (isStreaming) {
+    return (
+      <a
+        href={props.href}
+        className={aClass}
+        target="_blank"
+      >
+        {contentWithoutBrackets}
+      </a>
+    )
+  }
+
   return (
-    <a
-      href="#"
-      className="text-sky-600 inline-block rounded-full p-1 text-center bg-gray-100 font-mono hover:underline transition-all text-sm"
-      {...props}
-      target="_blank"
-    >
-      {contentWithoutBrackets}
-    </a>
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <a
+          href={props.href}
+          className={aClass}
+          target="_blank"
+        >
+          {contentWithoutBrackets}
+        </a>
+      </HoverCardTrigger>
+      <HoverCardContent>
+        <LinkPreviewCard url={props.href || ''} />
+      </HoverCardContent>
+    </HoverCard>
   )
 }
 
@@ -122,6 +139,7 @@ const CustomLink: React.FC<CustomLinkProps> = ({ children, ...props }) => {
  * @property content - The markdown content to be rendered.
  */
 export interface MarkdownViewProps {
+  isStreaming?: boolean
   content: string
 }
 
@@ -129,12 +147,12 @@ export interface MarkdownViewProps {
 /**
  * MarkdownView is a React component that renders markdown content.
  */
-export const MarkdownView =({ content }: MarkdownViewProps) => {
+export const MarkdownView =({ isStreaming = false, content }: MarkdownViewProps) => {
   return (
     <>
       <ReactMarkdown
-        remarkPlugins={[remarkMath, remarkGfm]}
-        rehypePlugins={[rehypeKatex, rehypeHighlight]}
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeHighlight]}
         components={{
           h1: ({ ...props }) => <h1 className="mt-10 scroll-m-20 border-b pb-2 text-3xl font-heading font-semibold tracking-tight transition-colors first:mt-0" {...props} />,
           h2: ({ ...props }) => <h2
@@ -148,7 +166,7 @@ export const MarkdownView =({ content }: MarkdownViewProps) => {
           ul: ({ ...props }) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props} />,
           ol: ({ ...props }) => <ul className="my-6 ml-6 list-decimal [&>li]:mt-2" {...props} />,
           li: ({ ...props }) => <li className="" {...props} />,
-          a: CustomLink,
+          a: ({ ...props }) => <CustomLink {...props} isStreaming={isStreaming} />,
           // Custom rendering for code blocks
           code: CustomCodeView,
           table: ({ ...props }) => <div className='my-8 w-full overflow-y-auto'><table className="w-full text-base border-b" {...props} /></div>,

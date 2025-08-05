@@ -1,4 +1,4 @@
-"""Web Search Agent."""
+"""Code interpreter Agent."""
 
 import datetime
 import logging
@@ -8,6 +8,7 @@ import secrets
 from typing import Any
 
 from openai import AsyncOpenAI
+
 from agents import (
     Agent,
     AgentHooks,
@@ -101,15 +102,14 @@ class CodeInterpreter(BaseAgent):
         return ChatMessage(
             role="user",
             content=await self._return_chatmessage_with_media(media, output.final_output),
-        )
+        ).model_dump()
 
     async def _return_chatmessage_with_media(
         self,
         media: list,
         text: str,
     ) -> list[TextMessageContent | ImageMessageContent]:
-        """Return a list of text and image message contents"""
-
+        """Return a list of text and image message contents."""
         content = [TextMessageContent(text=text)]
         if media:
             client = AsyncOpenAI()

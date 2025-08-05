@@ -1,10 +1,11 @@
 """Base class for agent managers in the Topix application."""
 
+import logging
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncGenerator
 
-import logging
 from jinja2 import Template
 from openai.types.responses import ResponseTextDeltaEvent
 

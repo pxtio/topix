@@ -34,13 +34,14 @@ class AssistantManager:
                 context.chat_history = history
                 query_input = QueryRewriteInput(query=query, chat_history=history)
                 # launch query rewrite:
-                return await AgentRunner.run(
+                new_query = await AgentRunner.run(
                     self.query_rewrite_agent,
                     input=query_input,
                 )
+                return history + [{"role": "user", "content": new_query}]
             else:
-                return query
-        return query
+                return [{"role": "user", "content": query}]
+        return [{"role": "user", "content": query}]
 
     async def run(
         self,
@@ -51,7 +52,7 @@ class AssistantManager:
         max_turns: int = 5,
     ) -> str:
         """Run the assistant agent with the provided context and query."""
-        new_query = await self._rewrite_query(context, query, session)
+        input = await self._rewrite_query(context, query, session)
 
         if session:
             await session.add_items(
@@ -59,7 +60,7 @@ class AssistantManager:
             )
         # launch plan:
         res = await AgentRunner.run(
-            self.plan_agent, input=new_query, context=context, max_turns=max_turns
+            self.plan_agent, input=input, context=context, max_turns=max_turns
         )
         if session:
             await session.add_items(

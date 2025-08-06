@@ -13,6 +13,8 @@ class SendMessageRequest(BaseModel):
     query: str
     model: str = "openai/gpt-4o"
 
+    activated_tool: str | None = None
+
 
 class ChatUpdateRequest(BaseModel):
     """Request model for updating a chat."""

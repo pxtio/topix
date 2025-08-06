@@ -176,13 +176,12 @@ class BaseAgent(Agent[Context]):
                 )
 
     def activate_tool(self, tool_name: str) -> None:
-
         """Activate a tool by name.
 
         Args:
             tool_name (str): The name of the tool to activate.
-        """
 
+        """
         activated = False
         for tool in self.tools:
             if tool.name == tool_name:
@@ -199,8 +198,8 @@ class BaseAgent(Agent[Context]):
 
         Args:
             tool_name (str): The name of the tool to deactivate.
-        """
 
+        """
         deactivated = False
         for tool in self.tools:
             if tool.name == tool_name:

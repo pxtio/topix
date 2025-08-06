@@ -1,19 +1,27 @@
 import { useReactFlow } from "@xyflow/react"
-import { useBoardStore } from "../store/board-store"
 import type { Note } from "../types/note"
 import TextareaAutosize from 'react-textarea-autosize'
+import { useEffect, useRef, useState } from "react"
 
 
 /**
  * Component to render the label of a note node.
  */
-export const NodeLabel = ({ note }: { note: Note }) => {
+export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean }) => {
   const { setNodes } = useReactFlow()
-  const updateNote = useBoardStore((state) => state.updateNote)
+
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+
+  const [labelEditing, setLabelEditing] = useState(false)
+
+  useEffect(() => {
+    if (!selected) {
+      setLabelEditing(false)
+    }
+  }, [selected])
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newLabel = event.target.value
-    updateNote(note.id, { label: newLabel })
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === note.id) {
@@ -30,6 +38,23 @@ export const NodeLabel = ({ note }: { note: Note }) => {
     )
   }
 
+  const stopDragging = (e: React.PointerEvent) => {
+    if (labelEditing) {
+      e.preventDefault() // prevent React Flow from starting a drag
+    }
+  }
+
+  const onDoubleClick = () => {
+    setLabelEditing(true)
+    setTimeout(() => {
+      const textarea = textareaRef.current
+      if (!textarea) return
+      textarea.focus()
+      const len = textarea.value.length
+      textarea.setSelectionRange(len, len)
+    }, 0)
+  }
+
   const textareaClass = `
     w-full h-full
     px-3 py-2
@@ -42,20 +67,40 @@ export const NodeLabel = ({ note }: { note: Note }) => {
     focus:ring-0
     focus:border-none
     overflow-visible
+    whitespace-normal break-words
   `
+
   return (
-    <div className={`
-      relative
-      flex flex-row items-center justify-center
-      bg-transparent
-      overflow-visible
-    `}>
-      <TextareaAutosize
-        className={textareaClass}
-        value={note.label || ''}
-        onChange={handleChange}
-        placeholder=""
-      />
+    <div
+      className={`
+        relative
+        flex flex-row items-center justify-center
+        bg-transparent
+        overflow-visible
+        w-[250px]
+        min-h-[50px]
+      `}
+      onDoubleClick={onDoubleClick}
+      onPointerDown={stopDragging}
+    >
+      {
+        labelEditing ? (
+          <TextareaAutosize
+            className={textareaClass}
+            value={note.label || ''}
+            onChange={handleChange}
+            placeholder=""
+            ref={textareaRef}
+            readOnly={!labelEditing}
+          />
+        ) : (
+          <div className={textareaClass}>
+            <span>
+              {note.label}
+            </span>
+          </div>
+        )
+      }
     </div>
   )
 }

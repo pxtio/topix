@@ -3,23 +3,17 @@ import {
   Background,
   Controls,
   MiniMap,
-  useNodesState,
-  useEdgesState,
   ReactFlow,
   BackgroundVariant,
-  addEdge,
-  type Connection,
   MarkerType
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import NodeView from './node-view'
 import { ActionPanel } from './action-panel'
-import { useBoardStore } from '../store/board-store'
-import { type LinkEdge, type NoteNode } from '../types/flow'
 import { useAddNoteNode } from '../hooks/add-node'
 import { EdgeView } from './edge-view'
-import { useCallback } from 'react'
 import { CustomConnectionLine } from './connection'
+import { useGraphStore } from '../store/graph-store'
 
 
 const proOptions = { hideAttribution: true }
@@ -51,21 +45,24 @@ const connectionLineStyle = {
  * GraphEditor component to render the graph with nodes and edges.
  */
 export default function GraphEditor() {
-  const currentBoardId = useBoardStore((state) => state.currentBoardId)
+  const {
+    nodes,
+    edges,
+    deletedNodes,
+    deletedEdges,
+    onNodesChange,
+    onEdgesChange,
+    onNodesDelete,
+    onEdgesDelete,
+    onConnect
+  } = useGraphStore()
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<NoteNode>([])
-  const [edges, setEdges, onEdgesChange] = useEdgesState<LinkEdge>([])
+  console.log('nodes', nodes)
+  console.log('edges', edges)
+  console.log('deletedNodes', deletedNodes)
+  console.log('deletedEdges', deletedEdges)
 
-  const handleAddNode = useAddNoteNode(currentBoardId, setNodes)
-
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
-  )
-
-  if (!currentBoardId) {
-    return null
-  }
+  const handleAddNode = useAddNoteNode()
 
   return (
     <>
@@ -75,11 +72,13 @@ export default function GraphEditor() {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodesDelete={onNodesDelete}
+        onEdgesDelete={onEdgesDelete}
         proOptions={proOptions}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        defaultEdgeOptions={defaultEdgeOptions}
         onConnect={onConnect}
+        defaultEdgeOptions={defaultEdgeOptions}
         connectionLineComponent={CustomConnectionLine}
         connectionLineStyle={connectionLineStyle}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}

@@ -19,12 +19,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { BotMessageSquare, History, Minus, MoreHorizontal, PaintRoller, Palette, Plus } from "lucide-react"
 import { useChatStore } from "@/features/agent/store/chat-store"
 import { trimText } from "@/lib/common"
-import { useBoardStore } from "@/features/board/store/board-store"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { useCreateBoard } from "@/features/board/api/create-board"
 import { useDeleteBoard } from "@/features/board/api/delete-board"
 import { Collapsible, CollapsibleTrigger } from "./ui/collapsible"
 import { CollapsibleContent } from "@radix-ui/react-collapsible"
+import { useGraphStore } from "@/features/board/store/graph-store"
 
 
 function NewBoardItem() {
@@ -55,17 +55,14 @@ function NewBoardItem() {
 
 
 function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
-  const view = useAppStore((state) => state.view)
-  const setView = useAppStore((state) => state.setView)
-  const userId = useAppStore((state) => state.userId)
-  const setCurrentBoardId = useBoardStore((state) => state.setCurrentBoardId)
-  const currentBoardId = useBoardStore((state) => state.currentBoardId)
+  const { view, setView, userId } = useAppStore()
+  const { boardId: currentBoardId, setBoardId } = useGraphStore()
 
   const { deleteBoard } = useDeleteBoard()
 
   const handleClick = () => {
-    setCurrentBoardId(boardId)
-    setView("board")  // Switch to board view when selecting a board
+    setBoardId(boardId)
+    setView("board")
   }
 
   const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent' + (currentBoardId === boardId && view === "board" ? ' bg-sidebar-accent/70' : '')
@@ -142,7 +139,7 @@ function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
 
   const chatLabel = trimText(label || "Untitled Chat", 20)
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent' + (currentChatId === chatId && view === "chat" ? ' bg-sidebar-accent/70' : '')
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent' + (currentChatId === chatId && view === "chat" ? ' bg-sidebar-accent' : '')
 
   return (
     <SidebarMenuSubItem>

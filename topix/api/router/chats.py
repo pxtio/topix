@@ -134,6 +134,9 @@ async def send_message(
     session = AssistantSession(session_id=chat_id, chat_store=chat_store)
 
     assistant = AssistantManager(QueryRewrite(), Plan(model=body.model))
+    if body.activated_tool:
+        assistant.plan_agent.activate_tool(body.activated_tool)
+
     try:
         async for data in assistant.run_streamed(
             query=body.query,

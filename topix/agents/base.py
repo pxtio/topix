@@ -174,3 +174,40 @@ class BaseAgent(Agent[Context]):
                     **fixed_params,
                     is_stop=False,
                 )
+
+    def activate_tool(self, tool_name: str) -> None:
+
+        """Activate a tool by name.
+
+        Args:
+            tool_name (str): The name of the tool to activate.
+        """
+
+        activated = False
+        for tool in self.tools:
+            if tool.name == tool_name:
+                tool.is_enabled = True
+                activated = True
+
+        if not activated:
+            raise ValueError(f"Tool {tool_name} not found in agent {self.name}")
+
+        self.model_settings.tool_choice = tool_name
+
+    def deactivate_tool(self, tool_name: str) -> None:
+        """Deactivate a tool by name.
+
+        Args:
+            tool_name (str): The name of the tool to deactivate.
+        """
+
+        deactivated = False
+        for tool in self.tools:
+            if tool.name == tool_name:
+                tool.is_enabled = False
+                deactivated = True
+
+        self.model_settings.tool_choice = "auto"
+
+        if not deactivated:
+            raise ValueError(f"Tool {tool_name} not found in agent {self.name}")

@@ -18,7 +18,9 @@ export interface GraphStore {
   onEdgesChange: (changes: EdgeChange<LinkEdge>[]) => void
   onNodesDelete: (nodes: NoteNode[]) => void
   onEdgesDelete: (edges: LinkEdge[]) => void
-  onConnect: (params: Connection) => void
+  onConnect: (params: Connection) => LinkEdge | undefined
+  setDeletedNodes: (nodes: NoteNode[]) => void
+  setDeletedEdges: (edges: LinkEdge[]) => void
 }
 
 
@@ -80,6 +82,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       nodes: updatedNodes
     })
   },
+
   onEdgesChange: (changes) => {
     const boardId = get().boardId
 
@@ -121,6 +124,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       edges: updatedEdges
     })
   },
+
   onNodesDelete: (nodes) => {
     const updatedNodes = get().nodes.filter(node => !nodes.some(n => n.id === node.id))
     const deletedNodes = nodes.map(node => ({ ...node, data: { ...node.data, deletedAt: new Date().toISOString() } }))
@@ -129,6 +133,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       deletedNodes: [...get().deletedNodes, ...deletedNodes]
     })
   },
+
   onEdgesDelete: (edges) => {
     const updatedEdges = get().edges.filter(edge => !edges.some(e => e.id === edge.id))
     const deletedEdges = edges.map(edge => {
@@ -142,9 +147,22 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       deletedEdges: [...get().deletedEdges, ...deletedEdges]
     })
   },
+
   onConnect: (params) => {
-    set({
-      edges: addEdge({ ...params, id: generateUuid() }, get().edges),
-    })
-  }
+    const edgeId = generateUuid()
+    const newEdge: LinkEdge = {
+      ...params,
+      id: edgeId
+    }
+    const newEdges = addEdge(newEdge, get().edges)
+    if (newEdges.length > get().edges.length) {
+      set({ edges: newEdges })
+      return newEdge
+    }
+    return undefined
+  },
+
+  setDeletedNodes: (nodes) => set({ deletedNodes: nodes }),
+
+  setDeletedEdges: (edges) => set({ deletedEdges: edges }),
 }))

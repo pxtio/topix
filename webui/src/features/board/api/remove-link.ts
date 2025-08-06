@@ -1,6 +1,7 @@
 import { API_URL } from "@/config/api"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import type { Graph } from "../types/board"
+import { sleep } from "@/lib/common"
+import { useMutation } from "@tanstack/react-query"
+import { DEBOUNCE_DELAY } from "../const"
 
 
 /**
@@ -36,8 +37,6 @@ export async function removeLink(
  * @returns An object containing the removeLink function and its mutation state.
  */
 export const useRemoveLink = () => {
-  const queryClient = useQueryClient()
-
   const mutation = useMutation({
     mutationFn: async ({
       boardId,
@@ -48,15 +47,7 @@ export const useRemoveLink = () => {
       userId: string
       linkId: string
     }) => {
-      // Optimistically update the board in the cache
-      queryClient.setQueryData<Graph>(["getBoard", boardId, userId], (oldBoard) => {
-        if (!oldBoard) return oldBoard
-
-        // Remove the edge from the board's edges array
-        const updatedEdges = oldBoard.edges?.filter(edge => edge.id !== linkId)
-        return { ...oldBoard, edges: updatedEdges }
-      })
-
+      await sleep(DEBOUNCE_DELAY)
       await removeLink(boardId, userId, linkId)
     }
   })

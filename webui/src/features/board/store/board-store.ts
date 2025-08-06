@@ -5,68 +5,88 @@ import type { Link } from "../types/link"
 
 export interface BoardStore {
   currentBoardId?: string
-  modifiedNotes: Map<string, Note>
-  modifiedLinks: Map<string, Link>
   setCurrentBoardId: (boardId?: string) => void
-  // add new note or link to the store
+
+  // notes & links
+  notes: Map<string, Note>
+  links: Map<string, Link>
+
+  setNotes: (notes: Map<string, Note>) => void
+  setLinks: (links: Map<string, Link>) => void
+
   addNote: (note: Note) => void
   addLink: (link: Link) => void
-  // update a note or link in the store
+
   updateNote: (noteId: string, noteData: Partial<Note>) => void
   updateLink: (linkId: string, linkData: Partial<Link>) => void
-  // reset modified notes and links
-  resetModifiedNotes: () => void
-  resetModifiedLinks: () => void
-  // Reset the entire store to its initial state
-  // Useful for clearing the store when switching boards or resetting the application
-  resetStore: () => void
+
+  deleteNote: (noteId: string) => void
+  deleteLink: (linkId: string) => void
+
+  resetNotes: () => void
+  resetLinks: () => void
 }
 
 
 export const useBoardStore = create<BoardStore>((set) => ({
   currentBoardId: undefined,
-  modifiedNotes: new Map<string, Note>(),
-  modifiedLinks: new Map<string, Link>(),
 
   setCurrentBoardId: (boardId?: string) => set(() => ({ currentBoardId: boardId })),
+
+  notes: new Map<string, Note>(),
+  links: new Map<string, Link>(),
+
+  setNotes: (notes: Map<string, Note>) => set(() => ({ notes })),
+  setLinks: (links: Map<string, Link>) => set(() => ({ links })),
+
   updateNote: (noteId: string, noteData: Partial<Note>) => set((state) => {
-    const updatedNotes = new Map(state.modifiedNotes)
+    const updatedNotes = new Map(state.notes)
     const existingNote = updatedNotes.get(noteId)
 
     if (existingNote) {
-      updatedNotes.set(noteId, { ...existingNote, ...noteData })
+      updatedNotes.set(noteId, { ...existingNote, ...noteData, updatedAt: new Date().toISOString() })
     }
 
-    return { modifiedNotes: updatedNotes }
+    return { notes: updatedNotes }
   }),
+
   updateLink: (linkId: string, linkData: Partial<Link>) => set((state) => {
-    const updatedLinks = new Map(state.modifiedLinks)
+    const updatedLinks = new Map(state.links)
     const existingLink = updatedLinks.get(linkId)
 
     if (existingLink) {
-      updatedLinks.set(linkId, { ...existingLink, ...linkData })
+      updatedLinks.set(linkId, { ...existingLink, ...linkData, updatedAt: new Date().toISOString() })
     }
 
-    return { modifiedLinks: updatedLinks }
+    return { links: updatedLinks }
   }),
 
   addNote: (note: Note) => set((state) => {
-    const updatedNotes = new Map(state.modifiedNotes)
+    const updatedNotes = new Map(state.notes)
     updatedNotes.set(note.id, note)
-    return { modifiedNotes: updatedNotes }
+    return { notes: updatedNotes }
   }),
+
   addLink: (link: Link) => set((state) => {
-    const updatedLinks = new Map(state.modifiedLinks)
+    const updatedLinks = new Map(state.links)
     updatedLinks.set(link.id, link)
-    return { modifiedLinks: updatedLinks }
+    return { links: updatedLinks }
   }),
 
-  resetModifiedNotes: () => set(() => ({ modifiedNotes: new Map<string, Note>() })),
-  resetModifiedLinks: () => set(() => ({ modifiedLinks: new Map<string, Link>() })),
+  deleteNote: (noteId: string) => set((state) => {
+    const updatedNotes = new Map(state.notes)
+    const toDelete = updatedNotes.get(noteId)
+    if (!toDelete) return state
+    toDelete.deletedAt = new Date().toISOString()
+    return { notes: updatedNotes }
+  }),
 
-  resetStore: () => set(() => ({
-    currentBoardId: undefined,
-    modifiedNotes: new Map<string, Note>(),
-    modifiedLinks: new Map<string, Link>()
-  }))
+  deleteLink: (linkId: string) => set((state) => {
+    const updatedLinks = new Map(state.links)
+    updatedLinks.delete(linkId)
+    return { links: updatedLinks }
+  }),
+
+  resetNotes: () => set(() => ({ notes: new Map<string, Note>() })),
+  resetLinks: () => set(() => ({ links: new Map<string, Link>() }))
 }))

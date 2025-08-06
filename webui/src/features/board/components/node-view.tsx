@@ -1,19 +1,46 @@
-import React, { memo, useRef } from "react"
+import React, { memo, useEffect, useRef } from "react"
 import { Handle, type NodeProps, Position, useReactFlow } from "@xyflow/react"
 import type { NoteNode } from "../types/flow"
 import { RoughRect } from "@/components/rough/rect"
 import { NodeLabel } from "./node-label"
-
+import { useDebouncedCallback } from 'use-debounce'
+import { useUpdateNote } from "../api/update-note"
+import { useAppStore } from "@/store"
+import { useGraphStore } from "../store/graph-store"
+import { DEBOUNCE_DELAY } from "../const"
 
 /**
  * NodeView component for rendering a resizable node in a graph.
  * It supports aspect ratio locking, resizing from corners, and handles minimum/maximum dimensions.
  */
 function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
+  const userId = useAppStore((state) => state.userId)
+
+  const boardId = useGraphStore((state) => state.boardId)
+
   const containerRef = useRef<HTMLDivElement | null>(null)
+
   const hasResizedRef = useRef(false)
 
   const { getNode } = useReactFlow()
+
+  const { updateNote } = useUpdateNote()
+
+  // Debounced function to update the note in the backend
+  const debounce = useDebouncedCallback(() => {
+    if (boardId && userId) {
+      updateNote({
+        boardId,
+        userId,
+        noteId: id,
+        noteData: data
+      })
+    }
+  }, DEBOUNCE_DELAY)
+
+  useEffect(() => {
+    debounce()
+  }, [debounce, data])
 
   const node = getNode(id)
 

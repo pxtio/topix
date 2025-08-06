@@ -1,8 +1,9 @@
 import { API_URL } from "@/config/api"
 import type { Link } from "../types/link"
-import type { Graph } from "../types/board"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 import snakecaseKeys from "snakecase-keys"
+import { DEBOUNCE_DELAY } from "../const"
+import { sleep } from "@/lib/common"
 
 
 /**
@@ -45,8 +46,6 @@ export async function addLinks(
  * @returns An object containing the addLinks function and its mutation state.
  */
 export const useAddLinks = () => {
-  const queryClient = useQueryClient()
-
   const mutation = useMutation({
     mutationFn: async ({
       boardId,
@@ -57,24 +56,8 @@ export const useAddLinks = () => {
       userId: string
       links: Link[]
     }) => {
-      // Optimistically update the board in the cache
-      queryClient.setQueryData<Graph>(
-        ["getBoard", boardId, userId],
-        (oldData) => {
-          if (!oldData) return
-
-          return {
-            ...oldData,
-            edges: [...(oldData.edges || []), ...links]
-          }
-        }
-      )
-
+      await sleep(DEBOUNCE_DELAY)
       await addLinks(boardId, userId, links)
-      // Mark the links as saved in the cache
-      links.forEach(link => {
-        link.saved = true
-      })
     }
   })
 

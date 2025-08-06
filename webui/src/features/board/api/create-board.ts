@@ -36,7 +36,7 @@ export async function createBoard(
 export const useCreateBoard = () => {
   const queryClient = useQueryClient()
 
-  const setBoardId = useGraphStore((state) => state.setBoardId)
+  const { setBoardId, setNodes, setEdges } = useGraphStore()
 
   const mutation = useMutation({
     mutationFn: async ({ userId }: { userId: string }) => {
@@ -46,6 +46,8 @@ export const useCreateBoard = () => {
         return [newBoard, ...(oldBoards || [])] // Prepend the new board to the list
       })
       setBoardId(boardId) // Set the current board ID to the newly created board
+      setNodes([])
+      setEdges([])
     }
   })
 

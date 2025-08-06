@@ -25,6 +25,7 @@ import { useDeleteBoard } from "@/features/board/api/delete-board"
 import { Collapsible, CollapsibleTrigger } from "./ui/collapsible"
 import { CollapsibleContent } from "@radix-ui/react-collapsible"
 import { useGraphStore } from "@/features/board/store/graph-store"
+import { useGetBoard } from "@/features/board/api/get-board"
 
 
 function NewBoardItem() {
@@ -56,13 +57,18 @@ function NewBoardItem() {
 
 function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
   const { view, setView, userId } = useAppStore()
-  const { boardId: currentBoardId, setBoardId } = useGraphStore()
+  const { boardId: currentBoardId, setBoardId, setNodes, setEdges } = useGraphStore()
 
   const { deleteBoard } = useDeleteBoard()
 
+  const { getBoard } = useGetBoard()
+
   const handleClick = () => {
     setBoardId(boardId)
+    setNodes([])
+    setEdges([])
     setView("board")
+    getBoard()
   }
 
   const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent' + (currentBoardId === boardId && view === "board" ? ' bg-sidebar-accent/70' : '')

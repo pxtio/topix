@@ -1,7 +1,10 @@
 import { API_URL } from "@/config/api"
 import type { Graph } from "../types/board"
 import camelcaseKeys from "camelcase-keys"
-import { useQuery } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
+import { useAppStore } from "@/store"
+import { useGraphStore } from "../store/graph-store"
+import { convertLinkToEdge, convertNoteToNode } from "../utils/graph"
 
 
 /**
@@ -28,29 +31,34 @@ export async function getBoard(
   }
 
   const data = await response.json()
-  return camelcaseKeys(data.data.graph)
+  return camelcaseKeys(data.data.graph, { deep: true })
 }
 
 
 /**
  * Custom hook to fetch a board by its ID for the user.
- *
- * @param boardId - The ID of the board to be fetched.
- * @param userId - The ID of the user who owns the board.
- *
- * @returns A query object containing the board data.
  */
-export const useGetBoard = ({
-  boardId,
-  userId
-}: {
-  boardId: string
-  userId: string
-}) => {
-  return useQuery<Graph>({
-    queryKey: ["getBoard", boardId, userId],
-    queryFn: () => getBoard(boardId, userId),
-    enabled: !!boardId && !!userId,
-    staleTime: 1000 * 60 * 5 // 5 minutes
+export const useGetBoard = () => {
+  const userId = useAppStore((state) => state.userId)
+  const { boardId, setNodes, setEdges } = useGraphStore()
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      if (!boardId) {
+        return
+      }
+
+      const { nodes: notes, edges: links } = await getBoard(boardId, userId)
+      const nodes = (notes || []).map(convertNoteToNode)
+      const edges = (links || []).map(convertLinkToEdge)
+
+      setNodes(nodes)
+      setEdges(edges)
+    }
   })
+
+  return {
+    getBoard: mutation.mutate,
+    ...mutation
+  }
 }

@@ -1,8 +1,7 @@
 import { API_URL } from "@/config/api"
 import snakecaseKeys from "snakecase-keys"
 import type { Link } from "../types/link"
-import type { Graph } from "../types/board"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 
 
 /**
@@ -36,8 +35,6 @@ export async function updateLink(
 
 
 export const useUpdateLink = () => {
-  const queryClient = useQueryClient()
-
   const mutation = useMutation({
     mutationFn: async ({
       boardId,
@@ -50,19 +47,6 @@ export const useUpdateLink = () => {
       linkId: string
       linkData: Partial<Link>
     }) => {
-      // Optimistically update the board in the cache
-      queryClient.setQueryData<Graph>(["getBoard", boardId, userId], (oldBoard) => {
-        if (!oldBoard) return oldBoard
-        if (!oldBoard.edges) return oldBoard
-
-        // Find and update the edge in the board's edges array
-        const updatedEdges = oldBoard.edges.map(edge =>
-          edge.id === linkId ? { ...edge, ...linkData } : edge
-        )
-
-        return { ...oldBoard, edges: updatedEdges }
-      })
-
       await updateLink(boardId, userId, linkId, linkData)
     }
   })

@@ -4,12 +4,15 @@ import TextareaAutosize from 'react-textarea-autosize'
 import { useEffect, useRef, useState } from "react"
 import { IconPicker } from "./emoji-picker/picker"
 import type { NoteNode } from "../types/flow"
+import { MarkdownEditor } from "@/components/editor/text-editor"
 
 
 /**
  * Component to render the label of a note node.
  */
 export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean }) => {
+  const [viewNote, setViewNote] = useState<boolean>(false)
+
   const { setNodes } = useReactFlow()
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -19,6 +22,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
   useEffect(() => {
     if (!selected) {
       setLabelEditing(false)
+      setViewNote(false)
     }
   }, [selected])
 
@@ -57,6 +61,29 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
                     icon: { type: 'emoji', emoji: emoji.emoji }
                   }
                 }
+              }
+            },
+          }
+        }
+        return node
+      })
+    )
+  }
+
+  const handleNoteClick = () => {
+    setViewNote(!viewNote)
+  }
+
+  const handleNoteChange = (markdown: string) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === note.id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              content: {
+                markdown: markdown
               }
             },
           }
@@ -108,8 +135,14 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
     >
       {
         selected &&
-        <div className='absolute top-0 left-0 transform translate-y-[-100%] text-xs font-sans'>
+        <div className='absolute top-0 left-0 transform translate-y-[-100%] text-xs font-sans flex flex-row items-center gap-2'>
           <IconPicker onSelect={handleEmojiSelect} />
+          <button
+            className='transition-colors px-2 py-1 text-accent-foreground/50 hover:text-accent-foreground'
+            onClick={handleNoteClick}
+          >
+            {viewNote ? 'Hide Note' : 'Show Note'}
+          </button>
         </div>
       }
       {
@@ -152,6 +185,13 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
           )
         }
       </div>
+      {
+        viewNote && (
+          <div className='absolute -bottom-1 left-1/2 transform translate-y-[100%] -translate-x-1/2 font-sans bg-card text-card-foreground rounded-xl border border-border p-4 shadow-md w-96'>
+            <MarkdownEditor markdown={note.content?.markdown || ''} onChange={handleNoteChange} readonly={false} />
+          </div>
+        )
+      }
     </div>
   )
 }

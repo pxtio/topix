@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown"
 import rehypeHighlight from 'rehype-highlight'
 import remarkGfm from 'remark-gfm'
 import 'katex/dist/katex.min.css'
-import 'highlight.js/styles/github.css'
+import 'highlight.js/styles/rose-pine-dawn.css'
 import { Copy } from "lucide-react"
 import { toast } from "sonner"
 import React from "react"
@@ -66,7 +66,7 @@ const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) 
 
   return isBlock ? (
     <pre
-      className={cn('text-sm text-mono !rounded-2xl p-4 bg-muted relative my-4 border-none overflow-x-auto', className)}
+      className={cn('text-sm text-mono !rounded-2xl p-4 !bg-card relative my-4 overflow-x-auto border border-border', className)}
     >
       <button
         onClick={() => handleCopy(codeContent)}

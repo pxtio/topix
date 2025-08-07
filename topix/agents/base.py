@@ -1,5 +1,7 @@
 """Base class for agent managers in the Topix application."""
 
+import logging
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncGenerator
@@ -20,6 +22,8 @@ from agents.extensions.models.litellm_model import LitellmModel
 from topix.agents.datatypes.context import Context, ToolCall
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.agents.utils import tool_execution_handler
+
+logger = logging.getLogger(__name__)
 
 RAW_RESPONSE_EVENT = "raw_response_event"
 PROMPT_DIR = Path(__file__).parent.parent / "prompts"
@@ -120,7 +124,9 @@ class BaseAgent(Agent[Context]):
                     )
 
             # Extract the final output from the agent
+            print(output)
             output = await self._output_extractor(context.context, output)
+            print(output)
 
             context.context.tool_calls.append(
                 ToolCall(

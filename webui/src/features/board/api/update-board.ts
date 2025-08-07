@@ -60,6 +60,7 @@ export const useUpdateBoard = () => {
           board.id === boardId ? { ...board, ...{ id: graphData.uid, label: graphData.label } } : board
         )
       })
+      await updateBoard(boardId, userId, graphData)
     }
   })
 

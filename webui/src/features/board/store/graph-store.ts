@@ -8,6 +8,8 @@ import { generateUuid } from "@/lib/common"
 export interface GraphStore {
   boardId?: string
   setBoardId: (boardId: string | undefined) => void
+  isLoading: boolean
+  setIsLoading: (loading: boolean) => void
   nodes: NoteNode[]
   edges: LinkEdge[]
   deletedNodes: NoteNode[]
@@ -28,6 +30,10 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   boardId: undefined,
 
   setBoardId: (boardId) => set({ boardId }),
+
+  isLoading: false,
+
+  setIsLoading: (loading) => set({ isLoading: loading }),
 
   nodes: [],
 

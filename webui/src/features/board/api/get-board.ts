@@ -40,20 +40,21 @@ export async function getBoard(
  */
 export const useGetBoard = () => {
   const userId = useAppStore((state) => state.userId)
-  const { boardId, setNodes, setEdges } = useGraphStore()
+  const { boardId, setNodes, setEdges, setIsLoading } = useGraphStore()
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!boardId) {
         return
       }
-
+      setIsLoading(true)
       const { nodes: notes, edges: links } = await getBoard(boardId, userId)
       const nodes = (notes || []).map(convertNoteToNode)
       const edges = (links || []).map(convertLinkToEdge)
 
       setNodes(nodes)
       setEdges(edges)
+      setIsLoading(false)
     }
   })
 

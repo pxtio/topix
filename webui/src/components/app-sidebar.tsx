@@ -57,7 +57,7 @@ function NewBoardItem() {
 
 function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
   const { view, setView, userId } = useAppStore()
-  const { boardId: currentBoardId, setBoardId, setNodes, setEdges } = useGraphStore()
+  const { boardId: currentBoardId, setBoardId, setNodes, setEdges, setIsLoading } = useGraphStore()
 
   const { deleteBoard } = useDeleteBoard()
 
@@ -65,6 +65,7 @@ function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
 
   const handleClick = () => {
     setBoardId(boardId)
+    setIsLoading(true)
     setNodes([])
     setEdges([])
     setView("board")

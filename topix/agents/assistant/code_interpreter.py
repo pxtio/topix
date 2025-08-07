@@ -21,7 +21,11 @@ from agents import (
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
-from topix.datatypes.chat.schema import ChatMessage, ImageMessageContent, ImageUrl, TextMessageContent
+from topix.agents.datatypes.outputs import CodeInterpreterOutput, FileAnnotation
+from topix.datatypes.chat.schema import (
+    ImageMessageContent,
+    TextMessageContent,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -88,29 +92,38 @@ class CodeInterpreter(BaseAgent):
 
         super().__post_init__()
 
-    async def _output_extractor(self, context: ReasoningContext, output: RunResult) -> ChatMessage:
+    async def _output_extractor(
+        self, context: ReasoningContext, output: RunResult
+    ) -> CodeInterpreterOutput:
         """Format the output of the code interpreter agent."""
         media = []
+        exectuted_code = ""
         for item in output.new_items:
-            if hasattr(item, 'raw_item') and hasattr(item.raw_item, 'content'):
+            if hasattr(item, "raw_item") and hasattr(item.raw_item, "content"):
                 for content in item.raw_item.content:
-                    if hasattr(content, 'annotations'):
+                    if hasattr(content, "annotations"):
                         for annotation in content.annotations:
                             logger.info(f"Saving image: {annotation}")
                             media.append(annotation)
 
-        return ChatMessage(
-            role="user",
-            content=await self._return_chatmessage_with_media(media, output.final_output),
-        ).model_dump()
+            if item.type == "tool_call_item":
+                if item.raw_item.type == "code_interpreter_call":
+                    exectuted_code += item.raw_item.code
+
+        annotations = self._return_chatmessage_with_media(media)
+
+        return CodeInterpreterOutput(
+            answer=output.final_output,
+            executed_code=output.final_output,
+            annotations=annotations
+        )
 
     async def _return_chatmessage_with_media(
         self,
         media: list,
-        text: str,
     ) -> list[TextMessageContent | ImageMessageContent]:
         """Return a list of text and image message contents."""
-        content = [TextMessageContent(text=text)]
+        content = []
         if media:
             client = AsyncOpenAI()
             for item in media:
@@ -129,6 +142,7 @@ class CodeInterpreter(BaseAgent):
                 with open(filepath, "wb") as f:
                     f.write(image_data)
 
-                content.append(ImageMessageContent(image_url=ImageUrl(url=filepath)))
-
+                content.append(
+                    FileAnnotation(type="image", url=filepath, file_id=image_id)
+                )
         return content

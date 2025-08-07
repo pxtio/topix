@@ -1,19 +1,27 @@
 import { useReactFlow } from "@xyflow/react"
-import { createDefaultNote } from "../types/note"
-import { convertNoteToNode } from "../utils/graph"
+import { createDefaultNote, type Note } from "../types/note"
 import { useCallback } from "react"
-import type { NoteNode } from "../types/flow"
+import { useGraphStore } from "../store/graph-store"
+import { convertNoteToNode } from "../utils/graph"
+import { useAddNotes } from "../api/add-notes"
+import { useAppStore } from "@/store"
 
 
 /**
  * Custom hook to add a new note node to the graph.
  */
-export function useAddNoteNode(currentBoardId: string | undefined, setNodes: (updater: (nds: NoteNode[]) => NoteNode[]) => void) {
+export function useAddNoteNode() {
+  const userId = useAppStore((state) => state.userId)
+
   const { getViewport } = useReactFlow()
 
+  const { boardId, nodes, setNodes } = useGraphStore()
+
+  const { addNotes } = useAddNotes()
+
   return useCallback(() => {
-    if (!currentBoardId) return
-    const newNote = createDefaultNote(currentBoardId)
+    if (!boardId) return
+    const newNote = createDefaultNote(boardId)
     const jitter = () => Math.random() * 100 - 50
 
     const container = document.querySelector('.react-flow__viewport')?.getBoundingClientRect()
@@ -31,11 +39,9 @@ export function useAddNoteNode(currentBoardId: string | undefined, setNodes: (up
     if (!newNote.properties) {
       newNote.properties = {}
     }
-    if (!newNote.properties.nodePosition) {
-      newNote.properties.nodePosition = { prop: { position: { x: 0, y: 0 }, type: 'position' } }
-    }
-    newNote.properties.nodePosition.prop.position = { x: graphX, y: graphY }
-    const newNode = convertNoteToNode(newNote)
-    setNodes((nds) => [...nds, newNode])
-  }, [setNodes, currentBoardId, getViewport])
+    newNote.properties.nodePosition = { prop: { position: { x: graphX, y: graphY }, type: 'position' } }
+    setNodes([...nodes, convertNoteToNode(newNote)])
+    const notes: Note[] = [newNote]
+    addNotes({ boardId, userId, notes })
+  }, [boardId, getViewport, setNodes, nodes, addNotes, userId])
 }

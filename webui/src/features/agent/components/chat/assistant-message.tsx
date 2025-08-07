@@ -9,6 +9,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import type { ChatMessage } from "../../types/chat"
 import { isMainResponse } from "../../types/stream"
+import { GenMindmapButton } from "./actions/gen-mindmap"
 
 
 const SourcesView = ({
@@ -57,6 +58,7 @@ const ResponseActions = ({ message }: { message: string }) => {
         <Copy className='size-4 shrink-0' strokeWidth={1.75} />
         <span>Copy Answer</span>
       </Button>
+      <GenMindmapButton message={message} />
     </div>
   )
 }

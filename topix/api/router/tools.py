@@ -20,8 +20,8 @@ router = APIRouter(
 )
 
 
-@router.post("/mindmap:convert/", include_in_schema=False)
-@router.post("/mindmap:convert")
+@router.post("/mindmaps:convert/", include_in_schema=False)
+@router.post("/mindmaps:convert")
 @with_standard_response
 async def convert_mindmap(
     response: Response,
@@ -48,8 +48,8 @@ async def convert_mindmap(
     }
 
 
-@router.post("/webpage/preview/", include_in_schema=False)
-@router.post("/webpage/preview")
+@router.post("/webpages/preview/", include_in_schema=False)
+@router.post("/webpages/preview")
 @with_standard_response
 async def link_preview(
     response: Response,

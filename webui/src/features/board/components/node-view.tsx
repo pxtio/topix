@@ -1,31 +1,52 @@
-import React, { memo, useRef } from "react"
-import { Handle, type NodeProps, Position, useConnection, useReactFlow } from "@xyflow/react"
+import React, { memo, useEffect, useRef } from "react"
+import { Handle, type NodeProps, Position, useReactFlow } from "@xyflow/react"
 import type { NoteNode } from "../types/flow"
 import { RoughRect } from "@/components/rough/rect"
 import { NodeLabel } from "./node-label"
-
+import { useDebouncedCallback } from 'use-debounce'
+import { useUpdateNote } from "../api/update-note"
+import { useAppStore } from "@/store"
+import { useGraphStore } from "../store/graph-store"
+import { DEBOUNCE_DELAY } from "../const"
 
 /**
  * NodeView component for rendering a resizable node in a graph.
  * It supports aspect ratio locking, resizing from corners, and handles minimum/maximum dimensions.
  */
 function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
+  const userId = useAppStore((state) => state.userId)
+
+  const boardId = useGraphStore((state) => state.boardId)
+
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const isResizingRef = useRef(false)
+
   const hasResizedRef = useRef(false)
-  const aspectRatioRef = useRef<number>(1)
 
-  const { getNode, setNodes, screenToFlowPosition } = useReactFlow()
+  const { getNode } = useReactFlow()
 
-  const connection = useConnection()
+  const { updateNote } = useUpdateNote()
 
-  const isTarget = connection.inProgress && connection.fromNode.id !== id
+  // Debounced function to update the note in the backend
+  const debounce = useDebouncedCallback(() => {
+    if (boardId && userId) {
+      updateNote({
+        boardId,
+        userId,
+        noteId: id,
+        noteData: data
+      })
+    }
+  }, DEBOUNCE_DELAY)
+
+  useEffect(() => {
+    debounce()
+  }, [debounce, data])
 
   const node = getNode(id)
 
   if (!node) return null
 
-  const { width, height, position } = node
+  const { width, height } = node
 
   const resizeHandles = [
     { pos: 'top-left', class: 'top-0 left-0 cursor-nwse-resize' },
@@ -34,95 +55,10 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     { pos: 'bottom-right', class: 'bottom-0 right-0 cursor-nwse-resize' },
   ]
 
-  const startResize = (e: MouseEvent | TouchEvent, handle: string) => {
-    e.preventDefault?.()
-    isResizingRef.current = true
-    hasResizedRef.current = true // We are now resizing manually
-
-    const el = containerRef.current
-    if (!el) return
-
-    const point = 'touches' in e ? e.touches[0] : e
-    const { x: startX, y: startY } = screenToFlowPosition({ x: point.clientX, y: point.clientY })
-
-    const startWidth = el.offsetWidth
-    const startHeight = el.offsetHeight
-    const startPos = { ...position }
-
-    if (data.lockAspectRatio) {
-      aspectRatioRef.current = startWidth / startHeight
-    }
-
-    const onMove = (e: MouseEvent | TouchEvent) => {
-      if (!isResizingRef.current) return
-
-      const point = 'touches' in e ? e.touches[0] : e
-      const { x: currentX, y: currentY } = screenToFlowPosition({ x: point.clientX, y: point.clientY })
-
-      const deltaX = currentX - startX
-      const deltaY = currentY - startY
-
-      let newWidth = startWidth
-      let newHeight = startHeight
-      let newX = startPos.x
-      let newY = startPos.y
-
-      if (handle.includes('right')) newWidth = startWidth + deltaX
-      if (handle.includes('left')) {
-        newWidth = startWidth - deltaX
-        newX += deltaX
-      }
-      if (handle.includes('bottom')) newHeight = startHeight + deltaY
-      if (handle.includes('top')) {
-        newHeight = startHeight - deltaY
-        newY += deltaY
-      }
-
-      if (data.lockAspectRatio) {
-        const ratio = aspectRatioRef.current
-        newHeight = newWidth / ratio
-      }
-
-      const minW = data.minWidth || 50
-      const minH = data.minHeight || 50
-      const maxW = Infinity
-      const maxH = Infinity
-
-      newWidth = Math.max(minW, Math.min(newWidth, maxW))
-      newHeight = Math.max(minH, Math.min(newHeight, maxH))
-
-      setNodes((nds) =>
-        nds.map((n) =>
-          n.id === id
-            ? {
-                ...n,
-                width: newWidth,
-                height: newHeight,
-                position: { x: newX, y: newY },
-              }
-            : n
-        )
-      )
-    }
-
-    const onEnd = () => {
-      isResizingRef.current = false
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onEnd)
-      document.removeEventListener('touchmove', onMove)
-      document.removeEventListener('touchend', onEnd)
-    }
-
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onEnd)
-    document.addEventListener('touchmove', onMove)
-    document.addEventListener('touchend', onEnd)
-  }
-
   const handleDown = (handle: string) => (e: React.MouseEvent | React.TouchEvent) => {
+    console.log('handleDown', handle)
     e.preventDefault()
     e.stopPropagation()
-    startResize(e.nativeEvent, handle)
   }
 
   const handleClassRight = "w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none -translate-x-[calc(50%-10px)] border-none"
@@ -135,21 +71,17 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
       <div
         className='absolute inset-0 h-full w-full overflow-visible'
       >
-        {!connection.inProgress && (
-          <Handle
-            className={handleClassRight}
-            position={Position.Right}
-            type="source"
-          />
-        )}
-        {(!connection.inProgress || isTarget) && (
-          <Handle
-            className={handleClassLeft}
-            position={Position.Left}
-            type="target"
-            isConnectableStart={false}
-          />
-        )}
+        <Handle
+          className={handleClassRight}
+          position={Position.Right}
+          type="source"
+        />
+        <Handle
+          className={handleClassLeft}
+          position={Position.Left}
+          type="target"
+          isConnectableStart={false}
+        />
       </div>
       <RoughRect
         rounded="rounded-2xl"
@@ -162,7 +94,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
           style={{ width, height }}
           className={nodeClass}
         >
-          <NodeLabel note={data} />
+          <NodeLabel note={data} selected={selected} />
           {selected && (
             <div className="absolute -inset-1 border border-primary pointer-events-none rounded z-10" />
           )}

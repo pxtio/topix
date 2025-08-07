@@ -207,7 +207,7 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         className='absolute bottom-0 right-1/2 transform translate-x-1/2'
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className='transition-all text-xs text-secondary-foreground hover:text-secondary-foreground'>
+        <span className='transition-all text-xs text-accent-foreground hover:text-card-foreground'>
           {
             isOpen ?
             <ChevronUp className='w-4 h-4 flex-shrink-0' /> :

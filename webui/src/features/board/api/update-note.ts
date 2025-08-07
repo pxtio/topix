@@ -1,8 +1,7 @@
 import { API_URL } from "@/config/api"
 import type { Note } from "../types/note"
 import snakecaseKeys from "snakecase-keys"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import type { Graph } from "../types/board"
+import { useMutation } from "@tanstack/react-query"
 
 
 /**
@@ -41,8 +40,6 @@ export async function updateNote(
  * @returns An object containing the updateNote function and its mutation state.
  */
 export const useUpdateNote = () => {
-  const queryClient = useQueryClient()
-
   const mutation = useMutation({
     mutationFn: async ({
       boardId,
@@ -55,19 +52,6 @@ export const useUpdateNote = () => {
       noteId: string
       noteData: Partial<Note>
     }) => {
-      // Optimistically update the board in the cache
-      queryClient.setQueryData<Graph>(["getBoard", boardId, userId], (oldBoard) => {
-        if (!oldBoard) return oldBoard
-        if (!oldBoard.nodes) return oldBoard
-
-        // Find and update the note in the board's nodes array
-        const updatedNotes = oldBoard.nodes.map(note =>
-          note.id === noteId ? { ...note, ...noteData } : note
-        )
-
-        return { ...oldBoard, nodes: updatedNotes }
-      })
-
       await updateNote(boardId, userId, noteId, noteData)
     }
   })

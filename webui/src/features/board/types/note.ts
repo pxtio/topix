@@ -52,6 +52,28 @@ export interface Note extends Record<string, unknown> {
 }
 
 
+export const createDefaultNoteProperties = (): NoteProperties => ({
+  nodePosition: {
+    prop: {
+      position: { x: 0, y: 0 },
+      type: "position",
+    },
+  },
+  nodeSize: {
+    prop: {
+      size: { width: 100, height: 100 },
+      type: "size",
+    },
+  },
+  emoji: {
+    prop: {
+      type: "icon",
+      icon: { type: "emoji", emoji: "" },
+    },
+  },
+})
+
+
 /**
  * Function to create a default note.
  * @param boardId - The ID of the board to which the note belongs.
@@ -66,18 +88,5 @@ export const createDefaultNote = (boardId: string): Note => ({
   style: { ...defaultStyle() },
   minWidth: 100,
   minHeight: 100,
-  properties: {
-    nodePosition: {
-      prop: {
-        position: { x: 0, y: 0 },
-        type: "position",
-      },
-    },
-    nodeSize: {
-      prop: {
-        size: { width: 100, height: 100 },
-        type: "size",
-      },
-    },
-  }
+  properties: createDefaultNoteProperties(),
 })

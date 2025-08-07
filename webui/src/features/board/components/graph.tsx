@@ -3,24 +3,31 @@ import {
   Background,
   Controls,
   MiniMap,
-  useNodesState,
-  useEdgesState,
   ReactFlow,
   BackgroundVariant,
-  addEdge,
-  type Connection,
-  MarkerType
+  MarkerType,
+  type OnNodesDelete,
+  type OnEdgesDelete,
+  type OnConnect,
+  useReactFlow
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import NodeView from './node-view'
 import { ActionPanel } from './action-panel'
-import { useBoardStore } from '../store/board-store'
-import { type LinkEdge, type NoteNode } from '../types/flow'
 import { useAddNoteNode } from '../hooks/add-node'
 import { EdgeView } from './edge-view'
-import { useCallback } from 'react'
 import { CustomConnectionLine } from './connection'
-
+import { useGraphStore } from '../store/graph-store'
+import { useCallback, useEffect, useState } from 'react'
+import type { LinkEdge, NoteNode } from '../types/flow'
+import { useRemoveNote } from '../api/remove-note'
+import { useAppStore } from '@/store'
+import { useRemoveLink } from '../api/remove-link'
+import { useAddLinks } from '../api/add-links'
+import { convertEdgeToLink } from '../utils/graph'
+import { getBounds } from '../utils/flow-view'
+import { useAddMindMapToBoard } from '../api/add-mindmap-to-board'
+import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 
 const proOptions = { hideAttribution: true }
 
@@ -51,21 +58,100 @@ const connectionLineStyle = {
  * GraphEditor component to render the graph with nodes and edges.
  */
 export default function GraphEditor() {
-  const currentBoardId = useBoardStore((state) => state.currentBoardId)
+  const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<NoteNode>([])
-  const [edges, setEdges, onEdgesChange] = useEdgesState<LinkEdge>([])
+  const userId = useAppStore((state) => state.userId)
+  const {
+    boardId,
+    isLoading,
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onNodesDelete,
+    onEdgesDelete,
+    onConnect,
+  } = useGraphStore()
+  const { mindmaps } = useMindMapStore()
+  const { removeNote } = useRemoveNote()
+  const { removeLink } = useRemoveLink()
+  const { addLinks } = useAddLinks()
+  const { addMindMapToBoard } = useAddMindMapToBoard()
 
-  const handleAddNode = useAddNoteNode(currentBoardId, setNodes)
+  const deleteNodes: OnNodesDelete<NoteNode> = useCallback((nodes) => {
+    if (!boardId || !userId) return
+    onNodesDelete(nodes)
 
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
-  )
+    // debounce the removal of notes in the backend
+    nodes.forEach((node) => {
+      removeNote({
+        boardId,
+        userId,
+        noteId: node.id
+      })
+    })
+  }, [onNodesDelete, boardId, userId, removeNote])
 
-  if (!currentBoardId) {
-    return null
-  }
+  const deleteEdges: OnEdgesDelete<LinkEdge> = useCallback((edges) => {
+    if (!boardId || !userId) return
+    onEdgesDelete(edges)
+
+    // debounce the removal of links in the backend
+    edges.forEach((edge) => {
+      removeLink({
+        boardId,
+        userId,
+        linkId: edge.id
+      })
+    })
+  }, [onEdgesDelete, boardId, userId, removeLink])
+
+  const connectNodes: OnConnect = useCallback((params) => {
+    if (!boardId || !userId) return
+    const newEdge = onConnect(params)
+    if (!newEdge) return
+    addLinks({
+      boardId,
+      userId,
+      links: [convertEdgeToLink(boardId, newEdge)]
+    })
+  }, [onConnect, boardId, userId, addLinks])
+
+  const handleAddNode = useAddNoteNode()
+
+  const { setViewport } = useReactFlow()
+
+  useEffect(() => {
+    if (!isLoading) {
+      // once loading is done, signal recentering the view
+      setShouldRecenter(true)
+    }
+  }, [isLoading])
+
+  useEffect(() => {
+    if (boardId && mindmaps.has(boardId)) {
+      // if a mind map is available, add it to the board
+      addMindMapToBoard()
+    }
+  }, [boardId, mindmaps, addMindMapToBoard])
+
+
+  useEffect(() => {
+    // only recenter when it's signaled (after loading)
+    if (!shouldRecenter) return
+    if (nodes.length === 0) {
+      setViewport({ x: 0, y: 0, zoom: 1 })
+    } else {
+      const { centerX, centerY } = getBounds(nodes)
+      setViewport({
+        // TODO: Use container size to adjust centering instead of window size
+        x: -centerX + window.innerWidth / 2 - 200,
+        y: -centerY + window.innerHeight / 2 - 100,
+        zoom: 1
+      })
+    }
+    setShouldRecenter(false)
+  }, [boardId, nodes, setViewport, shouldRecenter])
 
   return (
     <>
@@ -75,14 +161,15 @@ export default function GraphEditor() {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodesDelete={deleteNodes}
+        onEdgesDelete={deleteEdges}
         proOptions={proOptions}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
+        onConnect={connectNodes}
         defaultEdgeOptions={defaultEdgeOptions}
-        onConnect={onConnect}
         connectionLineComponent={CustomConnectionLine}
         connectionLineStyle={connectionLineStyle}
-        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
       >
         <MiniMap />
         <Controls />

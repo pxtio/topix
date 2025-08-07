@@ -1,162 +1,263 @@
 .tiptap {
-  > * {
-    &:first-child {
-      @apply mt-0;
-    }
+  > *:first-child {
+    margin-top: 0;
   }
-  /* Headings */
+
   h1 {
-    @apply font-heading mt-10 scroll-m-20 border-b pb-2 text-3xl font-bold tracking-tight first:mt-0;
+    font-family: var(--font-heading, sans-serif);
+    margin-top: 2.5rem;
+    scroll-margin-top: 5rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+    font-size: 1.875rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+
+    &:first-child {
+      margin-top: 0;
+    }
   }
 
   h2 {
-    @apply font-heading mt-8 scroll-m-20 text-2xl font-bold tracking-tight;
+    font-family: var(--font-heading, sans-serif);
+    margin-top: 2rem;
+    scroll-margin-top: 5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
 
   h3 {
-    @apply font-heading mt-6 scroll-m-20 text-xl font-bold tracking-tight;
+    font-family: var(--font-heading, sans-serif);
+    margin-top: 1.5rem;
+    scroll-margin-top: 5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
 
   h4 {
-    @apply font-heading mt-6 scroll-m-20 text-lg font-bold tracking-tight;
+    font-family: var(--font-heading, sans-serif);
+    margin-top: 1.5rem;
+    scroll-margin-top: 5rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
 
-  /* Paragraphs */
   p {
-    @apply leading-7 text-base mt-5;
+    margin-top: 1.25rem;
+    font-size: 1rem;
+    line-height: 1.75rem;
   }
 
   a {
-    @apply text-primary inline-block rounded-full p-1 text-center font-mono hover:underline transition-all text-xs;
+    display: inline-block;
+    padding: 0.25rem;
+    border-radius: 9999px;
+    text-align: center;
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--color-primary, #3b82f6);
+    transition: all 0.2s ease-in-out;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 
   ul {
-    @apply ml-6 list-disc my-6;
+    margin: 1.5rem 0;
+    margin-left: 1.5rem;
+    list-style-type: disc;
 
     li {
-      @apply mt-2;
+      margin-top: 0.5rem;
 
       p {
-        @apply mt-0;
+        margin-top: 0;
       }
 
-      /* Nested unordered lists */
       ul {
-        @apply list-[circle] ml-6 my-0;
-      }
+        list-style-type: circle;
+        margin-left: 1.5rem;
+        margin: 0;
 
-      ul ul {
-        @apply list-[square] ml-6 my-0;
+        ul {
+          list-style-type: square;
+          margin-left: 1.5rem;
+          margin: 0;
+        }
       }
     }
   }
 
   ol {
-    @apply ml-6 list-decimal;
+    margin-left: 1.5rem;
+    list-style-type: decimal;
 
     li {
-      @apply mt-2;
+      margin-top: 0.5rem;
 
       p {
-        @apply mt-0;
+        margin-top: 0;
       }
 
-      /* Nested ordered lists */
       ol {
-        @apply list-[lower-alpha] ml-6 my-0;
-      }
+        list-style-type: lower-alpha;
+        margin-left: 1.5rem;
+        margin: 0;
 
-      ol ol {
-        @apply list-[lower-roman] ml-6 my-0;
+        ol {
+          list-style-type: lower-roman;
+          margin-left: 1.5rem;
+          margin: 0;
+        }
       }
     }
   }
 
-
-  /* Blockquotes */
   blockquote {
-    @apply mt-4 border-l-2 pl-6 italic text-sm text-card-foreground;
+    margin-top: 1rem;
+    border-left: 2px solid #e5e7eb;
+    padding-left: 1.5rem;
+    font-style: italic;
+    font-size: 0.875rem;
+    color: var(--color-card-foreground, #111827);
   }
 
-  /* Tables */
   table {
-    @apply my-8 w-full text-base border-b;
+    margin: 2rem 0;
+    width: 100%;
+    font-size: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    border-collapse: collapse;
   }
 
   tr {
-    @apply border-t even:bg-muted;
+    border-top: 1px solid #e5e7eb;
+
+    &:nth-child(even) {
+      background-color: var(--color-muted, #f3f4f6);
+    }
   }
 
   th {
-    @apply border-b px-4 py-2 text-left font-bold text-sm text-card-foreground;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.5rem 1rem;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--color-card-foreground, #111827);
   }
 
   td {
-    @apply px-4 py-2 text-left text-sm text-card-foreground;
+    padding: 0.5rem 1rem;
+    text-align: left;
+    font-size: 0.875rem;
+    color: var(--color-card-foreground, #111827);
   }
 
-  /* Inline Code */
   code:not(pre code) {
-    @apply text-sm font-mono text-red-700 bg-muted px-1 py-0.5 rounded;
+    font-size: 0.875rem;
+    font-family: monospace;
+    color: #b91c1c;
+    background-color: var(--color-muted, #f3f4f6);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
   }
 
-  /* Code Blocks */
   pre {
-    @apply relative my-4 p-4 pt-8 overflow-x-auto bg-muted border rounded-xl text-base font-mono whitespace-pre overflow-x-auto;
+    position: relative;
+    margin: 1rem 0;
+    padding: 2rem 1rem 1rem;
+    overflow-x: auto;
+    background-color: var(--color-muted, #f3f4f6);
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-family: monospace;
+    white-space: pre;
 
     code {
-      @apply bg-transparent text-inherit text-sm p-0 whitespace-pre;
+      background: transparent;
+      color: inherit;
+      font-size: 0.875rem;
+      padding: 0;
+      white-space: pre;
     }
   }
 
-  /* Horizontal Rule */
   hr {
-    @apply border-t border-border my-6;
+    border-top: 1px solid var(--color-border, #e5e7eb);
+    margin: 1.5rem 0;
   }
 
-  /* Tiptap Pro Math Editor Styles */
   .Tiptap-mathematics-editor {
-    @apply bg-muted text-muted-foreground px-2 py-1 rounded inline-block;
-    font-family: var(--font-dm-mono);
+    background-color: var(--color-muted, #f3f4f6);
+    color: var(--color-muted-foreground, #6b7280);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    display: inline-block;
+    font-family: var(--font-dm-mono, monospace);
   }
 
   .Tiptap-mathematics-render {
-    @apply px-1 rounded inline-block;
-  }
+    padding: 0.25rem;
+    border-radius: 0.375rem;
+    display: inline-block;
 
-  .Tiptap-mathematics-render--editable {
-    @apply cursor-pointer transition-colors;
-  }
+    &--editable {
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 
-  .Tiptap-mathematics-render--editable:hover {
-    @apply bg-muted text-muted-foreground;
+      &:hover {
+        background-color: var(--color-muted, #f3f4f6);
+        color: var(--color-muted-foreground, #6b7280);
+      }
+    }
   }
 
   ul[data-type="taskList"] {
-    @apply list-none m-0 p-0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
 
     li {
-      @apply flex items-start;
+      display: flex;
+      align-items: flex-start;
 
       > label {
-        @apply flex-none mr-2 ml-1 select-none block flex items-center flex-row h-full m-auto;
+        display: flex;
+        flex: none;
+        margin-right: 0.5rem;
+        margin-left: 0.25rem;
+        user-select: none;
+        flex-direction: row;
+        align-items: center;
+        height: 100%;
+        margin: auto 0;
       }
 
       > div {
-        @apply flex-grow;
+        flex-grow: 1;
       }
 
       input[type="checkbox"] {
-        @apply cursor-pointer w-4 h-4;
+        cursor: pointer;
+        width: 1rem;
+        height: 1rem;
       }
 
       ul[data-type="taskList"] {
-        @apply m-0;
+        margin: 0;
       }
-    }
 
-    li[data-checked="true"] {
-      @apply line-through text-accent-foreground;
+      &[data-checked="true"] {
+        text-decoration: line-through;
+        color: var(--color-accent-foreground, #6b7280);
+      }
     }
   }
 }

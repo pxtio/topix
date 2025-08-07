@@ -19,3 +19,12 @@ export const trimText = (text: string, maxLength: number) => {
   }
   return text
 }
+
+
+/**
+ * Pauses execution for a specified number of milliseconds.
+ *
+ * @param ms - The number of milliseconds to sleep.
+ */
+export const sleep = (ms: number): Promise<void> =>
+  new Promise(resolve => setTimeout(resolve, ms))

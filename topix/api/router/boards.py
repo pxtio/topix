@@ -119,6 +119,26 @@ async def add_notes_to_graph(
     return {"message": "Notes added to board successfully"}
 
 
+@router.get("/{graph_id}/notes/{note_id}", include_in_schema=False)
+@router.get("/{graph_id}/notes/{note_id}")
+@with_standard_response
+async def get_note(
+    response: Response,
+    request: Request,
+    graph_id: Annotated[str, Path(description="Graph ID")],
+    note_id: Annotated[str, Path(description="Note ID")],
+    user_id: Annotated[str, Query(description="User Unique ID")]
+):
+    """Get a note from a graph."""
+    store: GraphStore = request.app.graph_store
+
+    notes = await store.get_nodes(node_ids=[note_id])
+    if not notes:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    return {"note": notes[0].model_dump(exclude_none=True)}
+
+
 @router.patch("/{graph_id}/notes/{note_id}/", include_in_schema=False)
 @router.patch("/{graph_id}/notes/{note_id}")
 @with_standard_response
@@ -173,6 +193,26 @@ async def add_links_to_graph(
 
     await store.add_links(links=links)
     return {"message": "Links added to board successfully"}
+
+
+@router.get("/{graph_id}/links/{link_id}", include_in_schema=False)
+@router.get("/{graph_id}/links/{link_id}")
+@with_standard_response
+async def get_link(
+    response: Response,
+    request: Request,
+    graph_id: Annotated[str, Path(description="Graph ID")],
+    link_id: Annotated[str, Path(description="Link ID")],
+    user_id: Annotated[str, Query(description="User Unique ID")]
+):
+    """Get a link from a graph."""
+    store: GraphStore = request.app.graph_store
+
+    links = await store.get_links(link_ids=[link_id])
+    if not links:
+        raise HTTPException(status_code=404, detail="Link not found")
+
+    return {"link": links[0].model_dump(exclude_none=True)}
 
 
 @router.patch("/{graph_id}/links/{link_id}/", include_in_schema=False)

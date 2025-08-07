@@ -1,8 +1,9 @@
 import { API_URL } from "@/config/api"
 import type { Note } from "../types/note"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { type Graph } from "../types/board"
+import { useMutation } from "@tanstack/react-query"
 import snakecaseKeys from "snakecase-keys"
+import { sleep } from "@/lib/common"
+import { DEBOUNCE_DELAY } from "../const"
 
 
 /**
@@ -44,8 +45,6 @@ export async function addNotes(
  * @returns An object containing the addNotes function and its mutation state.
  */
 export const useAddNotes = () => {
-  const queryClient = useQueryClient()
-
   const mutation = useMutation({
     mutationFn: async ({
       boardId,
@@ -56,23 +55,8 @@ export const useAddNotes = () => {
       userId: string
       notes: Note[]
     }) => {
-      // Optimistically update the board in the cache
-      queryClient.setQueryData<Graph>(
-        ["getBoard", boardId, userId],
-        (oldData) => {
-          if (!oldData) return
-
-          return {
-            ...oldData,
-            nodes: [...(oldData.nodes || []), ...notes]
-          }
-        }
-      )
+      await sleep(DEBOUNCE_DELAY)
       await addNotes(boardId, userId, notes)
-      // Mark notes as saved after successful addition
-      notes.forEach((note) => {
-        note.saved = true
-      })
     }
   })
 

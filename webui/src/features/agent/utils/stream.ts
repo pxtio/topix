@@ -50,7 +50,7 @@ export async function* handleStreamingResponse<T>(response: Response): AsyncGene
  */
 export async function* buildResponse(
   chunks: AsyncGenerator<AgentStreamMessage>
-): AsyncGenerator<{ response: AgentResponse; toolEvent: boolean }> {
+): AsyncGenerator<{ response: AgentResponse, toolEvent: boolean }> {
   // Initialize an empty response object
   const response: AgentResponse = { steps: [] }
 

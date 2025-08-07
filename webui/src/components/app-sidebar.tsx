@@ -19,12 +19,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { BotMessageSquare, History, Minus, MoreHorizontal, PaintRoller, Palette, Plus } from "lucide-react"
 import { useChatStore } from "@/features/agent/store/chat-store"
 import { trimText } from "@/lib/common"
-import { useBoardStore } from "@/features/board/store/board-store"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { useCreateBoard } from "@/features/board/api/create-board"
 import { useDeleteBoard } from "@/features/board/api/delete-board"
 import { Collapsible, CollapsibleTrigger } from "./ui/collapsible"
 import { CollapsibleContent } from "@radix-ui/react-collapsible"
+import { useGraphStore } from "@/features/board/store/graph-store"
+import { useGetBoard } from "@/features/board/api/get-board"
 
 
 function NewBoardItem() {
@@ -38,12 +39,12 @@ function NewBoardItem() {
     setView("board")  // Switch to board view when creating a new board
   }
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent'
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent/50'
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem className={itemClass} >
       <SidebarMenuButton
-        className={itemClass}
+        className='text-xs'
         onClick={handleClick}
       >
         <PaintRoller className='text-xs shrink-0' strokeWidth={1.75} />
@@ -55,24 +56,28 @@ function NewBoardItem() {
 
 
 function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
-  const view = useAppStore((state) => state.view)
-  const setView = useAppStore((state) => state.setView)
-  const userId = useAppStore((state) => state.userId)
-  const setCurrentBoardId = useBoardStore((state) => state.setCurrentBoardId)
-  const currentBoardId = useBoardStore((state) => state.currentBoardId)
+  const { view, setView, userId } = useAppStore()
+  const { boardId: currentBoardId, setBoardId, setNodes, setEdges, setIsLoading } = useGraphStore()
 
   const { deleteBoard } = useDeleteBoard()
 
+  const { getBoard } = useGetBoard()
+
   const handleClick = () => {
-    setCurrentBoardId(boardId)
-    setView("board")  // Switch to board view when selecting a board
+    setBoardId(boardId)
+    setIsLoading(true)
+    setNodes([])
+    setEdges([])
+    setView("board")
+    getBoard()
   }
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent' + (currentBoardId === boardId && view === "board" ? ' bg-sidebar-accent/70' : '')
+  const itemClass = 'text-sidebar-foreground text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent/50'
+    + (currentBoardId === boardId && view === "board" ? ' bg-sidebar-accent text-sidebar-accent-foreground' : '')
 
   return (
-    <SidebarMenuItem>
-      <SidebarMenuButton onClick={handleClick} className={itemClass} >
+    <SidebarMenuItem className={itemClass}>
+      <SidebarMenuButton onClick={handleClick} className='text-xs' >
         <Palette className='shrink-0' strokeWidth={1.75} />
         <span>{trimText(label || "Untitled Board", 20)}</span>
       </SidebarMenuButton>
@@ -100,7 +105,7 @@ function NewChatItem() {
 
   const currentChatId = useChatStore((state) => state.currentChatId)
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent' + (currentChatId === undefined && view === "chat" ? ' bg-sidebar-accent/70' : '')
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent/50' + (currentChatId === undefined && view === "chat" ? ' bg-sidebar-accent text-sidebar-accent-foreground' : '')
 
   const handleClick = () => {
     setCurrentChatId(undefined)
@@ -108,12 +113,12 @@ function NewChatItem() {
   }
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem className={itemClass} >
       <SidebarMenuButton
-        className={itemClass}
         onClick={handleClick}
+        className='text-xs'
       >
-        <BotMessageSquare className='text-xs shrink-0' strokeWidth={1.75} />
+        <BotMessageSquare className='text-xs shrink-0 stroke-sidebar-primary' strokeWidth={1.75} />
         <span>New Chat</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -142,7 +147,7 @@ function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
 
   const chatLabel = trimText(label || "Untitled Chat", 20)
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent' + (currentChatId === chatId && view === "chat" ? ' bg-sidebar-accent/70' : '')
+  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent/50' + (currentChatId === chatId && view === "chat" ? ' bg-sidebar-accent text-sidebar-accent-foreground' : '')
 
   return (
     <SidebarMenuSubItem>
@@ -203,8 +208,8 @@ export function AppSidebar() {
               >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuSubButton className='font-medium text-xs flex flex-row items-center w-full'>
-                      <History className='shrink-0' strokeWidth={1.75} />
+                    <SidebarMenuSubButton className='font-medium text-xs flex flex-row items-center w-full text-sidebar-foreground'>
+                      <History className='stroke-sidebar-foreground shrink-0' strokeWidth={1.75} />
                       <span>Chat History</span>
                       <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
                       <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />

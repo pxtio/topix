@@ -83,12 +83,13 @@ class IconProperty(Property):
     class Icon(BaseModel):
         """Icon data model."""
 
-        type: str
+        type: Literal['icon'] = 'icon'
         icon: str
 
     class Emoji(BaseModel):
         """Emoji data model."""
 
+        type: Literal['emoji'] = 'emoji'
         emoji: str
 
     type: Literal[PropertyTypeEnum.ICON] = PropertyTypeEnum.ICON

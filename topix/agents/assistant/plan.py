@@ -74,7 +74,7 @@ class Plan(BaseAgent):
             time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
         if model_settings is None:
-            model_settings = ModelSettings(temperature=0.01)
+            model_settings = ModelSettings(temperature=0.01, max_tokens=2000)
         if search_choice == "openai":
             web_search = WebSearch()
         else:

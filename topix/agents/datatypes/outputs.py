@@ -1,34 +1,15 @@
 """Agent Output Data Types."""
 from pydantic import BaseModel
 
-type ToolOutput = str | WebSearchOutput | CodeInterpreterOutput
-
-
-class SearchResult(BaseModel):
-    """Search result from web search tool."""
-
-    title: str
-    url: str
-    content: str
+type ToolOutput = str | CodeInterpreterOutput
 
 
 class FileAnnotation(BaseModel):
     """Annotation of a generated file."""
 
     type: str
-    url: str
+    file_path: str
     file_id: str
-
-
-class WebSearchOutput(BaseModel):
-    """Output from web search tool."""
-
-    answer: str
-    search_results: list[SearchResult]
-
-    def __str__(self) -> str:
-        """To string method."""
-        return self.answer
 
 
 class CodeInterpreterOutput(BaseModel):
@@ -47,5 +28,5 @@ class CodeInterpreterOutput(BaseModel):
         if self.annotations:
             result += "\n\nGenerated files:\n"
             for annotation in self.annotations:
-                result += f"- [{annotation.file_id}]({annotation.url})\n"
+                result += annotation.model_dump_json() + "\n"
         return result

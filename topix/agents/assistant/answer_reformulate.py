@@ -40,12 +40,11 @@ class AnswerReformulate(BaseAgent):
         tool_trace = ""
 
         for idx, tool_call in enumerate(tool_calls):
-            if tool_call.tool_name != AgentToolName.CODE_INTERPRETER:
-                tool_step = f"""Step {idx + 1}: Calling {tool_call.tool_name}
-                    - Arguments: {tool_call.arguments}
-                    - Output: {tool_call.output} \n\n
-                """
-                tool_trace += tool_step
+            tool_step = f"""Step {idx + 1}: Calling {tool_call.tool_name}
+                - Arguments: {tool_call.arguments}
+                - Output: {str(tool_call.output)} \n\n
+            """
+            tool_trace += tool_step
 
         prompt = self._render_prompt(
             "answer_reformulation.user.jinja",

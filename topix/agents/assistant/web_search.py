@@ -1,9 +1,11 @@
 """Web Search Agent."""
 
 import datetime
+import os
 import re
+import warnings
 
-from typing import Any
+from typing import Any, Literal
 
 from agents import (
     Agent,
@@ -24,6 +26,7 @@ from topix.agents.utils import (
     ToolCall,
     tool_execution_handler,
 )
+from topix.api.datatypes import requests
 
 
 class WebSearchAgentHook(AgentHooks):
@@ -62,14 +65,39 @@ class WebSearch(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4O_MINI,
         instructions_template: str = "web_search.jinja",
         model_settings: ModelSettings | None = None,
+        search_engine: Literal["openai", "perplexity", "travily"] = "openai",
     ):
         """Initialize the WebSearch agent."""
         name = "Web Search"
         instructions_dict = {"time": datetime.datetime.now().strftime("%Y-%m-%d")}
         instructions = self._render_prompt(instructions_template, **instructions_dict)
+
+        match search_engine:
+            case "openai":
+                if not model.startswith("openai"):
+                    raise ValueError(
+                        "The openai search engine is only supported with the openai model."
+                    )
+                tools = [WebSearchTool(search_context_size="medium")]
+            case "perplexity":
+                if not model.startswith("perplexity"):
+                    raise ValueError(
+                        "The perplexity search engine is only supported with the perplexity model."
+                    )
+                tools = []
+            case "travily":
+                tools = [function_tool(search_travily)]
+
         if model.startswith("perplexity"):
+            if search_engine != "perplextiy":
+                warnings.warn(
+                    "The Perplexity model is an end-to-end web search model \
+                    and does not support custom search engines."
+                )
             tools = []
+
         elif model.startswith("openai"):
+
             tools = [WebSearchTool(search_context_size="medium")]
         else:
             raise ValueError(f"Unsupported model for web search: {model}")
@@ -94,7 +122,7 @@ class WebSearch(BaseAgent):
         tool_name: str | None = None,
         tool_description: str | None = None,
         max_turns: int = 5,
-        streamed: bool = False
+        streamed: bool = False,
     ) -> Tool:
         """Convert the web search agent into a tool.
 
@@ -129,9 +157,7 @@ class WebSearch(BaseAgent):
                 context, name_override, input
             ) as fixed_params:
                 if streamed:
-                    _, stream = await self._call_litellm(
-                        streamed=True, input=input
-                    )
+                    _, stream = await self._call_litellm(streamed=True, input=input)
                     async for chunk in stream:
                         if chunk.choices[0].delta.content is not None:
                             # Create the message for the stream
@@ -166,8 +192,8 @@ class WebSearch(BaseAgent):
                     output=content,
                 )
             )
-
             return content
+
         return run_agent
 
     async def _call_litellm(self, streamed: bool, input: str):
@@ -208,3 +234,36 @@ class WebSearch(BaseAgent):
             # Replace the citations in the content
             content = re.sub(r"\[(\d+)\]", repl, content)
         return content
+
+
+def search_travily(query: str, max_results: int = 20) -> str:
+    """Search for a query using the Tavily API.
+
+    Args:
+        query (str): The query to search for.
+        max_results (int): The maximum number of results to return. Default is 20.
+
+    Returns:
+        str: The results of the search.
+
+    """
+    url = "https://api.tavily.com/search"
+    api_key = os.environ.get("TAVILY_API_KEY")
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+    data = {"query": query, "max_results": max_results}
+    response = requests.post(url, headers=headers, json=data)
+    response.raise_for_status()
+
+    json_response = response.json()
+
+    results = json_response.get("results", [])
+
+    res = "Search results:\n"
+    for result in results:
+        res += f"- Title: {result["title"]}\n \
+        - URL: {result["url"]}\n- Content: {result["content"]}\n\n"
+
+    return res

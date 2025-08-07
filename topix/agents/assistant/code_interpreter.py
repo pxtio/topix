@@ -106,15 +106,15 @@ class CodeInterpreter(BaseAgent):
                             logger.info(f"Saving image: {annotation}")
                             media.append(annotation)
 
-            if item.type == "tool_call_item":
-                if item.raw_item.type == "code_interpreter_call":
+            if item.type == 'tool_call_item':
+                if item.raw_item.type == 'code_interpreter_call':
                     exectuted_code += item.raw_item.code
 
-        annotations = self._return_chatmessage_with_media(media)
+        annotations = await self._return_chatmessage_with_media(media)
 
         return CodeInterpreterOutput(
             answer=output.final_output,
-            executed_code=output.final_output,
+            executed_code=exectuted_code,
             annotations=annotations
         )
 
@@ -143,6 +143,6 @@ class CodeInterpreter(BaseAgent):
                     f.write(image_data)
 
                 content.append(
-                    FileAnnotation(type="image", url=filepath, file_id=image_id)
+                    FileAnnotation(type="image", file_path=filepath, file_id=image_id)
                 )
         return content

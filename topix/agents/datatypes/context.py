@@ -3,7 +3,7 @@ import asyncio
 
 from pydantic import BaseModel, PrivateAttr
 
-from topix.agents.datatypes.outputs import CodeInterpreterOutput, WebSearchOutput
+from topix.agents.datatypes.outputs import ToolOutput
 
 
 class ToolCall(BaseModel):
@@ -12,7 +12,7 @@ class ToolCall(BaseModel):
     tool_id: str
     tool_name: str
     arguments: dict
-    output: str | WebSearchOutput | CodeInterpreterOutput
+    output: ToolOutput
 
 
 class Context(BaseModel):

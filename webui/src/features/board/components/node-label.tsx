@@ -2,6 +2,8 @@ import { useReactFlow } from "@xyflow/react"
 import type { Note } from "../types/note"
 import TextareaAutosize from 'react-textarea-autosize'
 import { useEffect, useRef, useState } from "react"
+import { IconPicker } from "./emoji-picker/picker"
+import type { NoteNode } from "../types/flow"
 
 
 /**
@@ -30,6 +32,32 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             data: {
               ...node.data,
               label: newLabel,
+            },
+          }
+        }
+        return node
+      })
+    )
+  }
+
+  const handleEmojiSelect = (emoji: { emoji: string }) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === note.id) {
+          const nde = node as NoteNode
+          return {
+            ...nde,
+            data: {
+              ...nde.data,
+              properties: {
+                ...nde.data.properties,
+                emoji: {
+                  prop: {
+                    type: "icon",
+                    icon: { type: 'emoji', emoji: emoji.emoji }
+                  }
+                }
+              }
             },
           }
         }
@@ -76,31 +104,54 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
         relative
         flex flex-row items-center justify-center
         bg-transparent
-        overflow-visible
-        w-[250px]
-        min-h-[50px]
       `}
-      onDoubleClick={onDoubleClick}
-      onPointerDown={stopDragging}
     >
       {
-        labelEditing ? (
-          <TextareaAutosize
-            className={textareaClass}
-            value={note.label || ''}
-            onChange={handleChange}
-            placeholder=""
-            ref={textareaRef}
-            readOnly={!labelEditing}
-          />
-        ) : (
-          <div className={textareaClass}>
-            <span>
-              {note.label}
-            </span>
+        selected &&
+        <div className='absolute top-0 left-0 transform translate-y-[-100%] text-xs font-sans'>
+          <IconPicker onSelect={handleEmojiSelect} />
+        </div>
+      }
+      {
+        note.properties?.emoji?.prop.icon?.type === 'emoji' && note.properties?.emoji?.prop.icon?.emoji && (
+          <div className={`
+            p-2
+          `}>
+            {note.properties.emoji.prop.icon.emoji}
           </div>
         )
       }
+      <div
+        className={`
+          relative
+          bg-transparent
+          overflow-visible
+          w-[250px]
+          min-h-[50px]
+          flex items-center justify-center
+        `}
+        onDoubleClick={onDoubleClick}
+        onPointerDown={stopDragging}
+      >
+        {
+          labelEditing ? (
+            <TextareaAutosize
+              className={textareaClass}
+              value={note.label || ''}
+              onChange={handleChange}
+              placeholder=""
+              ref={textareaRef}
+              readOnly={!labelEditing}
+            />
+          ) : (
+            <div className={textareaClass}>
+              <span>
+                {note.label}
+              </span>
+            </div>
+          )
+        }
+      </div>
     </div>
   )
 }

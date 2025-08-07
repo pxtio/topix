@@ -28,15 +28,16 @@ export const GraphView = () => {
         <div className='w-full h-full flex flex-col items-center justify-center'>
           <ReactFlowProvider>
             <div className="relative h-full w-full bg-background">
-              <GraphEditor />
               {
-                loading &&
+                loading ?
                 <div className="absolute inset-0 bg-background flex items-center justify-center">
                   <ProgressBar
                     message="Loading board"
                     viewMode="compact"
                   />
                 </div>
+                :
+                <GraphEditor />
               }
             </div>
           </ReactFlowProvider>

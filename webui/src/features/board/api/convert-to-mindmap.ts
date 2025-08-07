@@ -60,8 +60,7 @@ export const useConvertToMindMap = () => {
       setIsProcessing(true)
       setInProcessingBoardId(boardId)
       const { notes, links } = await convertToMindMap(userId, answer)
-      console.log("Converted notes:", notes)
-      console.log("Converted links:", links)
+
       notes.forEach(note => {
         note.graphUid = boardId
         note.style = defaultStyle()

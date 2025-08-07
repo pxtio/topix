@@ -23,15 +23,16 @@ export const useAddMindMapToBoard = () => {
         return
       }
       const { nodes: mindMapNodes, edges: mindMapEdges } = mindMap
+
       const displacedMindMapNodes = displaceNodes(nodes, mindMapNodes)
       clearMindMap(boardId)
-
-      await addNotes(boardId, userId, displacedMindMapNodes.map(node => convertNodeToNote(boardId, node)))
-      await addLinks(boardId, userId, mindMapEdges.map(edge => convertEdgeToLink(boardId, edge)))
 
       // Update the main graph with the displaced mind map nodes and edges
       setNodes([...displacedMindMapNodes, ...nodes])
       setEdges([...mindMapEdges, ...edges])
+
+      await addNotes(boardId, userId, displacedMindMapNodes.map(node => convertNodeToNote(boardId, node)))
+      await addLinks(boardId, userId, mindMapEdges.map(edge => convertEdgeToLink(boardId, edge)))
     }
   })
 

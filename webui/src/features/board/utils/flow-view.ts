@@ -42,7 +42,7 @@ export function displaceNodes(group1: NoteNode[], group2: NoteNode[]): NoteNode[
   const { minY: minY1, centerX: centerX1 } = getBounds(group1)
   const { maxY: maxY2, centerX: centerX2 } = getBounds(group2)
 
-  const deltaY = minY1 - maxY2 - 100 // Add some space between the groups
+  const deltaY = minY1 - maxY2 - 300 // Add some space between the groups
   const deltaX = centerX1 - centerX2
 
   const displacedGroup2 = group2.map(node => ({

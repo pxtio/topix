@@ -15,7 +15,7 @@ export async function previewWebpage(userId: string, url: string): Promise<LinkP
   const headers = new Headers()
   headers.set("Content-Type", "application/json")
 
-  const response = await fetch(`${API_URL}/tools/webpage/preview?user_id=${userId}`, {
+  const response = await fetch(`${API_URL}/tools/webpages/preview?user_id=${userId}`, {
     method: "POST",
     headers: headers,
     body: JSON.stringify({ url }),

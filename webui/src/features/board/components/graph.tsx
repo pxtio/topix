@@ -26,7 +26,8 @@ import { useRemoveLink } from '../api/remove-link'
 import { useAddLinks } from '../api/add-links'
 import { convertEdgeToLink } from '../utils/graph'
 import { getBounds } from '../utils/flow-view'
-
+import { useAddMindMapToBoard } from '../api/add-mindmap-to-board'
+import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 
 const proOptions = { hideAttribution: true }
 
@@ -69,12 +70,13 @@ export default function GraphEditor() {
     onEdgesChange,
     onNodesDelete,
     onEdgesDelete,
-    onConnect
+    onConnect,
   } = useGraphStore()
-
+  const { mindmaps } = useMindMapStore()
   const { removeNote } = useRemoveNote()
   const { removeLink } = useRemoveLink()
   const { addLinks } = useAddLinks()
+  const { addMindMapToBoard } = useAddMindMapToBoard()
 
   const deleteNodes: OnNodesDelete<NoteNode> = useCallback((nodes) => {
     if (!boardId || !userId) return
@@ -125,6 +127,14 @@ export default function GraphEditor() {
       setShouldRecenter(true)
     }
   }, [isLoading])
+
+  useEffect(() => {
+    if (boardId && mindmaps.has(boardId)) {
+      // if a mind map is available, add it to the board
+      addMindMapToBoard()
+    }
+  }, [boardId, mindmaps, addMindMapToBoard])
+
 
   useEffect(() => {
     // only recenter when it's signaled (after loading)

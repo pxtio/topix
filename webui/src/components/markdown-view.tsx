@@ -100,7 +100,7 @@ const CustomLink: React.FC<CustomLinkProps> = ({ isStreaming = false, children, 
   const content = Array.isArray(children) ? children[0] : children
   const contentWithoutBrackets = typeof content === 'string' ? content.replace(/^\[|\]$/g, '') : "KB"
 
-  const aClass = "transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-mono font-medium border border-border hover:bg-accent rounded-lg"
+  const aClass = "transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-mono font-medium border border-border bg-card hover:bg-accent rounded-lg"
 
   if (isStreaming) {
     return (

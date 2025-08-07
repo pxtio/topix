@@ -1,4 +1,5 @@
 import { type Node } from '@xyflow/react'
+import type { NoteNode } from '../types/flow'
 
 
 /**
@@ -31,4 +32,41 @@ export function getBounds(nodes: Node[]): Bounds {
   const centerY = (minY + maxY) / 2
 
   return { minX, minY, maxX, maxY, centerX, centerY }
+}
+
+
+/**
+ * Displaces a group of nodes vertically below another group.
+ */
+export function displaceNodes(group1: NoteNode[], group2: NoteNode[]): NoteNode[] {
+  const { minY: minY1, centerX: centerX1 } = getBounds(group1)
+  const { maxY: maxY2, centerX: centerX2 } = getBounds(group2)
+
+  const deltaY = minY1 - maxY2 - 100 // Add some space between the groups
+  const deltaX = centerX1 - centerX2
+
+  const displacedGroup2 = group2.map(node => ({
+    ...node,
+    position: {
+      x: node.position.x + deltaX,
+      y: node.position.y + deltaY
+    },
+    data: {
+      ...node.data,
+      properties: {
+        ...node.data.properties,
+        nodePosition: {
+          prop: {
+            position: {
+              x: node.position.x + deltaX,
+              y: node.position.y + deltaY
+            },
+            type: "position"
+          }
+        }
+      }
+    }
+  } as NoteNode))
+
+  return displacedGroup2
 }

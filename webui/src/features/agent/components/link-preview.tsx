@@ -26,7 +26,7 @@ export const MiniLinkCard = ({
   siteName: string
 }) => {
   return (
-    <div className="transition-all p-3 rounded-lg border border-border hover:bg-accent text-muted-foreground text-xs flex flex-row items-center gap-2 overflow-ellipsis">
+    <div className="transition-all p-3 rounded-lg border border-border bg-card hover:bg-accent text-muted-foreground text-xs flex flex-row items-center gap-2 overflow-ellipsis">
       <HoverCard>
         <HoverCardTrigger asChild>
           <a className="font-medium inline-block" href={url} target="_blank" rel="noopener noreferrer">

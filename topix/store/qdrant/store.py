@@ -86,8 +86,7 @@ class ContentStore:
         if "type" in data and data["type"] in ["note", "message"]:
             text = self.extract_text_from_dict(data)
             if text:
-                new_embedding = await self.embedder.embed([text])
-
+                new_embedding = (await self.embedder.embed([text]))[0]
         await self.qdrant_client.update_fields(
             point_id=idx,
             fields=data,

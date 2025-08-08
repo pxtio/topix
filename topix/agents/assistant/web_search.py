@@ -1,11 +1,11 @@
-"""Web Search Agent."""
+"""Unified Web Search Agent with Citation Support."""
 
 import datetime
-import os
 import re
-import warnings
 
-from typing import Any, Literal
+from typing import Any, List, Literal
+
+import requests
 
 from agents import (
     Agent,
@@ -21,12 +21,12 @@ from agents import (
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
+from topix.agents.datatypes.outputs import SearchResult, WebSearchOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.agents.utils import (
     ToolCall,
     tool_execution_handler,
 )
-from topix.api.datatypes import requests
 
 
 class WebSearchAgentHook(AgentHooks):
@@ -55,9 +55,9 @@ class WebSearchAgentHook(AgentHooks):
 
 
 class WebSearch(BaseAgent):
-    """An Agent for web search operations.
+    """Web Search Agent returning an answer with web page citations.
 
-    This class is responsible for managing the web search agent and its operations.
+    Supports multiple search engines (OpenAI, Perplexity, Tavily).
     """
 
     def __init__(
@@ -65,42 +65,21 @@ class WebSearch(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4O_MINI,
         instructions_template: str = "web_search.jinja",
         model_settings: ModelSettings | None = None,
-        search_engine: Literal["openai", "perplexity", "travily"] = "openai",
+        search_engine: Literal["openai", "travily", "perlexity"] = "openai",
+        search_context_size: Literal["small", "medium", "large"] = "medium",
     ):
         """Initialize the WebSearch agent."""
         name = "Web Search"
-        instructions_dict = {"time": datetime.datetime.now().strftime("%Y-%m-%d")}
+        self.search_engine = search_engine
+
+        # Enhanced instructions that include citation requirements
+        instructions_dict = {
+            "time": datetime.datetime.now().strftime("%Y-%m-%d"),
+        }
         instructions = self._render_prompt(instructions_template, **instructions_dict)
+        # Configure tools based on search engine
+        tools = self._configure_tools(model, search_engine, search_context_size)
 
-        match search_engine:
-            case "openai":
-                if not model.startswith("openai"):
-                    raise ValueError(
-                        "The openai search engine is only supported with the openai model."
-                    )
-                tools = [WebSearchTool(search_context_size="medium")]
-            case "perplexity":
-                if not model.startswith("perplexity"):
-                    raise ValueError(
-                        "The perplexity search engine is only supported with the perplexity model."
-                    )
-                tools = []
-            case "travily":
-                tools = [function_tool(search_travily)]
-
-        if model.startswith("perplexity"):
-            if search_engine != "perplextiy":
-                warnings.warn(
-                    "The Perplexity model is an end-to-end web search model \
-                    and does not support custom search engines."
-                )
-            tools = []
-
-        elif model.startswith("openai"):
-
-            tools = [WebSearchTool(search_context_size="medium")]
-        else:
-            raise ValueError(f"Unsupported model for web search: {model}")
         hooks = WebSearchAgentHook()
 
         if model_settings is None:
@@ -116,6 +95,69 @@ class WebSearch(BaseAgent):
         )
 
         super().__post_init__()
+
+    def _configure_tools(
+        self,
+        model: str,
+        search_engine: str,
+        search_context_size: Literal["small", "medium", "large"] = "medium",
+    ) -> List[Tool]:
+        """Configure tools based on search engine and model."""
+        match search_engine:
+            case "openai":
+                if model.startswith("openai"):
+                    return [WebSearchTool(search_context_size="medium")]
+                else:
+                    raise ValueError(
+                        "OpenAI search engine is only compatible with OpenAI models,"
+                        f"got {model}."
+                    )
+            case "travily":
+                @function_tool
+                def web_search(query: str) -> WebSearchOutput:
+                    """Search using Tavily API."""
+                    return search_travily(
+                        query, search_context_size=search_context_size
+                    )
+
+                return [web_search]
+            case "perplexity":
+                if model.startswith("perplexity"):
+                    return []
+                raise ValueError(
+                    "Perplexity search engine is only compatible with Perplexity models,"
+                    f"got {model}."
+                )
+            case _:
+                raise ValueError(f"Unsupported search engine: {search_engine}")
+
+    async def _output_extractor(self, context, output) -> WebSearchOutput:
+        if self.search_engine in ["openai", "perplexity"]:
+            search_results = [
+                SearchResult(url=annotation.url, title=annotation.title)
+                for item in output.new_items
+                if item.type == "message_output_item"
+                for annotation in item.raw_item.content[0].annotations
+                if annotation.type == "url_citation"
+            ]
+            return WebSearchOutput(
+                answer=output.final_output, search_results=search_results
+            )
+        else:
+            search_results = []
+            for item in output.new_items:
+                if item.type == "tool_call_output_item":
+                    # Get function calling results
+                    if isinstance(item.output, WebSearchOutput):
+                        search_results.extend(item.output.search_results)
+                    else:
+                        raise ValueError(
+                            "Expected WebSearchOutput from tool call, got "
+                            f"{type(item.output)}"
+                        )
+            return WebSearchOutput(
+                answer=output.final_output, search_results=search_results
+            )
 
     def as_tool(
         self,
@@ -179,20 +221,31 @@ class WebSearch(BaseAgent):
                 else:
                     response = await self._call_litellm(stream=False, input=input)
                     content = response.choices[0].message.content
-                    search_results = response.search_results
+                    search_results: list[dict] = response.search_results
 
                 if search_results:
                     content = self._process_perplexity_response(content, search_results)
+
+            web_search_output = WebSearchOutput(
+                answer=content,
+                search_results=[
+                    SearchResult(
+                        url=result.get("url"),
+                        title=result.get("title"),
+                    )
+                    for result in search_results
+                ],
+            )
 
             context.tool_calls.append(
                 ToolCall(
                     tool_id=fixed_params["tool_id"],
                     tool_name=name_override,
                     arguments={"input": input},
-                    output=content,
+                    output=web_search_output,
                 )
             )
-            return content
+            return web_search_output
 
         return run_agent
 
@@ -236,24 +289,40 @@ class WebSearch(BaseAgent):
         return content
 
 
-def search_travily(query: str, max_results: int = 20) -> str:
+def search_travily(
+    query: str,
+    max_results: int = 10,
+    search_context_size: Literal["small", "medium", "large"] = "medium",
+) -> WebSearchOutput:
     """Search for a query using the Tavily API.
 
     Args:
         query (str): The query to search for.
         max_results (int): The maximum number of results to return. Default is 20.
+        search_context_size (str): The size of the search context. Default is "medium".
 
     Returns:
         str: The results of the search.
 
     """
     url = "https://api.tavily.com/search"
-    api_key = os.environ.get("TAVILY_API_KEY")
+    api_key = (
+        "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"  # os.environ.get("TAVILY_API_KEY")
+    )
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}",
     }
-    data = {"query": query, "max_results": max_results}
+    if search_context_size == "large":
+        search_depth = "advanced"
+    else:
+        search_depth = "basic"
+    data = {
+        "query": query,
+        "max_results": max_results,
+        "search_depth": search_depth,
+        "auto_parameters": True,
+    }
     response = requests.post(url, headers=headers, json=data)
     response.raise_for_status()
 
@@ -261,9 +330,13 @@ def search_travily(query: str, max_results: int = 20) -> str:
 
     results = json_response.get("results", [])
 
-    res = "Search results:\n"
-    for result in results:
-        res += f"- Title: {result["title"]}\n \
-        - URL: {result["url"]}\n- Content: {result["content"]}\n\n"
-
-    return res
+    return WebSearchOutput(
+        search_results=[
+            SearchResult(
+                url=result["url"],
+                title=result.get("title", ""),
+                content=result.get("content", ""),
+            )
+            for result in results
+        ]
+    )

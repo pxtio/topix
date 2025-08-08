@@ -15,7 +15,7 @@ class KeyPointsExtract(BaseAgent):
     def __init__(
         self,
         model: str = ModelEnum.OpenAI.GPT_4_1_MINI,
-        instructions_template: str = "answer_reformulation.system.jinja",
+        instructions_template: str = "key_points_extraction.jinja",
         model_settings: ModelSettings | None = None,
     ):
         """Init method."""

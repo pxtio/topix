@@ -1,6 +1,7 @@
 """Unified Web Search Agent with Citation Support."""
 
 import datetime
+import os
 import re
 
 from typing import Any, List, Literal
@@ -65,7 +66,7 @@ class WebSearch(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4O_MINI,
         instructions_template: str = "web_search.jinja",
         model_settings: ModelSettings | None = None,
-        search_engine: Literal["openai", "travily", "perlexity"] = "openai",
+        search_engine: Literal["openai", "travily", "perlexity", "linkup"] = "openai",
         search_context_size: Literal["small", "medium", "large"] = "medium",
     ):
         """Initialize the WebSearch agent."""
@@ -115,11 +116,19 @@ class WebSearch(BaseAgent):
             case "travily":
                 @function_tool
                 def web_search(query: str) -> WebSearchOutput:
-                    """Search using Tavily API."""
+                    """Search using Tavily."""
                     return search_travily(
                         query, search_context_size=search_context_size
                     )
 
+                return [web_search]
+            case "linkup":
+                @function_tool
+                def web_search(query: str) -> WebSearchOutput:
+                    """Search using LinkUp."""
+                    return search_linkup(
+                        query, search_context_size=search_context_size
+                    )
                 return [web_search]
             case "perplexity":
                 if model.startswith("perplexity"):
@@ -306,9 +315,7 @@ def search_travily(
 
     """
     url = "https://api.tavily.com/search"
-    api_key = (
-        "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"  # os.environ.get("TAVILY_API_KEY")
-    )
+    api_key = os.environ.get("TAVILY_API_KEY")
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}",
@@ -335,6 +342,57 @@ def search_travily(
             SearchResult(
                 url=result["url"],
                 title=result.get("title", ""),
+                content=result.get("content", ""),
+            )
+            for result in results
+        ]
+    )
+
+
+def search_linkup(
+    query: str,
+    search_context_size: Literal["small", "medium", "large"] = "medium",
+) -> WebSearchOutput:
+    """Search for a query using the LinkUp API.
+
+    Args:
+        query (str): The query to search for.
+        max_results (int): The maximum number of results to return. Default is 20.
+        search_context_size (str): The size of the search context. Default is "medium".
+
+    Returns:
+        WebSearchOutput: The results of the search.
+
+    """
+    url = "https://api.linkup.so/v1/search"
+    api_key = os.environ.get("LINKUP_API_KEY")
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+
+    if search_context_size == "large":
+        search_depth = "deep"
+    else:
+        search_depth = "standard"
+
+    data = {
+        "q": query,
+        "outputType": "searchResults",
+        "depth": search_depth,
+    }
+    response = requests.post(url, headers=headers, json=data)
+    response.raise_for_status()
+
+    json_response = response.json()
+
+    results = json_response.get("results", [])
+
+    return WebSearchOutput(
+        search_results=[
+            SearchResult(
+                url=result["url"],
+                title=result.get("name", ""),
                 content=result.get("content", ""),
             )
             for result in results

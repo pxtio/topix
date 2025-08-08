@@ -20,6 +20,7 @@ from agents import (
 )
 from agents.extensions.models.litellm_model import LitellmModel
 from topix.agents.datatypes.context import Context, ToolCall
+from topix.agents.datatypes.outputs import ToolOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.agents.utils import tool_execution_handler
 
@@ -124,9 +125,7 @@ class BaseAgent(Agent[Context]):
                     )
 
             # Extract the final output from the agent
-            print(output)
-            output = await self._output_extractor(context.context, output)
-            print(output)
+            output: ToolOutput = await self._output_extractor(context.context, output)
 
             context.context.tool_calls.append(
                 ToolCall(
@@ -137,7 +136,7 @@ class BaseAgent(Agent[Context]):
                 )
             )
 
-            return output
+            return str(output)
 
         return run_agent
 
@@ -155,7 +154,9 @@ class BaseAgent(Agent[Context]):
             return input
         raise NotImplementedError("_input_formatter method is not implemented")
 
-    async def _output_extractor(self, context: Context, output: RunResult) -> Any:
+    async def _output_extractor(
+        self, context: Context, output: RunResult
+    ) -> ToolOutput:
         return output.final_output
 
     @classmethod

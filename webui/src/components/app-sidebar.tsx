@@ -16,7 +16,7 @@ import { useDeleteChat } from "@/features/agent/api/delete-chat"
 import { useListChats } from "@/features/agent/api/list-chats"
 import { useAppStore } from "@/store"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
-import { BotMessageSquare, History, Minus, MoreHorizontal, PaintRoller, Palette, Plus } from "lucide-react"
+import { Blend, BotMessageSquare, History, Minus, MoreHorizontal, PenLine, Plus } from "lucide-react"
 import { useChatStore } from "@/features/agent/store/chat-store"
 import { trimText } from "@/lib/common"
 import { useListBoards } from "@/features/board/api/list-boards"
@@ -26,6 +26,7 @@ import { Collapsible, CollapsibleTrigger } from "./ui/collapsible"
 import { CollapsibleContent } from "@radix-ui/react-collapsible"
 import { useGraphStore } from "@/features/board/store/graph-store"
 import { useGetBoard } from "@/features/board/api/get-board"
+import { UNTITLED_LABEL } from "@/features/board/const"
 
 
 function NewBoardItem() {
@@ -47,8 +48,8 @@ function NewBoardItem() {
         className='text-xs'
         onClick={handleClick}
       >
-        <PaintRoller className='text-xs shrink-0' strokeWidth={1.75} />
-        <span>New Board</span>
+        <PenLine className='text-xs shrink-0' strokeWidth={1.75} />
+        <span>New Notescape</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
   )
@@ -77,8 +78,8 @@ function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton onClick={handleClick} className='text-xs font-medium' isActive={isActive}>
-        <Palette className='shrink-0' strokeWidth={1.75} />
-        <span>{trimText(label || "Untitled Board", 20)}</span>
+        <Blend className='shrink-0' strokeWidth={1.75} />
+        <span>{trimText(label || UNTITLED_LABEL, 20)}</span>
       </SidebarMenuButton>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -145,7 +146,7 @@ function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
     deleteChat({ chatId, userId })
   }
 
-  const chatLabel = trimText(label || "Untitled Chat", 20)
+  const chatLabel = trimText(label || UNTITLED_LABEL, 20)
 
   const isActive = currentChatId === chatId && view === "chat"
 
@@ -179,7 +180,9 @@ export function AppSidebar() {
   const { data: boards } = useListBoards({ userId })
 
   const chatItems = chats?.map((chat) => <ChatMenuItem key={chat.uid} chatId={chat.uid} label={chat.label} />) || []
-  const boardItems = boards?.map((board) => <BoardItem key={board.id} boardId={board.id} label={board.label} />) || []
+  const boardItems = boards?.map((board) => {
+    return <BoardItem key={board.id} boardId={board.id} label={board.label} />
+  }) || []
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">

@@ -50,14 +50,9 @@ export const useUpdateBoard = () => {
       userId: string
       graphData: Partial<Graph>
     }) => {
-      // Optimistically update the board in the cache
-      queryClient.setQueryData<Graph>(["getBoard", boardId, userId], (oldBoard) => {
-        if (!oldBoard) return oldBoard
-        return { ...oldBoard, ...graphData }
-      })
       queryClient.setQueryData(["listBoards", userId], (oldBoards: { id: string, label?: string }[] | undefined) => {
         return oldBoards?.map(board =>
-          board.id === boardId ? { ...board, ...{ id: graphData.uid, label: graphData.label } } : board
+          board.id === boardId ? { ...board, ...{ id: boardId, label: graphData.label } } : board
         )
       })
       await updateBoard(boardId, userId, graphData)

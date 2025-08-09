@@ -21,18 +21,24 @@ const SourcesView = ({
   answer: string
 }) => {
   const links = extractNamedLinksFromMarkdown(answer)
+
   if (links.length === 0) {
     return null
   }
+
   return (
     <div className="w-full p-2">
-      <div className="w-full border-b border-border p-2 flex flex-row items-center gap-2">
-        <MousePointerClick className='size-4 shrink-0 text-primary' strokeWidth={1.75}/>
+      <div className="w-full border-b border-border p-2 flex flex-row items-center gap-2" >
+        <MousePointerClick className='size-4 shrink-0 text-primary' strokeWidth={1.75} />
         <span className="text-base text-primary font-semibold">Sources</span>
       </div>
       <ScrollArea className='w-full' >
         <div className="flex flex-row gap-1 px-2 py-4">
-          {links.map((link, index) => <MiniLinkCard key={index} url={link.url} siteName={link.siteName} />)}
+          {links.map((link, index) => <MiniLinkCard
+            key={index}
+            url={link.url}
+            siteName={link.siteName}
+          />)}
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
@@ -47,10 +53,9 @@ const SourcesView = ({
 const ResponseActions = ({ message }: { message: string }) => {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      console.log('Text copied to clipboard: ', text)
-      toast('Text copied to clipboard!')
-    }).catch(err => {
-      console.error('Failed to copy text: ', err)
+      toast('Answer copied to clipboard!')
+    }).catch(() => {
+      toast("Failed to copy answer!")
     })
   }
 
@@ -75,12 +80,13 @@ const ResponseActions = ({ message }: { message: string }) => {
  */
 export const AssistantMessage = ({
   message,
-  isStreaming = false
 }: {
   message: ChatMessage
-  isStreaming?: boolean // Whether the message is being streamed
 }) => {
   const streamingMessage = useChatStore((state) => state.streams.get(message.id))
+  const { isStreaming, streamingMessageId } = useChatStore()
+
+  const streaming = isStreaming && streamingMessageId === message.id
 
   const lastStep = streamingMessage?.steps?.[streamingMessage.steps.length - 1]
 
@@ -91,17 +97,27 @@ export const AssistantMessage = ({
     streamingMessage.steps.length > 0
   ) || message
 
-  const messageContent = message.content ? message.content
-    : lastStep?.response && isMainResponse(lastStep.name) ? lastStep.response
-    : ""
+  const messageContent = message.content ?
+    message.content
+    :
+    lastStep?.response && isMainResponse(lastStep.name) ?
+    lastStep.response
+    :
+    ""
 
-  const agentResponse = streamingMessage ? streamingMessage : message.reasoningSteps ? { steps: message.reasoningSteps } : undefined
+  const agentResponse = streamingMessage ?
+    streamingMessage
+    :
+    message.reasoningSteps ?
+    { steps: message.reasoningSteps }
+    :
+    undefined
 
   const lastStepMessage = showLastStepMessage ? (
     <div className="w-full p-4">
-      <MarkdownView content={messageContent} isStreaming={isStreaming} />
-      {!isStreaming && <SourcesView answer={messageContent} />}
-      {!isStreaming && <ResponseActions message={messageContent} />}
+      <MarkdownView content={messageContent} />
+      {!streaming && <SourcesView answer={messageContent} />}
+      {!streaming && <ResponseActions message={messageContent} />}
     </div>
   ) : null
 

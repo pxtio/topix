@@ -24,18 +24,19 @@ export const ChatView = () => {
             />
           </div>
         }
-        <ScrollArea className='h-full w-full'>
-          <div className='w-full h-full flex flex-col items-center justify-center'>
-            <div
-              className='h-full sm:max-w-[800px] w-[800px]'
-            >
-              {
-                currentChatId && <Conversation chatId={currentChatId} />
-              }
-
-            </div>
-          </div>
-        </ScrollArea>
+        {
+          currentChatId && (
+            <ScrollArea className='h-full w-full'>
+              <div className='w-full h-full flex flex-col items-center justify-center'>
+                <div
+                  className='h-full sm:max-w-[800px] w-[800px]'
+                >
+                  <Conversation chatId={currentChatId} />
+                </div>
+              </div>
+            </ScrollArea>
+          )
+        }
         <InputBar />
       </div>
     </>

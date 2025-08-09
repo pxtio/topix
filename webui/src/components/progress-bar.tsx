@@ -1,7 +1,7 @@
 /**
  * ThinkingDots component displays a "Thinking" message with animated dots.
  */
-const ThinkingDots = ({ message }: { message: string }) => {
+export const ThinkingDots = ({ message }: { message: string }) => {
   return (
     <div className="flex items-center gap-2">
       <span>{message}</span>

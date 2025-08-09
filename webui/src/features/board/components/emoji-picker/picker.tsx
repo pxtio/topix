@@ -16,7 +16,6 @@ export interface IconPickerProps {
 export const IconPicker = ({ onSelect }: IconPickerProps) => {
   const handleEmojiSelect = (emoji: { emoji: string }) => {
     // Handle emoji selection here
-    console.log("Selected emoji:", emoji.emoji)
     onSelect(emoji)
   }
 

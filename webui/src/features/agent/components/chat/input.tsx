@@ -21,6 +21,7 @@ import { generateUuid } from '@/lib/common'
 import { useAppStore } from '@/store'
 import { SendButton } from './send-button'
 import TextareaAutosize from 'react-textarea-autosize'
+import { Oc } from '@/components/oc'
 
 
 /**
@@ -83,8 +84,7 @@ const ModelChoiceMenu = () => {
 export const InputBar: React.FC = () => {
   const userId = useAppStore((state) => state.userId)
 
-  const llmModel = useChatStore((state) => state.llmModel)
-  const isStreaming = useChatStore((state) => state.isStreaming)
+  const { currentChatId, llmModel, isStreaming } = useChatStore()
 
   const [input, setInput] = useState<string>("")
 
@@ -118,8 +118,26 @@ export const InputBar: React.FC = () => {
       : 'cursor-pointer'
   )
 
+  const className = clsx(
+    "transition-all absolute left-1/2 transform -translate-x-1/2 p-4 z-50 flex flex-col justify-center items-center gap-16",
+    currentChatId ?
+    "bottom-10"
+    :
+    "bottom-1/3"
+  )
+
   return (
-    <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 p-4 z-50 flex justify-center items-center">
+    <div className={className}>
+      {
+        !currentChatId && (
+          <div className='w-full h-72 flex flex-col items-center justify-start'>
+            <Oc className='fill-primary w-36'/>
+            <div className='text-center text-xl text-card-foreground'>
+              <span>Ask me anything — I’ll sniff out the answer!</span>
+            </div>
+          </div>
+        )
+      }
       <div className='flex flex-col space-y-2'>
         <div>
           <div

@@ -17,10 +17,9 @@ export const CodeBlockComponent: React.FC<CodeBlockComponentProps> = ({ node }) 
   const handleCopy = useCallback(() => {
     const code = node.textContent
     navigator.clipboard.writeText(code).then(() => {
-      console.log('Text copied to clipboard: ', code)
-      toast('Text copied to clipboard!')
-    }).catch(err => {
-      console.error('Failed to copy text: ', err)
+      toast('Code copied to clipboard!')
+    }).catch(() => {
+      toast("Failed to copy code!")
     })
   }, [node])
 

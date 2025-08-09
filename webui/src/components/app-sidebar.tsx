@@ -16,7 +16,7 @@ import { useDeleteChat } from "@/features/agent/api/delete-chat"
 import { useListChats } from "@/features/agent/api/list-chats"
 import { useAppStore } from "@/store"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
-import { BotMessageSquare, History, Minus, MoreHorizontal, PaintRoller, Palette, Plus } from "lucide-react"
+import { BotMessageSquare, History, Minus, MoreHorizontal, PenLine, Plus, Share2 } from "lucide-react"
 import { useChatStore } from "@/features/agent/store/chat-store"
 import { trimText } from "@/lib/common"
 import { useListBoards } from "@/features/board/api/list-boards"
@@ -26,6 +26,7 @@ import { Collapsible, CollapsibleTrigger } from "./ui/collapsible"
 import { CollapsibleContent } from "@radix-ui/react-collapsible"
 import { useGraphStore } from "@/features/board/store/graph-store"
 import { useGetBoard } from "@/features/board/api/get-board"
+import { UNTITLED_LABEL } from "@/features/board/const"
 
 
 function NewBoardItem() {
@@ -39,7 +40,7 @@ function NewBoardItem() {
     setView("board")  // Switch to board view when creating a new board
   }
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent/50'
+  const itemClass = 'text-primary text-xs font-medium transition-all'
 
   return (
     <SidebarMenuItem className={itemClass} >
@@ -47,7 +48,7 @@ function NewBoardItem() {
         className='text-xs'
         onClick={handleClick}
       >
-        <PaintRoller className='text-xs shrink-0' strokeWidth={1.75} />
+        <PenLine className='text-xs shrink-0' strokeWidth={1.75} />
         <span>New Board</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -72,14 +73,13 @@ function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
     getBoard()
   }
 
-  const itemClass = 'text-sidebar-foreground text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent/50'
-    + (currentBoardId === boardId && view === "board" ? ' bg-sidebar-accent text-sidebar-accent-foreground' : '')
+  const isActive = currentBoardId === boardId && view === "board"
 
   return (
-    <SidebarMenuItem className={itemClass}>
-      <SidebarMenuButton onClick={handleClick} className='text-xs' >
-        <Palette className='shrink-0' strokeWidth={1.75} />
-        <span>{trimText(label || "Untitled Board", 20)}</span>
+    <SidebarMenuItem>
+      <SidebarMenuButton onClick={handleClick} className='text-xs font-medium' isActive={isActive}>
+        <Share2 className='shrink-0' strokeWidth={1.75} />
+        <span>{trimText(label || UNTITLED_LABEL, 20)}</span>
       </SidebarMenuButton>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -105,7 +105,7 @@ function NewChatItem() {
 
   const currentChatId = useChatStore((state) => state.currentChatId)
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent/50' + (currentChatId === undefined && view === "chat" ? ' bg-sidebar-accent text-sidebar-accent-foreground' : '')
+  const isActive = currentChatId === undefined && view === "chat"
 
   const handleClick = () => {
     setCurrentChatId(undefined)
@@ -113,12 +113,13 @@ function NewChatItem() {
   }
 
   return (
-    <SidebarMenuItem className={itemClass} >
+    <SidebarMenuItem className='text-xs font-medium' >
       <SidebarMenuButton
         onClick={handleClick}
-        className='text-xs'
+        className='text-xs text-primary'
+        isActive={isActive}
       >
-        <BotMessageSquare className='text-xs shrink-0 stroke-sidebar-primary' strokeWidth={1.75} />
+        <BotMessageSquare className='text-xs shrink-0' strokeWidth={1.75} />
         <span>New Chat</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -145,13 +146,13 @@ function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
     deleteChat({ chatId, userId })
   }
 
-  const chatLabel = trimText(label || "Untitled Chat", 20)
+  const chatLabel = trimText(label || UNTITLED_LABEL, 20)
 
-  const itemClass = 'text-xs font-medium transition-all rounded-lg hover:bg-sidebar-accent/50' + (currentChatId === chatId && view === "chat" ? ' bg-sidebar-accent text-sidebar-accent-foreground' : '')
+  const isActive = currentChatId === chatId && view === "chat"
 
   return (
-    <SidebarMenuSubItem>
-      <SidebarMenuSubButton asChild className={itemClass} onClick={handleClick}>
+    <SidebarMenuSubItem className="transition-all text-xs">
+      <SidebarMenuSubButton onClick={handleClick} className='text-xs' isActive={isActive}>
         <span>{chatLabel}</span>
       </SidebarMenuSubButton>
       <DropdownMenu>
@@ -179,10 +180,12 @@ export function AppSidebar() {
   const { data: boards } = useListBoards({ userId })
 
   const chatItems = chats?.map((chat) => <ChatMenuItem key={chat.uid} chatId={chat.uid} label={chat.label} />) || []
-  const boardItems = boards?.map((board) => <BoardItem key={board.id} boardId={board.id} label={board.label} />) || []
+  const boardItems = boards?.map((board) => {
+    return <BoardItem key={board.id} boardId={board.id} label={board.label} />
+  }) || []
 
   return (
-    <Sidebar variant='floating' collapsible="icon">
+    <Sidebar variant="sidebar" collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>
@@ -208,12 +211,12 @@ export function AppSidebar() {
               >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuSubButton className='font-medium text-xs flex flex-row items-center w-full text-sidebar-foreground'>
-                      <History className='stroke-sidebar-foreground shrink-0' strokeWidth={1.75} />
+                    <SidebarMenuButton className='font-medium text-xs flex flex-row items-center w-full'>
+                      <History className='size-4 shrink-0' strokeWidth={1.75} />
                       <span>Chat History</span>
                       <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
                       <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
-                    </SidebarMenuSubButton>
+                    </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>

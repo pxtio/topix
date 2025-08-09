@@ -48,10 +48,7 @@ export async function* sendMessage(
  * @returns An object containing the sendMessage function and its state.
  */
 export const useSendMessage = () => {
-  const setStream = useChatStore((state) => state.setStream)
-  const setIsStreaming = useChatStore((state) => state.setIsStreaming)
-  const setCurrentChatId = useChatStore((state) => state.setCurrentChatId)
-  const currentChatId = useChatStore((state) => state.currentChatId)
+  const { setStream, setIsStreaming, setCurrentChatId, currentChatId, setStreamingMessageId } = useChatStore()
 
   const queryClient = useQueryClient()
 
@@ -101,11 +98,20 @@ export const useSendMessage = () => {
         const streamingBatchSize = 10
 
         let iterations = 0
+        let streamingMessageId: string | undefined
         for await (const resp of response) {
           iterations++
-          if (resp.response.steps.length === 0) continue
+          if (resp.response.steps.length === 0) {
+            continue
+          }
+
           const step = resp.response.steps[0]
           const responseId = step.id
+
+          if (!streamingMessageId) {
+            streamingMessageId = step.id
+            setStreamingMessageId(streamingMessageId)
+          }
 
           if (!setNewAssistantMessageId) {
             setNewAssistantMessageId = true
@@ -141,6 +147,7 @@ export const useSendMessage = () => {
         throw error
       } finally {
         setIsStreaming(false)
+        setStreamingMessageId(undefined)
       }
     }
   })

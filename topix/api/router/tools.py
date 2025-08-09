@@ -4,11 +4,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Query, Request, Response
 
-from topix.agents.datatypes.inputs import MindMapConversionInput
-from topix.agents.mindmap.key_points_extract import KeyPointsExtract
-from topix.agents.mindmap.mindmap_conversion import MindmapConversion
+from topix.agents.mindmap.build_graph_fr_text import sections_to_tree, split_markdown_sections
 from topix.agents.mindmap.utils import convert_root_to_graph
-from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.helpers import with_standard_response
 from topix.utils.web import preview_webpage
@@ -30,18 +27,15 @@ async def convert_mindmap(
     body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
 ):
     """Convert a mindmap to a graph."""
-    key_points_extractor = KeyPointsExtract()
-    res = await AgentRunner.run(key_points_extractor, body.answer)
-    converter = MindmapConversion()
-    mindmap = await AgentRunner.run(converter, MindMapConversionInput(
-        answer=body.answer,
-        key_points=res
-    ))
+    secs = split_markdown_sections(body.answer)
+    res = sections_to_tree(secs)
+    notes = []
+    links = []
+    for root in res:
+        new_notes, new_links = convert_root_to_graph(root)
+        notes.extend(new_notes)
+        links.extend(new_links)
 
-    if not mindmap:
-        raise ValueError("Failed to convert mindmap")
-
-    notes, links = convert_root_to_graph(mindmap)
     return {
         "notes": [note.model_dump(exclude_none=True) for note in notes],
         "links": [link.model_dump(exclude_none=True) for link in links]

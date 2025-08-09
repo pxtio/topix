@@ -9,8 +9,6 @@ import { Copy } from "lucide-react"
 import { toast } from "sonner"
 import React from "react"
 import { cn } from "@/lib/utils"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card"
-import { LinkPreviewCard } from "@/features/agent/components/link-preview"
 
 
 /**
@@ -52,10 +50,9 @@ const extractText = (children: React.ReactNode): string => {
 const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) => {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      console.log('Text copied to clipboard: ', text)
-      toast('Text copied to clipboard!')
-    }).catch(err => {
-      console.error('Failed to copy text: ', err)
+      toast('Copied to clipboard!')
+    }).catch(() => {
+      toast('Failed to copy!')
     })
   }
 
@@ -73,7 +70,7 @@ const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) 
         className="transition-all absolute top-1 right-1 text-sm bg-transparent hover:bg-accent p-2 rounded-xl text-accent-foreground"
         aria-label="Copy to clipboard"
       >
-        <Copy strokeWidth={1.75} className='h-4 w-4' />
+        <Copy strokeWidth={1.75} className='size-4 shrink-0' />
       </button>
       <span className="absolute top-0 left-0 w-auto px-4 py-2 text-xs font-mono">
         {language}
@@ -82,7 +79,7 @@ const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) 
     </pre>
   ) : (
     <code
-      className={cn('text-left text-sm text-mono text-red-700 bg-muted text-muted-foreground rounded-lg', className)}
+      className={cn('text-left text-sm text-mono text-red-700 bg-muted text-muted-foreground rounded-lg px-1', className)}
     >
       {children}
     </code>
@@ -95,40 +92,21 @@ interface CustomLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> 
   children?: React.ReactNode
 }
 
-const CustomLink: React.FC<CustomLinkProps> = ({ isStreaming = false, children, ...props }) => {
+const CustomLink: React.FC<CustomLinkProps> = ({ children, ...props }) => {
   // Ensure children is an array and get the first element as a string
   const content = Array.isArray(children) ? children[0] : children
   const contentWithoutBrackets = typeof content === 'string' ? content.replace(/^\[|\]$/g, '') : "KB"
 
   const aClass = "transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-mono font-medium border border-border bg-card hover:bg-accent rounded-lg"
 
-  if (isStreaming) {
-    return (
-      <a
-        href={props.href}
-        className={aClass}
-        target="_blank"
-      >
-        {contentWithoutBrackets}
-      </a>
-    )
-  }
-
   return (
-    <HoverCard>
-      <HoverCardTrigger asChild>
-        <a
-          href={props.href}
-          className={aClass}
-          target="_blank"
-        >
-          {contentWithoutBrackets}
-        </a>
-      </HoverCardTrigger>
-      <HoverCardContent>
-        <LinkPreviewCard url={props.href || ''} />
-      </HoverCardContent>
-    </HoverCard>
+    <a
+      href={props.href}
+      className={aClass}
+      target="_blank"
+    >
+      {contentWithoutBrackets}
+    </a>
   )
 }
 
@@ -139,7 +117,6 @@ const CustomLink: React.FC<CustomLinkProps> = ({ isStreaming = false, children, 
  * @property content - The markdown content to be rendered.
  */
 export interface MarkdownViewProps {
-  isStreaming?: boolean
   content: string
 }
 
@@ -147,7 +124,7 @@ export interface MarkdownViewProps {
 /**
  * MarkdownView is a React component that renders markdown content.
  */
-export const MarkdownView =({ isStreaming = false, content }: MarkdownViewProps) => {
+export const MarkdownView =({ content }: MarkdownViewProps) => {
   return (
     <>
       <ReactMarkdown
@@ -166,7 +143,7 @@ export const MarkdownView =({ isStreaming = false, content }: MarkdownViewProps)
           ul: ({ ...props }) => <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props} />,
           ol: ({ ...props }) => <ul className="my-6 ml-6 list-decimal [&>li]:mt-2" {...props} />,
           li: ({ ...props }) => <li className="" {...props} />,
-          a: ({ ...props }) => <CustomLink {...props} isStreaming={isStreaming} />,
+          a: ({ ...props }) => <CustomLink {...props} />,
           // Custom rendering for code blocks
           code: CustomCodeView,
           table: ({ ...props }) => <div className='my-8 w-full overflow-y-auto'><table className="w-full text-base border-b" {...props} /></div>,

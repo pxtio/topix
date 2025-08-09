@@ -15,10 +15,12 @@ import type { LlmModel } from "../types/llm"
 export interface ChatStore {
   streams: Map<string, AgentResponse>
   isStreaming: boolean
+  streamingMessageId?: string
   currentChatId?: string
   llmModel: LlmModel
   setLlmModel: (model: LlmModel) => void
   setIsStreaming: (isStreaming: boolean) => void
+  setStreamingMessageId: (messageId?: string) => void
   setCurrentChatId: (chatId?: string) => void
   setStream: (responseId: string, response: AgentResponse) => void
   clearStream: (responseId: string) => void
@@ -37,11 +39,15 @@ export const useChatStore = create<ChatStore>((set) => ({
 
   isStreaming: false,
 
+  streamingMessageId: undefined,
+
   currentChatId: undefined,
 
   setLlmModel: (model) => set({ llmModel: model }),
 
   setIsStreaming: (isStreaming) => set({ isStreaming }),
+
+  setStreamingMessageId: (messageId) => set({ streamingMessageId: messageId }),
 
   setCurrentChatId: (chatId) => set({ currentChatId: chatId }),
 

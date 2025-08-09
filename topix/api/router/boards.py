@@ -33,8 +33,8 @@ async def create_graph(
     return {"graph_id": new_graph.uid}
 
 
-@router.post("/{graph_id}/", include_in_schema=False)
-@router.post("/{graph_id}")
+@router.patch("/{graph_id}/", include_in_schema=False)
+@router.patch("/{graph_id}")
 @with_standard_response
 async def update_graph(
     response: Response,

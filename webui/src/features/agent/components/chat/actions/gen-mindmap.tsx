@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useConvertToMindMap } from "@/features/board/api/convert-to-mindmap"
 import { useListBoards } from "@/features/board/api/list-boards"
+import { UNTITLED_LABEL } from "@/features/board/const"
 import { useAppStore } from "@/store"
 import { WandSparkles } from "lucide-react"
 
@@ -36,7 +37,7 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
             key={board.id}
             onClick={() => launchGeneration(board.id)}
           >
-            {board.label || "Untitled Board"}
+            {board.label || UNTITLED_LABEL}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

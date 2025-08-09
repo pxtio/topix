@@ -124,9 +124,7 @@ class BaseAgent(Agent[Context]):
                     )
 
             # Extract the final output from the agent
-            print(output)
             output = await self._output_extractor(context.context, output)
-            print(output)
 
             context.context.tool_calls.append(
                 ToolCall(

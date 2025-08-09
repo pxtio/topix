@@ -12,6 +12,9 @@ import { isMainResponse } from "../../types/stream"
 import { GenMindmapButton } from "./actions/gen-mindmap"
 
 
+/**
+ * Component that renders a list of sources for a chat response.
+ */
 const SourcesView = ({
   answer
 }: {
@@ -38,6 +41,9 @@ const SourcesView = ({
 }
 
 
+/**
+ * Component that renders action buttons for a chat response.
+ */
 const ResponseActions = ({ message }: { message: string }) => {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -64,16 +70,22 @@ const ResponseActions = ({ message }: { message: string }) => {
 }
 
 
+/**
+ * Component that renders the assistant's message in the chat.
+ */
 export const AssistantMessage = ({
   message,
   isStreaming = false
 }: {
   message: ChatMessage
-  isStreaming?: boolean
+  isStreaming?: boolean // Whether the message is being streamed
 }) => {
   const streamingMessage = useChatStore((state) => state.streams.get(message.id))
 
   const lastStep = streamingMessage?.steps?.[streamingMessage.steps.length - 1]
+
+  // Determine if the last step message should be shown
+  // whether it's a streaming response or a historical message
   const showLastStepMessage = (
     streamingMessage &&
     streamingMessage.steps.length > 0

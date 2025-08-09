@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Query, Request, Response
 
-from topix.agents.mindmap.build_graph_fr_text import parse_markdown_to_mindmap
+from topix.agents.mindmap.build_graph_fr_text import sections_to_tree, split_markdown_sections
 from topix.agents.mindmap.utils import convert_root_to_graph
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.helpers import with_standard_response
@@ -27,7 +27,8 @@ async def convert_mindmap(
     body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
 ):
     """Convert a mindmap to a graph."""
-    res = parse_markdown_to_mindmap(md=body.answer)
+    secs = split_markdown_sections(body.answer)
+    res = sections_to_tree(secs)
     notes = []
     links = []
     for root in res:

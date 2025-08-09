@@ -1,129 +1,150 @@
-"""Tests for mindmap parsing."""
-from topix.agents.mindmap.build_graph_fr_text import parse_markdown_to_mindmap
-from topix.agents.mindmap.datatypes import SimpleNode
+"""Build graph tests."""
+from topix.agents.mindmap.build_graph_fr_text import split_markdown_sections
 
 
-def _find(node: SimpleNode, label: str) -> SimpleNode | None:
-    if node.label == label:
-        return node
-    for c in node.children:
-        hit = _find(c, label)
-        if hit:
-            return hit
-    return None
+def as_sig(secs):
+    """Help compact info."""
+    return [(s.level, s.title, s.start_line, s.end_line) for s in secs]
 
 
-def test_single_h1_root_and_note():
-    """Test single H1 heading with intro note and no children."""
-    md = """# 🧠 Root Heading Carries Key Info
+def test_preface_then_headings():
+    """Preface (level=None) appears if text starts w/o heading; bodies are correct."""
+    md = """Prologue before heading.
 
-This is an intro paragraph for the root.
+# H1 Title
+intro
+
+## H2 A
+a-body
+
+### H3 A1
+a1-body
+
+## H2 B
+b-body
 """
-    root = parse_markdown_to_mindmap(md)[0]
-    assert root.label == "Root Heading Carries Key Info"
-    assert root.emoji == "🧠"
-    assert "intro paragraph" in root.note
-    assert root.children == []
+    secs = split_markdown_sections(md)
+    # Signature checks (levels and titles only)
+    assert [(s.level, s.title) for s in secs] == [
+        (None, ""), (1, "H1 Title"), (2, "H2 A"), (3, "H3 A1"), (2, "H2 B")
+    ]
+    # Body checks
+    assert "Prologue before heading." in secs[0].body
+    assert secs[1].body.strip() == "intro"
+    assert secs[2].body.strip() == "a-body"
+    assert secs[3].body.strip() == "a1-body"
+    assert secs[4].body.strip() == "b-body"
 
 
-def test_h2_children_and_order():
-    """Test parsing multiple H2 children under a single H1."""
-    md = """# 🧠 Root
-
-Intro.
-
-## 🔕 First child summary
-First child intro.
-
-## ⏲️ Second child summary
-Second child intro.
-"""
-    root = parse_markdown_to_mindmap(md)[0]
-    assert len(root.children) == 2
-    assert root.children[0].label == "First child summary"
-    assert root.children[1].label == "Second child summary"
-
-
-def test_emoji_optional_and_label_trim():
-    """Test handling headings with and without emojis."""
-    md = """# Root Without Emoji
-
-## 🧩 Has Emoji
+def test_headings_inside_code_are_ignored():
+    """Headings inside fenced code blocks are not treated as sections."""
+    md = """# Top
 text
-
-## No Emoji Either
-more
-"""
-    root = parse_markdown_to_mindmap(md)[0]
-    assert root.emoji == ""
-    first = _find(root, "Has Emoji")
-    second = _find(root, "No Emoji Either")
-    assert first and first.emoji == "🧩"
-    assert second and second.emoji == ""
-
-
-def test_code_fence_headings_are_ignored():
-    """Test ignoring headings inside fenced code blocks."""
-    md = """# 🧠 Root
-
-```markdown
-## This is not a real heading
-# Nor is this one
-```
-
-## ✅ Real Child
-text
-"""
-    root = parse_markdown_to_mindmap(md)[0]
-    child = _find(root, "Real Child")
-    assert child is not None
-    assert _find(root, "This is not a real heading") is None
-    assert _find(root, "Nor is this one") is None
-
-
-def test_multiple_h1_creates_synthetic_document_root():
-    """Test that multiple H1s result in multiple roots returned."""
-    md = """# One
-text 1
-
-# Two
-text 2
-"""
-    roots = parse_markdown_to_mindmap(md)
-    labels = [r.label for r in roots]
-    assert "One" in labels and "Two" in labels
-
-
-def test_math_and_code_preserved_in_notes():
-    """Test that math and code blocks are preserved in notes."""
-    md = r"""# 🧠 Root
-
-\[
-E = mc^2
-\]
-
 ```python
-def f(x):
-    return x**2
+## Not a heading
+# Also not a heading
 ```
-
-## Child
-Text
+## Real
+body
 """
-    root = parse_markdown_to_mindmap(md)[0]
-    assert r"E = mc^2" in root.note
-    assert "def f(x):" in root.note
+    secs = split_markdown_sections(md)
+    assert [(s.level, s.title) for s in secs] == [
+        (1, "Top"), (2, "Real")
+    ]
+    assert secs[1].body.strip() == "body"
 
 
-def test_child_order_by_source_position():
-    """Test that children keep the source order, not alphabetical order."""
-    md = """# Root
-txt
-## B child second in source
-txt
-## A child first in source
-txt
+def test_headings_inside_math_are_ignored():
+    """Headings inside $$ … $$ and LaTeX math envs are ignored."""
+    md = r"""# Top
+$$
+## not heading
+$$
+
+\begin{equation}
+# not heading either
+E = mc^2
+\end{equation}
+
+## Real
+ok
 """
-    root = parse_markdown_to_mindmap(md)[0]
-    labels = [c.label for c in root.children]
-    assert labels == ["B child second in source", "A child first in source"]
+    secs = split_markdown_sections(md)
+    assert [(s.level, s.title) for s in secs] == [
+        (1, "Top"), (2, "Real")
+    ]
+    assert secs[1].body.strip() == "ok"
+
+
+def test_non_overlapping_and_contiguous_ranges():
+    """Sections are non-overlapping and cover exactly the doc between starts."""
+    md = """# A
+line a
+## B
+line b
+## C
+line c
+"""
+    secs = split_markdown_sections(md)
+    # Non-overlap: end_line of i == start_line of i+1
+    for i in range(len(secs) - 1):
+        assert secs[i].end_line == secs[i + 1].start_line
+    # Final section ends at doc end
+    assert secs[-1].end_line == len(md.splitlines())
+
+
+def test_empty_doc_returns_empty_list():
+    """Empty document -> no sections."""
+    assert split_markdown_sections("") == []
+
+
+def test_no_headings_entire_doc_single_section():
+    """No headings -> single section with level=None and empty title."""
+    md = "only body\nsecond line"
+    secs = split_markdown_sections(md)
+    assert len(secs) == 1
+    s = secs[0]
+    assert s.level is None and s.title == ""
+    assert "only body" in s.body and "second line" in s.body
+
+
+def test_heading_without_body():
+    """Heading followed by another heading yields empty body for the first."""
+    md = """# A
+## B
+text
+"""
+    secs = split_markdown_sections(md)
+    assert [(s.level, s.title) for s in secs] == [
+        (1, "A"), (2, "B")
+    ]
+    assert secs[0].body.strip() == ""   # A has no body
+    assert secs[1].body.strip() == "text"
+
+
+def test_clamp_max_heading_level():
+    """Headings deeper than max_heading_level are clamped to that level."""
+    md = """# H1
+###### H6
+##### H5
+"""
+    secs = split_markdown_sections(md, max_heading_level=3)
+    # H1 stays 1, others clamped to 3
+    assert [s.level for s in secs] == [1, 3, 3]
+
+
+def test_mixed_fences_code_then_math_then_heading():
+    """Complex mixing of fences does not break section detection."""
+    md = """```txt
+# not heading
+```
+$$
+## not heading
+$$
+# Real
+body
+"""
+    secs = split_markdown_sections(md)
+    assert len(secs) == 2
+    assert secs[1].level == 1 and secs[1].title == "Real"
+    assert secs[1].body.strip() == "body"

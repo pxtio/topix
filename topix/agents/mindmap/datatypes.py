@@ -8,7 +8,8 @@ from pydantic import BaseModel
 class SimpleNode(BaseModel):
     """Represents a single node in the mind map."""
 
-    emoji: str
+    level: int
     label: str
     note: str
+    emoji: str = ""
     children: list[SimpleNode] = []

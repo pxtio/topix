@@ -1,5 +1,4 @@
 import React, { useState, type KeyboardEvent } from 'react'
-import { Command, CommandInput, CommandList } from '../../../../components/ui/command'
 import {
   Select,
   SelectContent,
@@ -21,6 +20,7 @@ import { useSendMessage } from '../../api/send-message'
 import { generateUuid } from '@/lib/common'
 import { useAppStore } from '@/store'
 import { SendButton } from './send-button'
+import TextareaAutosize from 'react-textarea-autosize'
 
 
 /**
@@ -57,7 +57,7 @@ const ModelChoiceMenu = () => {
 
   return (
     <Select onValueChange={handleModelChange} defaultValue={llmModel}>
-      <SelectTrigger className="h-8 w-auto rounded-full bg-card text-card-foreground border border-border text-xs px-3 shadow-none">
+      <SelectTrigger className="h-8 w-auto rounded-full bg-card text-card-foreground border border-border text-xs px-3 shadow-md">
         <SelectValue defaultValue={llmModel} />
       </SelectTrigger>
       <SelectContent className='overflow-visible'>
@@ -104,10 +104,9 @@ export const InputBar: React.FC = () => {
     setInput("") // Clear the input after search
   }
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape' || (e.key === 'Backspace' && !input)) {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-    } else if (e.key === 'Enter') {
       handleSearch()
     }
   }
@@ -123,29 +122,40 @@ export const InputBar: React.FC = () => {
     <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 p-4 z-50 flex justify-center items-center">
       <div className='flex flex-col space-y-2'>
         <div>
-          <Command
-            onKeyDown={handleKeyDown}
+          <div
             className={`
+              relative
               md:min-w-[800px]
-              rounded-3xl
-              p-3 pt-0
+              rounded-xl
+              p-2
               bg-card
               text-card-foreground text-base
               border border-border
-              shadow-sm
+              shadow-lg
             `}
           >
-            <div className="flex flex-col items-center space-y-1 items-stretch">
-              <div className='p-2'>
-                <CommandInput
-                  placeholder='Enter your query ...'
+            <div className='absolute -top-10 left-0 transform'>
+              <ModelChoiceMenu />
+            </div>
+            <div className="relative flex flex-row items-center space-y-1 items-stretch">
+              <div className='flex-1 p-2 flex items-center justify-center'>
+                <TextareaAutosize
+                  onKeyDown={handleKeyDown}
+                  onChange={(e) => setInput(e.target.value)}
                   value={input}
-                  onValueChange={setInput}
-                  className='border-b-none'
+                  minRows={1}
+                  maxRows={10}
+                  placeholder='Enter your message...'
+                  className={`
+                    w-full
+                    h-full
+                    resize-none border-none outline-none
+                    bg-transparent
+                    text-sm
+                  `}
                 />
               </div>
-              <div className='flex justify-start'>
-                <ModelChoiceMenu />
+              <div className='flex items-center justify-center'>
                 <SendButton
                   loadingStatus={isStreaming ? "loading": "loaded"}
                   disabled={isStreaming}
@@ -153,11 +163,8 @@ export const InputBar: React.FC = () => {
                   className={commandIconClass}
                 />
               </div>
-
             </div>
-            <CommandList>
-            </CommandList>
-          </Command>
+          </div>
         </div>
       </div>
     </div>

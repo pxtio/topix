@@ -52,10 +52,9 @@ const extractText = (children: React.ReactNode): string => {
 const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) => {
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      console.log('Text copied to clipboard: ', text)
-      toast('Text copied to clipboard!')
-    }).catch(err => {
-      console.error('Failed to copy text: ', err)
+      toast('Copied to clipboard!')
+    }).catch(() => {
+      toast('Failed to copy!')
     })
   }
 
@@ -73,7 +72,7 @@ const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) 
         className="transition-all absolute top-1 right-1 text-sm bg-transparent hover:bg-accent p-2 rounded-xl text-accent-foreground"
         aria-label="Copy to clipboard"
       >
-        <Copy strokeWidth={1.75} className='h-4 w-4' />
+        <Copy strokeWidth={1.75} className='size-4 shrink-0' />
       </button>
       <span className="absolute top-0 left-0 w-auto px-4 py-2 text-xs font-mono">
         {language}

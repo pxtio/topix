@@ -11,7 +11,4 @@ class AgentToolName(str, CustomEnum):
     WEB_SEARCH = "web_search"
     CODE_INTERPRETER = "code_interpreter"
 
-    KEY_POINTS_EXTRACT = "key_points_extract"
-    GRAPH_CONVERSION = "graph_conversion"
-
     RAW_MESSAGE = "raw_message"

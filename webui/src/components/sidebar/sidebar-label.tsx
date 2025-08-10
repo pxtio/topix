@@ -55,7 +55,14 @@ export const SidebarLabel = () => {
 
   return (
     <>
-      <LabelEditor initialLabel={label} onSave={handleSaveEdit} />
+      {
+        !(currentChatId === undefined && view === 'chat') ?
+        <LabelEditor initialLabel={label} onSave={handleSaveEdit} />
+        :
+        <div className="text-sm font-medium">
+          <span>New Chat</span>
+        </div>
+      }
     </>
   )
 }

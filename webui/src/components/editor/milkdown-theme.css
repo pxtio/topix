@@ -1,0 +1,74 @@
+/* milkdown-theme.css */
+.milkdown {
+  /* ===== Backgrounds / Surfaces ===== */
+  --crepe-color-background: var(--color-background);        /* app bg */
+  --crepe-color-surface: var(--color-card);                 /* cards/panels */
+  --crepe-color-surface-low: var(--color-popover);          /* lower/elevated surface */
+
+  /* ===== Text ===== */
+  --crepe-color-on-background: var(--color-foreground);     /* text on bg */
+  --crepe-color-on-surface: var(--color-card-foreground);   /* text on cards */
+  --crepe-color-on-surface-variant: var(--color-muted-foreground);
+
+  /* ===== Accents ===== */
+  --crepe-color-primary: var(--color-primary);
+  --crepe-color-secondary: var(--color-accent);
+  --crepe-color-on-secondary: var(--color-accent-foreground);
+
+  /* ===== UI / States ===== */
+  --crepe-color-outline: var(--color-muted-foreground);
+  --crepe-color-inverse: var(--color-foreground);           /* inverse bg */
+  --crepe-color-on-inverse: var(--color-background);        /* text on inverse */
+
+  /* Code & Errors */
+  --crepe-color-inline-code: var(--color-muted-foreground);/* inline code text */
+  --crepe-color-error: var(--color-destructive);
+
+  /* Interaction (pick closest tokens) */
+  --crepe-color-hover: var(--color-accent);                 /* hover bg */
+  --crepe-color-selected: var(--color-muted);               /* selection bg */
+  --crepe-color-inline-area: var(--color-input);            /* inline edit bg */
+
+  /* ===== Fonts ===== */
+  --crepe-font-title: var(--font-serif);
+  --crepe-font-default: var(--font-sans);
+  --crepe-font-code: var(--font-mono);
+
+  /* ===== Shadows ===== */
+  --crepe-shadow-1: var(--shadow-sm);
+  --crepe-shadow-2: var(--shadow-lg);
+}
+
+/* Optional frame styling to match app's card UI */
+.milkdown .crepe-frame {
+  background: var(--crepe-color-surface);
+  border-color: var(--crepe-color-outline);
+  box-shadow: var(--crepe-shadow-1);
+}
+
+/* Inline code style */
+.milkdown code,
+.milkdown .crepe-inline-code {
+  color: var(--crepe-color-inline-code);
+}
+
+/* Text selection color */
+.milkdown ::selection {
+  background: var(--crepe-color-selected);
+}
+
+.milkdown .ProseMirror {
+  padding: 2rem 6rem; /* 48px top/bottom, 128px left/right */
+}
+
+@media (max-width: 1024px) {
+  .milkdown .ProseMirror {
+    padding: 2rem 4rem; /* reduce for tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .milkdown .ProseMirror {
+    padding: 1.5rem; /* tighter on mobile */
+  }
+}

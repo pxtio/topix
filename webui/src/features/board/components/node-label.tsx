@@ -4,7 +4,9 @@ import TextareaAutosize from 'react-textarea-autosize'
 import { useEffect, useRef, useState } from "react"
 import { IconPicker } from "./emoji-picker/picker"
 import type { NoteNode } from "../types/flow"
-import { MarkdownEditor } from "@/components/editor/text-editor"
+import { MdEditor } from "@/components/editor/milkdown"
+import { MilkdownProvider } from "@milkdown/react"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
 
 /**
@@ -70,10 +72,6 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
     )
   }
 
-  const handleNoteClick = () => {
-    setViewNote(!viewNote)
-  }
-
   const handleNoteChange = (markdown: string) => {
     setNodes((nds) =>
       nds.map((node) => {
@@ -126,72 +124,93 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
   `
 
   return (
-    <div
-      className={`
-        relative
-        flex flex-row items-center justify-center
-        bg-transparent
-      `}
-    >
-      {
-        selected &&
-        <div className='absolute top-0 left-0 transform translate-y-[-100%] text-xs font-sans flex flex-row items-center gap-2'>
-          <IconPicker onSelect={handleEmojiSelect} />
-          <button
-            className='transition-colors px-2 py-1 text-accent-foreground/50 hover:text-accent-foreground'
-            onClick={handleNoteClick}
-          >
-            {viewNote ? 'Hide Note' : 'Show Note'}
-          </button>
-        </div>
-      }
-      {
-        note.properties?.emoji?.prop.icon?.type === 'emoji' && note.properties?.emoji?.prop.icon?.emoji && (
-          <div className={`
-            p-2
-          `}>
-            {note.properties.emoji.prop.icon.emoji}
-          </div>
-        )
-      }
+    <Sheet open={viewNote} onOpenChange={setViewNote}>
       <div
         className={`
           relative
+          flex flex-row items-center justify-center
           bg-transparent
-          overflow-visible
-          w-[250px]
-          min-h-[50px]
-          flex items-center justify-center
         `}
-        onDoubleClick={onDoubleClick}
-        onPointerDown={stopDragging}
       >
         {
-          labelEditing ? (
-            <TextareaAutosize
-              className={textareaClass}
-              value={note.label || ''}
-              onChange={handleChange}
-              placeholder=""
-              ref={textareaRef}
-              readOnly={!labelEditing}
-            />
-          ) : (
-            <div className={textareaClass}>
-              <span>
-                {note.label}
-              </span>
+          selected &&
+          <div className='absolute top-0 left-0 transform translate-y-[-100%] text-xs font-sans flex flex-row items-center gap-2'>
+            <IconPicker onSelect={handleEmojiSelect} />
+            <SheetTrigger asChild>
+              <button
+                className='transition-colors px-2 py-1 text-accent-foreground/50 hover:text-accent-foreground'
+              >
+                {viewNote ? 'Hide Note' : 'Show Note'}
+              </button>
+            </SheetTrigger>
+          </div>
+        }
+        {
+          note.properties?.emoji?.prop.icon?.type === 'emoji' && note.properties?.emoji?.prop.icon?.emoji && (
+            <div className={`
+              p-2
+            `}>
+              {note.properties.emoji.prop.icon.emoji}
             </div>
           )
         }
+        <div
+          className={`
+            relative
+            bg-transparent
+            overflow-visible
+            w-[250px]
+            min-h-[50px]
+            flex items-center justify-center
+          `}
+          onDoubleClick={onDoubleClick}
+          onPointerDown={stopDragging}
+        >
+          {
+            labelEditing ? (
+              <TextareaAutosize
+                className={textareaClass}
+                value={note.label || ''}
+                onChange={handleChange}
+                placeholder=""
+                ref={textareaRef}
+                readOnly={!labelEditing}
+              />
+            ) : (
+              <div className={textareaClass}>
+                <span>
+                  {note.label}
+                </span>
+              </div>
+            )
+          }
+        </div>
+        <SheetContent className="sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle asChild>
+              <div className='flex flex-row items-center gap-2'>
+                {
+                  note.properties?.emoji?.prop.icon?.type === 'emoji' && note.properties?.emoji?.prop.icon?.emoji && (
+                    <div className={`
+                      p-2
+                      text-3xl
+                    `}>
+                      {note.properties.emoji.prop.icon.emoji}
+                    </div>
+                  )
+                }
+                <h1 className='text-3xl'>{note.label}</h1>
+              </div>
+            </SheetTitle>
+            <SheetDescription className='invisible'>
+              Note description
+            </SheetDescription>
+          </SheetHeader>
+          <MilkdownProvider>
+            <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
+          </MilkdownProvider>
+        </SheetContent>
       </div>
-      {
-        viewNote && (
-          <div className='absolute -bottom-1 left-1/2 transform translate-y-[100%] -translate-x-1/2 font-sans bg-card text-card-foreground rounded-xl border border-border p-4 shadow-md w-96'>
-            <MarkdownEditor markdown={note.content?.markdown || ''} onChange={handleNoteChange} readonly={false} />
-          </div>
-        )
-      }
-    </div>
+    </Sheet>
   )
 }

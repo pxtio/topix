@@ -1,81 +1,14 @@
 import React, { useState, type KeyboardEvent } from 'react'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card"
 import clsx from 'clsx'
 import { useChatStore } from '../../store/chat-store'
-import { LlmDescription, LlmModels, LlmName, type LlmModel } from '../../types/llm'
 import { useSendMessage } from '../../api/send-message'
 import { generateUuid } from '@/lib/common'
 import { useAppStore } from '@/store'
 import { SendButton } from './send-button'
 import TextareaAutosize from 'react-textarea-autosize'
 import { Oc } from '@/components/oc'
-
-
-/**
- * ModelCard is a component that displays the name and description of a LLM model
- * in a hover card format. It is used within the ModelChoiceMenu to provide
- * additional information about each model.
- */
-const ModelCard: React.FC<{ model: LlmModel }> = ({ model }) => {
-  return (
-    <HoverCard openDelay={200}>
-      <HoverCardTrigger className='text-mono'>{LlmName[model]}</HoverCardTrigger>
-      <HoverCardContent className='w-48 rounded-xl border border-border bg-popover text-popover-foreground shadow' side="left" sideOffset={15}>
-        <div className=''>
-          {LlmDescription[model]}
-        </div>
-      </HoverCardContent>
-    </HoverCard>
-  )
-}
-
-
-/**
- * ModelChoiceMenu is a component that allows users to select an AI model
- * from a dropdown menu. It uses the Select component from the UI library
- * to create a styled dropdown with model options.
- */
-const ModelChoiceMenu = () => {
-  const setLlmModel = useChatStore((state) => state.setLlmModel)
-  const llmModel = useChatStore((state) => state.llmModel)
-
-  const handleModelChange = (model: LlmModel) => {
-    setLlmModel(model)
-  }
-
-  return (
-    <Select onValueChange={handleModelChange} defaultValue={llmModel}>
-      <SelectTrigger className="h-8 w-auto rounded-full bg-card text-card-foreground border border-border text-xs px-3 shadow-md">
-        <SelectValue defaultValue={llmModel} />
-      </SelectTrigger>
-      <SelectContent className='overflow-visible'>
-        <SelectGroup>
-          <SelectLabel>Models</SelectLabel>
-          {
-            LlmModels.map((model) => (
-              <SelectItem key={model} value={model} className='text-xs'>
-                <ModelCard model={model} />
-              </SelectItem>
-            ))
-          }
-        </SelectGroup>
-      </SelectContent>
-    </Select>
-  )
-}
+import { ModelChoiceMenu } from './input-settings/model-card'
+import { SearchEngineChoiceMenu } from './input-settings/web-search'
 
 
 /**
@@ -84,7 +17,7 @@ const ModelChoiceMenu = () => {
 export const InputBar: React.FC = () => {
   const userId = useAppStore((state) => state.userId)
 
-  const { currentChatId, llmModel, isStreaming } = useChatStore()
+  const { currentChatId, llmModel, isStreaming, webSearchEngine } = useChatStore()
 
   const [input, setInput] = useState<string>("")
 
@@ -98,7 +31,8 @@ export const InputBar: React.FC = () => {
     const payload = {
       query: input.trim(),
       messageId: generateUuid(),
-      model: llmModel
+      model: llmModel,
+      webSearchEngine,
     }
     sendMessage({ payload, userId })
     setInput("") // Clear the input after search
@@ -152,8 +86,9 @@ export const InputBar: React.FC = () => {
               shadow-lg
             `}
           >
-            <div className='absolute -top-10 left-0 transform'>
+            <div className='absolute -top-10 left-0 transform flex flex-row items-center gap-2'>
               <ModelChoiceMenu />
+              <SearchEngineChoiceMenu />
             </div>
             <div className="relative flex flex-row items-center space-y-1 items-stretch">
               <div className='flex-1 p-2 flex items-center justify-center'>

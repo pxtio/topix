@@ -1,7 +1,7 @@
 """Main agent manager."""
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any
 
 from agents import (
     Agent,
@@ -17,6 +17,7 @@ from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName
+from topix.agents.datatypes.web_search import WebSearchOption
 
 
 class PlanHooks(AgentHooks):
@@ -65,7 +66,7 @@ class Plan(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4O,
         instructions_template: str = "plan.jinja",
         model_settings: ModelSettings | None = None,
-        search_choice: Literal["openai", "perplexity"] = "openai",
+        search_choice: WebSearchOption = WebSearchOption.OPENAI,
     ):
         """Init method."""
         name = "Plan"
@@ -74,11 +75,10 @@ class Plan(BaseAgent):
             time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
         if model_settings is None:
-            model_settings = ModelSettings(temperature=0.01)
-        if search_choice == "openai":
-            web_search = WebSearch()
-        else:
-            web_search = WebSearch(model="perplexity/sonar")
+            model_settings = ModelSettings(temperature=0.01, max_tokens=2000)
+
+        web_search = self.setup_websearch(search_choice)
+
         tools = [
             web_search.as_tool(AgentToolName.WEB_SEARCH, streamed=True),
             AnswerReformulate(model=model).as_tool(
@@ -98,3 +98,29 @@ class Plan(BaseAgent):
             hooks=hooks,
         )
         super().__post_init__()
+
+    def setup_websearch(
+        self,
+        search_choice: WebSearchOption
+    ) -> WebSearch:
+        """Set up the web search tool based on the search choice."""
+        match search_choice:
+            case WebSearchOption.OPENAI:
+                return WebSearch()
+            case WebSearchOption.PERPLEXITY:
+                return WebSearch(
+                    model="perplexity/sonar",
+                    search_engine=search_choice
+                )
+            case WebSearchOption.TAVILY:
+                return WebSearch(
+                    instructions_template="decoupled_web_search.jinja",
+                    search_engine=search_choice
+                )
+            case WebSearchOption.LINKUP:
+                return WebSearch(
+                    instructions_template="decoupled_web_search.jinja",
+                    search_engine=search_choice
+                )
+            case _:
+                raise ValueError(f"Unknown web search option: {search_choice}")

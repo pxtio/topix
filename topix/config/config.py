@@ -48,17 +48,47 @@ class DatabasesConfig(BaseModel):
     postgres: PostgresConfig = PostgresConfig()
 
 
-class OpenAIConfig(BaseModel):
+class BaseAPIConfig(BaseModel):
+    """Base configuration for APIs used in the application."""
+
+    url: str | None = None
+    api_key: str
+
+
+class OpenAIConfig(BaseAPIConfig):
     """Configuration for OpenAI API."""
 
-    api_key: str
+    pass
 
 
-class MistralConfig(BaseModel):
+class MistralConfig(BaseAPIConfig):
     """Configuration for Mistral API."""
 
-    url: str
-    api_key: str
+    pass
+
+
+class GeminiConfig(BaseAPIConfig):
+    """Configuration for Gemini API."""
+
+    pass
+
+
+class PerplexityConfig(BaseAPIConfig):
+    """Configuration for Perplexity API."""
+
+    pass
+
+
+class TavilyConfig(BaseAPIConfig):
+    """Configuration for Tavily API."""
+
+    pass
+
+
+class LinkUpConfig(BaseAPIConfig):
+    """Configuration for LinkUp API."""
+
+    pass
 
 
 class APIsConfig(BaseModel):
@@ -66,6 +96,10 @@ class APIsConfig(BaseModel):
 
     openai: OpenAIConfig
     mistral: MistralConfig
+    perplexity: PerplexityConfig
+    tavily: TavilyConfig
+    linkup: LinkUpConfig
+    gemini: GeminiConfig
 
 
 class RunConfig(BaseModel):

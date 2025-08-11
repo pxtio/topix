@@ -51,8 +51,8 @@ class AnswerReformulate(BaseAgent):
             query=input,
             tool_trace=tool_trace,
         )
-        input_items += [{"role": "user", "content": prompt}]
-        return input_items
+
+        return input_items + [{"role": "assistant", "content": prompt}]
 
     async def _as_tool_hook(
         self, context: ReasoningContext, input: str, tool_id: str
@@ -66,7 +66,7 @@ class AnswerReformulate(BaseAgent):
                         tool_name=AgentToolName.ANSWER_REFORMULATE,
                         content=Content(
                             type=ContentType.MESSAGE,
-                            text=context.tool_calls[0].output,
+                            text=str(context.tool_calls[0].output),
                         ),
                         is_stop=True,
                     )

@@ -4,7 +4,7 @@ import datetime
 import os
 import re
 
-from typing import Any, List, Literal
+from typing import Any
 
 import requests
 
@@ -24,6 +24,7 @@ from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.outputs import SearchResult, WebSearchOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
+from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
 from topix.agents.utils import (
     ToolCall,
     tool_execution_handler,
@@ -66,8 +67,8 @@ class WebSearch(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4O_MINI,
         instructions_template: str = "web_search.jinja",
         model_settings: ModelSettings | None = None,
-        search_engine: Literal["openai", "travily", "perlexity", "linkup"] = "openai",
-        search_context_size: Literal["small", "medium", "large"] = "medium",
+        search_engine: WebSearchOption = WebSearchOption.OPENAI,
+        search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
     ):
         """Initialize the WebSearch agent."""
         name = "Web Search"
@@ -100,29 +101,29 @@ class WebSearch(BaseAgent):
     def _configure_tools(
         self,
         model: str,
-        search_engine: str,
-        search_context_size: Literal["small", "medium", "large"] = "medium",
-    ) -> List[Tool]:
+        search_engine: WebSearchOption,
+        search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
+    ) -> list[Tool]:
         """Configure tools based on search engine and model."""
         match search_engine:
-            case "openai":
+            case WebSearchOption.OPENAI:
                 if model.startswith("openai"):
-                    return [WebSearchTool(search_context_size="medium")]
+                    return [WebSearchTool(search_context_size=WebSearchContextSize.MEDIUM)]
                 else:
                     raise ValueError(
                         "OpenAI search engine is only compatible with OpenAI models,"
                         f"got {model}."
                     )
-            case "travily":
+            case WebSearchOption.TAVILY:
                 @function_tool
                 def web_search(query: str) -> WebSearchOutput:
                     """Search using Tavily."""
-                    return search_travily(
+                    return search_tavily(
                         query, search_context_size=search_context_size
                     )
 
                 return [web_search]
-            case "linkup":
+            case WebSearchOption.LINKUP:
                 @function_tool
                 def web_search(query: str) -> WebSearchOutput:
                     """Search using LinkUp."""
@@ -130,7 +131,7 @@ class WebSearch(BaseAgent):
                         query, search_context_size=search_context_size
                     )
                 return [web_search]
-            case "perplexity":
+            case WebSearchOption.PERPLEXITY:
                 if model.startswith("perplexity"):
                     return []
                 raise ValueError(
@@ -141,7 +142,7 @@ class WebSearch(BaseAgent):
                 raise ValueError(f"Unsupported search engine: {search_engine}")
 
     async def _output_extractor(self, context, output) -> WebSearchOutput:
-        if self.search_engine in ["openai", "perplexity"]:
+        if self.search_engine in [WebSearchOption.OPENAI, WebSearchOption.PERPLEXITY]:
             search_results = [
                 SearchResult(url=annotation.url, title=annotation.title)
                 for item in output.new_items
@@ -298,10 +299,10 @@ class WebSearch(BaseAgent):
         return content
 
 
-def search_travily(
+def search_tavily(
     query: str,
     max_results: int = 10,
-    search_context_size: Literal["small", "medium", "large"] = "medium",
+    search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
 ) -> WebSearchOutput:
     """Search for a query using the Tavily API.
 
@@ -320,7 +321,7 @@ def search_travily(
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}",
     }
-    if search_context_size == "large":
+    if search_context_size == WebSearchContextSize.LARGE:
         search_depth = "advanced"
     else:
         search_depth = "basic"
@@ -351,7 +352,7 @@ def search_travily(
 
 def search_linkup(
     query: str,
-    search_context_size: Literal["small", "medium", "large"] = "medium",
+    search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
 ) -> WebSearchOutput:
     """Search for a query using the LinkUp API.
 

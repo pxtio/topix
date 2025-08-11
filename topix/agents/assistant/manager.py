@@ -91,7 +91,7 @@ class AssistantManager:
             steps[message.tool_id].state = ReasoningStepState.COMPLETED
         return steps[message.tool_id]
 
-    async def run_streamed(
+    async def run_streamed(  # noqa: C901
         self,
         context: ReasoningContext,
         query: str,
@@ -121,32 +121,38 @@ class AssistantManager:
             self.plan_agent, input=new_query, context=context, max_turns=max_turns
         )
 
-        raw_answer = ""
+        final_message = ""
+        is_raw_answer = True
         steps = {}
         async for message in res:
             self._update_reasoning_step(steps, message)
             if self._is_response(message):
+                # if answer reformulate is used, reset final_message
+                if message.tool_name == AgentToolName.ANSWER_REFORMULATE and \
+                        is_raw_answer:
+                    final_message = ""
+                    is_raw_answer = False
                 if message.tool_name in [
                     AgentToolName.RAW_MESSAGE,
                     AgentToolName.ANSWER_REFORMULATE,
                 ]:
-                    raw_answer += message.content.text
+                    final_message += message.content.text
             yield message
 
         if session:
             # If a session is provided, store the final answer
-            if not raw_answer.strip():
+            if not final_message.strip():
                 # Answer is empty, use the result from web search
                 if context.tool_calls:
                     for tool_call in context.tool_calls:
                         if tool_call.tool_name == AgentToolName.WEB_SEARCH:
-                            raw_answer = tool_call.output
+                            final_message = tool_call.output
             await session.add_items(
                 [
                     {
                         "id": gen_uid(),
                         "role": "assistant",
-                        "content": raw_answer,
+                        "content": final_message,
                         "reasoning_steps": [val.model_dump(exclude_none=True) for val in steps.values()],
                     }
                 ]

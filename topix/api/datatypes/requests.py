@@ -2,6 +2,7 @@
 
 from pydantic import BaseModel
 
+from topix.agents.datatypes.web_search import WebSearchOption
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 
@@ -12,7 +13,7 @@ class SendMessageRequest(BaseModel):
     message_id: str | None = None
     query: str
     model: str = "openai/gpt-4o"
-
+    web_search_engine: WebSearchOption = WebSearchOption.OPENAI
     activated_tool: str | None = None
 
 

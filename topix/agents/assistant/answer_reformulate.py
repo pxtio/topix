@@ -40,20 +40,19 @@ class AnswerReformulate(BaseAgent):
         tool_trace = ""
 
         for idx, tool_call in enumerate(tool_calls):
-            if tool_call.tool_name != AgentToolName.CODE_INTERPRETER:
-                tool_step = f"""Step {idx + 1}: Calling {tool_call.tool_name}
-                    - Arguments: {tool_call.arguments}
-                    - Output: {tool_call.output} \n\n
-                """
-                tool_trace += tool_step
+            tool_step = f"""Step {idx + 1}: Calling {tool_call.tool_name}
+                - Arguments: {tool_call.arguments}
+                - Output: {str(tool_call.output)} \n\n
+            """
+            tool_trace += tool_step
 
         prompt = self._render_prompt(
             "answer_reformulation.user.jinja",
             query=input,
             tool_trace=tool_trace,
         )
-        input_items += [{"role": "user", "content": prompt}]
-        return input_items
+
+        return input_items + [{"role": "assistant", "content": prompt}]
 
     async def _as_tool_hook(
         self, context: ReasoningContext, input: str, tool_id: str
@@ -67,7 +66,7 @@ class AnswerReformulate(BaseAgent):
                         tool_name=AgentToolName.ANSWER_REFORMULATE,
                         content=Content(
                             type=ContentType.MESSAGE,
-                            text=context.tool_calls[0].output,
+                            text=str(context.tool_calls[0].output),
                         ),
                         is_stop=True,
                     )

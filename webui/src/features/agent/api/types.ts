@@ -1,5 +1,6 @@
 import type { Chat } from "../types/chat"
 import type { LlmModel } from "../types/llm"
+import type { WebSearchEngine } from "../types/web"
 
 
 /**
@@ -9,6 +10,7 @@ export interface SendMessageRequestPayload {
   query: string,
   messageId: string,
   model: LlmModel
+  webSearchEngine: WebSearchEngine
 }
 
 

@@ -321,7 +321,7 @@ def search_tavily(
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}",
     }
-    if search_context_size == WebSearchContextSize.LARGE:
+    if search_context_size in [WebSearchContextSize.MEDIUM, WebSearchContextSize.LARGE]:
         search_depth = "advanced"
     else:
         search_depth = "basic"

@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import type { AgentResponse } from "../types/stream"
 import type { LlmModel } from "../types/llm"
+import type { WebSearchEngine } from "../types/web"
 
 
 /**
@@ -18,7 +19,9 @@ export interface ChatStore {
   streamingMessageId?: string
   currentChatId?: string
   llmModel: LlmModel
+  webSearchEngine: WebSearchEngine
   setLlmModel: (model: LlmModel) => void
+  setWebSearchEngine: (engine: WebSearchEngine) => void
   setIsStreaming: (isStreaming: boolean) => void
   setStreamingMessageId: (messageId?: string) => void
   setCurrentChatId: (chatId?: string) => void
@@ -37,6 +40,8 @@ export const useChatStore = create<ChatStore>((set) => ({
 
   llmModel: "openai/gpt-4o",
 
+  webSearchEngine: "openai",
+
   isStreaming: false,
 
   streamingMessageId: undefined,
@@ -44,6 +49,8 @@ export const useChatStore = create<ChatStore>((set) => ({
   currentChatId: undefined,
 
   setLlmModel: (model) => set({ llmModel: model }),
+
+  setWebSearchEngine: (engine) => set({ webSearchEngine: engine }),
 
   setIsStreaming: (isStreaming) => set({ isStreaming }),
 

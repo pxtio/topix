@@ -133,7 +133,12 @@ async def send_message(
     chat_store: ChatStore = request.app.chat_store
     session = AssistantSession(session_id=chat_id, chat_store=chat_store)
 
-    assistant = AssistantManager(QueryRewrite(), Plan(model=body.model))
+    assistant = AssistantManager(
+        QueryRewrite(),
+        Plan(
+            model=body.model,
+            search_choice=body.web_search_engine
+        ))
     if body.activated_tool:
         assistant.plan_agent.activate_tool(body.activated_tool)
 

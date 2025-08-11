@@ -8,3 +8,26 @@ export interface LinkPreview {
   siteName?: string
   favicon?: string
 }
+
+
+/**
+ * Web search engine options.
+ */
+export const WebSearchEngines = ["openai", "perplexity", "tavily", "linkup"] as const
+export type WebSearchEngine = typeof WebSearchEngines[number]
+
+
+export const WebSearchEngineName: Record<WebSearchEngine, string> = {
+  openai: "OpenAI",
+  perplexity: "Perplexity",
+  tavily: "Tavily",
+  linkup: "LinkUp"
+}
+
+
+export const WebSearchEngineDescription: Record<WebSearchEngine, string> = {
+  openai: "OpenAI's web search",
+  perplexity: "Perplexity's web search pipeline",
+  tavily: "Tavily's search engine + LLM synthesis",
+  linkup: "LinkUp's search engine + LLM synthesis"
+}

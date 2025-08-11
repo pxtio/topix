@@ -12,6 +12,9 @@ async def setup(stage: StageEnum):
     config = Config.load(stage=stage)
 
     os.environ['OPENAI_API_KEY'] = config.run.apis.openai.api_key
+    os.environ["TAVILY_API_KEY"] = config.run.apis.tavily.api_key
+    os.environ["LINKUP_API_KEY"] = config.run.apis.linkup.api_key
+    os.environ["PERPLEXITY_API_KEY"] = config.run.apis.perplexity.api_key
 
     await QdrantStore.from_config().create_collection()
     return config

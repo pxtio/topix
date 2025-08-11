@@ -1,7 +1,7 @@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useChatStore } from "@/features/agent/store/chat-store"
-import { LlmDescription, LlmModels, LlmName, type LlmModel } from "@/features/agent/types/llm"
+import { LlmBrandIcon, LlmDescription, LlmModels, LlmName, type LlmModel } from "@/features/agent/types/llm"
 
 
 /**
@@ -44,11 +44,15 @@ export const ModelChoiceMenu = () => {
         <SelectGroup>
           <SelectLabel>Models</SelectLabel>
           {
-            LlmModels.map((model) => (
-              <SelectItem key={model} value={model} className='text-xs'>
-                <ModelCard model={model} />
-              </SelectItem>
-            ))
+            LlmModels.map((model) => {
+              const Icon = LlmBrandIcon[model]
+              return (
+                <SelectItem key={model} value={model} className='text-xs flex flex-row items-center gap-2'>
+                  <Icon size={4} />
+                  <ModelCard model={model} />
+                </SelectItem>
+              )
+            })
           }
         </SelectGroup>
       </SelectContent>

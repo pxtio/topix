@@ -10,6 +10,9 @@ class OpenAIModel(str, Enum):
     GPT_4_1 = "openai/gpt-4.1"
     GPT_4_1_MINI = "openai/gpt-4.1-mini"
     GPT_4_1_NANO = "openai/gpt-4.1-nano"
+    GPT_5 = "openai/gpt-5"
+    GPT_5_MINI = "openai/gpt-5-mini"
+    GPT_5_NANO = "openai/gpt-5-nano"
 
 
 class GeminiModel(str, Enum):
@@ -32,3 +35,14 @@ class ModelEnum:
     OpenAI = OpenAIModel
     Gemini = GeminiModel
     Perplexity = PerplexityModel
+
+
+def support_temperature(model: str) -> bool:
+    """Check if the model supports temperature.
+
+    Temperature is possibly not supported in reasoning models due to
+    introduced newer parameters like `verbosity` or `reasoning_effort`.
+    """
+    if model in [OpenAIModel.GPT_5, OpenAIModel.GPT_5_MINI, OpenAIModel.GPT_5_NANO]:
+        return False
+    return True

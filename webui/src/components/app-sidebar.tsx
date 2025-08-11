@@ -27,6 +27,7 @@ import { CollapsibleContent } from "@radix-ui/react-collapsible"
 import { useGraphStore } from "@/features/board/store/graph-store"
 import { useGetBoard } from "@/features/board/api/get-board"
 import { UNTITLED_LABEL } from "@/features/board/const"
+import { ScrollArea } from "./ui/scroll-area"
 
 
 function NewBoardItem() {
@@ -186,49 +187,51 @@ export function AppSidebar() {
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <span>Workspace</span>
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <NewBoardItem />
-              {boardItems}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <span>Chats</span>
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <NewChatItem />
-              <Collapsible
-                defaultOpen={true}
-                className="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className='font-medium text-xs flex flex-row items-center w-full'>
-                      <History className='size-4 shrink-0' strokeWidth={1.75} />
-                      <span>Chat History</span>
-                      <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
-                      <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {chatItems}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+      <ScrollArea className='h-full'>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              <span>Workspace</span>
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <NewBoardItem />
+                {boardItems}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              <span>Chats</span>
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <NewChatItem />
+                <Collapsible
+                  defaultOpen={true}
+                  className="group/collapsible"
+                >
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton className='font-medium text-xs flex flex-row items-center w-full'>
+                        <History className='size-4 shrink-0' strokeWidth={1.75} />
+                        <span>Chat History</span>
+                        <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
+                        <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {chatItems}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </ScrollArea>
     </Sidebar>
   )
 }

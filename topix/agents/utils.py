@@ -85,7 +85,7 @@ async def tool_execution_handler(
             AgentStreamMessage(
                 content=Content(
                     type=ContentType.STATUS,
-                    text=format_tool_completed_message(
+                    text=format_tool_failed_message(
                         tool_name, f"Failed with error: {e}"
                     ),
                 ),

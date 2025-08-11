@@ -1,6 +1,7 @@
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarLabel } from "./sidebar/sidebar-label"
+import { ModeToggle } from "./mode-toggle"
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -12,6 +13,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger className="-ml-1" />
             <div>
               <SidebarLabel />
+            </div>
+            <div className='ml-auto'>
+              <ModeToggle />
             </div>
           </header>
           <div className='flex flex-1 w-full relative min-w-0'>

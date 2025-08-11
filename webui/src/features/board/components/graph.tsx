@@ -1,10 +1,8 @@
 
 import {
-  Background,
   Controls,
   MiniMap,
   ReactFlow,
-  BackgroundVariant,
   MarkerType,
   type OnNodesDelete,
   type OnEdgesDelete,
@@ -173,7 +171,6 @@ export default function GraphEditor() {
       >
         <MiniMap />
         <Controls />
-        <Background variant={BackgroundVariant.Dots} />
       </ReactFlow>
     </>
   )

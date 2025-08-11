@@ -20,6 +20,7 @@ from agents import (
 )
 from agents.extensions.models.litellm_model import LitellmModel
 from topix.agents.datatypes.context import Context, ToolCall
+from topix.agents.datatypes.model_enum import support_temperature
 from topix.agents.datatypes.outputs import ToolOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.agents.utils import tool_execution_handler
@@ -35,7 +36,11 @@ class BaseAgent(Agent[Context]):
     """Base class for agents. Inherit from Openai Agent."""
 
     def __post_init__(self):
-        """Automatically load Litellm Model if model is a string."""
+        """Automatically load Litellm Model if not openai's."""
+        # if the model does not support temperature, set it to None
+        if not support_temperature(self.model):
+            self.model_settings.temperature = None
+
         if isinstance(self.model, str):
             model_type = self.model.split("/")[0]
             if model_type != "openai":
@@ -45,7 +50,7 @@ class BaseAgent(Agent[Context]):
         self,
         tool_name: str | None = None,
         tool_description: str | None = None,
-        max_turns: int = 5,
+        max_turns: int = 8,
         streamed: bool = False,
     ) -> Tool:
         """Transform this agent into a tool, callable by other agents.
@@ -161,8 +166,10 @@ class BaseAgent(Agent[Context]):
 
     @classmethod
     def _render_prompt(cls, filename: str, **kwargs) -> str:
-        """Render a prompt template with the given parameters."""
-        """Load a prompt template from the prompts directory."""
+        """Render a prompt template with the given parameters.
+
+        Load a prompt template from the prompts directory.
+        """
         with open(PROMPT_DIR / filename, "r", encoding="utf-8") as f:
             template_str = f.read()
             template: Template = Template(template_str)

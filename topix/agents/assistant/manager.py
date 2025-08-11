@@ -97,7 +97,7 @@ class AssistantManager:
         query: str,
         session: AssistantSession | None = None,
         message_id: str | None = None,
-        max_turns: int = 5,
+        max_turns: int = 8,
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Run the assistant agent with the provided context and query.
 

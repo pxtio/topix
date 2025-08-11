@@ -15,9 +15,9 @@ class OpenAIModel(str, Enum):
 class GeminiModel(str, Enum):
     """Gemini Models."""
 
-    GEMINI_2_FLASH = "gemini-2.0-flash"
-    GEMINI_2_5_FLASH = "gemini-2.5-flash"
-    GEMINI_2_5_PRO = "gemini-2.5-pro"
+    GEMINI_2_FLASH = "gemini/gemini-2.0-flash"
+    GEMINI_2_5_FLASH = "gemini/gemini-2.5-flash"
+    GEMINI_2_5_PRO = "gemini/gemini-2.5-pro"
 
 
 class PerplexityModel(str, Enum):

@@ -95,7 +95,7 @@ export const useSendMessage = () => {
         const stream = sendMessage(payload, chatId, userId)
         const response = buildResponse(stream)
         let setNewAssistantMessageId = false
-        const streamingBatchSize = 10
+        const streamingBatchSize = 2
 
         let iterations = 0
         let streamingMessageId: string | undefined

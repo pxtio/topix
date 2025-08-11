@@ -67,6 +67,12 @@ class MistralConfig(BaseAPIConfig):
     pass
 
 
+class GeminiConfig(BaseAPIConfig):
+    """Configuration for Gemini API."""
+
+    pass
+
+
 class PerplexityConfig(BaseAPIConfig):
     """Configuration for Perplexity API."""
 
@@ -93,6 +99,7 @@ class APIsConfig(BaseModel):
     perplexity: PerplexityConfig
     tavily: TavilyConfig
     linkup: LinkUpConfig
+    gemini: GeminiConfig
 
 
 class RunConfig(BaseModel):

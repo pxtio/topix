@@ -1,9 +1,9 @@
 """Agent context datatypes."""
 import asyncio
 
-from typing import Any
-
 from pydantic import BaseModel, PrivateAttr
+
+from topix.agents.datatypes.outputs import CodeInterpreterOutput, WebSearchOutput
 
 
 class ToolCall(BaseModel):
@@ -12,7 +12,7 @@ class ToolCall(BaseModel):
     tool_id: str
     tool_name: str
     arguments: dict
-    output: Any
+    output: str | WebSearchOutput | CodeInterpreterOutput
 
 
 class Context(BaseModel):

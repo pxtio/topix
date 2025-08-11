@@ -165,6 +165,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
           `}
           onDoubleClick={onDoubleClick}
           onPointerDown={stopDragging}
+          style={{ color: note.style.color || 'inherit' }}
         >
           {
             labelEditing ? (

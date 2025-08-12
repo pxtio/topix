@@ -67,6 +67,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       if (changeIdMap.has(node.id)) {
         const note = convertNodeToNote(boardId, node)
         const op = changeIdMap.get(node.id)
+
         switch (op) {
           case 'add': {
             node.data = { ...note, createdAt: new Date().toISOString() }

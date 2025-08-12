@@ -1,15 +1,35 @@
 import { Button } from "@/components/ui/button"
-import { Square } from "lucide-react"
+import clsx from "clsx"
+import { Hand, MousePointer2, Square } from "lucide-react"
 
 interface GraphControlPanelProps {
   onAddNode: () => void
+  enableSelection: boolean
+  setEnableSelection: (mode: boolean) => void
 }
 
 
 /**
  * Action panel for the graph view.
  */
-export function ActionPanel({ onAddNode }: GraphControlPanelProps) {
+export function ActionPanel({ onAddNode, enableSelection, setEnableSelection }: GraphControlPanelProps) {
+  const normalButtonClass = `
+    transition-colors
+    bg-card text-card-foreground
+    hover:bg-accent
+    p-4
+    rounded-lg
+  `
+
+  const activeButtonClass = clsx(
+    normalButtonClass,
+    'bg-accent text-accent-foreground',
+  )
+
+  const selectionModeButtonClass = enableSelection ? activeButtonClass : normalButtonClass
+
+  const dragModeButtonClass = enableSelection ? normalButtonClass : activeButtonClass
+
   return (
     <div
       className={`
@@ -22,13 +42,23 @@ export function ActionPanel({ onAddNode }: GraphControlPanelProps) {
     >
       <Button
         variant={null}
-        className={`
-          transition-colors
-          bg-card text-card-foreground
-          hover:bg-accent
-          p-4
-          rounded-lg
-        `}
+        size="icon"
+        onClick={() => setEnableSelection(!enableSelection)}
+        className={dragModeButtonClass}
+      >
+        <Hand className='size-4 shrink-0' strokeWidth={1.75} />
+      </Button>
+      <Button
+        variant={null}
+        size="icon"
+        onClick={() => setEnableSelection(!enableSelection)}
+        className={selectionModeButtonClass}
+      >
+        <MousePointer2 className='size-4 shrink-0' strokeWidth={1.75} />
+      </Button>
+      <Button
+        variant={null}
+        className={normalButtonClass}
         size="icon"
         onClick={onAddNode}
       >

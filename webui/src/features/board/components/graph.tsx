@@ -78,7 +78,7 @@ export default function GraphEditor() {
   const { removeNote } = useRemoveNote()
   const { removeLink } = useRemoveLink()
   const { addLinks } = useAddLinks()
-  const { addMindMapToBoard } = useAddMindMapToBoard()
+  const { addMindMapToBoardAsync } = useAddMindMapToBoard()
 
   const deleteNodes: OnNodesDelete<NoteNode> = useCallback((nodes) => {
     if (!boardId || !userId) return
@@ -131,12 +131,14 @@ export default function GraphEditor() {
   }, [isLoading])
 
   useEffect(() => {
-    if (boardId && mindmaps.has(boardId)) {
-      // if a mind map is available, add it to the board
-      addMindMapToBoard()
-      setShouldRecenter(true)
+    const integrateMindmap = async () => {
+      if (boardId && mindmaps.has(boardId)) {
+        await addMindMapToBoardAsync()
+        setShouldRecenter(true)
+      }
     }
-  }, [boardId, mindmaps, addMindMapToBoard])
+    integrateMindmap()
+  }, [boardId, mindmaps, addMindMapToBoardAsync])
 
 
   useEffect(() => {

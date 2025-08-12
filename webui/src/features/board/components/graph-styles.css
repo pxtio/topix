@@ -26,9 +26,9 @@
 }
 
 .react-flow__minimap-mask {
-    fill: var(--background) !important;
+    fill: var(--muted) !important;
 }
 
 .react-flow__minimap-node {
-    fill: var(--accent) !important;
+    fill: var(--primary) !important;
 }

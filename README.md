@@ -16,19 +16,42 @@ python -m topix.api.app --port <custom-port>
 
 ### Frontend
 
-if you change the port of api, you must change accordingly in `webui/src/config/api.ts`
+In `webui/` create a file name `.env` like this:
 
-```tsx
-export const API_URL = "http://localhost:8888"  // -> your api custom port
+```
+VITE_TOPIX_URL=http://localhost:<custom-port>
 ```
 
 ```bash
 cd webui/
-# first time you will need to run npm install to install all packages
-# next time no need
+```
+
+**Development:**
+
+For development, you need to install all packages with:
+
+```bash
 npm install
+```
+
+Then this command allows to view interface in DEV mode
+
+```bash
 npm run dev # this will run on port 5173
 ```
 
-For now the app is deployed on port `3000`
+**Production Preview:**
 
+Once the interface is ready, you can build it with
+
+```bash
+npm run build
+```
+
+Then it's ready for preview, using:
+
+```bash
+serve dist/
+```
+
+By default the app will be deployed on port `3000`

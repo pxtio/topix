@@ -21,7 +21,13 @@ export const IconPicker = ({ onSelect }: IconPickerProps) => {
     onSelect(emoji)
   }
 
-  const pickerTheme = theme === "dark" ? Theme.DARK : Theme.LIGHT
+  const pickerTheme = theme === "dark" ?
+    Theme.DARK
+    :
+    theme === "light" ?
+    Theme.LIGHT
+    :
+    Theme.AUTO
 
   return (
     <>

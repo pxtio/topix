@@ -10,7 +10,7 @@ import "./milkdown-theme.css"
  * Props for the Markdown editor component.
  */
 export interface MdEditorProps {
-  markdown: string;
+  markdown: string
   onSave: (markdown: string) => void
 }
 

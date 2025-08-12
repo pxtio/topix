@@ -11,6 +11,7 @@ import { defaultStyle } from "../types/style"
  */
 export const convertNoteToNode = (note: Note): NoteNode => {
   const position = note.properties?.nodePosition?.prop.position || { x: 0, y: 0 }
+  const size = note.properties?.nodeSize?.prop.size || { width: 100, height: 100 }
 
   return {
     id: note.id,
@@ -18,7 +19,11 @@ export const convertNoteToNode = (note: Note): NoteNode => {
     position,
     data: note,
     selected: false,
-    draggable: true
+    draggable: true,
+    measured: {
+      width: size.width,
+      height: size.height,
+    }
   }
 }
 
@@ -36,7 +41,7 @@ export const convertLinkToEdge = (link: Link): LinkEdge => {
     target: link.target,
     data: link,
     selected: false,
-    animated: false
+    animated: false,
   }
 }
 
@@ -49,8 +54,8 @@ export const convertNodeToNote = (graphId: string, node: NoteNode): Note => {
   note.id = node.id
   note.graphUid = graphId
   note.properties = note.properties || createDefaultNoteProperties()
-    if (node.position) {
-      note.properties.nodePosition = {
+  if (node.position) {
+    note.properties.nodePosition = {
       prop: {
         position: node.position,
         type: "position",
@@ -65,7 +70,6 @@ export const convertNodeToNote = (graphId: string, node: NoteNode): Note => {
       }
     }
   }
-
   return note
 }
 

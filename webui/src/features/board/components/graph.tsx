@@ -7,7 +7,8 @@ import {
   type OnNodesDelete,
   type OnEdgesDelete,
   type OnConnect,
-  useReactFlow
+  useReactFlow,
+  SelectionMode
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import NodeView from './node-view'
@@ -26,6 +27,8 @@ import { convertEdgeToLink } from '../utils/graph'
 import { getBounds } from '../utils/flow-view'
 import { useAddMindMapToBoard } from '../api/add-mindmap-to-board'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
+import './graph-styles.css'
+
 
 const proOptions = { hideAttribution: true }
 
@@ -56,6 +59,7 @@ const connectionLineStyle = {
  * GraphEditor component to render the graph with nodes and edges.
  */
 export default function GraphEditor() {
+  const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
 
   const userId = useAppStore((state) => state.userId)
@@ -130,6 +134,7 @@ export default function GraphEditor() {
     if (boardId && mindmaps.has(boardId)) {
       // if a mind map is available, add it to the board
       addMindMapToBoard()
+      setShouldRecenter(true)
     }
   }, [boardId, mindmaps, addMindMapToBoard])
 
@@ -153,7 +158,11 @@ export default function GraphEditor() {
 
   return (
     <>
-      <ActionPanel onAddNode={handleAddNode} />
+      <ActionPanel
+        onAddNode={handleAddNode}
+        enableSelection={enableSelection}
+        setEnableSelection={setEnableSelection}
+      />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -168,8 +177,12 @@ export default function GraphEditor() {
         defaultEdgeOptions={defaultEdgeOptions}
         connectionLineComponent={CustomConnectionLine}
         connectionLineStyle={connectionLineStyle}
+        selectionOnDrag={enableSelection}
+        selectionMode={SelectionMode.Partial}
+        panOnDrag={!enableSelection}
+        selectionKeyCode={null}
       >
-        <MiniMap />
+        <MiniMap className='!bg-card rounded-lg'/>
         <Controls />
       </ReactFlow>
     </>

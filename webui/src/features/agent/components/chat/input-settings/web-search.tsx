@@ -38,7 +38,7 @@ export const SearchEngineChoiceMenu = () => {
   return (
     <Select onValueChange={handleEngineChange} defaultValue={webSearchEngine}>
       <Tooltip delayDuration={400}>
-        <TooltipTrigger>
+        <TooltipTrigger asChild>
           <SelectTrigger className="h-8 w-auto rounded-full bg-card text-card-foreground border border-border text-xs px-3 shadow-md">
             <Globe className='size-4 shrink-0' strokeWidth={1.75} />
             <span>{WebSearchEngineName[webSearchEngine]}</span>
@@ -48,8 +48,8 @@ export const SearchEngineChoiceMenu = () => {
           Web Search Tool
         </TooltipContent>
       </Tooltip>
-      <SelectContent className='overflow-visible'>
-        <SelectGroup>
+      <SelectContent side='top'>
+        <SelectGroup className='max-h-[300px]'>
           <SelectLabel>Select Web Search Engine</SelectLabel>
           {
             WebSearchEngines.map((engine) => (

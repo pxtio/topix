@@ -39,7 +39,7 @@ export const ModelChoiceMenu = () => {
   return (
     <Select onValueChange={handleModelChange} defaultValue={llmModel}>
       <Tooltip delayDuration={400}>
-        <TooltipTrigger>
+        <TooltipTrigger asChild>
           <SelectTrigger className="h-8 w-auto rounded-full bg-card text-card-foreground border border-border text-xs px-3 shadow-md">
             <SelectValue defaultValue={llmModel} />
           </SelectTrigger>
@@ -48,8 +48,8 @@ export const ModelChoiceMenu = () => {
           Core LLM
         </TooltipContent>
       </Tooltip>
-      <SelectContent className='overflow-visible'>
-        <SelectGroup>
+      <SelectContent side='top'>
+        <SelectGroup className='max-h-[300px]'>
           <SelectLabel>Models</SelectLabel>
           {
             LlmModels.map((model) => {

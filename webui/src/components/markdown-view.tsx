@@ -9,6 +9,7 @@ import { Copy } from "lucide-react"
 import { toast } from "sonner"
 import React from "react"
 import { cn } from "@/lib/utils"
+import { ScrollArea, ScrollBar } from "./ui/scroll-area"
 
 
 /**
@@ -63,19 +64,23 @@ const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, children }) 
 
   return isBlock ? (
     <pre
-      className={cn('text-sm text-mono !rounded-2xl p-4 !bg-card relative my-4 overflow-x-auto border border-border', className)}
+      className={cn('text-sm text-mono !rounded-2xl !bg-card relative my-4 overflow-x-auto border border-border', className)}
     >
-      <button
-        onClick={() => handleCopy(codeContent)}
-        className="transition-all absolute top-1 right-1 text-sm bg-transparent hover:bg-accent p-2 rounded-xl text-accent-foreground"
-        aria-label="Copy to clipboard"
-      >
-        <Copy strokeWidth={1.75} className='size-4 shrink-0' />
-      </button>
-      <span className="absolute top-0 left-0 w-auto px-4 py-2 text-xs font-mono">
-        {language}
-      </span>
-      <code className={"block mt-6"}>{children}</code>
+      <ScrollArea className='p-4 relative'>
+        <button
+          onClick={() => handleCopy(codeContent)}
+          className="transition-all absolute top-1 right-1 text-sm bg-transparent hover:bg-accent p-2 rounded-xl text-accent-foreground"
+          aria-label="Copy to clipboard"
+        >
+          <Copy strokeWidth={1.75} className='size-4 shrink-0' />
+        </button>
+        <span className="absolute top-0 left-0 w-auto px-4 py-2 text-xs font-mono">
+          {language}
+        </span>
+        <code className={"block mt-6"}>{children}</code>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+
     </pre>
   ) : (
     <code

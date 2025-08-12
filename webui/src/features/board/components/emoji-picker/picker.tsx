@@ -1,5 +1,6 @@
+import { useTheme } from "@/components/theme-provider"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import EmojiPicker from 'emoji-picker-react'
+import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react'
 
 
 /**
@@ -14,10 +15,13 @@ export interface IconPickerProps {
  * Component to select an emoji icon.
  */
 export const IconPicker = ({ onSelect }: IconPickerProps) => {
+  const { theme } = useTheme()
   const handleEmojiSelect = (emoji: { emoji: string }) => {
     // Handle emoji selection here
     onSelect(emoji)
   }
+
+  const pickerTheme = theme === "dark" ? Theme.DARK : Theme.LIGHT
 
   return (
     <>
@@ -28,7 +32,12 @@ export const IconPicker = ({ onSelect }: IconPickerProps) => {
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="left" sideOffset={10}>
-          <EmojiPicker onEmojiClick={handleEmojiSelect} />
+          <EmojiPicker
+            onEmojiClick={handleEmojiSelect}
+            emojiStyle={EmojiStyle.NATIVE}
+            lazyLoadEmojis
+            theme={pickerTheme}
+          />
         </DropdownMenuContent>
       </DropdownMenu>
     </>

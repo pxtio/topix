@@ -1,5 +1,6 @@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useChatStore } from "@/features/agent/store/chat-store"
 import { WebSearchEngineDescription, WebSearchEngineName, WebSearchEngines, type WebSearchEngine } from "@/features/agent/types/web"
 import { Globe } from "lucide-react"
@@ -28,8 +29,7 @@ const SearchEngineCard: React.FC<{ searchEngine: WebSearchEngine }> = ({ searchE
  * Component that allows users to select a web search engine
  */
 export const SearchEngineChoiceMenu = () => {
-  const setWebSearchEngine = useChatStore((state) => state.setWebSearchEngine)
-  const webSearchEngine = useChatStore((state) => state.webSearchEngine)
+  const { webSearchEngine, setWebSearchEngine } = useChatStore()
 
   const handleEngineChange = (engine: WebSearchEngine) => {
     setWebSearchEngine(engine)
@@ -37,12 +37,19 @@ export const SearchEngineChoiceMenu = () => {
 
   return (
     <Select onValueChange={handleEngineChange} defaultValue={webSearchEngine}>
-      <SelectTrigger className="h-8 w-auto rounded-full bg-card text-card-foreground border border-border text-xs px-3 shadow-md">
-        <Globe className='size-4 shrink-0' strokeWidth={1.75} />
-        <span>Web Search</span>
-      </SelectTrigger>
-      <SelectContent className='overflow-visible'>
-        <SelectGroup>
+      <Tooltip delayDuration={400}>
+        <TooltipTrigger asChild>
+          <SelectTrigger className="h-8 w-auto rounded-full bg-card text-card-foreground border border-border text-xs px-3 shadow-md">
+            <Globe className='size-4 shrink-0' strokeWidth={1.75} />
+            <span>{WebSearchEngineName[webSearchEngine]}</span>
+          </SelectTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          Web Search Tool
+        </TooltipContent>
+      </Tooltip>
+      <SelectContent side='top'>
+        <SelectGroup className='max-h-[300px]'>
           <SelectLabel>Select Web Search Engine</SelectLabel>
           {
             WebSearchEngines.map((engine) => (

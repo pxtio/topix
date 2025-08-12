@@ -1,5 +1,6 @@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useChatStore } from "@/features/agent/store/chat-store"
 import { LlmBrandIcon, LlmDescription, LlmModels, LlmName, type LlmModel } from "@/features/agent/types/llm"
 
@@ -37,11 +38,18 @@ export const ModelChoiceMenu = () => {
 
   return (
     <Select onValueChange={handleModelChange} defaultValue={llmModel}>
-      <SelectTrigger className="h-8 w-auto rounded-full bg-card text-card-foreground border border-border text-xs px-3 shadow-md">
-        <SelectValue defaultValue={llmModel} />
-      </SelectTrigger>
-      <SelectContent className='overflow-visible'>
-        <SelectGroup>
+      <Tooltip delayDuration={400}>
+        <TooltipTrigger asChild>
+          <SelectTrigger className="h-8 w-auto rounded-full bg-card text-card-foreground border border-border text-xs px-3 shadow-md">
+            <SelectValue defaultValue={llmModel} />
+          </SelectTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          Core LLM
+        </TooltipContent>
+      </Tooltip>
+      <SelectContent side='top'>
+        <SelectGroup className='max-h-[300px]'>
           <SelectLabel>Models</SelectLabel>
           {
             LlmModels.map((model) => {

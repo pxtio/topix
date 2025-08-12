@@ -7,7 +7,10 @@ import {
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem
 } from "@/components/ui/sidebar"
 import { useDeleteChat } from "@/features/agent/api/delete-chat"
 import { useListChats } from "@/features/agent/api/list-chats"
@@ -25,6 +28,7 @@ import { useGraphStore } from "@/features/board/store/graph-store"
 import { useGetBoard } from "@/features/board/api/get-board"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { ScrollArea } from "./ui/scroll-area"
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "./ui/context-menu"
 
 
 /**
@@ -165,27 +169,24 @@ function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
   const isActive = currentChatId === chatId && view === "chat"
 
   return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        onClick={handleClick}
-        className='transition-all text-xs font-medium truncate'
-        isActive={isActive}
-      >
-        <span>{chatLabel}</span>
-      </SidebarMenuButton>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <SidebarMenuAction showOnHover>
-            <MoreHorizontal className='size-4' strokeWidth={1.75} />
-          </SidebarMenuAction>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="start">
-          <DropdownMenuItem onClick={() => handleDeleteChat(chatId)}>
+    <SidebarMenuSubItem>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <SidebarMenuSubButton
+            onClick={handleClick}
+            className='transition-all text-xs font-medium truncate cursor-pointer'
+            isActive={isActive}
+          >
+            <span>{chatLabel}</span>
+          </SidebarMenuSubButton>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={() => handleDeleteChat(chatId)}>
             <span>Delete Chat</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </SidebarMenuItem>
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+    </SidebarMenuSubItem>
   )
 }
 
@@ -243,7 +244,9 @@ export function AppSidebar() {
                       </SidebarMenuItem>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      {chatItems}
+                      <SidebarMenuSub>
+                        {chatItems}
+                      </SidebarMenuSub>
                     </CollapsibleContent>
                   </Collapsible>
                 </SidebarMenu>

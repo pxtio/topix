@@ -48,8 +48,13 @@ export const useCreateBoard = () => {
       setBoardId(boardId) // Set the current board ID to the newly created board
       setNodes([])
       setEdges([])
+      return boardId
     }
   })
 
-  return { createBoard: mutation.mutate, ...mutation }
+  return {
+    createBoard: mutation.mutate,
+    createBoardAsync: mutation.mutateAsync,
+    ...mutation
+  }
 }

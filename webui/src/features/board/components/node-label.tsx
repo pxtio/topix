@@ -7,6 +7,7 @@ import type { NoteNode } from "../types/flow"
 import { MdEditor } from "@/components/editor/milkdown"
 import { MilkdownProvider } from "@milkdown/react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 
 /**
@@ -186,7 +187,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             )
           }
         </div>
-        <SheetContent className="sm:max-w-2xl">
+        <SheetContent className="sm:max-w-2xl flex flex-col items-center">
           <SheetHeader>
             <SheetTitle asChild>
               <div className='flex flex-row items-center gap-2'>
@@ -207,9 +208,13 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
               Note description
             </SheetDescription>
           </SheetHeader>
-          <MilkdownProvider>
-            <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
-          </MilkdownProvider>
+          <div className='min-h-0 flex-1 flex items-center'>
+            <ScrollArea className='h-full'>
+              <MilkdownProvider>
+                <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
+              </MilkdownProvider>
+            </ScrollArea>
+          </div>
         </SheetContent>
       </div>
     </Sheet>

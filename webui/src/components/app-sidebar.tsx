@@ -7,10 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
+  SidebarMenuItem
 } from "@/components/ui/sidebar"
 import { useDeleteChat } from "@/features/agent/api/delete-chat"
 import { useListChats } from "@/features/agent/api/list-chats"
@@ -30,6 +27,9 @@ import { UNTITLED_LABEL } from "@/features/board/const"
 import { ScrollArea } from "./ui/scroll-area"
 
 
+/**
+ * New board item component
+ */
 function NewBoardItem() {
   const setView = useAppStore((state) => state.setView)
   const userId = useAppStore((state) => state.userId)
@@ -44,9 +44,9 @@ function NewBoardItem() {
   const itemClass = 'text-primary text-xs font-medium transition-all'
 
   return (
-    <SidebarMenuItem className={itemClass} >
+    <SidebarMenuItem>
       <SidebarMenuButton
-        className='text-xs'
+        className={itemClass}
         onClick={handleClick}
       >
         <PenLine className='text-xs shrink-0' strokeWidth={1.75} />
@@ -57,6 +57,9 @@ function NewBoardItem() {
 }
 
 
+/**
+ * A board item component
+ */
 function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
   const { view, setView, userId } = useAppStore()
   const { boardId: currentBoardId, setBoardId, setNodes, setEdges, setIsLoading } = useGraphStore()
@@ -78,14 +81,18 @@ function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton onClick={handleClick} className='text-xs font-medium' isActive={isActive}>
+      <SidebarMenuButton
+        onClick={handleClick}
+        className='text-xs font-medium truncate'
+        isActive={isActive}
+      >
         <Share2 className='shrink-0' strokeWidth={1.75} />
         <span>{trimText(label || UNTITLED_LABEL, 20)}</span>
       </SidebarMenuButton>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <SidebarMenuAction className='text-xs'>
-            <MoreHorizontal className='text-xs' strokeWidth={1.75} />
+          <SidebarMenuAction showOnHover>
+            <MoreHorizontal className='size-4' strokeWidth={1.75} />
           </SidebarMenuAction>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start">
@@ -99,6 +106,9 @@ function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
 }
 
 
+/**
+ * New chat item component
+ */
 function NewChatItem() {
   const view = useAppStore((state) => state.view)
   const setCurrentChatId = useChatStore((state) => state.setCurrentChatId)
@@ -114,10 +124,10 @@ function NewChatItem() {
   }
 
   return (
-    <SidebarMenuItem className='text-xs font-medium' >
+    <SidebarMenuItem>
       <SidebarMenuButton
         onClick={handleClick}
-        className='text-xs text-primary'
+        className='text-xs text-primary font-medium truncate'
         isActive={isActive}
       >
         <BotMessageSquare className='text-xs shrink-0' strokeWidth={1.75} />
@@ -128,6 +138,9 @@ function NewChatItem() {
 }
 
 
+/**
+ * A chat item component
+ */
 function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
   const { deleteChat } = useDeleteChat()
 
@@ -147,19 +160,23 @@ function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
     deleteChat({ chatId, userId })
   }
 
-  const chatLabel = trimText(label || UNTITLED_LABEL, 20)
+  const chatLabel = trimText(label || UNTITLED_LABEL,100)
 
   const isActive = currentChatId === chatId && view === "chat"
 
   return (
-    <SidebarMenuSubItem className="transition-all text-xs">
-      <SidebarMenuSubButton onClick={handleClick} className='text-xs' isActive={isActive}>
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        onClick={handleClick}
+        className='transition-all text-xs font-medium truncate'
+        isActive={isActive}
+      >
         <span>{chatLabel}</span>
-      </SidebarMenuSubButton>
+      </SidebarMenuButton>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <SidebarMenuAction className='text-xs'>
-            <MoreHorizontal className='text-xs' strokeWidth={1.75} />
+          <SidebarMenuAction showOnHover>
+            <MoreHorizontal className='size-4' strokeWidth={1.75} />
           </SidebarMenuAction>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start">
@@ -168,11 +185,14 @@ function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </SidebarMenuSubItem>
+    </SidebarMenuItem>
   )
 }
 
 
+/**
+ * App sidebar component
+ */
 export function AppSidebar() {
   const userId = useAppStore((state) => state.userId)
 
@@ -188,49 +208,49 @@ export function AppSidebar() {
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <ScrollArea className='h-full'>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>
-              <span>Workspace</span>
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <NewBoardItem />
-                {boardItems}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-          <SidebarGroup>
-            <SidebarGroupLabel>
-              <span>Chats</span>
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <NewChatItem />
-                <Collapsible
-                  defaultOpen={true}
-                  className="group/collapsible"
-                >
-                  <SidebarMenuItem>
+        <div className='w-(--sidebar-width)'>
+          <SidebarContent className='w-full'>
+            <SidebarGroup>
+              <SidebarGroupLabel>
+                <span>Workspace</span>
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <NewBoardItem />
+                  {boardItems}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>
+                <span>Chats</span>
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <NewChatItem />
+                  <Collapsible
+                    defaultOpen={true}
+                    className="group/collapsible w-full"
+                  >
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuButton className='font-medium text-xs flex flex-row items-center w-full'>
-                        <History className='size-4 shrink-0' strokeWidth={1.75} />
-                        <span>Chat History</span>
-                        <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
-                        <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
-                      </SidebarMenuButton>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton className='font-medium text-xs flex flex-row items-center w-full'>
+                          <History className='size-4 shrink-0' strokeWidth={1.75} />
+                          <span>Chat History</span>
+                          <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
+                          <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {chatItems}
-                      </SidebarMenuSub>
+                      {chatItems}
                     </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
+                  </Collapsible>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </div>
       </ScrollArea>
     </Sidebar>
   )

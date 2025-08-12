@@ -55,7 +55,7 @@ export const LlmBrandIcon: Record<LlmModel, React.ComponentType<{ size?: number 
   "openai/gpt-5": OpenAI,
   "openai/gpt-5-mini": OpenAI,
   "openai/gpt-5-nano": OpenAI,
-  "gemini/gemini-2.0-flash": Gemini,
-  "gemini/gemini-2.5-flash": Gemini,
-  "gemini/gemini-2.5-pro": Gemini
+  "gemini/gemini-2.0-flash": Gemini.Color,
+  "gemini/gemini-2.5-flash": Gemini.Color,
+  "gemini/gemini-2.5-pro": Gemini.Color
 }

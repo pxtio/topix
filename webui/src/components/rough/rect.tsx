@@ -49,6 +49,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     canvas.height = height
 
     const ctx = canvas.getContext('2d')
+
     if (!ctx) return
     ctx.clearRect(0, 0, width, height)
 
@@ -56,12 +57,17 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     const radius = rounded === 'rounded-2xl' ? 16 : 0
 
     const pathData = roundedRectPath(0, 0, width, height, radius)
+
     const drawable = rc.generator.path(pathData, {
       roughness,
       stroke,
       strokeWidth,
       fill,
       fillStyle,
+      disableMultiStroke: true,
+      disableMultiStrokeFill: true,
+      bowing: 0.2,
+      curveFitting: 1,
     })
 
     rc.draw(drawable)

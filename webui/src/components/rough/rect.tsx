@@ -63,11 +63,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       stroke,
       strokeWidth,
       fill,
-      fillStyle,
-      disableMultiStroke: true,
-      disableMultiStrokeFill: true,
-      bowing: 0.2,
-      curveFitting: 1,
+      fillStyle
     })
 
     rc.draw(drawable)

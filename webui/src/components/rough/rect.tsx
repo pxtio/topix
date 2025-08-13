@@ -1,35 +1,24 @@
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
+import type { Options as RoughOptions } from 'roughjs/bin/core'
+import { useViewport } from '@xyflow/react'
 
-/**
- * RoughRect is a React component that draws a rough rectangle with optional rounded corners
- * and allows for children to be rendered inside it. It uses the Rough.js library to create
- * the rough drawing effect.
- *
- * @param {Object} props - The properties for the RoughRect component.
- * @param {React.ReactNode} props.children - The content to render inside the rectangle.
- * @param {'none' | 'rounded-2xl'} [props.rounded='none'] - The rounding style for the rectangle corners.
- * @param {number} [props.roughness=1.5] - The roughness of the drawing.
- * @param {string} [props.stroke='black'] - The stroke color of the rectangle.
- * @param {number} [props.strokeWidth=2] - The width of the stroke.
- * @param {string} [props.fill] - The fill color of the rectangle.
- * @param {RoughOptions['fillStyle']} [props.fillStyle='hachure'] - The fill style for the rectangle.
- */
-export type RoughRectProps = {
-  children: React.ReactNode
-  rounded?: 'none' | 'rounded-2xl'
+type RoundedClass = 'none' | 'rounded-2xl'
+
+type RoughRectProps = {
+  children?: React.ReactNode
+  rounded?: RoundedClass
   roughness?: number
   stroke?: string
   strokeWidth?: number
   fill?: string
-  fillStyle?: 'solid'
+  fillStyle?: RoughOptions['fillStyle']
+  className?: string
 }
 
 
 /**
- * RoughRect is a React component that draws a rough rectangle with optional rounded corners
- * and allows for children to be rendered inside it. It uses the Rough.js library to create
- * the rough drawing effect.
+ * RoughCanvas-based rectangle component.
  */
 export const RoughRect: React.FC<RoughRectProps> = ({
   children,
@@ -39,90 +28,134 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   strokeWidth = 1,
   fill,
   fillStyle = 'solid',
+  className
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const { zoom = 1 } = useViewport()
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
-    const { width, height } = wrapper.getBoundingClientRect()
-    canvas.width = width
-    canvas.height = height
+    const rect = wrapper.getBoundingClientRect()
+    const cssW = Math.max(1, wrapper.clientWidth || Math.floor(rect.width))
+    const cssH = Math.max(1, wrapper.clientHeight || Math.floor(rect.height))
+    if (cssW === 0 || cssH === 0) return
+
+    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+
+    // oversample backing store for zoom-in, never below 1 on zoom-out
+    const oversample = Math.max(1, zoom)
+
+    const pixelW = Math.floor(cssW * dpr * oversample)
+    const pixelH = Math.floor(cssH * dpr * oversample)
+    if (canvas.width !== pixelW) canvas.width = pixelW
+    if (canvas.height !== pixelH) canvas.height = pixelH
+
+    canvas.style.width = cssW + 'px'
+    canvas.style.height = cssH + 'px'
 
     const ctx = canvas.getContext('2d')
-
     if (!ctx) return
-    ctx.clearRect(0, 0, width, height)
+
+    // clear in device pixels
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+    // draw in CSS units scaled by dpr*oversample so the path fills the buffer
+    ctx.setTransform(dpr * oversample, 0, 0, dpr * oversample, 0, 0)
 
     const rc = new RoughCanvas(canvas)
-    const radius = rounded === 'rounded-2xl' ? 16 : 0
 
-    const pathData = roundedRectPath(0, 0, width, height, radius)
+    // ensure visible if no fill and stroke was 'transparent'
+    const visibleStroke = stroke === 'transparent' && !fill ? '#222' : stroke
+
+    // hairline crispness without eating tiny boxes
+    const inset = strokeWidth <= 1.5 ? Math.min(0.5, cssW / 4, cssH / 4) : 0
+    const w = Math.max(0, cssW - inset * 2)
+    const h = Math.max(0, cssH - inset * 2)
+
+    const baseRadius = rounded === 'rounded-2xl' ? 16 : 0
+    const radius = Math.max(0, Math.min(baseRadius, w / 2, h / 2))
+
+    const pathData = radius > 0
+      ? excalidrawRoundedRectPath(inset, inset, w, h, radius) // curved corners like Excalidraw
+      : rectPath(inset, inset, w, h)
 
     const drawable = rc.generator.path(pathData, {
       roughness,
-      stroke,
+      stroke: visibleStroke,
       strokeWidth,
       fill,
-      fillStyle
+      fillStyle,
+      seed: 1337
     })
 
     rc.draw(drawable)
-  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle])
+  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, zoom])
 
   useEffect(() => {
     const wrapper = wrapperRef.current
     const canvas = canvasRef.current
     if (!wrapper || !canvas) return
 
-    const resizeObserver = new ResizeObserver(() => {
-      draw(wrapper, canvas)
-    })
+    const redraw = () => draw(wrapper, canvas)
 
-    resizeObserver.observe(wrapper)
-    draw(wrapper, canvas)
+    const ro = new ResizeObserver(redraw)
+    ro.observe(wrapper)
+
+    window.addEventListener('resize', redraw)
+
+    redraw()
 
     return () => {
-      resizeObserver.disconnect()
+      ro.disconnect()
+      window.removeEventListener('resize', redraw)
     }
   }, [draw])
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div ref={wrapperRef} className={`relative ${className || ''}`}>
       <canvas
         ref={canvasRef}
-        className="absolute top-0 left-0 w-full h-full pointer-events-none"
-        style={{ zIndex: 10 }}
+        className='absolute inset-0 w-full h-full pointer-events-none'
+        style={{ zIndex: 10, background: 'transparent' }}
       />
-      <div className="relative z-20">{children}</div>
+      <div className='relative z-20'>
+        {children}
+      </div>
     </div>
   )
 }
 
+// plain rectangle path
+function rectPath(x: number, y: number, w: number, h: number): string {
+  return `M${x},${y} h${w} v${h} h-${w} Z`
+}
 
-function roundedRectPath(
+// Excalidraw-style curved-corner rectangle using quadratic Béziers
+function excalidrawRoundedRectPath(
   x: number,
   y: number,
-  width: number,
-  height: number,
+  w: number,
+  h: number,
   r: number
 ): string {
-  if (r === 0) {
-    return `M${x},${y} h${width} v${height} h-${width} Z`
-  }
+  const R = Math.max(0, Math.min(r, Math.min(w, h) / 2))
+  const x0 = x
+  const y0 = y
+  const x1 = x + w
+  const y1 = y + h
 
-  // Clamp radius to not exceed half width or half height
-  const radius = Math.max(0, Math.min(r, width / 2, height / 2))
-
+  // moves clockwise: top-left start → top-right → bottom-right → bottom-left → close
   return [
-    `M${x + radius},${y}`,
-    `h${width - 2 * radius}`,
-    `a${radius},${radius} 0 0 1 ${radius},${radius}`,
-    `v${height - 2 * radius}`,
-    `a${radius},${radius} 0 0 1 -${radius},${radius}`,
-    `h-${width - 2 * radius}`,
-    `a${radius},${radius} 0 0 1 -${radius},-${radius}`,
-    `v-${height - 2 * radius}`,
-    `a${radius},${radius} 0 0 1 ${radius},-${radius}`,
+    `M ${x0 + R} ${y0}`,
+    `L ${x1 - R} ${y0}`,
+    `Q ${x1} ${y0}, ${x1} ${y0 + R}`,
+    `L ${x1} ${y1 - R}`,
+    `Q ${x1} ${y1}, ${x1 - R} ${y1}`,
+    `L ${x0 + R} ${y1}`,
+    `Q ${x0} ${y1}, ${x0} ${y1 - R}`,
+    `L ${x0} ${y0 + R}`,
+    `Q ${x0} ${y0}, ${x0 + R} ${y0}`,
     `Z`
   ].join(' ')
 }

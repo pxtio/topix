@@ -23,6 +23,14 @@ class GeminiModel(str, Enum):
     GEMINI_2_5_PRO = "gemini/gemini-2.5-pro"
 
 
+class AnthropicModel(str, Enum):
+    """Anthropic Models."""
+
+    CLAUDE_SONNET_4 = "anthropic/claude-sonnet-4"
+    CLAUDE_OPUS_4_1 = "anthropic/claude-opus-4-1"
+    CLAUDE_HAIKU = "anthropic/claude-haiku"
+
+
 class PerplexityModel(str, Enum):
     """Perplexity Models."""
 

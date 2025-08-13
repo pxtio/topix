@@ -91,6 +91,12 @@ class LinkUpConfig(BaseAPIConfig):
     pass
 
 
+class AnthropicConfig(BaseAPIConfig):
+    """Configuration for Anthropic API."""
+
+    pass
+
+
 class APIsConfig(BaseModel):
     """Configuration for external APIs used in the application."""
 
@@ -100,6 +106,7 @@ class APIsConfig(BaseModel):
     tavily: TavilyConfig
     linkup: LinkUpConfig
     gemini: GeminiConfig
+    anthropic: AnthropicConfig
 
 
 class RunConfig(BaseModel):

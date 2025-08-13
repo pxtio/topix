@@ -54,7 +54,7 @@ export const defaultStyle = (): Style => ({
   strokeStyle: "solid",
   backgroundColor: "oklch(0.954 0.038 75.164)",
   fillStyle: "solid",
-  roughness: 0.2,
+  roughness: 0.1,
   opacity: 100,
   groupIds: [],
   fontFamily: undefined,

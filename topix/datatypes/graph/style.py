@@ -16,12 +16,17 @@ class StrokeStyle(str, CustomEnum):
 
     SOLID = "solid"
     DASHED = "dashed"
+    DOTTED = "dotted"
 
 
 class FillStyle(str, CustomEnum):
     """Enumeration for fill styles."""
 
     SOLID = "solid"
+    HACHURE = "hachure"
+    CROSSHATCH = "cross-hatch"
+    ZIGZAG = "zigzag"
+    DOTS = "dots"
 
 
 class TextAlign(str, CustomEnum):

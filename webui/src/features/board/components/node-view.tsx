@@ -88,6 +88,8 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
         roughness={data.style.roughness}
         fill={data.style.backgroundColor || 'white'}
         fillStyle={data.style.fillStyle}
+        stroke={data.style.strokeColor || 'transparent'}
+        strokeWidth={data.style.strokeWidth}
       >
         <div
           ref={containerRef}

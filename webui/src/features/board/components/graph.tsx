@@ -28,6 +28,7 @@ import { getBounds } from '../utils/flow-view'
 import { useAddMindMapToBoard } from '../api/add-mindmap-to-board'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import './graph-styles.css'
+import { GraphSidebar } from './style-panel/panel'
 
 
 const proOptions = { hideAttribution: true }
@@ -61,6 +62,7 @@ const connectionLineStyle = {
 export default function GraphEditor() {
   const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
+  const [isDragging, setIsDragging] = useState<boolean>(false)
 
   const userId = useAppStore((state) => state.userId)
   const {
@@ -165,6 +167,13 @@ export default function GraphEditor() {
         enableSelection={enableSelection}
         setEnableSelection={setEnableSelection}
       />
+      {
+        !isDragging && (
+          <div className='absolute top-1 left-1 w-auto max-w-[300px] h-auto z-50'>
+            <GraphSidebar />
+          </div>
+        )
+      }
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -183,6 +192,8 @@ export default function GraphEditor() {
         selectionMode={SelectionMode.Partial}
         panOnDrag={!enableSelection}
         selectionKeyCode={null}
+        onNodeDragStart={() => setIsDragging(true)}
+        onNodeDragStop={() => setIsDragging(false)}
       >
         <MiniMap className='!bg-card rounded-lg'/>
         <Controls />

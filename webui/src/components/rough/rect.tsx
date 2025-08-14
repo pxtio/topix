@@ -86,6 +86,9 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       strokeWidth,
       fill,
       fillStyle,
+      bowing: 2,
+      curveStepCount: 24,
+      maxRandomnessOffset: 1.5,
       seed: 1337
     })
 

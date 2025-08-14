@@ -10,12 +10,12 @@ export type NodeType = "rectangle" | "text"
 /**
  * Stroke style for the node.
  */
-export type StrokeStyle = "solid" | "dashed"
+export type StrokeStyle = "solid" | "dashed" | "dotted"
 
 /**
  * Fill style for the node.
  */
-export type FillStyle = "solid"
+export type FillStyle = "solid" | "hachure" | "cross-hatch" | "zigzag" | "dots"
 
 /**
  * Text alignment options for the node.

@@ -6,7 +6,12 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from topix.datatypes.graph.style import Style
-from topix.datatypes.note.property import IconProperty, PositionProperty, Prop, SizeProperty
+from topix.datatypes.note.property import (
+    IconProperty,
+    PositionProperty,
+    Prop,
+    SizeProperty,
+)
 from topix.utils.common import gen_uid
 
 

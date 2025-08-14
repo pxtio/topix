@@ -7,6 +7,7 @@ from qdrant_client.models import ScoredPoint
 from topix.datatypes.chat.chat import Message
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
+from topix.datatypes.note.property import TextProperty
 from topix.nlp.embed import OpenAIEmbedder
 from topix.store.qdrant.base import QdrantStore
 
@@ -69,13 +70,29 @@ class ContentStore:
                 return json.dumps(entry.content)
         return ""
 
+    async def _embed(
+        self, entries: list[Entry]
+    ) -> list[list[float] | list[list[float]] | None]:
+        searchable_texts = []
+        indices = []
+        for i, entry in enumerate(entries):
+            for prop in entry.properties.values():
+                if isinstance(prop, TextProperty):
+                    if prop.searchable and prop.text:
+                        searchable_texts.append(prop.text)
+                        indices.append(i)
+        embeds = await self.embedder.embed(searchable_texts)
+        # Create a list of embeddings with the same length as entries
+        embeddings = [None] * len(entries)
+        for i, idx in enumerate(indices):
+            embeddings[idx] = embeds[i]
+        return embeddings
+
     async def add(self, entries: list[Entry]):
         """Create a new note in the Qdrant store."""
         await self.qdrant_client.add(
             objects=entries,
-            embeddings=await self.embedder.embed(
-                [self.extract_text(entry) for entry in entries]
-            )
+            embeddings=await self._embed(entries),
         )
 
     async def update(self, idx: str, data: dict):
@@ -88,9 +105,7 @@ class ContentStore:
             if text:
                 new_embedding = (await self.embedder.embed([text]))[0]
         await self.qdrant_client.update_fields(
-            point_id=idx,
-            fields=data,
-            embedding=new_embedding
+            point_id=idx, fields=data, embedding=new_embedding
         )
 
     async def delete(self, idx: str):
@@ -98,15 +113,10 @@ class ContentStore:
         await self.qdrant_client.delete(point_id=idx)
 
     async def mget(
-        self,
-        ids: list[str],
-        include: dict | bool | None = True
+        self, ids: list[str], include: dict | bool | None = True
     ) -> list[Entry]:
         """Retrieve multiple notes from the Qdrant store by their IDs."""
-        results = await self.qdrant_client.mget(
-            point_ids=ids,
-            include=include
-        )
+        results = await self.qdrant_client.mget(point_ids=ids, include=include)
         return [self.convert_point_to_entry(point) for point in results]
 
     async def filt(
@@ -114,44 +124,31 @@ class ContentStore:
         filters: dict | None = None,
         limit: int = 1000,
         include: dict | bool | None = True,
-        order: dict | str | None = None
+        order: dict | str | None = None,
     ) -> list[Entry]:
         """Retrieve all notes from the Qdrant store."""
         if order is None:
             order = {"key": "created_at", "direction": "desc"}
         results = await self.qdrant_client.filt(
-            filters=filters,
-            include=include,
-            limit=limit,
-            order=order
+            filters=filters, include=include, limit=limit, order=order
         )
-        return [
-            self.convert_point_to_entry(point) for point in results
-        ]
+        return [self.convert_point_to_entry(point) for point in results]
 
     async def search(
         self,
         query: str,
         limit: int = 5,
         filters: dict | None = None,
-        include: dict | bool | None = True
+        include: dict | bool | None = True,
     ) -> list[Entry]:
         """Search for notes in the Qdrant store."""
         embedding = await self.embedder.embed([query])
         results = await self.qdrant_client.search(
-            embedding=embedding[0],
-            limit=limit,
-            filters=filters,
-            include=include
+            embedding=embedding[0], limit=limit, filters=filters, include=include
         )
-        return [
-            self.convert_point_to_entry(point) for point in results
-        ]
+        return [self.convert_point_to_entry(point) for point in results]
 
-    async def delete_by_filters(
-        self,
-        filters: dict
-    ):
+    async def delete_by_filters(self, filters: dict):
         """Delete notes in the Qdrant store that match the given filters."""
         await self.qdrant_client.delete_by_filters(filters=filters)
 

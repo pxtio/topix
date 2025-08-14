@@ -11,6 +11,8 @@ from qdrant_client.http.models import FilterSelector
 from qdrant_client.models import (
     Distance,
     Filter,
+    MultiVectorComparator,
+    MultiVectorConfig,
     PointIdsList,
     PointStruct,
     ScalarQuantization,
@@ -79,7 +81,10 @@ class QdrantStore:
         force_recreate: bool = False,
         quantized: bool = True
     ) -> None:
-        """Create a Qdrant collection with the specified parameters."""
+        """Create a Qdrant collection with the specified parameters.
+
+        Supporting multiple vector storage
+        """
         exists = await self.client.collection_exists(self.collection)
         if force_recreate and exists:
             await self.client.delete_collection(self.collection)
@@ -87,7 +92,13 @@ class QdrantStore:
         if force_recreate or not exists:
             await self.client.create_collection(
                 collection_name=self.collection,
-                vectors_config=VectorParams(size=vector_size, distance=distance),
+                vectors_config=VectorParams(
+                    size=vector_size,
+                    distance=distance,
+                    multivector_config=MultiVectorConfig(
+                        comparator=MultiVectorComparator.MAX_SIM
+                    ),
+                ),
                 quantization_config=ScalarQuantization(
                     scalar=ScalarQuantizationConfig(
                         type="int8",
@@ -115,7 +126,7 @@ class QdrantStore:
     async def _add_batch(
         self,
         objects: Sequence[T],
-        embeddings: Sequence[list[float]],
+        embeddings: Sequence[list[float] | list[list[float]]],
     ) -> None:
         """Add a batch of objects to the Qdrant collection."""
         if not objects:
@@ -141,7 +152,7 @@ class QdrantStore:
     async def add(
         self,
         objects: Sequence[T],
-        embeddings: Sequence[list[float] | None] | None = None,
+        embeddings: Sequence[list[float] | list[list[float]] | None] | None = None,
         batch_size: int = 1000
     ) -> None:
         """Add a batch of objects to the Qdrant collection."""
@@ -158,7 +169,7 @@ class QdrantStore:
         self,
         point_id: str | int,
         fields: dict,
-        embedding: list[float] | None = None
+        embedding: list[float] | list[list[float]] | None = None
     ) -> None:
         """Update specific fields of a point in the collection."""
         if not fields:

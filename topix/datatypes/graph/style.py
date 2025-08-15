@@ -68,6 +68,8 @@ class Style(BaseModel):
     roughness: float = 1.0
     opacity: int = 100
     group_ids: list[str] = []
+    font_size: str | None = None
     font_family: str | None = None
     text_align: TextAlign = TextAlign.LEFT
-    color: str | None = None
+    text_color: str | None = None
+    text_style: str | None = None

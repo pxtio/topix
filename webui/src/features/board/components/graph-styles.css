@@ -27,6 +27,7 @@
 
 .react-flow__minimap-mask {
     fill: var(--muted) !important;
+    opacity: 0.75 !important;
 }
 
 .react-flow__minimap-node {

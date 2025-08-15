@@ -8,6 +8,7 @@ import { MdEditor } from "@/components/editor/milkdown"
 import { MilkdownProvider } from "@milkdown/react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from "../types/style"
 
 
 /**
@@ -111,12 +112,14 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
 
   const textareaClass = `
     w-full h-full
-    px-3 py-2
+    p-6
     bg-transparent
     ${note.style.textAlign === 'center' ? 'text-center' : note.style.textAlign === 'right' ? 'text-right' : 'text-left'}
     border-none
     resize-none
-    font-handwriting
+    ${textStyleToTwClass(note.style.textStyle)}
+    ${fontFamilyToTwClass(note.style.fontFamily)}
+    ${fontSizeToTwClass(note.style.fontSize)}
     focus:outline-none
     focus:ring-0
     focus:border-none
@@ -166,7 +169,9 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
           `}
           onDoubleClick={onDoubleClick}
           onPointerDown={stopDragging}
-          style={{ color: note.style.color || 'inherit' }}
+          style={{
+            color: note.style.textColor || 'inherit',
+          }}
         >
           {
             labelEditing ? (
@@ -187,10 +192,10 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             )
           }
         </div>
-        <SheetContent className="sm:max-w-2xl flex flex-col items-center">
-          <SheetHeader>
+        <SheetContent className="sm:max-w-2xl flex flex-col items-center text-left">
+          <SheetHeader className='w-full'>
             <SheetTitle asChild>
-              <div className='flex flex-row items-center gap-2'>
+              <div className='flex flex-row items-center gap-2 w-full'>
                 {
                   note.properties?.emoji?.prop.icon?.type === 'emoji' && note.properties?.emoji?.prop.icon?.emoji && (
                     <div className={`
@@ -208,8 +213,8 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
               Note description
             </SheetDescription>
           </SheetHeader>
-          <div className='min-h-0 flex-1 flex items-center'>
-            <ScrollArea className='h-full'>
+          <div className='min-h-0 flex-1 flex items-center w-full'>
+            <ScrollArea className='h-full w-full'>
               <MilkdownProvider>
                 <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
               </MilkdownProvider>

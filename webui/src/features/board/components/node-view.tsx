@@ -67,7 +67,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const nodeClass = 'relative font-handwriting drag-handle pointer-events-auto bg-transparent' + (hasResizedRef.current ? ' max-w-none' : ' max-w-[400px]')
 
   return (
-    <div className='border-none relative p-2'>
+    <div className='border-none relative p-2 bg-transparent overflow-visible'>
       <div
         className='absolute inset-0 h-full w-full overflow-visible'
       >

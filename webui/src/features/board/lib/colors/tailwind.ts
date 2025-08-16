@@ -73,7 +73,7 @@ export const isTransparent = (v?: string | null) => {
   return hx === '#00000000'
 }
 
-export const findFamilyShadeFromHex = (hex: string | null): { family?: string; shade?: Shade } | null => {
+export const findFamilyShadeFromHex = (hex: string | null): { family?: string, shade?: Shade } | null => {
   const base = toBaseHex(hex)
   if (!base) return null
   for (const fam of Object.keys(TAILWIND_HEX)) {

@@ -15,20 +15,22 @@ import {
 import { useDeleteChat } from "@/features/agent/api/delete-chat"
 import { useListChats } from "@/features/agent/api/list-chats"
 import { useAppStore } from "@/store"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
-import { BotMessageSquare, History, Minus, MoreHorizontal, PenLine, Plus, Share2 } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
+import { BotMessageSquare, History, Minus, MoreHorizontal, Plus } from "lucide-react"
 import { useChatStore } from "@/features/agent/store/chat-store"
 import { trimText } from "@/lib/common"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { useCreateBoard } from "@/features/board/api/create-board"
 import { useDeleteBoard } from "@/features/board/api/delete-board"
-import { Collapsible, CollapsibleTrigger } from "./ui/collapsible"
+import { Collapsible, CollapsibleTrigger } from "../ui/collapsible"
 import { CollapsibleContent } from "@radix-ui/react-collapsible"
 import { useGraphStore } from "@/features/board/store/graph-store"
 import { useGetBoard } from "@/features/board/api/get-board"
 import { UNTITLED_LABEL } from "@/features/board/const"
-import { ScrollArea } from "./ui/scroll-area"
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "./ui/context-menu"
+import { ScrollArea } from "../ui/scroll-area"
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "../ui/context-menu"
+import { NoteSimpleIcon } from "../icons/note"
+import { Edit2SimpleIcon } from "../icons/edit2"
 
 
 /**
@@ -53,7 +55,7 @@ function NewBoardItem() {
         className={itemClass}
         onClick={handleClick}
       >
-        <PenLine className='text-xs shrink-0' strokeWidth={1.75} />
+        <Edit2SimpleIcon className='text-xs shrink-0' strokeWidth={1.75} />
         <span>New Board</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -90,7 +92,7 @@ function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
         className='text-xs font-medium truncate'
         isActive={isActive}
       >
-        <Share2 className='shrink-0' strokeWidth={1.75} />
+        <NoteSimpleIcon className='shrink-0 size-4' strokeWidth={1.75}/>
         <span>{trimText(label || UNTITLED_LABEL, 20)}</span>
       </SidebarMenuButton>
       <DropdownMenu>
@@ -207,53 +209,51 @@ export function AppSidebar() {
   }) || []
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
-      <ScrollArea className='h-full'>
-        <div className='w-(--sidebar-width)'>
-          <SidebarContent className='w-full'>
-            <SidebarGroup>
-              <SidebarGroupLabel>
-                <span>Workspace</span>
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <NewBoardItem />
-                  {boardItems}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel>
-                <span>Chats</span>
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <NewChatItem />
-                  <Collapsible
-                    defaultOpen={true}
-                    className="group/collapsible w-full"
-                  >
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuItem>
-                        <SidebarMenuButton className='font-medium text-xs flex flex-row items-center w-full'>
-                          <History className='size-4 shrink-0' strokeWidth={1.75} />
-                          <span>Chat History</span>
-                          <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
-                          <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {chatItems}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </div>
+    <Sidebar variant="floating" collapsible="icon">
+      <ScrollArea className='h-full w-full flex flex-row'>
+        <SidebarContent className='w-[calc(var(--sidebar-width)-theme(spacing.2)*2)]'>
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              <span>Workspace</span>
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <NewBoardItem />
+                {boardItems}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              <span>Chats</span>
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <NewChatItem />
+                <Collapsible
+                  defaultOpen={true}
+                  className="group/collapsible w-full"
+                >
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton className='font-medium text-xs flex flex-row items-center w-full'>
+                        <History className='size-4 shrink-0' strokeWidth={1.75} />
+                        <span>Chat History</span>
+                        <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
+                        <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {chatItems}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </Collapsible>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
       </ScrollArea>
     </Sidebar>
   )

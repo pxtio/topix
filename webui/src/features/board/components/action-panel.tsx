@@ -38,6 +38,7 @@ export function ActionPanel({ onAddNode, enableSelection, setEnableSelection }: 
         p-1
         rounded-xl shadow-md
         flex flex-row items-center justify-center gap-2
+        border border-border
       `}
     >
       <Button

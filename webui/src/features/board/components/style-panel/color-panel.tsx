@@ -1,7 +1,7 @@
 import { Label } from "@/components/ui/label"
 import { useEffect, useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
-import { FAMILIES, findFamilyShadeFromHex, isSameColor, isTransparent, resolveFamilyShade, SHADE_STEPS, toBaseHex, type Family, type Shade } from "../../lib/colors/tailwind"
+import { FAMILIES, findFamilyShadeFromHex, getLuminance, isSameColor, isTransparent, resolveFamilyShade, SHADE_STEPS, toBaseHex, type Family, type Shade } from "../../lib/colors/tailwind"
 
 const KeySwatch = ({ color, label, selected, onClick, checker = false }: {
   color: string | null
@@ -9,30 +9,39 @@ const KeySwatch = ({ color, label, selected, onClick, checker = false }: {
   selected?: boolean
   onClick: () => void
   checker?: boolean
-}) => (
-  <button
-    type='button'
-    onClick={onClick}
-    className={cn(
-      'relative h-9 w-9 rounded-lg border border-border shadow-sm transition focus:outline-none focus:ring-2 focus:ring-primary',
-      selected && 'ring-2 ring-primary'
-    )}
-    style={{
-      backgroundColor: color ?? 'transparent',
-      backgroundImage: color === null || checker
-        ? 'linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%), linear-gradient(-45deg, hsl(var(--muted)) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, hsl(var(--muted)) 75%), linear-gradient(-45deg, transparent 75%, hsl(var(--muted)) 75%)'
-        : undefined,
-      backgroundSize: color === null || checker ? '8px 8px' : undefined,
-      backgroundPosition: color === null || checker ? '0 0, 0 4px, 4px -4px, -4px 0px' : undefined
-    }}
-  >
-    {label && (
-      <span className='absolute left-1 top-0.5 text-[10px] font-medium text-foreground/80'>
-        {label}
-      </span>
-    )}
-  </button>
-)
+}) => {
+  const isDark = color ? getLuminance(color) < 0.5 : false
+
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      className={cn(
+        'relative h-9 w-9 rounded-lg border border-border shadow-sm transition focus:outline-none focus:ring-2 focus:ring-primary',
+        selected && 'ring-2 ring-primary'
+      )}
+      style={{
+        backgroundColor: color ?? 'transparent',
+        backgroundImage: color === null || checker
+          ? 'linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%), linear-gradient(-45deg, hsl(var(--muted)) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, hsl(var(--muted)) 75%), linear-gradient(-45deg, transparent 75%, hsl(var(--muted)) 75%)'
+          : undefined,
+        backgroundSize: color === null || checker ? '8px 8px' : undefined,
+        backgroundPosition: color === null || checker ? '0 0, 0 4px, 4px -4px, -4px 0px' : undefined
+      }}
+    >
+      {label && (
+        <span
+          className={cn(
+            'absolute left-1 top-0.5 text-[10px] font-medium',
+            isDark ? 'text-white/90' : 'text-foreground/80'
+          )}
+        >
+          {label}
+        </span>
+      )}
+    </button>
+  )
+}
 
 export function ColorGrid({
   value,

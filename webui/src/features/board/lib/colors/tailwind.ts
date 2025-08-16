@@ -33,12 +33,12 @@ export type Family = {
 
 export const FAMILIES: Family[] = [
   { id: 'transparent', key: 'q', transparent: true },
-  { id: 'white', fixedHex: '#ffffff' },
-  { id: 'black', fixedHex: '#000000' },
-  { id: 'slate', key: 'w', family: 'slate' },
-  { id: 'neutral', key: 'e', family: 'neutral' },
-  { id: 'stone', key: 'r', family: 'stone' },
-  { id: 'rose', key: 't', family: 'rose' },
+  { id: 'white', key: 'w', fixedHex: '#ffffff' },   // add key
+  { id: 'black', key: 'e', fixedHex: '#000000' },   // add key
+  { id: 'slate', key: 'r', family: 'slate' },
+  { id: 'neutral', key: 't', family: 'neutral' },
+  { id: 'stone', key: 'y', family: 'stone' },
+  { id: 'rose', key: 'u', family: 'rose' },
   { id: 'teal', key: 'a', family: 'teal' },
   { id: 'blue', key: 's', family: 'blue' },
   { id: 'violet', key: 'd', family: 'violet' },
@@ -84,4 +84,19 @@ export const findFamilyShadeFromHex = (hex: string | null): { family?: string; s
     }
   }
   return null
+}
+
+export const getLuminance = (hex: string): number => {
+  const clean = hex.replace('#','')
+  const bigint = parseInt(clean.length === 3
+    ? clean.split('').map(c=>c+c).join('')
+    : clean, 16)
+  const r = (bigint >> 16) & 255
+  const g = (bigint >> 8) & 255
+  const b = bigint & 255
+  const srgb = [r,g,b].map(v => {
+    const c = v / 255
+    return c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4)
+  })
+  return 0.2126*srgb[0] + 0.7152*srgb[1] + 0.0722*srgb[2]
 }

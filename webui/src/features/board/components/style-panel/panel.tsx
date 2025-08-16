@@ -1,17 +1,17 @@
 import { useReactFlow } from "@xyflow/react"
-import type { FillStyle, StrokeStyle, Style, TextAlign } from "../../types/style"
+import { SloppyPresets, StrokeWidthPresets, type FillStyle, type FontFamily, type StrokeStyle, type Style, type TextAlign, type TextStyle } from "../../types/style"
 import type { NoteNode } from "../../types/flow"
 import { cn } from "@/lib/utils"
-import { useMemo, useState } from "react"
+import { useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Label } from "@/components/ui/label"
 import { useGraphStore } from "../../store/graph-store"
 import { AlignCenter, AlignLeft, AlignRight } from "lucide-react"
-import { cssVarToHex } from "../../utils/color"
 import type { OptionalStringKeys } from "@/types/generic"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { ColorGrid } from "./color-panel"
 
 
 export interface StylePanelProps {
@@ -77,200 +77,6 @@ const FillGlyph = ({ kind }: { kind: FillStyle }) => {
   )
 }
 
-// Minimal fallback hex map for a small palette, used only if CSS vars are missing
-const TAILWIND_HEX: Record<string, Record<number, string>> = {
-  slate:   {100:'#f1f5f9',200:'#e2e8f0',300:'#cbd5e1',400:'#94a3b8',500:'#64748b'},
-  neutral: {100:'#f5f5f5',200:'#e5e5e5',300:'#d4d4d4',400:'#a3a3a3',500:'#737373'},
-  stone:   {100:'#f5f5f4',200:'#e7e5e4',300:'#d6d3d1',400:'#a8a29e',500:'#78716c'},
-  rose:    {100:'#ffe4e6',200:'#fecdd3',300:'#fda4af',400:'#fb7185',500:'#f43f5e'},
-  teal:    {100:'#ccfbf1',200:'#99f6e4',300:'#5eead4',400:'#2dd4bf',500:'#14b8a6'},
-  blue:    {100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6'},
-  violet:  {100:'#ede9fe',200:'#ddd6fe',300:'#c4b5fd',400:'#a78bfa',500:'#8b5cf6'},
-  fuchsia: {100:'#fdf4ff',200:'#fae8ff',300:'#f5d0fe',400:'#f0abfc',500:'#d946ef'},
-  pink:    {100:'#fce7f3',200:'#fbcfe8',300:'#f9a8d4',400:'#f472b6',500:'#ec4899'},
-  green:   {100:'#dcfce7',200:'#bbf7d0',300:'#86efac',400:'#4ade80',500:'#22c55e'},
-  cyan:    {100:'#cffafe',200:'#a5f3fc',300:'#67e8f9',400:'#22d3ee',500:'#06b6d4'},
-  orange:  {100:'#ffedd5',200:'#fed7aa',300:'#fdba74',400:'#fb923c',500:'#f97316'},
-  amber:   {100:'#fef3c7',200:'#fde68a',300:'#fcd34d',400:'#fbbf24',500:'#f59e0b'},
-  red:     {100:'#fee2e2',200:'#fecaca',300:'#fca5a5',400:'#f87171',500:'#ef4444'},
-}
-
-// Resolve a family+shade to hex using CSS var first, then fallback
-const resolveFamilyShade = (family: string, shade: number) => {
-  const varHex = cssVarToHex(`var(--color-${family}-${shade})`)
-  return varHex ?? TAILWIND_HEX[family]?.[shade] ?? null
-}
-
-const SHADE_STEPS = [100, 200, 300, 400, 500] as const
-
-type Family = {
-  id: string
-  key?: string
-  family?: string
-  transparent?: boolean
-  fixedHex?: string   // NEW: for white/black (or any fixed color)
-}
-
-
-const FAMILIES: Family[] = [
-  { id: 'transparent', key: 'q', transparent: true },
-  { id: 'white', fixedHex: '#ffffff' },   // NEW
-  { id: 'black', fixedHex: '#000000' },   // NEW
-  { id: 'slate', key: 'w', family: 'slate' },
-  { id: 'neutral', key: 'e', family: 'neutral' },
-  { id: 'stone', key: 'r', family: 'stone' },
-  { id: 'rose', key: 't', family: 'rose' },
-  { id: 'teal', key: 'a', family: 'teal' },
-  { id: 'blue', key: 's', family: 'blue' },
-  { id: 'violet', key: 'd', family: 'violet' },
-  { id: 'fuchsia', key: 'f', family: 'fuchsia' },
-  { id: 'pink', key: 'g', family: 'pink' },
-  { id: 'green', key: 'z', family: 'green' },
-  { id: 'cyan', key: 'x', family: 'cyan' },
-  { id: 'orange', key: 'c', family: 'orange' },
-  { id: 'amber', key: 'v', family: 'amber' },
-  { id: 'red', key: 'b', family: 'red' },
-]
-
-const resolveEntryBaseHex = (f: Family) =>
-  f.transparent ? null : f.fixedHex ?? (f.family ? resolveFamilyShade(f.family, 500) : null)
-
-const KeySwatch = ({ color, label, selected, onClick, checker = false }: {
-  color: string | null
-  label?: string
-  selected?: boolean
-  onClick: () => void
-  checker?: boolean
-}) => (
-  <button
-    type='button'
-    onClick={onClick}
-    className={cn(
-      'relative h-9 w-9 rounded-lg border border-border shadow-sm transition focus:outline-none focus:ring-2 focus:ring-primary',
-      selected && 'ring-2 ring-primary'
-    )}
-    style={{
-      backgroundColor: color ?? 'transparent',
-      backgroundImage: color === null || checker
-        ? 'linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%), linear-gradient(-45deg, hsl(var(--muted)) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, hsl(var(--muted)) 75%), linear-gradient(-45deg, transparent 75%, hsl(var(--muted)) 75%)'
-        : undefined,
-      backgroundSize: color === null || checker ? '8px 8px' : undefined,
-      backgroundPosition: color === null || checker ? '0 0, 0 4px, 4px -4px, -4px 0px' : undefined
-    }}
-  >
-    {label && (
-      <span className='absolute left-1 top-0.5 text-[10px] font-medium text-foreground/80'>
-        {label}
-      </span>
-    )}
-  </button>
-)
-
-// helpers for robust color comparison
-const toBaseHex = (c?: string | null) => {
-  if (!c) return null
-  const hex = cssVarToHex(c) ?? c
-  if (!hex || !hex.startsWith('#')) return null
-  const h = hex.slice(1).toLowerCase()
-  const base = h.length === 3 ? h.split('').map(x => x + x).join('') : h.slice(0, 6)
-  return '#' + base
-}
-
-const isSameColor = (a?: string | null, b?: string | null) => {
-  const A = toBaseHex(a)
-  const B = toBaseHex(b)
-  return !!A && !!B && A === B
-}
-
-const isTransparent = (v?: string | null) => {
-  if (v == null) return true
-  const hx = cssVarToHex(v)
-  return hx === '#00000000'
-}
-
-// DROP-IN: replace your existing ColorGrid with this
-function ColorGrid({
-  value,
-  onPick,
-  allowTransparent = false
-}: {
-  value?: string | null
-  onPick: (hexOrNull: string | null) => void
-  allowTransparent?: boolean
-}) {
-  const [activeFamily, setActiveFamily] = useState<Family>(
-    FAMILIES.find(f => !!f.family)!
-  )
-
-  const pickFamily = (f: Family) => {
-    if (f.transparent) {
-      if (allowTransparent) onPick(null)
-      return
-    }
-    // fixed colors (white/black) pick immediately and keep the current shade family
-    if (f.fixedHex) {
-      const baseHex = toBaseHex(f.fixedHex)
-      if (baseHex) onPick(baseHex)
-      return
-    }
-    // shade-able family\n
-    setActiveFamily(f)
-    const base = resolveFamilyShade(f.family!, 500)
-    const baseHex = toBaseHex(base)
-    if (baseHex) onPick(baseHex)
-  }
-
-  return (
-    <div className='space-y-3'>
-      {/* Colors row (includes transparent, white, black, families) */}
-      <div className='grid grid-cols-6 gap-2'>
-        {FAMILIES
-          .filter(f => allowTransparent || !f.transparent)
-          .map(f => {
-            const colorHex = resolveEntryBaseHex(f)
-            const selected = f.transparent
-              ? isTransparent(value)
-              : !!colorHex && isSameColor(value, colorHex)
-
-            return (
-              <KeySwatch
-                key={f.id}
-                color={colorHex}
-                label={f.key}
-                selected={selected}
-                onClick={() => pickFamily(f)}
-                checker={!!f.transparent}
-              />
-            )
-          })}
-      </div>
-
-      {/* Shades row (only for actual Tailwind families) */}
-      {activeFamily.family && (
-        <div className='space-y-1'>
-          <Label className='text-xs text-muted-foreground'>Shades</Label>
-          <div className='flex flex-wrap items-center gap-2'>
-            {SHADE_STEPS.map((step, i) => {
-              const hex = resolveFamilyShade(activeFamily.family!, step)
-              const selected = !!hex && isSameColor(value, hex)
-              const baseHex = toBaseHex(hex)
-              return (
-                <KeySwatch
-                  key={step}
-                  color={hex}
-                  label={`⇧${i + 1}`}
-                  selected={selected}
-                  onClick={() => baseHex && onPick(baseHex)}
-                />
-              )
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 
 function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
   const s = style
@@ -280,23 +86,27 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
     onStyleChange(next)
   }
 
-  // roughness presets (Excalidraw-ish "Sloppiness")
-  const sloppyPresets = [0, 0.5, 1]
-
   return (
-    <Card className={cn("w-full bg-sidebar backdrop-blur supports-[backdrop-filter]:bg-background/60", className)}>
+    <Card className={cn("w-full bg-sidebar backdrop-blur supports-[backdrop-filter]:bg-sidebar/50 shadow-xl", className)}>
       <CardContent className="p-0 h-[600px]">
         <ScrollArea className='h-full p-3'>
-          <div className='flex flex-col items-start gap-4'>
+          <div className='flex flex-col items-start gap-4 p-1'>
             {/* Stroke */}
             <Section title="Stroke">
-              <ColorGrid value={s.strokeColor} onPick={v => pickColor("strokeColor", v)} />
+              <ColorGrid value={s.strokeColor} onPick={v => pickColor("strokeColor", v)} allowTransparent />
+            </Section>
+
+            {/* Text color */}
+            <Section title="Text color">
+              <ColorGrid value={s.textColor ?? null} onPick={v => onStyleChange({ textColor: v })} />
             </Section>
 
             {/* Background */}
             <Section title="Background">
               <ColorGrid value={s.backgroundColor ?? null} onPick={v => pickColor("backgroundColor", v)} allowTransparent />
             </Section>
+
+            <Separator />
 
             {/* Fill */}
             <Section title="Fill">
@@ -312,7 +122,7 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
             {/* Stroke width */}
             <Section title="Stroke width">
               <ToggleGroup type="single" value={String(s.strokeWidth ?? 1)} onValueChange={v => v && onStyleChange({ strokeWidth: Number(v) })} className="flex flex-wrap gap-2">
-                {[0.75,1,2].map(w => (
+                {StrokeWidthPresets.map(w => (
                   <ToggleGroupItem key={w} value={String(w)} className="h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary">
                     <LineGlyph width={w} />
                   </ToggleGroupItem>
@@ -332,7 +142,7 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
             {/* Sloppiness (roughness) */}
             <Section title="Sloppiness">
               <ToggleGroup type="single" value={String(s.roughness ?? 0)} onValueChange={v => v && onStyleChange({ roughness: Number(v) })} className="flex flex-wrap gap-2">
-                {sloppyPresets.map(val => (
+                {SloppyPresets.map(val => (
                   <ToggleGroupItem key={val} value={String(val)} className="h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary">
                     <WavyGlyph amount={val} />
                   </ToggleGroupItem>
@@ -351,9 +161,25 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
               </ToggleGroup>
             </Section>
 
-            {/* Text color */}
-            <Section title="Text color">
-              <ColorGrid value={s.color ?? null} onPick={v => onStyleChange({ color: v })} />
+            {/* Font family */}
+            <Section title="Font family">
+              <ToggleGroup type="single" value={s.fontFamily ?? "sans"} onValueChange={v => v && onStyleChange({ fontFamily: v as FontFamily })} className="flex gap-2">
+                <ToggleGroupItem value="handwriting" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-handwriting">A</ToggleGroupItem>
+                <ToggleGroupItem value="sans-serif" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-sans">A</ToggleGroupItem>
+                <ToggleGroupItem value="serif" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-serif">A</ToggleGroupItem>
+                <ToggleGroupItem value="monospace" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-mono">{"<>"}</ToggleGroupItem>
+              </ToggleGroup>
+            </Section>
+
+            {/* Text style */}
+            <Section title="Text style">
+              <ToggleGroup type="single" value={s.textStyle ?? "normal"} onValueChange={v => v && onStyleChange({ textStyle: v as TextStyle })} className="flex gap-2">
+                <ToggleGroupItem value="normal" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary">A</ToggleGroupItem>
+                <ToggleGroupItem value="italic" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary italic">I</ToggleGroupItem>
+                <ToggleGroupItem value="bold" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-bold">B</ToggleGroupItem>
+                <ToggleGroupItem value='underline' className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary underline">U</ToggleGroupItem>
+                <ToggleGroupItem value='strikethrough' className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary line-through">S</ToggleGroupItem>
+              </ToggleGroup>
             </Section>
           </div>
         </ScrollArea>

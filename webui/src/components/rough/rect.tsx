@@ -45,8 +45,12 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     // oversample backing store for zoom-in, never below 1 on zoom-out
     const oversample = Math.max(1, zoom)
 
-    const pixelW = Math.floor(cssW * dpr * oversample)
-    const pixelH = Math.floor(cssH * dpr * oversample)
+    // ➜ add a bleed in CSS units (display pixels), enough for stroke + jitter
+    const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 2)
+
+
+    const pixelW = Math.floor((cssW + bleed * 2) * dpr * oversample)
+    const pixelH = Math.floor((cssH + bleed * 2) * dpr * oversample)
     if (canvas.width !== pixelW) canvas.width = pixelW
     if (canvas.height !== pixelH) canvas.height = pixelH
 
@@ -62,6 +66,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
 
     // draw in CSS units scaled by dpr*oversample so the path fills the buffer
     ctx.setTransform(dpr * oversample, 0, 0, dpr * oversample, 0, 0)
+    ctx.translate(bleed, bleed)
 
     const rc = new RoughCanvas(canvas)
 

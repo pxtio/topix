@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react"
 import { Input } from "../ui/input"
 import { Button } from "../ui/button"
-import { Edit, Save } from "lucide-react"
 import { useClickOutside } from "@/hooks/use-click-outside"
 import { UNTITLED_LABEL } from "@/features/board/const"
+import { EditSimpleIcon } from "../icons/edit"
+import { TickSimpleIcon } from "../icons/tick"
 
 
 /**
@@ -55,13 +56,13 @@ export const LabelEditor = ({ initialLabel, onSave }: LabelEditorProps) => {
       <Button
         variant="ghost"
         onClick={handleClick}
-        size='sm'
+        size='icon'
       >
         {
           editMode ?
-          <Save className='size-3' strokeWidth={1.75} />
+          <TickSimpleIcon className='size-4' strokeWidth={1.75} />
           :
-          <Edit className='size-3' strokeWidth={1.75} />
+          <EditSimpleIcon className='size-4' strokeWidth={1.75} />
         }
       </Button>
     </div>

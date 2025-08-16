@@ -83,11 +83,11 @@
   --chart-4: oklch(0.4909 0.0770 227.9983);
   --chart-5: oklch(0.6289 0.0661 210.1228);
   --sidebar: oklch(0.9870 0.0107 76.6004);
-  --sidebar-foreground: oklch(0.4597 0.0629 289.5561);
-  --sidebar-primary: oklch(0.5989 0.1071 2.6555);
-  --sidebar-primary-foreground: oklch(0.9699 0.0113 71.8999);
-  --sidebar-accent: oklch(0.5989 0.1071 2.6555);
-  --sidebar-accent-foreground: oklch(0.9699 0.0113 71.8999);
+  --sidebar-foreground: oklch(0.5768 0.0458 291.0006);
+  --sidebar-primary: oklch(0.9621 0.0142 22.7633);
+  --sidebar-primary-foreground: oklch(0.5989 0.1071 2.6555);
+  --sidebar-accent: oklch(0.9621 0.0142 22.7633);
+  --sidebar-accent-foreground: oklch(0.5989 0.1071 2.6555);
   --sidebar-border: oklch(0.8920 0.0057 31.0551);
   --sidebar-ring: oklch(0.5989 0.1071 2.6555);
 
@@ -118,7 +118,7 @@
   --popover: oklch(0.2413 0.0322 289.1359);
   --popover-foreground: oklch(0.9088 0.0299 289.9690);
   --primary: oklch(0.8363 0.0544 21.1411);
-  --primary-foreground: oklch(0.2708 0.0423 289.2331);
+  --primary-foreground: oklch(0.2134 0.0255 291.1310);
   --secondary: oklch(0.5277 0.0793 227.7159);
   --secondary-foreground: oklch(0.9088 0.0299 289.9690);
   --muted: oklch(0.2875 0.0435 289.0886);
@@ -126,8 +126,8 @@
   --accent: oklch(0.2875 0.0435 289.0886);
   --accent-foreground: oklch(0.9088 0.0299 289.9690);
   --destructive: oklch(0.6977 0.1565 4.2242);
-  --destructive-foreground: oklch(0.2134 0.0255 291.1310);
-  --border: oklch(0.3717 0.0358 291.0973);
+  --destructive-foreground: oklch(0.9088 0.0299 289.9690);
+  --border: oklch(0.3463 0.0502 289.8342);
   --input: oklch(0.2875 0.0435 289.0886);
   --ring: oklch(0.8363 0.0544 21.1411);
   --chart-1: oklch(0.6977 0.1565 4.2242);
@@ -136,13 +136,13 @@
   --chart-4: oklch(0.5277 0.0793 227.7159);
   --chart-5: oklch(0.8219 0.0543 209.5588);
   --sidebar: oklch(0.2413 0.0322 289.1359);
-  --sidebar-foreground: oklch(0.9088 0.0299 289.9690);
-  --sidebar-primary: oklch(0.8363 0.0544 21.1411);
-  --sidebar-primary-foreground: oklch(0.2708 0.0423 289.2331);
-  --sidebar-accent: oklch(0.8363 0.0544 21.1411);
-  --sidebar-accent-foreground: oklch(0.2708 0.0423 289.2331);
-  --sidebar-border: oklch(0.3717 0.0358 291.0973);
-  --sidebar-ring: oklch(0.8363 0.0544 21.1411);
+  --sidebar-foreground: oklch(0.6539 0.0444 291.2325);
+  --sidebar-primary: oklch(0.2875 0.0435 289.0886);
+  --sidebar-primary-foreground: oklch(0.6977 0.1565 4.2242);
+  --sidebar-accent: oklch(0.2875 0.0435 289.0886);
+  --sidebar-accent-foreground: oklch(0.6977 0.1565 4.2242);
+  --sidebar-border: oklch(0.3463 0.0502 289.8342);
+  --sidebar-ring: oklch(0.6977 0.1565 4.2242);
 
   --font-sans: 'Geist', 'Geist Fallback', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif: "Geist", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;

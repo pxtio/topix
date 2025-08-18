@@ -108,8 +108,8 @@ export const AssistantMessage = ({
   const agentResponse = streamingMessage ?
     streamingMessage
     :
-    message.reasoningSteps ?
-    { steps: message.reasoningSteps }
+    message.properties.reasoning?.prop.reasoning ?
+    { steps: message.properties.reasoning.prop.reasoning }
     :
     undefined
 

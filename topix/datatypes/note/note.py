@@ -1,12 +1,12 @@
 """Classes representing a note object with properties and content."""
 
-from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from topix.datatypes.card import Card
 from topix.datatypes.graph.style import Style
-from topix.datatypes.note.property import IconProperty, PositionProperty, Prop, SizeProperty
+from topix.datatypes.property import IconProperty, PositionProperty, Prop, SizeProperty
 from topix.utils.common import gen_uid
 
 
@@ -16,16 +16,12 @@ class Content(BaseModel):
     markdown: str
 
 
-class Note(BaseModel):
+class Note(Card):
     """Note object."""
 
     id: str = Field(default_factory=gen_uid)
     type: Literal["note"] = "note"
     version: int = 1
-
-    created_at: str | None = Field(default_factory=lambda: datetime.now().isoformat())
-    updated_at: str | None = None
-    deleted_at: str | None = None
 
     # properties
     properties: dict[str, Prop] | None = {

@@ -40,7 +40,7 @@ class AnswerReformulate(BaseAgent):
         tool_trace = ""
 
         for idx, tool_call in enumerate(tool_calls):
-            tool_step = f"""Step {idx + 1}: Calling {tool_call.tool_name}
+            tool_step = f"""Step {idx + 1}: Calling {tool_call.name}
                 - Arguments: {tool_call.arguments}
                 - Output: {str(tool_call.output)} \n\n
             """
@@ -59,7 +59,7 @@ class AnswerReformulate(BaseAgent):
     ) -> str | None:
         # No need to launch the answer_reformulate if there is only one search result
         if len(context.tool_calls) == 1:
-            if context.tool_calls[0].tool_name == AgentToolName.WEB_SEARCH:
+            if context.tool_calls[0].name == AgentToolName.WEB_SEARCH:
                 await context._message_queue.put(
                     AgentStreamMessage(
                         tool_id=tool_id,

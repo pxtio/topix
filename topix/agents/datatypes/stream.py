@@ -25,6 +25,7 @@ class Content(BaseModel):
 class AgentStreamMessage(BaseModel):
     """Agent stream message for streaming results."""
 
+    type: Literal["stream_message"] = "stream_message"
     tool_id: str
     tool_name: AgentToolName
     content: Content | None = None

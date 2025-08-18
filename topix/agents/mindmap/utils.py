@@ -3,7 +3,7 @@
 from topix.agents.mindmap.datatypes import SimpleNode
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Content, Note
-from topix.datatypes.note.property import IconProperty, Prop
+from topix.datatypes.property import IconProperty, Prop
 
 
 def convert_root_to_graph(root: SimpleNode) -> tuple[list[Note], list[Link]]:

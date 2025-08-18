@@ -3,16 +3,7 @@ import asyncio
 
 from pydantic import BaseModel, PrivateAttr
 
-from topix.agents.datatypes.outputs import ToolOutput
-
-
-class ToolCall(BaseModel):
-    """Tool call."""
-
-    tool_id: str
-    tool_name: str
-    arguments: dict
-    output: ToolOutput
+from topix.datatypes.chat.tool_call import ToolCall
 
 
 class Context(BaseModel):

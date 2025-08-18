@@ -61,12 +61,12 @@ class Style(BaseModel):
     type: NodeType = NodeType.RECTANGLE
     angle: float = 0.0
     stroke_color: str | None = None
-    stroke_width: int = 1
+    stroke_width: float = 0.75
     stroke_style: StrokeStyle = StrokeStyle.SOLID
     background_color: str | None = None
     fill_style: FillStyle = FillStyle.SOLID
     roughness: float = 1.0
-    opacity: int = 100
+    opacity: float = 100
     group_ids: list[str] = []
     font_size: str | None = None
     font_family: str | None = None

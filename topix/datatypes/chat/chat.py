@@ -18,7 +18,6 @@ class MessageRole(str, CustomEnum):
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
-    TOOL = "tool"
 
 
 class Message(BaseModel):

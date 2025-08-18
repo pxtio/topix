@@ -22,22 +22,26 @@ class AssistantManager:
         self.query_rewrite_agent = query_rewrite_agent
         self.plan_agent = plan_agent
 
-    async def _rewrite_query(
+    async def _compose_input(
         self,
         context: ReasoningContext,
         query: str,
         session: AssistantSession | None = None,
-    ) -> str:
+        rephrase_query: bool = False
+    ) -> list[dict[str, str]]:
         if session:
             history = await session.get_items()
             if history:
                 context.chat_history = history
-                query_input = QueryRewriteInput(query=query, chat_history=history)
-                # launch query rewrite:
-                new_query = await AgentRunner.run(
-                    self.query_rewrite_agent,
-                    input=query_input,
-                )
+                if rephrase_query:
+                    # launch query rewrite:
+                    query_input = QueryRewriteInput(query=query, chat_history=history)
+                    new_query = await AgentRunner.run(
+                        self.query_rewrite_agent,
+                        input=query_input,
+                    )
+                else:
+                    new_query = query
                 return history + [{"role": "user", "content": new_query}]
             else:
                 return [{"role": "user", "content": query}]
@@ -50,9 +54,10 @@ class AssistantManager:
         session: AssistantSession | None = None,
         message_id: str | None = None,
         max_turns: int = 5,
+        rephrase_query: bool = False
     ) -> str:
         """Run the assistant agent with the provided context and query."""
-        input = await self._rewrite_query(context, query, session)
+        input = await self._compose_input(context, query, session, rephrase_query=rephrase_query)
 
         if session:
             await session.add_items(
@@ -98,6 +103,7 @@ class AssistantManager:
         session: AssistantSession | None = None,
         message_id: str | None = None,
         max_turns: int = 8,
+        rephrase_query: bool = False
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Run the assistant agent with the provided context and query.
 
@@ -109,7 +115,7 @@ class AssistantManager:
 
         """
         # Notify the start of the agent stream
-        new_query = await self._rewrite_query(context, query, session)
+        agent_input = await self._compose_input(context, query, session, rephrase_query=rephrase_query)
 
         if session:
             await session.add_items(
@@ -118,7 +124,7 @@ class AssistantManager:
 
         # launch plan:
         res = AgentRunner.run_streamed(
-            self.plan_agent, input=new_query, context=context, max_turns=max_turns
+            self.plan_agent, input=agent_input, context=context, max_turns=max_turns
         )
 
         final_message = ""

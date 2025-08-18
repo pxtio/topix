@@ -63,8 +63,8 @@ class Plan(BaseAgent):
 
     def __init__(
         self,
-        model: str = ModelEnum.OpenAI.GPT_4O,
-        instructions_template: str = "plan.jinja",
+        model: str = ModelEnum.OpenAI.GPT_4_1,
+        instructions_template: str = "plan.system.jinja",
         model_settings: ModelSettings | None = None,
         search_choice: WebSearchOption = WebSearchOption.OPENAI,
     ):
@@ -124,3 +124,26 @@ class Plan(BaseAgent):
                 )
             case _:
                 raise ValueError(f"Unknown web search option: {search_choice}")
+
+    def _format_message(self, message: dict[str, str]) -> str:
+        role = message["role"]
+        content = message["content"]
+        return f"<message role='{role}'>\n<![CDATA[\n{content}\n]]>\n</message>"
+
+    async def _input_formatter(self, context: ReasoningContext, input: list[dict[str, str]]) -> str:
+        assert len(input) > 0, \
+            ValueError("Input must contain at least one message.")
+        assert input[-1]['role'] == 'user', \
+            ValueError("Input must end with a user message.")
+
+        user_query = input[-1]['content']
+        messages = '\n\n'.join(self._format_message(msg) for msg in input[:-1])
+
+        user_prompt = self._render_prompt(
+            "plan.user.jinja",
+            messages=messages,
+            user_query=user_query,
+            time=datetime.now().isoformat()
+        )
+
+        return user_prompt

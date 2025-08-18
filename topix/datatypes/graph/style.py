@@ -16,12 +16,17 @@ class StrokeStyle(str, CustomEnum):
 
     SOLID = "solid"
     DASHED = "dashed"
+    DOTTED = "dotted"
 
 
 class FillStyle(str, CustomEnum):
     """Enumeration for fill styles."""
 
     SOLID = "solid"
+    HACHURE = "hachure"
+    CROSSHATCH = "cross-hatch"
+    ZIGZAG = "zigzag"
+    DOTS = "dots"
 
 
 class TextAlign(str, CustomEnum):
@@ -63,6 +68,8 @@ class Style(BaseModel):
     roughness: float = 1.0
     opacity: int = 100
     group_ids: list[str] = []
+    font_size: str | None = None
     font_family: str | None = None
     text_align: TextAlign = TextAlign.LEFT
-    color: str | None = None
+    text_color: str | None = None
+    text_style: str | None = None

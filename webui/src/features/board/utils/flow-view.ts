@@ -56,13 +56,11 @@ export function displaceNodes(group1: NoteNode[], group2: NoteNode[]): NoteNode[
       properties: {
         ...node.data.properties,
         nodePosition: {
-          prop: {
-            position: {
-              x: node.position.x + deltaX,
-              y: node.position.y + deltaY
-            },
-            type: "position"
-          }
+          position: {
+            x: node.position.x + deltaX,
+            y: node.position.y + deltaY
+          },
+          type: "position"
         }
       }
     }

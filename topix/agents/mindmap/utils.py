@@ -22,7 +22,9 @@ def convert_root_to_graph(root: SimpleNode) -> tuple[list[Note], list[Link]]:
                     )
                 )
             },
-            label=node.label,
+            label=RichText(
+                markdown=node.label
+            ),
             content=RichText(
                 markdown=node.note
             )

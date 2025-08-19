@@ -6,17 +6,17 @@ export type MessageRole = "user" | "assistant" | "system"
 export interface ChatMessage {
     id: string
     role: MessageRole
-    content: string
+    content: {
+      markdown: string
+    }
     createdAt?: string
     updatedAt?: string
     deletedAt?: string
     chatUid: string
     properties: {
       reasoning?: {
-        prop: {
-          type: "reasoning",
-          reasoning: ReasoningStep[]
-        }
+        type: "reasoning",
+        reasoning: ReasoningStep[]
       }
     }
 }

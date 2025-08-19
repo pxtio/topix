@@ -89,7 +89,13 @@ export const useSendMessage = () => {
           ["listMessages", chatId, userId],
           (oldMessages) => [
             ...(oldMessages || []),
-            { id: generateUuid(), role: "user", content: payload.query, chatUid: chatId }
+            {
+              id: generateUuid(),
+              role: "user",
+              content: { markdown: payload.query },
+              chatUid: chatId,
+              properties: {}
+            }
           ]
         )
         const stream = sendMessage(payload, chatId, userId)
@@ -119,7 +125,13 @@ export const useSendMessage = () => {
               ["listMessages", chatId, userId],
               (oldMessages) => [
                 ...(oldMessages || []),
-                { id: responseId, role: "assistant", content: "", chatUid: chatId }
+                {
+                  id: responseId,
+                  role: "assistant",
+                  content: { markdown: "" },
+                  chatUid: chatId,
+                  properties: { reasoning: { type: "reasoning", reasoning: [] } }
+                }
               ]
             )
           }

@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import abc
 
-from typing import Literal, Type
+from typing import Annotated, Literal, Type
 
 from pydantic import BaseModel, Field
 
 from topix.datatypes.chat.tool_call import ToolCall
 from topix.datatypes.enum import CustomEnum
-from topix.datatypes.lang import LangCodeEnum
 from topix.datatypes.mime import MimeTypeEnum
 from topix.utils.common import gen_uid
 
@@ -25,7 +24,6 @@ class PropertyType(str, CustomEnum):
     MULTI_TEXT = "multi_text"
     KEYWORD = "keyword"
     MULTI_KEYWORD = "multi_keyword"
-    REFERENCE = "reference"
     LOCATION = "location"
     POSITION = "position"
     SIZE = "size"
@@ -33,7 +31,6 @@ class PropertyType(str, CustomEnum):
     IMAGE = "image"
     FILE = "file"
     URL = "url"
-    STYLE = "style"
     REASONING = "reasoning"
 
 
@@ -71,12 +68,6 @@ class TextProperty(Property):
     type: Literal[PropertyType.TEXT] = PropertyType.TEXT
     text: str | None = None
     searchable: bool | None = None
-
-
-class SearchableTextProperty(TextProperty):
-    """Property for text values that are searchable."""
-
-    searchable: bool = True
 
 
 class IconProperty(Property):
@@ -153,19 +144,6 @@ class KeywordProperty(Property):
     value_type: Type[CustomEnum] | None = None
 
 
-class LanguageProperty(KeywordProperty):
-    """Property for language values."""
-
-    type: Literal[PropertyType.KEYWORD] = PropertyType.KEYWORD
-    value_type: Type[CustomEnum] = LangCodeEnum
-
-
-class MimeTypeProperty(KeywordProperty):
-    """Property for MIME type values."""
-
-    value_type: Type[CustomEnum] = MimeTypeEnum
-
-
 class MultiKeywordProperty(Property):
     """Property for multiple keyword values."""
 
@@ -220,29 +198,23 @@ class ReasoningProperty(Property):
     reasoning: list[ToolCall] = []
 
 
-type DataProperty = (
-    NumberProperty
-    | DateProperty
-    | BooleanProperty
-    | TextProperty
-    | SearchableTextProperty
-    | IconProperty
-    | ImageProperty
-    | FileProperty
-    | URLProperty
-    | MultiTextProperty
-    | KeywordProperty
-    | LanguageProperty
-    | MimeTypeProperty
-    | MultiKeywordProperty
-    | LocationProperty
-    | PositionProperty
-    | SizeProperty
-    | ReasoningProperty
-)
-
-
-class Prop(BaseModel):
-    """Property class for generic data properties."""
-
-    prop: DataProperty = Field(..., discriminator="type")
+type DataProperty = Annotated[
+    (
+        NumberProperty
+        | DateProperty
+        | BooleanProperty
+        | TextProperty
+        | IconProperty
+        | ImageProperty
+        | FileProperty
+        | URLProperty
+        | MultiTextProperty
+        | KeywordProperty
+        | MultiKeywordProperty
+        | LocationProperty
+        | PositionProperty
+        | SizeProperty
+        | ReasoningProperty
+    ),
+    Field(discriminator="type")
+]

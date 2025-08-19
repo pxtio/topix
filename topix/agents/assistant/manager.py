@@ -10,8 +10,10 @@ from topix.agents.datatypes.stream import AgentStreamMessage, ContentType
 from topix.agents.datatypes.tools import AgentToolName, to_display_output
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
+from topix.datatypes.chat.chat import Message
 from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
-from topix.datatypes.property import PropertyType
+from topix.datatypes.property import ReasoningProperty
+from topix.datatypes.resource import RichText
 from topix.utils.common import gen_uid
 
 
@@ -62,7 +64,7 @@ class AssistantManager:
 
         if session:
             await session.add_items(
-                [{"id": message_id or gen_uid(), "role": "user", "content": query}]
+                [{"id": message_id or gen_uid(), "role": "user", "content": {"markdown": query}}]
             )
         # launch plan:
         res = await AgentRunner.run(
@@ -70,7 +72,7 @@ class AssistantManager:
         )
         if session:
             await session.add_items(
-                [{"id": gen_uid(), "role": "assistant", "content": res}]
+                [{"id": gen_uid(), "role": "assistant", "content": {"markdown": res}}]
             )
         return res
 
@@ -120,7 +122,13 @@ class AssistantManager:
 
         if session:
             await session.add_items(
-                [{"id": message_id or gen_uid(), "role": "user", "content": query}]
+                [
+                    Message(
+                        id=message_id or gen_uid(),
+                        role="user",
+                        content=RichText(markdown=query),
+                    )
+                ]
             )
 
         # launch plan:
@@ -151,21 +159,17 @@ class AssistantManager:
 
             await session.add_items(
                 [
-                    {
-                        "id": gen_uid(),
-                        "role": "assistant",
-                        "content": final_message,
-                        "properties": {
-                            "reasoning": {
-                                "prop": {
-                                    "type": PropertyType.REASONING,
-                                    "reasoning": [
-                                        val.model_dump(exclude_none=True) for val in steps.values()
-                                    ]
-                                }
-                            }
+                    Message(
+                        role="assistant",
+                        content=RichText(markdown=final_message),
+                        properties={
+                            "reasoning": ReasoningProperty(
+                                reasoning=[
+                                    val.model_dump(exclude_none=True) for val in steps.values()
+                                ]
+                            )
                         }
-                    }
+                    )
                 ]
             )
 

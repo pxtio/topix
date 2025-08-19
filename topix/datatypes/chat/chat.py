@@ -7,9 +7,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from topix.datatypes.card import Card
 from topix.datatypes.enum import CustomEnum
-from topix.datatypes.property import Prop, ReasoningProperty
+from topix.datatypes.property import DataProperty, ReasoningProperty
+from topix.datatypes.resource import Resource
 from topix.utils.common import gen_uid
 
 
@@ -21,26 +21,30 @@ class MessageRole(str, CustomEnum):
     ASSISTANT = "assistant"
 
 
-class Message(Card):
+class Message(Resource):
     """Message in a chat."""
 
     type: Literal["message"] = "message"
-    id: str = Field(default_factory=gen_uid)
-    chat_uid: str
-    role: MessageRole
-    content: str | dict | list
 
-    properties: dict[str, Prop] = {
-        "reasoning": Prop(
-            prop=ReasoningProperty()
-        )
+    chat_uid: str | None = None
+
+    role: MessageRole
+
+    properties: dict[str, DataProperty] = {
+        "reasoning": ReasoningProperty()
     }
 
-    def to_chat_message(self) -> dict:
+    def to_chat_message(self) -> dict[str, str]:
         """Convert to a chat message format."""
+        content = ""
+        if self.content:
+            if isinstance(self.content, dict):
+                content = self.content.get("markdown", "")
+            else:
+                content = self.content.markdown if self.content else ""
         return {
             "role": self.role,
-            "content": self.content
+            "content": content
         }
 
 

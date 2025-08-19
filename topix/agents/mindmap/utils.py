@@ -2,8 +2,9 @@
 
 from topix.agents.mindmap.datatypes import SimpleNode
 from topix.datatypes.note.link import Link
-from topix.datatypes.note.note import Content, Note
-from topix.datatypes.property import IconProperty, Prop
+from topix.datatypes.note.note import Note
+from topix.datatypes.property import IconProperty
+from topix.datatypes.resource import RichText
 
 
 def convert_root_to_graph(root: SimpleNode) -> tuple[list[Note], list[Link]]:
@@ -15,16 +16,14 @@ def convert_root_to_graph(root: SimpleNode) -> tuple[list[Note], list[Link]]:
         """Recursively traverse the SimpleNode and build notes and links."""
         note = Note(
             properties={
-                "emoji": Prop(
-                    prop=IconProperty(
-                        icon=IconProperty.Emoji(
-                            emoji=node.emoji
-                        )
+                "emoji": IconProperty(
+                    icon=IconProperty.Emoji(
+                        emoji=node.emoji
                     )
                 )
             },
             label=node.label,
-            content=Content(
+            content=RichText(
                 markdown=node.note
             )
         )

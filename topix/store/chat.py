@@ -70,11 +70,20 @@ class ChatStore:
         async with self._pg_pool.connection() as conn:
             return await list_chats_by_user_uid(conn, user_uid)
 
-    async def add_messages(self, chat_uid: str, messages: list[dict]):
+    async def add_messages(self, chat_uid: str, messages: list[dict | Message]):
         """Add messages to the chat store."""
         for msg in messages:
-            msg["chat_uid"] = chat_uid
-        chat_messages = [Message(**msg) for msg in messages]
+            if isinstance(msg, Message):
+                msg.chat_uid = chat_uid
+            else:
+                msg["chat_uid"] = chat_uid
+
+        def _convert(msg: dict | Message) -> Message:
+            if isinstance(msg, Message):
+                return msg
+            return Message(**msg)
+
+        chat_messages = [_convert(msg) for msg in messages]
         await self._content_store.add(chat_messages)
 
     async def update_message(self, message_id: str, data: dict):

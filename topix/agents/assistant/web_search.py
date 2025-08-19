@@ -29,6 +29,7 @@ from topix.agents.utils import (
     ToolCall,
     tool_execution_handler,
 )
+from topix.datatypes.chat.tool_call import ToolCallState
 
 
 class WebSearchAgentHook(AgentHooks):
@@ -249,10 +250,11 @@ class WebSearch(BaseAgent):
 
             context.tool_calls.append(
                 ToolCall(
-                    tool_id=fixed_params["tool_id"],
-                    tool_name=name_override,
+                    id=fixed_params["tool_id"],
+                    name=name_override,
                     arguments={"input": input},
                     output=web_search_output,
+                    state=ToolCallState.COMPLETED
                 )
             )
             return web_search_output

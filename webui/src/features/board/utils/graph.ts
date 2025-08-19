@@ -10,8 +10,8 @@ import { defaultStyle } from "../types/style"
  * @returns A NoteNode representation of the note.
  */
 export const convertNoteToNode = (note: Note): NoteNode => {
-  const position = note.properties?.nodePosition?.prop.position || { x: 0, y: 0 }
-  const size = note.properties?.nodeSize?.prop.size || { width: 100, height: 100 }
+  const position = note.properties?.nodePosition?.position || { x: 0, y: 0 }
+  const size = note.properties?.nodeSize?.size || { width: 100, height: 100 }
 
   return {
     id: note.id,
@@ -56,18 +56,14 @@ export const convertNodeToNote = (graphId: string, node: NoteNode): Note => {
   note.properties = note.properties || createDefaultNoteProperties()
   if (node.position) {
     note.properties.nodePosition = {
-      prop: {
-        position: node.position,
-        type: "position",
-      }
+      position: node.position,
+      type: "position"
     }
   }
   if (node.measured) {
     note.properties.nodeSize = {
-      prop: {
-        size: { width: node.measured.width || 100, height: node.measured.height || 100 },
-        type: "size",
-      }
+      size: { width: node.measured.width || 100, height: node.measured.height || 100 },
+      type: "size",
     }
   }
   return note

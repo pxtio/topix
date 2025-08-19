@@ -1,7 +1,4 @@
 """ContentStore for managing notes and messages in Qdrant."""
-
-import json
-
 from qdrant_client.models import ScoredPoint
 
 from topix.datatypes.chat.chat import Message
@@ -26,11 +23,11 @@ class ContentStore:
         """Convert a Qdrant point to a note or message."""
         match point.payload.get("type"):
             case "note":
-                return Note.model_construct(**point.payload)
+                return Note(**point.payload)
             case "link":
-                return Link.model_construct(**point.payload)
+                return Link(**point.payload)
             case "message":
-                return Message.model_construct(**point.payload)
+                return Message(**point.payload)
             case _:
                 raise ValueError(
                     f"Unknown type in payload: {point.payload.get('type')}"
@@ -43,30 +40,19 @@ class ContentStore:
             raise ValueError(
                 "Entry must have a 'type' field with 'note', 'link' or 'message'."
             )
-        if entry["type"] == "note" and "content" in entry:
+        if entry["type"] in ("note", "message") and "content" in entry:
             return entry["content"].get("markdown", "")
-        elif entry["type"] == "link":
-            return entry.get("label", "")
-        elif entry["type"] == "message":
-            content = entry.get("content", "")
-            if isinstance(content, str):
-                return content
-            elif isinstance(content, list):
-                return json.dumps(content)
+        if entry["type"] == "link" and "label" in entry:
+            return entry["label"].get("markdown", "")
         return ""
 
     @staticmethod
     def extract_text(entry: Entry | dict) -> str:
         """Extract text content from a note or message."""
-        if isinstance(entry, Note) and entry.content:
+        if isinstance(entry, (Note, Message)) and entry.content:
             return entry.content.markdown
-        elif isinstance(entry, Link):
-            return entry.label or ""
-        elif isinstance(entry, Message):
-            if isinstance(entry.content, str):
-                return entry.content
-            elif isinstance(entry.content, list):
-                return json.dumps(entry.content)
+        if isinstance(entry, Link) and entry.label:
+            return entry.label.markdown
         return ""
 
     async def add(self, entries: list[Entry]):

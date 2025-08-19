@@ -4,17 +4,17 @@ from __future__ import annotations
 
 import abc
 
-from typing import Literal, Type
+from typing import Annotated, Literal, Type
 
 from pydantic import BaseModel, Field
 
+from topix.datatypes.chat.tool_call import ToolCall
 from topix.datatypes.enum import CustomEnum
-from topix.datatypes.lang import LangCodeEnum
 from topix.datatypes.mime import MimeTypeEnum
 from topix.utils.common import gen_uid
 
 
-class PropertyTypeEnum(str, CustomEnum):
+class PropertyType(str, CustomEnum):
     """Property type enum."""
 
     NUMBER = "number"
@@ -24,7 +24,6 @@ class PropertyTypeEnum(str, CustomEnum):
     MULTI_TEXT = "multi_text"
     KEYWORD = "keyword"
     MULTI_KEYWORD = "multi_keyword"
-    REFERENCE = "reference"
     LOCATION = "location"
     POSITION = "position"
     SIZE = "size"
@@ -32,49 +31,43 @@ class PropertyTypeEnum(str, CustomEnum):
     IMAGE = "image"
     FILE = "file"
     URL = "url"
-    STYLE = "style"
+    REASONING = "reasoning"
 
 
 class Property(abc.ABC, BaseModel):
     """Base class for all property types."""
 
     id: str = Field(default_factory=gen_uid)
-    type: PropertyTypeEnum
+    type: PropertyType
 
 
 class NumberProperty(Property):
     """Property for numeric values."""
 
-    type: Literal[PropertyTypeEnum.NUMBER] = PropertyTypeEnum.NUMBER
+    type: Literal[PropertyType.NUMBER] = PropertyType.NUMBER
     number: int | float | None = None
 
 
 class DateProperty(Property):
     """Property for date values."""
 
-    type: Literal[PropertyTypeEnum.DATE] = PropertyTypeEnum.DATE
+    type: Literal[PropertyType.DATE] = PropertyType.DATE
     date: str | None = None
 
 
 class BooleanProperty(Property):
     """Property for boolean values."""
 
-    type: Literal[PropertyTypeEnum.BOOLEAN] = PropertyTypeEnum.BOOLEAN
+    type: Literal[PropertyType.BOOLEAN] = PropertyType.BOOLEAN
     boolean: bool | None = None
 
 
 class TextProperty(Property):
     """Property for text values."""
 
-    type: Literal[PropertyTypeEnum.TEXT] = PropertyTypeEnum.TEXT
+    type: Literal[PropertyType.TEXT] = PropertyType.TEXT
     text: str | None = None
     searchable: bool | None = None
-
-
-class SearchableTextProperty(TextProperty):
-    """Property for text values that are searchable."""
-
-    searchable: bool = True
 
 
 class IconProperty(Property):
@@ -92,7 +85,7 @@ class IconProperty(Property):
         type: Literal['emoji'] = 'emoji'
         emoji: str
 
-    type: Literal[PropertyTypeEnum.ICON] = PropertyTypeEnum.ICON
+    type: Literal[PropertyType.ICON] = PropertyType.ICON
     icon: Icon | Emoji | None = None
 
 
@@ -105,7 +98,7 @@ class ImageProperty(Property):
         url: str
         caption: str | None = None
 
-    type: Literal[PropertyTypeEnum.IMAGE] = PropertyTypeEnum.IMAGE
+    type: Literal[PropertyType.IMAGE] = PropertyType.IMAGE
     image: Image | None = None
 
 
@@ -120,7 +113,7 @@ class FileProperty(Property):
         size: float | None = None
         mime_type: MimeTypeEnum | None = None
 
-    type: Literal[PropertyTypeEnum.FILE] = PropertyTypeEnum.FILE
+    type: Literal[PropertyType.FILE] = PropertyType.FILE
     file: File | None = None
 
 
@@ -132,42 +125,29 @@ class URLProperty(Property):
 
         url: str
 
-    type: Literal[PropertyTypeEnum.URL] = PropertyTypeEnum.URL
+    type: Literal[PropertyType.URL] = PropertyType.URL
     url: URL | None = None
 
 
 class MultiTextProperty(Property):
     """Property for multiple text values."""
 
-    type: Literal[PropertyTypeEnum.MULTI_TEXT] = PropertyTypeEnum.MULTI_TEXT
+    type: Literal[PropertyType.MULTI_TEXT] = PropertyType.MULTI_TEXT
     texts: list[str] = []  # list of str
 
 
 class KeywordProperty(Property):
     """Property for keyword values."""
 
-    type: Literal[PropertyTypeEnum.KEYWORD] = PropertyTypeEnum.KEYWORD
+    type: Literal[PropertyType.KEYWORD] = PropertyType.KEYWORD
     value: int | str | None = None
     value_type: Type[CustomEnum] | None = None
-
-
-class LanguageProperty(KeywordProperty):
-    """Property for language values."""
-
-    type: Literal[PropertyTypeEnum.KEYWORD] = PropertyTypeEnum.KEYWORD
-    value_type: Type[CustomEnum] = LangCodeEnum
-
-
-class MimeTypeProperty(KeywordProperty):
-    """Property for MIME type values."""
-
-    value_type: Type[CustomEnum] = MimeTypeEnum
 
 
 class MultiKeywordProperty(Property):
     """Property for multiple keyword values."""
 
-    type: Literal[PropertyTypeEnum.MULTI_KEYWORD] = PropertyTypeEnum.MULTI_KEYWORD
+    type: Literal[PropertyType.MULTI_KEYWORD] = PropertyType.MULTI_KEYWORD
     values: list[int | str] = []
     value_type: Type[CustomEnum] | None = None
 
@@ -181,7 +161,7 @@ class LocationProperty(Property):
         latitude: float
         longitude: float
 
-    type: Literal[PropertyTypeEnum.LOCATION] = PropertyTypeEnum.LOCATION
+    type: Literal[PropertyType.LOCATION] = PropertyType.LOCATION
     location: Location | None = None
 
 
@@ -194,7 +174,7 @@ class PositionProperty(Property):
         x: float
         y: float
 
-    type: Literal[PropertyTypeEnum.POSITION] = PropertyTypeEnum.POSITION
+    type: Literal[PropertyType.POSITION] = PropertyType.POSITION
     position: Position | None = None
 
 
@@ -207,32 +187,34 @@ class SizeProperty(Property):
         width: float
         height: float
 
-    type: Literal[PropertyTypeEnum.SIZE] = PropertyTypeEnum.SIZE
+    type: Literal[PropertyType.SIZE] = PropertyType.SIZE
     size: Size | None = None
 
 
-type DataProperty = (
-    NumberProperty
-    | DateProperty
-    | BooleanProperty
-    | TextProperty
-    | SearchableTextProperty
-    | IconProperty
-    | ImageProperty
-    | FileProperty
-    | URLProperty
-    | MultiTextProperty
-    | KeywordProperty
-    | LanguageProperty
-    | MimeTypeProperty
-    | MultiKeywordProperty
-    | LocationProperty
-    | PositionProperty
-    | SizeProperty
-)
+class ReasoningProperty(Property):
+    """Property for agent's reasoning steps."""
+
+    type: Literal[PropertyType.REASONING] = PropertyType.REASONING
+    reasoning: list[ToolCall] = []
 
 
-class Prop(BaseModel):
-    """Property class for generic data properties."""
-
-    prop: DataProperty = Field(..., discriminator="type")
+type DataProperty = Annotated[
+    (
+        NumberProperty
+        | DateProperty
+        | BooleanProperty
+        | TextProperty
+        | IconProperty
+        | ImageProperty
+        | FileProperty
+        | URLProperty
+        | MultiTextProperty
+        | KeywordProperty
+        | MultiKeywordProperty
+        | LocationProperty
+        | PositionProperty
+        | SizeProperty
+        | ReasoningProperty
+    ),
+    Field(discriminator="type")
+]

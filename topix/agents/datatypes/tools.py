@@ -12,3 +12,11 @@ class AgentToolName(str, CustomEnum):
     CODE_INTERPRETER = "code_interpreter"
 
     RAW_MESSAGE = "raw_message"
+
+
+def to_display_output(tool_name: str) -> bool:
+    """Check if the tool is for displaying output."""
+    return tool_name in [
+        AgentToolName.ANSWER_REFORMULATE,
+        AgentToolName.RAW_MESSAGE,
+    ]

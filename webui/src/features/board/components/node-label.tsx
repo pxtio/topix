@@ -39,9 +39,11 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             ...node,
             data: {
               ...node.data,
-              label: newLabel,
+              label: {
+                markdown: newLabel
+              },
             },
-          }
+          } as NoteNode
         }
         return node
       })
@@ -60,13 +62,11 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
               properties: {
                 ...nde.data.properties,
                 emoji: {
-                  prop: {
-                    type: "icon",
-                    icon: { type: 'emoji', emoji: emoji.emoji }
-                  }
+                  type: "icon",
+                  icon: { type: 'emoji', emoji: emoji.emoji }
                 }
               }
-            },
+            } as Note,
           }
         }
         return node
@@ -150,11 +150,11 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
           </div>
         }
         {
-          note.properties?.emoji?.prop.icon?.type === 'emoji' && note.properties?.emoji?.prop.icon?.emoji && (
+          note.properties?.emoji?.icon?.type === 'emoji' && note.properties?.emoji?.icon?.emoji && (
             <div className={`
               p-2
             `}>
-              {note.properties.emoji.prop.icon.emoji}
+              {note.properties.emoji.icon.emoji}
             </div>
           )
         }
@@ -177,7 +177,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             labelEditing ? (
               <TextareaAutosize
                 className={textareaClass}
-                value={note.label || ''}
+                value={note.label?.markdown || ''}
                 onChange={handleChange}
                 placeholder=""
                 ref={textareaRef}
@@ -186,7 +186,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             ) : (
               <div className={textareaClass}>
                 <span>
-                  {note.label}
+                  {note.label?.markdown || ""}
                 </span>
               </div>
             )
@@ -197,16 +197,16 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             <SheetTitle asChild>
               <div className='flex flex-row items-center gap-2 w-full'>
                 {
-                  note.properties?.emoji?.prop.icon?.type === 'emoji' && note.properties?.emoji?.prop.icon?.emoji && (
+                  note.properties?.emoji?.icon?.type === 'emoji' && note.properties?.emoji?.icon?.emoji && (
                     <div className={`
                       p-2
                       text-3xl
                     `}>
-                      {note.properties.emoji.prop.icon.emoji}
+                      {note.properties.emoji.icon.emoji}
                     </div>
                   )
                 }
-                <h1 className='text-3xl'>{note.label}</h1>
+                <h1 className='text-3xl'>{note.label?.markdown || ""}</h1>
               </div>
             </SheetTitle>
             <SheetDescription className='invisible'>

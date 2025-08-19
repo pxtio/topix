@@ -3,7 +3,8 @@ import pytest
 
 from topix.datatypes.graph.graph import Graph
 from topix.datatypes.note.link import Link
-from topix.datatypes.note.note import Content, Note
+from topix.datatypes.note.note import Note
+from topix.datatypes.resource import RichText
 from topix.store.graph import GraphStore
 from topix.store.qdrant.base import QdrantStore
 
@@ -34,8 +35,8 @@ async def test_graph_crud_lifecycle(config, init_collection):
         assert stored_graph.edges == []
 
         # 3. Add nodes
-        node1 = Note(label="First Node", graph_uid=graph.uid, content=Content(markdown="# Hello"))
-        node2 = Note(label="Second Node", graph_uid=graph.uid, content=Content(markdown="World!"))
+        node1 = Note(label=RichText(markdown="First Node"), graph_uid=graph.uid, content=RichText(markdown="# Hello"))
+        node2 = Note(label=RichText(markdown="Second Node"), graph_uid=graph.uid, content=RichText(markdown="World!"))
         await store.add_notes([node1, node2])
 
         # 4. Fetch nodes and verify
@@ -57,9 +58,9 @@ async def test_graph_crud_lifecycle(config, init_collection):
         assert any(e.id == link.id for e in graph_with_data.edges)
 
         # 8. Update a node
-        await store.update_node(node1.id, {"label": "First Node Updated"})
+        await store.update_node(node1.id, {"label": {"markdown": "First Node Updated"}})
         updated_nodes = await store.get_nodes([node1.id])
-        assert updated_nodes[0].label == "First Node Updated"
+        assert updated_nodes[0].label.markdown == "First Node Updated"
 
         # 9. Delete a node
         await store.delete_node(node2.id)

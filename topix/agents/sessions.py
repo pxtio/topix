@@ -1,6 +1,7 @@
 """Assistant session management."""
 
 from agents.memory import Session
+from topix.datatypes.chat.chat import Message
 from topix.store.chat import ChatStore
 
 MAX_RETRIEVAL_MESSAGES = 20
@@ -21,7 +22,7 @@ class AssistantSession(Session):
         )
         return [msg.to_chat_message() for msg in messages]
 
-    async def add_items(self, items: list[dict]) -> None:
+    async def add_items(self, items: list[dict | Message]) -> None:
         """Add items to the session."""
         await self._chat_store.add_messages(chat_uid=self._session_id, messages=items)
 

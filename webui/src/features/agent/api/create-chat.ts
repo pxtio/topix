@@ -1,4 +1,6 @@
 import { API_URL } from "@/config/api"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { type Chat } from "../types/chat"
 
 
 /**
@@ -6,7 +8,13 @@ import { API_URL } from "@/config/api"
  *
  * @param userId - The ID of the user for whom the chat is being created.
  */
-export async function createNewChat(userId: string, boardId?: string): Promise<string> {
+export async function createNewChat({
+  userId,
+  boardId,
+}: {
+  userId: string,
+  boardId?: string,
+}): Promise<string> {
   const headers = new Headers()
   headers.set("Content-Type", "application/json")
 
@@ -32,4 +40,32 @@ export async function createNewChat(userId: string, boardId?: string): Promise<s
 
   const data = await response.json()
   return data.data.chat_id
+}
+
+
+// Simple hook for creating a new chat
+export const useCreateChat = () => {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: createNewChat,
+    onSuccess: (chatId, { userId, boardId }) => {
+      queryClient.setQueryData<Chat[]>(["listChats", userId], (oldData) => {
+        const newChat = {
+          id: -1,
+          uid: chatId,
+          label: undefined,
+          createdAt: new Date().toISOString(),
+          userId,
+          graphUid: boardId
+        } as Chat
+        return [newChat, ...(oldData || [])]
+      })
+    }
+  })
+  return {
+    createChat: mutation.mutate,
+    createChatAsync: mutation.mutateAsync,
+    ...mutation
+  }
 }

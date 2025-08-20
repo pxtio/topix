@@ -6,7 +6,8 @@ import {
   redirect,
 } from '@tanstack/react-router'
 import { RootLayout } from './root-layout'
-import { NewChat, ChatView, BoardView } from '../features/demo'
+import { BoardView } from '../features/demo'
+import { ChatScreen } from '@/features/agent/screens/chat-screen'
 
 // Root layout (sidebar persists)
 export const rootRoute = createRootRoute({ component: RootLayout })
@@ -29,23 +30,26 @@ const redirectHome = createRoute({
 })
 
 // /chats (new chat)
+export const NewChatUrl = '/chats'
 const chatsIndexRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/chats',
-  component: NewChat,
+  path: NewChatUrl,
+  component: ChatScreen,
 })
 
 // /chats/:id
+export const ChatUrl = '/chats/$id'
 const chatRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/chats/$id',
-  component: ChatView,
+  path: ChatUrl,
+  component: ChatScreen,
 })
 
 // /boards/:id
+export const BoardUrl = '/boards/$id'
 const boardRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/boards/$id',
+  path: BoardUrl,
   component: BoardView,
 })
 

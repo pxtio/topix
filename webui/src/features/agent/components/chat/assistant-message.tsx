@@ -97,8 +97,8 @@ export const AssistantMessage = ({
     streamingMessage.steps.length > 0
   ) || message
 
-  const messageContent = message.content ?
-    message.content
+  const messageContent = message.content.markdown ?
+    message.content.markdown
     :
     lastStep?.response && isMainResponse(lastStep.name) ?
     lastStep.response
@@ -108,8 +108,8 @@ export const AssistantMessage = ({
   const agentResponse = streamingMessage ?
     streamingMessage
     :
-    message.reasoningSteps ?
-    { steps: message.reasoningSteps }
+    message.properties.reasoning?.reasoning ?
+    { steps: message.properties.reasoning.reasoning }
     :
     undefined
 

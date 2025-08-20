@@ -19,11 +19,12 @@ from agents import (
     function_tool,
 )
 from agents.extensions.models.litellm_model import LitellmModel
-from topix.agents.datatypes.context import Context, ToolCall
+from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import support_temperature
 from topix.agents.datatypes.outputs import ToolOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.agents.utils import tool_execution_handler
+from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
 
 logger = logging.getLogger(__name__)
 
@@ -134,10 +135,11 @@ class BaseAgent(Agent[Context]):
 
             context.context.tool_calls.append(
                 ToolCall(
-                    tool_id=p["tool_id"],
-                    tool_name=name_override,
+                    id=p["tool_id"],
+                    name=name_override,
                     arguments={"input": input},
                     output=output,
+                    state=ToolCallState.COMPLETED
                 )
             )
 

@@ -39,7 +39,7 @@ export function useAddNoteNode() {
     if (!newNote.properties) {
       newNote.properties = {}
     }
-    newNote.properties.nodePosition = { prop: { position: { x: graphX, y: graphY }, type: 'position' } }
+    newNote.properties.nodePosition = { position: { x: graphX, y: graphY }, type: 'position' }
     setNodes([...nodes, convertNoteToNode(newNote)])
     const notes: Note[] = [newNote]
     addNotes({ boardId, userId, notes })

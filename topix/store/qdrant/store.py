@@ -19,16 +19,12 @@ from qdrant_client.models import (
 )
 
 from topix.config.config import Config
-from topix.datatypes.chat.chat import Message
-from topix.datatypes.note.link import Link
-from topix.datatypes.note.note import Note
-from topix.datatypes.note.property import TextProperty
+from topix.datatypes.resource import Resource
+from topix.datatypes.property import TextProperty
 from topix.nlp.embed import DIMENSIONS, OpenAIEmbedder
 from topix.store.qdrant.utils import convert_point_to_entry, payload_dict_to_field_list
 
 logger = logging.getLogger(__name__)
-
-type Entry = Note | Link | Message
 
 DEFAULT_COLLECTION = "topix"
 
@@ -124,7 +120,7 @@ class QdrantStore:
         ids: list[str | int],
         include: dict | bool = True,
         with_vector: bool = False,
-    ) -> list[Entry]:
+    ) -> list[Resource]:
         """Retrieve multiple Entry objects by their IDs."""
         if isinstance(include, dict):
             include = payload_dict_to_field_list(include)
@@ -164,7 +160,7 @@ class QdrantStore:
         )
         return res.count
 
-    async def _embed(self, entries: list[Entry]) -> list[list[list[float]] | None]:
+    async def _embed(self, entries: list[Resource]) -> list[list[list[float]] | None]:
         searchable_texts = []
         indices = []
         for i, entry in enumerate(entries):

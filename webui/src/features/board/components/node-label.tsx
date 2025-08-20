@@ -8,6 +8,7 @@ import { MdEditor } from "@/components/editor/milkdown"
 import { MilkdownProvider } from "@milkdown/react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from "../types/style"
 
 
 /**
@@ -38,9 +39,11 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             ...node,
             data: {
               ...node.data,
-              label: newLabel,
+              label: {
+                markdown: newLabel
+              },
             },
-          }
+          } as NoteNode
         }
         return node
       })
@@ -59,13 +62,11 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
               properties: {
                 ...nde.data.properties,
                 emoji: {
-                  prop: {
-                    type: "icon",
-                    icon: { type: 'emoji', emoji: emoji.emoji }
-                  }
+                  type: "icon",
+                  icon: { type: 'emoji', emoji: emoji.emoji }
                 }
               }
-            },
+            } as Note,
           }
         }
         return node
@@ -111,12 +112,14 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
 
   const textareaClass = `
     w-full h-full
-    px-3 py-2
+    p-6
     bg-transparent
     ${note.style.textAlign === 'center' ? 'text-center' : note.style.textAlign === 'right' ? 'text-right' : 'text-left'}
     border-none
     resize-none
-    font-handwriting
+    ${textStyleToTwClass(note.style.textStyle)}
+    ${fontFamilyToTwClass(note.style.fontFamily)}
+    ${fontSizeToTwClass(note.style.fontSize)}
     focus:outline-none
     focus:ring-0
     focus:border-none
@@ -147,11 +150,11 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
           </div>
         }
         {
-          note.properties?.emoji?.prop.icon?.type === 'emoji' && note.properties?.emoji?.prop.icon?.emoji && (
+          note.properties?.emoji?.icon?.type === 'emoji' && note.properties?.emoji?.icon?.emoji && (
             <div className={`
               p-2
             `}>
-              {note.properties.emoji.prop.icon.emoji}
+              {note.properties.emoji.icon.emoji}
             </div>
           )
         }
@@ -166,13 +169,15 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
           `}
           onDoubleClick={onDoubleClick}
           onPointerDown={stopDragging}
-          style={{ color: note.style.color || 'inherit' }}
+          style={{
+            color: note.style.textColor || 'inherit',
+          }}
         >
           {
             labelEditing ? (
               <TextareaAutosize
                 className={textareaClass}
-                value={note.label || ''}
+                value={note.label?.markdown || ''}
                 onChange={handleChange}
                 placeholder=""
                 ref={textareaRef}
@@ -181,35 +186,35 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             ) : (
               <div className={textareaClass}>
                 <span>
-                  {note.label}
+                  {note.label?.markdown || ""}
                 </span>
               </div>
             )
           }
         </div>
-        <SheetContent className="sm:max-w-2xl flex flex-col items-center">
-          <SheetHeader>
+        <SheetContent className="sm:max-w-2xl flex flex-col items-center text-left">
+          <SheetHeader className='w-full'>
             <SheetTitle asChild>
-              <div className='flex flex-row items-center gap-2'>
+              <div className='flex flex-row items-center gap-2 w-full'>
                 {
-                  note.properties?.emoji?.prop.icon?.type === 'emoji' && note.properties?.emoji?.prop.icon?.emoji && (
+                  note.properties?.emoji?.icon?.type === 'emoji' && note.properties?.emoji?.icon?.emoji && (
                     <div className={`
                       p-2
                       text-3xl
                     `}>
-                      {note.properties.emoji.prop.icon.emoji}
+                      {note.properties.emoji.icon.emoji}
                     </div>
                   )
                 }
-                <h1 className='text-3xl'>{note.label}</h1>
+                <h1 className='text-3xl'>{note.label?.markdown || ""}</h1>
               </div>
             </SheetTitle>
             <SheetDescription className='invisible'>
               Note description
             </SheetDescription>
           </SheetHeader>
-          <div className='min-h-0 flex-1 flex items-center'>
-            <ScrollArea className='h-full'>
+          <div className='min-h-0 flex-1 flex items-center w-full'>
+            <ScrollArea className='h-full w-full'>
               <MilkdownProvider>
                 <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
               </MilkdownProvider>

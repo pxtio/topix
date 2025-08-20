@@ -7,22 +7,16 @@ import { defaultStyle, type Style } from "./style"
  * Interface for properties of a note.
  */
 export interface NoteProperties {
-  nodePosition?: {
-    prop: PositionProperty
-  }
-  nodeSize?: {
-    prop: SizeProperty
-  }
-  emoji?: {
-    prop: IconProperty
-  }
+  nodePosition?: PositionProperty
+  nodeSize?: SizeProperty
+  emoji?: IconProperty
 }
 
 
 /**
  * Interface for content of a note.
  */
-export interface Content {
+export interface RichText {
   markdown: string
 }
 
@@ -41,8 +35,8 @@ export interface Note extends Record<string, unknown> {
 
   properties?: NoteProperties
 
-  label?: string
-  content?: Content
+  label?: RichText
+  content?: RichText
 
   graphUid: string
   style: Style
@@ -54,23 +48,17 @@ export interface Note extends Record<string, unknown> {
 
 export const createDefaultNoteProperties = (): NoteProperties => ({
   nodePosition: {
-    prop: {
-      position: { x: 0, y: 0 },
-      type: "position",
-    },
+    position: { x: 0, y: 0 },
+    type: "position",
   },
   nodeSize: {
-    prop: {
-      size: { width: 100, height: 100 },
-      type: "size",
-    },
+    size: { width: 100, height: 100 },
+    type: "size",
   },
   emoji: {
-    prop: {
-      type: "icon",
-      icon: { type: "emoji", emoji: "" },
-    },
-  },
+    type: "icon",
+    icon: { type: "emoji", emoji: "" },
+  }
 })
 
 

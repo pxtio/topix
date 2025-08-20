@@ -1,4 +1,4 @@
-import { OpenAI, Gemini } from '@lobehub/icons'
+import { OpenAI, Gemini, Anthropic } from '@lobehub/icons'
 
 
 export const LlmModels = [
@@ -12,7 +12,10 @@ export const LlmModels = [
   "openai/gpt-5-nano",
   "gemini/gemini-2.0-flash",
   "gemini/gemini-2.5-flash",
-  "gemini/gemini-2.5-pro"
+  "gemini/gemini-2.5-pro",
+  "anthropic/claude-opus-4-1-20250805",
+  "anthropic/claude-sonnet-4-20250514",
+  "anthropic/claude-3-5-haiku-20241022"
 ] as const
 
 export type LlmModel = typeof LlmModels[number]
@@ -28,7 +31,10 @@ export const LlmName: Record<LlmModel, string> = {
   "openai/gpt-5-nano": "GPT-5 Nano",
   "gemini/gemini-2.0-flash": "Gemini 2.0 Flash",
   "gemini/gemini-2.5-flash": "Gemini 2.5 Flash",
-  "gemini/gemini-2.5-pro": "Gemini 2.5 Pro"
+  "gemini/gemini-2.5-pro": "Gemini 2.5 Pro",
+  "anthropic/claude-opus-4-1-20250805": "Claude Opus 4.1",
+  "anthropic/claude-sonnet-4-20250514": "Claude Sonnet 4",
+  "anthropic/claude-3-5-haiku-20241022": "Claude Haiku"
 }
 
 export const LlmDescription: Record<LlmModel, string> = {
@@ -42,7 +48,10 @@ export const LlmDescription: Record<LlmModel, string> = {
   "openai/gpt-5-nano": "Lightweight GPT-5 model suitable for quick tasks",
   "gemini/gemini-2.0-flash": "Efficient and affordable model ideal for factual, concise answers",
   "gemini/gemini-2.5-flash": "Faster Gemini model offering improved quality over 2.0 Flash",
-  "gemini/gemini-2.5-pro": "Flagship Gemini model with high accuracy and rich reasoning capabilities"
+  "gemini/gemini-2.5-pro": "Flagship Gemini model with high accuracy and rich reasoning capabilities",
+  "anthropic/claude-opus-4-1-20250805": "Powerful agentic model from Anthropic",
+  "anthropic/claude-sonnet-4-20250514": "Fast and powerful model from Anthropic",
+  "anthropic/claude-3-5-haiku-20241022": "Lightweight model from Anthropic"
 }
 
 
@@ -57,5 +66,8 @@ export const LlmBrandIcon: Record<LlmModel, React.ComponentType<{ size?: number 
   "openai/gpt-5-nano": OpenAI,
   "gemini/gemini-2.0-flash": Gemini.Color,
   "gemini/gemini-2.5-flash": Gemini.Color,
-  "gemini/gemini-2.5-pro": Gemini.Color
+  "gemini/gemini-2.5-pro": Gemini.Color,
+  "anthropic/claude-opus-4-1-20250805": Anthropic,
+  "anthropic/claude-sonnet-4-20250514": Anthropic,
+  "anthropic/claude-3-5-haiku-20241022": Anthropic
 }

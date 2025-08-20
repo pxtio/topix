@@ -1,11 +1,7 @@
 """Utility functions for Qdrant."""
 from qdrant_client.models import ScoredPoint
 
-from topix.datatypes.chat.chat import Message
-from topix.datatypes.note.link import Link
-from topix.datatypes.note.note import Note
-
-type Entry = Note | Link | Message
+from topix.datatypes.resource import Resource
 
 
 def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str]:
@@ -26,7 +22,7 @@ def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str
     return fields
 
 
-def convert_point_to_entry(point: ScoredPoint) -> Entry:
+def convert_point_to_entry(point: ScoredPoint) -> Resource:
     """Convert a Qdrant point to a note or message."""
     match point.payload.get("type"):
         case "note":

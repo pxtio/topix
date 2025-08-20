@@ -112,8 +112,12 @@ async def add_notes_to_graph(
     store: GraphStore = request.app.graph_store
 
     notes = body.notes
+
     for note in notes:
         note.graph_uid = graph_id
+
+    if not notes:
+        return {"message": "Received empty note array."}
 
     await store.add_notes(nodes=notes)
     return {"message": "Notes added to board successfully"}
@@ -191,8 +195,11 @@ async def add_links_to_graph(
     for link in links:
         link.graph_uid = graph_id
 
+    if not links:
+        return {"message": "Received empty link array."}
+
     await store.add_links(links=links)
-    return {"message": "Links added to board successfully"}
+    return {"message": "Links added to board successfully."}
 
 
 @router.get("/{graph_id}/links/{link_id}", include_in_schema=False)

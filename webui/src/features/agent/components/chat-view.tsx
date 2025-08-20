@@ -42,8 +42,6 @@ export const ChatView = ({ hideContextBoard = false }: ChatViewProps) => {
 
   const attachedBoardId = currentChatId ? chat?.graphUid : newChatBoardId
 
-  console.log(attachedBoardId)
-
   return (
     <div
       className="absolute inset-0 h-full w-full overflow-hidden"

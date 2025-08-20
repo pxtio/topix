@@ -1,4 +1,4 @@
-import React, { useState, type KeyboardEvent } from 'react'
+import { useState, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import { useChatStore } from '../../store/chat-store'
 import { useSendMessage } from '../../api/send-message'
@@ -11,10 +11,15 @@ import { ModelChoiceMenu } from './input-settings/model-card'
 import { SearchEngineChoiceMenu } from './input-settings/web-search'
 
 
+export interface InputBarProps {
+  attachedBoardId?: string
+}
+
+
 /**
  * Component that renders an input bar for sending messages in a chat interface.
  */
-export const InputBar: React.FC = () => {
+export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   const userId = useAppStore((state) => state.userId)
 
   const { currentChatId, llmModel, isStreaming, webSearchEngine } = useChatStore()
@@ -34,7 +39,7 @@ export const InputBar: React.FC = () => {
       model: llmModel,
       webSearchEngine,
     }
-    sendMessage({ payload, userId })
+    sendMessage({ payload, userId, boardId: attachedBoardId })
     setInput("") // Clear the input after search
   }
 
@@ -67,7 +72,7 @@ export const InputBar: React.FC = () => {
           <div className='w-full h-72 flex flex-col items-center justify-start'>
             <Oc className='fill-primary w-36'/>
             <div className='text-center text-xl text-card-foreground'>
-              <span>Ask me anything — I’ll sniff out the answer!</span>
+              <span>Ask me anything — I'll sniff out the answer!</span>
             </div>
           </div>
         )

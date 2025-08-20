@@ -1,0 +1,43 @@
+"""Utility functions for converting mind map data types to graph representations."""
+
+from src.agents.mindmap.datatypes import SimpleNode
+from src.datatypes.note.link import Link
+from src.datatypes.note.note import Note
+from src.datatypes.property import IconProperty
+from src.datatypes.resource import RichText
+
+
+def convert_root_to_graph(root: SimpleNode) -> tuple[list[Note], list[Link]]:
+    """Convert a SimpleNode to a graph representation."""
+    nodes = []
+    links = []
+
+    def traverse(node: SimpleNode, parent_id: str | None = None):
+        """Recursively traverse the SimpleNode and build notes and links."""
+        note = Note(
+            properties={
+                "emoji": IconProperty(
+                    icon=IconProperty.Emoji(
+                        emoji=node.emoji
+                    )
+                )
+            },
+            label=RichText(
+                markdown=node.label
+            ),
+            content=RichText(
+                markdown=node.note
+            )
+        )
+        nodes.append(note)
+        if parent_id:
+            links.append(Link(
+                source=parent_id,
+                target=note.id
+            ))
+        for child in node.children:
+            traverse(child, note.id)
+
+    traverse(root)
+
+    return nodes, links

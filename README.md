@@ -1,29 +1,32 @@
-## Prerequisites
+# Prerequisites
 
-You need to install nodejs on the machine to be able to run frontend
+You need to install:
+- Nodejs to be able to run frontend
+- uv to be able to run the backend
 
-For backend, just create a virtual env and install all dependencies with
+
+# Backend
+For launching, the backend execute the following commands:
 
 ```bash
-uv pip install pyproject.toml
-```
-
-### Backend
-```bash
+cd topix
+uv sync
 # it will serve api at port 8888 by default unless u provide a custom port
-python -m topix.api.app --port <custom-port>
+uv run python -m src.api.app --port <custom-port>
 ```
 
-### Frontend
+# Frontend
 
-In `webui/` create a file name `.env` like this:
+
+In `webui/` folder, create a file name `.env` like this:
 
 ```
 VITE_TOPIX_URL=http://localhost:<custom-port>
 ```
 
+Move to the frontend folder from the root of the repo
 ```bash
-cd webui/
+cd webui
 ```
 
 **Development:**

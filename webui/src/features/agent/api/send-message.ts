@@ -55,10 +55,12 @@ export const useSendMessage = () => {
   const mutation = useMutation({
     mutationFn: async ({
       payload,
-      userId
+      userId,
+      boardId
     }: {
       payload: SendMessageRequestPayload,
-      userId: string
+      userId: string,
+      boardId?: string
     }) => {
       setIsStreaming(true)
       // Optimistically update the chat messages in the query cache
@@ -73,7 +75,14 @@ export const useSendMessage = () => {
             queryClient.setQueryData<Chat[]>(
               ["listChats", userId],
               (oldChats) => {
-                const newChat = { id: -1, uid: newId, label: trimText(payload.query, 20), createdAt: new Date().toISOString(), userId }
+                const newChat = {
+                  id: -1,
+                  uid: newId,
+                  label: trimText(payload.query, 20),
+                  createdAt: new Date().toISOString(),
+                  userId,
+                  graphUid: boardId
+                } as Chat
                 return [newChat, ...(oldChats || [])]
               }
             )

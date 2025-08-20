@@ -52,11 +52,11 @@ export function BoardItem({ boardId, label }: { boardId: string, label?: string 
   const { getBoard } = useGetBoard()
 
   const handleClick = () => {
+    setView("board")
     setBoardId(boardId)
     setIsLoading(true)
     setNodes([])
     setEdges([])
-    setView("board")
     getBoard()
   }
 

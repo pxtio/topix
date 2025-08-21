@@ -13,7 +13,7 @@ import { useChat } from '../../hooks/chat-context'
 import { useCreateChat } from '../../api/create-chat'
 import { useUpdateChat } from '../../api/update-chat'
 import { useNavigate } from '@tanstack/react-router'
-import { ChatUrl } from '@/router'
+import { ChatUrl } from '@/routes'
 import { useDescribeChat } from '../../api/describe-chat'
 
 

@@ -1,4 +1,4 @@
-import { ChatUrl } from "@/router"
+import { ChatUrl } from "@/routes"
 import { Chat } from "../components/chat-view"
 import { useParams } from "@tanstack/react-router"
 

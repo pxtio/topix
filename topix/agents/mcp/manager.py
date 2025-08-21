@@ -57,6 +57,17 @@ class MCPServersManager:
     def create_python_executor_mcp_server(self) -> MCPServerStdio:
         """
         Create and add the 'Python Executor MCP' server using deno and mcp-run-python.
+
+        Example:
+        ```python
+        mcp_servers_manager = MCPServersManager()
+        s = mcp_servers_manager.create_python_executor_mcp_server()
+        await mcp_servers_manager.init_servers()
+        agent = CodeInterpreter(
+            backend=CodeInterpreterBackend.MCP,
+            mcp_servers=mcp_servers_manager.mcp_servers
+        )
+        ```
         """
         python_executor_mcp_server = self.add_stdio_server(
             name="Python Executor MCP",

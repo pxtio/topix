@@ -122,7 +122,7 @@ class CodeInterpreter(BaseAgent):
                 )
             ]
         elif backend == CodeInterpreterBackend.E2B:
-            tools = [self._create_e2b_tool()]  # e2b_api_key
+            tools = [self._create_e2b_tool()]
         # elif backend == CodeInterpreterBackend.MCP:
         #     # Use MCP tool instead of server to avoid connection issues
         #     python_mcp_server = self.add_stdio_server(

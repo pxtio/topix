@@ -2,13 +2,19 @@ import { useState, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import { useChatStore } from '../../store/chat-store'
 import { useSendMessage } from '../../api/send-message'
-import { generateUuid } from '@/lib/common'
+import { generateUuid, trimText } from '@/lib/common'
 import { useAppStore } from '@/store'
 import { SendButton } from './send-button'
 import TextareaAutosize from 'react-textarea-autosize'
 import { Oc } from '@/components/oc'
 import { ModelChoiceMenu } from './input-settings/model-card'
 import { SearchEngineChoiceMenu } from './input-settings/web-search'
+import { useChat } from '../../hooks/chat-context'
+import { useCreateChat } from '../../api/create-chat'
+import { useUpdateChat } from '../../api/update-chat'
+import { useNavigate } from '@tanstack/react-router'
+import { ChatUrl } from '@/routes'
+import { useDescribeChat } from '../../api/describe-chat'
 
 
 export interface InputBarProps {
@@ -20,27 +26,53 @@ export interface InputBarProps {
  * Component that renders an input bar for sending messages in a chat interface.
  */
 export const InputBar = ({ attachedBoardId }: InputBarProps) => {
+  const { chatId, setChatId } = useChat()
+
   const userId = useAppStore((state) => state.userId)
 
-  const { currentChatId, llmModel, isStreaming, webSearchEngine } = useChatStore()
+  const { llmModel, isStreaming, webSearchEngine } = useChatStore()
 
   const [input, setInput] = useState<string>("")
 
-  const { sendMessage } = useSendMessage()
+  const { createChatAsync } = useCreateChat()
+  const { updateChatAsync } = useUpdateChat()
+  const { sendMessageAsync } = useSendMessage()
+  const { describeChatAsync } = useDescribeChat()
 
-  const handleSearch = () => {
+  const navigate = useNavigate()
+
+  const handleSearch = async () => {
     // Implement your search logic here
     if (!input.trim()) {
       return
     }
+
+    // create new chat if chatid is undefined
+    let createNewChat: boolean = false
+    let id: string
+    if (!chatId) {
+      createNewChat = true
+      id = await createChatAsync({ userId, boardId: attachedBoardId })
+      setChatId(id)
+      navigate({ to: ChatUrl, params: { id } })
+      await updateChatAsync({ chatId: id, userId, chatData: { label: trimText(input.trim(), 20) } })
+    } else {
+      id = chatId
+    }
+
     const payload = {
       query: input.trim(),
       messageId: generateUuid(),
       model: llmModel,
       webSearchEngine,
     }
-    sendMessage({ payload, userId, boardId: attachedBoardId })
-    setInput("") // Clear the input after search
+
+    // clear input right before launching search
+    setInput("")
+    await sendMessageAsync({ payload, userId, chatId: id })
+    if (createNewChat) {
+      await describeChatAsync({ chatId: id, userId })
+    }
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -59,7 +91,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
 
   const className = clsx(
     "transition-all absolute left-1/2 transform -translate-x-1/2 p-4 z-50 flex flex-col justify-center items-center gap-16",
-    currentChatId ?
+    chatId ?
     "bottom-10"
     :
     "bottom-1/3"
@@ -68,7 +100,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   return (
     <div className={className}>
       {
-        !currentChatId && (
+        !chatId && (
           <div className='w-full h-72 flex flex-col items-center justify-start'>
             <Oc className='fill-primary w-36'/>
             <div className='text-center text-xl text-card-foreground'>

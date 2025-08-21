@@ -33,7 +33,6 @@ export const useAddMindMapToBoard = () => {
 
       await addNotes(boardId, userId, displacedMindMapNodes.map(node => convertNodeToNote(boardId, node)))
       await addLinks(boardId, userId, mindMapEdges.map(edge => convertEdgeToLink(boardId, edge)))
-      console.log('Mind map added to board:', boardId)
     }
   })
 

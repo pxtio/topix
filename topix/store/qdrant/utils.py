@@ -1,6 +1,10 @@
 """Utility functions for Qdrant."""
-from qdrant_client.models import ScoredPoint
 
+from qdrant_client.models import Record, ScoredPoint
+
+from topix.datatypes.chat.chat import Message
+from topix.datatypes.note.link import Link
+from topix.datatypes.note.note import Note
 from topix.datatypes.resource import Resource
 
 
@@ -22,16 +26,27 @@ def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str
     return fields
 
 
-def convert_point_to_entry(point: ScoredPoint) -> Resource:
-    """Convert a Qdrant point to a note or message."""
-    match point.payload.get("type"):
-        case "note":
-            return Note.model_construct(**point.payload)
-        case "link":
-            return Link.model_construct(**point.payload)
-        case "message":
-            return Message.model_construct(**point.payload)
-        case _:
-            raise ValueError(
-                f"Unknown type in payload: {point.payload.get('type')}"
-            )
+def convert_point(
+    point: ScoredPoint | Record,
+) -> (
+    Resource | tuple[Resource, list[list[float]]] | str | tuple[str, list[list[float]]]
+):
+    """Convert a Qdrant point to a resource."""
+    resource = point.id
+    if point.payload:
+        type_ = point.payload.get("type")
+        if "id" not in point.payload:
+            point.payload["id"] = point.id
+        match type_:
+            case "note":
+                resource = Note.partial(**point.payload)
+            case "message":
+                resource = Message.partial(**point.payload)
+            case "link":
+                resource = Link.partial(**point.payload)
+            case _:
+                raise ValueError(f"Unknown type: {type_}")
+
+    if point.vector:
+        return resource, point.vector
+    return resource

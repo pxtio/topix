@@ -1,8 +1,6 @@
 """Agent Output Data Types."""
 from pydantic import BaseModel
 
-type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput
-
 
 class SearchResult(BaseModel):
     """Search result from a web search tool."""
@@ -59,3 +57,6 @@ class CodeInterpreterOutput(BaseModel):
             for annotation in self.annotations:
                 result += annotation.model_dump_json() + "\n"
         return result
+
+
+ToolOutput = str | CodeInterpreterOutput | WebSearchOutput

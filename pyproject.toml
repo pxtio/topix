@@ -22,7 +22,8 @@ dependencies = [
     'lxml==6.0.0',
     'linkpreview==0.11.0',
     'cloudscraper==1.2.71',
-    'google-auth>=2.40.3'
+    'google-auth>=2.40.3',
+    'e2b-code-interpreter==1.5.2'
 ]
 
 [project.optional-dependencies]

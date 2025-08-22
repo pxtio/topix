@@ -27,6 +27,7 @@ from topix.datatypes.property import TextProperty
 from topix.datatypes.resource import Resource
 from topix.nlp.embed import DIMENSIONS, OpenAIEmbedder
 from topix.store.qdrant.utils import (
+    RetrieveOutput,
     convert_point,
     payload_dict_to_field_list,
 )
@@ -46,7 +47,11 @@ INDEX_FIELDS = [
     ("graph_uid", "keyword"),
     # link
     ("graph_uid", "keyword"),
+    # the unique id for each resource
+    ("id", "uuid"),
 ]
+
+MAX_PAGE_SIZE = 10000
 
 
 class ContentStore:
@@ -154,16 +159,21 @@ class ContentStore:
     ) -> None:
         """Delete Entry objects based on a filter condition."""
         if not hard_delete:
-            point_ids = await self.filt(
-                filters=filters, limit=float("inf"), with_vector=False, include=False
+            results = await self.filt(
+                filters=filters,
+                limit=float('inf'),
+                with_vector=False,
+                include=False,
+                order_by=None
             )
+            point_ids = [result.id for result in results]
             if point_ids:
                 await self.client.set_payload(
                     collection_name=self.collection,
                     payload={"deleted_at": datetime.now().isoformat()},
                     points=point_ids,
                 )
-            logger.info(f"Successfully marked {len(point_ids)} data as deleted."),
+            logger.info(f"Successfully marked {len(point_ids)} data as deleted.")
         else:
             await self.client.delete(
                 collection_name=self.collection,
@@ -280,7 +290,19 @@ class ContentStore:
     async def update(
         self, fields: list[dict], refresh: bool = True, batch_size: int = 1000
     ):
-        """Update fields of existing objects."""
+        """Update fields of existing objects.
+
+        Updating is risky because it regenerates embeddings
+        from the provided searchable fields and replaces the entire vector set.
+
+        For example, if both label and content are searchable,
+        the object is stored as a multi-vector with two embeddings.
+
+        But if you later update the object while providing only content,
+        the label embedding is lost
+        — the update overwrites the full vector representation rather
+        than merging partial updates.
+        """
         ids = [field["id"] for field in fields]
         embeds = await self._embed(fields)
 
@@ -306,8 +328,8 @@ class ContentStore:
         ids: list[str | int],
         include: dict | bool = True,
         with_vector: bool = False,
-    ):
-        """Retrieve multiple Entry objects by their IDs."""
+    ) -> list[RetrieveOutput]:
+        """Retrieve multiple Resource objects by their IDs."""
         if isinstance(include, dict):
             include: list = payload_dict_to_field_list(include)
             if "type" not in include:
@@ -329,7 +351,7 @@ class ContentStore:
         include: dict | bool = True,
         with_vector: bool = False,
         offset: int | None = None,
-    ):
+    ) -> list[RetrieveOutput]:
         """Semantic Search for text query."""
         query_vector = (await self.embedder.embed([query]))[0]
         if isinstance(include, dict):
@@ -356,7 +378,7 @@ class ContentStore:
         with_vector: bool = False,
         offset: int | None = None,
         batch_size: int = 1000,
-    ):
+    ) -> list[list[RetrieveOutput]]:
         """Semantic search for a batch of queries."""
         query_embs = await self.embedder.embed(queries)
         if isinstance(include, dict):
@@ -399,7 +421,7 @@ class ContentStore:
         include: dict | bool = True,
         with_vector: bool = False,
         offset: int | None = None,
-    ):
+    ) -> list[RetrieveOutput]:
         """Semantic search for an existing item using the point ID."""
         if isinstance(include, dict):
             include = payload_dict_to_field_list(include)
@@ -425,7 +447,7 @@ class ContentStore:
         with_vector: bool = False,
         offset: int | None = None,
         batch_size: int = 1000,
-    ):
+    ) -> list[list[RetrieveOutput]]:
         """Batch search for multiple items using their point IDs."""
         all_results = []
         if isinstance(include, dict):
@@ -454,7 +476,9 @@ class ContentStore:
                     collection_name=self.collection, requests=requests
                 )
                 all_results.extend(batch_results)
-        return [[convert_point(point) for point in result.points] for result in all_results]
+        return [
+            [convert_point(point) for point in result.points] for result in all_results
+        ]
 
     async def filt(
         self,
@@ -462,16 +486,17 @@ class ContentStore:
         limit: int = 1000,
         include: dict | bool = True,
         with_vector: bool = False,
-        order_by: OrderBy | None = None,
-        offset: int | None = None,
-    ):
-        """Retrieve all notes from the Qdrant store."""
-        if order_by is None:
-            order_by = OrderBy(key="created_at", direction="desc")
-
+        order_by: OrderBy | dict | None = {"key": "created_at", "direction": "desc"},
+        offset: str | None = None,
+    ) -> list[RetrieveOutput]:
+        """Filter points in the collection based on the given filters."""
         results = []
         next_offset = offset
-        page_size = min(limit, 1000)
+
+        if order_by is not None:
+            page_size = limit
+        else:
+            page_size = min(limit, MAX_PAGE_SIZE)
 
         if isinstance(include, dict):
             include: list = payload_dict_to_field_list(include)
@@ -486,7 +511,7 @@ class ContentStore:
                 scroll_filter=filters,
                 limit=page_size,
                 offset=next_offset,
-                with_payload=include or False,
+                with_payload=include,
                 with_vectors=with_vector,
                 order_by=order_by,
             )

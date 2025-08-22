@@ -93,7 +93,7 @@ class ChatStore:
 
     async def get_messages(self, chat_uid: str, limit: int = 100) -> list[Message]:
         """Get latest messages for a specific chat."""
-        messages = await self._content_store.filt(
+        message_results = await self._content_store.filt(
             filters={
                 "must": [
                     {
@@ -109,6 +109,7 @@ class ChatStore:
             include=True,
             limit=limit
         )
+        messages = [result.resource for result in message_results]
         return messages[::-1]  # Reverse order to get latest messages first
 
     async def pop_message(self, chat_uid: str) -> Message | None:

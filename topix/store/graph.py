@@ -45,7 +45,8 @@ class GraphStore:
 
     async def get_nodes(self, node_ids: list[str]) -> list[Note]:
         """Retrieve nodes by their IDs."""
-        return await self._content_store.get(node_ids)
+        results = await self._content_store.get(node_ids)
+        return [result.resource for result in results]
 
     async def add_links(self, links: list[Link]):
         """Add links to the graph."""
@@ -62,7 +63,8 @@ class GraphStore:
 
     async def get_links(self, link_ids: list[str]) -> list[Link]:
         """Retrieve links by their IDs."""
-        return await self._content_store.get(link_ids)
+        results = await self._content_store.get(link_ids)
+        return [result.resource for result in results]
 
     async def get_graph(self, graph_uid: str) -> Graph | None:
         """Retrieve the entire graph by its UID."""
@@ -70,7 +72,7 @@ class GraphStore:
             graph = await get_graph_by_uid(conn, graph_uid)
         if not graph:
             return None
-        graph.nodes = await self._content_store.filt(
+        node_results = await self._content_store.filt(
             filters={
                 "must": [
                     {"key": "type", "match": {"value": "note"}},
@@ -78,7 +80,8 @@ class GraphStore:
                 ]
             }
         )
-        graph.edges = await self._content_store.filt(
+        graph.nodes = [result.resource for result in node_results]
+        link_results = await self._content_store.filt(
             filters={
                 "must": [
                     {"key": "type", "match": {"value": "link"}},
@@ -86,6 +89,7 @@ class GraphStore:
                 ]
             }
         )
+        graph.edges = [result.resource for result in link_results]
         return graph
 
     async def add_graph(self, graph: Graph, user_uid: str) -> Graph:

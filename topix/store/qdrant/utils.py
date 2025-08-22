@@ -1,5 +1,6 @@
 """Utility functions for Qdrant."""
 
+from pydantic import BaseModel
 from qdrant_client.models import Record, ScoredPoint
 
 from topix.datatypes.chat.chat import Message
@@ -26,13 +27,24 @@ def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str
     return fields
 
 
+class RetrieveOutput(BaseModel):
+    """Output for all methods involving retrieval."""
+
+    id: str | int
+    resource: Resource | None = None
+    vector: list[list[float]] | None = None
+    score: float | None = None
+
+
 def convert_point(
     point: ScoredPoint | Record,
-) -> (
-    Resource | tuple[Resource, list[list[float]]] | str | tuple[str, list[list[float]]]
-):
+) -> RetrieveOutput:
     """Convert a Qdrant point to a resource."""
-    resource = point.id
+    resource = None
+    score = None
+    if isinstance(point, ScoredPoint):
+        score = point.score
+
     if point.payload:
         type_ = point.payload.get("type")
         if "id" not in point.payload:
@@ -47,6 +59,9 @@ def convert_point(
             case _:
                 raise ValueError(f"Unknown type: {type_}")
 
-    if point.vector:
-        return resource, point.vector
-    return resource
+    return RetrieveOutput(
+        id=point.id,
+        resource=resource,
+        score=score,
+        vector=point.vector
+    )

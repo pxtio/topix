@@ -159,7 +159,7 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
     <div
       className={`
         relative
-        w-full
+        flex flex-1 flex-col
         p-4
         bg-background
         text-muted-foreground

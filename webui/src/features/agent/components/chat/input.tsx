@@ -90,11 +90,8 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   )
 
   const className = clsx(
-    "transition-all absolute left-1/2 transform -translate-x-1/2 p-4 z-50 flex flex-col justify-center items-center gap-16",
-    chatId ?
-    "bottom-10"
-    :
-    "bottom-1/3"
+    "flex flex-col flex-1 self-end transform z-50 justify-center items-center gap-16 w-full",
+    chatId ? "bottom-1/10": "bottom-1/3"
   )
 
   return (
@@ -109,25 +106,21 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
           </div>
         )
       }
-      <div className='flex flex-col space-y-2'>
+      <div className='w-full flex flex-col space-y-2'>
         <div>
-          <div
-            className={`
-              relative
-              md:min-w-[800px]
-              rounded-xl
-              p-2
-              bg-card
-              text-card-foreground text-base
-              border border-border
-              shadow-lg
-            `}
-          >
-            <div className='absolute -top-10 left-0 transform flex flex-row items-center gap-2'>
+          <div className='relative flex flex-col p-2 gap-2'>
+            <div className='transform flex flex-row items-center gap-2'>
               <ModelChoiceMenu />
               <SearchEngineChoiceMenu />
             </div>
-            <div className="relative flex flex-row items-center space-y-1 items-stretch">
+            <div className={`
+              relative
+              flex flex-row
+              items-center items-stretch
+              space-y-1
+              bg-card text-card-foreground text-base
+              rounded-xl border border-border shadow-lg
+            `}>
               <div className='flex-1 p-2 flex items-center justify-center'>
                 <TextareaAutosize
                   onKeyDown={handleKeyDown}

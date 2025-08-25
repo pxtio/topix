@@ -61,7 +61,7 @@ export const Conversation = ({ chatId }: { chatId: string }) => {
 
   return (
     <>
-      <div className='mt-32 flex flex-col items-end space-y-8'>
+      <div className='flex flex-col flex-1 w-full space-y-8 pt-6'>
         {items}
         {
           isStreaming && !streamingMessageId &&
@@ -69,9 +69,7 @@ export const Conversation = ({ chatId }: { chatId: string }) => {
             <ThinkingDots message="Thinking..." />
           </div>
         }
-        <div className='h-screen'>
         </div>
-      </div>
     </>
   )
 }

@@ -65,6 +65,9 @@ class AgentRunner:
         if isinstance(input, str) or isinstance(input, BaseModel):
             input = await starting_agent._input_formatter(context=context, input=input)
 
+        if not input:
+            return None
+
         res = await Runner.run(
             starting_agent,
             input,
@@ -128,6 +131,9 @@ class AgentRunner:
             input_msg = ""
 
         input = await starting_agent._input_formatter(context=context, input=input)
+
+        if not input:
+            return
 
         async def stream_events():
             async with tool_execution_handler(

@@ -7,7 +7,7 @@ class AgentToolName(str, CustomEnum):
     """Enumeration for tool names used in the agent manager."""
 
     ANSWER_REFORMULATE = "answer_reformulate"
-    KNOWLEDGE_BASE_SEARCH = "knowledge_base_search"
+    MEMORY_SEARCH = "memory_search"
     WEB_SEARCH = "web_search"
     CODE_INTERPRETER = "code_interpreter"
 

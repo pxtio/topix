@@ -1,20 +1,61 @@
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useChatStore } from "../store/chat-store"
 import { Conversation } from "./chat/conversation"
 import { InputBar } from "./chat/input"
 import { useMindMapStore } from "../store/mindmap-store"
 import { ProgressBar } from "@/components/progress-bar"
+import { ContextBoard } from "./context-board"
+import { useListChats } from "../api/list-chats"
+import { useAppStore } from "@/store"
+import { useUpdateChat } from "../api/update-chat"
+import { useState } from "react"
+import { ChatProvider } from "../hooks/chat-context"
+
+
+export interface ChatViewProps {
+  chatId?: string
+  hideContextBoard?: boolean
+}
+
 
 // This is the response focus component
-export const ChatView = () => {
-  const currentChatId = useChatStore((state) => state.currentChatId)
+export const Chat = ({ chatId, hideContextBoard = false }: ChatViewProps) => {
+  const [newChatBoardId, setNewChatBoardId] = useState<string | undefined>(undefined)
+
+  const { userId } = useAppStore()
+
+  const { data: chatList } = useListChats({ userId })
+
   const { isProcessing } = useMindMapStore()
 
+  const { updateChat } = useUpdateChat()
+
+  const chat = chatList?.find(chat => chat.uid === chatId)
+
+  const updateChatContextBoard = (boardId?: string) => {
+    if (chatId) {
+      updateChat({ chatId, userId, chatData: { graphUid: boardId } })
+    } else {
+      setNewChatBoardId(boardId)
+    }
+  }
+
+  const attachedBoardId = chatId ? chat?.graphUid : newChatBoardId
+
   return (
-    <>
+    <ChatProvider initialChatId={chatId}>
       <div
         className="absolute inset-0 h-full w-full overflow-hidden"
       >
+        {
+          !hideContextBoard && (
+            <div className="absolute top-4 left-4 z-50">
+              <ContextBoard
+                contextBoardId={attachedBoardId}
+                boardAsContext={updateChatContextBoard}
+              />
+            </div>
+          )
+        }
         {
           isProcessing &&
           <div className="absolute inset-0 bg-transparent flex items-center justify-center">
@@ -25,20 +66,20 @@ export const ChatView = () => {
           </div>
         }
         {
-          currentChatId && (
+          chatId && (
             <ScrollArea className='h-full w-full'>
               <div className='w-full h-full flex flex-col items-center justify-center'>
                 <div
                   className='h-full sm:max-w-[800px] w-[800px]'
                 >
-                  <Conversation chatId={currentChatId} />
+                  <Conversation chatId={chatId} />
                 </div>
               </div>
             </ScrollArea>
           )
         }
-        <InputBar />
+        <InputBar attachedBoardId={attachedBoardId} />
       </div>
-    </>
+    </ChatProvider>
   )
 }

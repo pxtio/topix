@@ -12,8 +12,8 @@ export function RootLayout() {
       <main>
         <SidebarProvider>
           <AppSidebar />
-          <SidebarInset className="flex flex-col h-screen z-40">
-            <header className="flex h-1/13 shrink-0 items-center gap-2 border-b px-4 w-full">
+          <SidebarInset className="flex flex-col h-screen">
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
               <SidebarTrigger className="-ml-1" />
               <div>
                 <SidebarLabel />
@@ -24,8 +24,8 @@ export function RootLayout() {
             </header>
 
             {/* 👇 Active route gets rendered here */}
-            <div className="flex flex-1 w-full h-10/13 relative min-w-0 p-4 items-center justify-center">
-              <div className="flex inset-0 h-full w-full items-center justify-center overflow-y-scroll">
+            <div className="flex flex-1 w-full relative min-w-0">
+              <div className='absolute inset-0 h-full w-full overflow-hidden'>
                 <Outlet />
               </div>
             </div>

@@ -97,6 +97,7 @@ class Plan(BaseAgent):
             web_search.as_tool(AgentToolName.WEB_SEARCH, streamed=True),
             memory_search.as_tool(AgentToolName.MEMORY_SEARCH, streamed=True),
             answer_reformulate.as_tool(
+                AgentToolName.ANSWER_REFORMULATE,
                 streamed=True,
             ),
             code_interpreter.as_tool(AgentToolName.CODE_INTERPRETER, streamed=True),

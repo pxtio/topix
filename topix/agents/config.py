@@ -39,7 +39,7 @@ class AssistantManagerConfig(BaseModel):
     query_rewrite: BaseAgentConfig
 
     @staticmethod
-    def from_yaml(filepath: str):
+    def from_yaml(filepath: str = "topix/agents/assistant/manager_config.yaml"):
         """Create an instance of ManagerConfig from a YAML file."""
         with open(filepath) as f:
             cf = yaml.safe_load(f)

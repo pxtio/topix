@@ -51,7 +51,11 @@ class BaseAgent(Agent[Context]):
     @classmethod
     def from_config(cls, config: BaseAgentConfig) -> "BaseAgent":
         """Create an instance of BaseAgent from configuration."""
-        return cls(**config.model_dump())
+        kwargs = {
+            key: getattr(config, key)
+            for key in config.model_fields_set
+        }
+        return cls(**kwargs)
 
     def as_tool(
         self,

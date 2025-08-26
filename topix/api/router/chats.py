@@ -137,12 +137,13 @@ async def send_message(
     chat_store: ChatStore = request.app.chat_store
     session = AssistantSession(session_id=chat_id, chat_store=chat_store)
 
-    assistant_config = AssistantManagerConfig.from_yaml("topix/agents/config.yaml")
+    assistant_config = AssistantManagerConfig.from_yaml()
     assistant_config.set_plan_model(body.model)
     assistant_config.set_web_engine(body.web_search_engine)
+
     assistant: AssistantManager = AssistantManager.from_config(
         content_store=chat_store._content_store,
-        assistant_config=assistant_config
+        config=assistant_config
     )
     if body.activated_tool:
         assistant.plan_agent.activate_tool(body.activated_tool)

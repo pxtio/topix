@@ -1,12 +1,10 @@
 query_rewrite:
-
   model: openai/gpt-4o-mini
   instructions_template: query_rewrite.system.jinja
   model_settings:
     temperature: 0.01
 
 plan:
-
   model: openai/gpt-4.1
   instructions_template: plan.system.jinja
   model_settings:

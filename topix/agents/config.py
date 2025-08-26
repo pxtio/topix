@@ -32,7 +32,7 @@ class PlanConfig(BaseAgentConfig):
     answer_reformulate: BaseAgentConfig
 
 
-class ManagerConfig(BaseModel):
+class AssistantManagerConfig(BaseModel):
     """Manager Config class."""
 
     plan: PlanConfig
@@ -43,7 +43,7 @@ class ManagerConfig(BaseModel):
         """Create an instance of ManagerConfig from a YAML file."""
         with open(filepath) as f:
             cf = yaml.safe_load(f)
-        return ManagerConfig.model_validate(cf)
+        return AssistantManagerConfig.model_validate(cf)
 
     def set_web_engine(self, engine: WebSearchOption):
         """Switch the web search engine."""

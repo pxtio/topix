@@ -19,6 +19,7 @@ from agents import (
     function_tool,
 )
 from agents.extensions.models.litellm_model import LitellmModel
+from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import support_temperature
 from topix.agents.datatypes.outputs import ToolOutput
@@ -46,6 +47,11 @@ class BaseAgent(Agent[Context]):
             model_type = self.model.split("/")[0]
             if model_type != "openai":
                 self.model = LitellmModel(self.model)
+
+    @classmethod
+    def from_config(cls, config: BaseAgentConfig) -> "BaseAgent":
+        """Create an instance of BaseAgent from configuration."""
+        return cls(**config.model_dump())
 
     def as_tool(
         self,

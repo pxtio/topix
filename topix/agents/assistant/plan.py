@@ -15,6 +15,7 @@ from topix.agents.assistant.code_interpreter import CodeInterpreter
 from topix.agents.assistant.memory_search import NOT_FOUND, MemorySearch
 from topix.agents.assistant.web_search import WebSearch
 from topix.agents.base import BaseAgent
+from topix.agents.config import PlanConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName
@@ -69,7 +70,10 @@ class Plan(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4_1,
         instructions_template: str = "plan.system.jinja",
         model_settings: ModelSettings | None = None,
-        search_choice: WebSearchOption = WebSearchOption.OPENAI,
+        web_search: WebSearch | None = None,
+        memory_search: MemorySearch | None = None,
+        answer_reformulate: AnswerReformulate | None = None,
+        code_interpreter: CodeInterpreter | None = None,
     ):
         """Init method."""
         name = "Plan"
@@ -78,21 +82,24 @@ class Plan(BaseAgent):
             time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
         if model_settings is None:
-            model_settings = ModelSettings(temperature=0.01, max_tokens=2000)
+            model_settings = ModelSettings(temperature=0.01, max_tokens=8000)
 
-        web_search = self.setup_websearch(search_choice)
-
-        content_store = ContentStore.from_config()
-        memory_search = MemorySearch(content_store=content_store)
+        if web_search is None:
+            web_search = WebSearch()
+        if memory_search is None:
+            memory_search = MemorySearch()
+        if answer_reformulate is None:
+            answer_reformulate = AnswerReformulate(model=model)
+        if code_interpreter is None:
+            code_interpreter = CodeInterpreter()
 
         tools = [
             web_search.as_tool(AgentToolName.WEB_SEARCH, streamed=True),
             memory_search.as_tool(AgentToolName.MEMORY_SEARCH, streamed=True),
-            AnswerReformulate(model=model).as_tool(
-                AgentToolName.ANSWER_REFORMULATE,
+            answer_reformulate.as_tool(
                 streamed=True,
             ),
-            CodeInterpreter().as_tool(AgentToolName.CODE_INTERPRETER, streamed=True),
+            code_interpreter.as_tool(AgentToolName.CODE_INTERPRETER, streamed=True),
         ]
         hooks = PlanHooks()
 
@@ -105,6 +112,19 @@ class Plan(BaseAgent):
             hooks=hooks,
         )
         super().__post_init__()
+
+    @classmethod
+    def from_config(cls, content_store: ContentStore, config: PlanConfig):
+        """Create an instance of Plan from configuration."""
+        return cls(
+            web_search=WebSearch.from_config(config.web_search),
+            memory_search=MemorySearch.from_config(content_store, config.memory_search),
+            answer_reformulate=AnswerReformulate.from_config(config.answer_reformulate),
+            code_interpreter=CodeInterpreter.from_config(config.code_interpreter),
+            model=config.model,
+            instructions_template=config.instructions_template,
+            model_settings=config.model_settings,
+        )
 
     def setup_websearch(self, search_choice: WebSearchOption) -> WebSearch:
         """Set up the web search tool based on the search choice."""

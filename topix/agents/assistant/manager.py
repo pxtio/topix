@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator
 
 from topix.agents.assistant.plan import Plan
 from topix.agents.assistant.query_rewrite import QueryRewrite
+from topix.agents.config import ManagerConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.inputs import QueryRewriteInput
 from topix.agents.datatypes.stream import AgentStreamMessage, ContentType
@@ -14,6 +15,7 @@ from topix.datatypes.chat.chat import Message
 from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
 from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
+from topix.store.qdrant.store import ContentStore
 from topix.utils.common import gen_uid
 
 
@@ -24,6 +26,14 @@ class AssistantManager:
         """Init method."""
         self.query_rewrite_agent = query_rewrite_agent
         self.plan_agent = plan_agent
+
+    @classmethod
+    def from_config(cls, content_store: ContentStore, config: ManagerConfig):
+        """Create an instance of AssistantManager from configuration."""
+        plan_agent = Plan.from_config(content_store, config.plan)
+        query_rewrite_agent = QueryRewrite.from_config(config.query_rewrite)
+
+        return cls(query_rewrite_agent, plan_agent)
 
     async def _compose_input(
         self,

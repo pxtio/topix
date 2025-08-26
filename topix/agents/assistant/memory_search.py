@@ -4,6 +4,7 @@ import re
 
 from agents import ModelSettings, RunResult
 from topix.agents.base import BaseAgent
+from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.store.qdrant.store import ContentStore
@@ -35,6 +36,16 @@ class MemorySearch(BaseAgent):
         )
 
         self.content_store = content_store
+
+    @classmethod
+    def from_config(cls, content_store: ContentStore, config: BaseAgentConfig):
+        """Create an instance of MemorySearch from configuration."""
+        return cls(
+            content_store=content_store,
+            model=config.model,
+            instructions_template=config.instructions_template,
+            model_settings=config.model_settings,
+        )
 
     async def _input_formatter(self, context: ReasoningContext, input: str) -> str:
         # search from the memory base, and return the related memories

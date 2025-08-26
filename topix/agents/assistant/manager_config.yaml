@@ -1,0 +1,40 @@
+query_rewrite:
+
+  model: openai/gpt-4o-mini
+  instructions_template: query_rewrite.system.jinja
+  model_settings:
+    temperature: 0.01
+
+plan:
+
+  model: openai/gpt-4.1
+  instructions_template: plan.system.jinja
+  model_settings:
+    temperature: 0.01
+    max_tokens: 8000
+
+  web_search:
+    model: openai/gpt-4o-mini
+    instructions_template: web_search.jinja
+    search_engine: openai
+    search_context_size: medium
+    model_settings:
+      temperature: 0.01
+
+  memory_search:
+    model: openai/gpt-4o-mini
+    instructions_template: memory_search.jinja
+    model_settings:
+      temperature: 0.01
+
+  code_interpreter:
+    model: openai/gpt-4o-mini
+    instructions_template: code_interpreter.jinja
+    model_settings:
+      temperature: 0.01
+
+  answer_reformulate:
+    model: openai/gpt-4.1
+    instructions_template: answer_reformulation.system.jinja
+    model_settings:
+      temperature: 0.01

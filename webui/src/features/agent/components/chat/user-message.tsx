@@ -14,10 +14,11 @@ export const UserMessage = ({ message, isLatest }: { message: string, isLatest: 
   }, [isLatest])
   return (
     <>
+      <div className="h-4" ref={ref} />
       <div
         className={`
           flex flex-col gap-2
-          w-fit max-w-[75%]
+          w-auto max-w-[75%]
           bg-muted
           text-card-foreground text-base
           rounded-xl

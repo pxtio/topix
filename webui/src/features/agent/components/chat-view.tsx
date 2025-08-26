@@ -44,11 +44,11 @@ export const Chat = ({ chatId, hideContextBoard = false }: ChatViewProps) => {
   return (
     <ChatProvider initialChatId={chatId}>
       <div
-        className="flex flex-col inset-0 h-full w-full lg:w-8/10 items-center overflow-hidden"
+        className="absolute inset-0 h-full w-full overflow-hidden"
       >
         {
           !hideContextBoard && (
-            <div className="flex self-start z-50">
+            <div className="absolute top-4 left-4 z-50">
               <ContextBoard
                 contextBoardId={attachedBoardId}
                 boardAsContext={updateChatContextBoard}
@@ -67,10 +67,10 @@ export const Chat = ({ chatId, hideContextBoard = false }: ChatViewProps) => {
         }
         {
           chatId && (
-            <ScrollArea className='max-h-8/10 w-full'>
+            <ScrollArea className='h-full w-full'>
               <div className='w-full h-full flex flex-col items-center justify-center'>
                 <div
-                  className='h-full w-full'
+                  className='h-full sm:max-w-[800px] w-[800px]'
                 >
                   <Conversation chatId={chatId} />
                 </div>

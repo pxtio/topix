@@ -169,3 +169,7 @@
     @apply bg-background text-foreground;
   }
 }
+
+#chat-scroll-area-viewport > div {
+  display: block !important;
+}

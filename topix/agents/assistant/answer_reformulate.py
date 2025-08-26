@@ -59,7 +59,9 @@ class AnswerReformulate(BaseAgent):
     ) -> str | None:
         # No need to launch the answer_reformulate if there is only one search result
         if len(context.tool_calls) == 1:
-            if context.tool_calls[0].name == AgentToolName.WEB_SEARCH:
+            if context.tool_calls[0].name in [
+                AgentToolName.WEB_SEARCH, AgentToolName.MEMORY_SEARCH
+            ]:
                 await context._message_queue.put(
                     AgentStreamMessage(
                         tool_id=tool_id,
@@ -71,5 +73,5 @@ class AnswerReformulate(BaseAgent):
                         is_stop=True,
                     )
                 )
-            return context.tool_calls[0].output
+                return context.tool_calls[0].output
         return None

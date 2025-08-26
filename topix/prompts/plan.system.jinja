@@ -22,7 +22,7 @@ TOOL-CALLING POLICY
 INPUT STRUCTURE
 The user input provides three key sections to guide the response generation:
 - <dialogue> : A set of messages representing the conversation history, crucial for understanding context and maintaining coherence.
-- <reminders>: A reminder for the available tools and behaviors and behavioral policies.
+- <reminders>: A reminder for the available tools and behavioral policies.
 - <last_user_query> ({{ user_query }}): The most recent user query, treat this as the **primary task to solve right now**.  Your task is to respond directly to this question.  Always rephrase this into a clear, self-contained question before beginning your plan.
 
 
@@ -53,4 +53,4 @@ OUTPUT CONTRACT
   Reasoning: <brief rationale for tool choices and plan>
   Plan: <numbered steps with explicit tool calls and expected outputs>
 - Execute the plan with tool calls.
-- Always end by calling answer_reformulate with a clear formulation of the user's question.
+- Always end by calling answer_reformulate using the **Task (explicit)** string you generated before if any tools are called previously.

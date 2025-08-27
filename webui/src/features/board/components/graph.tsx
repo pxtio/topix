@@ -1,6 +1,5 @@
 
 import {
-  Controls,
   MiniMap,
   ReactFlow,
   MarkerType,
@@ -65,6 +64,9 @@ export default function GraphEditor() {
   const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
   const [isDragging, setIsDragging] = useState<boolean>(false)
+  const [isLocked, setIsLocked] = useState<boolean>(false)
+
+  const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow()
 
   const userId = useAppStore((state) => state.userId)
   const {
@@ -125,8 +127,6 @@ export default function GraphEditor() {
 
   const handleAddNode = useAddNoteNode()
 
-  const { setViewport } = useReactFlow()
-
   useEffect(() => {
     if (!isLoading) {
       // once loading is done, signal recentering the view
@@ -181,6 +181,11 @@ export default function GraphEditor() {
         onAddNode={handleAddNode}
         enableSelection={enableSelection}
         setEnableSelection={setEnableSelection}
+        onZoomIn={() => zoomIn({ duration: 200 })}
+        onZoomOut={() => zoomOut({ duration: 200 })}
+        onFitView={() => fitView({ padding: 0.2, duration: 250 })}
+        isLocked={isLocked}
+        toggleLock={() => setIsLocked((v) => !v)}
       />
       {
         !isDragging && (
@@ -205,13 +210,18 @@ export default function GraphEditor() {
         connectionLineStyle={connectionLineStyle}
         selectionOnDrag={enableSelection}
         selectionMode={SelectionMode.Partial}
-        panOnDrag={!enableSelection}
+        panOnDrag={!isLocked && !enableSelection}
         selectionKeyCode={null}
         onNodeDragStart={() => setIsDragging(true)}
         onNodeDragStop={() => setIsDragging(false)}
+        nodesDraggable={!isLocked}
+        nodesConnectable={!isLocked}
+        elementsSelectable={!isLocked}
+        zoomOnScroll={!isLocked}
+        zoomOnPinch={!isLocked}
+        panOnScroll={!isLocked}
       >
         <MiniMap className='!bg-card rounded-lg'/>
-        <Controls />
       </ReactFlow>
     </div>
   )

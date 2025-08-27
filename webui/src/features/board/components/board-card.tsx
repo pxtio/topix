@@ -54,7 +54,14 @@ export const BoardCard = ({
       }
       <div className='p-2 w-full overflow-ellipsis'>
         <h4 className='inline-block font-medium text-sm'>{board.label || UNTITLED_LABEL}</h4>
-        <span className='block text-xs text-muted-foreground mt-1'>{dateString}</span>
+        {
+          dateString && (
+            <div className='w-full text-xs text-muted-foreground mt-1'>
+              <span>Last edited on </span>
+              <span className='ml-auto'>{dateString}</span>
+            </div>
+          )
+        }
       </div>
     </div>
   )

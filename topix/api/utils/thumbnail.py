@@ -1,7 +1,12 @@
 """Thumbnail utilities for the API."""
 
+import base64
+import logging
+
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def save_thumbnail(
@@ -35,3 +40,15 @@ def save_thumbnail(
 
     # return absolute file:// path
     return f"file://{filepath}"
+
+
+def load_png_as_data_url(path: str | Path) -> str | None:
+    """Convert PNG to base64 string."""
+    try:
+        p = Path(path)
+        data = p.read_bytes()
+        b64 = base64.b64encode(data).decode("utf-8")
+        return f"data:image/png;base64,{b64}"
+    except Exception as e:
+        logger.warning(f"Error loading PNG as data URL: {e}", exc_info=True)
+        return None

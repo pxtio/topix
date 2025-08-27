@@ -18,18 +18,35 @@ export const BoardCard = ({
   return (
     <div
       className={`
+        transition-all
         rounded-xl
-        border border-border
-        bg-card
         text-card-foreground
-        p-4
-        shadow-none hover:shadow-lg transition-shadow
+        border border-transparent hover:border-border
+        shadow-none hover:shadow-sm
         cursor-pointer
-        w-60 h-40
+        w-60
+        flex flex-col
+        overflow-hidden
+        gap-1
       `}
       onClick={handleClick}
     >
-      <h2 className='inline-block overflow-ellipsis font-medium'>{board.label || UNTITLED_LABEL}</h2>
+      {
+        board.thumbnail ? (
+          <div className='bg-card rounded-xl'>
+            <img
+              src={board.thumbnail}
+              alt={board.label || UNTITLED_LABEL}
+              className='w-full h-40 object-cover rounded-md'
+            />
+          </div>
+        ) : (
+          <div className='w-full h-40 bg-card rounded-md' />
+        )
+      }
+      <div className='p-2 w-full overflow-ellipsis'>
+        <span className='inline-block font-medium text-sm'>{board.label || UNTITLED_LABEL}</span>
+      </div>
     </div>
   )
 }

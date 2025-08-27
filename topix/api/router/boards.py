@@ -7,7 +7,7 @@ from fastapi.params import Body, Path, Query
 
 from topix.api.datatypes.requests import AddLinksRequest, AddNotesRequest, GraphUpdateRequest, LinkUpdateRequest, NoteUpdateRequest
 from topix.api.helpers import with_standard_response
-from topix.api.utils.thumbnail import save_thumbnail
+from topix.api.utils.thumbnail import load_png_as_data_url, save_thumbnail
 from topix.datatypes.graph.graph import Graph
 from topix.store.graph import GraphStore
 
@@ -81,6 +81,9 @@ async def get_graph(
     if not graph:
         raise HTTPException(status_code=404, detail="Graph not found")
 
+    if graph.thumbnail and graph.thumbnail.startswith("file://"):
+        graph.thumbnail = load_png_as_data_url(graph.thumbnail[len("file://"):])
+
     return {"graph": graph.model_dump(exclude_none=True)}
 
 
@@ -96,6 +99,12 @@ async def list_graphs(
     store: GraphStore = request.app.graph_store
 
     graphs = await store.list_graphs(user_uid=user_id)
+
+    # Convert file:// URLs to data URLs
+    for graph in graphs:
+        if graph.thumbnail and graph.thumbnail.startswith("file://"):
+            graph.thumbnail = load_png_as_data_url(graph.thumbnail[len("file://"):])
+
     return {"graphs": [graph.model_dump(exclude_none=True) for graph in graphs]}
 
 

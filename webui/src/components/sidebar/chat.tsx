@@ -5,22 +5,50 @@ import { useDeleteChat } from "@/features/agent/api/delete-chat"
 import { trimText } from "@/lib/common"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "../ui/context-menu"
-import { useNavigate, useRouterState } from "@tanstack/react-router"
+import { useNavigate, useRouterState, useSearch } from "@tanstack/react-router"
 import { Delete02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 /**
  * New chat item component
  */
-export function NewChatItem() {
+export function NewChatItem({
+  isSubMenuItem = false,
+  initialBoardId = undefined
+}: {
+  isSubMenuItem?: boolean
+  initialBoardId?: string
+}) {
   const navigate = useNavigate()
+
+  const queryParams = useSearch({ from: '/chats', select: (s: { board_id?: string }) => s, shouldThrow: false })
+  const boardId = queryParams?.board_id
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const isActive = pathname === '/chats'
+
+  const isActive =
+    pathname === '/chats' &&
+    (initialBoardId ? boardId === initialBoardId : !boardId)
 
   const handleClick = () => {
-    navigate({ to: '/chats' })
+    if (initialBoardId) {
+      navigate({ to: '/chats', search: { board_id: initialBoardId } })
+    } else {
+      navigate({ to: '/chats' })
+    }
   }
-
+  if (isSubMenuItem) {
+    return (
+      <SidebarMenuSubItem>
+        <SidebarMenuSubButton
+          onClick={handleClick}
+          className='text-xs font-medium truncate'
+          isActive={isActive}
+        >
+          <span>New Chat</span>
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
+    )
+  }
   return (
     <SidebarMenuItem>
       <SidebarMenuButton

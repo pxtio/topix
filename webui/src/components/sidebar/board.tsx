@@ -13,7 +13,7 @@ import { DashboardCircleAddIcon, Delete02Icon } from "@hugeicons/core-free-icons
 import type { Chat } from "@/features/agent/types/chat"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible"
 import { Minus, Plus } from "lucide-react"
-import { ChatMenuItem } from "./chat"
+import { ChatMenuItem, NewChatItem } from "./chat"
 
 /**
  * Dashboard menu item component
@@ -112,6 +112,7 @@ export function BoardItem({ boardId, label, chats }: { boardId: string; label?: 
               {
                 chats?.map((chat) => <ChatMenuItem key={chat.uid} chatId={chat.uid} label={chat.label} />) || []
               }
+              <NewChatItem initialBoardId={boardId} isSubMenuItem />
             </SidebarMenuSub>
           </CollapsibleContent>
         </Collapsible>

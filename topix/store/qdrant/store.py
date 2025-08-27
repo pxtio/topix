@@ -225,6 +225,11 @@ class ContentStore:
                 embeddings[i] = []
             embeddings[i].append(embeds[idx])
 
+        # Fill in None embeddings with zero vectors
+        for i, emb in enumerate(embeddings):
+            if emb is None:
+                embeddings[i] = [[0.0] * DIMENSIONS]
+
         return embeddings
 
     async def add(

@@ -39,7 +39,7 @@ class GraphStore:
         data["id"] = node_id
         await self._content_store.update([data])
 
-    async def delete_node(self, node_id: str, hard_delete: bool = False):
+    async def delete_node(self, node_id: str, hard_delete: bool = True):
         """Delete a node from the graph."""
         await self._content_store.delete([node_id], hard_delete=hard_delete)
 
@@ -59,7 +59,7 @@ class GraphStore:
 
     async def delete_link(self, link_id: str):
         """Delete a link from the graph."""
-        await self._content_store.delete([link_id])
+        await self._content_store.delete([link_id], hard_delete=True)
 
     async def get_links(self, link_ids: list[str]) -> list[Link]:
         """Retrieve links by their IDs."""

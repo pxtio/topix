@@ -135,8 +135,10 @@ export default function GraphEditor() {
   useEffect(() => {
     const integrateMindmap = async () => {
       if (boardId && mindmaps.has(boardId)) {
-        await addMindMapToBoardAsync()
-        setShouldRecenter(true)
+        const added = await addMindMapToBoardAsync()
+        if (added) {
+          setShouldRecenter(true)
+        }
       }
     }
     integrateMindmap()

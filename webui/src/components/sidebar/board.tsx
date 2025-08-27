@@ -1,26 +1,53 @@
 import { useCreateBoard } from "@/features/board/api/create-board"
 import { useAppStore } from "@/store"
-import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from "../ui/sidebar"
+import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from "../ui/sidebar"
 import { Edit2SimpleIcon } from "../icons/edit2"
 import { useDeleteBoard } from "@/features/board/api/delete-board"
 import { NoteSimpleIcon } from "../icons/note"
 import { trimText } from "@/lib/common"
 import { UNTITLED_LABEL } from "@/features/board/const"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
-import { MoreHorizontal } from "lucide-react"
 import { useNavigate, useRouterState } from "@tanstack/react-router"
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "../ui/context-menu"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { DashboardCircleAddIcon, Delete02Icon } from "@hugeicons/core-free-icons"
+import type { Chat } from "@/features/agent/types/chat"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible"
+import { Minus, Plus } from "lucide-react"
+import { ChatMenuItem } from "./chat"
+
+/**
+ * Dashboard menu item component
+ */
+export function DashboardMenuItem() {
+  const navigate = useNavigate()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+
+  const isActive = pathname === `/boards`
+
+  const handleClick = () => {
+    navigate({ to: '/boards' })
+  }
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton onClick={handleClick} className="text-xs font-medium truncate" isActive={isActive}>
+        <HugeiconsIcon icon={DashboardCircleAddIcon} className="shrink-0 size-4" strokeWidth={1.75} />
+        <span>Dashboard</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  )
+}
 
 /**
  * New board item component
  */
 export function NewBoardItem() {
-  const { userId, setView } = useAppStore()
+  const { userId } = useAppStore()
   const { createBoardAsync } = useCreateBoard()
   const navigate = useNavigate()
 
   const handleClick = async () => {
     const newId = await createBoardAsync({ userId })
-    setView('board')
     // Go to /boards/:id (no page refresh)
     navigate({ to: '/boards/$id', params: { id: newId } })
   }
@@ -37,7 +64,7 @@ export function NewBoardItem() {
 
 
 /** Existing board item */
-export function BoardItem({ boardId, label }: { boardId: string; label?: string }) {
+export function BoardItem({ boardId, label, chats }: { boardId: string; label?: string; chats?: Chat[] }) {
   const { userId } = useAppStore()
   const { deleteBoard } = useDeleteBoard()
   const navigate = useNavigate()
@@ -53,23 +80,42 @@ export function BoardItem({ boardId, label }: { boardId: string; label?: string 
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton onClick={handleClick} className="text-xs font-medium truncate" isActive={isActive}>
-        <NoteSimpleIcon className="shrink-0 size-4" strokeWidth={1.75} />
-        <span>{trimText(label || UNTITLED_LABEL, 20)}</span>
-      </SidebarMenuButton>
+      <ContextMenu>
+        <Collapsible
+          defaultOpen={true}
+          className="group/collapsible w-full"
+        >
+          <ContextMenuTrigger asChild>
+            <SidebarMenuButton onClick={handleClick} className="text-xs font-medium truncate" isActive={isActive}>
+              <NoteSimpleIcon className="shrink-0 size-4" strokeWidth={1.75} />
+              <span>{trimText(label || UNTITLED_LABEL, 20)}</span>
+            </SidebarMenuButton>
+          </ContextMenuTrigger>
+          <ContextMenuContent className='w-44'>
+            <ContextMenuItem onClick={handleDelete} variant="destructive">
+              <HugeiconsIcon
+                icon={Delete02Icon}
+                className="mr-2 size-4"
+              />
+              <span>Delete Board</span>
+            </ContextMenuItem>
+          </ContextMenuContent>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <SidebarMenuAction showOnHover>
-            <MoreHorizontal className="size-4" strokeWidth={1.75} />
-          </SidebarMenuAction>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="start">
-          <DropdownMenuItem onClick={handleDelete}>
-            <span>Delete Board</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuAction>
+              <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
+              <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
+            </SidebarMenuAction>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarMenuSub>
+              {
+                chats?.map((chat) => <ChatMenuItem key={chat.uid} chatId={chat.uid} label={chat.label} />) || []
+              }
+            </SidebarMenuSub>
+          </CollapsibleContent>
+        </Collapsible>
+      </ContextMenu>
     </SidebarMenuItem>
   )
 }

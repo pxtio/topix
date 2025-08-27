@@ -6,6 +6,8 @@ import { trimText } from "@/lib/common"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "../ui/context-menu"
 import { useNavigate, useRouterState } from "@tanstack/react-router"
+import { Delete02Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
 /**
  * New chat item component
@@ -67,8 +69,12 @@ export function ChatMenuItem({ chatId, label }: { chatId: string; label?: string
             <span>{chatLabel}</span>
           </SidebarMenuSubButton>
         </ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem onClick={() => handleDeleteChat(chatId)}>
+        <ContextMenuContent className='w-44'>
+          <ContextMenuItem onClick={() => handleDeleteChat(chatId)} variant='destructive'>
+            <HugeiconsIcon
+              icon={Delete02Icon}
+              className="size-4 mr-2"
+            />
             <span>Delete Chat</span>
           </ContextMenuItem>
         </ContextMenuContent>

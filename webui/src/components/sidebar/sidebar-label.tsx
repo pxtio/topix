@@ -20,14 +20,17 @@ export const SidebarLabel = () => {
   const boardId = boardParams?.id
 
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const isDashboard = pathname === "/boards"
   const isNewChat = pathname === "/chats"
 
   const active = useMemo(() => {
     if (boardId) return { view: "board" as const, id: boardId }
     if (chatId)  return { view: "chat"  as const, id: chatId }
     if (isNewChat) return { view: "new-chat" as const, id: undefined }
+    if (isDashboard) return { view: "dashboard" as const, id: undefined }
+
     return { view: "unknown" as const, id: undefined }
-  }, [boardId, chatId, isNewChat])
+  }, [boardId, chatId, isNewChat, isDashboard])
 
   const { data: chatList }  = useListChats({ userId })
   const { data: boardList } = useListBoards({ userId })
@@ -39,7 +42,7 @@ export const SidebarLabel = () => {
   // sync local label with current active target
   useEffect(() => {
     if (active.view === "board" && active.id) {
-      const b = boardList?.find((x) => x.id === active.id)
+      const b = boardList?.find((x) => x.uid === active.id)
       setLabel(b?.label ?? "")
       return
     }
@@ -73,6 +76,10 @@ export const SidebarLabel = () => {
 
   if (active.view === "new-chat") {
     return <div className="text-sm font-medium">New Chat</div>
+  }
+
+  if (active.view === "dashboard") {
+    return <div className="text-sm font-medium">Dashboard</div>
   }
 
   if (active.view === "chat" || active.view === "board") {

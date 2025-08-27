@@ -7,19 +7,21 @@ import { ContextBoard } from "./context-board"
 import { useListChats } from "../api/list-chats"
 import { useAppStore } from "@/store"
 import { useUpdateChat } from "../api/update-chat"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ChatProvider } from "../hooks/chat-context"
 
 
+// Chat view props
 export interface ChatViewProps {
   chatId?: string
   hideContextBoard?: boolean
+  initialBoardId?: string
 }
 
 
 // This is the response focus component
-export const Chat = ({ chatId, hideContextBoard = false }: ChatViewProps) => {
-  const [newChatBoardId, setNewChatBoardId] = useState<string | undefined>(undefined)
+export const Chat = ({ chatId, hideContextBoard = false, initialBoardId = undefined }: ChatViewProps) => {
+  const [newChatBoardId, setNewChatBoardId] = useState<string | undefined>(initialBoardId)
 
   const { userId } = useAppStore()
 
@@ -30,6 +32,10 @@ export const Chat = ({ chatId, hideContextBoard = false }: ChatViewProps) => {
   const { updateChat } = useUpdateChat()
 
   const chat = chatList?.find(chat => chat.uid === chatId)
+
+  useEffect(() => {
+    setNewChatBoardId(initialBoardId)
+  }, [initialBoardId])
 
   const updateChatContextBoard = (boardId?: string) => {
     if (chatId) {

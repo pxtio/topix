@@ -105,7 +105,8 @@ async def list_chats(
 ):
     """List all chats for the user."""
     store: ChatStore = request.app.chat_store
-    return {"chats": await store.list_chats(user_uid=user_id)}
+    chats = await store.list_chats(user_uid=user_id)
+    return {"chats": [chat.model_dump(exclude_none=True) for chat in chats]}
 
 
 @router.delete("/{chat_id}/", include_in_schema=False)

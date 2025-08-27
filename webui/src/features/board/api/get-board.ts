@@ -41,12 +41,11 @@ export async function getBoard(
 export const useGetBoard = () => {
   // no selectors here → no subscription
   const mutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<boolean> => {
       const { boardId, setNodes, setEdges, isLoading, setIsLoading } = useGraphStore.getState()
       const { userId } = useAppStore.getState()
-
-      if (!boardId) return
-      if (!isLoading) return
+      if (!boardId) return false
+      if (isLoading) return false
       setIsLoading(true)
       try {
         const { nodes: notes, edges: links } = await getBoard(boardId, userId)
@@ -55,6 +54,7 @@ export const useGetBoard = () => {
 
         setNodes(nodes)
         setEdges(edges)
+        return true
       } finally {
         setIsLoading(false)
       }

@@ -39,7 +39,7 @@ class GraphStore:
         data["id"] = node_id
         await self._content_store.update([data])
 
-    async def delete_node(self, node_id: str, hard_delete: bool = False):
+    async def delete_node(self, node_id: str, hard_delete: bool = True):
         """Delete a node from the graph."""
         await self._content_store.delete([node_id], hard_delete=hard_delete)
 
@@ -59,7 +59,7 @@ class GraphStore:
 
     async def delete_link(self, link_id: str):
         """Delete a link from the graph."""
-        await self._content_store.delete([link_id])
+        await self._content_store.delete([link_id], hard_delete=True)
 
     async def get_links(self, link_ids: list[str]) -> list[Link]:
         """Retrieve links by their IDs."""
@@ -116,11 +116,11 @@ class GraphStore:
             hard_delete=hard_delete
         )
 
-    async def list_graphs(self, user_uid: str) -> list[tuple[str, str | None]]:
+    async def list_graphs(self, user_uid: str) -> list[Graph]:
         """List all graphs' ids and labels for a user."""
         async with self._pg_pool.connection() as conn:
             graphs = await list_graphs_by_user_uid(conn, user_uid)
-        return [(idx, label) for idx, label, _ in graphs]
+        return graphs
 
     async def close(self):
         """Close the database connection pool."""

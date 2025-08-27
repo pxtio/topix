@@ -32,7 +32,7 @@ export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardPro
 
   const value = contextBoardId ? contextBoardId : "-1"
 
-  const label = contextBoardId ? boards.find(board => board.id === contextBoardId)?.label || UNTITLED_LABEL : "Select Context"
+  const label = contextBoardId ? boards.find(board => board.uid === contextBoardId)?.label || UNTITLED_LABEL : "Select Context"
 
   return (
     <Select value={value} onValueChange={handleSelectBoard}>
@@ -47,7 +47,7 @@ export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardPro
           No Context
         </SelectItem>
         {boards.map((board) => (
-          <SelectItem key={board.id} value={board.id}>
+          <SelectItem key={board.uid} value={board.uid}>
             {board.label || UNTITLED_LABEL}
           </SelectItem>
         ))}

@@ -17,7 +17,7 @@ import { useAddNoteNode } from '../hooks/add-node'
 import { EdgeView } from './edge-view'
 import { CustomConnectionLine } from './connection'
 import { useGraphStore } from '../store/graph-store'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { LinkEdge, NoteNode } from '../types/flow'
 import { useRemoveNote } from '../api/remove-note'
 import { useAppStore } from '@/store'
@@ -29,6 +29,8 @@ import { useAddMindMapToBoard } from '../api/add-mindmap-to-board'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import './graph-styles.css'
 import { GraphSidebar } from './style-panel/panel'
+import { useSaveThumbnailOnUnmount } from '../hooks/make-thumbnail'
+import { saveThumbnail } from '../api/save-thumbnail'
 
 
 const proOptions = { hideAttribution: true }
@@ -162,8 +164,19 @@ export default function GraphEditor() {
     setShouldRecenter(false)
   }, [boardId, nodes, setViewport, shouldRecenter])
 
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
+
+  useSaveThumbnailOnUnmount({
+    boardId,
+    containerRef: wrapperRef,
+    saveThumbnail: async (boardId, blob) => {
+      await saveThumbnail({ userId, boardId, blob })
+    },
+    opts: { width: 360, height: 200, pixelRatio: 1, backgroundColor: 'transparent' },
+  })
+
   return (
-    <>
+    <div ref={wrapperRef} className='w-full h-full'>
       <ActionPanel
         onAddNode={handleAddNode}
         enableSelection={enableSelection}
@@ -200,6 +213,6 @@ export default function GraphEditor() {
         <MiniMap className='!bg-card rounded-lg'/>
         <Controls />
       </ReactFlow>
-    </>
+    </div>
   )
 }

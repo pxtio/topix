@@ -22,6 +22,7 @@ CREATE TABLE graphs (
     label TEXT,
     format_version INT NOT NULL DEFAULT 1,
     readonly BOOLEAN NOT NULL DEFAULT FALSE,
+    thumbnail TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP,
     deleted_at TIMESTAMP

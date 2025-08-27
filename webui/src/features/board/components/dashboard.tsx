@@ -15,7 +15,7 @@ export const Dashboard = () => {
       <ScrollArea className='w-full h-full'>
         <div className='p-4 gap-4 flex flex-row flex-wrap'>
           {boards?.map((board) => (
-            <BoardCard key={board.id} board={board} />
+            <BoardCard key={board.uid} board={board} />
           ))}
         </div>
       </ScrollArea>

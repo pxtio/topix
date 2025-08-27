@@ -42,7 +42,7 @@ export const SidebarLabel = () => {
   // sync local label with current active target
   useEffect(() => {
     if (active.view === "board" && active.id) {
-      const b = boardList?.find((x) => x.id === active.id)
+      const b = boardList?.find((x) => x.uid === active.id)
       setLabel(b?.label ?? "")
       return
     }

@@ -42,6 +42,7 @@
     "cmdk": "^1.1.1",
     "emoji-picker-react": "^4.13.2",
     "highlight.js": "^11.11.1",
+    "html-to-image": "^1.11.11",
     "katex": "^0.16.22",
     "lucide-react": "^0.525.0",
     "next-themes": "^0.4.6",

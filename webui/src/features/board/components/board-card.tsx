@@ -1,20 +1,18 @@
 import { useNavigate } from "@tanstack/react-router"
 import { UNTITLED_LABEL } from "../const"
+import type { Graph } from "../types/board"
 
 
 // Board card thumbnail component
 export const BoardCard = ({
   board
 }: {
-  board: {
-    id: string,
-    label?: string
-  }
+  board: Graph
 }) => {
   const navigate = useNavigate()
 
   const handleClick = () => {
-    navigate({ to: '/boards/$id', params: { id: board.id } })
+    navigate({ to: '/boards/$id', params: { id: board.uid } })
   }
 
   return (

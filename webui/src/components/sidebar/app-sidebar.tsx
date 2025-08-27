@@ -65,11 +65,11 @@ export function AppSidebar() {
     () =>
       boards.map((board) => (
         <BoardItem
-          key={board.id}
-          boardId={board.id}
+          key={board.uid}
+          boardId={board.uid}
           label={board.label}
           // read from the prebuilt map in O(1)
-          chats={chatsByBoard.get(board.id) ?? []}
+          chats={chatsByBoard.get(board.uid) ?? []}
         />
       )),
     [boards, chatsByBoard]

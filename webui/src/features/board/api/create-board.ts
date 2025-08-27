@@ -1,6 +1,7 @@
 import { API_URL } from "@/config/api"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useGraphStore } from "../store/graph-store"
+import type { Graph } from "../types/board"
 
 
 /**
@@ -41,8 +42,8 @@ export const useCreateBoard = () => {
   const mutation = useMutation({
     mutationFn: async ({ userId }: { userId: string }) => {
       const boardId = await createBoard(userId)
-      queryClient.setQueryData(["listBoards", userId], (oldBoards: { id: string, label?: string }[] | undefined) => {
-        const newBoard = { id: boardId } // Temporary ID until the server responds
+      queryClient.setQueryData(["listBoards", userId], (oldBoards: Graph[] | undefined) => {
+        const newBoard = { uid: boardId } as Graph // Temporary ID until the server responds
         return [newBoard, ...(oldBoards || [])] // Prepend the new board to the list
       })
       setBoardId(boardId) // Set the current board ID to the newly created board

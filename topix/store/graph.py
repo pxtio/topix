@@ -104,11 +104,11 @@ class GraphStore:
             }
         )
 
-    async def list_graphs(self, user_uid: str) -> list[tuple[str, str | None]]:
+    async def list_graphs(self, user_uid: str) -> list[Graph]:
         """List all graphs' ids and labels for a user."""
         async with self._pg_pool.connection() as conn:
             graphs = await list_graphs_by_user_uid(conn, user_uid)
-        return [(idx, label) for idx, label, _ in graphs]
+        return graphs
 
     async def close(self):
         """Close the database connection pool."""

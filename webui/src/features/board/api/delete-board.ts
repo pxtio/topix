@@ -1,5 +1,6 @@
 import { API_URL } from "@/config/api"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { Graph } from "../types/board"
 
 
 /**
@@ -32,8 +33,8 @@ export const useDeleteBoard = () => {
   const mutation = useMutation({
     mutationFn: async ({ boardId, userId }: { boardId: string, userId: string }) => {
       // Optimistically update the list of boards in the cache
-      queryClient.setQueryData(["listBoards", userId], (oldBoards: { id: string, label?: string }[] | undefined) => {
-        return oldBoards?.filter(board => board.id !== boardId)
+      queryClient.setQueryData(["listBoards", userId], (oldBoards: Graph[] | undefined) => {
+        return oldBoards?.filter(board => board.uid !== boardId)
       })
 
       await deleteBoard(boardId, userId)

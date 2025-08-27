@@ -1,4 +1,3 @@
-import { useChatStore } from "@/features/agent/store/chat-store"
 import { useAppStore } from "@/store"
 import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSubButton, SidebarMenuSubItem } from "../ui/sidebar"
 import { BotMessageSquare } from "lucide-react"
@@ -6,19 +5,18 @@ import { useDeleteChat } from "@/features/agent/api/delete-chat"
 import { trimText } from "@/lib/common"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "../ui/context-menu"
+import { useNavigate, useRouterState } from "@tanstack/react-router"
 
 /**
  * New chat item component
  */
 export function NewChatItem() {
-  const { view, setView } = useAppStore()
-  const { currentChatId, setCurrentChatId } = useChatStore()
-
-  const isActive = currentChatId === undefined && view === "chat"
+  const navigate = useNavigate()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const isActive = pathname === '/chats'
 
   const handleClick = () => {
-    setCurrentChatId(undefined)
-    setView("chat")  // Switch to chat view when creating a new chat
+    navigate({ to: '/chats' })
   }
 
   return (
@@ -39,23 +37,23 @@ export function NewChatItem() {
 /**
  * A chat item component
  */
-export function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
-  const { userId, view, setView } = useAppStore()
-  const { currentChatId, setCurrentChatId } = useChatStore()
+export function ChatMenuItem({ chatId, label }: { chatId: string; label?: string }) {
+  const navigate = useNavigate()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const isActive = pathname === `/chats/${chatId}`
+
+  const { userId } = useAppStore()
   const { deleteChat } = useDeleteChat()
 
   const handleClick = () => {
-    setCurrentChatId(chatId)
-    setView("chat")  // Switch to chat view when selecting a chat
+    navigate({ to: '/chats/$id', params: { id: chatId } }) // 👈 SPA nav
   }
 
   const handleDeleteChat = (chatId: string) => {
     deleteChat({ chatId, userId })
   }
 
-  const chatLabel = trimText(label || UNTITLED_LABEL,100)
-
-  const isActive = currentChatId === chatId && view === "chat"
+  const chatLabel = trimText(label || UNTITLED_LABEL, 100)
 
   return (
     <SidebarMenuSubItem>

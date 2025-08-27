@@ -7,10 +7,13 @@ from topix.agents.assistant.query_rewrite import QueryRewrite
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.inputs import QueryRewriteInput
 from topix.agents.datatypes.stream import AgentStreamMessage, ContentType
-from topix.agents.datatypes.tools import AgentToolName
+from topix.agents.datatypes.tools import AgentToolName, to_display_output
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
-from topix.datatypes.chat.reasoning import ReasoningStep, ReasoningStepState
+from topix.datatypes.chat.chat import Message
+from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
+from topix.datatypes.property import ReasoningProperty
+from topix.datatypes.resource import RichText
 from topix.utils.common import gen_uid
 
 
@@ -61,7 +64,7 @@ class AssistantManager:
 
         if session:
             await session.add_items(
-                [{"id": message_id or gen_uid(), "role": "user", "content": query}]
+                [{"id": message_id or gen_uid(), "role": "user", "content": {"markdown": query}}]
             )
         # launch plan:
         res = await AgentRunner.run(
@@ -69,34 +72,34 @@ class AssistantManager:
         )
         if session:
             await session.add_items(
-                [{"id": gen_uid(), "role": "assistant", "content": res}]
+                [{"id": gen_uid(), "role": "assistant", "content": {"markdown": res}}]
             )
         return res
 
     @staticmethod
     def _update_reasoning_step(
-        steps: dict[str, ReasoningStep],
+        steps: dict[str, ToolCall],
         message: AgentStreamMessage
-    ) -> ReasoningStep:
+    ) -> ToolCall:
         """Update the reasoning step based on the message."""
         if message.tool_id not in steps:
-            steps[message.tool_id] = ReasoningStep(
+            steps[message.tool_id] = ToolCall(
                 id=message.tool_id,
                 name=message.tool_name,
-                response="",
+                output="",
                 event_messages=[],
-                state=ReasoningStepState.STARTED,
+                state=ToolCallState.STARTED,
             )
         if message.content:
             if message.content.type != ContentType.STATUS:
-                steps[message.tool_id].response += message.content.text
+                steps[message.tool_id].output += message.content.text
             else:
                 steps[message.tool_id].event_messages.append(message.content.text)
         if message.is_stop:
-            steps[message.tool_id].state = ReasoningStepState.COMPLETED
+            steps[message.tool_id].state = ToolCallState.COMPLETED
         return steps[message.tool_id]
 
-    async def run_streamed(  # noqa: C901
+    async def run_streamed(
         self,
         context: ReasoningContext,
         query: str,
@@ -119,7 +122,13 @@ class AssistantManager:
 
         if session:
             await session.add_items(
-                [{"id": message_id or gen_uid(), "role": "user", "content": query}]
+                [
+                    Message(
+                        id=message_id or gen_uid(),
+                        role="user",
+                        content=RichText(markdown=query),
+                    )
+                ]
             )
 
         # launch plan:
@@ -138,10 +147,7 @@ class AssistantManager:
                         is_raw_answer:
                     final_message = ""
                     is_raw_answer = False
-                if message.tool_name in [
-                    AgentToolName.RAW_MESSAGE,
-                    AgentToolName.ANSWER_REFORMULATE,
-                ]:
+                if to_display_output(message.tool_name):
                     final_message += message.content.text
             yield message
 
@@ -153,12 +159,17 @@ class AssistantManager:
 
             await session.add_items(
                 [
-                    {
-                        "id": gen_uid(),
-                        "role": "assistant",
-                        "content": final_message,
-                        "reasoning_steps": [val.model_dump(exclude_none=True) for val in steps.values()],
-                    }
+                    Message(
+                        role="assistant",
+                        content=RichText(markdown=final_message),
+                        properties={
+                            "reasoning": ReasoningProperty(
+                                reasoning=[
+                                    val.model_dump(exclude_none=True) for val in steps.values()
+                                ]
+                            )
+                        }
+                    )
                 ]
             )
 

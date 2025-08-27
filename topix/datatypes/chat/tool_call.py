@@ -1,14 +1,15 @@
 """Reasoning-related data types."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
+from topix.agents.datatypes.outputs import ToolOutput
 from topix.agents.datatypes.tools import AgentToolName
 from topix.datatypes.enum import CustomEnum
 
 
-class ReasoningStepState(str, CustomEnum):
+class ToolCallState(str, CustomEnum):
     """Enum for reasoning step states."""
 
     STARTED = "started"
@@ -32,12 +33,13 @@ class KnowledgeSource(BaseModel):
     webpage: Webpage
 
 
-class ReasoningStep(BaseModel):
+class ToolCall(BaseModel):
     """A single step in the reasoning process."""
 
+    type: Literal["tool_call"] = "tool_call"
     id: str
     name: AgentToolName
-    response: str = ""
+    output: ToolOutput
     event_messages: list[str] = []
-    state: ReasoningStepState
-    sources: list[KnowledgeSource] = []
+    state: ToolCallState = ToolCallState.STARTED
+    arguments: dict[str, Any] = {}

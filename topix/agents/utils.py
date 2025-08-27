@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from agents import RunContextWrapper
 from topix.agents.datatypes.context import Context, ToolCall
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
+from topix.datatypes.chat.tool_call import ToolCallState
 from topix.utils.common import gen_uid
 
 
@@ -147,10 +148,11 @@ def tool_execution_decorator(tool_name: str):
                     result = await func(wrapper, *args, **kwargs)
 
             tool_call = ToolCall(
-                tool_id=fixed_params["tool_id"],
-                tool_name=fixed_params["tool_name"],
+                id=fixed_params["tool_id"],
+                name=fixed_params["tool_name"],
                 arguments=log_params,
                 output=result,
+                state=ToolCallState.COMPLETED
             )
             wrapper.context.tool_calls.append(tool_call)
 

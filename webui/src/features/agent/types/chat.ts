@@ -1,17 +1,24 @@
 import type { ReasoningStep } from "./stream"
 
-export type MessageRole = "user" | "assistant" | "system" | "tool"
+export type MessageRole = "user" | "assistant" | "system"
 
 
 export interface ChatMessage {
     id: string
     role: MessageRole
-    content: string
+    content: {
+      markdown: string
+    }
     createdAt?: string
     updatedAt?: string
     deletedAt?: string
     chatUid: string
-    reasoningSteps?: ReasoningStep[]
+    properties: {
+      reasoning?: {
+        type: "reasoning",
+        reasoning: ReasoningStep[]
+      }
+    }
 }
 
 

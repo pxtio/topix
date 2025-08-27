@@ -10,10 +10,10 @@ from topix.utils.common import gen_uid
 def messages():
     """Fixture to provide sample messages."""
     return [
-        {"id": gen_uid(), "role": "user", "content": "Hello!"},
-        {"id": gen_uid(), "role": "assistant", "content": "Hi there! How can I help you?"},
-        {"id": gen_uid(), "role": "user", "content": "Tell me a joke."},
-        {"id": gen_uid(), "role": "assistant", "content": "Why did the chicken cross the road? To get to the other side!"}
+        {"id": gen_uid(), "role": "user", "content": {"markdown": "Hello!"}},
+        {"id": gen_uid(), "role": "assistant", "content": {"markdown": "Hi there! How can I help you?"}},
+        {"id": gen_uid(), "role": "user", "content": {"markdown": "Tell me a joke."}},
+        {"id": gen_uid(), "role": "assistant", "content": {"markdown": "Why did the chicken cross the road? To get to the other side!"}}
     ]
 
 

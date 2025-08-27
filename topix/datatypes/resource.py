@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import logging
+
 from datetime import datetime
 
 from pydantic import BaseModel, Field, TypeAdapter
 
 from topix.datatypes.property import DataProperty
 from topix.utils.common import gen_uid
+
+logger = logging.getLogger(__name__)
 
 
 class RichText(BaseModel):
@@ -51,7 +55,7 @@ class Resource(BaseModel):
 
         for k, v in kwargs.items():
             if k not in cls.model_fields:
-                errors.append(f"Unknown field: {k}")
+                logger.warning(f"Unknown field: {k}")
                 continue
             try:
                 adapter = TypeAdapter(cls.model_fields[k].annotation)

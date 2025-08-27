@@ -80,7 +80,7 @@ async def tool_execution_handler(
         )
     )
     try:
-        yield fixed_params
+        yield fixed_params["tool_id"]
     except Exception as e:
         await context._message_queue.put(
             AgentStreamMessage(
@@ -141,15 +141,14 @@ def tool_execution_decorator(tool_name: str):
 
             async with tool_execution_handler(
                 wrapper.context, tool_name, start_msg=start_message
-            ) as fixed_params:
+            ) as tool_id:
                 sig = inspect.signature(func)
                 if "tool_id" in sig.parameters:
-                    kwargs["tool_id"] = fixed_params["tool_id"]
-                    result = await func(wrapper, *args, **kwargs)
+                    result = await func(wrapper, tool_id=tool_id, *args, **kwargs)
 
             tool_call = ToolCall(
-                id=fixed_params["tool_id"],
-                name=fixed_params["tool_name"],
+                id=tool_id,
+                name=tool_name,
                 arguments=log_params,
                 output=result,
                 state=ToolCallState.COMPLETED

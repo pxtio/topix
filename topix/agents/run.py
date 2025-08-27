@@ -138,7 +138,7 @@ class AgentRunner:
         async def stream_events():
             async with tool_execution_handler(
                 context, tool_name=AgentToolName.RAW_MESSAGE, start_msg=input_msg
-            ) as p:
+            ) as tool_id:
                 res = Runner.run_streamed(
                     starting_agent,
                     input,
@@ -149,9 +149,8 @@ class AgentRunner:
                     previous_response_id=previous_response_id,
                     session=session,
                 )
-
                 async for stream_chunk in starting_agent._handle_stream_events(
-                    res, **p
+                    res, tool_id=tool_id, tool_name=AgentToolName.RAW_MESSAGE
                 ):
                     await context._message_queue.put(stream_chunk)
 

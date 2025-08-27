@@ -208,7 +208,7 @@ class WebSearch(BaseAgent):
             context = wrapper.context
             async with tool_execution_handler(
                 context, name_override, input
-            ) as fixed_params:
+            ) as tool_id:
                 if streamed:
                     _, stream = await self._call_litellm(streamed=True, input=input)
                     async for chunk in stream:
@@ -219,7 +219,8 @@ class WebSearch(BaseAgent):
                                     type=ContentType.TOKEN,
                                     text=chunk.choices[0].delta.content,
                                 ),
-                                **fixed_params,
+                                tool_id=tool_id,
+                                tool_name=name_override,
                                 is_stop=False,
                             )
                             # Add the message to the context
@@ -250,7 +251,7 @@ class WebSearch(BaseAgent):
 
             context.tool_calls.append(
                 ToolCall(
-                    id=fixed_params["tool_id"],
+                    id=tool_id,
                     name=name_override,
                     arguments={"input": input},
                     output=web_search_output,

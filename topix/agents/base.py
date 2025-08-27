@@ -112,10 +112,10 @@ class BaseAgent(Agent[Context]):
             input_str = await self._input_formatter(context.context, input)
             async with tool_execution_handler(
                 context.context, name_override, input
-            ) as p:
+            ) as tool_id:
                 # Handle tool execution within an async context manager
                 hook_result = await self._as_tool_hook(
-                    context.context, input, tool_id=p["tool_id"]
+                    context.context, input, tool_id=tool_id
                 )
                 if hook_result is not None:
                     return hook_result
@@ -129,6 +129,7 @@ class BaseAgent(Agent[Context]):
                         max_turns=max_turns,
                     )
                     # Process and forward stream events
+                    p = {"tool_id": tool_id, "tool_name": name_override}
                     async for stream_chunk in self._handle_stream_events(output, **p):
                         await context.context._message_queue.put(stream_chunk)
                 else:
@@ -145,7 +146,7 @@ class BaseAgent(Agent[Context]):
 
             context.context.tool_calls.append(
                 ToolCall(
-                    id=p["tool_id"],
+                    id=tool_id,
                     name=name_override,
                     arguments={"input": input},
                     output=output,

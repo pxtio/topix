@@ -19,7 +19,6 @@ from topix.agents.config import PlanConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName
-from topix.agents.datatypes.web_search import WebSearchOption
 from topix.store.qdrant.store import ContentStore
 
 
@@ -126,26 +125,6 @@ class Plan(BaseAgent):
             instructions_template=config.instructions_template,
             model_settings=config.model_settings,
         )
-
-    def setup_websearch(self, search_choice: WebSearchOption) -> WebSearch:
-        """Set up the web search tool based on the search choice."""
-        match search_choice:
-            case WebSearchOption.OPENAI:
-                return WebSearch()
-            case WebSearchOption.PERPLEXITY:
-                return WebSearch(model="perplexity/sonar", search_engine=search_choice)
-            case WebSearchOption.TAVILY:
-                return WebSearch(
-                    instructions_template="decoupled_web_search.jinja",
-                    search_engine=search_choice,
-                )
-            case WebSearchOption.LINKUP:
-                return WebSearch(
-                    instructions_template="decoupled_web_search.jinja",
-                    search_engine=search_choice,
-                )
-            case _:
-                raise ValueError(f"Unknown web search option: {search_choice}")
 
     def _format_message(self, message: dict[str, str]) -> str:
         role = message["role"]

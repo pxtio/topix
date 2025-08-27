@@ -1,6 +1,7 @@
 import { API_URL } from "@/config/api"
 import { useQuery } from "@tanstack/react-query"
 import type { Graph } from "../types/board"
+import camelcaseKeys from "camelcase-keys"
 
 
 /**
@@ -25,7 +26,7 @@ export async function listBoards(
   }
 
   const data = await response.json()
-  return data.data.graphs
+  return camelcaseKeys(data.data.graphs, { deep: true })
 }
 
 

@@ -1,6 +1,6 @@
 import { useAppStore } from "@/store"
 import { useListBoards } from "../api/list-boards"
-import { BoardCard } from "./board-card"
+import { BoardCard, NewBoardCard } from "./board-card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 
@@ -14,6 +14,8 @@ export const Dashboard = () => {
     <div className='w-full h-full absolute inset-0'>
       <ScrollArea className='w-full h-full'>
         <div className='p-4 mt-4 gap-8 flex flex-row flex-wrap'>
+          <h3 className='w-full text-lg text-secondary font-semibold'>Your Boards</h3>
+          <NewBoardCard />
           {boards?.map((board) => (
             <BoardCard key={board.uid} board={board} />
           ))}

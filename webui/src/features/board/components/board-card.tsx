@@ -45,7 +45,7 @@ export const BoardCard = ({
         )
       }
       <div className='p-2 w-full overflow-ellipsis'>
-        <span className='inline-block font-medium text-sm'>{board.label || UNTITLED_LABEL}</span>
+        <span className='inline-block font-medium text-xs'>{board.label || UNTITLED_LABEL}</span>
       </div>
     </div>
   )

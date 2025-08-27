@@ -19,7 +19,7 @@ class ChatStore:
     def __init__(self):
         """Initialize the chat store."""
         self._pg_pool = create_pool()
-        self._content_store = ContentStore()
+        self._content_store = ContentStore.from_config()
 
     async def open(self):
         """Open the database connection pool."""
@@ -48,22 +48,22 @@ class ChatStore:
             else:
                 await delete_chat_by_uid(conn, chat_uid)
 
-        if hard_delete:
-            # delete associated messages in Qdrant
-            await self._content_store.delete_by_filters(
-                filters={
-                    "must": [
-                        {
-                            "key": "type",
-                            "match": {"value": "message"}
-                        },
-                        {
-                            "key": "chat_uid",
-                            "match": {"value": chat_uid}
-                        }
-                    ]
-                }
-            )
+        # delete associated messages in Qdrant
+        await self._content_store.delete_by_filters(
+            filters={
+                "must": [
+                    {
+                        "key": "type",
+                        "match": {"value": "message"}
+                    },
+                    {
+                        "key": "chat_uid",
+                        "match": {"value": chat_uid}
+                    }
+                ]
+            },
+            hard_delete=hard_delete
+        )
 
     async def list_chats(self, user_uid: str) -> list[Chat]:
         """List all chats for a user."""
@@ -88,11 +88,12 @@ class ChatStore:
 
     async def update_message(self, message_id: str, data: dict):
         """Update a message in the chat store."""
-        await self._content_store.update(message_id, data)
+        data["id"] = message_id
+        await self._content_store.update([data])
 
     async def get_messages(self, chat_uid: str, limit: int = 100) -> list[Message]:
         """Get latest messages for a specific chat."""
-        messages = await self._content_store.filt(
+        message_results = await self._content_store.filt(
             filters={
                 "must": [
                     {
@@ -108,6 +109,7 @@ class ChatStore:
             include=True,
             limit=limit
         )
+        messages = [result.resource for result in message_results]
         return messages[::-1]  # Reverse order to get latest messages first
 
     async def pop_message(self, chat_uid: str) -> Message | None:
@@ -115,7 +117,7 @@ class ChatStore:
         messages = await self.get_messages(chat_uid, limit=1)
         if not messages:
             return None
-        await self._content_store.delete(messages[0].id)
+        await self._content_store.delete([messages[0].id])
         return messages[0]
 
     async def close(self):

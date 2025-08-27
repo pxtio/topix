@@ -3,8 +3,17 @@
 from topix.datatypes.graph.graph import Graph
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
-from topix.store.postgres.graph import _dangerous_hard_delete_graph_by_uid, create_graph, delete_graph_by_uid, get_graph_by_uid, update_graph_by_uid
-from topix.store.postgres.graph_user import add_user_to_graph_by_uid, list_graphs_by_user_uid
+from topix.store.postgres.graph import (
+    _dangerous_hard_delete_graph_by_uid,
+    create_graph,
+    delete_graph_by_uid,
+    get_graph_by_uid,
+    update_graph_by_uid,
+)
+from topix.store.postgres.graph_user import (
+    add_user_to_graph_by_uid,
+    list_graphs_by_user_uid,
+)
 from topix.store.postgres.pool import create_pool
 from topix.store.qdrant.store import ContentStore
 
@@ -14,7 +23,7 @@ class GraphStore:
 
     def __init__(self):
         """Initialize the GraphStore."""
-        self._content_store = ContentStore()
+        self._content_store = ContentStore.from_config()
         self._pg_pool = create_pool()
 
     async def open(self):
@@ -27,15 +36,17 @@ class GraphStore:
 
     async def update_node(self, node_id: str, data: dict):
         """Update a node in the graph."""
-        await self._content_store.update(node_id, data)
+        data["id"] = node_id
+        await self._content_store.update([data])
 
-    async def delete_node(self, node_id: str):
+    async def delete_node(self, node_id: str, hard_delete: bool = False):
         """Delete a node from the graph."""
-        await self._content_store.delete(node_id)
+        await self._content_store.delete([node_id], hard_delete=hard_delete)
 
     async def get_nodes(self, node_ids: list[str]) -> list[Note]:
         """Retrieve nodes by their IDs."""
-        return await self._content_store.mget(node_ids)
+        results = await self._content_store.get(node_ids)
+        return [result.resource for result in results]
 
     async def add_links(self, links: list[Link]):
         """Add links to the graph."""
@@ -43,15 +54,17 @@ class GraphStore:
 
     async def update_link(self, link_id: str, data: dict):
         """Update a link in the graph."""
-        await self._content_store.update(link_id, data)
+        data["id"] = link_id
+        await self._content_store.update([data])
 
     async def delete_link(self, link_id: str):
         """Delete a link from the graph."""
-        await self._content_store.delete(link_id)
+        await self._content_store.delete([link_id])
 
     async def get_links(self, link_ids: list[str]) -> list[Link]:
         """Retrieve links by their IDs."""
-        return await self._content_store.mget(link_ids)
+        results = await self._content_store.get(link_ids)
+        return [result.resource for result in results]
 
     async def get_graph(self, graph_uid: str) -> Graph | None:
         """Retrieve the entire graph by its UID."""
@@ -59,22 +72,24 @@ class GraphStore:
             graph = await get_graph_by_uid(conn, graph_uid)
         if not graph:
             return None
-        graph.nodes = await self._content_store.filt(
+        node_results = await self._content_store.filt(
             filters={
                 "must": [
                     {"key": "type", "match": {"value": "note"}},
-                    {"key": "graph_uid", "match": {"value": graph_uid}}
+                    {"key": "graph_uid", "match": {"value": graph_uid}},
                 ]
             }
         )
-        graph.edges = await self._content_store.filt(
+        graph.nodes = [result.resource for result in node_results]
+        link_results = await self._content_store.filt(
             filters={
                 "must": [
                     {"key": "type", "match": {"value": "link"}},
-                    {"key": "graph_uid", "match": {"value": graph_uid}}
+                    {"key": "graph_uid", "match": {"value": graph_uid}},
                 ]
             }
         )
+        graph.edges = [result.resource for result in link_results]
         return graph
 
     async def add_graph(self, graph: Graph, user_uid: str) -> Graph:
@@ -97,11 +112,8 @@ class GraphStore:
                 await _dangerous_hard_delete_graph_by_uid(conn, graph_uid)
 
         await self._content_store.delete_by_filters(
-            filters={
-                "must": [
-                    {"key": "graph_uid", "match": {"value": graph_uid}}
-                ]
-            }
+            filters={"must": [{"key": "graph_uid", "match": {"value": graph_uid}}]},
+            hard_delete=hard_delete
         )
 
     async def list_graphs(self, user_uid: str) -> list[tuple[str, str | None]]:

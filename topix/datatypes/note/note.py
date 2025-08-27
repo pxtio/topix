@@ -5,7 +5,12 @@ from typing import Literal
 from pydantic import Field
 
 from topix.datatypes.graph.style import Style
-from topix.datatypes.property import DataProperty, IconProperty, PositionProperty, SizeProperty
+from topix.datatypes.property import (
+    DataProperty,
+    IconProperty,
+    PositionProperty,
+    SizeProperty,
+)
 from topix.datatypes.resource import Resource
 
 

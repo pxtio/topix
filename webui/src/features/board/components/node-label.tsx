@@ -113,7 +113,6 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
   const textareaClass = `
     w-full h-full
     p-6
-    bg-transparent
     ${note.style.textAlign === 'center' ? 'text-center' : note.style.textAlign === 'right' ? 'text-right' : 'text-left'}
     border-none
     resize-none
@@ -123,7 +122,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
     focus:outline-none
     focus:ring-0
     focus:border-none
-    overflow-visible
+    overflow-hidden
     whitespace-normal break-words
   `
 
@@ -134,6 +133,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
           relative
           flex flex-row items-center justify-center
           bg-transparent
+          overflow-visible
         `}
       >
         {
@@ -166,6 +166,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             w-[250px]
             min-h-[50px]
             flex items-center justify-center
+            p-2
           `}
           onDoubleClick={onDoubleClick}
           onPointerDown={stopDragging}

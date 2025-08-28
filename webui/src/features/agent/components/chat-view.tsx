@@ -1,5 +1,4 @@
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useChatStore } from "../store/chat-store"
 import { Conversation } from "./chat/conversation"
 import { InputBar } from "./chat/input"
 import { useMindMapStore } from "../store/mindmap-store"
@@ -8,21 +7,23 @@ import { ContextBoard } from "./context-board"
 import { useListChats } from "../api/list-chats"
 import { useAppStore } from "@/store"
 import { useUpdateChat } from "../api/update-chat"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { ChatProvider } from "../hooks/chat-context"
 
 
+// Chat view props
 export interface ChatViewProps {
+  chatId?: string
   hideContextBoard?: boolean
+  initialBoardId?: string
 }
 
 
 // This is the response focus component
-export const ChatView = ({ hideContextBoard = false }: ChatViewProps) => {
-  const [newChatBoardId, setNewChatBoardId] = useState<string | undefined>(undefined)
+export const Chat = ({ chatId, hideContextBoard = false, initialBoardId = undefined }: ChatViewProps) => {
+  const [newChatBoardId, setNewChatBoardId] = useState<string | undefined>(initialBoardId)
 
   const { userId } = useAppStore()
-
-  const { currentChatId } = useChatStore()
 
   const { data: chatList } = useListChats({ userId })
 
@@ -30,55 +31,61 @@ export const ChatView = ({ hideContextBoard = false }: ChatViewProps) => {
 
   const { updateChat } = useUpdateChat()
 
-  const chat = chatList?.find(chat => chat.uid === currentChatId)
+  const chat = chatList?.find(chat => chat.uid === chatId)
+
+  useEffect(() => {
+    setNewChatBoardId(initialBoardId)
+  }, [initialBoardId])
 
   const updateChatContextBoard = (boardId?: string) => {
-    if (currentChatId) {
-      updateChat({ chatId: currentChatId, userId, chatData: { graphUid: boardId } })
+    if (chatId) {
+      updateChat({ chatId, userId, chatData: { graphUid: boardId } })
     } else {
       setNewChatBoardId(boardId)
     }
   }
 
-  const attachedBoardId = currentChatId ? chat?.graphUid : newChatBoardId
+  const attachedBoardId = chatId ? chat?.graphUid : newChatBoardId
 
   return (
-    <div
-      className="absolute inset-0 h-full w-full overflow-hidden"
-    >
-      {
-        !hideContextBoard && (
-          <div className="absolute top-4 left-4 z-50">
-            <ContextBoard
-              contextBoardId={attachedBoardId}
-              boardAsContext={updateChatContextBoard}
+    <ChatProvider initialChatId={chatId}>
+      <div
+        className="absolute inset-0 h-full w-full overflow-hidden"
+      >
+        {
+          !hideContextBoard && (
+            <div className="absolute top-4 left-4 z-50">
+              <ContextBoard
+                contextBoardId={attachedBoardId}
+                boardAsContext={updateChatContextBoard}
+              />
+            </div>
+          )
+        }
+        {
+          isProcessing &&
+          <div className="absolute inset-0 bg-transparent flex items-center justify-center">
+            <ProgressBar
+              message="Mapifying"
+              viewMode="compact"
             />
           </div>
-        )
-      }
-      {
-        isProcessing &&
-        <div className="absolute inset-0 bg-transparent flex items-center justify-center">
-          <ProgressBar
-            message="Mapifying"
-            viewMode="compact"
-          />
-        </div>
-      }
-      {
-        currentChatId && (
-          <ScrollArea className='h-full w-full'>
-            <div className='w-full h-full flex flex-col items-center justify-center'>
-              <div
-                className='h-full sm:max-w-[800px] w-[800px]'
-              >
-                <Conversation chatId={currentChatId} />
+        }
+        {
+          chatId && (
+            <ScrollArea className='h-full w-full'>
+              <div className='w-full h-full flex flex-col items-center justify-center'>
+                <div
+                  className='h-full sm:max-w-[800px] w-[800px]'
+                >
+                  <Conversation chatId={chatId} />
+                </div>
               </div>
-            </div>
-          </ScrollArea>
-        )
-      }
-      <InputBar attachedBoardId={attachedBoardId} />
-    </div>
+            </ScrollArea>
+          )
+        }
+        <InputBar attachedBoardId={attachedBoardId} />
+      </div>
+    </ChatProvider>
   )
 }

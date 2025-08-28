@@ -1,6 +1,5 @@
 
 import {
-  Controls,
   MiniMap,
   ReactFlow,
   MarkerType,
@@ -17,7 +16,7 @@ import { useAddNoteNode } from '../hooks/add-node'
 import { EdgeView } from './edge-view'
 import { CustomConnectionLine } from './connection'
 import { useGraphStore } from '../store/graph-store'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { LinkEdge, NoteNode } from '../types/flow'
 import { useRemoveNote } from '../api/remove-note'
 import { useAppStore } from '@/store'
@@ -29,6 +28,8 @@ import { useAddMindMapToBoard } from '../api/add-mindmap-to-board'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import './graph-styles.css'
 import { GraphSidebar } from './style-panel/panel'
+import { useSaveThumbnailOnUnmount } from '../hooks/make-thumbnail'
+import { saveThumbnail } from '../api/save-thumbnail'
 
 
 const proOptions = { hideAttribution: true }
@@ -63,6 +64,9 @@ export default function GraphEditor() {
   const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
   const [isDragging, setIsDragging] = useState<boolean>(false)
+  const [isLocked, setIsLocked] = useState<boolean>(false)
+
+  const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow()
 
   const userId = useAppStore((state) => state.userId)
   const {
@@ -123,8 +127,6 @@ export default function GraphEditor() {
 
   const handleAddNode = useAddNoteNode()
 
-  const { setViewport } = useReactFlow()
-
   useEffect(() => {
     if (!isLoading) {
       // once loading is done, signal recentering the view
@@ -135,8 +137,10 @@ export default function GraphEditor() {
   useEffect(() => {
     const integrateMindmap = async () => {
       if (boardId && mindmaps.has(boardId)) {
-        await addMindMapToBoardAsync()
-        setShouldRecenter(true)
+        const added = await addMindMapToBoardAsync()
+        if (added) {
+          setShouldRecenter(true)
+        }
       }
     }
     integrateMindmap()
@@ -160,12 +164,28 @@ export default function GraphEditor() {
     setShouldRecenter(false)
   }, [boardId, nodes, setViewport, shouldRecenter])
 
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
+
+  useSaveThumbnailOnUnmount({
+    boardId,
+    containerRef: wrapperRef,
+    saveThumbnail: async (boardId, blob) => {
+      await saveThumbnail({ userId, boardId, blob })
+    },
+    opts: { width: 360, height: 200, pixelRatio: 1, backgroundColor: 'transparent' },
+  })
+
   return (
-    <>
+    <div ref={wrapperRef} className='w-full h-full'>
       <ActionPanel
         onAddNode={handleAddNode}
         enableSelection={enableSelection}
         setEnableSelection={setEnableSelection}
+        onZoomIn={() => zoomIn({ duration: 200 })}
+        onZoomOut={() => zoomOut({ duration: 200 })}
+        onFitView={() => fitView({ padding: 0.2, duration: 250 })}
+        isLocked={isLocked}
+        toggleLock={() => setIsLocked((v) => !v)}
       />
       {
         !isDragging && (
@@ -190,14 +210,19 @@ export default function GraphEditor() {
         connectionLineStyle={connectionLineStyle}
         selectionOnDrag={enableSelection}
         selectionMode={SelectionMode.Partial}
-        panOnDrag={!enableSelection}
+        panOnDrag={!isLocked && !enableSelection}
         selectionKeyCode={null}
         onNodeDragStart={() => setIsDragging(true)}
         onNodeDragStop={() => setIsDragging(false)}
+        nodesDraggable={!isLocked}
+        nodesConnectable={!isLocked}
+        elementsSelectable={!isLocked}
+        zoomOnScroll={!isLocked}
+        zoomOnPinch={!isLocked}
+        panOnScroll={!isLocked}
       >
         <MiniMap className='!bg-card rounded-lg'/>
-        <Controls />
       </ReactFlow>
-    </>
+    </div>
   )
 }

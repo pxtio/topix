@@ -1,5 +1,7 @@
 import { API_URL } from "@/config/api"
 import { useQuery } from "@tanstack/react-query"
+import type { Graph } from "../types/board"
+import camelcaseKeys from "camelcase-keys"
 
 
 /**
@@ -10,7 +12,7 @@ import { useQuery } from "@tanstack/react-query"
  */
 export async function listBoards(
   userId: string
-): Promise<{ id: string, label?: string }[]> {
+): Promise<Graph[]> {
   const headers = new Headers()
   headers.set("Content-Type", "application/json")
 
@@ -24,7 +26,7 @@ export async function listBoards(
   }
 
   const data = await response.json()
-  return data.data.graphs
+  return camelcaseKeys(data.data.graphs, { deep: true })
 }
 
 
@@ -40,7 +42,7 @@ export const useListBoards = ({
 }: {
   userId: string
 }) => {
-  return useQuery<{ id: string, label?: string }[]>({
+  return useQuery<Graph[]>({
     queryKey: ["listBoards", userId],
     queryFn: () => listBoards(userId),
     enabled: !!userId,

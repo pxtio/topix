@@ -1,6 +1,7 @@
 """Graph User Base Postgres Store."""
 from psycopg import AsyncConnection
 
+from src.datatypes.graph.graph import Graph
 from src.store.postgres.graph import get_graph_id_by_uid
 from src.store.postgres.user import get_user_id_by_uid
 
@@ -40,13 +41,13 @@ async def add_user_to_graph_by_uid(
 async def list_graphs_by_user_uid(
     conn: AsyncConnection,
     user_uid: str
-) -> list[tuple[str, str | None, str]]:
+) -> list[Graph]:
     """Return list of (graph_uid, role) for all graphs the user has access to."""
     user_id = await get_user_id_by_uid(conn, user_uid)
     if user_id is None:
         return []
     query = (
-        "SELECT g.uid, g.label, gu.role "
+        "SELECT g.id, g.uid, g.label, g.readonly, g.thumbnail, g.created_at, g.updated_at, g.deleted_at "
         "FROM graph_user gu JOIN graphs g ON gu.graph_id = g.id "
         "WHERE gu.user_id = %s "
         "AND g.deleted_at IS NULL "
@@ -55,8 +56,20 @@ async def list_graphs_by_user_uid(
     async with conn.cursor() as cur:
         await cur.execute(query, (user_id,))
         res = await cur.fetchall()
-    # List of tuples (graph_uid, graph_label, role)
-    return [(r[0], r[1], r[2]) for r in res]
+
+    # List of graph objects
+    return [
+        Graph(
+            id=row[0],
+            uid=row[1],
+            label=row[2],
+            readonly=row[3],
+            thumbnail=row[4],
+            created_at=row[5].isoformat() if row[5] else None,
+            updated_at=row[6].isoformat() if row[6] else None,
+            deleted_at=row[7].isoformat() if row[7] else None
+        ) for row in res
+    ]
 
 
 async def list_users_by_graph_uid(

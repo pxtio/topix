@@ -5,7 +5,12 @@ from typing import Literal
 from pydantic import Field
 
 from src.datatypes.graph.style import Style
-from src.datatypes.property import DataProperty, IconProperty, PositionProperty, SizeProperty
+from src.datatypes.property import (
+    DataProperty,
+    IconProperty,
+    PositionProperty,
+    SizeProperty,
+)
 from src.datatypes.resource import Resource
 
 

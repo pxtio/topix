@@ -61,5 +61,9 @@ export const useUpdateChat = () => {
     }
   })
 
-  return { updateChat: mutation.mutate, ...mutation }
+  return {
+    updateChat: mutation.mutate,
+    updateChatAsync: mutation.mutateAsync,
+    ...mutation
+  }
 }

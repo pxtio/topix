@@ -1,5 +1,13 @@
 """Utility functions for Qdrant."""
 
+from pydantic import BaseModel
+from qdrant_client.models import Record, ScoredPoint
+
+from topix.datatypes.chat.chat import Message
+from topix.datatypes.note.link import Link
+from topix.datatypes.note.note import Note
+from topix.datatypes.resource import Resource
+
 
 def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str]:
     """Convert a nested dict to a list of dot-notation field paths.
@@ -17,3 +25,43 @@ def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str
             fields.extend(payload_dict_to_field_list(value, full_key))
         # else: skip (only True and dict supported)
     return fields
+
+
+class RetrieveOutput(BaseModel):
+    """Output for all methods involving retrieval."""
+
+    id: str | int
+    resource: Resource | None = None
+    vector: list[list[float]] | None = None
+    score: float | None = None
+
+
+def convert_point(
+    point: ScoredPoint | Record,
+) -> RetrieveOutput:
+    """Convert a Qdrant point to a resource."""
+    resource = None
+    score = None
+    if isinstance(point, ScoredPoint):
+        score = point.score
+
+    if point.payload:
+        type_ = point.payload.get("type")
+        if "id" not in point.payload:
+            point.payload["id"] = point.id
+        match type_:
+            case "note":
+                resource = Note.partial(**point.payload)
+            case "message":
+                resource = Message.partial(**point.payload)
+            case "link":
+                resource = Link.partial(**point.payload)
+            case _:
+                raise ValueError(f"Unknown type: {type_}")
+
+    return RetrieveOutput(
+        id=point.id,
+        resource=resource,
+        score=score,
+        vector=point.vector
+    )

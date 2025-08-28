@@ -1,5 +1,5 @@
 import { useReactFlow } from "@xyflow/react"
-import { SloppyPresets, StrokeWidthPresets, type FillStyle, type FontFamily, type StrokeStyle, type Style, type TextAlign, type TextStyle } from "../../types/style"
+import { SloppyPresets, StrokeWidthPresets, type FillStyle, type FontFamily, type FontSize, type StrokeStyle, type Style, type TextAlign, type TextStyle } from "../../types/style"
 import type { NoteNode } from "../../types/flow"
 import { cn } from "@/lib/utils"
 import { useMemo } from "react"
@@ -164,10 +164,20 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
             {/* Font family */}
             <Section title="Font family">
               <ToggleGroup type="single" value={s.fontFamily ?? "sans"} onValueChange={v => v && onStyleChange({ fontFamily: v as FontFamily })} className="flex gap-2">
-                <ToggleGroupItem value="handwriting" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-handwriting">A</ToggleGroupItem>
-                <ToggleGroupItem value="sans-serif" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-sans">A</ToggleGroupItem>
-                <ToggleGroupItem value="serif" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-serif">A</ToggleGroupItem>
+                <ToggleGroupItem value="handwriting" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-handwriting">Aa</ToggleGroupItem>
+                <ToggleGroupItem value="sans-serif" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-sans">Aa</ToggleGroupItem>
+                <ToggleGroupItem value="serif" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-serif">Aa</ToggleGroupItem>
                 <ToggleGroupItem value="monospace" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-mono">{"<>"}</ToggleGroupItem>
+              </ToggleGroup>
+            </Section>
+
+            {/* Font size */}
+            <Section title="Font size">
+              <ToggleGroup type="single" value={s.fontSize ?? "M"} onValueChange={v => v && onStyleChange({ fontSize: v as FontSize })} className="flex gap-2">
+                <ToggleGroupItem value="S" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary">S</ToggleGroupItem>
+                <ToggleGroupItem value="M" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary">M</ToggleGroupItem>
+                <ToggleGroupItem value="L" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary">L</ToggleGroupItem>
+                <ToggleGroupItem value="XL" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary">XL</ToggleGroupItem>
               </ToggleGroup>
             </Section>
 

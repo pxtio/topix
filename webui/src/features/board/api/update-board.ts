@@ -50,9 +50,9 @@ export const useUpdateBoard = () => {
       userId: string
       graphData: Partial<Graph>
     }) => {
-      queryClient.setQueryData(["listBoards", userId], (oldBoards: { id: string, label?: string }[] | undefined) => {
+      queryClient.setQueryData(["listBoards", userId], (oldBoards: Graph[] | undefined) => {
         return oldBoards?.map(board =>
-          board.id === boardId ? { ...board, ...{ id: boardId, label: graphData.label } } : board
+          board.uid === boardId ? { ...board, ...{ ...graphData, uid: boardId } } : board
         )
       })
       await updateBoard(boardId, userId, graphData)

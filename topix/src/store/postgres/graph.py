@@ -55,7 +55,7 @@ async def get_graph_by_uid(
 ) -> Graph | None:
     """Fetch a graph by UID."""
     query = (
-        "SELECT id, uid, label, format_version, readonly, "
+        "SELECT id, uid, label, format_version, readonly, thumbnail, "
         "created_at, updated_at, deleted_at "
         "FROM graphs WHERE uid = %s"
     )
@@ -70,9 +70,10 @@ async def get_graph_by_uid(
             label=row[2],
             format_version=row[3],
             readonly=row[4],
-            created_at=row[5].isoformat() if row[5] else None,
-            updated_at=row[6].isoformat() if row[6] else None,
-            deleted_at=row[7].isoformat() if row[7] else None,
+            thumbnail=row[5],
+            created_at=row[6].isoformat() if row[6] else None,
+            updated_at=row[7].isoformat() if row[7] else None,
+            deleted_at=row[8].isoformat() if row[8] else None,
         )
 
 
@@ -86,7 +87,7 @@ async def update_graph_by_uid(
     values = []
 
     # Only allow certain fields
-    allowed_fields = {"label", "format_version", "readonly"}
+    allowed_fields = {"label", "format_version", "readonly", "thumbnail"}
 
     # Other allowed fields (non-date)
     for k, v in updated_data.items():

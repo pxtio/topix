@@ -25,6 +25,8 @@ class Graph(BaseModel):
     format_version: int = 1
     readonly: bool = False
 
+    thumbnail: str | None = None
+
     created_at: str | None = Field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str | None = None
     deleted_at: str | None = None

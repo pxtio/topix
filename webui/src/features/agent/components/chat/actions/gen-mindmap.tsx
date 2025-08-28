@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useListChats } from "@/features/agent/api/list-chats"
-import { useChatStore } from "@/features/agent/store/chat-store"
+import { useChat } from "@/features/agent/hooks/chat-context"
 import { useConvertToMindMap } from "@/features/board/api/convert-to-mindmap"
 import { useCreateBoard } from "@/features/board/api/create-board"
 import { useListBoards } from "@/features/board/api/list-boards"
@@ -16,15 +16,17 @@ import { HugeiconsIcon } from "@hugeicons/react"
  * Generate a mind map from the selected message
  */
 export const GenMindmapButton = ({ message }: { message: string }) => {
+  const { chatId } = useChat()
+
   const { userId } = useAppStore()
-  const currentChatId = useChatStore((state) => state.currentChatId)
+
   const { convertToMindMap } = useConvertToMindMap()
   const { data: boardList } = useListBoards({ userId })
   const { data: chatList } = useListChats({ userId })
 
   const { createBoardAsync } = useCreateBoard()
 
-  const chat = chatList?.find(chat => chat.uid === currentChatId)
+  const chat = chatList?.find(chat => chat.uid === chatId)
 
   const attachedBoardId = chat?.graphUid
 
@@ -67,8 +69,8 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
               </DropdownMenuItem>
               {boardList?.map((board) => (
                 <DropdownMenuItem
-                  key={board.id}
-                  onClick={() => launchGeneration(board.id)}
+                  key={board.uid}
+                  onClick={() => launchGeneration(board.uid)}
                 >
                   {board.label || UNTITLED_LABEL}
                 </DropdownMenuItem>
@@ -103,8 +105,8 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
               </ContextMenuItem>
               {boardList?.map((board) => (
                 <ContextMenuItem
-                  key={board.id}
-                  onClick={() => launchGeneration(board.id)}
+                  key={board.uid}
+                  onClick={() => launchGeneration(board.uid)}
                 >
                   {board.label || UNTITLED_LABEL}
                 </ContextMenuItem>

@@ -1,4 +1,5 @@
 """Integration tests for the ChatStore class."""
+
 import pytest
 
 from src.datatypes.chat.chat import Chat
@@ -11,9 +12,19 @@ def messages():
     """Fixture to provide sample messages."""
     return [
         {"id": gen_uid(), "role": "user", "content": {"markdown": "Hello!"}},
-        {"id": gen_uid(), "role": "assistant", "content": {"markdown": "Hi there! How can I help you?"}},
+        {
+            "id": gen_uid(),
+            "role": "assistant",
+            "content": {"markdown": "Hi there! How can I help you?"},
+        },
         {"id": gen_uid(), "role": "user", "content": {"markdown": "Tell me a joke."}},
-        {"id": gen_uid(), "role": "assistant", "content": {"markdown": "Why did the chicken cross the road? To get to the other side!"}}
+        {
+            "id": gen_uid(),
+            "role": "assistant",
+            "content": {
+                "markdown": "Why did the chicken cross the road? To get to the other side!"
+            },
+        },
     ]
 
 

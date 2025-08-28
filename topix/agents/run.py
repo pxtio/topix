@@ -91,7 +91,7 @@ class AgentRunner:
         hooks: RunHooks[TContext] | None = None,
         run_config: RunConfig | None = None,
         previous_response_id: str | None = None,
-        session: Session | None = None,
+        session: Session | None = None
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Run a workflow starting at the given agent in streaming mode.
 

@@ -7,7 +7,10 @@ from pathlib import Path
 from typing import Any, AsyncGenerator
 
 from jinja2 import Template
-from openai.types.responses import ResponseTextDeltaEvent
+from openai.types.responses import (
+    ResponseReasoningSummaryTextDeltaEvent,
+    ResponseTextDeltaEvent,
+)
 
 from agents import (
     Agent,
@@ -51,10 +54,7 @@ class BaseAgent(Agent[Context]):
     @classmethod
     def from_config(cls, config: BaseAgentConfig) -> "BaseAgent":
         """Create an instance of BaseAgent from configuration."""
-        kwargs = {
-            key: getattr(config, key)
-            for key in config.model_fields_set
-        }
+        kwargs = {key: getattr(config, key) for key in config.model_fields_set}
         return cls(**kwargs)
 
     def as_tool(
@@ -150,7 +150,7 @@ class BaseAgent(Agent[Context]):
                     name=name_override,
                     arguments={"input": input},
                     output=output,
-                    state=ToolCallState.COMPLETED
+                    state=ToolCallState.COMPLETED,
                 )
             )
 
@@ -192,15 +192,22 @@ class BaseAgent(Agent[Context]):
         self, stream_response: RunResultStreaming, **fixed_params
     ) -> AsyncGenerator[AgentStreamMessage, None]:
         """Handle streaming events from the agent."""
+        event_type_map = {
+            ResponseTextDeltaEvent: "stream_message",
+            ResponseReasoningSummaryTextDeltaEvent: "stream_reasoning_message",
+        }
         async for event in stream_response.stream_events():
-            if event.type == RAW_RESPONSE_EVENT and isinstance(
-                event.data, ResponseTextDeltaEvent
-            ):
-                yield AgentStreamMessage(
-                    content=Content(type=ContentType.TOKEN, text=event.data.delta),
-                    **fixed_params,
-                    is_stop=False,
-                )
+            if event.type == RAW_RESPONSE_EVENT:
+                for cls, msg_type in event_type_map.items():
+                    if isinstance(event.data, cls):
+                        yield AgentStreamMessage(
+                            type=msg_type,
+                            content=Content(
+                                type=ContentType.TOKEN, text=event.data.delta
+                            ),
+                            **fixed_params,
+                            is_stop=False,
+                        )
 
     def activate_tool(self, tool_name: str) -> None:
         """Activate a tool by name.

@@ -1,5 +1,7 @@
 """Agent Config classes."""
 
+from typing import Literal
+
 import yaml
 
 from pydantic import BaseModel
@@ -58,3 +60,12 @@ class AssistantManagerConfig(BaseModel):
         """Switch the plan model."""
         self.plan.model = model
         self.plan.answer_reformulate.model = model
+
+    def set_reasoning(self, effort: Literal["low", "medium", "high"] | None):
+        """Set the reasoning."""
+        if not effort:
+            self.plan.model_settings.reasoning = None
+        else:
+            self.plan.model_settings.reasoning = {
+                "effort": effort
+            }

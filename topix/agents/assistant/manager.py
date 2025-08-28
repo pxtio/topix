@@ -40,7 +40,7 @@ class AssistantManager:
         context: ReasoningContext,
         query: str,
         session: AssistantSession | None = None,
-        rephrase_query: bool = False
+        rephrase_query: bool = False,
     ) -> list[dict[str, str]]:
         if session:
             history = await session.get_items()
@@ -67,14 +67,22 @@ class AssistantManager:
         session: AssistantSession | None = None,
         message_id: str | None = None,
         max_turns: int = 5,
-        rephrase_query: bool = False
+        rephrase_query: bool = False,
     ) -> str:
         """Run the assistant agent with the provided context and query."""
-        input = await self._compose_input(context, query, session, rephrase_query=rephrase_query)
+        input = await self._compose_input(
+            context, query, session, rephrase_query=rephrase_query
+        )
 
         if session:
             await session.add_items(
-                [{"id": message_id or gen_uid(), "role": "user", "content": {"markdown": query}}]
+                [
+                    {
+                        "id": message_id or gen_uid(),
+                        "role": "user",
+                        "content": {"markdown": query},
+                    }
+                ]
             )
         # launch plan:
         res = await AgentRunner.run(
@@ -88,8 +96,7 @@ class AssistantManager:
 
     @staticmethod
     def _update_reasoning_step(
-        steps: dict[str, ToolCall],
-        message: AgentStreamMessage
+        steps: dict[str, ToolCall], message: AgentStreamMessage
     ) -> ToolCall:
         """Update the reasoning step based on the message."""
         if message.tool_id not in steps:
@@ -116,7 +123,7 @@ class AssistantManager:
         session: AssistantSession | None = None,
         message_id: str | None = None,
         max_turns: int = 8,
-        rephrase_query: bool = False
+        rephrase_query: bool = False,
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Run the assistant agent with the provided context and query.
 
@@ -128,7 +135,9 @@ class AssistantManager:
 
         """
         # Notify the start of the agent stream
-        agent_input = await self._compose_input(context, query, session, rephrase_query=rephrase_query)
+        agent_input = await self._compose_input(
+            context, query, session, rephrase_query=rephrase_query
+        )
 
         if session:
             await session.add_items(
@@ -153,8 +162,10 @@ class AssistantManager:
             self._update_reasoning_step(steps, message)
             if self._is_response(message):
                 # if answer reformulate is used, reset final_message
-                if message.tool_name == AgentToolName.ANSWER_REFORMULATE and \
-                        is_raw_answer:
+                if (
+                    message.tool_name == AgentToolName.ANSWER_REFORMULATE
+                    and is_raw_answer
+                ):
                     final_message = ""
                     is_raw_answer = False
                 if to_display_output(message.tool_name):
@@ -175,10 +186,11 @@ class AssistantManager:
                         properties={
                             "reasoning": ReasoningProperty(
                                 reasoning=[
-                                    val.model_dump(exclude_none=True) for val in steps.values()
+                                    val.model_dump(exclude_none=True)
+                                    for val in steps.values()
                                 ]
                             )
-                        }
+                        },
                     )
                 ]
             )

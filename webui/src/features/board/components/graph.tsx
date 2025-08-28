@@ -7,7 +7,9 @@ import {
   type OnEdgesDelete,
   type OnConnect,
   useReactFlow,
-  SelectionMode
+  SelectionMode,
+  type NodeChange,
+  type EdgeChange
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import NodeView from './node-view'
@@ -16,14 +18,13 @@ import { useAddNoteNode } from '../hooks/add-node'
 import { EdgeView } from './edge-view'
 import { CustomConnectionLine } from './connection'
 import { useGraphStore } from '../store/graph-store'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { LinkEdge, NoteNode } from '../types/flow'
 import { useRemoveNote } from '../api/remove-note'
 import { useAppStore } from '@/store'
 import { useRemoveLink } from '../api/remove-link'
 import { useAddLinks } from '../api/add-links'
 import { convertEdgeToLink } from '../utils/graph'
-import { getBounds } from '../utils/flow-view'
 import { useAddMindMapToBoard } from '../api/add-mindmap-to-board'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import './graph-styles.css'
@@ -65,21 +66,20 @@ export default function GraphEditor() {
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
   const [isDragging, setIsDragging] = useState<boolean>(false)
   const [isLocked, setIsLocked] = useState<boolean>(false)
+  const [moving, setMoving] = useState(false)
 
   const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow()
 
   const userId = useAppStore((state) => state.userId)
-  const {
-    boardId,
-    isLoading,
-    nodes,
-    edges,
-    onNodesChange,
-    onEdgesChange,
-    onNodesDelete,
-    onEdgesDelete,
-    onConnect,
-  } = useGraphStore()
+  const boardId = useGraphStore((state) => state.boardId)
+  const isLoading = useGraphStore((state) => state.isLoading)
+  const nodes = useGraphStore((state) => state.nodes)
+  const edges = useGraphStore((state) => state.edges)
+  const onNodesChange = useGraphStore((state) => state.onNodesChange)
+  const onEdgesChange = useGraphStore((state) => state.onEdgesChange)
+  const onNodesDelete = useGraphStore((state) => state.onNodesDelete)
+  const onEdgesDelete = useGraphStore((state) => state.onEdgesDelete)
+  const onConnect = useGraphStore((state) => state.onConnect)
   const { mindmaps } = useMindMapStore()
   const { removeNote } = useRemoveNote()
   const { removeLink } = useRemoveLink()
@@ -150,19 +150,9 @@ export default function GraphEditor() {
   useEffect(() => {
     // only recenter when it's signaled (after loading)
     if (!shouldRecenter) return
-    if (nodes.length === 0) {
-      setViewport({ x: 0, y: 0, zoom: 1 })
-    } else {
-      const { centerX, centerY } = getBounds(nodes)
-      setViewport({
-        // TODO: Use container size to adjust centering instead of window size
-        x: -centerX + window.innerWidth / 2 - 200,
-        y: -centerY + window.innerHeight / 2 - 100,
-        zoom: 1
-      })
-    }
+    fitView({ padding: 0.2, duration: 250, minZoom: 1, maxZoom: 1 })
     setShouldRecenter(false)
-  }, [boardId, nodes, setViewport, shouldRecenter])
+  }, [setViewport, shouldRecenter, fitView])
 
   const wrapperRef = useRef<HTMLDivElement | null>(null)
 
@@ -175,20 +165,62 @@ export default function GraphEditor() {
     opts: { width: 360, height: 200, pixelRatio: 1, backgroundColor: 'transparent' },
   })
 
+  const handleZoomIn = useCallback(() => {
+    zoomIn({ duration: 200 })
+  }, [zoomIn])
+
+  const handleZoomOut = useCallback(() => {
+    zoomOut({ duration: 200 })
+  }, [zoomOut])
+
+  const handleFitView = useCallback(() => {
+    fitView({ padding: 0.2, duration: 250 })
+  }, [fitView])
+
+  const throttledOnNodesChange = useMemo(() => {
+    let raf: number | null = null
+    let queued: NodeChange<NoteNode>[] | null = null
+
+    return (changes: NodeChange<NoteNode>[]) => {
+      queued = queued ? [...queued, ...changes] : changes
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        onNodesChange(queued!)
+        raf = null
+        queued = null
+      })
+    }
+  }, [onNodesChange])
+
+  const throttledOnEdgesChange = useMemo(() => {
+    let raf: number | null = null
+    let queued: EdgeChange<LinkEdge>[] | null = null
+
+    return (changes: EdgeChange<LinkEdge>[]) => {
+      queued = queued ? [...queued, ...changes] : changes
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        onEdgesChange(queued!)
+        raf = null
+        queued = null
+      })
+    }
+  }, [onEdgesChange])
+
   return (
     <div ref={wrapperRef} className='w-full h-full'>
       <ActionPanel
         onAddNode={handleAddNode}
         enableSelection={enableSelection}
         setEnableSelection={setEnableSelection}
-        onZoomIn={() => zoomIn({ duration: 200 })}
-        onZoomOut={() => zoomOut({ duration: 200 })}
-        onFitView={() => fitView({ padding: 0.2, duration: 250 })}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onFitView={handleFitView}
         isLocked={isLocked}
         toggleLock={() => setIsLocked((v) => !v)}
       />
       {
-        !isDragging && (
+        !isDragging && !moving && (
           <div className='absolute top-1 left-1 w-auto max-w-[300px] h-auto z-50'>
             <GraphSidebar />
           </div>
@@ -197,8 +229,8 @@ export default function GraphEditor() {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
+        onNodesChange={throttledOnNodesChange}
+        onEdgesChange={throttledOnEdgesChange}
         onNodesDelete={deleteNodes}
         onEdgesDelete={deleteEdges}
         proOptions={proOptions}
@@ -220,8 +252,11 @@ export default function GraphEditor() {
         zoomOnScroll={!isLocked}
         zoomOnPinch={!isLocked}
         panOnScroll={!isLocked}
+        onMoveStart={() => setMoving(true)}
+        onMoveEnd={() => setMoving(false)}
+        onlyRenderVisibleElements
       >
-        <MiniMap className='!bg-card rounded-lg'/>
+        {!moving && !isDragging && <MiniMap className='!bg-card rounded-lg'/>}
       </ReactFlow>
     </div>
   )

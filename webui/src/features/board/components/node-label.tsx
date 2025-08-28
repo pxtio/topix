@@ -95,7 +95,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
 
   const stopDragging = (e: React.PointerEvent) => {
     if (labelEditing) {
-      e.preventDefault() // prevent React Flow from starting a drag
+      e.stopPropagation() // prevent React Flow from starting a drag
     }
   }
 
@@ -110,10 +110,9 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
     }, 0)
   }
 
-  const textareaClass = `
+  const divClass = `
     w-full h-full
     p-6
-    bg-transparent
     ${note.style.textAlign === 'center' ? 'text-center' : note.style.textAlign === 'right' ? 'text-right' : 'text-left'}
     border-none
     resize-none
@@ -123,9 +122,11 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
     focus:outline-none
     focus:ring-0
     focus:border-none
-    overflow-visible
+    overflow-hidden
     whitespace-normal break-words
   `
+
+  const textareaClass = `${divClass} nodrag nopan nowheel`
 
   return (
     <Sheet open={viewNote} onOpenChange={setViewNote}>
@@ -134,6 +135,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
           relative
           flex flex-row items-center justify-center
           bg-transparent
+          overflow-visible
         `}
       >
         {
@@ -166,6 +168,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             w-[250px]
             min-h-[50px]
             flex items-center justify-center
+            p-2
           `}
           onDoubleClick={onDoubleClick}
           onPointerDown={stopDragging}
@@ -184,7 +187,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
                 readOnly={!labelEditing}
               />
             ) : (
-              <div className={textareaClass}>
+              <div className={divClass}>
                 <span>
                   {note.label?.markdown || ""}
                 </span>

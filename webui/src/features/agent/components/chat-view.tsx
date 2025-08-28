@@ -54,7 +54,7 @@ export const Chat = ({ chatId, hideContextBoard = false, initialBoardId = undefi
       >
         {
           !hideContextBoard && (
-            <div className="absolute top-4 left-4 z-50">
+            <div className="p-4 backdrop-blur bg-background supports-[backdrop-filter]:bg-background/50">
               <ContextBoard
                 contextBoardId={attachedBoardId}
                 boardAsContext={updateChatContextBoard}
@@ -73,11 +73,9 @@ export const Chat = ({ chatId, hideContextBoard = false, initialBoardId = undefi
         }
         {
           chatId && (
-            <ScrollArea className='h-full w-full'>
+            <ScrollArea className='w-full h-full p-4'>
               <div className='w-full h-full flex flex-col items-center justify-center'>
-                <div
-                  className='h-full sm:max-w-[800px] w-[800px]'
-                >
+                <div className='w-full max-w-[800px] h-full'>
                   <Conversation chatId={chatId} />
                 </div>
               </div>

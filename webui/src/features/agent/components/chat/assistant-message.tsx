@@ -125,7 +125,7 @@ export const AssistantMessage = ({
     <div className='w-full'>
       {
         agentResponse &&
-        <ReasoningStepsView response={agentResponse} />
+        <ReasoningStepsView response={agentResponse} isStreaming={streaming} />
       }
       {lastStepMessage}
     </div>

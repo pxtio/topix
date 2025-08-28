@@ -76,7 +76,7 @@ export function AppSidebar() {
   )
 
   return (
-    <Sidebar variant="floating" collapsible="icon">
+    <Sidebar variant="inset" collapsible="icon">
       <ScrollArea className="h-full w-full flex flex-row">
         <SidebarContent className="w-[calc(var(--sidebar-width)-theme(spacing.2)*2)]">
           <SidebarGroup>

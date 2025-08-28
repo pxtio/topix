@@ -6,23 +6,7 @@ import type { AgentResponse, ReasoningStep } from "../../types/stream"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { extractNamedLinksFromMarkdown } from "../../utils/md"
-
-
-/**
- * ThinkingDots component displays a "Thinking" message with animated dots.
- */
-const ThinkingDots = () => {
-  return (
-    <div className="flex items-center space-x-1 text-base font-semibold p-4">
-      <span>{"Thinking"}</span>
-      <div className="inline-block flex space-x-1">
-        <span className="animate-bounce [animation-delay:0s]">.</span>
-        <span className="animate-bounce [animation-delay:0.2s]">.</span>
-        <span className="animate-bounce [animation-delay:0.4s]">.</span>
-      </div>
-    </div>
-  )
-}
+import { ThinkingDots } from "@/components/progress-bar"
 
 
 /**
@@ -135,6 +119,7 @@ const ReasoningStepView = ({
  * @property {AgentResponse} response - The response from the agent containing reasoning steps.
  */
 export interface ReasoningStepsViewProps {
+  isStreaming: boolean
   response?: AgentResponse
 }
 
@@ -144,13 +129,13 @@ export interface ReasoningStepsViewProps {
  * It allows toggling between showing the last step or all steps.
  * @param {ReasoningStepsViewProps} props - The properties for the component.
  */
-export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
+export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsViewProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(true)
 
   if (!response || response.steps.length === 0) {
     return (
       <div className='w-full p-4 text-left'>
-        <ThinkingDots />
+        <ThinkingDots message={"Thinking"} />
       </div>
     )
   }
@@ -167,10 +152,8 @@ export const ReasoningStepsView = ({ response }: ReasoningStepsViewProps) => {
         border border-border
       `}
     >
-      <div className='font-medium text-base text-center'>
-        <span className='text-base text-card-foreground'>
-          Thinking
-        </span>
+      <div className='font-medium text-base p-1 flex flex-row items-center justify-center'>
+        <ThinkingDots message={"Thinking"} isStopped={!isStreaming} />
       </div>
       <div
         className={`

@@ -6,13 +6,13 @@ import type { Note } from "./note"
  * Interface for a graph in the board.
  */
 export interface Graph {
-  id?: number
   uid: string
   type: "graph"
   label?: string
   nodes?: Note[]
   edges?: Link[]
   readonly: boolean
+  thumbnail?: string
   createdAt: string
   updatedAt?: string
   deletedAt?: string

@@ -1,18 +1,34 @@
 import { Button } from "@/components/ui/button"
+import { Cursor02Icon, FitToScreenIcon, Hold04Icon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import clsx from "clsx"
-import { Hand, MousePointer2, Square } from "lucide-react"
 
-interface GraphControlPanelProps {
+interface ActionPanelProps {
   onAddNode: () => void
   enableSelection: boolean
   setEnableSelection: (mode: boolean) => void
-}
 
+  // NEW: controls migrated from React Flow <Controls/>
+  onZoomIn: () => void
+  onZoomOut: () => void
+  onFitView: () => void
+  isLocked: boolean
+  toggleLock: () => void
+}
 
 /**
  * Action panel for the graph view.
  */
-export function ActionPanel({ onAddNode, enableSelection, setEnableSelection }: GraphControlPanelProps) {
+export function ActionPanel({
+  onAddNode,
+  enableSelection,
+  setEnableSelection,
+  onZoomIn,
+  onZoomOut,
+  onFitView,
+  isLocked,
+  toggleLock,
+}: ActionPanelProps) {
   const normalButtonClass = `
     transition-colors
     bg-card text-card-foreground
@@ -23,11 +39,10 @@ export function ActionPanel({ onAddNode, enableSelection, setEnableSelection }: 
 
   const activeButtonClass = clsx(
     normalButtonClass,
-    'bg-accent text-accent-foreground',
+    "bg-accent text-accent-foreground",
   )
 
   const selectionModeButtonClass = enableSelection ? activeButtonClass : normalButtonClass
-
   const dragModeButtonClass = enableSelection ? normalButtonClass : activeButtonClass
 
   return (
@@ -37,33 +52,124 @@ export function ActionPanel({ onAddNode, enableSelection, setEnableSelection }: 
         bg-card text-card-foreground
         p-1
         rounded-xl shadow-md
-        flex flex-row items-center justify-center gap-2
+        flex flex-row items-center justify-center gap-1
         border border-border
       `}
+      role="toolbar"
+      aria-label="Graph actions"
     >
+      {/* Pan / Select modes */}
       <Button
         variant={null}
         size="icon"
         onClick={() => setEnableSelection(!enableSelection)}
         className={dragModeButtonClass}
+        title="Pan mode"
+        aria-label="Pan mode"
       >
-        <Hand className='size-4 shrink-0' strokeWidth={1.75} />
+        <HugeiconsIcon
+          icon={Hold04Icon}
+          className="size-4 shrink-0"
+        />
       </Button>
       <Button
         variant={null}
         size="icon"
         onClick={() => setEnableSelection(!enableSelection)}
         className={selectionModeButtonClass}
+        title="Selection mode"
+        aria-label="Selection mode"
       >
-        <MousePointer2 className='size-4 shrink-0' strokeWidth={1.75} />
+        <HugeiconsIcon
+          icon={Cursor02Icon}
+          className="size-4 shrink-0"
+          strokeWidth={1.75}
+        />
       </Button>
+
+      {/* Zoom controls */}
+      <Button
+        variant={null}
+        size="icon"
+        onClick={onZoomIn}
+        className={normalButtonClass}
+        title="Zoom in"
+        aria-label="Zoom in"
+      >
+        <HugeiconsIcon
+          icon={PlusSignIcon}
+          className="size-4 shrink-0"
+          strokeWidth={1.75}
+        />
+      </Button>
+      <Button
+        variant={null}
+        size="icon"
+        onClick={onZoomOut}
+        className={normalButtonClass}
+        title="Zoom out"
+        aria-label="Zoom out"
+      >
+        <HugeiconsIcon
+          icon={MinusSignIcon}
+          className="size-4 shrink-0"
+          strokeWidth={1.75}
+        />
+      </Button>
+      <Button
+        variant={null}
+        size="icon"
+        onClick={onFitView}
+        className={normalButtonClass}
+        title="Fit view"
+        aria-label="Fit view"
+      >
+        <HugeiconsIcon
+          icon={FitToScreenIcon}
+          className="size-4 shrink-0"
+          strokeWidth={1.75}
+        />
+      </Button>
+
+      {/* Lock / Unlock canvas */}
+      <Button
+        variant={null}
+        size="icon"
+        onClick={toggleLock}
+        className={isLocked ? activeButtonClass : normalButtonClass}
+        title={isLocked ? "Unlock canvas" : "Lock canvas"}
+        aria-pressed={isLocked}
+        aria-label={isLocked ? "Unlock canvas" : "Lock canvas"}
+      >
+        {isLocked ? (
+          <HugeiconsIcon
+            icon={SquareLock02Icon}
+            className="size-4 shrink-0"
+            strokeWidth={1.75}
+          />
+        ) : (
+          <HugeiconsIcon
+            icon={SquareUnlock02Icon}
+            className="size-4 shrink-0"
+            strokeWidth={1.75}
+          />
+        )}
+      </Button>
+
+      {/* Add node */}
       <Button
         variant={null}
         className={normalButtonClass}
         size="icon"
         onClick={onAddNode}
+        title="Add node"
+        aria-label="Add node"
       >
-        <Square className='size-4 shrink-0' strokeWidth={1.75} />
+        <HugeiconsIcon
+          icon={SquareIcon}
+          className="size-4 shrink-0"
+          strokeWidth={1.75}
+        />
       </Button>
     </div>
   )

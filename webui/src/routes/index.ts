@@ -8,6 +8,7 @@ import {
 import { RootLayout } from './root-layout'
 import { ChatScreen } from '@/features/agent/screens/chat-screen'
 import { BoardScreen } from '@/features/board/screens/board-screen'
+import { Dashboard } from '@/features/board/components/dashboard'
 
 // Root layout (sidebar persists)
 export const rootRoute = createRootRoute({ component: RootLayout })
@@ -45,6 +46,14 @@ const chatRoute = createRoute({
   component: ChatScreen,
 })
 
+// /boards (dashboard)
+export const DashboardUrl = '/boards'
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: DashboardUrl,
+  component: Dashboard,
+})
+
 // /boards/:id
 export const BoardUrl = '/boards/$id'
 const boardRoute = createRoute({
@@ -58,6 +67,7 @@ const routeTree = rootRoute.addChildren([
   redirectHome,
   chatsIndexRoute,
   chatRoute,
+  dashboardRoute,
   boardRoute,
 ])
 

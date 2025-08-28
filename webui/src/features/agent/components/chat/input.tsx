@@ -134,7 +134,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
                   onChange={(e) => setInput(e.target.value)}
                   value={input}
                   minRows={1}
-                  maxRows={10}
+                  maxRows={15}
                   placeholder='Enter your message...'
                   className={`
                     w-full

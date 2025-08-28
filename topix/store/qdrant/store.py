@@ -182,7 +182,7 @@ class ContentStore:
             )
             logger.info("Successfully deleted.")
 
-    async def _embed(
+    async def _embed(  # noqa: C901
         self, entries: list[Resource | dict]
     ) -> list[list[list[float]] | None]:
         searchable_texts = []
@@ -224,6 +224,12 @@ class ContentStore:
             if embeddings[i] is None:
                 embeddings[i] = []
             embeddings[i].append(embeds[idx])
+
+        # Fill in None embeddings with zero vectors
+        for i, emb in enumerate(embeddings):
+            if emb is None:
+                embeddings[i] = [[0.0] * DIMENSIONS]
+
         return embeddings
 
     async def add(
@@ -234,9 +240,10 @@ class ContentStore:
     ):
         """Create a new note in the Qdrant store."""
         embeddings = await self._embed(resources)
+
         for i in range(0, len(resources), batch_size):
-            batch_entries = resources[i : i + batch_size]
-            batch_embeddings = embeddings[i : i + batch_size]
+            batch_entries = resources[i:i + batch_size]
+            batch_embeddings = embeddings[i:i + batch_size]
 
             points = [
                 PointStruct(
@@ -307,9 +314,9 @@ class ContentStore:
         embeds = await self._embed(fields)
 
         for i in range(0, len(fields), batch_size):
-            batch_fields = fields[i : i + batch_size]
-            batch_ids = ids[i : i + batch_size]
-            batch_embeds = embeds[i : i + batch_size]
+            batch_fields = fields[i:i + batch_size]
+            batch_ids = ids[i:i + batch_size]
+            batch_embeds = embeds[i:i + batch_size]
 
             await self._update_payloads(batch_ids, batch_fields, refresh)
             await self._update_embs(batch_ids, batch_embeds)
@@ -389,7 +396,7 @@ class ContentStore:
         all_results = []
         for i in range(0, len(query_embs), batch_size):
             # Get the current batch of embeddings using slicing.
-            batch_embs = query_embs[i : i + batch_size]
+            batch_embs = query_embs[i:i + batch_size]
 
             requests = [
                 QueryRequest(
@@ -456,7 +463,7 @@ class ContentStore:
                 include.append("type")
         for i in range(0, len(point_ids), batch_size):
             # Get the current batch of embeddings using slicing.
-            batch_ids = point_ids[i : i + batch_size]
+            batch_ids = point_ids[i:i + batch_size]
 
             requests = [
                 QueryRequest(

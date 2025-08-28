@@ -15,9 +15,10 @@ export const GraphView = () => {
 
   useEffect(() => {
     const fetchBoard = async () => {
-      await getBoardAsync()
-      setLoaded(true)
-
+      const fetched = await getBoardAsync()
+      if (fetched) {
+        setLoaded(true)
+      }
     }
     // update local store current board id with param from path
     if (!loaded) {

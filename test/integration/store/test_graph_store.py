@@ -1,4 +1,4 @@
-""" "Integration tests for the GraphStore class."""
+"""Integration tests for the GraphStore class."""
 
 import pytest
 

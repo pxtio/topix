@@ -69,8 +69,8 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
               </DropdownMenuItem>
               {boardList?.map((board) => (
                 <DropdownMenuItem
-                  key={board.id}
-                  onClick={() => launchGeneration(board.id)}
+                  key={board.uid}
+                  onClick={() => launchGeneration(board.uid)}
                 >
                   {board.label || UNTITLED_LABEL}
                 </DropdownMenuItem>
@@ -105,8 +105,8 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
               </ContextMenuItem>
               {boardList?.map((board) => (
                 <ContextMenuItem
-                  key={board.id}
-                  onClick={() => launchGeneration(board.id)}
+                  key={board.uid}
+                  onClick={() => launchGeneration(board.uid)}
                 >
                   {board.label || UNTITLED_LABEL}
                 </ContextMenuItem>

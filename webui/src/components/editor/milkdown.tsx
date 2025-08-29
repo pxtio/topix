@@ -30,8 +30,12 @@ export const MdEditor = ({ markdown, onSave }: MdEditorProps) => {
       })
     })
 
-    return crepe
+    return crepe.editor
   }, [])
 
-  return <Milkdown />
+  return (
+    <>
+      <Milkdown />
+    </>
+  )
 }

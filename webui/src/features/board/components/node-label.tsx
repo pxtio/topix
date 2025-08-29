@@ -6,9 +6,9 @@ import { IconPicker } from "./emoji-picker/picker"
 import type { NoteNode } from "../types/flow"
 import { MdEditor } from "@/components/editor/milkdown"
 import { MilkdownProvider } from "@milkdown/react"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from "../types/style"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 
 /**
@@ -129,7 +129,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
   const textareaClass = `${divClass} nodrag nopan nowheel`
 
   return (
-    <Sheet open={viewNote} onOpenChange={setViewNote}>
+    <Dialog open={viewNote} onOpenChange={setViewNote}>
       <div
         className={`
           relative
@@ -142,13 +142,13 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
           selected &&
           <div className='absolute top-0 left-0 transform translate-y-[-100%] text-xs font-sans flex flex-row items-center gap-2'>
             <IconPicker onSelect={handleEmojiSelect} />
-            <SheetTrigger asChild>
+            <DialogTrigger asChild>
               <button
                 className='transition-colors px-2 py-1 text-accent-foreground/50 hover:text-accent-foreground'
               >
                 {viewNote ? 'Hide Note' : 'Show Note'}
               </button>
-            </SheetTrigger>
+            </DialogTrigger>
           </div>
         }
         {
@@ -195,9 +195,9 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
             )
           }
         </div>
-        <SheetContent className="sm:max-w-2xl flex flex-col items-center text-left">
-          <SheetHeader className='w-full'>
-            <SheetTitle asChild>
+        <DialogContent className="sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2">
+          <DialogHeader className='w-full'>
+            <DialogTitle asChild>
               <div className='flex flex-row items-center gap-2 w-full'>
                 {
                   note.properties?.emoji?.icon?.type === 'emoji' && note.properties?.emoji?.icon?.emoji && (
@@ -211,11 +211,11 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
                 }
                 <h1 className='text-3xl'>{note.label?.markdown || ""}</h1>
               </div>
-            </SheetTitle>
-            <SheetDescription className='invisible'>
+            </DialogTitle>
+            <DialogDescription className='invisible'>
               Note description
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
           <div className='min-h-0 flex-1 flex items-center w-full'>
             <ScrollArea className='h-full w-full'>
               <MilkdownProvider>
@@ -223,8 +223,8 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
               </MilkdownProvider>
             </ScrollArea>
           </div>
-        </SheetContent>
+        </DialogContent>
       </div>
-    </Sheet>
+    </Dialog>
   )
 }

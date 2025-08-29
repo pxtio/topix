@@ -30,7 +30,7 @@
   --crepe-color-inline-area: var(--color-input);            /* inline edit bg */
 
   /* ===== Fonts ===== */
-  --crepe-font-title: var(--font-serif);
+  --crepe-font-title: var(--font-sans);
   --crepe-font-default: var(--font-sans);
   --crepe-font-code: var(--font-mono);
 
@@ -71,4 +71,23 @@
   .milkdown .ProseMirror {
     padding: 1.5rem; /* tighter on mobile */
   }
+}
+
+.milkdown .menu-groups {
+  height: 20vh;
+  scrollbar-width: thin; /* for Firefox */
+  scrollbar-color: rgba(0,0,0,.4) transparent; /* thumb, track */
+}
+
+.milkdown .menu-groups::-webkit-scrollbar {
+  width: 8px;            /* adjust width */
+}
+
+.milkdown .menu-groups::-webkit-scrollbar-track {
+  background: transparent; /* transparent track background */
+}
+
+.milkdown .menu-groups::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,.4); /* visible thumb */
+  border-radius: 4px;
 }

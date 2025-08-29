@@ -42,7 +42,7 @@ export function useSaveThumbnailOnUnmount({
   useEffect(() => {
     mounted.current = true
 
-    // snapshot the DOM node once so cleanup doesn’t chase a changing ref
+    // snapshot the DOM node once so cleanup doesn't chase a changing ref
     const container = containerRef.current
 
     const capture = async () => {
@@ -85,7 +85,7 @@ export function useSaveThumbnailOnUnmount({
       if (document.visibilityState === 'hidden') capture()
     }
 
-    // NB: don’t use beforeunload unless you absolutely must; it’s more fragile
+    // NB: don't use beforeunload unless you absolutely must, it's more fragile
     window.addEventListener('pagehide', onPageHide)
     document.addEventListener('visibilitychange', onVisibilityChange)
 
@@ -94,12 +94,12 @@ export function useSaveThumbnailOnUnmount({
       // remove listeners *without* doing any capture in cleanup
       window.removeEventListener('pagehide', onPageHide)
       document.removeEventListener('visibilitychange', onVisibilityChange)
-      // final safety: if we’re unmounting without a pagehide (e.g., internal route change),
+      // final safety: if we're unmounting without a pagehide (e.g., internal route change),
       // trigger one last capture
-      // queue a microtask so removal happens first and we don’t block the commit
+      // queue a microtask so removal happens first and we don't block the commit
       queueMicrotask(() => { capture() })
     }
-    // empty deps: runs once; no re-subscribe, no re-cleanup on updates
+    // empty deps: runs once, no re-subscribe, no re-cleanup on updates
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 }

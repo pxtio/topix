@@ -14,7 +14,7 @@ export const ThinkingDots = ({ message, isStopped = false }: { message: string, 
       />
       <span>{message}</span>
       {
-        !isStopped && <Loader2 className='size-5 animate-spin [animation-duration:750ms]' />
+        !isStopped && <Loader2 className='size-4 animate-spin [animation-duration:750ms]' />
       }
     </div>
   )

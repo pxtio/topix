@@ -4,8 +4,8 @@ import pytest_asyncio
 
 from psycopg import AsyncConnection
 
-from src.config.config import Config
-from src.datatypes.stage import StageEnum
+from topix.config.config import Config
+from topix.datatypes.stage import StageEnum
 
 
 @pytest.fixture(scope="session")

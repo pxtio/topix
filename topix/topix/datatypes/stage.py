@@ -1,6 +1,6 @@
 """Stage Enum."""
 
-from src.datatypes.enum import CustomEnum
+from topix.datatypes.enum import CustomEnum
 
 
 class StageEnum(str, CustomEnum):

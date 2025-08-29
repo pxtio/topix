@@ -1,7 +1,7 @@
 """Emoji handling for mindmap conversion."""
 import re
 
-from src.agents.mindmap.datatypes import SimpleNode
+from topix.agents.mindmap.datatypes import SimpleNode
 
 EMOJI_START_RE = re.compile(
     r"^\s*(?P<emoji>("

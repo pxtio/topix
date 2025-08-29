@@ -5,8 +5,8 @@ from datetime import datetime
 
 from psycopg import AsyncConnection
 
-from src.datatypes.graph.graph import Graph
-from src.store.postgres.graph import (
+from topix.datatypes.graph.graph import Graph
+from topix.store.postgres.graph import (
     _dangerous_hard_delete_graph_by_uid,
     create_graph,
     delete_graph_by_uid,
@@ -14,7 +14,7 @@ from src.store.postgres.graph import (
     get_graph_id_by_uid,
     update_graph_by_uid,
 )
-from src.utils.common import gen_uid
+from topix.utils.common import gen_uid
 
 logger = logging.getLogger(__name__)
 

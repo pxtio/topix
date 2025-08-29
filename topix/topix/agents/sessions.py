@@ -1,8 +1,8 @@
 """Assistant session management."""
 
 from agents.memory import Session
-from src.datatypes.chat.chat import Message
-from src.store.chat import ChatStore
+from topix.datatypes.chat.chat import Message
+from topix.store.chat import ChatStore
 
 MAX_RETRIEVAL_MESSAGES = 20
 

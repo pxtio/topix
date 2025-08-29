@@ -2,12 +2,12 @@
 
 import pytest
 
-from src.datatypes.graph.graph import Graph
-from src.datatypes.note.link import Link
-from src.datatypes.note.note import Note
-from src.datatypes.resource import RichText
-from src.store.graph import GraphStore
-from src.store.qdrant.store import ContentStore
+from topix.datatypes.graph.graph import Graph
+from topix.datatypes.note.link import Link
+from topix.datatypes.note.note import Note
+from topix.datatypes.resource import RichText
+from topix.store.graph import GraphStore
+from topix.store.qdrant.store import ContentStore
 
 
 @pytest.fixture(scope="module")

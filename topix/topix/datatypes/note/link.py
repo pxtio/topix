@@ -3,8 +3,8 @@
 from pydantic import Field
 from typing_extensions import Literal
 
-from src.datatypes.graph.style import Style
-from src.datatypes.resource import Resource
+from topix.datatypes.graph.style import Style
+from topix.datatypes.resource import Resource
 
 
 class Link(Resource):

@@ -3,7 +3,7 @@ import asyncio
 
 from pydantic import BaseModel, PrivateAttr
 
-from src.datatypes.chat.tool_call import ToolCall
+from topix.datatypes.chat.tool_call import ToolCall
 
 
 class Context(BaseModel):

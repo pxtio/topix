@@ -1,5 +1,5 @@
 """Build graph tests."""
-from src.agents.mindmap.build_graph_fr_text import split_markdown_sections
+from topix.agents.mindmap.build_graph_fr_text import split_markdown_sections
 
 
 def as_sig(secs):

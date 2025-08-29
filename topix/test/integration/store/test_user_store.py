@@ -3,8 +3,8 @@ import uuid
 
 import pytest
 
-from src.datatypes.user import User
-from src.store.user import UserStore
+from topix.datatypes.user import User
+from topix.store.user import UserStore
 
 
 def make_test_user():

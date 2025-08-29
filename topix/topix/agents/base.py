@@ -19,12 +19,12 @@ from agents import (
     function_tool,
 )
 from agents.extensions.models.litellm_model import LitellmModel
-from src.agents.datatypes.context import Context
-from src.agents.datatypes.model_enum import support_temperature
-from src.agents.datatypes.outputs import ToolOutput
-from src.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
-from src.agents.utils import tool_execution_handler
-from src.datatypes.chat.tool_call import ToolCall, ToolCallState
+from topix.agents.datatypes.context import Context
+from topix.agents.datatypes.model_enum import support_temperature
+from topix.agents.datatypes.outputs import ToolOutput
+from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
+from topix.agents.utils import tool_execution_handler
+from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
 
 logger = logging.getLogger(__name__)
 

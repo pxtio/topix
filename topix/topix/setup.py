@@ -2,9 +2,9 @@
 
 import os
 
-from src.config.config import Config
-from src.datatypes.stage import StageEnum
-from src.store.qdrant.base import QdrantStore
+from topix.config.config import Config
+from topix.datatypes.stage import StageEnum
+from topix.store.qdrant.base import QdrantStore
 
 
 async def setup(stage: StageEnum):

@@ -1,10 +1,10 @@
 """Utility functions for converting mind map data types to graph representations."""
 
-from src.agents.mindmap.datatypes import SimpleNode
-from src.datatypes.note.link import Link
-from src.datatypes.note.note import Note
-from src.datatypes.property import IconProperty
-from src.datatypes.resource import RichText
+from topix.agents.mindmap.datatypes import SimpleNode
+from topix.datatypes.note.link import Link
+from topix.datatypes.note.note import Note
+from topix.datatypes.property import IconProperty
+from topix.datatypes.resource import RichText
 
 
 def convert_root_to_graph(root: SimpleNode) -> tuple[list[Note], list[Link]]:

@@ -5,9 +5,9 @@ import logging
 from pydantic import BaseModel
 
 from agents import ModelSettings, RunResult
-from src.agents.base import BaseAgent
-from src.agents.datatypes.context import Context
-from src.agents.datatypes.model_enum import ModelEnum
+from topix.agents.base import BaseAgent
+from topix.agents.datatypes.context import Context
+from topix.agents.datatypes.model_enum import ModelEnum
 
 logger = logging.getLogger(__name__)
 

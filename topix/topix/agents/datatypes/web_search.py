@@ -1,5 +1,5 @@
 """Web Search Settings Data Types."""
-from src.datatypes.enum import CustomEnum
+from topix.datatypes.enum import CustomEnum
 
 
 class WebSearchOption(str, CustomEnum):

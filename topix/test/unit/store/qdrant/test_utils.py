@@ -1,7 +1,7 @@
 """Test utilities for Qdrant store."""
 import pytest
 
-from src.store.qdrant.utils import payload_dict_to_field_list
+from topix.store.qdrant.utils import payload_dict_to_field_list
 
 
 @pytest.mark.parametrize(

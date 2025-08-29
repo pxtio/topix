@@ -2,9 +2,9 @@
 
 import pytest
 
-from src.datatypes.chat.chat import Chat
-from src.store.chat import ChatStore
-from src.utils.common import gen_uid
+from topix.datatypes.chat.chat import Chat
+from topix.store.chat import ChatStore
+from topix.utils.common import gen_uid
 
 
 @pytest.fixture

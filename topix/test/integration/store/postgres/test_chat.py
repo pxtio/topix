@@ -4,17 +4,17 @@ from datetime import datetime
 import pytest
 import pytest_asyncio
 
-from src.datatypes.chat.chat import Chat
-from src.datatypes.user import User
-from src.store.postgres.chat import (
+from topix.datatypes.chat.chat import Chat
+from topix.datatypes.user import User
+from topix.store.postgres.chat import (
     _dangerous_hard_delete_chat_by_uid,
     create_chat,
     delete_chat_by_uid,
     get_chat_by_uid,
     update_chat_by_uid,
 )
-from src.store.postgres.user import _dangerous_hard_delete_user_by_uid, create_user
-from src.utils.common import gen_uid
+from topix.store.postgres.user import _dangerous_hard_delete_user_by_uid, create_user
+from topix.utils.common import gen_uid
 
 
 @pytest_asyncio.fixture

@@ -9,7 +9,7 @@ import pandas as pd
 
 from datasets import load_dataset
 
-from topix.src.agents.base import BaseAgent
+from topix.agents.base import BaseAgent
 
 
 class Evaluator:

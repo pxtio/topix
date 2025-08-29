@@ -8,11 +8,11 @@ from pydantic import BaseModel
 
 from agents import RunConfig, RunHooks, Runner, TContext, TResponseInputItem
 from agents.memory import Session
-from src.agents.base import BaseAgent
-from src.agents.datatypes.context import Context
-from src.agents.datatypes.stream import AgentStreamMessage
-from src.agents.datatypes.tools import AgentToolName
-from src.agents.utils import tool_execution_handler
+from topix.agents.base import BaseAgent
+from topix.agents.datatypes.context import Context
+from topix.agents.datatypes.stream import AgentStreamMessage
+from topix.agents.datatypes.tools import AgentToolName
+from topix.agents.utils import tool_execution_handler
 
 DEFAULT_MAX_TURNS = 5
 

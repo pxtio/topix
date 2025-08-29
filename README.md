@@ -12,7 +12,7 @@ For launching, the backend execute the following commands:
 cd topix
 uv sync
 # it will serve api at port 8888 by default unless u provide a custom port
-uv run python -m src.api.app --port <custom-port>
+uv run python -m topix.api.app --port <custom-port>
 ```
 
 # Frontend

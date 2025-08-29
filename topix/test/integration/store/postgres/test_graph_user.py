@@ -4,16 +4,16 @@ from datetime import datetime
 import pytest
 import pytest_asyncio
 
-from src.datatypes.graph.graph import Graph
-from src.datatypes.user import User
-from src.store.postgres.graph import _dangerous_hard_delete_graph_by_uid, create_graph
-from src.store.postgres.graph_user import (
+from topix.datatypes.graph.graph import Graph
+from topix.datatypes.user import User
+from topix.store.postgres.graph import _dangerous_hard_delete_graph_by_uid, create_graph
+from topix.store.postgres.graph_user import (
     add_user_to_graph_by_uid,
     list_graphs_by_user_uid,
     list_users_by_graph_uid,
 )
-from src.store.postgres.user import _dangerous_hard_delete_user_by_uid, create_user
-from src.utils.common import gen_uid
+from topix.store.postgres.user import _dangerous_hard_delete_user_by_uid, create_user
+from topix.utils.common import gen_uid
 
 
 @pytest_asyncio.fixture

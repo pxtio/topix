@@ -6,8 +6,8 @@ import pytest_asyncio
 
 from psycopg import AsyncConnection
 
-from src.datatypes.user import User
-from src.store.postgres.user import (
+from topix.datatypes.user import User
+from topix.store.postgres.user import (
     _dangerous_hard_delete_user_by_uid,
     create_user,
     delete_user_by_uid,
@@ -15,7 +15,7 @@ from src.store.postgres.user import (
     get_user_id_by_uid,
     update_user_by_uid,
 )
-from src.utils.common import gen_uid
+from topix.utils.common import gen_uid
 
 
 @pytest_asyncio.fixture

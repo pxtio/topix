@@ -1,6 +1,6 @@
 """Tests for emoji extraction and annotation."""
-from src.agents.mindmap.datatypes import SimpleNode
-from src.agents.mindmap.emoji import annotate_node_emojis, extract_leading_emoji
+from topix.agents.mindmap.datatypes import SimpleNode
+from topix.agents.mindmap.emoji import annotate_node_emojis, extract_leading_emoji
 
 
 def test_no_emoji_returns_empty_and_stripped():

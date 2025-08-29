@@ -3,8 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from src.agents.datatypes.tools import AgentToolName
-from src.datatypes.enum import CustomEnum
+from topix.agents.datatypes.tools import AgentToolName
+from topix.datatypes.enum import CustomEnum
 
 
 class ContentType(str, CustomEnum):

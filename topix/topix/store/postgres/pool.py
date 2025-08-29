@@ -1,8 +1,8 @@
-"""Async Postgres connection pool for src."""
+"""Async Postgres connection pool for topix."""
 
 from psycopg_pool import AsyncConnectionPool
 
-from src.config.config import Config
+from topix.config.config import Config
 
 
 def create_pool() -> AsyncConnectionPool:

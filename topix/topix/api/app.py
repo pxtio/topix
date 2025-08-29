@@ -10,14 +10,14 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.router import boards, chats, tools
-from src.config.config import Config
-from src.datatypes.stage import StageEnum
-from src.setup import setup
-from src.store.chat import ChatStore
-from src.store.graph import GraphStore
-from src.store.user import UserStore
-from src.utils.logging import logging_config
+from topix.api.router import boards, chats, tools
+from topix.config.config import Config
+from topix.datatypes.stage import StageEnum
+from topix.setup import setup
+from topix.store.chat import ChatStore
+from topix.store.graph import GraphStore
+from topix.store.user import UserStore
+from topix.utils.logging import logging_config
 
 logging_config()
 

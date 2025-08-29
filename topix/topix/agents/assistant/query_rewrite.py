@@ -1,10 +1,10 @@
 """Query Rewrite Agent."""
 
 from agents import ModelSettings
-from src.agents.base import BaseAgent
-from src.agents.datatypes.context import ReasoningContext
-from src.agents.datatypes.inputs import QueryRewriteInput
-from src.agents.datatypes.model_enum import ModelEnum
+from topix.agents.base import BaseAgent
+from topix.agents.datatypes.context import ReasoningContext
+from topix.agents.datatypes.inputs import QueryRewriteInput
+from topix.agents.datatypes.model_enum import ModelEnum
 
 
 class QueryRewrite(BaseAgent):

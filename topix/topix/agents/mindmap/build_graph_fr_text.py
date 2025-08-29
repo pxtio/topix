@@ -5,7 +5,7 @@ import re
 
 from dataclasses import dataclass, field
 
-from src.agents.mindmap.datatypes import SimpleNode
+from topix.agents.mindmap.datatypes import SimpleNode
 
 
 @dataclass

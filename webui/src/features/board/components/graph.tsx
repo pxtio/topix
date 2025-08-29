@@ -9,7 +9,8 @@ import {
   useReactFlow,
   SelectionMode,
   type NodeChange,
-  type EdgeChange
+  type EdgeChange,
+  useOnViewportChange
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import NodeView from './node-view'
@@ -31,6 +32,7 @@ import './graph-styles.css'
 import { GraphSidebar } from './style-panel/panel'
 import { useSaveThumbnailOnUnmount } from '../hooks/make-thumbnail'
 import { saveThumbnail } from '../api/save-thumbnail'
+import { useShallow } from 'zustand/shallow'
 
 
 const proOptions = { hideAttribution: true }
@@ -66,15 +68,15 @@ export default function GraphEditor() {
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
   const [isDragging, setIsDragging] = useState<boolean>(false)
   const [isLocked, setIsLocked] = useState<boolean>(false)
-  const [moving, setMoving] = useState(false)
+  const [moving, setMoving] = useState<boolean>(false)
 
   const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow()
 
   const userId = useAppStore((state) => state.userId)
   const boardId = useGraphStore((state) => state.boardId)
   const isLoading = useGraphStore((state) => state.isLoading)
-  const nodes = useGraphStore((state) => state.nodes)
-  const edges = useGraphStore((state) => state.edges)
+  const nodes = useGraphStore(useShallow((state) => state.nodes))
+  const edges = useGraphStore(useShallow((state) => state.edges))
   const onNodesChange = useGraphStore((state) => state.onNodesChange)
   const onEdgesChange = useGraphStore((state) => state.onEdgesChange)
   const onNodesDelete = useGraphStore((state) => state.onNodesDelete)
@@ -207,6 +209,11 @@ export default function GraphEditor() {
     }
   }, [onEdgesChange])
 
+  useOnViewportChange({
+    onChange: () => setMoving(true),
+    onEnd: () => setMoving(false)
+  })
+
   return (
     <div ref={wrapperRef} className='w-full h-full'>
       <ActionPanel
@@ -252,8 +259,6 @@ export default function GraphEditor() {
         zoomOnScroll={!isLocked}
         zoomOnPinch={!isLocked}
         panOnScroll={!isLocked}
-        onMoveStart={() => setMoving(true)}
-        onMoveEnd={() => setMoving(false)}
         onlyRenderVisibleElements
       >
         {!moving && !isDragging && <MiniMap className='!bg-card rounded-lg'/>}

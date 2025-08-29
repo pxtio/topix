@@ -19,17 +19,17 @@ from agents import (
     function_tool,
     generation_span,
 )
-from src.agents.base import BaseAgent
-from src.agents.datatypes.context import ReasoningContext
-from src.agents.datatypes.model_enum import ModelEnum
-from src.agents.datatypes.outputs import SearchResult, WebSearchOutput
-from src.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
-from src.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
-from src.agents.utils import (
+from topix.agents.base import BaseAgent
+from topix.agents.datatypes.context import ReasoningContext
+from topix.agents.datatypes.model_enum import ModelEnum
+from topix.agents.datatypes.outputs import SearchResult, WebSearchOutput
+from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
+from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
+from topix.agents.utils import (
     ToolCall,
     tool_execution_handler,
 )
-from src.datatypes.chat.tool_call import ToolCallState
+from topix.datatypes.chat.tool_call import ToolCallState
 
 
 class WebSearchAgentHook(AgentHooks):

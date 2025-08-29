@@ -1,8 +1,8 @@
 """User Store Module."""
 
-from src.datatypes.user import User
-from src.store.postgres.pool import create_pool
-from src.store.postgres.user import _dangerous_hard_delete_user_by_uid, create_user, delete_user_by_uid, get_user_by_uid, update_user_by_uid
+from topix.datatypes.user import User
+from topix.store.postgres.pool import create_pool
+from topix.store.postgres.user import _dangerous_hard_delete_user_by_uid, create_user, delete_user_by_uid, get_user_by_uid, update_user_by_uid
 
 
 class UserStore:

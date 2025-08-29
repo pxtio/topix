@@ -22,11 +22,11 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-from src.config.config import Config
-from src.datatypes.property import TextProperty
-from src.datatypes.resource import Resource
-from src.nlp.embed import DIMENSIONS, OpenAIEmbedder
-from src.store.qdrant.utils import (
+from topix.config.config import Config
+from topix.datatypes.property import TextProperty
+from topix.datatypes.resource import Resource
+from topix.nlp.embed import DIMENSIONS, OpenAIEmbedder
+from topix.store.qdrant.utils import (
     RetrieveOutput,
     convert_point,
     payload_dict_to_field_list,

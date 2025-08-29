@@ -7,9 +7,9 @@ from urllib.parse import quote_plus
 from pydantic import BaseModel
 from yaml import safe_load
 
-from src.config.utils import load_secrets
-from src.datatypes.stage import StageEnum
-from src.utils.singleton import SingletonMeta
+from topix.config.utils import load_secrets
+from topix.datatypes.stage import StageEnum
+from topix.utils.singleton import SingletonMeta
 
 
 class QdrantConfig(BaseModel):

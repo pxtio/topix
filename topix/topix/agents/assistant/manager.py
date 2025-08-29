@@ -2,19 +2,19 @@
 
 from collections.abc import AsyncGenerator
 
-from src.agents.assistant.plan import Plan
-from src.agents.assistant.query_rewrite import QueryRewrite
-from src.agents.datatypes.context import ReasoningContext
-from src.agents.datatypes.inputs import QueryRewriteInput
-from src.agents.datatypes.stream import AgentStreamMessage, ContentType
-from src.agents.datatypes.tools import AgentToolName, to_display_output
-from src.agents.run import AgentRunner
-from src.agents.sessions import AssistantSession
-from src.datatypes.chat.chat import Message
-from src.datatypes.chat.tool_call import ToolCall, ToolCallState
-from src.datatypes.property import ReasoningProperty
-from src.datatypes.resource import RichText
-from src.utils.common import gen_uid
+from topix.agents.assistant.plan import Plan
+from topix.agents.assistant.query_rewrite import QueryRewrite
+from topix.agents.datatypes.context import ReasoningContext
+from topix.agents.datatypes.inputs import QueryRewriteInput
+from topix.agents.datatypes.stream import AgentStreamMessage, ContentType
+from topix.agents.datatypes.tools import AgentToolName, to_display_output
+from topix.agents.run import AgentRunner
+from topix.agents.sessions import AssistantSession
+from topix.datatypes.chat.chat import Message
+from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
+from topix.datatypes.property import ReasoningProperty
+from topix.datatypes.resource import RichText
+from topix.utils.common import gen_uid
 
 
 class AssistantManager:

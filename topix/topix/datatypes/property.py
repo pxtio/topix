@@ -8,10 +8,10 @@ from typing import Annotated, Literal, Type
 
 from pydantic import BaseModel, Field
 
-from src.datatypes.chat.tool_call import ToolCall
-from src.datatypes.enum import CustomEnum
-from src.datatypes.mime import MimeTypeEnum
-from src.utils.common import gen_uid
+from topix.datatypes.chat.tool_call import ToolCall
+from topix.datatypes.enum import CustomEnum
+from topix.datatypes.mime import MimeTypeEnum
+from topix.utils.common import gen_uid
 
 
 class PropertyType(str, CustomEnum):

@@ -4,11 +4,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Query, Request, Response
 
-from src.agents.mindmap.build_graph_fr_text import sections_to_tree, split_markdown_sections
-from src.agents.mindmap.utils import convert_root_to_graph
-from src.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
-from src.api.helpers import with_standard_response
-from src.utils.web import preview_webpage
+from topix.agents.mindmap.build_graph_fr_text import sections_to_tree, split_markdown_sections
+from topix.agents.mindmap.utils import convert_root_to_graph
+from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
+from topix.api.helpers import with_standard_response
+from topix.utils.web import preview_webpage
 
 router = APIRouter(
     prefix="/tools",

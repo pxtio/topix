@@ -8,8 +8,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, TypeAdapter
 
-from src.datatypes.property import DataProperty
-from src.utils.common import gen_uid
+from topix.datatypes.property import DataProperty
+from topix.utils.common import gen_uid
 
 logger = logging.getLogger(__name__)
 

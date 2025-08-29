@@ -18,11 +18,11 @@ from agents import (
     RunResult,
     Tool,
 )
-from src.agents.base import BaseAgent
-from src.agents.datatypes.context import ReasoningContext
-from src.agents.datatypes.model_enum import ModelEnum
-from src.agents.datatypes.outputs import CodeInterpreterOutput, FileAnnotation
-from src.datatypes.chat.schema import (
+from topix.agents.base import BaseAgent
+from topix.agents.datatypes.context import ReasoningContext
+from topix.agents.datatypes.model_enum import ModelEnum
+from topix.agents.datatypes.outputs import CodeInterpreterOutput, FileAnnotation
+from topix.datatypes.chat.schema import (
     ImageMessageContent,
     TextMessageContent,
 )

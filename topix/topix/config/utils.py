@@ -5,7 +5,7 @@ import os
 
 from dopplersdk import DopplerSDK
 
-from src.datatypes.stage import StageEnum
+from topix.datatypes.stage import StageEnum
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
-from src.utils.common import gen_uid
+from topix.utils.common import gen_uid
 
 
 class User(BaseModel):

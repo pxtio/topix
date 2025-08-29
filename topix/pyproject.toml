@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "topix"
 dynamic = ["version"]
@@ -67,6 +71,9 @@ line-length = 150
 
 [tool.ruff.lint.isort]
 lines-between-types = 1
+
+[tool.setuptools.packages.find]
+exclude = ["build", "test"]
 
 [dependency-groups]
 dev = [

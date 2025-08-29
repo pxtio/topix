@@ -4,7 +4,7 @@ from datetime import datetime
 
 from psycopg import AsyncConnection
 
-from src.datatypes.chat.chat import Chat
+from topix.datatypes.chat.chat import Chat
 
 
 async def create_chat(

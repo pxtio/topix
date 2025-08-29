@@ -4,14 +4,14 @@ from typing import Literal
 
 from pydantic import Field
 
-from src.datatypes.graph.style import Style
-from src.datatypes.property import (
+from topix.datatypes.graph.style import Style
+from topix.datatypes.property import (
     DataProperty,
     IconProperty,
     PositionProperty,
     SizeProperty,
 )
-from src.datatypes.resource import Resource
+from topix.datatypes.resource import Resource
 
 
 class Note(Resource):

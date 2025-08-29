@@ -1,21 +1,21 @@
 """GraphStore for managing graph data in the database."""
 
-from src.datatypes.graph.graph import Graph
-from src.datatypes.note.link import Link
-from src.datatypes.note.note import Note
-from src.store.postgres.graph import (
+from topix.datatypes.graph.graph import Graph
+from topix.datatypes.note.link import Link
+from topix.datatypes.note.note import Note
+from topix.store.postgres.graph import (
     _dangerous_hard_delete_graph_by_uid,
     create_graph,
     delete_graph_by_uid,
     get_graph_by_uid,
     update_graph_by_uid,
 )
-from src.store.postgres.graph_user import (
+from topix.store.postgres.graph_user import (
     add_user_to_graph_by_uid,
     list_graphs_by_user_uid,
 )
-from src.store.postgres.pool import create_pool
-from src.store.qdrant.store import ContentStore
+from topix.store.postgres.pool import create_pool
+from topix.store.qdrant.store import ContentStore
 
 
 class GraphStore:

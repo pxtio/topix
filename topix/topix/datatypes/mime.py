@@ -1,6 +1,6 @@
 """Mime Type Enum for Media Types."""
 
-from src.datatypes.enum import CustomEnum
+from topix.datatypes.enum import CustomEnum
 
 
 class MimeTypeEnum(str, CustomEnum):

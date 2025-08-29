@@ -1,7 +1,7 @@
 """Language Enum Types."""
 from __future__ import annotations
 
-from src.datatypes.enum import CustomEnum
+from topix.datatypes.enum import CustomEnum
 
 
 class LangCodeEnum(str, CustomEnum):

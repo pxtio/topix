@@ -7,17 +7,17 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Request, Response
 from fastapi.params import Path, Query
 
-from src.agents.assistant.manager import AssistantManager
-from src.agents.assistant.plan import Plan
-from src.agents.assistant.query_rewrite import QueryRewrite
-from src.agents.datatypes.context import ReasoningContext
-from src.agents.describe_chat import DescribeChat
-from src.agents.run import AgentRunner
-from src.agents.sessions import AssistantSession
-from src.api.datatypes.requests import ChatUpdateRequest, MessageUpdateRequest, SendMessageRequest
-from src.api.helpers import with_standard_response, with_streaming
-from src.datatypes.chat.chat import Chat
-from src.store.chat import ChatStore
+from topix.agents.assistant.manager import AssistantManager
+from topix.agents.assistant.plan import Plan
+from topix.agents.assistant.query_rewrite import QueryRewrite
+from topix.agents.datatypes.context import ReasoningContext
+from topix.agents.describe_chat import DescribeChat
+from topix.agents.run import AgentRunner
+from topix.agents.sessions import AssistantSession
+from topix.api.datatypes.requests import ChatUpdateRequest, MessageUpdateRequest, SendMessageRequest
+from topix.api.helpers import with_standard_response, with_streaming
+from topix.datatypes.chat.chat import Chat
+from topix.store.chat import ChatStore
 
 logger = logging.getLogger(__name__)
 

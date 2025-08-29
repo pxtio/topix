@@ -1,7 +1,7 @@
 """Chat Store Module."""
 
-from src.datatypes.chat.chat import Chat, Message
-from src.store.postgres.chat import (
+from topix.datatypes.chat.chat import Chat, Message
+from topix.store.postgres.chat import (
     _dangerous_hard_delete_chat_by_uid,
     create_chat,
     delete_chat_by_uid,
@@ -9,8 +9,8 @@ from src.store.postgres.chat import (
     list_chats_by_user_uid,
     update_chat_by_uid,
 )
-from src.store.postgres.pool import create_pool
-from src.store.qdrant.store import ContentStore
+from topix.store.postgres.pool import create_pool
+from topix.store.qdrant.store import ContentStore
 
 
 class ChatStore:

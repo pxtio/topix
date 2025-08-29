@@ -1,9 +1,9 @@
 """Graph User Base Postgres Store."""
 from psycopg import AsyncConnection
 
-from src.datatypes.graph.graph import Graph
-from src.store.postgres.graph import get_graph_id_by_uid
-from src.store.postgres.user import get_user_id_by_uid
+from topix.datatypes.graph.graph import Graph
+from topix.store.postgres.graph import get_graph_id_by_uid
+from topix.store.postgres.user import get_user_id_by_uid
 
 
 async def add_user_to_graph_by_uid(

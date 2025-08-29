@@ -6,9 +6,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from src.datatypes.note.link import Link
-from src.datatypes.note.note import Note
-from src.utils.common import gen_uid
+from topix.datatypes.note.link import Link
+from topix.datatypes.note.note import Note
+from topix.utils.common import gen_uid
 
 
 class Graph(BaseModel):

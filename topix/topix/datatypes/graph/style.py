@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 
-from src.datatypes.enum import CustomEnum
+from topix.datatypes.enum import CustomEnum
 
 
 class NodeType(str, CustomEnum):

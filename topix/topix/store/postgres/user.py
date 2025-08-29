@@ -4,7 +4,7 @@ from datetime import datetime
 from psycopg import AsyncConnection
 from psycopg.errors import UniqueViolation
 
-from src.datatypes.user import User
+from topix.datatypes.user import User
 
 
 async def create_user(conn: AsyncConnection, user: User) -> User:

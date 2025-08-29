@@ -7,10 +7,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from src.datatypes.enum import CustomEnum
-from src.datatypes.property import DataProperty, ReasoningProperty
-from src.datatypes.resource import Resource
-from src.utils.common import gen_uid
+from topix.datatypes.enum import CustomEnum
+from topix.datatypes.property import DataProperty, ReasoningProperty
+from topix.datatypes.resource import Resource
+from topix.utils.common import gen_uid
 
 
 class MessageRole(str, CustomEnum):

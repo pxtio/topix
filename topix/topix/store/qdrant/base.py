@@ -21,10 +21,10 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-from src.config.config import Config
-from src.nlp.embed import DIMENSIONS
-from src.store.qdrant.utils import payload_dict_to_field_list
-from src.utils.timeit import async_timeit
+from topix.config.config import Config
+from topix.nlp.embed import DIMENSIONS
+from topix.store.qdrant.utils import payload_dict_to_field_list
+from topix.utils.timeit import async_timeit
 
 logger = logging.getLogger(__name__)
 

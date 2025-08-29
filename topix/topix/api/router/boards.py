@@ -5,11 +5,11 @@ from typing import Annotated
 from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile
 from fastapi.params import Body, Path, Query
 
-from src.api.datatypes.requests import AddLinksRequest, AddNotesRequest, GraphUpdateRequest, LinkUpdateRequest, NoteUpdateRequest
-from src.api.helpers import with_standard_response
-from src.api.utils.thumbnail import load_png_as_data_url, save_thumbnail
-from src.datatypes.graph.graph import Graph
-from src.store.graph import GraphStore
+from topix.api.datatypes.requests import AddLinksRequest, AddNotesRequest, GraphUpdateRequest, LinkUpdateRequest, NoteUpdateRequest
+from topix.api.helpers import with_standard_response
+from topix.api.utils.thumbnail import load_png_as_data_url, save_thumbnail
+from topix.datatypes.graph.graph import Graph
+from topix.store.graph import GraphStore
 
 router = APIRouter(
     prefix="/boards",

@@ -2,9 +2,9 @@
 
 from pydantic import BaseModel
 
-from src.agents.datatypes.web_search import WebSearchOption
-from src.datatypes.note.link import Link
-from src.datatypes.note.note import Note
+from topix.agents.datatypes.web_search import WebSearchOption
+from topix.datatypes.note.link import Link
+from topix.datatypes.note.note import Note
 
 
 class SendMessageRequest(BaseModel):

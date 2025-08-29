@@ -4,7 +4,7 @@ from datetime import datetime
 
 from psycopg import AsyncConnection
 
-from src.datatypes.graph.graph import Graph
+from topix.datatypes.graph.graph import Graph
 
 
 async def create_graph(

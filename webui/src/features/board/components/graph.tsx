@@ -209,6 +209,9 @@ export default function GraphEditor() {
     }
   }, [onEdgesChange])
 
+  const handleDragStart = useCallback(() => setIsDragging(true), [])
+  const handleDragStop = useCallback(() => setIsDragging(false), [])
+
   useOnViewportChange({
     onChange: () => setMoving(true),
     onEnd: () => setMoving(false)
@@ -251,8 +254,8 @@ export default function GraphEditor() {
         selectionMode={SelectionMode.Partial}
         panOnDrag={!isLocked && !enableSelection}
         selectionKeyCode={null}
-        onNodeDragStart={() => setIsDragging(true)}
-        onNodeDragStop={() => setIsDragging(false)}
+        onNodeDragStart={handleDragStart}
+        onNodeDragStop={handleDragStop}
         nodesDraggable={!isLocked}
         nodesConnectable={!isLocked}
         elementsSelectable={!isLocked}

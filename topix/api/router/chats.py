@@ -141,13 +141,16 @@ async def send_message(
     assistant_config = AssistantManagerConfig.from_yaml()
     assistant_config.set_plan_model(body.model)
     assistant_config.set_web_engine(body.web_search_engine)
+    assistant_config.set_reasoning(body.reasoning_effort)
 
     assistant: AssistantManager = AssistantManager.from_config(
         content_store=chat_store._content_store,
         config=assistant_config
     )
-    if body.activated_tool:
-        assistant.plan_agent.activate_tool(body.activated_tool)
+
+    assistant.plan_agent.set_enabled_tools(body.enabled_tools)
+    if body.force_tool:
+        assistant.plan_agent.force_tool(body.force_tool)
 
     try:
         async for data in assistant.run_streamed(

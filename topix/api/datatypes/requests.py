@@ -1,7 +1,10 @@
 """API Request Models."""
 
+from typing import Literal
+
 from pydantic import BaseModel
 
+from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.datatypes.web_search import WebSearchOption
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
@@ -14,7 +17,13 @@ class SendMessageRequest(BaseModel):
     query: str
     model: str = "openai/gpt-4o"
     web_search_engine: WebSearchOption = WebSearchOption.OPENAI
-    activated_tool: str | None = None
+    force_tool: AgentToolName | None = None
+
+    enabled_tools: list[AgentToolName] = [
+        AgentToolName.WEB_SEARCH,
+        AgentToolName.ANSWER_REFORMULATE
+    ]
+    reasoning_effort: Literal["low", "medium", "high"] | None = None
 
 
 class ChatUpdateRequest(BaseModel):

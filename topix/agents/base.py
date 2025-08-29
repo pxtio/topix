@@ -27,6 +27,7 @@ from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import support_temperature
 from topix.agents.datatypes.outputs import ToolOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
+from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.utils import tool_execution_handler
 from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
 
@@ -209,38 +210,27 @@ class BaseAgent(Agent[Context]):
                             is_stop=False,
                         )
 
-    def activate_tool(self, tool_name: str) -> None:
-        """Activate a tool by name.
+    def force_tool(
+        self,
+        tool_name: AgentToolName,
+    ):
+        """Force the agent to use a specific tool."""
+        tool = None
+        for t in self.tools:
+            if t.name == tool_name:
+                tool = t
+                break
 
-        Args:
-            tool_name (str): The name of the tool to activate.
-
-        """
-        activated = False
-        for tool in self.tools:
-            if tool.name == tool_name:
-                tool.is_enabled = True
-                activated = True
-
-        if not activated:
+        if tool is None:
             raise ValueError(f"Tool {tool_name} not found in agent {self.name}")
 
         self.model_settings.tool_choice = tool_name
+        tool.is_enabled = True
 
-    def deactivate_tool(self, tool_name: str) -> None:
-        """Deactivate a tool by name.
-
-        Args:
-            tool_name (str): The name of the tool to deactivate.
-
-        """
-        deactivated = False
+    def set_enabled_tools(self, tool_names: list[AgentToolName]):
+        """Set Agent tool from `tool_names`，other tools will be disabled."""
         for tool in self.tools:
-            if tool.name == tool_name:
+            if tool.name in tool_names:
+                tool.is_enabled = True
+            else:
                 tool.is_enabled = False
-                deactivated = True
-
-        self.model_settings.tool_choice = "auto"
-
-        if not deactivated:
-            raise ValueError(f"Tool {tool_name} not found in agent {self.name}")

@@ -67,5 +67,6 @@ class AssistantManagerConfig(BaseModel):
             self.plan.model_settings.reasoning = None
         else:
             self.plan.model_settings.reasoning = {
-                "effort": effort
+                "effort": effort,
+                "summary": "auto"
             }

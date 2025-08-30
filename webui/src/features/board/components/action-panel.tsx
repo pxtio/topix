@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button"
-import { Cursor02Icon, FitToScreenIcon, Hold04Icon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon } from "@hugeicons/core-free-icons"
+import { Cursor02Icon, FitToScreenIcon, Hold04Icon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, StickyNote03Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import clsx from "clsx"
+import type { NodeType } from "../types/style"
 
 interface ActionPanelProps {
-  onAddNode: () => void
+  onAddNode: ({ nodeType }: { nodeType: NodeType }) => void
   enableSelection: boolean
   setEnableSelection: (mode: boolean) => void
 
@@ -156,17 +157,33 @@ export function ActionPanel({
         )}
       </Button>
 
-      {/* Add node */}
+      {/* Add rectangle */}
       <Button
         variant={null}
         className={normalButtonClass}
         size="icon"
-        onClick={onAddNode}
+        onClick={() => onAddNode({ nodeType: 'rectangle' })}
         title="Add node"
         aria-label="Add node"
       >
         <HugeiconsIcon
           icon={SquareIcon}
+          className="size-4 shrink-0"
+          strokeWidth={1.75}
+        />
+      </Button>
+
+      {/* Add sheet */}
+      <Button
+        variant={null}
+        className={normalButtonClass}
+        size="icon"
+        onClick={() => onAddNode({ nodeType: 'sheet' })}
+        title="Add sheet"
+        aria-label="Add sheet"
+      >
+        <HugeiconsIcon
+          icon={StickyNote03Icon}
           className="size-4 shrink-0"
           strokeWidth={1.75}
         />

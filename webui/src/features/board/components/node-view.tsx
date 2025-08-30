@@ -66,6 +66,23 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
   const nodeClass = 'relative font-handwriting drag-handle pointer-events-auto bg-transparent' + (hasResizedRef.current ? ' max-w-none' : ' max-w-[400px]')
 
+  const rounded = data.style.roundness > 0 ? "rounded-2xl": "none"
+
+  const divClass = `shadow-lg rounded-md border-border`
+
+  const content = (
+    <div
+      ref={containerRef}
+      style={{ width, height }}
+      className={nodeClass}
+    >
+      <NodeLabel note={data} selected={selected} />
+      {selected && (
+        <div className="absolute -inset-1 border border-primary pointer-events-none rounded z-10" />
+      )}
+    </div>
+  )
+
   return (
     <div className='border-none relative p-2 bg-transparent overflow-visible'>
       <div
@@ -83,25 +100,25 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
           isConnectableStart={false}
         />
       </div>
-      <RoughRect
-        rounded="rounded-2xl"
-        roughness={data.style.roughness}
-        fill={data.style.backgroundColor || 'white'}
-        fillStyle={data.style.fillStyle}
-        stroke={data.style.strokeColor || 'transparent'}
-        strokeWidth={data.style.strokeWidth}
-      >
-        <div
-          ref={containerRef}
-          style={{ width, height }}
-          className={nodeClass}
-        >
-          <NodeLabel note={data} selected={selected} />
-          {selected && (
-            <div className="absolute -inset-1 border border-primary pointer-events-none rounded z-10" />
-          )}
-        </div>
-      </RoughRect>
+      {
+        data.style.type === "sheet" ? (
+          <div className={divClass} style={{ backgroundColor: data.style.backgroundColor }}>
+            {content}
+          </div>
+        ) : (
+          <RoughRect
+            rounded={rounded}
+            roughness={data.style.roughness}
+            fill={data.style.backgroundColor || 'white'}
+            fillStyle={data.style.fillStyle}
+            stroke={data.style.strokeColor || 'transparent'}
+            strokeWidth={data.style.strokeWidth}
+          >
+            {content}
+          </RoughRect>
+        )
+      }
+
       {/* Resize Handles */}
       {selected &&
         resizeHandles.map(({ pos, class: posClass }) => (

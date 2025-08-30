@@ -91,3 +91,15 @@
   background-color: rgba(0,0,0,.4); /* visible thumb */
   border-radius: 4px;
 }
+
+.sheet-editor .milkdown {
+  background: transparent;
+
+  .ProseMirror {
+    padding: 1rem;
+  }
+}
+
+.sheet-editor .milkdown-slash-menu {
+  visibility: hidden;
+}

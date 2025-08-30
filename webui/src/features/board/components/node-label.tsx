@@ -2,13 +2,16 @@ import { useReactFlow } from "@xyflow/react"
 import type { Note } from "../types/note"
 import TextareaAutosize from 'react-textarea-autosize'
 import { useEffect, useRef, useState } from "react"
-import { IconPicker } from "./emoji-picker/picker"
 import type { NoteNode } from "../types/flow"
 import { MdEditor } from "@/components/editor/milkdown"
 import { MilkdownProvider } from "@milkdown/react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from "../types/style"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { ArrowDiagonalIcon } from "@hugeicons/core-free-icons"
+import { clsx } from "clsx"
+import { MarkdownView } from "@/components/markdown-view"
 
 
 /**
@@ -30,7 +33,7 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
     }
   }, [selected])
 
-  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleLabelChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newLabel = event.target.value
     setNodes((nds) =>
       nds.map((node) => {
@@ -44,30 +47,6 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
               },
             },
           } as NoteNode
-        }
-        return node
-      })
-    )
-  }
-
-  const handleEmojiSelect = (emoji: { emoji: string }) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === note.id) {
-          const nde = node as NoteNode
-          return {
-            ...nde,
-            data: {
-              ...nde.data,
-              properties: {
-                ...nde.data.properties,
-                emoji: {
-                  type: "icon",
-                  icon: { type: 'emoji', emoji: emoji.emoji }
-                }
-              }
-            } as Note,
-          }
         }
         return node
       })
@@ -110,9 +89,24 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
     }, 0)
   }
 
+  const nodeType = note.style.type
+
+  const labelClass = clsx(
+    `
+      relative
+      bg-transparent
+      overflow-visible
+      w-[250px]
+      min-h-[50px]
+      flex items-center justify-center
+      p-2
+    `,
+    nodeType === "sheet" ? `h-[250px] ${fontFamilyToTwClass(note.style.fontFamily)}` : ""
+  )
+
   const divClass = `
     w-full h-full
-    p-6
+    p-4
     ${note.style.textAlign === 'center' ? 'text-center' : note.style.textAlign === 'right' ? 'text-right' : 'text-left'}
     border-none
     resize-none
@@ -128,103 +122,103 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
 
   const textareaClass = `${divClass} nodrag nopan nowheel`
 
+  const titleEditorClass = `
+    text-3xl
+    focus:outline-none
+    focus:ring-0
+    focus:border-none
+    overflow-hidden
+    whitespace-normal break-words
+    resize-none
+    w-full
+  `
+
   return (
     <Dialog open={viewNote} onOpenChange={setViewNote}>
       <div
-        className={`
-          relative
-          flex flex-row items-center justify-center
-          bg-transparent
-          overflow-visible
-        `}
+        className={labelClass}
+        onDoubleClick={onDoubleClick}
+        onPointerDown={stopDragging}
+        style={{
+          color: note.style.textColor || 'inherit',
+        }}
       >
         {
           selected &&
-          <div className='absolute top-0 left-0 transform translate-y-[-100%] text-xs font-sans flex flex-row items-center gap-2'>
-            <IconPicker onSelect={handleEmojiSelect} />
+          <div className='absolute top-2 right-1 text-xs font-sans flex flex-row items-center justify-center gap-2 z-40'>
             <DialogTrigger asChild>
               <button
-                className='transition-colors px-2 py-1 text-accent-foreground/50 hover:text-accent-foreground'
+                className='transition-colors px-2 py-1 text-foreground/50 hover:text-foreground'
               >
-                {viewNote ? 'Hide Note' : 'Show Note'}
+                <HugeiconsIcon icon={ArrowDiagonalIcon} className="size-4 shrink-0" strokeWidth={1.75} />
               </button>
             </DialogTrigger>
           </div>
         }
         {
-          note.properties?.emoji?.icon?.type === 'emoji' && note.properties?.emoji?.icon?.emoji && (
-            <div className={`
-              p-2
-            `}>
-              {note.properties.emoji.icon.emoji}
+          nodeType === "sheet" ? (
+            <div className='w-full h-full nodrag nopan nowheel cursor-text p-0'>
+              <ScrollArea className='h-full w-full flex flex-col justify-start p-2'>
+                <MarkdownView content={note.content?.markdown || ''} />
+              </ScrollArea>
+            </div>
+          ) : (
+            <div className='w-full h-full'>
+              {
+                labelEditing ? (
+                  <TextareaAutosize
+                    className={textareaClass}
+                    value={note.label?.markdown || ''}
+                    onChange={handleLabelChange}
+                    placeholder=""
+                    ref={textareaRef}
+                    readOnly={!labelEditing}
+                  />
+                ) : (
+                  <div className={divClass}>
+                    <span>
+                      {note.label?.markdown || ""}
+                    </span>
+                  </div>
+                )
+              }
             </div>
           )
         }
-        <div
-          className={`
-            relative
-            bg-transparent
-            overflow-visible
-            w-[250px]
-            min-h-[50px]
-            flex items-center justify-center
-            p-2
-          `}
-          onDoubleClick={onDoubleClick}
-          onPointerDown={stopDragging}
-          style={{
-            color: note.style.textColor || 'inherit',
-          }}
-        >
-          {
-            labelEditing ? (
-              <TextareaAutosize
-                className={textareaClass}
-                value={note.label?.markdown || ''}
-                onChange={handleChange}
-                placeholder=""
-                ref={textareaRef}
-                readOnly={!labelEditing}
-              />
-            ) : (
-              <div className={divClass}>
-                <span>
-                  {note.label?.markdown || ""}
-                </span>
-              </div>
-            )
-          }
-        </div>
-        <DialogContent className="sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2">
-          <DialogHeader className='w-full'>
-            <DialogTitle asChild>
-              <div className='flex flex-row items-center gap-2 w-full'>
-                {
-                  note.properties?.emoji?.icon?.type === 'emoji' && note.properties?.emoji?.icon?.emoji && (
-                    <div className={`
-                      p-2
-                      text-3xl
-                    `}>
-                      {note.properties.emoji.icon.emoji}
-                    </div>
-                  )
-                }
-                <h1 className='text-3xl'>{note.label?.markdown || ""}</h1>
-              </div>
-            </DialogTitle>
-            <DialogDescription className='invisible'>
-              Note description
-            </DialogDescription>
-          </DialogHeader>
-          <div className='min-h-0 flex-1 flex items-center w-full'>
-            <ScrollArea className='h-full w-full'>
-              <MilkdownProvider>
-                <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
-              </MilkdownProvider>
-            </ScrollArea>
-          </div>
-        </DialogContent>
       </div>
+      <DialogContent className="sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2">
+        {
+          nodeType === "sheet" ? (
+            <DialogHeader className='invisible'>
+              <DialogTitle />
+              <DialogDescription />
+            </DialogHeader>
+          ) : (
+            <DialogHeader className='w-full'>
+              <DialogTitle asChild>
+                <div className='flex flex-row items-center gap-2 w-full pt-10 px-24'>
+                  <TextareaAutosize
+                    className={titleEditorClass}
+                    value={note.label?.markdown || ''}
+                    onChange={handleLabelChange}
+                    placeholder=""
+                  />
+                </div>
+              </DialogTitle>
+              <DialogDescription className='invisible'>
+                Note description
+              </DialogDescription>
+            </DialogHeader>
+          )
+        }
+        <div className='min-h-0 flex-1 flex items-center w-full'>
+          <ScrollArea className='h-full w-full'>
+            <MilkdownProvider>
+              <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
+            </MilkdownProvider>
+          </ScrollArea>
+        </div>
+      </DialogContent>
     </Dialog>
   )
 }

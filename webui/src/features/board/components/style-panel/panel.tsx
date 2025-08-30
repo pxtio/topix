@@ -9,7 +9,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Label } from "@/components/ui/label"
 import { useGraphStore } from "../../store/graph-store"
 import { AlignCenter, AlignLeft, AlignRight } from "lucide-react"
-import type { OptionalStringKeys } from "@/types/generic"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ColorGrid } from "./color-panel"
 
@@ -81,9 +80,9 @@ const FillGlyph = ({ kind }: { kind: FillStyle }) => {
 function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
   const s = style
 
-  function pickColor<K extends OptionalStringKeys<Style>>(key: K, v: string | null) {
-    const next = { [key]: (v ?? undefined) } as { [P in K]: Style[P] }
-    onStyleChange(next)
+  function pickColor<K extends keyof Style>(key: K, v: Style[K] | null) {
+    const next = { [key]: (v ?? undefined) } as Partial<Style>;
+    onStyleChange(next);
   }
 
   return (

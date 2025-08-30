@@ -96,12 +96,12 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
       relative
       bg-transparent
       overflow-visible
-      w-[250px]
+      w-[300px]
       min-h-[50px]
       flex items-center justify-center
       p-2
     `,
-    nodeType === "sheet" ? `h-[250px] ${fontFamilyToTwClass(note.style.fontFamily)}` : ""
+    nodeType === "sheet" ? `h-[300px] ${fontFamilyToTwClass(note.style.fontFamily)}` : ""
   )
 
   const divClass = `
@@ -145,19 +145,20 @@ export const NodeLabel = ({ note, selected }: { note: Note, selected: boolean })
       >
         {
           selected &&
-          <div className='absolute top-2 right-1 text-xs font-sans flex flex-row items-center justify-center gap-2 z-40'>
+          <div className='absolute top-2 inset-x-0 transform -translate-y-[calc(100%+0.5rem)] text-xs font-sans flex flex-row items-center justify-center gap-2 z-40'>
             <DialogTrigger asChild>
               <button
-                className='transition-colors px-2 py-1 text-foreground/50 hover:text-foreground'
+                className='transition-colors px-2 py-1 text-foreground/50 hover:text-foreground flex flex-row items-center justify-center gap-2'
               >
                 <HugeiconsIcon icon={ArrowDiagonalIcon} className="size-4 shrink-0" strokeWidth={1.75} />
+                <span>Edit Note</span>
               </button>
             </DialogTrigger>
           </div>
         }
         {
           nodeType === "sheet" ? (
-            <div className='w-full h-full nodrag nopan nowheel cursor-text p-0'>
+            <div className='w-full h-full nodrag nopan nowheel cursor-text p-1'>
               <ScrollArea className='h-full w-full flex flex-col justify-start p-2'>
                 <MarkdownView content={note.content?.markdown || ''} />
               </ScrollArea>

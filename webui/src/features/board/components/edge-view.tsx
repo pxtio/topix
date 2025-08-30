@@ -1,7 +1,7 @@
 import {
   BaseEdge,
   EdgeLabelRenderer,
-  getBezierPath,
+  getSimpleBezierPath,
   useInternalNode,
   type EdgeProps
 } from '@xyflow/react'
@@ -31,7 +31,7 @@ export const EdgeView = ({
 
   const { sourcePosition, targetPosition } = getAutoHandlePositions(sx, sy, tx, ty)
 
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = getSimpleBezierPath({
     sourceX: sx,
     sourceY: sy,
     sourcePosition,

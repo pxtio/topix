@@ -47,16 +47,16 @@ const edgeTypes = {
 
 const defaultEdgeOptions = {
   type: 'default',
-  style: { stroke: '#636363', strokeWidth: 1 },
+  style: { stroke: '#6366f1', strokeWidth: 2 },
   markerEnd: {
-    type: MarkerType.ArrowClosed,
-    color: '#636363',
+    type: MarkerType.Arrow,
+    color: '#6366f1',
     width: 20,
     height: 20
   },
 }
 const connectionLineStyle = {
-  stroke: '#636363',
+  stroke: '#818cf8',
 }
 
 

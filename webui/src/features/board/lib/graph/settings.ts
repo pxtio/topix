@@ -19,7 +19,7 @@ export type LayoutAlgorithmOptions = {
 // Default layout options for graph algorithms.
 export const defaultLayoutOptions: LayoutAlgorithmOptions = {
   direction: 'LR',
-  spacing: [100, 400],
+  spacing: [250, 400],
 }
 
 

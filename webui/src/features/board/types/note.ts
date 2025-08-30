@@ -43,6 +43,8 @@ export interface Note extends Record<string, unknown> {
 
   minWidth?: number
   minHeight?: number
+
+  pinned: boolean
 }
 
 
@@ -83,4 +85,5 @@ export const createDefaultNote = ({
   minWidth: 100,
   minHeight: 100,
   properties: createDefaultNoteProperties(),
+  pinned: false
 })

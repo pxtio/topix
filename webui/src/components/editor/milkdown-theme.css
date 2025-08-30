@@ -58,7 +58,7 @@
 }
 
 .milkdown .ProseMirror {
-  padding: 2rem 6rem; /* 48px top/bottom, 128px left/right */
+  padding: 2rem 5rem;
 }
 
 @media (max-width: 1024px) {

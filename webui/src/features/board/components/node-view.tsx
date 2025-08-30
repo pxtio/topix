@@ -8,6 +8,7 @@ import { useUpdateNote } from '../api/update-note'
 import { useAppStore } from '@/store'
 import { useGraphStore } from '../store/graph-store'
 import { DEBOUNCE_DELAY } from '../const'
+import clsx from 'clsx'
 
 function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const userId = useAppStore(state => state.userId)
@@ -46,7 +47,10 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
   const nodeClass = `relative font-handwriting drag-handle pointer-events-auto bg-transparent${hasResizedRef.current ? ' max-w-none' : ' max-w-[400px]'}`
   const rounded = data.style.roundness > 0 ? 'rounded-2xl' : 'none'
-  const frameClass = 'shadow-lg rounded-md border border-border'
+  const frameClass = clsx(
+    'shadow-lg rounded-md border border-border',
+    data.pinned && 'ring-2 ring-primary',
+  )
 
   const content = (
     <div ref={containerRef} style={{ width, height }} className={nodeClass}>

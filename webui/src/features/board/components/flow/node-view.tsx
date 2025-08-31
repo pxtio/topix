@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef } from 'react'
 import { Handle, type NodeProps, Position, useReactFlow } from '@xyflow/react'
 import type { NoteNode } from '../../types/flow'
 import { RoughRect } from '@/components/rough/rect'
-import { NodeLabel } from './node-label'
+import { NodeCard } from './note-card'
 import { useDebouncedCallback } from 'use-debounce'
 import { useUpdateNote } from '../../api/update-note'
 import { useAppStore } from '@/store'
@@ -28,8 +28,6 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
   useEffect(() => { debounce() }, [debounce, data])
 
-
-
   const resizeHandles = useMemo(() => ([
     { pos: 'top-left', class: 'top-0 left-0 cursor-nwse-resize' },
     { pos: 'top-right', class: 'top-0 right-0 cursor-nesw-resize' },
@@ -54,7 +52,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
   const content = (
     <div ref={containerRef} style={{ width, height }} className={nodeClass}>
-      <NodeLabel note={data} selected={selected} />
+      <NodeCard note={data} selected={selected} />
       {selected && <div className='absolute -inset-1 border border-primary pointer-events-none rounded z-10' />}
     </div>
   )

@@ -21,7 +21,7 @@ import { TAILWIND_100 } from '../../lib/colors/tailwind'
 
 type NoteWithPin = Note & { pinned?: boolean }
 
-type NodeLabelProps = {
+type NodeCardProps = {
   note: NoteWithPin
   selected: boolean
   open?: boolean
@@ -34,7 +34,7 @@ type NodeLabelProps = {
  * - Shape (others): must click the floating "View Note" button to open dialog
  * - Sheet-only toolbar: palette (bg color), pin, delete
  */
-export const NodeLabel = ({ note, selected, open, onOpenChange }: NodeLabelProps) => {
+export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) => {
   const isSheet = note.style.type === 'sheet'
 
   const [internalOpen, setInternalOpen] = useState(false)

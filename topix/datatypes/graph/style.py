@@ -9,6 +9,10 @@ class NodeType(str, CustomEnum):
     """Enumeration for node types."""
 
     RECTANGLE = "rectangle"
+    ELLIPSE = "ellipse"
+    DIAMOND = "diamond"
+    SHEET = "sheet"
+    TEXT = "text"
 
 
 class StrokeStyle(str, CustomEnum):
@@ -37,6 +41,24 @@ class TextAlign(str, CustomEnum):
     RIGHT = "right"
 
 
+class FontSize(str, CustomEnum):
+    """Enumeration for font sizes."""
+
+    S = "S"
+    M = "M"
+    L = "L"
+    XL = "XL"
+
+
+class FontFamily(str, CustomEnum):
+    """Enumeration for font families."""
+
+    HANDWRITING = "handwriting"
+    SANS_SERIF = "sans-serif"
+    SERIF = "serif"
+    MONOSPACE = "monospace"
+
+
 class Style(BaseModel):
     """Style of a node in a graph.
 
@@ -49,6 +71,7 @@ class Style(BaseModel):
         stroke_width (int): Width of the node's border.
         stroke_style (str): Style of the node's border, can be "solid" or "dashed".
         roughness (float): Roughness of the node, between 0 and 2.
+        roundness (float): Roundness of the node's corners, between 0 and 2.
         opacity (int): Opacity of the node, default is 100%.
         group_ids (list[str]): List of group IDs this node belongs to.
         font_family (str): Font family used for text in the node.
@@ -60,16 +83,17 @@ class Style(BaseModel):
 
     type: NodeType = NodeType.RECTANGLE
     angle: float = 0.0
-    stroke_color: str | None = None
+    stroke_color: str = "transparent"
     stroke_width: float = 0.75
     stroke_style: StrokeStyle = StrokeStyle.SOLID
-    background_color: str | None = None
+    background_color: str = "#ffedd5"
     fill_style: FillStyle = FillStyle.SOLID
     roughness: float = 1.0
+    roundness: float = 0.0
     opacity: float = 100
     group_ids: list[str] = []
-    font_size: str | None = None
-    font_family: str | None = None
+    font_size: FontSize = FontSize.M
+    font_family: FontFamily = FontFamily.HANDWRITING
     text_align: TextAlign = TextAlign.LEFT
-    text_color: str | None = None
+    text_color: str = "#000000"
     text_style: str | None = None

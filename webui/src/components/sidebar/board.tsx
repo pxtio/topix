@@ -64,7 +64,7 @@ export function NewBoardItem() {
 
 
 /** Existing board item */
-export function BoardItem({ boardId, label, chats }: { boardId: string; label?: string; chats?: Chat[] }) {
+export function BoardItem({ boardId, label, chats }: { boardId: string, label?: string, chats?: Chat[] }) {
   const { userId } = useAppStore()
   const { deleteBoard } = useDeleteBoard()
   const navigate = useNavigate()

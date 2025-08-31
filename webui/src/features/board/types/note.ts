@@ -1,6 +1,6 @@
 import { generateUuid } from "@/lib/common"
 import type { IconProperty, PositionProperty, SizeProperty } from "./property"
-import { defaultStyle, type Style } from "./style"
+import { createDefaultStyle, type NodeType, type Style } from "./style"
 
 
 /**
@@ -43,6 +43,8 @@ export interface Note extends Record<string, unknown> {
 
   minWidth?: number
   minHeight?: number
+
+  pinned: boolean
 }
 
 
@@ -67,14 +69,21 @@ export const createDefaultNoteProperties = (): NoteProperties => ({
  * @param boardId - The ID of the board to which the note belongs.
  * @returns A new note with default properties.
  */
-export const createDefaultNote = (boardId: string): Note => ({
+export const createDefaultNote = ({
+  boardId,
+  nodeType = 'rectangle'
+}: {
+  boardId: string,
+  nodeType?: NodeType
+}): Note => ({
   id: generateUuid(),
   type: "note",
   version: 1,
   createdAt: new Date().toISOString(),
   graphUid: boardId,
-  style: { ...defaultStyle() },
+  style: { ...createDefaultStyle({ type: nodeType }) },
   minWidth: 100,
   minHeight: 100,
   properties: createDefaultNoteProperties(),
+  pinned: false
 })

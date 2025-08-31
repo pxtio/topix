@@ -5,6 +5,7 @@ import { useGraphStore } from "../store/graph-store"
 import { convertNoteToNode } from "../utils/graph"
 import { useAddNotes } from "../api/add-notes"
 import { useAppStore } from "@/store"
+import type { NodeType } from "../types/style"
 
 
 /**
@@ -19,9 +20,13 @@ export function useAddNoteNode() {
 
   const { addNotes } = useAddNotes()
 
-  return useCallback(() => {
+  return useCallback(({
+    nodeType = 'rectangle'
+  }: {
+    nodeType?: NodeType
+  }) => {
     if (!boardId) return
-    const newNote = createDefaultNote(boardId)
+    const newNote = createDefaultNote({ boardId, nodeType })
     const jitter = () => Math.random() * 100 - 50
 
     const container = document.querySelector('.react-flow__viewport')?.getBoundingClientRect()

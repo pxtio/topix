@@ -12,9 +12,9 @@
  */
 export function formatDateForUI(isoString: string, locale: string = "en-US"): string {
   try {
-    const date = new Date(isoString);
+    const date = new Date(isoString)
     if (isNaN(date.getTime())) {
-      throw new Error("Invalid date");
+      throw new Error("Invalid date")
     }
 
     return date.toLocaleString(locale, {
@@ -24,9 +24,9 @@ export function formatDateForUI(isoString: string, locale: string = "en-US"): st
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
-    });
+    })
   } catch (error) {
-    console.error("Error formatting date:", error);
-    return isoString; // fallback
+    console.error("Error formatting date:", error)
+    return isoString
   }
 }

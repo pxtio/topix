@@ -12,6 +12,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
 import clsx from 'clsx'
 import { TAILWIND_100 } from '../../lib/colors/tailwind'
+import { DialogDescription } from '@radix-ui/react-dialog'
 
 type Props = { node: NoteNode }
 
@@ -134,7 +135,7 @@ export function LinearNoteCard({ node }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <div className='relative'>
+      <div className='relative w-full min-w-0'>
         {/* color dot with popover palette */}
         <div className='absolute left-2 top-2 z-50'>
           <Popover>
@@ -176,6 +177,7 @@ export function LinearNoteCard({ node }: Props) {
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2'>
         <DialogHeader className='invisible'>
           <DialogTitle />
+          <DialogDescription />
         </DialogHeader>
 
         <div className='min-h-0 flex-1 flex items-center w-full'>

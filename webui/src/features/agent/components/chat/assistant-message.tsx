@@ -15,32 +15,41 @@ import { GenMindmapButton } from "./actions/gen-mindmap"
 /**
  * Component that renders a list of sources for a chat response.
  */
-const SourcesView = ({
-  answer
-}: {
-  answer: string
-}) => {
+const SourcesView = ({ answer }: { answer: string }) => {
   const links = extractNamedLinksFromMarkdown(answer)
 
-  if (links.length === 0) {
-    return null
-  }
+  if (links.length === 0) return null
 
   return (
-    <div className="w-full p-2">
-      <div className="w-full border-b border-border p-2 flex flex-row items-center gap-2" >
+    <div className='w-full p-2 min-w-0'>
+      <div className='w-full border-b border-border p-2 flex items-center gap-2'>
         <MousePointerClick className='size-4 shrink-0 text-primary' strokeWidth={1.75} />
-        <span className="text-base text-primary font-semibold">Sources</span>
+        <span className='text-base text-primary font-semibold'>Sources</span>
       </div>
-      <ScrollArea className='w-full' >
-        <div className="flex flex-row gap-1 px-2 py-4">
-          {links.map((link, index) => <MiniLinkCard
-            key={index}
-            url={link.url}
-            siteName={link.siteName}
-          />)}
+
+      {/* Root must not overflow its parent */}
+      <ScrollArea className='w-full overflow-hidden'>
+        {/*
+          Mobile: flex-wrap so items wrap within the viewport (no overflow)
+          md+: no-wrap + x-scroll. w-max ensures content width equals sum of children for scrolling.
+        */}
+        <div
+          className='px-2 py-4 flex flex-wrap md:flex-nowrap gap-2 md:w-max
+                     md:overflow-visible'
+        >
+          {links.map((link, index) => (
+            <div key={index} className='shrink-0'>
+              <MiniLinkCard url={link.url} siteName={link.siteName} />
+            </div>
+          ))}
         </div>
-        <ScrollBar orientation="horizontal" />
+
+        {/* horizontal scrollbar with transparent track */}
+        <ScrollBar
+          orientation='horizontal'
+          className='scrollbar-thin scrollbar-thumb-rounded-lg
+                     scrollbar-thumb-muted-foreground/40 scrollbar-track-transparent'
+        />
       </ScrollArea>
     </div>
   )

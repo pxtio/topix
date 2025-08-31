@@ -77,6 +77,13 @@ const FillGlyph = ({ kind }: { kind: FillStyle }) => {
 }
 
 
+const CornerGlyph = ({ r }: { r: 0 | 2 }) => (
+  <svg width='24' height='24' viewBox='0 0 24 24' className='text-foreground/80'>
+    <rect x='4' y='4' width='16' height='16' rx={r * 2} ry={r * 2} fill='none' stroke='currentColor' strokeWidth='1.75' />
+  </svg>
+)
+
+
 function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
   const s = style
 
@@ -149,6 +156,18 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
               </ToggleGroup>
             </Section>
 
+            {/* Corner radius (roundness: 0 | 2) */}
+            <Section title='Roundness'>
+              <ToggleGroup type='single' value={String(s.roundness ?? 0)} onValueChange={v => v && onStyleChange({ roundness: Number(v) as 0 | 2 })} className='flex gap-2'>
+                <ToggleGroupItem value='0' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>
+                  <CornerGlyph r={0} />
+                </ToggleGroupItem>
+                <ToggleGroupItem value='2' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>
+                  <CornerGlyph r={2} />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </Section>
+
             <Separator />
 
             {/* Text align */}
@@ -200,23 +219,38 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
 
 export function GraphSidebar() {
   const { nodes } = useGraphStore()
-
   const { setNodes } = useReactFlow()
 
-  const node = useMemo(() => nodes.find(n => n.selected) as NoteNode | undefined, [nodes])
+  // selected nodes
+  const selected = useMemo(
+    () => (nodes as NoteNode[]).filter(n => n.selected),
+    [nodes]
+  )
 
-  if (!node) return null
+  if (selected.length === 0) return null
 
-  const s = node.data.style
+  // show the style panel ONLY if there is at least one selected "not" sheet node
+  const selectedSheet = selected.find(n => n.data.style.type !== 'sheet')
+  if (!selectedSheet) return null
 
+  // use the first selected sheet's style as the panel's source-of-truth values
+  const s: Style = selectedSheet.data.style
+
+  // apply style changes to ALL selected nodes EXCEPT sheets
   const handleStyleChange = (next: Partial<Style>) => {
-    setNodes(ns => ns.map(n => n.id === node.id ? {
-      ...n,
-      data: {
-        ...n.data,
-        style: { ...s, ...next }
-      }
-    } : n))
+    setNodes(ns =>
+      (ns as NoteNode[]).map(n => {
+        if (!n.selected) return n
+        if (n.data.style.type === 'sheet') return n
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            style: { ...n.data.style, ...next }
+          }
+        }
+      })
+    )
   }
 
   return (

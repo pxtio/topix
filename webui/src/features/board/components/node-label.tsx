@@ -10,8 +10,9 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from '../types/style'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowDiagonalIcon, Delete02Icon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
+import { ArrowDiagonalIcon, Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
 import { clsx } from 'clsx'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 // subcomponents
 import { Shape } from './notes/shape'
@@ -26,10 +27,36 @@ type NodeLabelProps = {
   onOpenChange?: (open: boolean) => void
 }
 
+const TAILWIND_100: Array<{ name: string, hex: string }> = [
+  { name: 'slate', hex: '#f1f5f9' },
+  { name: 'gray', hex: '#f3f4f6' },
+  { name: 'zinc', hex: '#f4f4f5' },
+  { name: 'neutral', hex: '#f5f5f5' },
+  { name: 'stone', hex: '#f5f5f4' },
+  { name: 'red', hex: '#fee2e2' },
+  { name: 'orange', hex: '#ffedd5' },
+  { name: 'amber', hex: '#fef3c7' },
+  { name: 'yellow', hex: '#fef9c3' },
+  { name: 'lime', hex: '#ecfccb' },
+  { name: 'green', hex: '#dcfce7' },
+  { name: 'emerald', hex: '#d1fae5' },
+  { name: 'teal', hex: '#ccfbf1' },
+  { name: 'cyan', hex: '#cffafe' },
+  { name: 'sky', hex: '#e0f2fe' },
+  { name: 'blue', hex: '#dbeafe' },
+  { name: 'indigo', hex: '#e0e7ff' },
+  { name: 'violet', hex: '#ede9fe' },
+  { name: 'purple', hex: '#f3e8ff' },
+  { name: 'fuchsia', hex: '#fae8ff' },
+  { name: 'pink', hex: '#fce7f3' },
+  { name: 'rose', hex: '#ffe4e6' }
+]
+
 /**
  * Renders the node's inline preview and the full editor dialog.
  * - StickyNote (type "sheet"): click preview to open dialog
  * - Shape (others): must click the floating "View Note" button to open dialog
+ * - Sheet-only toolbar: palette (bg color), pin, delete
  */
 export const NodeLabel = ({ note, selected, open, onOpenChange }: NodeLabelProps) => {
   const isSheet = note.style.type === 'sheet'
@@ -89,6 +116,16 @@ export const NodeLabel = ({ note, selected, open, onOpenChange }: NodeLabelProps
     )
   }, [note.id, setNodes])
 
+  const updateStyle = useCallback((next: Partial<Note['style']>) => {
+    setNodes(nds =>
+      nds.map(n => {
+        if (n.id !== note.id) return n
+        const prevStyle = n.data.style as Note['style']
+        return { ...n, data: { ...n.data, style: { ...prevStyle, ...next } } }
+      })
+    )
+  }, [note.id, setNodes])
+
   const stopDragging = useCallback((e: React.PointerEvent) => {
     if (labelEditing) e.stopPropagation()
   }, [labelEditing])
@@ -127,6 +164,10 @@ export const NodeLabel = ({ note, selected, open, onOpenChange }: NodeLabelProps
     setEdges?.(eds => eds.filter(edge => edge.source !== note.id && edge.target !== note.id))
   }, [note.id, setNodes, setEdges])
 
+  const onPickPalette = useCallback((hex: string) => {
+    updateStyle({ backgroundColor: hex })
+  }, [updateStyle])
+
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <div
@@ -137,14 +178,46 @@ export const NodeLabel = ({ note, selected, open, onOpenChange }: NodeLabelProps
       >
         {isSheet && (
           <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 border-b border-border justify-end bg-background/20'>
+            {/* Palette popover */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className='p-1 text-foreground/60 hover:text-foreground transition-colors'
+                  onClick={e => e.stopPropagation()}
+                  aria-label='Background color'
+                  title='Background color'
+                >
+                  <HugeiconsIcon icon={PaintBoardIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align='end' className='w-auto p-2'>
+                <div className='grid grid-cols-6 gap-2'>
+                  {TAILWIND_100.map(c => (
+                    <button
+                      key={c.name}
+                      className='h-6 w-6 rounded-full border border-border hover:brightness-95'
+                      style={{ backgroundColor: c.hex }}
+                      title={`${c.name}-100`}
+                      aria-label={`${c.name}-100`}
+                      onClick={() => onPickPalette(c.hex)}
+                    />
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
             <button
               className='p-1 text-foreground/60 hover:text-foreground transition-colors'
               onClick={onTogglePin}
               aria-label='Toggle pin'
               title='Pin/Unpin'
             >
-              {note.pinned ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-primary' strokeWidth={1.75} /> : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={1.75} />}
+              {note.pinned
+                ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-primary' strokeWidth={1.75} />
+                : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={1.75} />
+              }
             </button>
+
             <button
               className='p-1 text-foreground/60 hover:text-destructive transition-colors'
               onClick={onDelete}

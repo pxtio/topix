@@ -13,73 +13,142 @@ import { Delete02Icon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
 import clsx from 'clsx'
 import { TAILWIND_100 } from '../../lib/colors/tailwind'
 import { DialogDescription } from '@radix-ui/react-dialog'
+import { useRemoveNote } from '../../api/remove-note'
+import { useRemoveLink } from '../../api/remove-link'
+import { useUpdateNote } from '../../api/update-note'
+import { useAppStore } from '@/store'
+import { formatDistanceToNow } from '../../utils/date'
 
 type Props = { node: NoteNode }
 
+/* ---------- color & gradient helpers ---------- */
+function clamp(n: number, min = 0, max = 100) {
+  return Math.max(min, Math.min(max, n))
+}
+function hexToRgb(hex: string) {
+  const clean = hex.replace('#', '')
+  const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean
+  const num = parseInt(full, 16)
+  return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 }
+}
+function rgbToHsl(r: number, g: number, b: number) {
+  r /= 255
+  g /= 255
+  b /= 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  let h = 0
+  let s = 0
+  const l = (max + min) / 2
+  const d = max - min
+  if (d !== 0) {
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break
+      case g: h = (b - r) / d + 2; break
+      case b: h = (r - g) / d + 4; break
+    }
+    h /= 6
+  }
+  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) }
+}
+function buildSubtleHueGradient(hex: string) {
+  let h = 215, s = 60, l = 70
+  try {
+    const { r, g, b } = hexToRgb(hex)
+    const hsl = rgbToHsl(r, g, b)
+    h = hsl.h
+    s = hsl.s
+    l = hsl.l
+  } catch { /* empty */ }
+
+  const s1 = clamp(s * 1.05)
+  const l1 = clamp(l * 1.10)
+  const s2 = clamp(s * 0.9)
+  const l2 = clamp(l * 0.90)
+  const l3 = clamp(l - 12)
+
+  // dialed-down alphas — base gradient is softer
+  const radial = `radial-gradient(1000px 600px at 15% 0%, hsla(${h} ${s1}% ${l1}% / 0.14), transparent 55%)`
+  const linear = `linear-gradient(135deg,
+    hsla(${h} ${s}% ${l}% / 0.06) 0%,
+    hsla(${h} ${s2}% ${l2}% / 0.14) 45%,
+    hsla(${h} ${s}% ${l3}% / 0.10) 100%)`
+  return `${radial}, ${linear}`
+}
+
+/* ---------- fade mask helper (no background painting) ---------- */
+function buildFadeMaskStyle(stops: { solidUntil?: number } = {}) {
+  const solid = stops.solidUntil ?? 75
+  const mask = `linear-gradient(to bottom, rgba(0,0,0,1) ${solid}%, rgba(0,0,0,0) 100%)`
+  return {
+    WebkitMaskImage: mask,
+    maskImage: mask
+  } as React.CSSProperties
+}
+
 export function LinearNoteCard({ node }: Props) {
   const [open, setOpen] = useState(false)
+
   const setStore = useGraphStore.setState
+  const userId = useAppStore(state => state.userId)
+  const boardId = useGraphStore(state => state.boardId)
+
+  const { updateNote } = useUpdateNote()
+  const { removeNote } = useRemoveNote()
+  const { removeLink } = useRemoveLink()
 
   const color = node.data.style.backgroundColor ?? '#a5c9ff'
   const textColor = node.data.style.textColor ?? undefined
   const isPinned = !!node.data.pinned
   const title = node.data.label?.markdown || ''
+  const { text: timeAgo, tooltip: fullDate } = formatDistanceToNow(node.data.updatedAt)
+
+  const gradientBg = useMemo(() => buildSubtleHueGradient(color), [color])
 
   const onPickColor = useCallback((hex: string) => {
-    setStore(state => {
-      const next = state.nodes.map(n =>
-        n.id === node.id
-          ? ({
-              ...n,
-              data: {
-                ...n.data,
-                style: { ...n.data.style, backgroundColor: hex }
-              }
-            } as NoteNode)
-          : n
-      )
-      return { ...state, nodes: next }
-    })
-  }, [node.id, setStore])
+    if (!boardId) return
+    const newNode = {
+      ...node,
+      data: { ...node.data, style: { ...node.data.style, backgroundColor: hex } }
+    } as NoteNode
+    setStore(state => ({ ...state, nodes: state.nodes.map(n => n.id === node.id ? newNode : n) }))
+    updateNote({ boardId, userId, noteId: node.data.id, noteData: newNode.data })
+  }, [boardId, node, setStore, updateNote, userId])
 
   const onSaveContent = useCallback((markdown: string) => {
-    setStore(state => {
-      const next = state.nodes.map(n =>
-        n.id === node.id
-          ? ({
-              ...n,
-              data: {
-                ...n.data,
-                content: { markdown },
-                updatedAt: new Date().toISOString()
-              }
-            } as NoteNode)
-          : n
-      )
-      return { ...state, nodes: next }
-    })
-  }, [node.id, setStore])
+    if (!boardId) return
+    const newNode = {
+      ...node,
+      data: { ...node.data, content: { markdown }, updatedAt: new Date().toISOString() }
+    } as NoteNode
+    setStore(state => ({ ...state, nodes: state.nodes.map(n => n.id === node.id ? newNode : n) }))
+    updateNote({ boardId, userId, noteId: node.data.id, noteData: newNode.data })
+  }, [boardId, node, setStore, updateNote, userId])
 
   const onTogglePin = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
-    setStore(state => {
-      const next = state.nodes.map(n =>
-        n.id === node.id
-          ? ({ ...n, data: { ...n.data, pinned: !isPinned } } as NoteNode)
-          : n
-      )
-      return { ...state, nodes: next }
-    })
-  }, [node.id, isPinned, setStore])
+    if (!boardId) return
+    const newNode = { ...node, data: { ...node.data, pinned: !isPinned } } as NoteNode
+    setStore(state => ({ ...state, nodes: state.nodes.map(n => n.id === node.id ? newNode : n) }))
+    updateNote({ boardId, userId, noteId: node.data.id, noteData: newNode.data })
+  }, [boardId, isPinned, node, setStore, updateNote, userId])
 
   const onDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
+    if (!boardId || !userId) return
     setStore(state => {
       const nodes = state.nodes.filter(n => n.id !== node.id)
       const edges = state.edges.filter(e => e.source !== node.id && e.target !== node.id)
+      const toDeleteNodeId = node.data.id
+      const toDeleteEdgeIds = edges
+        .filter(e => e.source === toDeleteNodeId || e.target === toDeleteNodeId)
+        .map(e => e.id)
+      removeNote({ boardId, userId, noteId: toDeleteNodeId })
+      toDeleteEdgeIds.forEach(edgeId => removeLink({ boardId, userId, linkId: edgeId }))
       return { ...state, nodes, edges }
     })
-  }, [node.id, setStore])
+  }, [boardId, node.data.id, node.id, removeLink, removeNote, setStore, userId])
 
   const cardClass = clsx(
     'relative rounded-xl bg-background overflow-hidden cursor-pointer transition-all duration-200 group',
@@ -90,7 +159,13 @@ export function LinearNoteCard({ node }: Props) {
 
   const CardBody = useMemo(() => (
     <div className={cardClass} style={{ color: textColor }}>
-      {/* top-right toolbar (appears on hover, always visible when pinned) */}
+      {/* hue gradient overlay — light: multiply, dark: screen */}
+      <div
+        className='absolute inset-0 pointer-events-none mix-blend-multiply dark:mix-blend-screen opacity-[0.22] dark:opacity-[0.35]'
+        style={{ backgroundImage: gradientBg }}
+      />
+
+      {/* hover toolbar */}
       <div className={clsx(
         'absolute top-0 right-0 px-1.5 py-1 flex items-center gap-1 border-b border-l border-border bg-background/70 rounded-bl-xl backdrop-blur-sm transition-opacity z-20',
         isPinned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
@@ -116,11 +191,18 @@ export function LinearNoteCard({ node }: Props) {
         </button>
       </div>
 
-      {/* gradient fade at bottom */}
-      <div className='pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent' />
-
-      {/* content area with max height and fade */}
-      <div className='p-4 md:p-6 pt-8 md:pt-10 max-h-[200px] overflow-hidden text-foreground'>
+      {/* content area with MASK fade at the bottom (no background painting) */}
+      <div
+        className='p-4 md:p-6 max-h-[200px] overflow-hidden text-foreground relative z-10'
+        style={buildFadeMaskStyle({ solidUntil: 75 })}
+      >
+        {timeAgo && fullDate && (
+          <div>
+            <span title={fullDate} className='text-xs text-muted-foreground select-none'>
+              {timeAgo}
+            </span>
+          </div>
+        )}
         {title && (
           <h2 className='text-xl md:text-2xl font-semibold mb-2'>
             {title}
@@ -131,18 +213,18 @@ export function LinearNoteCard({ node }: Props) {
         </div>
       </div>
     </div>
-  ), [cardClass, isPinned, onDelete, onTogglePin, node.data.content?.markdown, textColor, title])
+  ), [cardClass, textColor, isPinned, onTogglePin, onDelete, timeAgo, fullDate, title, node.data.content?.markdown, gradientBg])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <div className='relative w-full min-w-0'>
-        {/* color dot with popover palette */}
+        {/* color dot & palette */}
         <div className='absolute left-2 top-2 z-50'>
           <Popover>
             <PopoverTrigger asChild>
               <button
                 className='h-4 w-4 rounded-full ring-2 ring-primary/40 shadow hover:brightness-95 transition'
-                style={{ backgroundColor: color }}
+                style={{ backgroundColor: node.data.style.backgroundColor ?? '#a5c9ff' }}
                 aria-label='Change background color'
                 title='Change background color'
                 onClick={e => e.stopPropagation()}
@@ -165,7 +247,6 @@ export function LinearNoteCard({ node }: Props) {
           </Popover>
         </div>
 
-        {/* open dialog when clicking the card */}
         <DialogTrigger asChild>
           <div onClick={() => setOpen(true)}>
             {CardBody}
@@ -173,7 +254,6 @@ export function LinearNoteCard({ node }: Props) {
         </DialogTrigger>
       </div>
 
-      {/* full editor dialog */}
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2'>
         <DialogHeader className='invisible'>
           <DialogTitle />

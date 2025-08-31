@@ -54,7 +54,7 @@ const connectionLineStyle = { stroke: '#818cf8' }
 type ViewMode = 'graph' | 'linear'
 
 export default function GraphEditor() {
-  const [viewMode, setViewMode] = useState<ViewMode>('graph')
+  const [viewMode, setViewMode] = useState<ViewMode>('linear')
 
   const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
@@ -62,7 +62,7 @@ export default function GraphEditor() {
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [moving, setMoving] = useState<boolean>(false)
 
-  const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow()
+  const { zoomIn, zoomOut, fitView, viewportInitialized } = useReactFlow()
 
   const userId = useAppStore(state => state.userId)
   const boardId = useGraphStore(state => state.boardId)
@@ -126,9 +126,13 @@ export default function GraphEditor() {
 
   useEffect(() => {
     if (!shouldRecenter || viewMode !== 'graph') return
-    fitView({ padding: 0.2, duration: 250, minZoom: 1, maxZoom: 1 })
+    fitView({ padding: 0.2, minZoom: 1, maxZoom: 1 })
     setShouldRecenter(false)
-  }, [setViewport, shouldRecenter, fitView, viewMode])
+  }, [shouldRecenter, fitView, viewMode])
+
+  useEffect(() => {
+    if (viewportInitialized) fitView({ padding: 0.2, minZoom: 1, maxZoom: 1 })
+  }, [viewportInitialized, fitView])
 
   const wrapperRef = useRef<HTMLDivElement | null>(null)
 

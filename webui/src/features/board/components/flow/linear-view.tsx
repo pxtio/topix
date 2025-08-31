@@ -31,7 +31,7 @@ export function LinearView() {
   return (
     <div className='w-full h-full overflow-hidden'>
       <ScrollArea className='h-full'>
-        <div className='mx-auto max-w-[800px] w-full px-4 py-6 pt-20 space-y-6'>
+        <div className='mx-auto max-w-[800px] w-full px-4 py-4 sm:py-6 pt-20 sm:pt-20 space-y-4 sm:space-y-6'>
           {sheets.map(n => (
             <LinearNoteCard key={n.id} node={n} />
           ))}

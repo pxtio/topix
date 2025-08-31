@@ -79,12 +79,13 @@ export function ActionPanel({
   return (
     <div
       className={`
-        absolute top-4 left-1/2 -translate-x-1/2 z-10
-        bg-card text-card-foreground
-        p-1
-        rounded-xl shadow-md
-        flex flex-row items-center justify-center gap-1
-        border border-border
+        absolute z-10 border border-border shadow-md
+        bg-card text-card-foreground rounded-xl
+        p-1 flex gap-1
+        right-2 top-1/2 -translate-y-1/2 md:translate-y-0
+        flex-col items-stretch
+        md:right-auto md:left-1/2 md:top-4 md:-translate-x-1/2
+        md:flex-row md:items-center
       `}
       role='toolbar'
       aria-label='Graph actions'

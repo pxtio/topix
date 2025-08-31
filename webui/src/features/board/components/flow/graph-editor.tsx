@@ -54,7 +54,7 @@ const connectionLineStyle = { stroke: '#818cf8' }
 type ViewMode = 'graph' | 'linear'
 
 export default function GraphEditor() {
-  const [viewMode, setViewMode] = useState<ViewMode>('linear')
+  const [viewMode, setViewMode] = useState<ViewMode>('graph')
 
   const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
@@ -74,7 +74,8 @@ export default function GraphEditor() {
   const onNodesDelete = useGraphStore(state => state.onNodesDelete)
   const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const onConnect = useGraphStore(state => state.onConnect)
-  const { mindmaps } = useMindMapStore()
+  const mindmaps = useMindMapStore(state => state.mindmaps)
+
   const { removeNote } = useRemoveNote()
   const { removeLink } = useRemoveLink()
   const { addLinks } = useAddLinks()

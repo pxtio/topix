@@ -7,39 +7,52 @@ import "highlight.js/styles/rose-pine-dawn.css"
 import { Copy } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { CustomTable } from "./markdown/custom-table"
 
+/** -------------------------------------------------------
+ *  one-time transparent scrollbar styles (for code + tables)
+ *  ------------------------------------------------------*/
+let __mkScrollbarInjected = false
+function ensureScrollbarStyleInjected() {
+  if (__mkScrollbarInjected) return
+  const style = document.createElement("style")
+  style.setAttribute("data-mk-scrollbars", "true")
+  style.innerHTML = `
+    /* firefox */
+    .mk-scroll { scrollbar-width: thin; scrollbar-color: rgba(120,120,130,.5) transparent; }
+    /* webkit */
+    .mk-scroll::-webkit-scrollbar { height: 10px; width: 10px; }
+    .mk-scroll::-webkit-scrollbar-track { background: transparent; }
+    .mk-scroll::-webkit-scrollbar-thumb { background: rgba(120,120,130,.5); border-radius: 9999px; }
+    .mk-scroll::-webkit-scrollbar-thumb:hover { background: rgba(120,120,130,.7); }
+  `
+  document.head.appendChild(style)
+  __mkScrollbarInjected = true
+}
 
+/** -------------------------------------------------------
+ *  CustomCodeView — responsive, transparent scrollbar
+ *  ------------------------------------------------------*/
 interface CustomCodeViewProps {
   className?: string
   inline?: boolean
   children?: React.ReactNode
 }
 
-let __ccvStyleInjected = false
-
 export const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, inline, children }) => {
   const codeRef = React.useRef<HTMLElement>(null)
 
-  // inject once: transparent track + thin thumb (works without Tailwind scrollbar plugin)
   React.useEffect(() => {
-    if (__ccvStyleInjected) return
-    const style = document.createElement("style")
-    style.setAttribute("data-ccv", "true")
-    style.innerHTML = `
-      .ccv-scroll { scrollbar-width: thin; scrollbar-color: rgba(120,120,130,.5) transparent; }
-      .ccv-scroll::-webkit-scrollbar { height: 10px; }
-      .ccv-scroll::-webkit-scrollbar-track { background: transparent; }
-      .ccv-scroll::-webkit-scrollbar-thumb { background: rgba(120,120,130,.5); border-radius: 9999px; }
-      .ccv-scroll::-webkit-scrollbar-thumb:hover { background: rgba(120,120,130,.7); }
-    `
-    document.head.appendChild(style)
-    __ccvStyleInjected = true
+    ensureScrollbarStyleInjected()
   }, [])
 
+  // Treat as block ONLY when react-markdown marks inline === false,
+  // or when a syntax class "language-..." is present (fenced code).
   const { isBlock, language } = React.useMemo(() => {
+    const hasLang = /language-([\w-]+)/.test(className || "")
     const match = /language-([\w-]+)/.exec(className || "")
     return {
-      isBlock: !inline,
+      isBlock: inline === false || hasLang,
       language: match ? match[1] : "plaintext"
     }
   }, [className, inline])
@@ -70,11 +83,8 @@ export const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, inlin
     <div className="w-full min-w-0">
       <pre
         className={cn(
-          // layout: let container shrink; do not create page-wide overflow
           "relative my-4 w-full min-w-0",
-          // visuals
-          "rounded-2xl bg-card text-sm text-mono border border-border",
-          // important: let inner <code> handle horizontal scrolling
+          "rounded-2xl !bg-card text-sm text-mono border border-border",
           "overflow-visible",
           className
         )}
@@ -95,10 +105,8 @@ export const CustomCodeView: React.FC<CustomCodeViewProps> = ({ className, inlin
         <code
           ref={codeRef}
           className={cn(
-            "ccv-scroll block mt-6 p-4 w-full min-w-0",
-            // horizontal scroll is confined to the code area
+            "mk-scroll block mt-6 p-4 w-full min-w-0",
             "overflow-x-auto",
-            // preserve formatting; allow long tokens to extend and be scrollable
             "whitespace-pre break-words"
           )}
         >
@@ -179,7 +187,9 @@ const markdownComponents: Components = {
     />
   ),
   li: (props) => <li className="break-words min-w-0" {...props} />,
+
   a: (props) => <CustomLink {...props} />,
+
   code: CustomCodeView,
 
   // responsive images (scale down, never overflow)
@@ -193,26 +203,8 @@ const markdownComponents: Components = {
   ),
 
   // horizontally scrollable tables with transparent scrollbar track
-  table: (props) => (
-    <div
-      className="
-        my-6 w-full max-w-full
-        overflow-x-auto overflow-y-hidden
-        overscroll-x-contain
-        scrollbar-thin scrollbar-thumb-rounded-lg
-        scrollbar-thumb-muted-foreground/40 scrollbar-track-transparent
-      "
-    >
-      <table
-        className="
-          text-base border-b
-          w-max max-w-none
-          min-w-[480px] md:min-w-[640px]
-        "
-        {...props}
-      />
-    </div>
-  ),
+  table: (props) => <CustomTable {...props} />,
+
   tr: (props) => <tr className="m-0 border-t p-0 even:bg-muted" {...props} />,
   th: (props) => (
     <th
@@ -235,6 +227,7 @@ const markdownComponents: Components = {
       {...props}
     />
   ),
+
   b: (props) => <b className="font-semibold" {...props} />,
   strong: (props) => <strong className="font-semibold" {...props} />,
   em: (props) => <em className="italic" {...props} />,
@@ -254,6 +247,10 @@ export interface MarkdownViewProps {
 export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
   ({ content }) => {
     const memoContent = React.useMemo(() => content, [content])
+
+    React.useEffect(() => {
+      ensureScrollbarStyleInjected()
+    }, [])
 
     return (
       <div className="w-full min-w-0">

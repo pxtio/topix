@@ -193,7 +193,7 @@ export function LinearNoteCard({ node }: Props) {
 
       {/* content area with MASK fade at the bottom (no background painting) */}
       <div
-        className='p-4 md:p-6 max-h-[200px] overflow-hidden text-foreground relative z-10'
+        className='p-4 md:p-6 max-h-[200px] overflow-hidden text-foreground relative z-10 space-y-1'
         style={buildFadeMaskStyle({ solidUntil: 75 })}
       >
         {timeAgo && fullDate && (

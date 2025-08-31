@@ -1,13 +1,13 @@
 // components/flow/node-label.tsx
 import { useReactFlow } from '@xyflow/react'
-import type { Note } from '../types/note'
+import type { Note } from '../../types/note'
 import TextareaAutosize from 'react-textarea-autosize'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { NoteNode } from '../types/flow'
+import type { NoteNode } from '../../types/flow'
 import { MdEditor } from '@/components/editor/milkdown'
 import { MilkdownProvider } from '@milkdown/react'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from '../types/style'
+import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from '../../types/style'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowDiagonalIcon, Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
@@ -15,8 +15,9 @@ import { clsx } from 'clsx'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 // subcomponents
-import { Shape } from './notes/shape'
-import { StickyNote } from './notes/sticky-note'
+import { Shape } from '../notes/shape'
+import { StickyNote } from '../notes/sticky-note'
+import { TAILWIND_100 } from '../../lib/colors/tailwind'
 
 type NoteWithPin = Note & { pinned?: boolean }
 
@@ -26,31 +27,6 @@ type NodeLabelProps = {
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }
-
-const TAILWIND_100: Array<{ name: string, hex: string }> = [
-  { name: 'slate', hex: '#f1f5f9' },
-  { name: 'gray', hex: '#f3f4f6' },
-  { name: 'zinc', hex: '#f4f4f5' },
-  { name: 'neutral', hex: '#f5f5f5' },
-  { name: 'stone', hex: '#f5f5f4' },
-  { name: 'red', hex: '#fee2e2' },
-  { name: 'orange', hex: '#ffedd5' },
-  { name: 'amber', hex: '#fef3c7' },
-  { name: 'yellow', hex: '#fef9c3' },
-  { name: 'lime', hex: '#ecfccb' },
-  { name: 'green', hex: '#dcfce7' },
-  { name: 'emerald', hex: '#d1fae5' },
-  { name: 'teal', hex: '#ccfbf1' },
-  { name: 'cyan', hex: '#cffafe' },
-  { name: 'sky', hex: '#e0f2fe' },
-  { name: 'blue', hex: '#dbeafe' },
-  { name: 'indigo', hex: '#e0e7ff' },
-  { name: 'violet', hex: '#ede9fe' },
-  { name: 'purple', hex: '#f3e8ff' },
-  { name: 'fuchsia', hex: '#fae8ff' },
-  { name: 'pink', hex: '#fce7f3' },
-  { name: 'rose', hex: '#ffe4e6' }
-]
 
 /**
  * Renders the node's inline preview and the full editor dialog.
@@ -273,7 +249,7 @@ export const NodeLabel = ({ note, selected, open, onOpenChange }: NodeLabelProps
         ) : (
           <DialogHeader className='w-full'>
             <DialogTitle asChild>
-              <div className='flex items-center gap-2 w-full pt-10 px-24'>
+              <div className='flex items-center gap-2 w-full pt-10 px-20'>
                 <TextareaAutosize
                   className={titleEditorClass}
                   value={note.label?.markdown || ''}

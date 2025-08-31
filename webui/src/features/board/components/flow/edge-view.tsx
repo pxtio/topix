@@ -5,9 +5,9 @@ import {
   useInternalNode,
   type EdgeProps
 } from '@xyflow/react'
-import type { LinkEdge } from '../types/flow'
-import { getEdgeParams } from '../utils/flow'
-import { getAutoHandlePositions } from '../utils/edge-orientation'
+import type { LinkEdge } from '../../types/flow'
+import { getEdgeParams } from '../../utils/flow'
+import { getAutoHandlePositions } from '../../utils/edge-orientation'
 
 
 /**

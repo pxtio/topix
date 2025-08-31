@@ -1,13 +1,13 @@
 import { memo, useEffect, useMemo, useRef } from 'react'
 import { Handle, type NodeProps, Position, useReactFlow } from '@xyflow/react'
-import type { NoteNode } from '../types/flow'
+import type { NoteNode } from '../../types/flow'
 import { RoughRect } from '@/components/rough/rect'
 import { NodeLabel } from './node-label'
 import { useDebouncedCallback } from 'use-debounce'
-import { useUpdateNote } from '../api/update-note'
+import { useUpdateNote } from '../../api/update-note'
 import { useAppStore } from '@/store'
-import { useGraphStore } from '../store/graph-store'
-import { DEBOUNCE_DELAY } from '../const'
+import { useGraphStore } from '../../store/graph-store'
+import { DEBOUNCE_DELAY } from '../../const'
 import clsx from 'clsx'
 
 function NodeView({ id, data, selected }: NodeProps<NoteNode>) {

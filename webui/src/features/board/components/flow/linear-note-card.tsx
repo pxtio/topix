@@ -193,16 +193,9 @@ export function LinearNoteCard({ node }: Props) {
 
       {/* content area with MASK fade at the bottom (no background painting) */}
       <div
-        className='p-4 md:p-6 max-h-[200px] overflow-hidden text-foreground relative z-10 space-y-1'
+        className='p-4 pt-8 md:p-6 md:pt-10 max-h-[200px] overflow-hidden text-foreground relative z-10 space-y-1'
         style={buildFadeMaskStyle({ solidUntil: 75 })}
       >
-        {timeAgo && fullDate && (
-          <div>
-            <span title={fullDate} className='text-xs text-muted-foreground select-none'>
-              {timeAgo}
-            </span>
-          </div>
-        )}
         {title && (
           <h2 className='text-xl md:text-2xl font-semibold mb-2'>
             {title}
@@ -213,13 +206,13 @@ export function LinearNoteCard({ node }: Props) {
         </div>
       </div>
     </div>
-  ), [cardClass, textColor, isPinned, onTogglePin, onDelete, timeAgo, fullDate, title, node.data.content?.markdown, gradientBg])
+  ), [cardClass, textColor, isPinned, onTogglePin, onDelete, title, node.data.content?.markdown, gradientBg])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <div className='relative w-full min-w-0'>
         {/* color dot & palette */}
-        <div className='absolute left-2 top-2 z-50'>
+        <div className='absolute left-2 top-2 z-50 flex flex-row items-center gap-2'>
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -245,6 +238,13 @@ export function LinearNoteCard({ node }: Props) {
               </div>
             </PopoverContent>
           </Popover>
+          {timeAgo && fullDate && (
+            <div>
+              <span title={fullDate} className='text-xs text-muted-foreground select-none'>
+                {timeAgo}
+              </span>
+            </div>
+          )}
         </div>
 
         <DialogTrigger asChild>

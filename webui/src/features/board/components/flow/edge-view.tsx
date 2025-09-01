@@ -1,13 +1,13 @@
 import {
   BaseEdge,
   EdgeLabelRenderer,
-  getBezierPath,
+  getSimpleBezierPath,
   useInternalNode,
   type EdgeProps
 } from '@xyflow/react'
-import type { LinkEdge } from '../types/flow'
-import { getEdgeParams } from '../utils/flow'
-import { getAutoHandlePositions } from '../utils/edge-orientation'
+import type { LinkEdge } from '../../types/flow'
+import { getEdgeParams } from '../../utils/flow'
+import { getAutoHandlePositions } from '../../utils/edge-orientation'
 
 
 /**
@@ -31,7 +31,7 @@ export const EdgeView = ({
 
   const { sourcePosition, targetPosition } = getAutoHandlePositions(sx, sy, tx, ty)
 
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = getSimpleBezierPath({
     sourceX: sx,
     sourceY: sy,
     sourcePosition,

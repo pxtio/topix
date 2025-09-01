@@ -8,7 +8,7 @@ import { convertLinkToEdge, convertNoteToNode } from "../utils/graph"
 import { autoLayout } from "../lib/graph/auto-layout"
 import { defaultLayoutOptions } from "../lib/graph/settings"
 import { useMindMapStore } from "@/features/agent/store/mindmap-store"
-import { defaultStyle } from "../types/style"
+import { createDefaultStyle } from "../types/style"
 
 
 /**
@@ -63,7 +63,7 @@ export const useConvertToMindMap = () => {
 
       notes.forEach(note => {
         note.graphUid = boardId
-        note.style = defaultStyle()
+        note.style = createDefaultStyle({ type: "sheet" })
       })
       links.forEach(link => link.graphUid = boardId)
       const rawNodes = notes.map(convertNoteToNode)

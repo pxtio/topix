@@ -67,7 +67,7 @@ export function NewChatItem({
 /**
  * A chat item component
  */
-export function ChatMenuItem({ chatId, label }: { chatId: string; label?: string }) {
+export function ChatMenuItem({ chatId, label }: { chatId: string, label?: string }) {
   const navigate = useNavigate()
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isActive = pathname === `/chats/${chatId}`

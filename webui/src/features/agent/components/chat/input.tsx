@@ -90,9 +90,9 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   )
 
   const className = clsx(
-    "transition-all absolute left-1/2 transform -translate-x-1/2 p-4 z-50 flex flex-col justify-center items-center gap-16",
+    "transition-all absolute inset-x-0 p-4 z-50 flex flex-col justify-center items-center gap-16",
     chatId ?
-    "bottom-10"
+    "bottom-0"
     :
     "bottom-1/3"
   )
@@ -109,50 +109,48 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
           </div>
         )
       }
-      <div className='flex flex-col space-y-2'>
-        <div>
-          <div
-            className={`
-              relative
-              md:min-w-[800px]
-              rounded-xl
-              p-2
-              bg-card
-              text-card-foreground text-base
-              border border-border
-              shadow-lg
-            `}
-          >
-            <div className='absolute -top-10 left-0 transform flex flex-row items-center gap-2'>
-              <ModelChoiceMenu />
-              <SearchEngineChoiceMenu />
+      <div className='flex flex-col space-y-2 w-full items-center justify-center'>
+        <div
+          className={`
+            relative
+            w-full max-w-[800px] mx-auto
+            rounded-xl
+            p-2
+            bg-card
+            text-card-foreground text-base
+            border border-border
+            shadow-lg
+          `}
+        >
+          <div className='absolute -top-10 left-0 transform flex flex-row items-center gap-2'>
+            <ModelChoiceMenu />
+            <SearchEngineChoiceMenu />
+          </div>
+          <div className="relative flex flex-row items-center space-y-1 items-stretch">
+            <div className='flex-1 p-2 flex items-center justify-center'>
+              <TextareaAutosize
+                onKeyDown={handleKeyDown}
+                onChange={(e) => setInput(e.target.value)}
+                value={input}
+                minRows={2}
+                maxRows={15}
+                placeholder='Enter your message...'
+                className={`
+                  w-full
+                  h-full
+                  resize-none border-none outline-none
+                  bg-transparent
+                  text-sm
+                `}
+              />
             </div>
-            <div className="relative flex flex-row items-center space-y-1 items-stretch">
-              <div className='flex-1 p-2 flex items-center justify-center'>
-                <TextareaAutosize
-                  onKeyDown={handleKeyDown}
-                  onChange={(e) => setInput(e.target.value)}
-                  value={input}
-                  minRows={1}
-                  maxRows={15}
-                  placeholder='Enter your message...'
-                  className={`
-                    w-full
-                    h-full
-                    resize-none border-none outline-none
-                    bg-transparent
-                    text-sm
-                  `}
-                />
-              </div>
-              <div className='flex items-center justify-center'>
-                <SendButton
-                  loadingStatus={isStreaming ? "loading": "loaded"}
-                  disabled={isStreaming}
-                  onClick={handleSearch}
-                  className={commandIconClass}
-                />
-              </div>
+            <div className='flex items-center justify-center'>
+              <SendButton
+                loadingStatus={isStreaming ? "loading": "loaded"}
+                disabled={isStreaming}
+                onClick={handleSearch}
+                className={commandIconClass}
+              />
             </div>
           </div>
         </div>

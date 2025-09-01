@@ -5,7 +5,7 @@
 /**
  * Type of node in the board.
  */
-export type NodeType = "rectangle" | "text"
+export type NodeType = "rectangle" | "text" | "sheet" | "ellipse" | "diamond"
 
 /**
  * Stroke style for the node.
@@ -112,41 +112,93 @@ export type StrokeWidth = typeof StrokeWidthPresets[number]
  * Interface for the style of a node in the board.
  */
 export interface Style {
-  type?: NodeType
-  angle?: number
-  strokeColor?: string
-  strokeWidth?: number
-  strokeStyle?: StrokeStyle
-  backgroundColor?: string
+  type: NodeType
+  angle: number
+  strokeColor: string
+  strokeWidth: number
+  strokeStyle: StrokeStyle
+  backgroundColor: string
   fillStyle: FillStyle
   roughness: number
-  opacity?: number
-  groupIds?: string[]
-  fontFamily?: FontFamily
-  fontSize?: FontSize
-  textAlign?: TextAlign
-  textColor?: string | null
-  textStyle?: TextStyle
+  roundness: number
+  opacity: number
+  groupIds: string[]
+  fontFamily: FontFamily
+  fontSize: FontSize
+  textAlign: TextAlign
+  textColor: string | null
+  textStyle: TextStyle
 }
 
 
 /**
  * Default style for nodes in the board.
  */
-export const defaultStyle = (): Style => ({
-  type: "rectangle",
-  angle: 0.0,
-  strokeColor: "transparent",
-  strokeWidth: 0.75,
-  strokeStyle: "solid",
-  backgroundColor: "oklch(0.954 0.038 75.164)",
-  fillStyle: "solid",
-  roughness: 0.5,
-  opacity: 100,
-  groupIds: [],
-  fontFamily: "handwriting",
-  fontSize: "M",
-  textAlign: "left",
-  textColor: "black",
-  textStyle: "normal"
-})
+export const createDefaultStyle = ({
+  type = "rectangle"
+}: {
+  type?: NodeType
+}): Style => {
+  const defaultOptions = {
+    type: type,
+    angle: 0.0,
+    strokeColor: "transparent",
+    strokeWidth: 0.75,
+    strokeStyle: "solid",
+    backgroundColor: "#ffedd5",
+    fillStyle: "solid",
+    textColor: "#000000",
+    textStyle: "normal",
+    opacity: 100,
+    groupIds: []
+  }
+
+  switch (type) {
+    case "rectangle":
+      return {
+        ...defaultOptions,
+        roughness: 0.5,
+        roundness: 2,
+        fontFamily: "handwriting",
+        fontSize: "M",
+        textAlign: "center"
+      } as Style
+    case "ellipse":
+      return {
+        ...defaultOptions,
+        roughness: 0.5,
+        roundness: 2,
+        fontFamily: "handwriting",
+        fontSize: "M",
+        textAlign: "center"
+      } as Style
+    case "diamond":
+      return {
+        ...defaultOptions,
+        roughness: 0.5,
+        roundness: 2,
+        fontFamily: "handwriting",
+        fontSize: "M",
+        textAlign: "center"
+      } as Style
+    case "sheet":
+      return {
+        ...defaultOptions,
+        roughness: 0,
+        roundness: 0,
+        fontFamily: "sans-serif",
+        fontSize: "M",
+        textAlign: "left"
+      } as Style
+    case "text":
+      return {
+        ...defaultOptions,
+        roughness: 0,
+        roundness: 0,
+        fontFamily: "sans-serif",
+        fontSize: "M",
+        textAlign: "left",
+        backgroundColor: "transparent"
+      } as Style
+  }
+}

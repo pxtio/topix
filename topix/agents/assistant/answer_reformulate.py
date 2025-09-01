@@ -52,7 +52,7 @@ class AnswerReformulate(BaseAgent):
             tool_trace=tool_trace,
         )
 
-        return input_items + [{"role": "assistant", "content": prompt}]
+        return input_items + [{"role": "user", "content": prompt}]
 
     async def _as_tool_hook(
         self, context: ReasoningContext, input: str, tool_id: str

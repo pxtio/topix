@@ -1,4 +1,4 @@
-"""Async Postgres connection pool for Topix."""
+"""Async Postgres connection pool for topix."""
 
 from psycopg_pool import AsyncConnectionPool
 

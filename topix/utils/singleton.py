@@ -27,7 +27,7 @@ class SingletonMeta(type):
     ```python
     from pydantic import BaseModel
 
-    from topix.utils.singleton import SingletonMeta
+    from src.utils.singleton import SingletonMeta
 
     # Define your normal base model class
     class NormalClass(BaseModel):

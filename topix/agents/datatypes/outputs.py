@@ -58,5 +58,4 @@ class CodeInterpreterOutput(BaseModel):
                 result += annotation.model_dump_json() + "\n"
         return result
 
-
-ToolOutput = str | CodeInterpreterOutput | WebSearchOutput
+type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput

@@ -106,6 +106,7 @@ class CodeInterpreter(BaseAgent):
             instructions_template: Template for agent instructions
             model_settings: Model configuration settings
             backend: Code execution backend to use
+            mcp_servers: List of MCPServerStdio instances (required if using MCP backend)
             e2b_api_key: E2B API key (required if using E2B backend)
         """
         name = "Code Interpreter"

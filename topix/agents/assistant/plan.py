@@ -73,6 +73,7 @@ class Plan(BaseAgent):
         memory_search: MemorySearch | None = None,
         answer_reformulate: AnswerReformulate | None = None,
         code_interpreter: CodeInterpreter | None = None,
+        content_store: ContentStore | None = None,
     ):
         """Init method."""
         name = "Plan"
@@ -80,17 +81,14 @@ class Plan(BaseAgent):
             instructions_template,
             time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
-        if model_settings is None:
-            model_settings = ModelSettings(temperature=0.01, max_tokens=8000)
 
-        if web_search is None:
-            web_search = WebSearch()
-        if memory_search is None:
-            memory_search = MemorySearch()
-        if answer_reformulate is None:
-            answer_reformulate = AnswerReformulate(model=model)
-        if code_interpreter is None:
-            code_interpreter = CodeInterpreter()
+        model_settings = model_settings or ModelSettings(temperature=0.01, max_tokens=8000)
+
+        web_search = web_search or WebSearch()
+        content_store = content_store or ContentStore.from_config()
+        memory_search = memory_search or MemorySearch(content_store=content_store)
+        answer_reformulate = answer_reformulate or AnswerReformulate(model=model)
+        code_interpreter = code_interpreter or CodeInterpreter()
 
         tools = [
             web_search.as_tool(AgentToolName.WEB_SEARCH, streamed=True),

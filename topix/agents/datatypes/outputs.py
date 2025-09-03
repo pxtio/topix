@@ -1,20 +1,17 @@
 """Agent Output Data Types."""
+from typing import Literal
+
 from pydantic import BaseModel
 
-type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput
+from topix.agents.datatypes.annotations import FileAnnotation, RefAnnotation, SearchResult
 
-
-class SearchResult(BaseModel):
-    """Search result from a web search tool."""
-
-    url: str
-    title: str | None = None
-    content: str | None = None
+type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput | MemorySearchOutput
 
 
 class WebSearchOutput(BaseModel):
     """Output from web search tool."""
 
+    type: Literal["web_search"] = "web_search"
     answer: str | None = None
     search_results: list[SearchResult]
 
@@ -33,17 +30,10 @@ class WebSearchOutput(BaseModel):
             return self.answer
 
 
-class FileAnnotation(BaseModel):
-    """Annotation of a generated file."""
-
-    type: str
-    file_path: str
-    file_id: str
-
-
 class CodeInterpreterOutput(BaseModel):
     """Output from code interpreter tool."""
 
+    type: Literal["code_interpreter"] = "code_interpreter"
     answer: str
     executed_code: str
     annotations: list[FileAnnotation]
@@ -59,3 +49,15 @@ class CodeInterpreterOutput(BaseModel):
             for annotation in self.annotations:
                 result += annotation.model_dump_json() + "\n"
         return result
+
+
+class MemorySearchOutput(BaseModel):
+    """Output from memory search tool."""
+
+    type: Literal["memory_search"] = "memory_search"
+    answer: str
+    references: list[RefAnnotation] = []
+
+    def __str__(self) -> str:
+        """To string method."""
+        return self.answer

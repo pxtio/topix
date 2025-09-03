@@ -1,17 +1,17 @@
 """Classes representing the style of a node in a graph."""
 
+from enum import StrEnum
+
 from pydantic import BaseModel
 
-from topix.datatypes.enum import CustomEnum
 
-
-class NodeType(str, CustomEnum):
+class NodeType(StrEnum):
     """Enumeration for node types."""
 
     RECTANGLE = "rectangle"
 
 
-class StrokeStyle(str, CustomEnum):
+class StrokeStyle(StrEnum):
     """Enumeration for stroke styles."""
 
     SOLID = "solid"
@@ -19,7 +19,7 @@ class StrokeStyle(str, CustomEnum):
     DOTTED = "dotted"
 
 
-class FillStyle(str, CustomEnum):
+class FillStyle(StrEnum):
     """Enumeration for fill styles."""
 
     SOLID = "solid"
@@ -29,7 +29,7 @@ class FillStyle(str, CustomEnum):
     DOTS = "dots"
 
 
-class TextAlign(str, CustomEnum):
+class TextAlign(StrEnum):
     """Enumeration for text alignment."""
 
     LEFT = "left"

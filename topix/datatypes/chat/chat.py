@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from topix.datatypes.enum import CustomEnum
 from topix.datatypes.property import DataProperty, ReasoningProperty
 from topix.datatypes.resource import Resource
 from topix.utils.common import gen_uid
 
 
-class MessageRole(str, CustomEnum):
+class MessageRole(StrEnum):
     """Enum for message roles."""
 
     SYSTEM = "system"

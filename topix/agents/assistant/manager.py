@@ -7,12 +7,12 @@ from topix.agents.assistant.query_rewrite import QueryRewrite
 from topix.agents.config import AssistantManagerConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.inputs import QueryRewriteInput
-from topix.agents.datatypes.stream import AgentStreamMessage, ContentType
+from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.agents.datatypes.tools import AgentToolName, to_display_output
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
 from topix.datatypes.chat.chat import Message
-from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
+from topix.datatypes.chat.tool_call import ToolCall
 from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
 from topix.store.qdrant.store import ContentStore
@@ -94,29 +94,28 @@ class AssistantManager:
             )
         return res
 
-    @staticmethod
-    def _update_reasoning_step(
-        steps: dict[str, ToolCall], message: AgentStreamMessage
-    ) -> ToolCall:
-        """Update the reasoning step based on the message."""
-        if message.tool_id not in steps:
-            steps[message.tool_id] = ToolCall(
-                id=message.tool_id,
-                name=message.tool_name,
-                output="",
-                event_messages=[],
-                state=ToolCallState.STARTED,
-            )
-        if message.content:
-            if message.content.type != ContentType.STATUS:
-                steps[message.tool_id].output += message.content.text
-            else:
-                steps[message.tool_id].event_messages.append(message.content.text)
-        if message.is_stop:
-            steps[message.tool_id].state = ToolCallState.COMPLETED
-        return steps[message.tool_id]
+    def _convert_tool_call_to_annotation_message(
+        self,
+        tool_call: ToolCall
+    ) -> AgentStreamMessage | None:
+        if tool_call.name not in [AgentToolName.WEB_SEARCH, AgentToolName.MEMORY_SEARCH]:
+            return None
 
-    async def run_streamed(
+        match tool_call.name:
+            case AgentToolName.WEB_SEARCH:
+                annotations = tool_call.output.search_results
+            case AgentToolName.MEMORY_SEARCH:
+                annotations = tool_call.output.references
+
+        return AgentStreamMessage(
+            tool_id=tool_call.id,
+            tool_name=tool_call.name,
+            content=Content(
+                annotations=annotations
+            )
+        )
+
+    async def run_streamed(  # noqa: C901
         self,
         context: ReasoningContext,
         query: str,
@@ -157,20 +156,24 @@ class AssistantManager:
 
         final_message = ""
         is_raw_answer = True
-        steps = {}
+
         async for message in res:
-            self._update_reasoning_step(steps, message)
-            if self._is_response(message):
-                # if answer reformulate is used, reset final_message
-                if (
-                    message.tool_name == AgentToolName.ANSWER_REFORMULATE
-                    and is_raw_answer
-                ):
-                    final_message = ""
-                    is_raw_answer = False
-                if to_display_output(message.tool_name):
-                    final_message += message.content.text
-            yield message
+            if isinstance(message, AgentStreamMessage):
+                if self._is_response(message):
+                    # if answer reformulate is used, reset final_message
+                    if (
+                        message.tool_name == AgentToolName.ANSWER_REFORMULATE
+                        and is_raw_answer
+                    ):
+                        final_message = ""
+                        is_raw_answer = False
+                    if to_display_output(message.tool_name):
+                        final_message += message.content.text
+                yield message
+            elif isinstance(message, ToolCall):
+                annotation_message = self._convert_tool_call_to_annotation_message(message)
+                if annotation_message is not None:
+                    yield annotation_message
 
         if session:
             # If a session is provided, store the final answer
@@ -186,8 +189,8 @@ class AssistantManager:
                         properties={
                             "reasoning": ReasoningProperty(
                                 reasoning=[
-                                    val.model_dump(exclude_none=True)
-                                    for val in steps.values()
+                                    tool_call.model_dump(exclude_none=True)
+                                    for tool_call in context.tool_calls
                                 ]
                             )
                         },

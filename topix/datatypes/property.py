@@ -4,17 +4,17 @@ from __future__ import annotations
 
 import abc
 
+from enum import IntEnum, StrEnum
 from typing import Annotated, Literal, Type
 
 from pydantic import BaseModel, Field
 
 from topix.datatypes.chat.tool_call import ToolCall
-from topix.datatypes.enum import CustomEnum
 from topix.datatypes.mime import MimeTypeEnum
 from topix.utils.common import gen_uid
 
 
-class PropertyType(str, CustomEnum):
+class PropertyType(StrEnum):
     """Property type enum."""
 
     NUMBER = "number"
@@ -141,7 +141,7 @@ class KeywordProperty(Property):
 
     type: Literal[PropertyType.KEYWORD] = PropertyType.KEYWORD
     value: int | str | None = None
-    value_type: Type[CustomEnum] | None = None
+    value_type: Type[IntEnum | StrEnum] | None = None
 
 
 class MultiKeywordProperty(Property):
@@ -149,7 +149,7 @@ class MultiKeywordProperty(Property):
 
     type: Literal[PropertyType.MULTI_KEYWORD] = PropertyType.MULTI_KEYWORD
     values: list[int | str] = []
-    value_type: Type[CustomEnum] | None = None
+    value_type: Type[IntEnum | StrEnum] | None = None
 
 
 class LocationProperty(Property):

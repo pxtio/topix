@@ -1,9 +1,9 @@
 """Agent tool names."""
 
-from topix.datatypes.enum import CustomEnum
+from enum import StrEnum
 
 
-class AgentToolName(str, CustomEnum):
+class AgentToolName(StrEnum):
     """Enumeration for tool names used in the agent manager."""
 
     ANSWER_REFORMULATE = "answer_reformulate"

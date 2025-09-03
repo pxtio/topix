@@ -1,9 +1,9 @@
 """Mime Type Enum for Media Types."""
 
-from topix.datatypes.enum import CustomEnum
+from enum import StrEnum
 
 
-class MimeTypeEnum(str, CustomEnum):
+class MimeTypeEnum(StrEnum):
     """Enum for the different types of media."""
 
     PDF = 'application/pdf'

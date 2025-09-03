@@ -26,7 +26,7 @@ from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import support_temperature
 from topix.agents.datatypes.outputs import ToolOutput
-from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
+from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType, StreamingMessageType
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.utils import tool_execution_handler
 from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
@@ -111,6 +111,9 @@ class BaseAgent(Agent[Context]):
 
             # Format the input for the agent
             input_str = await self._input_formatter(context.context, input)
+
+            thought = ""
+
             async with tool_execution_handler(
                 context.context, name_override, input
             ) as tool_id:
@@ -131,7 +134,12 @@ class BaseAgent(Agent[Context]):
                     )
                     # Process and forward stream events
                     p = {"tool_id": tool_id, "tool_name": name_override}
+
                     async for stream_chunk in self._handle_stream_events(output, **p):
+                        if stream_chunk.type == StreamingMessageType.STREAM_REASONING_MESSAGE \
+                                and stream_chunk.content is not None \
+                                and stream_chunk.type in (ContentType.TOKEN, ContentType.MESSAGE):
+                            thought += stream_chunk.content.text
                         await context.context._message_queue.put(stream_chunk)
                 else:
                     # Run the agent and get the result
@@ -144,16 +152,19 @@ class BaseAgent(Agent[Context]):
 
             # Extract the final output from the agent
             output: ToolOutput = await self._output_extractor(context.context, output)
-
-            context.context.tool_calls.append(
-                ToolCall(
-                    id=tool_id,
-                    name=name_override,
-                    arguments={"input": input},
-                    output=output,
-                    state=ToolCallState.COMPLETED,
-                )
+            toolcall_output = ToolCall(
+                id=tool_id,
+                name=name_override,
+                arguments={"input": input},
+                thought=thought if thought != "" else None,
+                output=output,
+                state=ToolCallState.COMPLETED,
             )
+            # append tool call output to message queue for streaming
+            await context.context._message_queue.put(toolcall_output)
+
+            # keep track of all tool calls made during the agent's execution for context
+            context.context.tool_calls.append(toolcall_output)
 
             return str(output)
 
@@ -194,9 +205,10 @@ class BaseAgent(Agent[Context]):
     ) -> AsyncGenerator[AgentStreamMessage, None]:
         """Handle streaming events from the agent."""
         event_type_map = {
-            ResponseTextDeltaEvent: "stream_message",
-            ResponseReasoningSummaryTextDeltaEvent: "stream_reasoning_message",
+            ResponseTextDeltaEvent: StreamingMessageType.STREAM_MESSAGE,
+            ResponseReasoningSummaryTextDeltaEvent: StreamingMessageType.STREAM_REASONING_MESSAGE,
         }
+
         async for event in stream_response.stream_events():
             if event.type == RAW_RESPONSE_EVENT:
                 for cls, msg_type in event_type_map.items():
@@ -204,7 +216,8 @@ class BaseAgent(Agent[Context]):
                         yield AgentStreamMessage(
                             type=msg_type,
                             content=Content(
-                                type=ContentType.TOKEN, text=event.data.delta
+                                type=ContentType.TOKEN,
+                                text=event.data.delta
                             ),
                             **fixed_params,
                             is_stop=False,
@@ -228,7 +241,7 @@ class BaseAgent(Agent[Context]):
         tool.is_enabled = True
 
     def set_enabled_tools(self, tool_names: list[AgentToolName]):
-        """Set Agent tool from `tool_names`，other tools will be disabled."""
+        """Set Agent tool from `tool_names`, other tools will be disabled."""
         for tool in self.tools:
             if tool.name in tool_names:
                 tool.is_enabled = True

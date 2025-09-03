@@ -5,8 +5,10 @@ import re
 from agents import ModelSettings, RunResult
 from topix.agents.base import BaseAgent
 from topix.agents.config import BaseAgentConfig
+from topix.agents.datatypes.annotations import RefAnnotation
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
+from topix.agents.datatypes.outputs import MemorySearchOutput
 from topix.store.qdrant.store import ContentStore
 
 NOT_FOUND = "No more relevant information found in the memory base."
@@ -92,15 +94,26 @@ class MemorySearch(BaseAgent):
         self,
         context: ReasoningContext,
         output: RunResult,
-    ) -> str:
-        final_output = output.final_output
+    ) -> MemorySearchOutput:
+        final_output: str = output.final_output
 
         # Extract the cited url in format [type](url)
-        pattern = r'\[[^\]]+\]\(([0-9a-fA-F]{4})\)'
-        short_ids = re.findall(pattern, final_output)
+        pattern = r'\[([^\]]+)\]\(([0-9a-fA-F]{4})\)'
+        matches = re.findall(pattern, final_output)
 
-        if not short_ids:
+        if not matches:
             # No relevant information found
-            return NOT_FOUND
+            return MemorySearchOutput(answer=NOT_FOUND)
 
-        return final_output
+        id_map = {idx[:4]: idx for idx in context._memory_cache}
+        ref_ids = []
+
+        def _replace_link(match):
+            _, short_id = match.groups()
+            long_id = id_map.get(short_id, None)
+            if long_id is not None:
+                ref_ids.append(RefAnnotation(ref_id=long_id))
+
+        rewritten = re.sub(pattern, _replace_link, final_output)
+
+        return MemorySearchOutput(answer=rewritten, references=ref_ids)

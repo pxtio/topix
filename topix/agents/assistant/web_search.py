@@ -238,26 +238,20 @@ class WebSearch(BaseAgent):
                 if search_results:
                     content = self._process_perplexity_response(content, search_results)
 
+            searches = [SearchResult(**result) for result in search_results]
             web_search_output = WebSearchOutput(
                 answer=content,
-                search_results=[
-                    SearchResult(
-                        url=result.get("url"),
-                        title=result.get("title"),
-                    )
-                    for result in search_results
-                ],
+                search_results=searches,
             )
-
-            context.tool_calls.append(
-                ToolCall(
-                    id=tool_id,
-                    name=name_override,
-                    arguments={"input": input},
-                    output=web_search_output,
-                    state=ToolCallState.COMPLETED
-                )
+            tool_call = ToolCall(
+                id=tool_id,
+                name=name_override,
+                arguments={"input": input},
+                output=web_search_output,
+                state=ToolCallState.COMPLETED
             )
+            context.tool_calls.append(tool_call)
+            await context._message_queue.put(tool_call)
             return web_search_output
 
         return run_agent

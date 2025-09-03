@@ -13,6 +13,7 @@ from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.stream import AgentStreamMessage
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.utils import tool_execution_handler
+from topix.datatypes.chat.tool_call import ToolCall
 
 DEFAULT_MAX_TURNS = 5
 
@@ -157,8 +158,8 @@ class AgentRunner:
         asyncio.create_task(stream_events())
 
         while True:
-            message: AgentStreamMessage = await context._message_queue.get()
+            message: AgentStreamMessage | ToolCall = await context._message_queue.get()
             yield message
-            if message.is_stop:
+            if message.type != "tool_call" and message.is_stop:
                 if message.tool_name == AgentToolName.RAW_MESSAGE:
                     break

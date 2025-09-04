@@ -66,7 +66,7 @@ export const Conversation = ({ chatId }: { chatId: string }) => {
         {
           isStreaming && !streamingMessageId &&
           <div className='w-full flex flex-row justify-start items-center'>
-            <ThinkingDots message="Thinking..." />
+            <ThinkingDots message="Thinking" />
           </div>
         }
         <div className='h-screen'>

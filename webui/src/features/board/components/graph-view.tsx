@@ -1,5 +1,5 @@
 import { ReactFlowProvider } from "@xyflow/react"
-import GraphEditor from "./graph"
+import GraphEditor from "./flow/graph-editor"
 import { useGraphStore } from "../store/graph-store"
 import { useEffect, useState } from "react"
 import { ProgressBar } from "@/components/progress-bar"

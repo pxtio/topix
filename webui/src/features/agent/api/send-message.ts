@@ -5,7 +5,6 @@ import { buildResponse, handleStreamingResponse } from "../utils/stream"
 import { useChatStore } from "../store/chat-store"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type {ChatMessage } from "../types/chat"
-import { generateUuid } from "@/lib/common"
 import snakecaseKeys from "snakecase-keys"
 
 
@@ -61,19 +60,22 @@ export const useSendMessage = () => {
       chatId: string
     }) => {
       setIsStreaming(true)
+
       // Optimistically update the chat messages in the query cache
+      const newUserMessage = {
+        id: payload.messageId,
+        role: "user",
+        content: { markdown: payload.query },
+        chatUid: chatId,
+        properties: {}
+      } as ChatMessage
+
       try {
         queryClient.setQueryData<ChatMessage[]>(
           ["listMessages", chatId, userId],
           (oldMessages) => [
             ...(oldMessages || []),
-            {
-              id: generateUuid(),
-              role: "user",
-              content: { markdown: payload.query },
-              chatUid: chatId,
-              properties: {}
-            }
+            newUserMessage
           ]
         )
         const stream = sendMessage(payload, chatId, userId)
@@ -101,16 +103,25 @@ export const useSendMessage = () => {
             setNewAssistantMessageId = true
             queryClient.setQueryData<ChatMessage[]>(
               ["listMessages", chatId, userId],
-              (oldMessages) => [
-                ...(oldMessages || []),
-                {
+              (oldMessages) => {
+                const newAssistantMessage = {
                   id: responseId,
                   role: "assistant",
                   content: { markdown: "" },
                   chatUid: chatId,
                   properties: { reasoning: { type: "reasoning", reasoning: [] } }
+                } as ChatMessage
+
+                const check = oldMessages && oldMessages.length > 0 && oldMessages[oldMessages.length - 1].id === newUserMessage.id
+
+                if (!check) {
+                  return [...(oldMessages || []), newUserMessage, newAssistantMessage]
                 }
-              ]
+                return [
+                  ...(oldMessages || []),
+                  newAssistantMessage
+                ]
+              }
             )
           }
           if (iterations % streamingBatchSize === 1 || resp.toolEvent) {

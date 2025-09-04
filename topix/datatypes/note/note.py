@@ -35,3 +35,5 @@ class Note(Resource):
     # graph attributes
     graph_uid: str | None = None
     style: Style = Field(default_factory=Style)
+
+    pinned: bool = False

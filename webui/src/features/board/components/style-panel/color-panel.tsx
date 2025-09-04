@@ -110,7 +110,7 @@ export function ColorGrid({
       const baseHex = toBaseHex(f.fixedHex)
       if (baseHex) onPick(baseHex)
       // Optionally reflect fixed color as active family (or keep previous)
-      setActiveFamily(f)             // optional; safe either way
+      setActiveFamily(f)             // optional, safe either way
       return
     }
     setActiveFamily(f)

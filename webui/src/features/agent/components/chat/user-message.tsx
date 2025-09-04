@@ -21,6 +21,7 @@ export const UserMessage = ({ message, isLatest }: { message: string, isLatest: 
           w-auto max-w-[75%]
           bg-muted
           text-card-foreground text-base
+          text-left
           rounded-xl
           px-5 py-2
           ml-auto

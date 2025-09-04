@@ -1,24 +1,34 @@
 import { ReactFlowProvider } from "@xyflow/react"
-import GraphEditor from "./graph"
+import GraphEditor from "./flow/graph-editor"
 import { useGraphStore } from "../store/graph-store"
-import { useMindMapStore } from "@/features/agent/store/mindmap-store"
 import { useEffect, useState } from "react"
 import { ProgressBar } from "@/components/progress-bar"
+import { useGetBoard } from "../api/get-board"
 
 
 // This is the response focus component
 export const GraphView = () => {
-  const [loading, setLoading] = useState(true)
-  const { boardId, isLoading } = useGraphStore()
-  const { isProcessing, inProcessingBoardId } = useMindMapStore()
+  const [loaded, setLoaded] = useState<boolean>(false)
+  const { boardId } = useGraphStore()
+
+  const { getBoardAsync } = useGetBoard()
 
   useEffect(() => {
-    if (isLoading || (isProcessing && inProcessingBoardId === boardId)) {
-      setLoading(true)
-    } else {
-      setLoading(false)
+    const fetchBoard = async () => {
+      const fetched = await getBoardAsync()
+      if (fetched) {
+        setLoaded(true)
+      }
     }
-  }, [isLoading, isProcessing, inProcessingBoardId, boardId])
+    // update local store current board id with param from path
+    if (!loaded) {
+      fetchBoard()
+    }
+  }, [boardId, getBoardAsync, loaded])
+
+  useEffect(() => {
+    setLoaded(false)
+  }, [boardId])
 
   return (
     <>
@@ -28,7 +38,7 @@ export const GraphView = () => {
         <ReactFlowProvider>
           <div className="relative h-full w-full bg-background">
             {
-              loading ?
+              !loaded ?
               <div className="absolute inset-0 bg-background flex items-center justify-center">
                 <ProgressBar
                   message="Loading board"

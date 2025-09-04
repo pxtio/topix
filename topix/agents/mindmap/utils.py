@@ -14,6 +14,7 @@ def convert_root_to_graph(root: SimpleNode) -> tuple[list[Note], list[Link]]:
 
     def traverse(node: SimpleNode, parent_id: str | None = None):
         """Recursively traverse the SimpleNode and build notes and links."""
+        content = f"# {node.label}\n\n{node.note}".strip()
         note = Note(
             properties={
                 "emoji": IconProperty(
@@ -22,11 +23,8 @@ def convert_root_to_graph(root: SimpleNode) -> tuple[list[Note], list[Link]]:
                     )
                 )
             },
-            label=RichText(
-                markdown=node.label
-            ),
             content=RichText(
-                markdown=node.note
+                markdown=content
             )
         )
         nodes.append(note)

@@ -1,5 +1,5 @@
 import { useReactFlow } from "@xyflow/react"
-import { SloppyPresets, StrokeWidthPresets, type FillStyle, type FontFamily, type StrokeStyle, type Style, type TextAlign, type TextStyle } from "../../types/style"
+import { SloppyPresets, StrokeWidthPresets, type FillStyle, type FontFamily, type FontSize, type StrokeStyle, type Style, type TextAlign, type TextStyle } from "../../types/style"
 import type { NoteNode } from "../../types/flow"
 import { cn } from "@/lib/utils"
 import { useMemo } from "react"
@@ -9,7 +9,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Label } from "@/components/ui/label"
 import { useGraphStore } from "../../store/graph-store"
 import { AlignCenter, AlignLeft, AlignRight } from "lucide-react"
-import type { OptionalStringKeys } from "@/types/generic"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ColorGrid } from "./color-panel"
 
@@ -78,12 +77,19 @@ const FillGlyph = ({ kind }: { kind: FillStyle }) => {
 }
 
 
+const CornerGlyph = ({ r }: { r: 0 | 2 }) => (
+  <svg width='24' height='24' viewBox='0 0 24 24' className='text-foreground/80'>
+    <rect x='4' y='4' width='16' height='16' rx={r * 2} ry={r * 2} fill='none' stroke='currentColor' strokeWidth='1.75' />
+  </svg>
+)
+
+
 function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
   const s = style
 
-  function pickColor<K extends OptionalStringKeys<Style>>(key: K, v: string | null) {
-    const next = { [key]: (v ?? undefined) } as { [P in K]: Style[P] }
-    onStyleChange(next)
+  function pickColor<K extends keyof Style>(key: K, v: Style[K] | null) {
+    const next = { [key]: (v ?? undefined) } as Partial<Style>;
+    onStyleChange(next);
   }
 
   return (
@@ -150,6 +156,18 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
               </ToggleGroup>
             </Section>
 
+            {/* Corner radius (roundness: 0 | 2) */}
+            <Section title='Roundness'>
+              <ToggleGroup type='single' value={String(s.roundness ?? 0)} onValueChange={v => v && onStyleChange({ roundness: Number(v) as 0 | 2 })} className='flex gap-2'>
+                <ToggleGroupItem value='0' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>
+                  <CornerGlyph r={0} />
+                </ToggleGroupItem>
+                <ToggleGroupItem value='2' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>
+                  <CornerGlyph r={2} />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </Section>
+
             <Separator />
 
             {/* Text align */}
@@ -164,10 +182,20 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
             {/* Font family */}
             <Section title="Font family">
               <ToggleGroup type="single" value={s.fontFamily ?? "sans"} onValueChange={v => v && onStyleChange({ fontFamily: v as FontFamily })} className="flex gap-2">
-                <ToggleGroupItem value="handwriting" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-handwriting">A</ToggleGroupItem>
-                <ToggleGroupItem value="sans-serif" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-sans">A</ToggleGroupItem>
-                <ToggleGroupItem value="serif" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-serif">A</ToggleGroupItem>
+                <ToggleGroupItem value="handwriting" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-handwriting">Aa</ToggleGroupItem>
+                <ToggleGroupItem value="sans-serif" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-sans">Aa</ToggleGroupItem>
+                <ToggleGroupItem value="serif" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-serif">Aa</ToggleGroupItem>
                 <ToggleGroupItem value="monospace" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-mono">{"<>"}</ToggleGroupItem>
+              </ToggleGroup>
+            </Section>
+
+            {/* Font size */}
+            <Section title="Font size">
+              <ToggleGroup type="single" value={s.fontSize ?? "M"} onValueChange={v => v && onStyleChange({ fontSize: v as FontSize })} className="flex gap-2">
+                <ToggleGroupItem value="S" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary">S</ToggleGroupItem>
+                <ToggleGroupItem value="M" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary">M</ToggleGroupItem>
+                <ToggleGroupItem value="L" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary">L</ToggleGroupItem>
+                <ToggleGroupItem value="XL" className="h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary">XL</ToggleGroupItem>
               </ToggleGroup>
             </Section>
 
@@ -191,23 +219,38 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
 
 export function GraphSidebar() {
   const { nodes } = useGraphStore()
-
   const { setNodes } = useReactFlow()
 
-  const node = useMemo(() => nodes.find(n => n.selected) as NoteNode | undefined, [nodes])
+  // selected nodes
+  const selected = useMemo(
+    () => (nodes as NoteNode[]).filter(n => n.selected),
+    [nodes]
+  )
 
-  if (!node) return null
+  if (selected.length === 0) return null
 
-  const s = node.data.style
+  // show the style panel ONLY if there is at least one selected "not" sheet node
+  const selectedSheet = selected.find(n => n.data.style.type !== 'sheet')
+  if (!selectedSheet) return null
 
+  // use the first selected sheet's style as the panel's source-of-truth values
+  const s: Style = selectedSheet.data.style
+
+  // apply style changes to ALL selected nodes EXCEPT sheets
   const handleStyleChange = (next: Partial<Style>) => {
-    setNodes(ns => ns.map(n => n.id === node.id ? {
-      ...n,
-      data: {
-        ...n.data,
-        style: { ...s, ...next }
-      }
-    } : n))
+    setNodes(ns =>
+      (ns as NoteNode[]).map(n => {
+        if (!n.selected) return n
+        if (n.data.style.type === 'sheet') return n
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            style: { ...n.data.style, ...next }
+          }
+        }
+      })
+    )
   }
 
   return (

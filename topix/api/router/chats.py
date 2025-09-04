@@ -34,10 +34,11 @@ router = APIRouter(
 async def create_chat(
     response: Response,
     request: Request,
-    user_id: Annotated[str, Query(description="User Unique ID")]
+    user_id: Annotated[str, Query(description="User Unique ID")],
+    board_id: Annotated[str, Query(description="Board Unique ID")] = None
 ):
     """Create a new chat for the user."""
-    new_chat = Chat(user_uid=user_id)
+    new_chat = Chat(user_uid=user_id, graph_uid=board_id)
 
     store: ChatStore = request.app.chat_store
     await store.create_chat(new_chat)
@@ -104,7 +105,8 @@ async def list_chats(
 ):
     """List all chats for the user."""
     store: ChatStore = request.app.chat_store
-    return {"chats": await store.list_chats(user_uid=user_id)}
+    chats = await store.list_chats(user_uid=user_id)
+    return {"chats": [chat.model_dump(exclude_none=True) for chat in chats]}
 
 
 @router.delete("/{chat_id}/", include_in_schema=False)

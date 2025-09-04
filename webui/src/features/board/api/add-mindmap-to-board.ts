@@ -14,16 +14,17 @@ export const useAddMindMapToBoard = () => {
   const { mindmaps, clearMindMap } = useMindMapStore()
 
   const mutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<boolean> => {
       if (!boardId || !userId) {
-        return
+        return false
       }
       const mindMap = mindmaps.get(boardId)
       if (!mindMap) {
-        return
+        return false
       }
       const { nodes: mindMapNodes, edges: mindMapEdges } = mindMap
 
+      // Displace mind map nodes to avoid overlap with existing nodes
       const displacedMindMapNodes = displaceNodes(nodes, mindMapNodes)
       clearMindMap(boardId)
 
@@ -33,7 +34,7 @@ export const useAddMindMapToBoard = () => {
 
       await addNotes(boardId, userId, displacedMindMapNodes.map(node => convertNodeToNote(boardId, node)))
       await addLinks(boardId, userId, mindMapEdges.map(edge => convertEdgeToLink(boardId, edge)))
-      console.log('Mind map added to board:', boardId)
+      return true
     }
   })
 

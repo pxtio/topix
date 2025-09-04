@@ -17,14 +17,12 @@ export interface ChatStore {
   streams: Map<string, AgentResponse>
   isStreaming: boolean
   streamingMessageId?: string
-  currentChatId?: string
   llmModel: LlmModel
   webSearchEngine: WebSearchEngine
   setLlmModel: (model: LlmModel) => void
   setWebSearchEngine: (engine: WebSearchEngine) => void
   setIsStreaming: (isStreaming: boolean) => void
   setStreamingMessageId: (messageId?: string) => void
-  setCurrentChatId: (chatId?: string) => void
   setStream: (responseId: string, response: AgentResponse) => void
   clearStream: (responseId: string) => void
 }
@@ -46,8 +44,6 @@ export const useChatStore = create<ChatStore>((set) => ({
 
   streamingMessageId: undefined,
 
-  currentChatId: undefined,
-
   setLlmModel: (model) => set({ llmModel: model }),
 
   setWebSearchEngine: (engine) => set({ webSearchEngine: engine }),
@@ -55,8 +51,6 @@ export const useChatStore = create<ChatStore>((set) => ({
   setIsStreaming: (isStreaming) => set({ isStreaming }),
 
   setStreamingMessageId: (messageId) => set({ streamingMessageId: messageId }),
-
-  setCurrentChatId: (chatId) => set({ currentChatId: chatId }),
 
   setStream: (responseId, response) => set((state) => {
     return { streams: new Map(state.streams).set(responseId, response) }

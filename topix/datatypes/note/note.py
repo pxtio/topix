@@ -5,7 +5,12 @@ from typing import Literal
 from pydantic import Field
 
 from topix.datatypes.graph.style import Style
-from topix.datatypes.property import DataProperty, IconProperty, PositionProperty, SizeProperty
+from topix.datatypes.property import (
+    DataProperty,
+    IconProperty,
+    PositionProperty,
+    SizeProperty,
+)
 from topix.datatypes.resource import Resource
 
 
@@ -30,3 +35,5 @@ class Note(Resource):
     # graph attributes
     graph_uid: str | None = None
     style: Style = Field(default_factory=Style)
+
+    pinned: bool = False

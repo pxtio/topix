@@ -6,9 +6,7 @@ import { create } from "zustand/react"
  */
 export interface AppStore {
   userId: string
-  view: "chat" | "board"
   setUserId: (userId: string) => void
-  setView: (view: "chat" | "board") => void
 }
 
 
@@ -17,8 +15,6 @@ export interface AppStore {
  */
 export const useAppStore = create<AppStore>((set) => ({
   userId: "root",
-  view: "chat",
 
   setUserId: (userId) => set({ userId }),
-  setView: (view) => set({ view })
 }))

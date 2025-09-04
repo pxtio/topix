@@ -28,7 +28,7 @@ class OpenAIEmbedder:
         texts = [text if text else "$" for text in texts]
         # Call the embeddings endpoint asynchronously
         response = await self._client.embeddings.create(
-            model="text-embedding-3-small",
+            model=MODEL_NAME,
             input=texts,
             dimensions=DIMENSIONS
         )

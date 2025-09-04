@@ -4,10 +4,7 @@ import type { SendMessageRequestPayload } from "./types"
 import { buildResponse, handleStreamingResponse } from "../utils/stream"
 import { useChatStore } from "../store/chat-store"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import type { Chat, ChatMessage } from "../types/chat"
-import { generateUuid, trimText } from "@/lib/common"
-import { createNewChat } from "./create-chat"
-import { describeChat } from "./describe-chat"
+import type {ChatMessage } from "../types/chat"
 import snakecaseKeys from "snakecase-keys"
 
 
@@ -48,54 +45,37 @@ export async function* sendMessage(
  * @returns An object containing the sendMessage function and its state.
  */
 export const useSendMessage = () => {
-  const { setStream, setIsStreaming, setCurrentChatId, currentChatId, setStreamingMessageId } = useChatStore()
+  const { setStream, setIsStreaming, setStreamingMessageId } = useChatStore()
 
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
     mutationFn: async ({
       payload,
-      userId
+      userId,
+      chatId,
     }: {
       payload: SendMessageRequestPayload,
-      userId: string
+      userId: string,
+      chatId: string
     }) => {
       setIsStreaming(true)
+
       // Optimistically update the chat messages in the query cache
+      const newUserMessage = {
+        id: payload.messageId,
+        role: "user",
+        content: { markdown: payload.query },
+        chatUid: chatId,
+        properties: {}
+      } as ChatMessage
+
       try {
-        let newChatCreated = false
-        let chatId = currentChatId
-        if (!chatId) {
-          newChatCreated = true
-          chatId = await createNewChat(userId)
-          if (chatId) {
-            const newId = chatId
-            queryClient.setQueryData<Chat[]>(
-              ["listChats", userId],
-              (oldChats) => {
-                const newChat = { id: -1, uid: newId, label: trimText(payload.query, 20), createdAt: new Date().toISOString(), userId }
-                return [newChat, ...(oldChats || [])]
-              }
-            )
-          }
-
-          setCurrentChatId(chatId)
-        }
-
-        if (!chatId) {
-          return
-        }
         queryClient.setQueryData<ChatMessage[]>(
           ["listMessages", chatId, userId],
           (oldMessages) => [
             ...(oldMessages || []),
-            {
-              id: generateUuid(),
-              role: "user",
-              content: { markdown: payload.query },
-              chatUid: chatId,
-              properties: {}
-            }
+            newUserMessage
           ]
         )
         const stream = sendMessage(payload, chatId, userId)
@@ -123,36 +103,30 @@ export const useSendMessage = () => {
             setNewAssistantMessageId = true
             queryClient.setQueryData<ChatMessage[]>(
               ["listMessages", chatId, userId],
-              (oldMessages) => [
-                ...(oldMessages || []),
-                {
+              (oldMessages) => {
+                const newAssistantMessage = {
                   id: responseId,
                   role: "assistant",
                   content: { markdown: "" },
                   chatUid: chatId,
                   properties: { reasoning: { type: "reasoning", reasoning: [] } }
+                } as ChatMessage
+
+                const check = oldMessages && oldMessages.length > 0 && oldMessages[oldMessages.length - 1].id === newUserMessage.id
+
+                if (!check) {
+                  return [...(oldMessages || []), newUserMessage, newAssistantMessage]
                 }
-              ]
+                return [
+                  ...(oldMessages || []),
+                  newAssistantMessage
+                ]
+              }
             )
           }
           if (iterations % streamingBatchSize === 1 || resp.toolEvent) {
             setStream(responseId, resp.response)
           }
-        }
-        if (newChatCreated) {
-          // describe chat after creating it
-          const label = await describeChat(chatId, userId)
-          queryClient.setQueryData<Chat[]>(
-            ["listChats", userId],
-            (oldChats) => {
-              if (!oldChats) return []
-              return oldChats.map(chat =>
-                chat.uid === chatId
-                  ? { ...chat, label } // Replace with a new object
-                  : chat
-              )
-            }
-          )
         }
       } catch (error) {
         console.error("Error sending message:", error)
@@ -165,6 +139,7 @@ export const useSendMessage = () => {
   })
   return {
     sendMessage: mutation.mutate,
+    sendMessageAsync: mutation.mutateAsync,
     ...mutation
   }
 }

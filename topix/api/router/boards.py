@@ -2,11 +2,12 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile
 from fastapi.params import Body, Path, Query
 
 from topix.api.datatypes.requests import AddLinksRequest, AddNotesRequest, GraphUpdateRequest, LinkUpdateRequest, NoteUpdateRequest
 from topix.api.helpers import with_standard_response
+from topix.api.utils.thumbnail import load_png_as_data_url, save_thumbnail
 from topix.datatypes.graph.graph import Graph
 from topix.store.graph import GraphStore
 
@@ -80,6 +81,9 @@ async def get_graph(
     if not graph:
         raise HTTPException(status_code=404, detail="Graph not found")
 
+    if graph.thumbnail and graph.thumbnail.startswith("file://"):
+        graph.thumbnail = load_png_as_data_url(graph.thumbnail[len("file://"):])
+
     return {"graph": graph.model_dump(exclude_none=True)}
 
 
@@ -95,7 +99,13 @@ async def list_graphs(
     store: GraphStore = request.app.graph_store
 
     graphs = await store.list_graphs(user_uid=user_id)
-    return {"graphs": [{"id": idx, "label": label} if label else {"id": idx} for idx, label in graphs]}
+
+    # Convert file:// URLs to data URLs
+    for graph in graphs:
+        if graph.thumbnail and graph.thumbnail.startswith("file://"):
+            graph.thumbnail = load_png_as_data_url(graph.thumbnail[len("file://"):])
+
+    return {"graphs": [graph.model_dump(exclude_none=True) for graph in graphs]}
 
 
 @router.post("/{graph_id}/notes/", include_in_schema=False)
@@ -112,8 +122,12 @@ async def add_notes_to_graph(
     store: GraphStore = request.app.graph_store
 
     notes = body.notes
+
     for note in notes:
         note.graph_uid = graph_id
+
+    if not notes:
+        return {"message": "Received empty note array."}
 
     await store.add_notes(nodes=notes)
     return {"message": "Notes added to board successfully"}
@@ -191,8 +205,11 @@ async def add_links_to_graph(
     for link in links:
         link.graph_uid = graph_id
 
+    if not links:
+        return {"message": "Received empty link array."}
+
     await store.add_links(links=links)
-    return {"message": "Links added to board successfully"}
+    return {"message": "Links added to board successfully."}
 
 
 @router.get("/{graph_id}/links/{link_id}", include_in_schema=False)
@@ -248,3 +265,20 @@ async def remove_link_from_graph(
 
     await store.delete_link(link_id=link_id)
     return {"message": "Link removed from board successfully"}
+
+
+@router.post("/{graph_id}/thumbnail/", include_in_schema=False)
+@router.post("/{graph_id}/thumbnail")
+@with_standard_response
+async def save_graph_thumbnail(
+    request: Request,
+    graph_id: Annotated[str, Path(description="Graph ID")],
+    file: UploadFile = File(...)
+):
+    """Save a thumbnail image for the graph."""
+    file_bytes = await file.read()
+    path = save_thumbnail(graph_id, file_bytes)
+    store: GraphStore = request.app.graph_store
+
+    await store.update_graph(graph_id, {"thumbnail": path})
+    return {"path": path}

@@ -39,27 +39,31 @@ export async function getBoard(
  * Custom hook to fetch a board by its ID for the user.
  */
 export const useGetBoard = () => {
-  const userId = useAppStore((state) => state.userId)
-  const { boardId, setNodes, setEdges, setIsLoading } = useGraphStore()
-
+  // no selectors here → no subscription
   const mutation = useMutation({
-    mutationFn: async () => {
-      if (!boardId) {
-        return
-      }
+    mutationFn: async (): Promise<boolean> => {
+      const { boardId, setNodes, setEdges, isLoading, setIsLoading } = useGraphStore.getState()
+      const { userId } = useAppStore.getState()
+      if (!boardId) return false
+      if (isLoading) return false
       setIsLoading(true)
-      const { nodes: notes, edges: links } = await getBoard(boardId, userId)
-      const nodes = (notes || []).map(convertNoteToNode)
-      const edges = (links || []).map(convertLinkToEdge)
+      try {
+        const { nodes: notes, edges: links } = await getBoard(boardId, userId)
+        const nodes = (notes ?? []).map(convertNoteToNode)
+        const edges = (links ?? []).map(convertLinkToEdge)
 
-      setNodes(nodes)
-      setEdges(edges)
-      setIsLoading(false)
-    }
+        setNodes(nodes)
+        setEdges(edges)
+        return true
+      } finally {
+        setIsLoading(false)
+      }
+    },
   })
 
   return {
     getBoard: mutation.mutate,
-    ...mutation
+    getBoardAsync: mutation.mutateAsync,
+    ...mutation,
   }
 }

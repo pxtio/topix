@@ -1,5 +1,5 @@
 import { generateUuid } from "@/lib/common"
-import { defaultStyle, type Style } from "./style"
+import { createDefaultStyle, type Style } from "./style"
 
 
 /**
@@ -41,7 +41,7 @@ export const createDefaultLink = (
   version: 1,
   source,
   target,
-  style: defaultStyle(),
+  style: createDefaultStyle({}),
   createdAt: new Date().toISOString(),
   graphUid: boardId,
 })

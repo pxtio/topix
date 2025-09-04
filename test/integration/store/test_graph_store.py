@@ -1,4 +1,5 @@
-""""Integration tests for the GraphStore class."""
+"""Integration tests for the GraphStore class."""
+
 import pytest
 
 from topix.datatypes.graph.graph import Graph
@@ -6,13 +7,13 @@ from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.datatypes.resource import RichText
 from topix.store.graph import GraphStore
-from topix.store.qdrant.base import QdrantStore
+from topix.store.qdrant.store import ContentStore
 
 
 @pytest.fixture(scope="module")
 async def init_collection():
     """Initialize the Qdrant collection for graph tests."""
-    await QdrantStore.from_config().create_collection()
+    await ContentStore.from_config().create_collection(force_recreate=True)
 
 
 @pytest.mark.asyncio
@@ -35,8 +36,16 @@ async def test_graph_crud_lifecycle(config, init_collection):
         assert stored_graph.edges == []
 
         # 3. Add nodes
-        node1 = Note(label=RichText(markdown="First Node"), graph_uid=graph.uid, content=RichText(markdown="# Hello"))
-        node2 = Note(label=RichText(markdown="Second Node"), graph_uid=graph.uid, content=RichText(markdown="World!"))
+        node1 = Note(
+            label=RichText(markdown="First Node"),
+            graph_uid=graph.uid,
+            content=RichText(markdown="# Hello"),
+        )
+        node2 = Note(
+            label=RichText(markdown="Second Node"),
+            graph_uid=graph.uid,
+            content=RichText(markdown="World!"),
+        )
         await store.add_notes([node1, node2])
 
         # 4. Fetch nodes and verify
@@ -44,7 +53,12 @@ async def test_graph_crud_lifecycle(config, init_collection):
         assert {n.id for n in nodes} == {node1.id, node2.id}
 
         # 5. Add link between nodes
-        link = Link(source=node1.id, target=node2.id, graph_uid=graph.uid)
+        link = Link(
+            source=node1.id,
+            target=node2.id,
+            graph_uid=graph.uid,
+            content=RichText(markdown="Friend")
+        )
         await store.add_links([link])
 
         # 6. Fetch links and verify
@@ -63,10 +77,14 @@ async def test_graph_crud_lifecycle(config, init_collection):
         assert updated_nodes[0].label.markdown == "First Node Updated"
 
         # 9. Delete a node
-        await store.delete_node(node2.id)
+        await store.delete_node(node2.id, hard_delete=False)
         remaining_nodes = await store.get_nodes([node1.id, node2.id])
-        assert len(remaining_nodes) == 1
-        assert remaining_nodes[0].id == node1.id
+        assert len(remaining_nodes) == 2
+        for node in remaining_nodes:
+            if node.deleted_at is not None:
+                assert node.id == node2.id
+            else:
+                assert node.id == node1.id
 
         # 10. Delete graph (soft)
         await store.delete_graph(graph.uid, hard_delete=False)

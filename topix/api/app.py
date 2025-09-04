@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from topix.api.router import boards, chats, tools
+from topix.agents.mcp.manager import MCPServersManager
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
 from topix.setup import setup
@@ -27,6 +28,11 @@ def create_app(stage: StageEnum):
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         """Application lifespan context manager."""
+        # Initialize MCP servers (e.g., Python Executor) and attach to app state
+        app.mcp_servers_manager = MCPServersManager()
+        app.state.python_mcp_server = app.mcp_servers_manager.create_python_executor_mcp_server()
+        await app.mcp_servers_manager.init_servers()
+
         app.graph_store = GraphStore()
         await app.graph_store.open()
         app.user_store = UserStore()
@@ -34,6 +40,7 @@ def create_app(stage: StageEnum):
         app.chat_store = ChatStore()
         await app.chat_store.open()
         yield
+
         await app.graph_store.close()
         await app.user_store.close()
         await app.chat_store.close()

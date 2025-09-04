@@ -5,9 +5,9 @@ import logging
 import os
 import secrets
 from enum import Enum
-from typing import Any, List  # , Optional
-from e2b_code_interpreter import Sandbox
+from typing import Any, List
 
+from e2b_code_interpreter import Sandbox
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 
@@ -21,7 +21,7 @@ from agents import (
     Tool,
     function_tool,
 )
-from agents.mcp import MCPServerStdio  # , create_static_tool_filter
+from agents.mcp import MCPServerStdio
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
@@ -99,15 +99,16 @@ class CodeInterpreter(BaseAgent):
         backend: CodeInterpreterBackend | None = CodeInterpreterBackend.OPENAI,
         mcp_servers: List[MCPServerStdio] = [],
     ):
-        """Initialize the code interpreter agent.
+        """
+        Initialize the code interpreter agent.
 
         Args:
-            model: The model to use for the agent
-            instructions_template: Template for agent instructions
-            model_settings: Model configuration settings
-            backend: Code execution backend to use
-            mcp_servers: List of MCPServerStdio instances (required if using MCP backend)
-            e2b_api_key: E2B API key (required if using E2B backend)
+            model: The model to use for the agent.
+            instructions_template: Template for agent instructions.
+            model_settings: Model configuration settings.
+            backend: Code execution backend to use.
+            mcp_servers: List of MCPServerStdio instances (required if using MCP backend).
+            e2b_api_key: E2B API key (required if using E2B backend).
         """
         name = "Code Interpreter"
         instructions_dict = {"time": datetime.datetime.now().strftime("%Y-%m-%d")}
@@ -124,20 +125,6 @@ class CodeInterpreter(BaseAgent):
             ]
         elif backend == CodeInterpreterBackend.E2B:
             tools = [self._create_e2b_tool()]
-        # elif backend == CodeInterpreterBackend.MCP:
-        #     # Use MCP tool instead of server to avoid connection issues
-        #     python_mcp_server = self.add_stdio_server(
-        #         name="Python Executor MCP",
-        #         command="/home/louis/.deno/bin/deno",
-        #         args=[
-        #             "run",
-        #             "--allow-net", "--allow-read=node_modules", "--allow-write=node_modules",
-        #             "--node-modules-dir=auto",
-        #             "jsr:@pydantic/mcp-run-python", "stdio"
-        #         ],
-        #     )
-            # await python_mcp_server.connect()
-            # mcp_servers.append(python_mcp_server)
 
         hooks = CodeInterpreterAgentHook()
 
@@ -157,10 +144,23 @@ class CodeInterpreter(BaseAgent):
         super().__post_init__()
 
     def _create_e2b_tool(self) -> Tool:
-        """Create E2B code execution tool."""
+        """
+        Create and return an E2B code execution tool.
+
+        Returns:
+            Tool: A tool for executing Python code in an E2B sandbox.
+        """
 
         async def execute_python_e2b(code: str) -> str:
-            """Execute Python code in E2B sandbox."""
+            """
+            Execute Python code in an E2B sandbox.
+
+            Args:
+                code (str): The Python code to execute.
+
+            Returns:
+                str: The result of the code execution, including output, logs, and errors.
+            """
             try:
                 with Sandbox() as sandbox:
                     execution = sandbox.run_code(code)
@@ -180,6 +180,16 @@ class CodeInterpreter(BaseAgent):
         async def execute_python_e2b_tool(
             context: RunContextWrapper[ReasoningContext], code: str
         ) -> str:
+            """
+            Tool wrapper for executing Python code in E2B sandbox.
+
+            Args:
+                context (RunContextWrapper[ReasoningContext]): The agent's reasoning context. (not used yet)
+                code (str): The Python code to execute.
+
+            Returns:
+                str: The result of the code execution.
+            """
             return await execute_python_e2b(code)
 
         return execute_python_e2b_tool
@@ -187,7 +197,16 @@ class CodeInterpreter(BaseAgent):
     async def _output_extractor(
         self, context: ReasoningContext, output: RunResult
     ) -> CodeInterpreterOutput:
-        """Format the output of the code interpreter agent."""
+        """
+        Format and extract the output of the code interpreter agent.
+
+        Args:
+            context (ReasoningContext): The agent's reasoning context.
+            output (RunResult): The result of the agent's run.
+
+        Returns:
+            CodeInterpreterOutput: The formatted output including answer, executed code, and annotations.
+        """
         media = []
         exectuted_code = ""
         for item in output.new_items:
@@ -220,7 +239,15 @@ class CodeInterpreter(BaseAgent):
         self,
         media: list,
     ) -> list[TextMessageContent | ImageMessageContent]:
-        """Return a list of text and image message contents."""
+        """
+        Return a list of text and image message contents from media annotations.
+
+        Args:
+            media (list): List of media annotations to process.
+
+        Returns:
+            list[TextMessageContent | ImageMessageContent]: List of message content objects for chat display.
+        """
         content = []
         if media:
             client = AsyncOpenAI()

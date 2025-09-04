@@ -82,7 +82,7 @@ class Plan(BaseAgent):
             time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
-        model_settings = model_settings or ModelSettings(temperature=0.01, max_tokens=8000)
+        model_settings = model_settings or ModelSettings(max_tokens=8000)
 
         web_search = web_search or WebSearch()
         content_store = content_store or ContentStore.from_config()

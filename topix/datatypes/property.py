@@ -9,7 +9,7 @@ from typing import Annotated, Literal, Type
 
 from pydantic import BaseModel, Field
 
-from topix.datatypes.chat.tool_call import ToolCall
+from topix.agents.datatypes.tool_call import ToolCall
 from topix.datatypes.mime import MimeTypeEnum
 from topix.utils.common import gen_uid
 

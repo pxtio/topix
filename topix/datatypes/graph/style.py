@@ -41,7 +41,7 @@ class TextAlign(StrEnum):
     RIGHT = "right"
 
 
-class FontSize(str, CustomEnum):
+class FontSize(StrEnum):
     """Enumeration for font sizes."""
 
     S = "S"
@@ -50,7 +50,7 @@ class FontSize(str, CustomEnum):
     XL = "XL"
 
 
-class FontFamily(str, CustomEnum):
+class FontFamily(StrEnum):
     """Enumeration for font families."""
 
     HANDWRITING = "handwriting"

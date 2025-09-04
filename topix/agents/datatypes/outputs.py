@@ -12,7 +12,7 @@ class WebSearchOutput(BaseModel):
     """Output from web search tool."""
 
     type: Literal["web_search"] = "web_search"
-    answer: str | None = None
+    answer: str = ""
     search_results: list[SearchResult]
 
     def __str__(self) -> str:

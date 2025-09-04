@@ -4,7 +4,7 @@ import asyncio
 from pydantic import BaseModel, PrivateAttr
 
 from topix.agents.datatypes.stream import AgentStreamMessage
-from topix.datatypes.chat.tool_call import ToolCall
+from topix.agents.datatypes.tool_call import ToolCall
 
 
 class Context(BaseModel):

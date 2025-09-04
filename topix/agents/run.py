@@ -11,11 +11,11 @@ from agents.memory import Session
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.stream import AgentStreamMessage
+from topix.agents.datatypes.tool_call import ToolCall
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.utils import tool_execution_handler
-from topix.datatypes.chat.tool_call import ToolCall
 
-DEFAULT_MAX_TURNS = 5
+DEFAULT_MAX_TURNS = 8
 
 
 class AgentRunner:

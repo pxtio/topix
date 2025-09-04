@@ -1,3 +1,5 @@
+import type { Annotation, ToolOutput } from "./tool-outputs"
+
 /**
  * Represents the type of streaming message in the agent response.
  */
@@ -44,6 +46,7 @@ export interface AgentStreamMessage {
     content?: {
       type: StreamingContentType
       text: string
+      annotations: Annotation[]
     }
     isStop: boolean
 }
@@ -55,16 +58,10 @@ export interface AgentStreamMessage {
 export interface ReasoningStep {
   id: string
   name: ToolName
-  response: string
+  thought: string
+  output: ToolOutput
   state: ToolExecutionState
   eventMessages: string[]
-  sources?: {
-    type: "webpage",
-    webpage: {
-      name: string
-      url: string
-    }
-  }[]
 }
 
 
@@ -81,14 +78,19 @@ export interface AgentResponse {
  */
 export type ToolName =
   | "answer_reformulate"
-  | "knowledge_base_search"
   | "web_search"
   | "memory_search"
   | "code_interpreter"
-  | "key_points_extract"
-  | "graph_conversion"
   | "raw_message"
 
+
+export const ToolNameDescription: Record<ToolName, string> = {
+  "answer_reformulate": "Rephrase the answer",
+  "web_search": "Search the web",
+  "memory_search": "Search memory",
+  "code_interpreter": "Interpret code",
+  "raw_message": "Reasoning message"
+}
 
 // The RAW_MESSAGE tool name is used to indicate raw messages in the stream.
 export const RAW_MESSAGE: ToolName = "raw_message"

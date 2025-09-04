@@ -93,7 +93,8 @@ export const AssistantMessage = ({
   message: ChatMessage
 }) => {
   const streamingMessage = useChatStore((state) => state.streams.get(message.id))
-  const { isStreaming, streamingMessageId } = useChatStore()
+  const isStreaming = useChatStore((state) => state.isStreaming)
+  const streamingMessageId = useChatStore((state) => state.streamingMessageId)
 
   const streaming = isStreaming && streamingMessageId === message.id
 
@@ -109,8 +110,8 @@ export const AssistantMessage = ({
   const messageContent = message.content.markdown ?
     message.content.markdown
     :
-    lastStep?.response && isMainResponse(lastStep.name) ?
-    lastStep.response
+    lastStep?.output && isMainResponse(lastStep.name) ?
+    lastStep.output as string
     :
     ""
 

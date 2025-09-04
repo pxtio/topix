@@ -54,3 +54,22 @@ def support_temperature(model: str) -> bool:
     if model in [OpenAIModel.GPT_5, OpenAIModel.GPT_5_MINI, OpenAIModel.GPT_5_NANO]:
         return False
     return True
+
+
+def support_reasoning(model: str) -> bool:
+    """Check if the model supports reasoning."""
+    reasoning_models = {
+        # OpenAI reasoning-capable
+        OpenAIModel.GPT_5,
+        OpenAIModel.GPT_5_MINI,
+        OpenAIModel.GPT_5_NANO,
+
+        # Gemini reasoning-capable
+        GeminiModel.GEMINI_2_5_FLASH,
+        GeminiModel.GEMINI_2_5_PRO,
+
+        # Perplexity reasoning-capable
+        PerplexityModel.PERPLEXITY_SONAR
+    }
+
+    return model in reasoning_models

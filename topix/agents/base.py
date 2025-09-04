@@ -14,6 +14,7 @@ from openai.types.responses import (
 
 from agents import (
     Agent,
+    ModelSettings,
     RunContextWrapper,
     Runner,
     RunResult,
@@ -24,12 +25,12 @@ from agents import (
 from agents.extensions.models.litellm_model import LitellmModel
 from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.context import Context
-from topix.agents.datatypes.model_enum import support_temperature
+from topix.agents.datatypes.model_enum import support_reasoning, support_temperature
 from topix.agents.datatypes.outputs import ToolOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType, StreamingMessageType
+from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.utils import tool_execution_handler
-from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
 
 logger = logging.getLogger(__name__)
 
@@ -44,13 +45,36 @@ class BaseAgent(Agent[Context]):
     def __post_init__(self):
         """Automatically load Litellm Model if not openai's."""
         # if the model does not support temperature, set it to None
-        if not support_temperature(self.model):
-            self.model_settings.temperature = None
+        self.model_settings = self._adjust_model_settings(self.model, self.model_settings)
 
         if isinstance(self.model, str):
             model_type = self.model.split("/")[0]
             if model_type != "openai":
                 self.model = LitellmModel(self.model)
+
+    def _adjust_model_settings(self, model: str, model_settings: ModelSettings | None) -> ModelSettings:
+        model_settings = model_settings or ModelSettings()
+
+        if model_settings.max_tokens is None:
+            model_settings.max_tokens = 8000
+
+        # increase this to avoid tail repetition
+        if model_settings.frequency_penalty is None:
+            model_settings.frequency_penalty = 0.2
+
+        if support_reasoning(model):
+            if not model_settings.reasoning:
+                model_settings.reasoning = {"effort": "low", "summary": "auto"}
+        else:
+            model_settings.reasoning = None
+
+        if support_temperature(model):
+            if not model_settings.temperature:
+                model_settings.temperature = 0.01
+        else:
+            model_settings.temperature = None
+
+        return model_settings
 
     @classmethod
     def from_config(cls, config: BaseAgentConfig) -> "BaseAgent":
@@ -158,7 +182,7 @@ class BaseAgent(Agent[Context]):
                 id=tool_id,
                 name=name_override,
                 arguments={"input": input},
-                thought=thought if thought != "" else None,
+                thought=thought,
                 output=output,
                 state=ToolCallState.COMPLETED,
             )

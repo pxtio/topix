@@ -23,7 +23,7 @@ class ToolCall(BaseModel):
     type: Literal["tool_call"] = "tool_call"
     id: str
     name: AgentToolName
-    thought: str | None = None
+    thought: str = ""
     output: ToolOutput
     event_messages: list[str] = []
     state: ToolCallState = ToolCallState.STARTED

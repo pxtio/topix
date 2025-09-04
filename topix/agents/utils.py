@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from agents import RunContextWrapper
 from topix.agents.datatypes.context import Context, ToolCall
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
-from topix.datatypes.chat.tool_call import ToolCallState
+from topix.agents.datatypes.tool_call import ToolCallState
 from topix.utils.common import gen_uid
 
 

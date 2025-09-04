@@ -113,6 +113,7 @@ class BaseAgent(Agent[Context]):
             input_str = await self._input_formatter(context.context, input)
 
             thought = ""
+            output = ""
 
             async with tool_execution_handler(
                 context.context, name_override, input
@@ -122,36 +123,37 @@ class BaseAgent(Agent[Context]):
                     context.context, input, tool_id=tool_id
                 )
                 if hook_result is not None:
-                    return hook_result
-
-                if streamed:
-                    # Run the agent in streaming mode
-                    output = Runner.run_streamed(
-                        self,
-                        context=context.context,
-                        input=input_str,
-                        max_turns=max_turns,
-                    )
-                    # Process and forward stream events
-                    p = {"tool_id": tool_id, "tool_name": name_override}
-
-                    async for stream_chunk in self._handle_stream_events(output, **p):
-                        if stream_chunk.type == StreamingMessageType.STREAM_REASONING_MESSAGE \
-                                and stream_chunk.content is not None \
-                                and stream_chunk.type in (ContentType.TOKEN, ContentType.MESSAGE):
-                            thought += stream_chunk.content.text
-                        await context.context._message_queue.put(stream_chunk)
+                    output = hook_result
                 else:
-                    # Run the agent and get the result
-                    output: RunResult = await Runner.run(
-                        starting_agent=self,
-                        input=input_str,
-                        context=context.context,
-                        max_turns=max_turns,
-                    )
+                    if streamed:
+                        # Run the agent in streaming mode
+                        output = Runner.run_streamed(
+                            self,
+                            context=context.context,
+                            input=input_str,
+                            max_turns=max_turns,
+                        )
+                        # Process and forward stream events
+                        p = {"tool_id": tool_id, "tool_name": name_override}
 
-            # Extract the final output from the agent
-            output: ToolOutput = await self._output_extractor(context.context, output)
+                        async for stream_chunk in self._handle_stream_events(output, **p):
+                            if stream_chunk.type == StreamingMessageType.STREAM_REASONING_MESSAGE \
+                                    and stream_chunk.content is not None \
+                                    and stream_chunk.type in (ContentType.TOKEN, ContentType.MESSAGE):
+                                thought += stream_chunk.content.text
+                            await context.context._message_queue.put(stream_chunk)
+                    else:
+                        # Run the agent and get the result
+                        output: RunResult = await Runner.run(
+                            starting_agent=self,
+                            input=input_str,
+                            context=context.context,
+                            max_turns=max_turns,
+                        )
+
+                    # Extract the final output from the agent
+                    output: ToolOutput = await self._output_extractor(context.context, output)
+
             toolcall_output = ToolCall(
                 id=tool_id,
                 name=name_override,

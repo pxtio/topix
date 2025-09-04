@@ -13,7 +13,7 @@ class AnswerReformulate(BaseAgent):
 
     def __init__(
         self,
-        model: str = ModelEnum.OpenAI.GPT_4O,
+        model: str = ModelEnum.OpenAI.GPT_4_1,
         instructions_template: str = "answer_reformulation.system.jinja",
         model_settings: ModelSettings | None = None,
     ):

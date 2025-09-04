@@ -89,7 +89,7 @@ class MapifyAgent(BaseAgent):
         ]
         return result
 
-    async def graph_output_formatter(
+    async def _output_extractor_to_graph(
         self, context: Context, output: RunResult
     ) -> tuple[list[Note], list[Link]]:
         nodes = [

@@ -1,17 +1,22 @@
+"""MCP servers manager and configuration."""
+
 import logging
+
 from typing import List, Optional
+
 from agents.mcp import MCPServerStdio, create_static_tool_filter
 
 logger = logging.getLogger(__name__)
 
 
 class MCPServersManager:
-    """
-    Advanced MCP agent manager with tool filtering,
-    error handling and flexible configuration
+    """Advanced MCP agent manager with tool filtering.
+
+    Error handling and flexible configuration.
     """
 
     def __init__(self):
+        """Initialize the MCP servers manager."""
         self.mcp_servers = []
 
     def add_stdio_server(
@@ -24,8 +29,7 @@ class MCPServersManager:
         allowed_tools: Optional[List[str]] = None,
         blocked_tools: Optional[List[str]] = None
     ) -> MCPServerStdio:
-        """Add a local MCP server with tool filtering"""
-
+        """Add a local MCP server with tool filtering."""
         # Create tool filter if specified
         tool_filter = None
         if allowed_tools or blocked_tools:
@@ -50,13 +54,18 @@ class MCPServersManager:
         return server
 
     async def init_servers(self):
-        """Connect all configured MCP servers"""
+        """Connect all configured MCP servers."""
         for server in self.mcp_servers:
             await server.connect()
 
     def create_python_executor_mcp_server(self) -> MCPServerStdio:
-        """
-        Create and add the 'Python Executor MCP' server using deno and mcp-run-python.
+        """Create and add the 'Python Executor MCP' server using deno and mcp-run-python.
+
+        Args:
+            None
+
+        Returns:
+            MCPServerStdio: The python MCP server instance.
 
         Example:
         ```python
@@ -68,6 +77,7 @@ class MCPServersManager:
             mcp_servers=mcp_servers_manager.mcp_servers
         )
         ```
+
         """
         python_executor_mcp_server = self.add_stdio_server(
             name="Python Executor MCP",

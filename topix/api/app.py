@@ -10,8 +10,8 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from topix.api.router import boards, chats, tools
 from topix.agents.mcp.manager import MCPServersManager
+from topix.api.router import boards, chats, tools
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
 from topix.setup import setup

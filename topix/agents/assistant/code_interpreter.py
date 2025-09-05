@@ -4,6 +4,7 @@ import datetime
 import logging
 import os
 import secrets
+
 from enum import Enum
 from typing import Any, List
 
@@ -36,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 class CodeInterpreterBackend(str, Enum):
     """Available code interpreter backends."""
+
     OPENAI = "openai"
     E2B = "e2b"
     MCP = "mcp"
@@ -43,6 +45,7 @@ class CodeInterpreterBackend(str, Enum):
 
 class CodeInput(BaseModel):
     """Input model for code execution."""
+
     code: str
 
 
@@ -99,8 +102,7 @@ class CodeInterpreter(BaseAgent):
         backend: CodeInterpreterBackend | None = CodeInterpreterBackend.OPENAI,
         mcp_servers: List[MCPServerStdio] = [],
     ):
-        """
-        Initialize the code interpreter agent.
+        """Initialize the code interpreter agent.
 
         Args:
             model: The model to use for the agent.
@@ -109,6 +111,7 @@ class CodeInterpreter(BaseAgent):
             backend: Code execution backend to use.
             mcp_servers: List of MCPServerStdio instances (required if using MCP backend).
             e2b_api_key: E2B API key (required if using E2B backend).
+
         """
         name = "Code Interpreter"
         instructions_dict = {"time": datetime.datetime.now().strftime("%Y-%m-%d")}
@@ -144,22 +147,22 @@ class CodeInterpreter(BaseAgent):
         super().__post_init__()
 
     def _create_e2b_tool(self) -> Tool:
-        """
-        Create and return an E2B code execution tool.
+        """Create and return an E2B code execution tool.
 
         Returns:
             Tool: A tool for executing Python code in an E2B sandbox.
+
         """
 
         async def execute_python_e2b(code: str) -> str:
-            """
-            Execute Python code in an E2B sandbox.
+            """Execute Python code in an E2B sandbox.
 
             Args:
                 code (str): The Python code to execute.
 
             Returns:
                 str: The result of the code execution, including output, logs, and errors.
+
             """
             try:
                 with Sandbox() as sandbox:
@@ -180,8 +183,7 @@ class CodeInterpreter(BaseAgent):
         async def execute_python_e2b_tool(
             context: RunContextWrapper[ReasoningContext], code: str
         ) -> str:
-            """
-            Tool wrapper for executing Python code in E2B sandbox.
+            """Tool wrapper for executing Python code in E2B sandbox.
 
             Args:
                 context (RunContextWrapper[ReasoningContext]): The agent's reasoning context. (not used yet)
@@ -189,16 +191,18 @@ class CodeInterpreter(BaseAgent):
 
             Returns:
                 str: The result of the code execution.
+
             """
             return await execute_python_e2b(code)
 
         return execute_python_e2b_tool
 
     async def _output_extractor(
-        self, context: ReasoningContext, output: RunResult
+        self,
+        context: ReasoningContext,
+        output: RunResult,
     ) -> CodeInterpreterOutput:
-        """
-        Format and extract the output of the code interpreter agent.
+        """Format and extract the output of the code interpreter agent.
 
         Args:
             context (ReasoningContext): The agent's reasoning context.
@@ -206,9 +210,9 @@ class CodeInterpreter(BaseAgent):
 
         Returns:
             CodeInterpreterOutput: The formatted output including answer, executed code, and annotations.
+
         """
-        media = []
-        exectuted_code = ""
+        media, executed_code = [], ""
         for item in output.new_items:
             if hasattr(item, "raw_item") and hasattr(item.raw_item, "content"):
                 for content in item.raw_item.content:
@@ -220,18 +224,18 @@ class CodeInterpreter(BaseAgent):
             if item.type == 'tool_call_item':
                 if hasattr(item.raw_item, 'type'):
                     if item.raw_item.type == 'code_interpreter_call':
-                        exectuted_code += item.raw_item.code
+                        executed_code += item.raw_item.code
                     elif item.raw_item.type == 'tool_call' and hasattr(item.raw_item, 'name'):
                         # Handle custom tool calls (E2B, MCP)
                         if item.raw_item.name in ['execute_python_e2b', 'execute_python_mcp']:
                             if hasattr(item.raw_item, 'arguments') and item.raw_item.arguments:
-                                exectuted_code += item.raw_item.arguments.get('code', '')
+                                executed_code += item.raw_item.arguments.get('code', '')
 
         annotations = await self._return_chatmessage_with_media(media)
 
         return CodeInterpreterOutput(
             answer=output.final_output,
-            executed_code=exectuted_code,
+            executed_code=executed_code,
             annotations=annotations
         )
 
@@ -239,14 +243,14 @@ class CodeInterpreter(BaseAgent):
         self,
         media: list,
     ) -> list[TextMessageContent | ImageMessageContent]:
-        """
-        Return a list of text and image message contents from media annotations.
+        """Return a list of text and image message contents from media annotations.
 
         Args:
             media (list): List of media annotations to process.
 
         Returns:
             list[TextMessageContent | ImageMessageContent]: List of message content objects for chat display.
+
         """
         content = []
         if media:

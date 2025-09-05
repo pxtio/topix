@@ -15,13 +15,13 @@ from topix.datatypes.resource import RichText
 class Theme(BaseModel):
     """Theme."""
     title: str
-    description: str
+    content: str
 
 
 class MapifyOutput(BaseModel):
     """Mapify Output."""
     title: str
-    synthesis: str
+    content: str
     sources: list[str]
     themes: list[Theme]
 
@@ -78,13 +78,13 @@ class MapifyAgent(BaseAgent):
             SimpleNode(
                 level=0,
                 label=output.final_output.title,
-                note=output.final_output.synthesis,
+                note=output.final_output.content,
             )
         ] + [
             SimpleNode(
                 level=1,
                 label=theme.title,
-                note=theme.description,
+                note=theme.content,
             ) for theme in output.final_output.themes
         ]
         return result
@@ -95,7 +95,7 @@ class MapifyAgent(BaseAgent):
         nodes = [
             Note(
                 content=RichText(
-                    markdown=output.final_output.synthesis
+                    markdown=output.final_output.content
                 ),
                 label=RichText(
                     markdown=output.final_output.title,
@@ -104,7 +104,7 @@ class MapifyAgent(BaseAgent):
         ] + [
             Note(
                 content=RichText(
-                    markdown=theme.description,
+                    markdown=theme.content,
                 ),
                 label=RichText(
                     markdown=theme.title,

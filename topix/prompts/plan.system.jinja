@@ -50,7 +50,8 @@ The user input provides three sections:
   - If the query is simple enough to be answered without tools, **do not call any tools**, respond directly.
   - If one obvious tool call suffices, do it and proceed to answer_reformulate.
   - Only decompose for complex, multi-faceted, ambiguous, or time-sensitive queries.
-- **Step 1: Plan minimally, then call tools. After each tool call, *briefly* reflect and update the plan.**
+- **Step 1: Plan minimally on tool call steps, then call tools. (do not describe general steps or non-tool plans)
+  After each tool call, *briefly* reflect and update the plan.**
 - All tool queries must be self-contained, keyword-rich, and avoid vague references to earlier turns.
 
 ## ERROR HANDLING

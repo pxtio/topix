@@ -7,7 +7,10 @@ import "highlight.js/styles/rose-pine-dawn.css"
 import { Copy } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { CustomTable } from "./markdown/custom-table"
+import { CustomTable } from "./custom-table"
+import type { PluggableList } from 'unified'
+import { useRafThrottledString } from "@/features/agent/hooks/throttle-string"
+
 
 /** -------------------------------------------------------
  *  one-time transparent scrollbar styles (for code + tables)
@@ -139,132 +142,74 @@ const CustomLink: React.FC<CustomLinkProps> = ({ children, ...props }) => {
   )
 }
 
-/** -------------------------------------------------------
- *  Responsive-first markdown components
- *  ------------------------------------------------------*/
-const markdownComponents: Components = {
-  h1: (props) => (
-    <h1
-      className="mt-7 scroll-m-20 border-b pb-2 text-2xl font-heading font-semibold tracking-tight transition-colors first:mt-0"
-      {...props}
-    />
-  ),
-  h2: (props) => <h2 className="mt-6 scroll-m-20 text-xl font-heading font-semibold tracking-tight" {...props} />,
-  h3: (props) => <h3 className="mt-5 scroll-m-20 text-lg font-heading font-semibold tracking-tight" {...props} />,
-  h4: (props) => <h4 className="mt-4 scroll-m-20 text-base font-heading font-semibold tracking-tight" {...props} />,
-
-  p: (props) => (
-    <p
-      className="
-        leading-7 text-base [&:not(:first-child)]:mt-4
-        break-words whitespace-normal
-        min-w-0
-      "
-      {...props}
-    />
-  ),
-
-  blockquote: (props) => <blockquote className="mt-4 border-l-2 pl-6 italic text-base" {...props} />,
-
-  ul: (props) => (
-    <ul
-      className="
-        my-6 ml-6 list-disc [&>li]:mt-2
-        break-words whitespace-normal
-        min-w-0
-      "
-      {...props}
-    />
-  ),
-  ol: (props) => (
-    <ol
-      className="
-        my-6 ml-6 list-decimal [&>li]:mt-2
-        break-words whitespace-normal
-        min-w-0
-      "
-      {...props}
-    />
-  ),
-  li: (props) => <li className="break-words min-w-0" {...props} />,
-
-  a: (props) => <CustomLink {...props} />,
-
-  code: CustomCodeView,
-
-  // responsive images (scale down, never overflow)
-  img: (props) => (
-    <img
-      {...props}
-      className={cn("max-w-full h-auto rounded-lg my-4", props.className)}
-      style={{ ...(props.style || {}), height: "auto", maxWidth: "100%" }}
-      alt={props.alt || ""}
-    />
-  ),
-
-  // horizontally scrollable tables with transparent scrollbar track
-  table: (props) => <CustomTable {...props} />,
-
-  tr: (props) => <tr className="m-0 border-t p-0 even:bg-muted" {...props} />,
-  th: (props) => (
-    <th
-      className="
-        border-b px-4 py-2 text-left font-bold
-        [&[align=center]]:text-center [&[align=right]]:text-right
-        whitespace-nowrap
-      "
-      {...props}
-    />
-  ),
-  td: (props) => (
-    <td
-      className="
-        px-4 py-2 text-left
-        [&[align=center]]:text-center [&[align=right]]:text-right
-        align-top
-        break-words
-      "
-      {...props}
-    />
-  ),
-
-  b: (props) => <b className="font-semibold" {...props} />,
-  strong: (props) => <strong className="font-semibold" {...props} />,
-  em: (props) => <em className="italic" {...props} />,
-  del: (props) => <del className="line-through" {...props} />,
+/** lightweight code block for streaming (no copy button, no badge) */
+const LightCode: React.FC<CustomCodeViewProps> = ({ className, inline, children }) => {
+  const isBlock = inline === false || /language-/.test(className || "")
+  if (!isBlock) {
+    return <code className={cn("text-left text-sm text-mono bg-muted text-muted-foreground rounded-lg px-1", className)}>{children}</code>
+  }
+  return (
+    <pre className={cn("my-4 w-full min-w-0 rounded-2xl !bg-card text-sm text-mono border border-border overflow-x-auto", className)}>
+      <code className="block p-4 whitespace-pre break-words">{children}</code>
+    </pre>
+  )
 }
 
-/** -------------------------------------------------------
- *  Props
- *  ------------------------------------------------------*/
+const baseComponents: Components = {
+  h1: p => <h1 className="mt-7 scroll-m-20 border-b pb-2 text-2xl font-heading font-semibold tracking-tight first:mt-0" {...p} />,
+  h2: p => <h2 className="mt-6 scroll-m-20 text-xl font-heading font-semibold tracking-tight" {...p} />,
+  h3: p => <h3 className="mt-5 scroll-m-20 text-lg font-heading font-semibold tracking-tight" {...p} />,
+  h4: p => <h4 className="mt-4 scroll-m-20 text-base font-heading font-semibold tracking-tight" {...p} />,
+  p:  p => <p className="leading-7 text-base [&:not(:first-child)]:mt-4 break-words whitespace-normal min-w-0" {...p} />,
+  blockquote: p => <blockquote className="mt-4 border-l-2 pl-6 italic text-base" {...p} />,
+  ul: p => <ul className="my-6 ml-6 list-disc [&>li]:mt-2 break-words whitespace-normal min-w-0" {...p} />,
+  ol: p => <ol className="my-6 ml-6 list-decimal [&>li]:mt-2 break-words whitespace-normal min-w-0" {...p} />,
+  li: p => <li className="break-words min-w-0" {...p} />,
+  img: p => <img {...p} className={cn("max-w-full h-auto rounded-lg my-4", p.className)} style={{ ...(p.style || {}), height: "auto", maxWidth: "100%" }} alt={p.alt || ""} />,
+  table: p => <CustomTable {...p} />,
+  tr: p => <tr className="m-0 border-t p-0 even:bg-muted" {...p} />,
+  th: p => <th className="border-b px-4 py-2 text-left font-bold [&[align=center]]:text-center [&[align=right]]:text-right whitespace-nowrap" {...p} />,
+  td: p => <td className="px-4 py-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right align-top break-words" {...p} />,
+  b:  p => <b className="font-semibold" {...p} />,
+  strong: p => <strong className="font-semibold" {...p} />,
+  em: p => <em className="italic" {...p} />,
+  del: p => <del className="line-through" {...p} />
+}
+
 export interface MarkdownViewProps {
   content: string
+  isStreaming?: boolean
 }
 
-/** -------------------------------------------------------
- *  MarkdownView — memoized by content
- *  ------------------------------------------------------*/
 export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
-  ({ content }) => {
-    const memoContent = React.useMemo(() => content, [content])
+  ({ content, isStreaming = false }) => {
+    // throttle + defer
+    const throttled = useRafThrottledString(content, isStreaming)
+    const deferred = React.useDeferredValue(throttled)
 
-    React.useEffect(() => {
-      ensureScrollbarStyleInjected()
-    }, [])
+    // choose code renderer + highlighting based on stream state
+    const components = React.useMemo<Components>(() => ({
+      ...baseComponents,
+      code: isStreaming ? LightCode : CustomCodeView,
+      a: (props) => <CustomLink {...props} />
+    }), [isStreaming])
+
+    const rehypePlugins = React.useMemo<PluggableList>(() => {
+      return isStreaming ? [] : [[rehypeHighlight, { detect: false, ignoreMissing: true }]]
+    }, [isStreaming])
 
     return (
       <div className="w-full min-w-0">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          rehypePlugins={[[rehypeHighlight, { detect: false, ignoreMissing: true }]]}
-          components={markdownComponents}
+          rehypePlugins={rehypePlugins}
+          components={components}
         >
-          {memoContent}
+          {deferred}
         </ReactMarkdown>
       </div>
     )
   },
-  (prev, next) => prev.content === next.content
+  // skip re-render if both content + streaming flag are unchanged
+  (prev, next) => prev.content === next.content && prev.isStreaming === next.isStreaming
 )
-
-export default MarkdownView

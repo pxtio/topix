@@ -84,11 +84,12 @@ export const useSendMessage = () => {
         let setNewAssistantMessageId = false
 
         let streamingMessageId: string | undefined
+        let count = 0
         for await (const resp of response) {
           if (resp.steps.length === 0) {
             continue
           }
-
+          count ++
           const step = resp.steps[0]
           const responseId = step.id
 
@@ -122,7 +123,10 @@ export const useSendMessage = () => {
               }
             )
           }
-          setStream(responseId, resp)
+          const lastStepName = resp.steps.length > 0 ? resp.steps[resp.steps.length - 1].name : ""
+          if (count % 10 === 1 || lastStepName === "raw_message" || lastStepName === "answer_reformulate") {
+            setStream(responseId, resp)
+          }
         }
       } catch (error) {
         console.error("Error sending message:", error)

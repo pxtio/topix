@@ -1,4 +1,4 @@
-import { MarkdownView } from "@/components/markdown-view"
+import { MarkdownView } from "@/components/markdown/markdown-view"
 import { useChatStore } from "../../store/chat-store"
 import { ReasoningStepsView } from "./reasoning-steps"
 import { MiniLinkCard } from "../link-preview"
@@ -6,7 +6,6 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Copy, MousePointerClick } from "lucide-react"
 import { extractNamedLinksFromMarkdown } from "../../utils/md"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
 import type { ChatMessage } from "../../types/chat"
 import { isMainResponse } from "../../types/stream"
 import { GenMindmapButton } from "./actions/gen-mindmap"
@@ -69,15 +68,14 @@ const ResponseActions = ({ message }: { message: string }) => {
   }
 
   return (
-    <div className="flex flex-row items-center gap-2">
-      <Button
-        variant={null}
-        className="text-xs text-muted-foreground hover:text-foreground hover:bg-muted flex flex-row items-center gap-2"
+    <div className="flex flex-row items-center gap-1">
+      <button
+        className="transition-all text-xs text-muted-foreground/50 hover:text-foreground font-medium flex flex-row items-center gap-1 p-1 rounded-md"
         onClick={() => handleCopy(message)}
       >
         <Copy className='size-4 shrink-0' strokeWidth={1.75} />
-        <span>Copy Answer</span>
-      </Button>
+        <span>Copy</span>
+      </button>
       <GenMindmapButton message={message} />
     </div>
   )
@@ -124,7 +122,7 @@ export const AssistantMessage = ({
     undefined
 
   const lastStepMessage = showLastStepMessage ? (
-    <div className="w-full p-4">
+    <div className="w-full p-4 space-y-2">
       <MarkdownView content={messageContent} />
       {!streaming && <SourcesView answer={messageContent} />}
       {!streaming && <ResponseActions message={messageContent} />}

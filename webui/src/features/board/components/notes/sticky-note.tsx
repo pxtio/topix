@@ -1,5 +1,5 @@
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { MarkdownView } from '@/components/markdown-view'
+import { MarkdownView } from '@/components/markdown/markdown-view'
 import { memo } from 'react'
 
 interface StickyNoteProps {

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { memo, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { trimText } from "@/lib/common"
 import { ToolNameDescription, type AgentResponse, type ReasoningStep } from "../../types/stream"
@@ -33,7 +33,7 @@ const ReasoningMessage = ({
  * ReasoningStepView component displays a single reasoning step.
  * @param {ReasoningStep} step - The reasoning step to display.
  */
-const ReasoningStepView = ({
+const ReasoningStepViewImpl = ({
   step,
   isLoading
 }: { step: ReasoningStep, isLoading?: boolean }) => {
@@ -42,7 +42,7 @@ const ReasoningStepView = ({
   const description = ToolNameDescription[step.name]
   const { reasoning, message } = extractStepDescription(step)
 
-  const sources = getWebSearchUrls(step)
+  const sources = viewMore ? getWebSearchUrls(step) : []
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
@@ -78,18 +78,18 @@ const ReasoningStepView = ({
           {
             viewMore ? (
               <div className='flex flex-col gap-2'>
-                {
-                  reasoning !== "" && <ReasoningMessage reasoning={reasoning} />
-                }
-                <span className='text-card-foreground whitespace-pre-line'>
-                  {message}
-                </span>
                 <button
                   className='text-xs text-primary font-sans hover:underline ml-2'
                   onClick={handleClick}
                 >
                   {"Show less"}
                 </button>
+                {
+                  reasoning !== "" && <ReasoningMessage reasoning={reasoning} />
+                }
+                <span className='text-card-foreground whitespace-pre-line'>
+                  {message}
+                </span>
               </div>
             ) : (
               <div>
@@ -107,7 +107,7 @@ const ReasoningStepView = ({
           }
         </div>
         {
-          sources && sources.length > 0 &&
+          viewMore && sources && sources.length > 0 &&
           <div className='w-full flex flex-row flex-wrap items-start gap-1 p-1'>
             {
               sources.map((source, index) => (
@@ -140,6 +140,22 @@ const ReasoningStepView = ({
 }
 
 
+export const ReasoningStepView = memo(ReasoningStepViewImpl, (prev, next) => {
+  const a = prev.step
+  const b = next.step
+  if (prev.isLoading !== next.isLoading) return false
+  // compare the fields that actually affect rendering
+  return (
+    a.id === b.id &&
+    a.name === b.name &&
+    a.state === b.state &&
+    a.thought === b.thought &&
+    a.output === b.output &&
+    (a.eventMessages?.length || 0) === (b.eventMessages?.length || 0)
+  )
+})
+
+
 /**
  * ReasoningStepsViewProps defines the properties for the ReasoningStepsView component.
  * @property {boolean} isStreaming - Indicates if the response is being streamed.
@@ -157,7 +173,7 @@ export interface ReasoningStepsViewProps {
  * @param {ReasoningStepsViewProps} props - The properties for the component.
  */
 export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsViewProps) => {
-  const [isOpen, setIsOpen] = useState<boolean>(true)
+  const [isOpen, setIsOpen] = useState<boolean>(false)
 
   if (!response || response.steps.length === 0) {
     return (
@@ -184,7 +200,7 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
       </div>
       <div
         className={`
-          flex flex-col items-start gap-2
+          flex flex-col items-start
           font-mono
           text-sm
           relative

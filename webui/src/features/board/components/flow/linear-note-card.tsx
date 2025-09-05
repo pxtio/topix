@@ -1,7 +1,7 @@
 // components/flow/linear-note-card.tsx
 import { useCallback, useMemo, useState } from 'react'
 import type { NoteNode } from '../../types/flow'
-import { MarkdownView } from '@/components/markdown-view'
+import { MarkdownView } from '@/components/markdown/markdown-view'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { MilkdownProvider } from '@milkdown/react'

@@ -3,7 +3,7 @@ import type {
   AgentResponse,
   ReasoningStep,
   ToolExecutionState,
-  ToolName,
+  ToolName
 } from "../../types/stream"
 import { RAW_MESSAGE, isMainResponse } from "../../types/stream"
 import type {
@@ -59,12 +59,17 @@ export async function* buildResponse(
   const order: string[] = []
 
   let currentBlock: BlockKind = null
+  let rawBlockIndex = -1
+
+  const stepKeyFor = (toolId: string, toolName: ToolName) =>
+    isMainResponse(toolName) ? `${toolId}::raw:${rawBlockIndex}` : toolId
 
   const ensureStep = (toolId: string, toolName: ToolName) => {
-    let step = stepsById.get(toolId)
+    const key = stepKeyFor(toolId, toolName)
+    let step = stepsById.get(key)
     if (!step) {
       step = {
-        id: toolId,
+        id: key,
         name: toolName,
         thoughtText: "",
         outputText: "",
@@ -72,8 +77,8 @@ export async function* buildResponse(
         eventMessages: [],
         annotations: []
       }
-      stepsById.set(toolId, step)
-      order.push(toolId)
+      stepsById.set(key, step)
+      order.push(key)
     } else {
       step.name = toolName
     }
@@ -109,12 +114,19 @@ export async function* buildResponse(
   for await (const chunk of chunks) {
     const isRaw = isMainResponse(chunk.toolName)
 
+    // skip if it's a status message for a raw block
+    if (isRaw && chunk.content?.type === "status") {
+      continue
+    }
+
     // handle block transitions
     if (currentBlock === null) {
       currentBlock = isRaw ? "raw" : "tools"
+      if (currentBlock === "raw") rawBlockIndex++
     } else if (currentBlock === "tools" && isRaw) {
       completeAll()
       currentBlock = "raw"
+      rawBlockIndex++            // new raw block ⇒ new raw step key space
     } else if (currentBlock === "raw" && !isRaw) {
       completeLastRawIfAny()
       currentBlock = "tools"

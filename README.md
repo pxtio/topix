@@ -9,7 +9,7 @@ You need to install:
 For launching, the backend execute the following commands:
 
 ```bash
-cd topix
+cd backend
 uv sync
 # it will serve api at port 8888 by default unless u provide a custom port
 uv run python -m topix.api.app --port <custom-port>

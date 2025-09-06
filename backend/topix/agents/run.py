@@ -11,10 +11,11 @@ from agents.memory import Session
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.stream import AgentStreamMessage
+from topix.agents.datatypes.tool_call import ToolCall
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.utils import tool_execution_handler
 
-DEFAULT_MAX_TURNS = 5
+DEFAULT_MAX_TURNS = 8
 
 
 class AgentRunner:
@@ -65,6 +66,9 @@ class AgentRunner:
         if isinstance(input, str) or isinstance(input, BaseModel):
             input = await starting_agent._input_formatter(context=context, input=input)
 
+        if not input:
+            return None
+
         res = await Runner.run(
             starting_agent,
             input,
@@ -88,7 +92,7 @@ class AgentRunner:
         hooks: RunHooks[TContext] | None = None,
         run_config: RunConfig | None = None,
         previous_response_id: str | None = None,
-        session: Session | None = None,
+        session: Session | None = None
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Run a workflow starting at the given agent in streaming mode.
 
@@ -129,10 +133,13 @@ class AgentRunner:
 
         input = await starting_agent._input_formatter(context=context, input=input)
 
+        if not input:
+            return
+
         async def stream_events():
             async with tool_execution_handler(
                 context, tool_name=AgentToolName.RAW_MESSAGE, start_msg=input_msg
-            ) as p:
+            ) as tool_id:
                 res = Runner.run_streamed(
                     starting_agent,
                     input,
@@ -143,17 +150,16 @@ class AgentRunner:
                     previous_response_id=previous_response_id,
                     session=session,
                 )
-
                 async for stream_chunk in starting_agent._handle_stream_events(
-                    res, **p
+                    res, tool_id=tool_id, tool_name=AgentToolName.RAW_MESSAGE
                 ):
                     await context._message_queue.put(stream_chunk)
 
         asyncio.create_task(stream_events())
 
         while True:
-            message: AgentStreamMessage = await context._message_queue.get()
+            message: AgentStreamMessage | ToolCall = await context._message_queue.get()
             yield message
-            if message.is_stop:
+            if message.type != "tool_call" and message.is_stop:
                 if message.tool_name == AgentToolName.RAW_MESSAGE:
                     break

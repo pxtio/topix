@@ -1,9 +1,9 @@
 """Stage Enum."""
 
-from topix.datatypes.enum import CustomEnum
+from enum import StrEnum
 
 
-class StageEnum(str, CustomEnum):
+class StageEnum(StrEnum):
     """Enum for different stages of the agent's operation."""
 
     LOCAL = "local"

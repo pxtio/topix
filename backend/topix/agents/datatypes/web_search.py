@@ -1,8 +1,8 @@
 """Web Search Settings Data Types."""
-from topix.datatypes.enum import CustomEnum
+from enum import StrEnum
 
 
-class WebSearchOption(str, CustomEnum):
+class WebSearchOption(StrEnum):
     """Enumeration of web search options."""
 
     OPENAI = "openai"
@@ -11,7 +11,7 @@ class WebSearchOption(str, CustomEnum):
     LINKUP = "linkup"
 
 
-class WebSearchContextSize(str, CustomEnum):
+class WebSearchContextSize(StrEnum):
     """Enumeration of web search context sizes."""
 
     SMALL = "small"

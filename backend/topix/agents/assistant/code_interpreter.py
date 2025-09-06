@@ -143,6 +143,6 @@ class CodeInterpreter(BaseAgent):
                     f.write(image_data)
 
                 content.append(
-                    FileAnnotation(type="image", file_path=filepath, file_id=image_id)
+                    FileAnnotation(file_type="image", file_path=filepath, file_id=image_id)
                 )
         return content

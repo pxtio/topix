@@ -4,16 +4,18 @@ from collections.abc import AsyncGenerator
 
 from topix.agents.assistant.plan import Plan
 from topix.agents.assistant.query_rewrite import QueryRewrite
+from topix.agents.config import AssistantManagerConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.inputs import QueryRewriteInput
-from topix.agents.datatypes.stream import AgentStreamMessage, ContentType
-from topix.agents.datatypes.tools import AgentToolName, to_display_output
+from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType, StreamingMessageType
+from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
+from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
 from topix.datatypes.chat.chat import Message
-from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
 from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
+from topix.store.qdrant.store import ContentStore
 from topix.utils.common import gen_uid
 
 
@@ -25,12 +27,20 @@ class AssistantManager:
         self.query_rewrite_agent = query_rewrite_agent
         self.plan_agent = plan_agent
 
+    @classmethod
+    def from_config(cls, content_store: ContentStore, config: AssistantManagerConfig):
+        """Create an instance of AssistantManager from configuration."""
+        plan_agent = Plan.from_config(content_store, config.plan)
+        query_rewrite_agent = QueryRewrite.from_config(config.query_rewrite)
+
+        return cls(query_rewrite_agent, plan_agent)
+
     async def _compose_input(
         self,
         context: ReasoningContext,
         query: str,
         session: AssistantSession | None = None,
-        rephrase_query: bool = False
+        rephrase_query: bool = False,
     ) -> list[dict[str, str]]:
         if session:
             history = await session.get_items()
@@ -57,14 +67,22 @@ class AssistantManager:
         session: AssistantSession | None = None,
         message_id: str | None = None,
         max_turns: int = 5,
-        rephrase_query: bool = False
+        rephrase_query: bool = False,
     ) -> str:
         """Run the assistant agent with the provided context and query."""
-        input = await self._compose_input(context, query, session, rephrase_query=rephrase_query)
+        input = await self._compose_input(
+            context, query, session, rephrase_query=rephrase_query
+        )
 
         if session:
             await session.add_items(
-                [{"id": message_id or gen_uid(), "role": "user", "content": {"markdown": query}}]
+                [
+                    {
+                        "id": message_id or gen_uid(),
+                        "role": "user",
+                        "content": {"markdown": query},
+                    }
+                ]
             )
         # launch plan:
         res = await AgentRunner.run(
@@ -76,37 +94,36 @@ class AssistantManager:
             )
         return res
 
-    @staticmethod
-    def _update_reasoning_step(
-        steps: dict[str, ToolCall],
-        message: AgentStreamMessage
-    ) -> ToolCall:
-        """Update the reasoning step based on the message."""
-        if message.tool_id not in steps:
-            steps[message.tool_id] = ToolCall(
-                id=message.tool_id,
-                name=message.tool_name,
-                output="",
-                event_messages=[],
-                state=ToolCallState.STARTED,
-            )
-        if message.content:
-            if message.content.type != ContentType.STATUS:
-                steps[message.tool_id].output += message.content.text
-            else:
-                steps[message.tool_id].event_messages.append(message.content.text)
-        if message.is_stop:
-            steps[message.tool_id].state = ToolCallState.COMPLETED
-        return steps[message.tool_id]
+    def _convert_tool_call_to_annotation_message(
+        self,
+        tool_call: ToolCall
+    ) -> AgentStreamMessage | None:
+        if tool_call.name not in [AgentToolName.WEB_SEARCH, AgentToolName.MEMORY_SEARCH]:
+            return None
 
-    async def run_streamed(
+        annotations = []
+        match tool_call.name:
+            case AgentToolName.WEB_SEARCH:
+                annotations = tool_call.output.search_results
+            case AgentToolName.MEMORY_SEARCH:
+                annotations = tool_call.output.references
+
+        return AgentStreamMessage(
+            tool_id=tool_call.id,
+            tool_name=tool_call.name,
+            content=Content(
+                annotations=annotations
+            )
+        )
+
+    async def run_streamed(  # noqa: C901
         self,
         context: ReasoningContext,
         query: str,
         session: AssistantSession | None = None,
         message_id: str | None = None,
         max_turns: int = 8,
-        rephrase_query: bool = False
+        rephrase_query: bool = False,
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Run the assistant agent with the provided context and query.
 
@@ -118,7 +135,9 @@ class AssistantManager:
 
         """
         # Notify the start of the agent stream
-        agent_input = await self._compose_input(context, query, session, rephrase_query=rephrase_query)
+        agent_input = await self._compose_input(
+            context, query, session, rephrase_query=rephrase_query
+        )
 
         if session:
             await session.add_items(
@@ -136,39 +155,78 @@ class AssistantManager:
             self.plan_agent, input=agent_input, context=context, max_turns=max_turns
         )
 
-        final_message = ""
-        is_raw_answer = True
-        steps = {}
+        thought = ""
+        current_id = None
+        plan_message = ""
+        in_message = False
+
+        steps = []
+
         async for message in res:
-            self._update_reasoning_step(steps, message)
-            if self._is_response(message):
-                # if answer reformulate is used, reset final_message
-                if message.tool_name == AgentToolName.ANSWER_REFORMULATE and \
-                        is_raw_answer:
-                    final_message = ""
-                    is_raw_answer = False
-                if to_display_output(message.tool_name):
-                    final_message += message.content.text
-            yield message
+            if isinstance(message, AgentStreamMessage):
+                if message.tool_name == AgentToolName.RAW_MESSAGE:
+                    if not in_message:
+                        in_message = True
+                        current_id = message.tool_id
+
+                    if message.content and message.content.type in [ContentType.MESSAGE, ContentType.TOKEN]:
+                        if message.type == StreamingMessageType.STREAM_MESSAGE:
+                            plan_message += message.content.text
+                        elif message.type == StreamingMessageType.STREAM_REASONING_MESSAGE:
+                            thought += message.content.text
+                else:
+                    if in_message:
+                        if current_id and (plan_message or thought):
+                            step = ToolCall(
+                                id=current_id,
+                                name=AgentToolName.RAW_MESSAGE,
+                                output=plan_message,
+                                thought=thought,
+                                state=ToolCallState.COMPLETED
+                            )
+                            steps.append(step)
+                        # in new plan message, reset
+                        in_message = False
+                        current_id = None
+                        thought = ""
+                        plan_message = ""
+
+                yield message
+            elif isinstance(message, ToolCall):
+                annotation_message = self._convert_tool_call_to_annotation_message(message)
+                steps.append(message)
+                if annotation_message is not None:
+                    yield annotation_message
+
+        if current_id and (plan_message or thought):
+            step = ToolCall(
+                id=current_id,
+                name=AgentToolName.RAW_MESSAGE,
+                output=plan_message,
+                thought=thought,
+                state=ToolCallState.COMPLETED
+            )
+            steps.append(step)
 
         if session:
-            # If a session is provided, store the final answer
-            if not final_message.strip():
-                # Answer is empty
-                raise ValueError("No answer generated by the agent.")
+            if not steps:
+                raise Exception("No steps created during streaming!")
+
+            final_answer: str = str(steps[-1].output)
 
             await session.add_items(
                 [
                     Message(
                         role="assistant",
-                        content=RichText(markdown=final_message),
+                        content=RichText(markdown=final_answer),
                         properties={
                             "reasoning": ReasoningProperty(
                                 reasoning=[
-                                    val.model_dump(exclude_none=True) for val in steps.values()
+                                    step.model_dump(exclude_none=True)
+                                    for step in steps
                                 ]
                             )
-                        }
+                        },
                     )
                 ]
             )

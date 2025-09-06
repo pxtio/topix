@@ -7,10 +7,14 @@ from pathlib import Path
 from typing import Any, AsyncGenerator
 
 from jinja2 import Template
-from openai.types.responses import ResponseTextDeltaEvent
+from openai.types.responses import (
+    ResponseReasoningSummaryTextDeltaEvent,
+    ResponseTextDeltaEvent,
+)
 
 from agents import (
     Agent,
+    ModelSettings,
     RunContextWrapper,
     Runner,
     RunResult,
@@ -19,12 +23,14 @@ from agents import (
     function_tool,
 )
 from agents.extensions.models.litellm_model import LitellmModel
+from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.context import Context
-from topix.agents.datatypes.model_enum import support_temperature
+from topix.agents.datatypes.model_enum import support_penalties, support_reasoning, support_temperature
 from topix.agents.datatypes.outputs import ToolOutput
-from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
+from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType, StreamingMessageType
+from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
+from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.utils import tool_execution_handler
-from topix.datatypes.chat.tool_call import ToolCall, ToolCallState
 
 logger = logging.getLogger(__name__)
 
@@ -39,13 +45,46 @@ class BaseAgent(Agent[Context]):
     def __post_init__(self):
         """Automatically load Litellm Model if not openai's."""
         # if the model does not support temperature, set it to None
-        if not support_temperature(self.model):
-            self.model_settings.temperature = None
+        self.model_settings = self._adjust_model_settings(self.model, self.model_settings)
 
         if isinstance(self.model, str):
             model_type = self.model.split("/")[0]
             if model_type != "openai":
                 self.model = LitellmModel(self.model)
+
+    def _adjust_model_settings(self, model: str, model_settings: ModelSettings | None) -> ModelSettings:
+        model_settings = model_settings or ModelSettings()
+
+        if model_settings.max_tokens is None:
+            model_settings.max_tokens = 8000
+
+        # increase this to avoid tail repetition
+        if model_settings.frequency_penalty is None:
+            model_settings.frequency_penalty = 0.2
+
+        if support_reasoning(model):
+            if not model_settings.reasoning:
+                model_settings.reasoning = {"effort": "low", "summary": "auto"}
+        else:
+            model_settings.reasoning = None
+
+        if support_temperature(model):
+            if not model_settings.temperature:
+                model_settings.temperature = 0.01
+        else:
+            model_settings.temperature = None
+
+        if support_penalties(model):
+            if model_settings.frequency_penalty is None:
+                model_settings.frequency_penalty = 0.2
+
+        return model_settings
+
+    @classmethod
+    def from_config(cls, config: BaseAgentConfig) -> "BaseAgent":
+        """Create an instance of BaseAgent from configuration."""
+        kwargs = {key: getattr(config, key) for key in config.model_fields_set}
+        return cls(**kwargs)
 
     def as_tool(
         self,
@@ -100,48 +139,62 @@ class BaseAgent(Agent[Context]):
 
             # Format the input for the agent
             input_str = await self._input_formatter(context.context, input)
+
+            thought = ""
+            output = ""
+
             async with tool_execution_handler(
                 context.context, name_override, input
-            ) as p:
+            ) as tool_id:
                 # Handle tool execution within an async context manager
                 hook_result = await self._as_tool_hook(
-                    context.context, input, tool_id=p["tool_id"]
+                    context.context, input, tool_id=tool_id
                 )
                 if hook_result is not None:
-                    return hook_result
-
-                if streamed:
-                    # Run the agent in streaming mode
-                    output = Runner.run_streamed(
-                        self,
-                        context=context.context,
-                        input=input_str,
-                        max_turns=max_turns,
-                    )
-                    # Process and forward stream events
-                    async for stream_chunk in self._handle_stream_events(output, **p):
-                        await context.context._message_queue.put(stream_chunk)
+                    output = hook_result
                 else:
-                    # Run the agent and get the result
-                    output: RunResult = await Runner.run(
-                        starting_agent=self,
-                        input=input_str,
-                        context=context.context,
-                        max_turns=max_turns,
-                    )
+                    if streamed:
+                        # Run the agent in streaming mode
+                        output = Runner.run_streamed(
+                            self,
+                            context=context.context,
+                            input=input_str,
+                            max_turns=max_turns,
+                        )
+                        # Process and forward stream events
+                        p = {"tool_id": tool_id, "tool_name": name_override}
 
-            # Extract the final output from the agent
-            output: ToolOutput = await self._output_extractor(context.context, output)
+                        async for stream_chunk in self._handle_stream_events(output, **p):
+                            if stream_chunk.type == StreamingMessageType.STREAM_REASONING_MESSAGE \
+                                    and stream_chunk.content is not None \
+                                    and stream_chunk.type in (ContentType.TOKEN, ContentType.MESSAGE):
+                                thought += stream_chunk.content.text
+                            await context.context._message_queue.put(stream_chunk)
+                    else:
+                        # Run the agent and get the result
+                        output: RunResult = await Runner.run(
+                            starting_agent=self,
+                            input=input_str,
+                            context=context.context,
+                            max_turns=max_turns,
+                        )
 
-            context.context.tool_calls.append(
-                ToolCall(
-                    id=p["tool_id"],
-                    name=name_override,
-                    arguments={"input": input},
-                    output=output,
-                    state=ToolCallState.COMPLETED
-                )
+                    # Extract the final output from the agent
+                    output: ToolOutput = await self._output_extractor(context.context, output)
+
+            toolcall_output = ToolCall(
+                id=tool_id,
+                name=name_override,
+                arguments={"input": input},
+                thought=thought,
+                output=output,
+                state=ToolCallState.COMPLETED,
             )
+            # append tool call output to message queue for streaming
+            await context.context._message_queue.put(toolcall_output)
+
+            # keep track of all tool calls made during the agent's execution for context
+            context.context.tool_calls.append(toolcall_output)
 
             return str(output)
 
@@ -181,48 +234,46 @@ class BaseAgent(Agent[Context]):
         self, stream_response: RunResultStreaming, **fixed_params
     ) -> AsyncGenerator[AgentStreamMessage, None]:
         """Handle streaming events from the agent."""
+        event_type_map = {
+            ResponseTextDeltaEvent: StreamingMessageType.STREAM_MESSAGE,
+            ResponseReasoningSummaryTextDeltaEvent: StreamingMessageType.STREAM_REASONING_MESSAGE,
+        }
+
         async for event in stream_response.stream_events():
-            if event.type == RAW_RESPONSE_EVENT and isinstance(
-                event.data, ResponseTextDeltaEvent
-            ):
-                yield AgentStreamMessage(
-                    content=Content(type=ContentType.TOKEN, text=event.data.delta),
-                    **fixed_params,
-                    is_stop=False,
-                )
+            if event.type == RAW_RESPONSE_EVENT:
+                for cls, msg_type in event_type_map.items():
+                    if isinstance(event.data, cls):
+                        yield AgentStreamMessage(
+                            type=msg_type,
+                            content=Content(
+                                type=ContentType.TOKEN,
+                                text=event.data.delta
+                            ),
+                            **fixed_params,
+                            is_stop=False,
+                        )
 
-    def activate_tool(self, tool_name: str) -> None:
-        """Activate a tool by name.
+    def force_tool(
+        self,
+        tool_name: AgentToolName,
+    ):
+        """Force the agent to use a specific tool."""
+        tool = None
+        for t in self.tools:
+            if t.name == tool_name:
+                tool = t
+                break
 
-        Args:
-            tool_name (str): The name of the tool to activate.
-
-        """
-        activated = False
-        for tool in self.tools:
-            if tool.name == tool_name:
-                tool.is_enabled = True
-                activated = True
-
-        if not activated:
+        if tool is None:
             raise ValueError(f"Tool {tool_name} not found in agent {self.name}")
 
         self.model_settings.tool_choice = tool_name
+        tool.is_enabled = True
 
-    def deactivate_tool(self, tool_name: str) -> None:
-        """Deactivate a tool by name.
-
-        Args:
-            tool_name (str): The name of the tool to deactivate.
-
-        """
-        deactivated = False
+    def set_enabled_tools(self, tool_names: list[AgentToolName]):
+        """Set Agent tool from `tool_names`, other tools will be disabled."""
         for tool in self.tools:
-            if tool.name == tool_name:
+            if tool.name in tool_names:
+                tool.is_enabled = True
+            else:
                 tool.is_enabled = False
-                deactivated = True
-
-        self.model_settings.tool_choice = "auto"
-
-        if not deactivated:
-            raise ValueError(f"Tool {tool_name} not found in agent {self.name}")

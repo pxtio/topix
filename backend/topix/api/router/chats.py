@@ -8,13 +8,16 @@ from fastapi import APIRouter, Body, Request, Response
 from fastapi.params import Path, Query
 
 from topix.agents.assistant.manager import AssistantManager
-from topix.agents.assistant.plan import Plan
-from topix.agents.assistant.query_rewrite import QueryRewrite
+from topix.agents.config import AssistantManagerConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.describe_chat import DescribeChat
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
-from topix.api.datatypes.requests import ChatUpdateRequest, MessageUpdateRequest, SendMessageRequest
+from topix.api.datatypes.requests import (
+    ChatUpdateRequest,
+    MessageUpdateRequest,
+    SendMessageRequest,
+)
 from topix.api.helpers import with_standard_response, with_streaming
 from topix.datatypes.chat.chat import Chat
 from topix.store.chat import ChatStore
@@ -135,14 +138,19 @@ async def send_message(
     chat_store: ChatStore = request.app.chat_store
     session = AssistantSession(session_id=chat_id, chat_store=chat_store)
 
-    assistant = AssistantManager(
-        QueryRewrite(),
-        Plan(
-            model=body.model,
-            search_choice=body.web_search_engine
-        ))
-    if body.activated_tool:
-        assistant.plan_agent.activate_tool(body.activated_tool)
+    assistant_config = AssistantManagerConfig.from_yaml()
+    assistant_config.set_plan_model(body.model)
+    assistant_config.set_web_engine(body.web_search_engine)
+    assistant_config.set_reasoning(body.reasoning_effort)
+
+    assistant: AssistantManager = AssistantManager.from_config(
+        content_store=chat_store._content_store,
+        config=assistant_config
+    )
+
+    assistant.plan_agent.set_enabled_tools(body.enabled_tools)
+    if body.force_tool:
+        assistant.plan_agent.force_tool(body.force_tool)
 
     try:
         async for data in assistant.run_streamed(

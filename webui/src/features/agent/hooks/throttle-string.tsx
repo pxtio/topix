@@ -1,4 +1,3 @@
-// useRafThrottledString.ts
 import { useEffect, useRef, useState } from "react"
 
 export function useRafThrottledString(input: string, enabled: boolean) {

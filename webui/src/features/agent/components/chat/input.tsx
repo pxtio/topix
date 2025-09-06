@@ -15,6 +15,9 @@ import { useUpdateChat } from '../../api/update-chat'
 import { useNavigate } from '@tanstack/react-router'
 import { ChatUrl } from '@/routes'
 import { useDescribeChat } from '../../api/describe-chat'
+import { MemorySearchChoiceMenu } from './input-settings/memory-search'
+import { CodeInterpreterChoiceMenu } from './input-settings/code-interpreter'
+import type { SendMessageRequestPayload } from '../../api/types'
 
 
 export interface InputBarProps {
@@ -30,7 +33,10 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
 
   const userId = useAppStore((state) => state.userId)
 
-  const { llmModel, isStreaming, webSearchEngine } = useChatStore()
+  const llmModel = useChatStore((state) => state.llmModel)
+  const isStreaming = useChatStore((state) => state.isStreaming)
+  const webSearchEngine = useChatStore((state) => state.webSearchEngine)
+  const enabledTools = useChatStore((state) => state.enabledTools)
 
   const [input, setInput] = useState<string>("")
 
@@ -65,7 +71,8 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
       messageId: generateUuid(),
       model: llmModel,
       webSearchEngine,
-    }
+      enabledTools,
+    } as SendMessageRequestPayload
 
     // clear input right before launching search
     setInput("")
@@ -90,7 +97,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   )
 
   const className = clsx(
-    "transition-all absolute inset-x-0 p-4 z-50 flex flex-col justify-center items-center gap-16",
+    "transition-all absolute inset-x-0 p-4 pt-10 z-50 flex flex-col justify-center items-center gap-16 bg-background/80 supports-[backdrop-filter]:bg-background/60 backdrop-blur-md",
     chatId ?
     "bottom-0"
     :
@@ -102,7 +109,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
       {
         !chatId && (
           <div className='w-full h-72 flex flex-col items-center justify-start'>
-            <Oc className='fill-primary w-36'/>
+            <Oc/>
             <div className='text-center text-xl text-card-foreground'>
               <span>Ask me anything — I'll sniff out the answer!</span>
             </div>
@@ -119,12 +126,13 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
             bg-card
             text-card-foreground text-base
             border border-border
-            shadow-lg
           `}
         >
-          <div className='absolute -top-10 left-0 transform flex flex-row items-center gap-2'>
+          <div className='absolute -top-9 left-0 transform flex flex-row items-center gap-1'>
             <ModelChoiceMenu />
             <SearchEngineChoiceMenu />
+            <MemorySearchChoiceMenu />
+            <CodeInterpreterChoiceMenu />
           </div>
           <div className="relative flex flex-row items-center space-y-1 items-stretch">
             <div className='flex-1 p-2 flex items-center justify-center'>

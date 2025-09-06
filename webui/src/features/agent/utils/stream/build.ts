@@ -5,7 +5,7 @@ import type {
   ToolExecutionState,
   ToolName
 } from "../../types/stream"
-import { RAW_MESSAGE, isMainResponse } from "../../types/stream"
+import { RAW_MESSAGE, ToolNameDescription, isMainResponse } from "../../types/stream"
 import type {
   WebSearchOutput,
   MemorySearchOutput,
@@ -190,7 +190,7 @@ export function extractStepDescription(step: ReasoningStep): { reasoning: string
     if (step.eventMessages && step.eventMessages.length > 0) {
       return { reasoning: step.thought || "", message: step.eventMessages[step.eventMessages.length - 1] }
     }
-    return { reasoning: step.thought || "", message: `Running \`${step.name}\`` }
+    return { reasoning: step.thought || "", message: ToolNameDescription[step.name] }
   }
   return { reasoning: step.thought || "", message: step.output as string || "" }
 }

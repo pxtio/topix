@@ -49,7 +49,7 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="transition-all text-xs text-muted-foreground/50 hover:text-foreground font-medium flex flex-row items-center gap-1 p-1 rounded-md"
+                className="transition-all text-xs text-muted-foreground/50 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md"
               >
                 <HugeiconsIcon
                   icon={MagicWand05Icon}

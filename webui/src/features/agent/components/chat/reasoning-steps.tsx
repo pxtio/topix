@@ -1,13 +1,12 @@
 import { memo, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
-import { trimText } from "@/lib/common"
 import { ToolNameDescription, type AgentResponse, type ReasoningStep } from "../../types/stream"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { extractStepDescription, getWebSearchUrls } from "../../utils/stream/build"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { IdeaIcon } from "@hugeicons/core-free-icons"
 import { ThinkingDots } from "@/components/progress-bar"
+import { MiniLinkCard } from "../link-preview"
+import { cn } from "@/lib/utils"
 
 
 const ReasoningMessage = ({
@@ -49,10 +48,10 @@ const ReasoningStepViewImpl = ({
     setViewMore(!viewMore)
   }
 
-  const messageClass =
-    viewMore ?
-    'transition-all w-full h-auto min-h-2 p-2 rounded-xl bg-card text-card-foreground border border-border' :
-    'transition-all w-full h-auto min-h-2 p-2 rounded-xl border border-transparent'
+  const messageClass = cn(
+    'transition-all w-full h-auto min-h-2 p-2 rounded-xl border border-transparent',
+    viewMore ? 'bg-card' : ''
+  )
 
   return (
     <div
@@ -69,7 +68,7 @@ const ReasoningStepViewImpl = ({
         }
         {
           isLoading ?
-          <div className='relative w-2 h-2 rounded-full bg-primary/50 z-20' /> :
+          <div className='relative w-2 h-2 rounded-full bg-primary/75 z-20' /> :
           <div className='relative w-2 h-2 rounded-full bg-primary z-20' />
         }
       </div>
@@ -77,25 +76,35 @@ const ReasoningStepViewImpl = ({
         <div className={messageClass}>
           {
             viewMore ? (
-              <div className='flex flex-col gap-2'>
-                <button
-                  className='text-xs text-primary font-sans hover:underline ml-2'
-                  onClick={handleClick}
-                >
-                  {"Show less"}
-                </button>
+              <div className='flex flex-col gap-1'>
                 {
                   reasoning !== "" && <ReasoningMessage reasoning={reasoning} />
                 }
                 <span className='text-card-foreground whitespace-pre-line'>
                   {message}
                 </span>
+                {
+                  sources && sources.length > 0 &&
+                  <div className='w-full flex flex-row flex-wrap items-start gap-1'>
+                    {
+                      sources.map((source, index) => <MiniLinkCard key={index} annotation={source} />)
+                    }
+                  </div>
+                }
+                <button
+                  className='text-xs text-primary font-sans hover:underline ml-2'
+                  onClick={handleClick}
+                >
+                  {"Show less"}
+                </button>
               </div>
             ) : (
               <div>
-                <span className='text-card-foreground whitespace-pre-line font-medium'>
-                  {description}
-                </span>
+                {description && (
+                  <span className='text-card-foreground whitespace-pre-line font-medium'>
+                    {description}
+                  </span>
+                )}
                 <button
                   className='text-xs text-primary font-sans hover:underline ml-2'
                   onClick={handleClick}
@@ -106,34 +115,6 @@ const ReasoningStepViewImpl = ({
             )
           }
         </div>
-        {
-          viewMore && sources && sources.length > 0 &&
-          <div className='w-full flex flex-row flex-wrap items-start gap-1 p-1'>
-            {
-              sources.map((source, index) => (
-                <HoverCard key={index}>
-                  <HoverCardTrigger asChild>
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className='transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-medium border border-border bg-card hover:bg-accent rounded-lg'
-                    >
-                      {trimText(source.title || source.url, 20)}
-                    </a>
-                  </HoverCardTrigger>
-                  <HoverCardContent asChild>
-                    <ScrollArea>
-                      <div className='w-full'>
-                        <a className='text-sm text-muted-foreground' href={source.url}>{trimText(source.url, 50)}</a>
-                      </div>
-                    </ScrollArea>
-                  </HoverCardContent>
-                </HoverCard>
-              ))
-            }
-          </div>
-        }
       </div>
     </div>
   )

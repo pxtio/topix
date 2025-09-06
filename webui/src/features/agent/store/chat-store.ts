@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { AgentResponse } from "../types/stream"
+import type { AgentResponse, ToolName } from "../types/stream"
 import type { LlmModel } from "../types/llm"
 import type { WebSearchEngine } from "../types/web"
 
@@ -19,8 +19,10 @@ export interface ChatStore {
   streamingMessageId?: string
   llmModel: LlmModel
   webSearchEngine: WebSearchEngine
+  enabledTools: ToolName[]
   setLlmModel: (model: LlmModel) => void
   setWebSearchEngine: (engine: WebSearchEngine) => void
+  setEnabledTools: (tools: ToolName[]) => void
   setIsStreaming: (isStreaming: boolean) => void
   setStreamingMessageId: (messageId?: string) => void
   setStream: (responseId: string, response: AgentResponse) => void
@@ -40,6 +42,8 @@ export const useChatStore = create<ChatStore>((set) => ({
 
   webSearchEngine: "openai",
 
+  enabledTools: ["answer_reformulate", "web_search", "memory_search", "code_interpreter"],
+
   isStreaming: false,
 
   streamingMessageId: undefined,
@@ -47,6 +51,8 @@ export const useChatStore = create<ChatStore>((set) => ({
   setLlmModel: (model) => set({ llmModel: model }),
 
   setWebSearchEngine: (engine) => set({ webSearchEngine: engine }),
+
+  setEnabledTools: (tools) => set({ enabledTools: tools }),
 
   setIsStreaming: (isStreaming) => set({ isStreaming }),
 

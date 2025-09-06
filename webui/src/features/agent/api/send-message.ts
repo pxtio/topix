@@ -1,11 +1,12 @@
 import { API_URL } from "@/config/api"
 import type { AgentStreamMessage } from "../types/stream"
 import type { SendMessageRequestPayload } from "./types"
-import { buildResponse, handleStreamingResponse } from "../utils/stream"
+import { handleStreamingResponse } from "../utils/stream/digest"
 import { useChatStore } from "../store/chat-store"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type {ChatMessage } from "../types/chat"
 import snakecaseKeys from "snakecase-keys"
+import { buildResponse } from "../utils/stream/build"
 
 
 /**
@@ -81,17 +82,15 @@ export const useSendMessage = () => {
         const stream = sendMessage(payload, chatId, userId)
         const response = buildResponse(stream)
         let setNewAssistantMessageId = false
-        const streamingBatchSize = 2
 
-        let iterations = 0
         let streamingMessageId: string | undefined
+        let count = 0
         for await (const resp of response) {
-          iterations++
-          if (resp.response.steps.length === 0) {
+          if (resp.steps.length === 0) {
             continue
           }
-
-          const step = resp.response.steps[0]
+          count ++
+          const step = resp.steps[0]
           const responseId = step.id
 
           if (!streamingMessageId) {
@@ -124,8 +123,9 @@ export const useSendMessage = () => {
               }
             )
           }
-          if (iterations % streamingBatchSize === 1 || resp.toolEvent) {
-            setStream(responseId, resp.response)
+          const lastStepName = resp.steps.length > 0 ? resp.steps[resp.steps.length - 1].name : ""
+          if (count % 10 === 1 || lastStepName === "raw_message" || lastStepName === "answer_reformulate") {
+            setStream(responseId, resp)
           }
         }
       } catch (error) {

@@ -1,40 +1,28 @@
-import { useAppStore } from "@/store"
-import { usePreviewWebpage } from "../api/preview-link"
-import { Skeleton } from "@/components/ui/skeleton"
 import { trimText } from "@/lib/common"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
+import type { UrlAnnotation } from "../types/tool-outputs"
+import { extractMainDomain } from "../utils/url"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Link02Icon } from "@hugeicons/core-free-icons"
 
 
-export function SkeletonCard() {
-  return (
-    <div className="flex flex-col space-y-3">
-      <Skeleton className="h-full w-full rounded-xl" />
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-full" />
-      </div>
-    </div>
-  )
-}
-
-
+// MiniLinkCard component displays a compact link card with a hover preview.
 export const MiniLinkCard = ({
-  url,
-  siteName
+  annotation
 }: {
-  url: string
-  siteName: string
+  annotation: UrlAnnotation
 }) => {
+  const domain = extractMainDomain(annotation.url) || annotation.url
   return (
-    <div className="transition-all p-2 rounded-lg border border-border bg-card hover:bg-accent text-muted-foreground text-xs flex flex-row items-center gap-1 overflow-ellipsis">
+    <div className="transition-all px-2 py-1 rounded-lg border border-border bg-card hover:bg-accent text-muted-foreground text-xs flex flex-row items-center gap-1">
       <HoverCard>
         <HoverCardTrigger asChild>
-          <a className="font-mono font-medium inline-block" href={url} target="_blank" rel="noopener noreferrer">
-            {trimText(siteName, 20)}
+          <a className="font-mono font-medium inline-block" href={annotation.url} target="_blank" rel="noopener noreferrer">
+            {trimText(domain, 20)}
           </a>
         </HoverCardTrigger>
-        <HoverCardContent>
-          <LinkPreviewCard url={url} />
+        <HoverCardContent className='p-0 shadow-lg border border-border w-auto rounded-lg overflow-hidden'>
+          <LinkPreviewCard url={annotation.url} siteName={domain} title={annotation.title} content={annotation.content} />
         </HoverCardContent>
       </HoverCard>
     </div>
@@ -45,41 +33,32 @@ export const MiniLinkCard = ({
  * LinkPreviewCard component displays a preview of a webpage link.
  */
 export const LinkPreviewCard = ({
-  url
+  url,
+  siteName = undefined,
+  title = undefined,
+  content = undefined
 }: {
   url: string
+  siteName?: string
+  title?: string
+  content?: string
 }) => {
-  const userId = useAppStore((state) => state.userId)
-  const {
-    data: preview,
-    isLoading: loadingPreview
-  } = usePreviewWebpage({ userId, url })
-
-  if (loadingPreview) {
-    return <SkeletonCard />
-  }
-
-  if (!preview) {
-    return <div>No preview available for this link.</div>
-  }
-
-  const title = trimText(preview.title || '', 50)
-  const description = trimText(preview.description || '', 100)
-  const siteName = trimText(preview.siteName || url, 30)
+  const name = siteName || extractMainDomain(url) || url
+  const description = content || ''
 
   return (
-    <div className="flex flex-col space-y-3">
+    <div className="transition-all rounded-lg p-2 cursor-pointer bg-card hover:bg-accent hover:shadow-md w-40">
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">{title}</h4>
-        <p className="text-xs">{description}</p>
+        <h4 className="text-sm font-medium w-full truncate">{title}</h4>
+        <span className="text-xs w-full truncate">{description}</span>
         <a
-          className="flex flex-row items-center gap-2 text-xs text-muted-foreground font-medium"
+          className="flex flex-row items-center gap-1 text-xs text-muted-foreground font-medium font-mono"
           href={url}
           target="_blank"
           rel="noopener noreferrer"
         >
-          {preview.favicon && <img src={preview.favicon} alt="Favicon" className="h-4 w-4 shrink-0 rounded-full" />}
-          {siteName && <span className="">{siteName}</span>}
+          <HugeiconsIcon icon={Link02Icon} className="size-3" strokeWidth={1.75} />
+          {name && <span className="truncate">{name}</span>}
         </a>
       </div>
     </div>

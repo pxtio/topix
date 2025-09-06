@@ -24,12 +24,12 @@ from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.outputs import SearchResult, WebSearchOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
+from topix.agents.datatypes.tool_call import ToolCallState
 from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
 from topix.agents.utils import (
     ToolCall,
     tool_execution_handler,
 )
-from topix.datatypes.chat.tool_call import ToolCallState
 
 
 class WebSearchAgentHook(AgentHooks):
@@ -208,7 +208,7 @@ class WebSearch(BaseAgent):
             context = wrapper.context
             async with tool_execution_handler(
                 context, name_override, input
-            ) as fixed_params:
+            ) as tool_id:
                 if streamed:
                     _, stream = await self._call_litellm(streamed=True, input=input)
                     async for chunk in stream:
@@ -219,7 +219,8 @@ class WebSearch(BaseAgent):
                                     type=ContentType.TOKEN,
                                     text=chunk.choices[0].delta.content,
                                 ),
-                                **fixed_params,
+                                tool_id=tool_id,
+                                tool_name=name_override,
                                 is_stop=False,
                             )
                             # Add the message to the context
@@ -237,26 +238,20 @@ class WebSearch(BaseAgent):
                 if search_results:
                     content = self._process_perplexity_response(content, search_results)
 
+            searches = [SearchResult(**result) for result in search_results]
             web_search_output = WebSearchOutput(
                 answer=content,
-                search_results=[
-                    SearchResult(
-                        url=result.get("url"),
-                        title=result.get("title"),
-                    )
-                    for result in search_results
-                ],
+                search_results=searches,
             )
-
-            context.tool_calls.append(
-                ToolCall(
-                    id=fixed_params["tool_id"],
-                    name=name_override,
-                    arguments={"input": input},
-                    output=web_search_output,
-                    state=ToolCallState.COMPLETED
-                )
+            tool_call = ToolCall(
+                id=tool_id,
+                name=name_override,
+                arguments={"input": input},
+                output=web_search_output,
+                state=ToolCallState.COMPLETED
             )
+            context.tool_calls.append(tool_call)
+            await context._message_queue.put(tool_call)
             return web_search_output
 
         return run_agent

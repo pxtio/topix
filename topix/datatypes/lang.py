@@ -1,10 +1,10 @@
 """Language Enum Types."""
 from __future__ import annotations
 
-from topix.datatypes.enum import CustomEnum
+from enum import StrEnum
 
 
-class LangCodeEnum(str, CustomEnum):
+class LangCodeEnum(StrEnum):
     """Language Code Enum."""
 
     ENGLISH = "en"
@@ -15,7 +15,7 @@ class LangCodeEnum(str, CustomEnum):
     DUTCH = "nl"
 
 
-class LangEnum(str, CustomEnum):
+class LangEnum(StrEnum):
     """Language Enum."""
 
     ENGLISH = "English"

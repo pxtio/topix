@@ -48,15 +48,16 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
         !attachedBoardId ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant={null}
-                className="text-xs text-muted-foreground hover:text-foreground hover:bg-muted flex flex-row items-center gap-2"
+              <button
+                className="transition-all text-xs text-muted-foreground/50 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md"
               >
                 <HugeiconsIcon
                   icon={MagicWand05Icon}
+                  className='size-4'
+                  strokeWidth={1.75}
                 />
                 <span>Mapify</span>
-              </Button>
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48">
               <DropdownMenuLabel>Boards</DropdownMenuLabel>

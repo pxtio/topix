@@ -25,7 +25,7 @@ from agents import (
 from agents.extensions.models.litellm_model import LitellmModel
 from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.context import Context
-from topix.agents.datatypes.model_enum import support_reasoning, support_temperature
+from topix.agents.datatypes.model_enum import support_penalties, support_reasoning, support_temperature
 from topix.agents.datatypes.outputs import ToolOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType, StreamingMessageType
 from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
@@ -73,6 +73,10 @@ class BaseAgent(Agent[Context]):
                 model_settings.temperature = 0.01
         else:
             model_settings.temperature = None
+
+        if support_penalties(model):
+            if model_settings.frequency_penalty is None:
+                model_settings.frequency_penalty = 0.2
 
         return model_settings
 

@@ -21,6 +21,8 @@ class SendMessageRequest(BaseModel):
 
     enabled_tools: list[AgentToolName] = [
         AgentToolName.WEB_SEARCH,
+        AgentToolName.MEMORY_SEARCH,
+        AgentToolName.CODE_INTERPRETER,
         AgentToolName.ANSWER_REFORMULATE
     ]
     reasoning_effort: Literal["low", "medium", "high"] | None = None

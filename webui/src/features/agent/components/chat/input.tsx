@@ -108,9 +108,9 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
     <div className={className}>
       {
         !chatId && (
-          <div className='w-full h-72 flex flex-col items-center justify-start'>
+          <div className='relative w-full h-72 flex flex-col items-center justify-center'>
             <Oc/>
-            <div className='text-center text-xl text-card-foreground'>
+            <div className='absolute bottom-10 inset-x-0text-center text-xl text-card-foreground'>
               <span>Ask me anything — I'll sniff out the answer!</span>
             </div>
           </div>

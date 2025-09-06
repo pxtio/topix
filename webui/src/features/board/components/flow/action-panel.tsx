@@ -80,6 +80,7 @@ export function ActionPanel({
     <div
       className={`
         absolute z-50 border border-border shadow-md
+        backdrop-blur-md supports-[backdrop-filter]:bg-card/80 backdrop-saturate-150
         bg-card text-card-foreground rounded-xl
         p-1 flex gap-1
         right-2 top-1/2 -translate-y-1/2 md:translate-y-0

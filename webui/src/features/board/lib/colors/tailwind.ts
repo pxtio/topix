@@ -25,7 +25,7 @@ export const buildPalette = (shade: TailwindShade) =>
     return hex ? [{ name, hex }] : []
   })
 
-export const TAILWIND_100 = buildPalette(100)
+export const TAILWIND_200 = buildPalette(200)
 
 export const resolveFamilyShade = (family: string, shade: number) =>
   TAILWIND_HEX[family]?.[shade] ?? null

@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 // subcomponents
 import { Shape } from '../notes/shape'
 import { StickyNote } from '../notes/sticky-note'
-import { TAILWIND_100 } from '../../lib/colors/tailwind'
+import { TAILWIND_200 } from '../../lib/colors/tailwind'
 
 type NoteWithPin = Note & { pinned?: boolean }
 
@@ -168,7 +168,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
               </PopoverTrigger>
               <PopoverContent align='end' className='w-auto p-2'>
                 <div className='grid grid-cols-6 gap-2'>
-                  {TAILWIND_100.map(c => (
+                  {TAILWIND_200.map(c => (
                     <button
                       key={c.name}
                       className='h-6 w-6 rounded-full border border-border hover:brightness-95'

@@ -145,7 +145,7 @@ export const createDefaultStyle = ({
     strokeColor: "transparent",
     strokeWidth: 0.75,
     strokeStyle: "solid",
-    backgroundColor: "#ffedd5",
+    backgroundColor: "#fed7aa",
     fillStyle: "solid",
     textColor: "#000000",
     textStyle: "normal",

@@ -124,7 +124,7 @@ export const useSendMessage = () => {
             )
           }
           const lastStepName = resp.steps.length > 0 ? resp.steps[resp.steps.length - 1].name : ""
-          if (count % 10 === 1 || lastStepName === "raw_message" || lastStepName === "answer_reformulate") {
+          if (count % 10 === 1 || lastStepName === "raw_message") {
             setStream(responseId, resp)
           }
         }

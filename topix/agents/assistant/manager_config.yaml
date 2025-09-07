@@ -30,9 +30,3 @@ plan:
     instructions_template: code_interpreter.jinja
     model_settings:
       temperature: 0.01
-
-  answer_reformulate:
-    model: openai/gpt-4.1
-    instructions_template: answer_reformulation.system.jinja
-    model_settings:
-      temperature: 0.01

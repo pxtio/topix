@@ -10,6 +10,8 @@ import { GenMindmapButton } from "./actions/gen-mindmap"
 import { extractAnswerWebSources } from "../../utils/url"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { CopyIcon, Link04Icon } from "@hugeicons/core-free-icons"
+import { extractFinalSegment } from "../../utils/stream/text"
+import { useMemo } from "react"
 
 
 /**
@@ -106,13 +108,20 @@ export const AssistantMessage = ({
     streamingMessage.steps.length > 0
   ) || message
 
-  const messageContent = message.content.markdown ?
-    message.content.markdown
-    :
-    lastStep?.output && isMainResponse(lastStep.name) ?
+  const messageContent = message.content.markdown ? message.content.markdown : null
+
+  const rawContent = lastStep?.output && isMainResponse(lastStep.name) ?
     lastStep.output as string
     :
     ""
+
+    // extract final-only view for rendering
+  const { final: finalContent, started } = useMemo(
+    () => extractFinalSegment(rawContent),
+    [rawContent]
+  )
+
+  const markdownMessage = streaming ? (started ? finalContent : '') : (messageContent ? messageContent : finalContent)
 
   const agentResponse = streamingMessage ?
     streamingMessage
@@ -124,9 +133,9 @@ export const AssistantMessage = ({
 
   const lastStepMessage = showLastStepMessage ? (
     <div className="w-full p-4 space-y-2">
-      <MarkdownView content={messageContent} />
+      <MarkdownView content={markdownMessage} />
       {!streaming && agentResponse && <SourcesView answer={agentResponse} />}
-      {!streaming && <ResponseActions message={messageContent} />}
+      {!streaming && <ResponseActions message={finalContent} />}
     </div>
   ) : null
 

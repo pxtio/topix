@@ -10,7 +10,6 @@ from agents import (
     RunContextWrapper,
     Tool,
 )
-from topix.agents.assistant.answer_reformulate import AnswerReformulate
 from topix.agents.assistant.code_interpreter import CodeInterpreter
 from topix.agents.assistant.memory_search import NOT_FOUND, MemorySearch
 from topix.agents.assistant.web_search import WebSearch
@@ -43,10 +42,7 @@ class PlanHooks(AgentHooks):
         tool: Tool,
     ):
         """Handle tool calls and update the context with the results."""
-        if tool.name == AgentToolName.ANSWER_REFORMULATE:
-            # If the tool is the answer reformulation tool,
-            # we do not need to recall the LLM
-            agent.tool_use_behavior = "stop_on_first_tool"
+        pass
 
     async def on_tool_end(
         self,
@@ -71,7 +67,6 @@ class Plan(BaseAgent):
         model_settings: ModelSettings | None = None,
         web_search: WebSearch | None = None,
         memory_search: MemorySearch | None = None,
-        answer_reformulate: AnswerReformulate | None = None,
         code_interpreter: CodeInterpreter | None = None,
         content_store: ContentStore | None = None,
     ):
@@ -87,16 +82,11 @@ class Plan(BaseAgent):
         web_search = web_search or WebSearch()
         content_store = content_store or ContentStore.from_config()
         memory_search = memory_search or MemorySearch(content_store=content_store)
-        answer_reformulate = answer_reformulate or AnswerReformulate(model=model)
         code_interpreter = code_interpreter or CodeInterpreter()
 
         tools = [
             web_search.as_tool(AgentToolName.WEB_SEARCH, streamed=True),
             memory_search.as_tool(AgentToolName.MEMORY_SEARCH, streamed=True),
-            answer_reformulate.as_tool(
-                AgentToolName.ANSWER_REFORMULATE,
-                streamed=True,
-            ),
             code_interpreter.as_tool(AgentToolName.CODE_INTERPRETER, streamed=True),
         ]
         hooks = PlanHooks()
@@ -117,7 +107,6 @@ class Plan(BaseAgent):
         return cls(
             web_search=WebSearch.from_config(config.web_search),
             memory_search=MemorySearch.from_config(content_store, config.memory_search),
-            answer_reformulate=AnswerReformulate.from_config(config.answer_reformulate),
             code_interpreter=CodeInterpreter.from_config(config.code_interpreter),
             model=config.model,
             instructions_template=config.instructions_template,

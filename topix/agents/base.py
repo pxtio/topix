@@ -30,7 +30,7 @@ from topix.agents.datatypes.outputs import ToolOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType, StreamingMessageType
 from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
 from topix.agents.datatypes.tools import AgentToolName
-from topix.agents.utils import tool_execution_handler
+from topix.agents.utils.tools import tool_execution_handler
 
 logger = logging.getLogger(__name__)
 

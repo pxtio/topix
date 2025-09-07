@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
 import type { Options as RoughOptions } from 'roughjs/bin/core'
 import { useViewport } from '@xyflow/react'
+import clsx from 'clsx'
 
 type RoundedClass = 'none' | 'rounded-2xl'
 
@@ -120,14 +121,19 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     }
   }, [draw])
 
+  const mainDivClass = clsx(
+    'relative',
+    className || ''
+  )
+
   return (
-    <div ref={wrapperRef} className={`relative ${className || ''}`}>
+    <div ref={wrapperRef} className={mainDivClass}>
       <canvas
         ref={canvasRef}
         className='absolute inset-0 w-full h-full pointer-events-none'
         style={{ zIndex: 10, background: 'transparent' }}
       />
-      <div className='relative z-20'>
+      <div className='relative z-20 w-full h-full'>
         {children}
       </div>
     </div>

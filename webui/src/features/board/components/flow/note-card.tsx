@@ -47,11 +47,14 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
 
   // classNames derived from style
   const labelClass = useMemo(() => clsx(
-    'relative bg-transparent overflow-visible w-[300px] min-h-[50px] flex items-center justify-center',
-    isSheet ? `h-[300px] ${fontFamilyToTwClass(note.style.fontFamily)} p-4 pt-8` : 'p-2'
+    'relative bg-transparent overflow-visible flex items-center justify-center',
+    isSheet ?
+    `w-[300px] h-[300px] ${fontFamilyToTwClass(note.style.fontFamily)} p-4 pt-8`
+    :
+    'w-full h-full p-2'
   ), [isSheet, note.style.fontFamily])
 
-  const titleEditorClass = 'text-3xl focus:outline-none focus:ring-0 focus:border-none overflow-hidden whitespace-normal break-words resize-none w-full'
+  const titleEditorClass = 'text-3xl focus:outline-none focus:ring-0 focus:border-none overflow-visible whitespace-normal break-words resize-none w-full'
 
   const setDialogOpen = useCallback((v: boolean) => {
     if (typeof open === 'boolean') onOpenChange?.(v)

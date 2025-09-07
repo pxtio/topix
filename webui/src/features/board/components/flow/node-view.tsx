@@ -1,5 +1,5 @@
-import { memo, useEffect, useMemo, useRef } from 'react'
-import { Handle, type NodeProps, Position, useReactFlow } from '@xyflow/react'
+import { memo, useEffect, useMemo } from 'react'
+import { type ControlPosition, Handle, type NodeProps, NodeResizeControl, Position, useReactFlow } from '@xyflow/react'
 import type { NoteNode } from '../../types/flow'
 import { RoughRect } from '@/components/rough/rect'
 import { NodeCard } from './note-card'
@@ -13,9 +13,7 @@ import clsx from 'clsx'
 function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const userId = useAppStore(state => state.userId)
   const boardId = useGraphStore(state => state.boardId)
-
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const hasResizedRef = useRef(false)
+  const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
 
   const { getNode } = useReactFlow()
   const { updateNote } = useUpdateNote()
@@ -38,12 +36,10 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const node = getNode(id)
   if (!node) return null
 
-  const { width, height } = node
-
   const handleClassRight = 'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none -translate-x-[calc(50%-10px)] border-none'
   const handleClassLeft = 'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none translate-x-1/2 border-none'
 
-  const nodeClass = `relative font-handwriting drag-handle pointer-events-auto bg-transparent${hasResizedRef.current ? ' max-w-none' : ' max-w-[400px]'}`
+  const nodeClass = `w-full h-full relative font-handwriting drag-handle pointer-events-auto bg-transparent`
   const rounded = data.style.roundness > 0 ? 'rounded-2xl' : 'none'
   const frameClass = clsx(
     'shadow-lg rounded-md border border-border',
@@ -51,20 +47,25 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   )
 
   const content = (
-    <div ref={containerRef} style={{ width, height }} className={nodeClass}>
+    <div className={nodeClass}>
       <NodeCard note={data} selected={selected} />
       {selected && <div className='absolute -inset-1 border border-primary pointer-events-none rounded z-10' />}
     </div>
   )
 
+  const nodeType = data.style.type
+
+  const handleResizeStart = () => setIsResizingNode(true)
+  const handleResizeEnd = () => setIsResizingNode(false)
+
   return (
-    <div className='border-none relative p-2 bg-transparent overflow-visible'>
+    <div className='border-none relative p-2 bg-transparent overflow-visible w-full h-full'>
       <div className='absolute inset-0 h-full w-full overflow-visible'>
         <Handle className={handleClassRight} position={Position.Right} type='source' />
         <Handle className={handleClassLeft} position={Position.Left} type='target' isConnectableStart={false} />
       </div>
 
-      {data.style.type === 'sheet' ? (
+      {nodeType === 'sheet' ? (
         <div className={frameClass} style={{ backgroundColor: data.style.backgroundColor }}>
           {content}
         </div>
@@ -76,17 +77,26 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
           fillStyle={data.style.fillStyle}
           stroke={data.style.strokeColor || 'transparent'}
           strokeWidth={data.style.strokeWidth}
+          className='w-full h-full'
         >
           {content}
         </RoughRect>
       )}
 
-      {selected && resizeHandles.map(({ pos, class: posClass }) => (
-        <div
+      {nodeType !== "sheet" && selected && resizeHandles.map(({ pos, class: posClass }) => (
+        <NodeResizeControl
           key={pos}
-          className={`absolute w-3 h-3 bg-transparent border border-primary rounded-full ${posClass} z-20`}
-          style={{ transform: `translate(${pos.includes('right') ? '50%' : '-50%'}, ${pos.includes('bottom') ? '50%' : '-50%'})` }}
-        />
+          position={pos as ControlPosition}
+          onResizeStart={handleResizeStart}
+          onResizeEnd={handleResizeEnd}
+          minHeight={100}
+          minWidth={200}
+        >
+          <div
+            className={`absolute w-3 h-3 bg-transparent border border-primary rounded-full ${posClass} z-20`}
+            style={{ transform: `translate(${pos.includes('right') ? '50%' : '-50%'}, ${pos.includes('bottom') ? '50%' : '-50%'})` }}
+          />
+        </NodeResizeControl>
       ))}
     </div>
   )

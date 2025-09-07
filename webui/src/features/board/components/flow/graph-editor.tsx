@@ -75,6 +75,7 @@ export default function GraphEditor() {
   const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const onConnect = useGraphStore(state => state.onConnect)
   const mindmaps = useMindMapStore(state => state.mindmaps)
+  const isResizingNode = useGraphStore(state => state.isResizingNode)
 
   const { removeNote } = useRemoveNote()
   const { removeLink } = useRemoveLink()
@@ -201,7 +202,7 @@ export default function GraphEditor() {
       />
 
       {/* Graph-only sidebar (style controls) */}
-      {viewMode === 'graph' && !isDragging && !moving && (
+      {viewMode === 'graph' && !isDragging && !moving && !isResizingNode && (
         <div className='absolute top-1 left-1 w-auto max-w-[300px] h-auto z-50'>
           <GraphSidebar />
         </div>
@@ -236,7 +237,7 @@ export default function GraphEditor() {
           panOnScroll={!isLocked}
           onlyRenderVisibleElements
         >
-          {!moving && !isDragging && <MiniMap className='!bg-card rounded-lg'/>}
+          {!moving && !isDragging && !isResizingNode && <MiniMap className='!bg-card rounded-lg'/>}
         </ReactFlow>
       ) : (
         <LinearView />

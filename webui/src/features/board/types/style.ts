@@ -126,7 +126,7 @@ export interface Style {
   fontFamily: FontFamily
   fontSize: FontSize
   textAlign: TextAlign
-  textColor: string | null
+  textColor: string
   textStyle: TextStyle
 }
 

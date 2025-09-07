@@ -67,7 +67,7 @@ export const SearchEngineChoiceMenu = () => {
           </SelectTrigger>
         </TooltipTrigger>
         <TooltipContent>
-          Web Search Tool
+          Select Web Search Engine
         </TooltipContent>
       </Tooltip>
       <SelectContent side='top'>

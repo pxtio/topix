@@ -54,7 +54,7 @@ const connectionLineStyle = { stroke: '#818cf8' }
 type ViewMode = 'graph' | 'linear'
 
 export default function GraphEditor() {
-  const [viewMode, setViewMode] = useState<ViewMode>('linear')
+  const [viewMode, setViewMode] = useState<ViewMode>('graph')
 
   const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)

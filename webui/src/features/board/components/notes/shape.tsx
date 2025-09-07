@@ -45,7 +45,7 @@ export const Shape = memo(function Shape({
           readOnly={!labelEditing}
         />
       ) : (
-        <div className={`${base} flex flex-col justify-center`}>
+        <div className={`${base} whitespace-pre-wrap`}>
           <span>{value || ''}</span>
         </div>
       )}

@@ -1,3 +1,4 @@
+import { uuidToNumber } from "@/lib/common"
 import type { LinkEdge, NoteNode } from "../types/flow"
 import type { Link } from "../types/link"
 import { createDefaultNoteProperties, type Note } from "../types/note"
@@ -19,11 +20,13 @@ export const convertNoteToNode = (note: Note): NoteNode => {
   const width = !isSheet ? size.width : undefined
   const height = !isSheet ? size.height : undefined
 
+  const roughSeed = uuidToNumber(note.id)
+
   return {
     id: note.id,
     type: 'default',
     position,
-    data: note,
+    data: { ...note, roughSeed },
     selected: false,
     draggable: true,
     height: height,

@@ -26,7 +26,7 @@ export async function makeThumbnailFromContainer(
 
   // 6-arg signature: include padding
   const { getViewportForBounds } = await import('@xyflow/react')
-  const { x, y, zoom } = getViewportForBounds(bounds, width, height, 0.5, 2, 0.1)
+  const { x, y, zoom } = getViewportForBounds(bounds, width, height, 0.1, 2, 0.1)
 
   const blob = await toBlob(viewportEl, {
     backgroundColor,

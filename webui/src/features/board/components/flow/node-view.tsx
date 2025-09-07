@@ -9,6 +9,8 @@ import { useAppStore } from '@/store'
 import { useGraphStore } from '../../store/graph-store'
 import { DEBOUNCE_DELAY } from '../../const'
 import clsx from 'clsx'
+import { RoughCircle } from '@/components/rough/circ'
+import { RoughDiamond } from '@/components/rough/diam'
 
 function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const userId = useAppStore(state => state.userId)
@@ -66,17 +68,46 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
       </div>
 
       {nodeType === 'sheet' ? (
-        <div className={frameClass} style={{ backgroundColor: data.style.backgroundColor }}>
+        <div className={frameClass} style={{ backgroundColor: data.style.backgroundColor, color: data.style.textColor }}>
           {content}
         </div>
-      ) : (
+      ) : nodeType === 'ellipse' ? (
+        <RoughCircle
+          roughness={data.style.roughness}
+          fill={data.style.backgroundColor || 'white'}
+          fillStyle={data.style.fillStyle}
+          stroke={data.style.strokeColor || 'transparent'}
+          strokeStyle={data.style.strokeStyle}
+          strokeWidth={data.style.strokeWidth}
+          seed={data.roughSeed}
+          className='w-full h-full'
+        >
+          {content}
+        </RoughCircle>
+      ) : nodeType === 'diamond' ? (
+        <RoughDiamond
+          rounded={rounded}
+          roughness={data.style.roughness}
+          fill={data.style.backgroundColor || 'white'}
+          fillStyle={data.style.fillStyle}
+          stroke={data.style.strokeColor || 'transparent'}
+          strokeStyle={data.style.strokeStyle}
+          strokeWidth={data.style.strokeWidth}
+          seed={data.roughSeed}
+          className='w-full h-full'
+        >
+          {content}
+        </RoughDiamond>
+      ): (
         <RoughRect
           rounded={rounded}
           roughness={data.style.roughness}
           fill={data.style.backgroundColor || 'white'}
           fillStyle={data.style.fillStyle}
           stroke={data.style.strokeColor || 'transparent'}
+          strokeStyle={data.style.strokeStyle}
           strokeWidth={data.style.strokeWidth}
+          seed={data.roughSeed}
           className='w-full h-full'
         >
           {content}

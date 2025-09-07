@@ -255,7 +255,7 @@ export function LinearNoteCard({ node }: Props) {
       </div>
 
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2'>
-        <DialogHeader className='invisible'>
+        <DialogHeader className='hidden'>
           <DialogTitle />
           <DialogDescription />
         </DialogHeader>

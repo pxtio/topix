@@ -28,7 +28,7 @@ export const Shape = memo(function Shape({
   const base = `
     w-full p-4 border-none resize-none
     focus:outline-none focus:ring-0 focus:border-none
-    overflow-visible whitespace-normal break-words
+    overflow-hidden whitespace-normal break-words
     ${styleHelpers.text} ${styleHelpers.font} ${styleHelpers.size}
     ${textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'}
   `

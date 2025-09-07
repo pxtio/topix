@@ -48,20 +48,32 @@ export interface Note extends Record<string, unknown> {
 }
 
 
-export const createDefaultNoteProperties = (): NoteProperties => ({
-  nodePosition: {
-    position: { x: 0, y: 0 },
-    type: "position",
-  },
-  nodeSize: {
-    size: { width: 100, height: 100 },
-    type: "size",
-  },
-  emoji: {
-    type: "icon",
-    icon: { type: "emoji", emoji: "" },
+export const DEFAULT_NOTE_WIDTH = 200
+export const DEFAULT_NOTE_HEIGHT = 100
+
+export const DEFAULT_STICKY_NOTE_WIDTH = 300
+export const DEFAULT_STICKY_NOTE_HEIGHT = 300
+
+
+export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: NodeType }): NoteProperties => {
+  const defaultSize = type === 'sheet' ?
+    { width: DEFAULT_STICKY_NOTE_WIDTH, height: DEFAULT_STICKY_NOTE_HEIGHT }
+    : { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT }
+  return {
+    nodePosition: {
+      position: { x: 0, y: 0 },
+      type: "position",
+    },
+    nodeSize: {
+      size: defaultSize,
+      type: "size",
+    },
+    emoji: {
+      type: "icon",
+      icon: { type: "emoji", emoji: "" },
+    }
   }
-})
+}
 
 
 /**
@@ -82,8 +94,8 @@ export const createDefaultNote = ({
   createdAt: new Date().toISOString(),
   graphUid: boardId,
   style: { ...createDefaultStyle({ type: nodeType }) },
-  minWidth: 100,
-  minHeight: 100,
-  properties: createDefaultNoteProperties(),
+  minWidth: DEFAULT_NOTE_WIDTH,
+  minHeight: DEFAULT_NOTE_HEIGHT,
+  properties: createDefaultNoteProperties({ type: nodeType }),
   pinned: false
 })

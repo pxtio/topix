@@ -156,7 +156,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
         style={{ color: note.style.textColor || 'inherit' }}
       >
         {isSheet && (
-          <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 border-b border-border justify-end bg-background/20'>
+          <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 shadow-xs justify-end bg-background/20'>
             {/* Palette popover */}
             <Popover>
               <PopoverTrigger asChild>
@@ -245,7 +245,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
       {/* DIALOG CONTENT (full editor) */}
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2'>
         {isSheet ? (
-          <DialogHeader className='invisible'>
+          <DialogHeader className='hidden'>
             <DialogTitle />
             <DialogDescription />
           </DialogHeader>
@@ -261,11 +261,11 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
                 />
               </div>
             </DialogTitle>
-            <DialogDescription className='invisible'>Note description</DialogDescription>
+            <DialogDescription className='hidden'>Note description</DialogDescription>
           </DialogHeader>
         )}
 
-        <div className='min-h-0 flex-1 flex items-center w-full'>
+        <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
           <ScrollArea className='h-full w-full'>
             <MilkdownProvider>
               <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />

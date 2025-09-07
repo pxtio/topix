@@ -41,15 +41,15 @@ const edgeTypes = { default: EdgeView }
 
 const defaultEdgeOptions = {
   type: 'default',
-  style: { stroke: '#6366f1', strokeWidth: 2 },
+  style: { stroke: '#78716c', strokeWidth: 2 },
   markerEnd: {
     type: MarkerType.Arrow,
-    color: '#6366f1',
+    color: '#78716c',
     width: 20,
     height: 20
   }
 }
-const connectionLineStyle = { stroke: '#818cf8' }
+const connectionLineStyle = { stroke: '#a8a29e' }
 
 type ViewMode = 'graph' | 'linear'
 

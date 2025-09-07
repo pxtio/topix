@@ -88,8 +88,8 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
   const s = style
 
   function pickColor<K extends keyof Style>(key: K, v: Style[K] | null) {
-    const next = { [key]: (v ?? undefined) } as Partial<Style>;
-    onStyleChange(next);
+    const next = { [key]: (v ?? undefined) } as Partial<Style>
+    onStyleChange(next)
   }
 
   return (

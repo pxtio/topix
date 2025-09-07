@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils"
 import { CustomTable } from "./custom-table"
 import { useRafThrottledString } from "@/features/agent/hooks/throttle-string"
 import { Pre } from "./custom-pre"
+import rehypeRaw from "rehype-raw"
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize"
+import type { Schema } from "hast-util-sanitize"
 
 /** -------------------------------------------------------
  *  one-time transparent scrollbar styles (for tables)
@@ -54,7 +57,7 @@ function CustomLink({ children, href, ...rest }: CustomLinkProps) {
  *  Typed wrappers for common elements
  *  ------------------------------------------------------*/
 function H1(props: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h1 className="mt-7 scroll-m-20 border-b pb-2 text-2xl font-heading font-medium tracking-tight first:mt-0" {...props} />
+  return <h1 className="mt-7 scroll-m-20 border-b border-muted-foreground/50 pb-2 text-2xl font-heading font-medium tracking-tight first:mt-0" {...props} />
 }
 function H2(props: React.HTMLAttributes<HTMLHeadingElement>) {
   return <h2 className="mt-6 scroll-m-20 text-xl font-heading font-medium tracking-tight" {...props} />
@@ -170,6 +173,14 @@ const components = {
   pre: Pre
 } satisfies Components
 
+
+const brOnlySchema: Schema = {
+  ...defaultSchema,
+  tagNames: [...(defaultSchema.tagNames ?? []), "br"],
+  // keep attributes strict (defaultSchema already is)
+}
+
+
 /** -------------------------------------------------------
  *  Props
  *  ------------------------------------------------------*/
@@ -196,6 +207,7 @@ export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
         <Streamdown
           shikiTheme={["rose-pine-dawn", "rose-pine-moon"]}
           remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw, [rehypeSanitize, brOnlySchema]]}
           components={components}
         >
           {deferred}

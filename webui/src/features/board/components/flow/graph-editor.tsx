@@ -15,7 +15,7 @@ import '@xyflow/react/dist/base.css'
 import NodeView from './node-view'
 import { useAddNoteNode } from '../../hooks/add-node'
 import { EdgeView } from './edge-view'
-import { CustomConnectionLine } from '../connection'
+import { CustomConnectionLine } from './connection'
 import { useGraphStore } from '../../store/graph-store'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { LinkEdge, NoteNode } from '../../types/flow'
@@ -41,20 +41,20 @@ const edgeTypes = { default: EdgeView }
 
 const defaultEdgeOptions = {
   type: 'default',
-  style: { stroke: '#6366f1', strokeWidth: 2 },
+  style: { stroke: '#78716c', strokeWidth: 2 },
   markerEnd: {
     type: MarkerType.Arrow,
-    color: '#6366f1',
+    color: '#78716c',
     width: 20,
     height: 20
   }
 }
-const connectionLineStyle = { stroke: '#818cf8' }
+const connectionLineStyle = { stroke: '#a8a29e' }
 
 type ViewMode = 'graph' | 'linear'
 
 export default function GraphEditor() {
-  const [viewMode, setViewMode] = useState<ViewMode>('linear')
+  const [viewMode, setViewMode] = useState<ViewMode>('graph')
 
   const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
@@ -75,6 +75,7 @@ export default function GraphEditor() {
   const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const onConnect = useGraphStore(state => state.onConnect)
   const mindmaps = useMindMapStore(state => state.mindmaps)
+  const isResizingNode = useGraphStore(state => state.isResizingNode)
 
   const { removeNote } = useRemoveNote()
   const { removeLink } = useRemoveLink()
@@ -201,7 +202,7 @@ export default function GraphEditor() {
       />
 
       {/* Graph-only sidebar (style controls) */}
-      {viewMode === 'graph' && !isDragging && !moving && (
+      {viewMode === 'graph' && !isDragging && !moving && !isResizingNode && (
         <div className='absolute top-1 left-1 w-auto max-w-[300px] h-auto z-50'>
           <GraphSidebar />
         </div>
@@ -236,7 +237,7 @@ export default function GraphEditor() {
           panOnScroll={!isLocked}
           onlyRenderVisibleElements
         >
-          {!moving && !isDragging && <MiniMap className='!bg-card rounded-lg'/>}
+          {!moving && !isDragging && !isResizingNode && <MiniMap className='!bg-card rounded-lg'/>}
         </ReactFlow>
       ) : (
         <LinearView />

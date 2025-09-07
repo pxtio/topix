@@ -11,7 +11,7 @@ import { useGraphStore } from '../../store/graph-store'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
 import clsx from 'clsx'
-import { TAILWIND_100 } from '../../lib/colors/tailwind'
+import { TAILWIND_200 } from '../../lib/colors/tailwind'
 import { DialogDescription } from '@radix-ui/react-dialog'
 import { useRemoveNote } from '../../api/remove-note'
 import { useRemoveLink } from '../../api/remove-link'
@@ -225,7 +225,7 @@ export function LinearNoteCard({ node }: Props) {
             </PopoverTrigger>
             <PopoverContent align='start' className='w-auto p-2'>
               <div className='grid grid-cols-6 gap-2'>
-                {TAILWIND_100.map(c => (
+                {TAILWIND_200.map(c => (
                   <button
                     key={c.name}
                     className='h-6 w-6 rounded-md border border-border hover:brightness-95'
@@ -255,7 +255,7 @@ export function LinearNoteCard({ node }: Props) {
       </div>
 
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2'>
-        <DialogHeader className='invisible'>
+        <DialogHeader className='hidden'>
           <DialogTitle />
           <DialogDescription />
         </DialogHeader>

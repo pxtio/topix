@@ -1,35 +1,52 @@
 import { cn } from "@/lib/utils"
 import { getLuminance } from "../../lib/colors/tailwind"
 import { darkModeDisplayHex } from "../../lib/colors/dark-variants"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 type KeySwatchProps = {
   color: string | null
   label?: string
   selected?: boolean
   onClick: () => void
+  onContextMenu?: (e: React.MouseEvent) => void
   checker?: boolean
   isDark?: boolean
+  size?: "sm" | "md" | "lg"
+  hideLabel?: boolean
+  className?: string
 }
+
+const SIZE_MAP = {
+  sm: "h-7 w-7 rounded-md",
+  md: "h-9 w-9 rounded-lg",
+  lg: "h-11 w-11 rounded-xl",
+} as const
 
 export const KeySwatch = ({
   color,
   label,
   selected,
   onClick,
+  onContextMenu,
   checker = false,
   isDark = false,
+  size = "md",
+  hideLabel = false,
+  className,
 }: KeySwatchProps) => {
-  // Only the *display* color is flipped for dark mode.
   const shown = isDark ? darkModeDisplayHex(color ?? undefined) : color
   const isDarkText = shown ? getLuminance(shown) < 0.5 : false
 
-  return (
+  const btn = (
     <button
       type="button"
       onClick={onClick}
+      onContextMenu={onContextMenu}
       className={cn(
-        "relative h-9 w-9 rounded-lg border border-border shadow-sm transition focus:outline-none focus:ring-2 focus:ring-primary",
-        selected && "ring-2 ring-primary"
+        "relative border border-border shadow-sm transition focus:outline-none focus:ring-2 focus:ring-primary",
+        SIZE_MAP[size],
+        selected && "ring-2 ring-primary",
+        className
       )}
       style={{
         backgroundColor: shown ?? "transparent",
@@ -43,12 +60,13 @@ export const KeySwatch = ({
             ? "0 0, 0 4px, 4px -4px, -4px 0px"
             : undefined,
       }}
+      aria-label={label}
     >
-      {label && (
+      {!hideLabel && label && (
         <span
           className={cn(
             "absolute left-1 top-0.5 text-[10px] font-medium",
-            isDarkText ? "text-white/90" : "text-foreground/80"
+            isDarkText ? "text-white/90" : "text-black/90"
           )}
         >
           {label}
@@ -56,4 +74,19 @@ export const KeySwatch = ({
       )}
     </button>
   )
+
+  if (hideLabel && label) {
+    return (
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>{btn}</TooltipTrigger>
+          <TooltipContent side="top" align="center" className="py-1 px-2 text-xs">
+            {label}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
+  }
+
+  return btn
 }

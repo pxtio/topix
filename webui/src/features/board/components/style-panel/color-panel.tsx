@@ -11,8 +11,24 @@ import {
   type Family,
   type Shade,
 } from "../../lib/colors/tailwind"
-import { KeySwatch } from "./key-swatch" // ensure path matches your structure
-import { useTheme } from "@/components/theme-provider" // wherever your hook is
+import { KeySwatch } from "./key-swatch"
+import { useTheme } from "@/components/theme-provider"
+import { cn } from "@/lib/utils"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
+
+type Props = {
+  value?: string | null
+  onPick: (hexOrNull: string | null) => void
+  allowTransparent?: boolean
+  controlledShade?: Shade
+  onShadeChange?: (s: Shade) => void
+  /** Compact = small swatches, labels hidden; right-click shows shades */
+  variant?: "default" | "compact"
+}
 
 export function ColorGrid({
   value,
@@ -20,13 +36,8 @@ export function ColorGrid({
   allowTransparent = false,
   controlledShade,
   onShadeChange,
-}: {
-  value?: string | null
-  onPick: (hexOrNull: string | null) => void
-  allowTransparent?: boolean
-  controlledShade?: Shade
-  onShadeChange?: (s: Shade) => void
-}) {
+  variant = "default",
+}: Props) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === "dark"
 
@@ -37,7 +48,6 @@ export function ColorGrid({
   const shade: Shade = controlledShade ?? internalShade
 
   useEffect(() => {
-    // transparent
     if (isTransparent(value)) {
       const transparentFam = FAMILIES.find(f => f.transparent)
       if (transparentFam) setActiveFamily(transparentFam)
@@ -47,7 +57,6 @@ export function ColorGrid({
     const base = toBaseHex(value)
     if (!base) return
 
-    // fixed colors …
     if (isSameColor(base, "#ffffff")) {
       setActiveFamily(FAMILIES.find(f => f.fixedHex === "#ffffff") ?? defaultFamily)
       return
@@ -57,7 +66,6 @@ export function ColorGrid({
       return
     }
 
-    // tailwind families …
     const match = findFamilyShadeFromHex(base)
     if (match?.family && match?.shade) {
       const fam = FAMILIES.find(f => f.family === match.family) ?? defaultFamily
@@ -91,42 +99,112 @@ export function ColorGrid({
     if (baseHex) onPick(baseHex)
   }
 
-  const pickShade = (s: Shade) => {
+  const pickShade = (s: Shade, fam = activeFamily) => {
     if (controlledShade == null) setInternalShade(s)
     onShadeChange?.(s)
-    if (!activeFamily.family) return
-    const hex = resolveFamilyShade(activeFamily.family, s)
+    if (!fam.family) return
+    const hex = resolveFamilyShade(fam.family, s)
     const baseHex = toBaseHex(hex)
     if (baseHex) onPick(baseHex)
   }
 
+  const FamilyItem = ({ f }: { f: Family }) => {
+    const isCompact = variant === "compact"
+    const colorHex = resolveEntryHexAtShade(f, shade)
+    const selected = f.transparent
+      ? isTransparent(value)
+      : !!colorHex && isSameColor(value, colorHex)
+
+    // Special entries: no context menu, just pick on click
+    if (f.transparent || f.fixedHex) {
+      return (
+        <KeySwatch
+          key={f.id}
+          color={colorHex}
+          label={f.key}
+          selected={selected}
+          onClick={() => pickFamily(f)}
+          checker={!!f.transparent}
+          isDark={isDark}
+          size={isCompact ? "sm" : "md"}
+          hideLabel={isCompact}
+          className={isCompact ? "ring-offset-0" : undefined}
+        />
+      )
+    }
+
+    // Tailwind families
+    if (isCompact && f.family) {
+      // Right-click (native contextmenu) will open ContextMenuContent automatically.
+      return (
+        <ContextMenu key={f.id}>
+          <ContextMenuTrigger asChild>
+            <KeySwatch
+              color={colorHex}
+              label={f.key}
+              selected={selected}
+              onClick={() => pickFamily(f)} // left click picks immediately
+              isDark={isDark}
+              size="sm"
+              hideLabel
+              className="ring-offset-0"
+            />
+          </ContextMenuTrigger>
+          <ContextMenuContent className="p-2">
+            <div className="grid grid-cols-4 gap-1">
+              {SHADE_STEPS.map((step) => {
+                const hex = resolveFamilyShade(f.family!, step)
+                const selectedShade = !!hex && isSameColor(value, hex)
+                const baseHex = toBaseHex(hex)
+                return (
+                  <KeySwatch
+                    key={step}
+                    color={hex}
+                    selected={selectedShade}
+                    onClick={() => {
+                      if (baseHex) {
+                        setActiveFamily(f)
+                        pickShade(step, f)
+                      }
+                    }}
+                    isDark={isDark}
+                    size="sm"
+                    hideLabel
+                  />
+                )
+              })}
+            </div>
+          </ContextMenuContent>
+        </ContextMenu>
+      )
+    }
+
+    // Default variant (no right-click shades)
+    return (
+      <KeySwatch
+        key={f.id}
+        color={colorHex}
+        label={f.key}
+        selected={selected}
+        onClick={() => pickFamily(f)}
+        isDark={isDark}
+        size="md"
+      />
+    )
+  }
+
   return (
-    <div className="space-y-3">
-      {/* Top row: every family previewed at current shade */}
-      <div className="grid grid-cols-6 gap-2">
+    <div className="space-y-2">
+      {/* Always 6 columns */}
+      <div className={cn("grid gap-2 grid-cols-6")}>
         {FAMILIES
           .filter(f => allowTransparent || !f.transparent)
-          .map(f => {
-            const colorHex = resolveEntryHexAtShade(f, shade)
-            const selected = f.transparent
-              ? isTransparent(value)
-              : !!colorHex && isSameColor(value, colorHex)
-            return (
-              <KeySwatch
-                key={f.id}
-                color={colorHex}
-                label={f.key}
-                selected={selected}
-                onClick={() => pickFamily(f)}
-                checker={!!f.transparent}
-                isDark={isDark} // <= pass effective theme here
-              />
-            )
-          })}
+          .map(f => (
+            <FamilyItem key={f.id} f={f} />
+          ))}
       </div>
 
-      {/* Shades row */}
-      {activeFamily.family && (
+      {variant === "default" && activeFamily.family && (
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">
             Shades — {activeFamily.family}
@@ -143,7 +221,8 @@ export function ColorGrid({
                   label={`⇧${i + 1}`}
                   selected={selected}
                   onClick={() => baseHex && pickShade(step)}
-                  isDark={isDark} // <= also here
+                  isDark={isDark}
+                  size="md"
                 />
               )
             })}

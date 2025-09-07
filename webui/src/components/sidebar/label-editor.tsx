@@ -8,7 +8,7 @@ import { TickSimpleIcon } from "../icons/tick"
 
 
 /**
- * Props for the LabelEditor component.
+ * Label Editor Props type
  */
 export interface LabelEditorProps {
   initialLabel: string
@@ -17,7 +17,7 @@ export interface LabelEditorProps {
 
 
 /**
- * LabelEditor component for editing labels.
+ * Label Editor component for sidebar
  */
 export const LabelEditor = ({ initialLabel, onSave }: LabelEditorProps) => {
   const [label, setLabel] = useState<string>(initialLabel)
@@ -39,6 +39,14 @@ export const LabelEditor = ({ initialLabel, onSave }: LabelEditorProps) => {
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      onSave(label.trim())
+      setEditMode(false)
+    }
+  }
+
   useClickOutside(ref, handleClickOutside)
 
   useEffect(() => {
@@ -47,23 +55,22 @@ export const LabelEditor = ({ initialLabel, onSave }: LabelEditorProps) => {
 
   return (
     <div ref={ref} className='flex flex-row items-center gap-2 text-sm font-medium'>
-      {
-        editMode ?
-        <Input value={label} onChange={(e) => setLabel(e.target.value)} />
-        :
+      {editMode ? (
+        <Input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
+      ) : (
         <span>{label.trim() || UNTITLED_LABEL}</span>
-      }
-      <Button
-        variant="ghost"
-        onClick={handleClick}
-        size='icon'
-      >
-        {
-          editMode ?
+      )}
+      <Button variant="ghost" onClick={handleClick} size='icon'>
+        {editMode ? (
           <TickSimpleIcon className='size-4' strokeWidth={1.75} />
-          :
+        ) : (
           <EditSimpleIcon className='size-4' strokeWidth={1.75} />
-        }
+        )}
       </Button>
     </div>
   )

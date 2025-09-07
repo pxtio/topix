@@ -11,8 +11,14 @@ import { DEBOUNCE_DELAY } from '../../const'
 import clsx from 'clsx'
 import { RoughCircle } from '@/components/rough/circ'
 import { RoughDiamond } from '@/components/rough/diam'
+import { useTheme } from '@/components/theme-provider'
+import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 
 function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
+  // Dark mode support
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+
   const userId = useAppStore(state => state.userId)
   const boardId = useGraphStore(state => state.boardId)
   const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
@@ -50,7 +56,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
   const content = (
     <div className={nodeClass}>
-      <NodeCard note={data} selected={selected} />
+      <NodeCard note={data} selected={selected} isDark={isDark} />
       {selected && <div className='absolute -inset-1 border border-primary pointer-events-none rounded z-10' />}
     </div>
   )
@@ -60,6 +66,10 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const handleResizeStart = () => setIsResizingNode(true)
   const handleResizeEnd = () => setIsResizingNode(false)
 
+  const backgroundColor = isDark ? darkModeDisplayHex(data.style.backgroundColor) || undefined : data.style.backgroundColor
+  const strokeColor = isDark ? darkModeDisplayHex(data.style.strokeColor) || undefined : data.style.strokeColor
+  const textColor = isDark ? darkModeDisplayHex(data.style.textColor) || undefined : data.style.textColor
+
   return (
     <div className='border-none relative p-2 bg-transparent overflow-visible w-full h-full'>
       <div className='absolute inset-0 h-full w-full overflow-visible'>
@@ -68,15 +78,15 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
       </div>
 
       {nodeType === 'sheet' ? (
-        <div className={frameClass} style={{ backgroundColor: data.style.backgroundColor, color: data.style.textColor }}>
+        <div className={frameClass} style={{ backgroundColor, color: textColor }}>
           {content}
         </div>
       ) : nodeType === 'ellipse' ? (
         <RoughCircle
           roughness={data.style.roughness}
-          fill={data.style.backgroundColor || 'white'}
+          fill={backgroundColor}
           fillStyle={data.style.fillStyle}
-          stroke={data.style.strokeColor || 'transparent'}
+          stroke={strokeColor}
           strokeStyle={data.style.strokeStyle}
           strokeWidth={data.style.strokeWidth}
           seed={data.roughSeed}
@@ -88,9 +98,9 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
         <RoughDiamond
           rounded={rounded}
           roughness={data.style.roughness}
-          fill={data.style.backgroundColor || 'white'}
+          fill={backgroundColor}
           fillStyle={data.style.fillStyle}
-          stroke={data.style.strokeColor || 'transparent'}
+          stroke={strokeColor}
           strokeStyle={data.style.strokeStyle}
           strokeWidth={data.style.strokeWidth}
           seed={data.roughSeed}
@@ -102,9 +112,9 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
         <RoughRect
           rounded={rounded}
           roughness={data.style.roughness}
-          fill={data.style.backgroundColor || 'white'}
+          fill={backgroundColor}
           fillStyle={data.style.fillStyle}
-          stroke={data.style.strokeColor || 'transparent'}
+          stroke={strokeColor}
           strokeStyle={data.style.strokeStyle}
           strokeWidth={data.style.strokeWidth}
           seed={data.roughSeed}

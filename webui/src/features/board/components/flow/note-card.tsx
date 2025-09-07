@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Shape } from '../notes/shape'
 import { StickyNote } from '../notes/sticky-note'
 import { TAILWIND_200 } from '../../lib/colors/tailwind'
+import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 
 type NoteWithPin = Note & { pinned?: boolean }
 
@@ -26,6 +27,7 @@ type NodeCardProps = {
   selected: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  isDark: boolean
 }
 
 /**
@@ -34,7 +36,7 @@ type NodeCardProps = {
  * - Shape (others): must click the floating "View Note" button to open dialog
  * - Sheet-only toolbar: palette (bg color), pin, delete
  */
-export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) => {
+export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCardProps) => {
   const isSheet = note.style.type === 'sheet'
 
   const [internalOpen, setInternalOpen] = useState(false)
@@ -44,6 +46,8 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const [labelEditing, setLabelEditing] = useState(false)
+
+  const textColor = isDark ? darkModeDisplayHex(note.style.textColor) || undefined : note.style.textColor
 
   // classNames derived from style
   const labelClass = useMemo(() => clsx(
@@ -153,7 +157,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
         className={labelClass}
         onDoubleClick={onDoubleClick}
         onPointerDown={stopDragging}
-        style={{ color: note.style.textColor || 'inherit' }}
+        style={{ color: textColor || 'inherit' }}
       >
         {isSheet && (
           <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 shadow-xs justify-end bg-background/20'>

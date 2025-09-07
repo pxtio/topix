@@ -104,7 +104,7 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
 
             {/* Text color */}
             <Section title="Text color">
-              <ColorGrid value={s.textColor ?? null} onPick={v => onStyleChange({ textColor: v })} />
+              <ColorGrid value={s.textColor} onPick={v => onStyleChange({ textColor: v || undefined })} />
             </Section>
 
             {/* Background */}

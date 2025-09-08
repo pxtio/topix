@@ -31,7 +31,6 @@ class PlanConfig(BaseAgentConfig):
     web_search: WebSearchConfig
     memory_search: BaseAgentConfig
     code_interpreter: BaseAgentConfig
-    answer_reformulate: BaseAgentConfig
 
 
 class AssistantManagerConfig(BaseModel):
@@ -59,7 +58,6 @@ class AssistantManagerConfig(BaseModel):
     def set_plan_model(self, model: str):
         """Switch the plan model."""
         self.plan.model = model
-        self.plan.answer_reformulate.model = model
 
     def set_reasoning(self, effort: Literal["low", "medium", "high"] | None):
         """Set the reasoning."""

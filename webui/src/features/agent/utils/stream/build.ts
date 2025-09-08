@@ -14,6 +14,7 @@ import type {
   Annotation,
   UrlAnnotation
 } from "../../types/tool-outputs"
+import { extractReasoning } from "./text"
 
 type BlockKind = "raw" | "tools" | null
 
@@ -192,7 +193,8 @@ export function extractStepDescription(step: ReasoningStep): { reasoning: string
     }
     return { reasoning: step.thought || "", message: ToolNameDescription[step.name] }
   }
-  return { reasoning: step.thought || "", message: step.output as string || "" }
+  const { reasoning: reasoningOutLoud } = extractReasoning(step.output as string || "")
+  return { reasoning: step.thought || "", message: reasoningOutLoud }
 }
 
 // Extracts the web search URLs from a ReasoningStep.

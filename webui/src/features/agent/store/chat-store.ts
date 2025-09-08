@@ -42,7 +42,7 @@ export const useChatStore = create<ChatStore>((set) => ({
 
   webSearchEngine: "openai",
 
-  enabledTools: ["answer_reformulate", "web_search", "memory_search", "code_interpreter"],
+  enabledTools: ["web_search", "memory_search", "code_interpreter"],
 
   isStreaming: false,
 

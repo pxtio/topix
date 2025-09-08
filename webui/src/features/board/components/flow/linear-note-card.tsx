@@ -215,7 +215,7 @@ export function LinearNoteCard({ node }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <div className='relative w-full min-w-0'>
-        <div className='absolute inset-x-0 -bottom-2 h-[0.5px] bg-border' />
+        <div className='absolute inset-x-0 -bottom-2 h-0 border-b border-muted-foreground/50 border-dashed' />
         {/* color dot & palette */}
         <div className='absolute left-6 bottom-4 z-50 flex flex-row items-center gap-2'>
           <Popover>

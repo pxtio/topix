@@ -57,17 +57,21 @@ function CustomLink({ children, href, ...rest }: CustomLinkProps) {
  *  Typed wrappers for common elements
  *  ------------------------------------------------------*/
 function H1(props: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h1 className="mt-7 scroll-m-20 border-b border-muted-foreground/50 pb-2 text-2xl font-heading font-medium tracking-tight first:mt-0" {...props} />
+  return <h1 className="mt-7 scroll-m-20 border-b border-muted-foreground/20 pb-2 text-2xl font-heading font-medium tracking-tight first:mt-0" {...props} />
 }
+
 function H2(props: React.HTMLAttributes<HTMLHeadingElement>) {
   return <h2 className="mt-6 scroll-m-20 text-xl font-heading font-medium tracking-tight" {...props} />
 }
+
 function H3(props: React.HTMLAttributes<HTMLHeadingElement>) {
   return <h3 className="mt-5 scroll-m-20 text-lg font-heading font-medium tracking-tight" {...props} />
 }
+
 function H4(props: React.HTMLAttributes<HTMLHeadingElement>) {
   return <h4 className="mt-4 scroll-m-20 text-base font-heading font-medium tracking-tight" {...props} />
 }
+
 function P(props: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
@@ -80,9 +84,11 @@ function P(props: React.HTMLAttributes<HTMLParagraphElement>) {
     />
   )
 }
+
 function Blockquote(props: React.BlockquoteHTMLAttributes<HTMLElement>) {
   return <blockquote className="mt-4 border-l-2 pl-6 italic text-base" {...props} />
 }
+
 function Ul(props: React.HTMLAttributes<HTMLUListElement>) {
   return (
     <ul
@@ -95,6 +101,7 @@ function Ul(props: React.HTMLAttributes<HTMLUListElement>) {
     />
   )
 }
+
 function Ol(props: React.HTMLAttributes<HTMLOListElement>) {
   return (
     <ol
@@ -107,9 +114,11 @@ function Ol(props: React.HTMLAttributes<HTMLOListElement>) {
     />
   )
 }
+
 function Li(props: React.LiHTMLAttributes<HTMLLIElement>) {
   return <li className="break-words min-w-0" {...props} />
 }
+
 function Img(props: React.ImgHTMLAttributes<HTMLImageElement>) {
   return (
     <img
@@ -120,9 +129,11 @@ function Img(props: React.ImgHTMLAttributes<HTMLImageElement>) {
     />
   )
 }
+
 function Tr(props: React.HTMLAttributes<HTMLTableRowElement>) {
   return <tr className="m-0 border-t p-0 even:bg-muted" {...props} />
 }
+
 function Th(props: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
@@ -135,6 +146,7 @@ function Th(props: React.ThHTMLAttributes<HTMLTableCellElement>) {
     />
   )
 }
+
 function Td(props: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <td
@@ -147,6 +159,10 @@ function Td(props: React.TdHTMLAttributes<HTMLTableCellElement>) {
       {...props}
     />
   )
+}
+
+function Hr(props: React.HTMLAttributes<HTMLHRElement>) {
+  return <hr className="my-6 border-muted-foreground/20" {...props} />
 }
 
 /** components map — fully typed and safe */
@@ -166,6 +182,7 @@ const components = {
   tr: Tr,
   th: Th,
   td: Td,
+  hr: Hr,
   b: (props: React.HTMLAttributes<HTMLElement>) => <b className="font-semibold" {...props} />,
   strong: (props: React.HTMLAttributes<HTMLElement>) => <strong className="font-semibold" {...props} />,
   em: (props: React.HTMLAttributes<HTMLElement>) => <em className="italic" {...props} />,

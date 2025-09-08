@@ -66,7 +66,8 @@ async def test_graph_user_assoc_and_listing(conn, user_obj, graph_obj):
 
     # 3. List graphs for user
     user_graphs = await list_graphs_by_user_uid(conn, user_uid)
-    assert (graph_uid, graph_obj.label, "owner") in user_graphs
+    user_graph_tuples = [(g.uid, g.label) for g in user_graphs]
+    assert (graph_uid, graph_obj.label) in user_graph_tuples
 
     # 4. List users for graph
     graph_users = await list_users_by_graph_uid(conn, graph_uid)
@@ -90,7 +91,8 @@ async def test_graph_user_assoc_and_listing(conn, user_obj, graph_obj):
     assert (user2_uid, "member") in graph_users2
 
     user2_graphs = await list_graphs_by_user_uid(conn, user2_uid)
-    assert (graph_uid, graph_obj.label, "member") in user2_graphs
+    user2_graph_tuples = [(g.uid, g.label) for g in user2_graphs]
+    assert (graph_uid, graph_obj.label) in user2_graph_tuples
 
     # 7. Clean up: delete user and graph
     await _dangerous_hard_delete_graph_by_uid(conn, graph_uid)

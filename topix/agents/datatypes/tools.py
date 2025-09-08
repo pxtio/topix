@@ -6,6 +6,7 @@ from enum import StrEnum
 class AgentToolName(StrEnum):
     """Enumeration for tool names used in the agent manager."""
 
+    ANSWER_REFORMULATE = "answer_reformulate"
     MEMORY_SEARCH = "memory_search"
     WEB_SEARCH = "web_search"
     CODE_INTERPRETER = "code_interpreter"
@@ -16,5 +17,6 @@ class AgentToolName(StrEnum):
 def to_display_output(tool_name: str) -> bool:
     """Check if the tool is for displaying output."""
     return tool_name in [
+        AgentToolName.ANSWER_REFORMULATE,
         AgentToolName.RAW_MESSAGE,
     ]

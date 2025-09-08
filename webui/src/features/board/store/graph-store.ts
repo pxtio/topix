@@ -14,6 +14,7 @@ export interface GraphStore {
   edges: LinkEdge[]
   deletedNodes: NoteNode[]
   deletedEdges: LinkEdge[]
+  isResizingNode: boolean
   setNodes: (nodes: NoteNode[]) => void
   setEdges: (edges: LinkEdge[]) => void
   onNodesChange: (changes: NodeChange<NoteNode>[]) => void
@@ -23,6 +24,7 @@ export interface GraphStore {
   onConnect: (params: Connection) => LinkEdge | undefined
   setDeletedNodes: (nodes: NoteNode[]) => void
   setDeletedEdges: (edges: LinkEdge[]) => void
+  setIsResizingNode: (resizing: boolean) => void
 }
 
 
@@ -42,6 +44,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   deletedNodes: [],
 
   deletedEdges: [],
+
+  isResizingNode: false,
 
   setNodes: (nodes) => set({ nodes }),
 
@@ -172,4 +176,6 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setDeletedNodes: (nodes) => set({ deletedNodes: nodes }),
 
   setDeletedEdges: (edges) => set({ deletedEdges: edges }),
+
+  setIsResizingNode: (resizing) => set({ isResizingNode: resizing })
 }))

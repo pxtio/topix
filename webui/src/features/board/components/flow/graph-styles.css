@@ -33,3 +33,8 @@
 .react-flow__minimap-node {
     fill: var(--primary) !important;
 }
+
+.react-flow__resize-control {
+    background-color: transparent !important;
+    border: none !important;
+}

@@ -1,4 +1,4 @@
-import { generateUuid } from "@/lib/common"
+import { generateUuid, uuidToNumber } from "@/lib/common"
 import type { IconProperty, PositionProperty, SizeProperty } from "./property"
 import { createDefaultStyle, type NodeType, type Style } from "./style"
 
@@ -45,23 +45,37 @@ export interface Note extends Record<string, unknown> {
   minHeight?: number
 
   pinned: boolean
+
+  roughSeed?: number
 }
 
 
-export const createDefaultNoteProperties = (): NoteProperties => ({
-  nodePosition: {
-    position: { x: 0, y: 0 },
-    type: "position",
-  },
-  nodeSize: {
-    size: { width: 100, height: 100 },
-    type: "size",
-  },
-  emoji: {
-    type: "icon",
-    icon: { type: "emoji", emoji: "" },
+export const DEFAULT_NOTE_WIDTH = 200
+export const DEFAULT_NOTE_HEIGHT = 100
+
+export const DEFAULT_STICKY_NOTE_WIDTH = 300
+export const DEFAULT_STICKY_NOTE_HEIGHT = 300
+
+
+export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: NodeType }): NoteProperties => {
+  const defaultSize = type === 'sheet' ?
+    { width: DEFAULT_STICKY_NOTE_WIDTH, height: DEFAULT_STICKY_NOTE_HEIGHT }
+    : { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT }
+  return {
+    nodePosition: {
+      position: { x: 0, y: 0 },
+      type: "position",
+    },
+    nodeSize: {
+      size: defaultSize,
+      type: "size",
+    },
+    emoji: {
+      type: "icon",
+      icon: { type: "emoji", emoji: "" },
+    }
   }
-})
+}
 
 
 /**
@@ -75,15 +89,21 @@ export const createDefaultNote = ({
 }: {
   boardId: string,
   nodeType?: NodeType
-}): Note => ({
-  id: generateUuid(),
-  type: "note",
-  version: 1,
-  createdAt: new Date().toISOString(),
-  graphUid: boardId,
-  style: { ...createDefaultStyle({ type: nodeType }) },
-  minWidth: 100,
-  minHeight: 100,
-  properties: createDefaultNoteProperties(),
-  pinned: false
-})
+}): Note => {
+  const id = generateUuid()
+  const roughSeed = uuidToNumber(id)
+
+  return {
+    id: id,
+    type: "note",
+    version: 1,
+    createdAt: new Date().toISOString(),
+    graphUid: boardId,
+    style: { ...createDefaultStyle({ type: nodeType }) },
+    minWidth: DEFAULT_NOTE_WIDTH,
+    minHeight: DEFAULT_NOTE_HEIGHT,
+    properties: createDefaultNoteProperties({ type: nodeType }),
+    pinned: false,
+    roughSeed
+  }
+}

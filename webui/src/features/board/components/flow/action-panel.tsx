@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Cursor02Icon, FitToScreenIcon, GitMergeIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, StickyNote03Icon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GitMergeIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, StickyNote03Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { NodeType } from '../../types/style'
@@ -174,28 +174,52 @@ export function ActionPanel({
             )}
           </Button>
 
-          {/* Add rectangle */}
-          <Button
-            variant={null}
-            className={normalButtonClass}
-            size='icon'
-            onClick={() => onAddNode({ nodeType: 'rectangle' })}
-            title='Add node'
-            aria-label='Add node'
-          >
-            <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={1.75} />
-          </Button>
-
           {/* Add sheet */}
           <Button
             variant={null}
             className={normalButtonClass}
             size='icon'
             onClick={() => onAddNode({ nodeType: 'sheet' })}
-            title='Add sheet'
-            aria-label='Add sheet'
+            title='Add Sticky Note'
+            aria-label='Add Sticky Note'
           >
             <HugeiconsIcon icon={StickyNote03Icon} className='size-4 shrink-0' strokeWidth={1.75} />
+          </Button>
+
+          {/* Add rectangle */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => onAddNode({ nodeType: 'rectangle' })}
+            title='Add Rectangle'
+            aria-label='Add Rectangle'
+          >
+            <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+          </Button>
+
+          {/* Add circle */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => onAddNode({ nodeType: 'ellipse' })}
+            title='Add Ellipse'
+            aria-label='Add Ellipse'
+          >
+            <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+          </Button>
+
+          {/* Add diamond */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => onAddNode({ nodeType: 'diamond' })}
+            title='Add Diamond'
+            aria-label='Add Diamond'
+          >
+            <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={1.75} />
           </Button>
         </>
       )}

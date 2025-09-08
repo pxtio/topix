@@ -26,7 +26,7 @@ from topix.agents.datatypes.outputs import SearchResult, WebSearchOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.agents.datatypes.tool_call import ToolCallState
 from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
-from topix.agents.utils import (
+from topix.agents.utils.tools import (
     ToolCall,
     tool_execution_handler,
 )

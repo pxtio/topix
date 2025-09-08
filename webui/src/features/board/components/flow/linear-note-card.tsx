@@ -11,13 +11,15 @@ import { useGraphStore } from '../../store/graph-store'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
 import clsx from 'clsx'
-import { TAILWIND_100 } from '../../lib/colors/tailwind'
+import { TAILWIND_200 } from '../../lib/colors/tailwind'
 import { DialogDescription } from '@radix-ui/react-dialog'
 import { useRemoveNote } from '../../api/remove-note'
 import { useRemoveLink } from '../../api/remove-link'
 import { useUpdateNote } from '../../api/update-note'
 import { useAppStore } from '@/store'
 import { formatDistanceToNow } from '../../utils/date'
+import { useTheme } from '@/components/theme-provider'
+import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 
 type Props = { node: NoteNode }
 
@@ -98,8 +100,11 @@ export function LinearNoteCard({ node }: Props) {
   const { removeNote } = useRemoveNote()
   const { removeLink } = useRemoveLink()
 
-  const color = node.data.style.backgroundColor ?? '#a5c9ff'
-  const textColor = node.data.style.textColor ?? undefined
+  // dark mode support
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+
+  const color = isDark ? darkModeDisplayHex(node.data.style.backgroundColor) ?? '#a5c9ff' : node.data.style.backgroundColor
   const isPinned = !!node.data.pinned
   const title = node.data.label?.markdown || ''
   const { text: timeAgo, tooltip: fullDate } = formatDistanceToNow(node.data.updatedAt)
@@ -158,7 +163,7 @@ export function LinearNoteCard({ node }: Props) {
   )
 
   const CardBody = useMemo(() => (
-    <div className={cardClass} style={{ color: textColor }}>
+    <div className={cardClass}>
       {/* hue gradient overlay — light: multiply, dark: screen */}
       <div
         className='absolute inset-0 pointer-events-none mix-blend-multiply dark:mix-blend-screen opacity-[0.22] dark:opacity-[0.35]'
@@ -205,19 +210,19 @@ export function LinearNoteCard({ node }: Props) {
         </div>
       </div>
     </div>
-  ), [cardClass, textColor, isPinned, onTogglePin, onDelete, title, node.data.content?.markdown, gradientBg])
+  ), [cardClass, isPinned, onTogglePin, onDelete, title, node.data.content?.markdown, gradientBg])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <div className='relative w-full min-w-0'>
-        <div className='absolute inset-x-0 -bottom-2 h-[0.5px] bg-border' />
+        <div className='absolute inset-x-0 -bottom-2 h-0 border-b border-muted-foreground/50 border-dashed' />
         {/* color dot & palette */}
         <div className='absolute left-6 bottom-4 z-50 flex flex-row items-center gap-2'>
           <Popover>
             <PopoverTrigger asChild>
               <button
                 className='h-4 w-4 rounded-full ring-2 ring-primary/40 shadow hover:brightness-95 transition'
-                style={{ backgroundColor: node.data.style.backgroundColor ?? '#a5c9ff' }}
+                style={{ backgroundColor: color }}
                 aria-label='Change background color'
                 title='Change background color'
                 onClick={e => e.stopPropagation()}
@@ -225,11 +230,11 @@ export function LinearNoteCard({ node }: Props) {
             </PopoverTrigger>
             <PopoverContent align='start' className='w-auto p-2'>
               <div className='grid grid-cols-6 gap-2'>
-                {TAILWIND_100.map(c => (
+                {TAILWIND_200.map(c => (
                   <button
                     key={c.name}
                     className='h-6 w-6 rounded-md border border-border hover:brightness-95'
-                    style={{ backgroundColor: c.hex }}
+                    style={{ backgroundColor: darkModeDisplayHex(c.hex) || c.hex }}
                     title={`${c.name}-100`}
                     aria-label={`${c.name}-100`}
                     onClick={() => onPickColor(c.hex)}
@@ -255,7 +260,7 @@ export function LinearNoteCard({ node }: Props) {
       </div>
 
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2'>
-        <DialogHeader className='invisible'>
+        <DialogHeader className='hidden'>
           <DialogTitle />
           <DialogDescription />
         </DialogHeader>

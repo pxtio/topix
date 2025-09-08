@@ -47,20 +47,20 @@ export const LinkPreviewCard = ({
   const description = content || ''
 
   return (
-    <div className="transition-all rounded-lg p-2 cursor-pointer bg-card hover:bg-accent hover:shadow-md w-40">
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="transition-all rounded-lg p-2 cursor-pointer bg-card hover:bg-accent hover:shadow-md w-40 block"
+    >
       <div className="space-y-2">
         <h4 className="text-sm font-medium w-full truncate">{title}</h4>
         <span className="text-xs w-full truncate">{description}</span>
-        <a
-          className="flex flex-row items-center gap-1 text-xs text-muted-foreground font-medium font-mono"
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <div className="flex flex-row items-center gap-1 text-xs text-muted-foreground font-medium font-mono">
           <HugeiconsIcon icon={Link02Icon} className="size-3" strokeWidth={1.75} />
           {name && <span className="truncate">{name}</span>}
-        </a>
+        </div>
       </div>
-    </div>
+    </a>
   )
 }

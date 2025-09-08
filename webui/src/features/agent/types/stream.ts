@@ -77,7 +77,6 @@ export interface AgentResponse {
  * Agent tool names enum
  */
 export type ToolName =
-  | "answer_reformulate"
   | "web_search"
   | "memory_search"
   | "code_interpreter"
@@ -85,7 +84,6 @@ export type ToolName =
 
 
 export const ToolNameDescription: Record<ToolName, string> = {
-  "answer_reformulate": "Rephrase the answer",
   "web_search": "Search the web",
   "memory_search": "Search memory",
   "code_interpreter": "Interpret code",
@@ -97,5 +95,5 @@ export const RAW_MESSAGE: ToolName = "raw_message"
 
 
 export function isMainResponse(toolName: ToolName): boolean {
-  return toolName === "raw_message" || toolName === "answer_reformulate"
+  return toolName === "raw_message"
 }

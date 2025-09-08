@@ -1,5 +1,5 @@
 import { getBezierPath, type ConnectionLineComponentProps } from '@xyflow/react'
-import type { NoteNode } from '../types/flow'
+import type { NoteNode } from '../../types/flow'
 
 
 /**

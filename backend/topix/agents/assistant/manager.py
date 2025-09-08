@@ -12,6 +12,7 @@ from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
+from topix.agents.utils.text import extract_final_answer
 from topix.datatypes.chat.chat import Message
 from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
@@ -213,6 +214,8 @@ class AssistantManager:
                 raise Exception("No steps created during streaming!")
 
             final_answer: str = str(steps[-1].output)
+
+            final_answer = extract_final_answer(final_answer)
 
             await session.add_items(
                 [

@@ -1,6 +1,7 @@
 """Query Rewrite Agent."""
 
 from agents import ModelSettings
+
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.inputs import QueryRewriteInput

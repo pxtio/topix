@@ -25,7 +25,7 @@ class Note(Resource):
             position=PositionProperty.Position(x=0, y=0)
         ),
         "node_size": SizeProperty(
-            size=SizeProperty.Size(width=100, height=100)
+            size=SizeProperty.Size(width=300, height=100)
         ),
         "emoji": IconProperty(
             icon=IconProperty.Emoji(emoji="")

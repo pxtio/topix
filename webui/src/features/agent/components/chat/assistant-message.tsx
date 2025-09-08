@@ -63,6 +63,10 @@ const SourcesView = ({ answer }: { answer: AgentResponse }) => {
  */
 const ResponseActions = ({ message }: { message: string }) => {
   const handleCopy = (text: string) => {
+    if (!text.trim()) {
+      toast("No answer to copy!")
+      return
+    }
     navigator.clipboard.writeText(text).then(() => {
       toast('Answer copied to clipboard!')
     }).catch(() => {
@@ -135,7 +139,7 @@ export const AssistantMessage = ({
     <div className="w-full p-4 space-y-2">
       <MarkdownView content={markdownMessage} />
       {!streaming && agentResponse && <SourcesView answer={agentResponse} />}
-      {!streaming && <ResponseActions message={finalContent} />}
+      {!streaming && <ResponseActions message={markdownMessage} />}
     </div>
   ) : null
 

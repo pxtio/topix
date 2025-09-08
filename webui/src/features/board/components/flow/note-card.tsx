@@ -53,7 +53,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
   const labelClass = useMemo(() => clsx(
     'relative bg-transparent overflow-visible flex items-center justify-center',
     isSheet ?
-    `w-[300px] h-[300px] ${fontFamilyToTwClass(note.style.fontFamily)} p-4 pt-8`
+    `w-[300px] h-[300px] ${fontFamilyToTwClass(note.style.fontFamily)} p-2 pt-8`
     :
     'w-full h-full p-2'
   ), [isSheet, note.style.fontFamily])

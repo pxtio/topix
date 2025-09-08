@@ -63,7 +63,7 @@ export const useConvertToMindMap = () => {
 
       notes.forEach(note => {
         note.graphUid = boardId
-        note.style = createDefaultStyle({ type: "sheet" })
+        note.style = createDefaultStyle({ type: note.style.type })
       })
       links.forEach(link => link.graphUid = boardId)
       const rawNodes = notes.map(convertNoteToNode)

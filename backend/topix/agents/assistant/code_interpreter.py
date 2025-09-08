@@ -7,8 +7,6 @@ import secrets
 
 from typing import Any
 
-from openai import AsyncOpenAI
-
 from agents import (
     Agent,
     AgentHooks,
@@ -18,6 +16,8 @@ from agents import (
     RunResult,
     Tool,
 )
+from openai import AsyncOpenAI
+
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum

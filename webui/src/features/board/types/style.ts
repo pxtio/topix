@@ -161,7 +161,8 @@ export const createDefaultStyle = ({
         roundness: 2,
         fontFamily: "handwriting",
         fontSize: "M",
-        textAlign: "center"
+        textAlign: "center",
+        backgroundColor: "#dbeafe",
       } as Style
     case "ellipse":
       return {

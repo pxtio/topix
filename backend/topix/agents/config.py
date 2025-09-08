@@ -4,9 +4,9 @@ from typing import Literal
 
 import yaml
 
+from agents import ModelSettings
 from pydantic import BaseModel
 
-from agents import ModelSettings
 from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
 
 

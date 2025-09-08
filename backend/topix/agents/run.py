@@ -4,10 +4,10 @@ import asyncio
 from collections.abc import AsyncGenerator
 from typing import Any
 
-from pydantic import BaseModel
-
 from agents import RunConfig, RunHooks, Runner, TContext, TResponseInputItem
 from agents.memory import Session
+from pydantic import BaseModel
+
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.stream import AgentStreamMessage

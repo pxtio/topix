@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import ModelEnum
-from topix.agents.mindmap.datatypes import SimpleNode
+from topix.datatypes.graph.style import NodeType
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.datatypes.resource import RichText
@@ -24,7 +24,6 @@ class MapifyOutput(BaseModel):
 
     title: str
     content: str
-    sources: list[str]
     themes: list[Theme]
 
 
@@ -74,32 +73,11 @@ class MapifyAgent(BaseAgent):
 
     async def _output_extractor(
         self, context: Context, output: RunResult
-    ) -> list[SimpleNode]:
-        result = [
-            SimpleNode(
-                level=0,
-                label=output.final_output.title,
-                note=output.final_output.content,
-            )
-        ] + [
-            SimpleNode(
-                level=1,
-                label=theme.title,
-                note=theme.content,
-            ) for theme in output.final_output.themes
-        ]
-        return result
-
-    async def _output_extractor_to_graph(
-        self, context: Context, output: RunResult
     ) -> tuple[list[Note], list[Link]]:
         nodes = [
             Note(
                 content=RichText(
-                    markdown=output.final_output.content
-                ),
-                label=RichText(
-                    markdown=output.final_output.title,
+                    markdown=f"# {output.final_output.title}\n\n{output.final_output.content}".strip(),
                 )
             )
         ] + [
@@ -112,6 +90,10 @@ class MapifyAgent(BaseAgent):
                 )
             ) for theme in output.final_output.themes
         ]
+
+        nodes[0].style.type = NodeType.SHEET
+        for node in nodes[1:]:
+            node.style.type = NodeType.RECTANGLE
 
         links = [
             Link(

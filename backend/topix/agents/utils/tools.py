@@ -6,9 +6,9 @@ import inspect
 from contextlib import asynccontextmanager
 from typing import Any, Callable
 
+from agents import RunContextWrapper
 from pydantic import BaseModel
 
-from agents import RunContextWrapper
 from topix.agents.datatypes.context import Context, ToolCall
 from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
 from topix.agents.datatypes.tool_call import ToolCallState

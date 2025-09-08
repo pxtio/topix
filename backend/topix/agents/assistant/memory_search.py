@@ -3,6 +3,7 @@
 import re
 
 from agents import ModelSettings, RunResult
+
 from topix.agents.base import BaseAgent
 from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.annotations import RefAnnotation

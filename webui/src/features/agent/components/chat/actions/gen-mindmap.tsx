@@ -10,6 +10,7 @@ import { UNTITLED_LABEL } from "@/features/board/const"
 import { useAppStore } from "@/store"
 import { MagicWand05Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import { toast } from "sonner"
 
 
 /**
@@ -31,6 +32,10 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
   const attachedBoardId = chat?.graphUid
 
   const launchGeneration = (boardId: string) => {
+    if (!message.trim()) {
+      toast.error("No message to convert!")
+      return
+    }
     convertToMindMap({
       boardId,
       answer: message

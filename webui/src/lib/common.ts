@@ -28,3 +28,20 @@ export const trimText = (text: string, maxLength: number) => {
  */
 export const sleep = (ms: number): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, ms))
+
+
+/**
+ * Converts a UUID string to a numeric hash.
+ *
+ * @param uuid - The UUID string to convert.
+ * @returns A numeric hash derived from the UUID.
+ */
+export function uuidToNumber(uuid: string): number {
+  let hash = 0
+  for (let i = 0; i < uuid.length; i++) {
+    const code = uuid.charCodeAt(i)
+    // mix the bits
+    hash = (hash * 31 + code) >>> 0 // keep as unsigned 32-bit
+  }
+  return hash
+}

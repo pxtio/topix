@@ -88,12 +88,12 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
   const s = style
 
   function pickColor<K extends keyof Style>(key: K, v: Style[K] | null) {
-    const next = { [key]: (v ?? undefined) } as Partial<Style>;
-    onStyleChange(next);
+    const next = { [key]: (v ?? undefined) } as Partial<Style>
+    onStyleChange(next)
   }
 
   return (
-    <Card className={cn("w-full bg-sidebar backdrop-blur supports-[backdrop-filter]:bg-sidebar/50 shadow-md border border-border", className)}>
+    <Card className={cn("w-full bg-sidebar backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 shadow-md border border-border", className)}>
       <CardContent className="p-0 h-[600px]">
         <ScrollArea className='h-full p-3'>
           <div className='flex flex-col items-start gap-4 p-1'>
@@ -104,7 +104,7 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
 
             {/* Text color */}
             <Section title="Text color">
-              <ColorGrid value={s.textColor ?? null} onPick={v => onStyleChange({ textColor: v })} />
+              <ColorGrid value={s.textColor} onPick={v => onStyleChange({ textColor: v || undefined })} />
             </Section>
 
             {/* Background */}

@@ -1,40 +1,57 @@
-import { useState } from "react"
+import { memo, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
-import { extractStepDescription } from "../../utils/stream"
-import { trimText } from "@/lib/common"
-import type { AgentResponse, ReasoningStep } from "../../types/stream"
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { extractNamedLinksFromMarkdown } from "../../utils/md"
+import { ToolNameDescription, type AgentResponse, type ReasoningStep } from "../../types/stream"
+import { extractStepDescription, getWebSearchUrls } from "../../utils/stream/build"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { IdeaIcon } from "@hugeicons/core-free-icons"
 import { ThinkingDots } from "@/components/progress-bar"
+import { MiniLinkCard } from "../link-preview"
+import { cn } from "@/lib/utils"
+
+
+const ReasoningMessage = ({
+  reasoning
+}: { reasoning: string }) => {
+  const [viewReasoning, setViewReasoning] = useState<boolean>(false)
+
+  const handleClick = () => setViewReasoning(!viewReasoning)
+
+  return (
+    <div className='text-muted-foreground bg-background p-2 rounded-lg space-y-1'>
+      <div className='flex items-center gap-2 font-medium text-foreground cursor-pointer' onClick={handleClick}>
+        <HugeiconsIcon icon={IdeaIcon} className='size-4' strokeWidth={1.75} />
+        <span>Reasoning</span>
+      </div>
+      {viewReasoning && <span>{reasoning}</span>}
+    </div>
+  )
+}
 
 
 /**
  * ReasoningStepView component displays a single reasoning step.
  * @param {ReasoningStep} step - The reasoning step to display.
  */
-const ReasoningStepView = ({
+const ReasoningStepViewImpl = ({
   step,
   isLoading
 }: { step: ReasoningStep, isLoading?: boolean }) => {
-  const message = extractStepDescription(step)
-
-  const sources = extractNamedLinksFromMarkdown(step.response || "")
-
-  const trimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 200)
-  const longerTrimmedMessage = trimText(message.trim().replace(/\n{2,}/g, '\n'), 800)
-
   const [viewMore, setViewMore] = useState<boolean>(false)
+
+  const description = ToolNameDescription[step.name]
+  const { reasoning, message } = extractStepDescription(step)
+
+  const sources = viewMore ? getWebSearchUrls(step) : []
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
     setViewMore(!viewMore)
   }
 
-  const messageClass =
-    viewMore ?
-    'transition-all h-auto min-h-2 p-2 rounded-xl bg-card text-card-foreground border border-border' :
-    'transition-all h-auto min-h-2 p-2 rounded-xl border border-transparent'
+  const messageClass = cn(
+    'transition-all w-full h-auto min-h-2 p-2 rounded-xl border border-transparent',
+    viewMore ? 'bg-card' : ''
+  )
 
   return (
     <div
@@ -47,70 +64,77 @@ const ReasoningStepView = ({
       <div className='relative flex-shrink-0'>
         {
           isLoading &&
-          <div className='absolute animate-ping w-2 h-2 rounded-full bg-muted-foreground z-20' />
+          <div className='absolute animate-ping w-2 h-2 rounded-full bg-primary/50 z-20' />
         }
         {
           isLoading ?
-          <div className='relative w-2 h-2 rounded-full bg-primary z-20' /> :
+          <div className='relative w-2 h-2 rounded-full bg-primary/75 z-20' /> :
           <div className='relative w-2 h-2 rounded-full bg-primary z-20' />
         }
       </div>
-      <div className='flex-1 flex flex-col items-start gap-1'>
+      <div className='relative flex-1 flex flex-col items-start rounded-lg text-sm'>
         <div className={messageClass}>
           {
-            viewMore &&
-            <span className='text-xs text-card-foreground whitespace-pre-line'>
-              {longerTrimmedMessage}
-            </span>
-          }
-          {
-            !viewMore &&
-            <span className='text-xs text-card-foreground whitespace-pre-line'>
-              {trimmedMessage}
-            </span>
-          }
-          {
-            message.length > 200 &&
-            <button
-              className='text-xs text-primary hover:underline ml-2'
-              onClick={handleClick}
-            >
-              {viewMore ? "Show less" : "Show more"}
-            </button>
+            viewMore ? (
+              <div className='flex flex-col gap-1'>
+                {
+                  reasoning !== "" && <ReasoningMessage reasoning={reasoning} />
+                }
+                <span className='text-card-foreground whitespace-pre-line'>
+                  {message}
+                </span>
+                {
+                  sources && sources.length > 0 &&
+                  <div className='w-full flex flex-row flex-wrap items-start gap-1'>
+                    {
+                      sources.map((source, index) => <MiniLinkCard key={index} annotation={source} />)
+                    }
+                  </div>
+                }
+                <button
+                  className='text-xs text-primary font-sans hover:underline ml-2'
+                  onClick={handleClick}
+                >
+                  {"Show less"}
+                </button>
+              </div>
+            ) : (
+              <div>
+                {description && (
+                  <span className='text-card-foreground whitespace-pre-line font-medium'>
+                    {description}
+                  </span>
+                )}
+                <button
+                  className='text-xs text-primary font-sans hover:underline ml-2'
+                  onClick={handleClick}
+                >
+                  {"Show details"}
+                </button>
+              </div>
+            )
           }
         </div>
-        {
-          sources && sources.length > 0 &&
-          <div className='w-full flex flex-row flex-wrap items-start gap-1'>
-            {
-              sources.map((source, index) => (
-                <HoverCard key={index}>
-                  <HoverCardTrigger asChild>
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className='transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-medium border border-border bg-card hover:bg-accent rounded-lg'
-                    >
-                      {trimText(source.siteName, 20)}
-                    </a>
-                  </HoverCardTrigger>
-                  <HoverCardContent asChild>
-                    <ScrollArea>
-                      <div className='w-full'>
-                        <a className='text-xs text-muted-foreground' href={source.url}>{trimText(source.url, 50)}</a>
-                      </div>
-                    </ScrollArea>
-                  </HoverCardContent>
-                </HoverCard>
-              ))
-            }
-          </div>
-        }
       </div>
     </div>
   )
 }
+
+
+export const ReasoningStepView = memo(ReasoningStepViewImpl, (prev, next) => {
+  const a = prev.step
+  const b = next.step
+  if (prev.isLoading !== next.isLoading) return false
+  // compare the fields that actually affect rendering
+  return (
+    a.id === b.id &&
+    a.name === b.name &&
+    a.state === b.state &&
+    a.thought === b.thought &&
+    a.output === b.output &&
+    (a.eventMessages?.length || 0) === (b.eventMessages?.length || 0)
+  )
+})
 
 
 /**
@@ -130,7 +154,7 @@ export interface ReasoningStepsViewProps {
  * @param {ReasoningStepsViewProps} props - The properties for the component.
  */
 export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsViewProps) => {
-  const [isOpen, setIsOpen] = useState<boolean>(true)
+  const [isOpen, setIsOpen] = useState<boolean>(false)
 
   if (!response || response.steps.length === 0) {
     return (
@@ -157,7 +181,7 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
       </div>
       <div
         className={`
-          flex flex-col items-start gap-2
+          flex flex-col items-start
           font-mono
           text-sm
           relative

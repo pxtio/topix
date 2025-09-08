@@ -1,12 +1,12 @@
 // utils/formatDistanceToNow.ts
 export function formatDistanceToNow(
   isoDate?: string | null
-): { text: string | undefined; tooltip: string | undefined } {
+): { text: string | undefined, tooltip: string | undefined } {
   if (!isoDate) {
     return { text: undefined, tooltip: undefined }
   }
 
-  const date = new Date(isoDate);
+  const date = new Date(isoDate)
   if (isNaN(date.getTime())) {
     // Invalid date string
     return { text: undefined, tooltip: undefined }
@@ -23,7 +23,7 @@ export function formatDistanceToNow(
   const months = Math.floor(days / 30)
   const years = Math.floor(days / 365)
 
-  let text: string;
+  let text: string
   if (seconds < 60) {
     text = `${seconds}s ago`
   } else if (minutes < 60) {
@@ -48,7 +48,7 @@ export function formatDistanceToNow(
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  })
 
   return { text, tooltip }
 }

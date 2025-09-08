@@ -1,7 +1,7 @@
 // components/flow/linear-note-card.tsx
 import { useCallback, useMemo, useState } from 'react'
 import type { NoteNode } from '../../types/flow'
-import { MarkdownView } from '@/components/markdown-view'
+import { MarkdownView } from '@/components/markdown/markdown-view'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { MilkdownProvider } from '@milkdown/react'
@@ -11,13 +11,15 @@ import { useGraphStore } from '../../store/graph-store'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
 import clsx from 'clsx'
-import { TAILWIND_100 } from '../../lib/colors/tailwind'
+import { TAILWIND_200 } from '../../lib/colors/tailwind'
 import { DialogDescription } from '@radix-ui/react-dialog'
 import { useRemoveNote } from '../../api/remove-note'
 import { useRemoveLink } from '../../api/remove-link'
 import { useUpdateNote } from '../../api/update-note'
 import { useAppStore } from '@/store'
 import { formatDistanceToNow } from '../../utils/date'
+import { useTheme } from '@/components/theme-provider'
+import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 
 type Props = { node: NoteNode }
 
@@ -98,8 +100,11 @@ export function LinearNoteCard({ node }: Props) {
   const { removeNote } = useRemoveNote()
   const { removeLink } = useRemoveLink()
 
-  const color = node.data.style.backgroundColor ?? '#a5c9ff'
-  const textColor = node.data.style.textColor ?? undefined
+  // dark mode support
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+
+  const color = isDark ? darkModeDisplayHex(node.data.style.backgroundColor) ?? '#a5c9ff' : node.data.style.backgroundColor
   const isPinned = !!node.data.pinned
   const title = node.data.label?.markdown || ''
   const { text: timeAgo, tooltip: fullDate } = formatDistanceToNow(node.data.updatedAt)
@@ -151,23 +156,22 @@ export function LinearNoteCard({ node }: Props) {
   }, [boardId, node.data.id, node.id, removeLink, removeNote, setStore, userId])
 
   const cardClass = clsx(
-    'relative rounded-xl bg-background overflow-hidden cursor-pointer transition-all duration-200 group',
+    'rounded-xl relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group',
     isPinned
       ? 'ring-2 ring-primary/60 border border-transparent shadow-md'
-      : 'border border-border hover:ring-2 hover:ring-primary/40 hover:border-transparent hover:shadow-md'
+      : 'border border-transparent rounded-none hover:ring-2 hover:ring-primary/40 hover:border-transparent hover:shadow-md'
   )
 
   const CardBody = useMemo(() => (
-    <div className={cardClass} style={{ color: textColor }}>
+    <div className={cardClass}>
       {/* hue gradient overlay — light: multiply, dark: screen */}
       <div
         className='absolute inset-0 pointer-events-none mix-blend-multiply dark:mix-blend-screen opacity-[0.22] dark:opacity-[0.35]'
         style={{ backgroundImage: gradientBg }}
       />
-
       {/* hover toolbar */}
       <div className={clsx(
-        'absolute top-0 right-0 px-1.5 py-1 flex items-center gap-1 border-b border-l border-border bg-background/70 rounded-bl-xl backdrop-blur-sm transition-opacity z-20',
+        'absolute top-0 right-0 px-1.5 py-1 flex items-center gap-1 border-b border-l border-border bg-background/70 rounded-bl-xl backdrop-blur-sm transition-opacity z-20 rounded-tr-xl',
         isPinned ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
       )}>
         <button
@@ -193,8 +197,8 @@ export function LinearNoteCard({ node }: Props) {
 
       {/* content area with MASK fade at the bottom (no background painting) */}
       <div
-        className='p-4 pt-8 md:p-6 md:pt-10 max-h-[200px] overflow-hidden text-foreground relative z-10 space-y-1'
-        style={buildFadeMaskStyle({ solidUntil: 75 })}
+        className='p-4 md:p-6 mb-12 min-h-[100px] max-h-[225px] overflow-hidden text-foreground relative z-10 space-y-1'
+        style={buildFadeMaskStyle({ solidUntil: 90 })}
       >
         {title && (
           <h2 className='text-xl md:text-2xl font-semibold mb-2'>
@@ -206,18 +210,19 @@ export function LinearNoteCard({ node }: Props) {
         </div>
       </div>
     </div>
-  ), [cardClass, textColor, isPinned, onTogglePin, onDelete, title, node.data.content?.markdown, gradientBg])
+  ), [cardClass, isPinned, onTogglePin, onDelete, title, node.data.content?.markdown, gradientBg])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <div className='relative w-full min-w-0'>
+        <div className='absolute inset-x-0 -bottom-2 h-0 border-b border-muted-foreground/50 border-dashed' />
         {/* color dot & palette */}
-        <div className='absolute left-2 top-2 z-50 flex flex-row items-center gap-2'>
+        <div className='absolute left-6 bottom-4 z-50 flex flex-row items-center gap-2'>
           <Popover>
             <PopoverTrigger asChild>
               <button
                 className='h-4 w-4 rounded-full ring-2 ring-primary/40 shadow hover:brightness-95 transition'
-                style={{ backgroundColor: node.data.style.backgroundColor ?? '#a5c9ff' }}
+                style={{ backgroundColor: color }}
                 aria-label='Change background color'
                 title='Change background color'
                 onClick={e => e.stopPropagation()}
@@ -225,11 +230,11 @@ export function LinearNoteCard({ node }: Props) {
             </PopoverTrigger>
             <PopoverContent align='start' className='w-auto p-2'>
               <div className='grid grid-cols-6 gap-2'>
-                {TAILWIND_100.map(c => (
+                {TAILWIND_200.map(c => (
                   <button
                     key={c.name}
                     className='h-6 w-6 rounded-md border border-border hover:brightness-95'
-                    style={{ backgroundColor: c.hex }}
+                    style={{ backgroundColor: darkModeDisplayHex(c.hex) || c.hex }}
                     title={`${c.name}-100`}
                     aria-label={`${c.name}-100`}
                     onClick={() => onPickColor(c.hex)}
@@ -255,7 +260,7 @@ export function LinearNoteCard({ node }: Props) {
       </div>
 
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2'>
-        <DialogHeader className='invisible'>
+        <DialogHeader className='hidden'>
           <DialogTitle />
           <DialogDescription />
         </DialogHeader>

@@ -1,7 +1,15 @@
+import type { Annotation, ToolOutput } from "./tool-outputs"
+
 /**
  * Represents the type of streaming message in the agent response.
  */
-export type StreamingMessageType = "token" | "status" | "message"
+export type StreamingMessageType = "stream_message" | "stream_reasoning_message"
+
+
+/**
+ * Represents the type of streaming message content in the agent response.
+ */
+export type StreamingContentType = "token" | "status" | "message"
 
 
 /**
@@ -25,18 +33,20 @@ export interface StreamDelta {
  *
  * @property toolId - The ID of the tool that generated the message.
  * @property toolName - The name of the tool that generated the message.
- * @property content - The content of the message, which can be of type StreamingMessageType and contains text.
+ * @property content - The content of the message, which can be of type StreamingContentType and contains text.
  * @property is_stop - A boolean indicating whether the streaming has stopped.
  *
  * This interface is used to represent messages that are part of a stream from an agent, typically in a conversational AI context.
  * It includes information about the tool that generated the message, the type of content being streamed, and whether the streaming has stopped.
  */
 export interface AgentStreamMessage {
+    type: StreamingMessageType
     toolId: string
     toolName: ToolName
     content?: {
-      type: StreamingMessageType
+      type: StreamingContentType
       text: string
+      annotations: Annotation[]
     }
     isStop: boolean
 }
@@ -48,16 +58,10 @@ export interface AgentStreamMessage {
 export interface ReasoningStep {
   id: string
   name: ToolName
-  response: string
+  thought: string
+  output: ToolOutput
   state: ToolExecutionState
   eventMessages: string[]
-  sources?: {
-    type: "webpage",
-    webpage: {
-      name: string
-      url: string
-    }
-  }[]
 }
 
 
@@ -73,19 +77,23 @@ export interface AgentResponse {
  * Agent tool names enum
  */
 export type ToolName =
-  | "answer_reformulate"
-  | "knowledge_base_search"
   | "web_search"
+  | "memory_search"
   | "code_interpreter"
-  | "key_points_extract"
-  | "graph_conversion"
   | "raw_message"
 
+
+export const ToolNameDescription: Record<ToolName, string> = {
+  "web_search": "Search the web",
+  "memory_search": "Search memory",
+  "code_interpreter": "Interpret code",
+  "raw_message": "Reasoning message"
+}
 
 // The RAW_MESSAGE tool name is used to indicate raw messages in the stream.
 export const RAW_MESSAGE: ToolName = "raw_message"
 
 
 export function isMainResponse(toolName: ToolName): boolean {
-  return toolName === "raw_message" || toolName === "answer_reformulate"
+  return toolName === "raw_message"
 }

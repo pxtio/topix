@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
 import type { Options as RoughOptions } from 'roughjs/bin/core'
 import { useViewport } from '@xyflow/react'
+import clsx from 'clsx'
+import type { StrokeStyle } from '@/features/board/types/style'
 
 type RoundedClass = 'none' | 'rounded-2xl'
 
@@ -10,12 +12,44 @@ type RoughRectProps = {
   rounded?: RoundedClass
   roughness?: number
   stroke?: string
+  strokeStyle?: StrokeStyle // 'solid' | 'dashed' | 'dotted'
   strokeWidth?: number
   fill?: string
   fillStyle?: RoughOptions['fillStyle']
   className?: string
+  seed?: number
 }
 
+/** Map logical stroke style to dash pattern and (optionally) desired canvas lineCap. */
+function mapStrokeStyle(
+  strokeStyle: StrokeStyle | undefined,
+  strokeWidth: number | undefined
+): {
+  strokeLineDash?: number[]
+  lineCap?: CanvasLineCap
+} {
+  const sw = Math.max(0.5, strokeWidth ?? 1)
+
+  switch (strokeStyle) {
+    case 'dashed':
+      return {
+        strokeLineDash: [4 * sw, 2.5 * sw],
+        lineCap: 'butt'
+      }
+    case 'dotted':
+      // Round caps + [0, gap] yields pleasant dots
+      return {
+        strokeLineDash: [0, 2.2 * sw],
+        lineCap: 'round'
+      }
+    case 'solid':
+    default:
+      return {
+        strokeLineDash: undefined,
+        lineCap: 'butt'
+      }
+  }
+}
 
 /**
  * RoughCanvas-based rectangle component.
@@ -25,10 +59,12 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   rounded = 'none',
   roughness = 1.2,
   stroke = 'transparent',
+  strokeStyle = 'solid',
   strokeWidth = 1,
   fill,
   fillStyle = 'solid',
-  className
+  className,
+  seed = 1337
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -45,9 +81,8 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     // oversample backing store for zoom-in, never below 1 on zoom-out
     const oversample = Math.max(1, zoom)
 
-    // ➜ add a bleed in CSS units (display pixels), enough for stroke + jitter
+    // add a bleed in CSS units (display px), enough for stroke + jitter
     const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 2)
-
 
     const pixelW = Math.floor((cssW + bleed * 2) * dpr * oversample)
     const pixelH = Math.floor((cssH + bleed * 2) * dpr * oversample)
@@ -74,7 +109,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     const visibleStroke = stroke === 'transparent' && !fill ? '#222' : stroke
 
     // hairline crispness without eating tiny boxes
-    const inset = strokeWidth <= 1.5 ? Math.min(0.5, cssW / 4, cssH / 4) : 0
+    const inset = (strokeWidth ?? 1) <= 1.5 ? Math.min(0.5, cssW / 4, cssH / 4) : 0
     const w = Math.max(0, cssW - inset * 2)
     const h = Math.max(0, cssH - inset * 2)
 
@@ -82,23 +117,33 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     const radius = Math.max(0, Math.min(baseRadius, w / 2, h / 2))
 
     const pathData = radius > 0
-      ? excalidrawRoundedRectPath(inset, inset, w, h, radius) // curved corners like Excalidraw
+      ? excalidrawRoundedRectPath(inset, inset, w, h, radius)
       : rectPath(inset, inset, w, h)
+
+    // stroke style (solid / dashed / dotted)
+    const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
 
     const drawable = rc.generator.path(pathData, {
       roughness,
       stroke: visibleStroke,
-      strokeWidth,
+      strokeWidth: strokeWidth ?? 1,
       fill,
       fillStyle,
       bowing: 2,
       curveStepCount: 24,
       maxRandomnessOffset: 1.5,
-      seed: 1337
+      seed: seed || 1337,
+      // ✅ only properties that exist on RoughJS Options
+      strokeLineDash,
+      strokeLineDashOffset: 0
     })
 
+    // Apply desired lineCap directly on the canvas context (RoughJS Options lacks this key)
+    ctx.save()
+    if (lineCap) ctx.lineCap = lineCap
     rc.draw(drawable)
-  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, zoom])
+    ctx.restore()
+  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, zoom, seed, strokeStyle])
 
   useEffect(() => {
     const wrapper = wrapperRef.current
@@ -120,14 +165,16 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     }
   }, [draw])
 
+  const mainDivClass = clsx('relative', className || '')
+
   return (
-    <div ref={wrapperRef} className={`relative ${className || ''}`}>
+    <div ref={wrapperRef} className={mainDivClass}>
       <canvas
         ref={canvasRef}
         className='absolute inset-0 w-full h-full pointer-events-none'
         style={{ zIndex: 10, background: 'transparent' }}
       />
-      <div className='relative z-20'>
+      <div className='relative z-20 w-full h-full'>
         {children}
       </div>
     </div>
@@ -153,7 +200,7 @@ function excalidrawRoundedRectPath(
   const x1 = x + w
   const y1 = y + h
 
-  // moves clockwise: top-left start → top-right → bottom-right → bottom-left → close
+  // clockwise: top-left → top-right → bottom-right → bottom-left → close
   return [
     `M ${x0 + R} ${y0}`,
     `L ${x1 - R} ${y0}`,

@@ -6,12 +6,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncGenerator
 
-from jinja2 import Template
-from openai.types.responses import (
-    ResponseReasoningSummaryTextDeltaEvent,
-    ResponseTextDeltaEvent,
-)
-
 from agents import (
     Agent,
     ModelSettings,
@@ -23,11 +17,26 @@ from agents import (
     function_tool,
 )
 from agents.extensions.models.litellm_model import LitellmModel
+from jinja2 import Template
+from openai.types.responses import (
+    ResponseReasoningSummaryTextDeltaEvent,
+    ResponseTextDeltaEvent,
+)
+
 from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.context import Context
-from topix.agents.datatypes.model_enum import support_penalties, support_reasoning, support_temperature
+from topix.agents.datatypes.model_enum import (
+    support_penalties,
+    support_reasoning,
+    support_temperature,
+)
 from topix.agents.datatypes.outputs import ToolOutput
-from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType, StreamingMessageType
+from topix.agents.datatypes.stream import (
+    AgentStreamMessage,
+    Content,
+    ContentType,
+    StreamingMessageType,
+)
 from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.utils.tools import tool_execution_handler

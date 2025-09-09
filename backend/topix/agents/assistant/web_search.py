@@ -19,6 +19,7 @@ from agents import (
     function_tool,
     generation_span,
 )
+
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum

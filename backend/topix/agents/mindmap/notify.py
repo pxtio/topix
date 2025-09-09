@@ -12,28 +12,20 @@ from topix.datatypes.note.note import Note
 from topix.datatypes.resource import RichText
 
 
-class Theme(BaseModel):
-    """Theme."""
-
-    title: str
-    content: str
-
-
-class MapifyOutput(BaseModel):
+class NotifyOutput(BaseModel):
     """Mapify Output."""
 
     title: str
     content: str
-    themes: list[Theme]
 
 
-class MapifyAgent(BaseAgent):
+class NotifyAgent(BaseAgent):
     """Mapify Agent for synthesizing and thematically analyzing text."""
 
     def __init__(
         self,
         model: str = ModelEnum.OpenAI.GPT_4O_MINI,
-        instructions_template: str = "mapify.system.jinja",
+        instructions_template: str = "notify.system.jinja",
         model_settings: ModelSettings | None = None,
     ):
         """Init method."""
@@ -47,7 +39,7 @@ class MapifyAgent(BaseAgent):
             model=model,
             model_settings=model_settings,
             instructions=instructions,
-            output_type=MapifyOutput,
+            output_type=NotifyOutput,
         )
         super().__post_init__()
 
@@ -66,7 +58,7 @@ class MapifyAgent(BaseAgent):
         """
         # Optionally, you could include chat history if relevant.
         user_prompt = self._render_prompt(
-            "mapify.user.jinja",
+            "notify.user.jinja",
             input=input,
         )
         return user_prompt
@@ -80,25 +72,7 @@ class MapifyAgent(BaseAgent):
                     markdown=f"# {output.final_output.title}\n\n{output.final_output.content}".strip(),
                 )
             )
-        ] + [
-            Note(
-                content=RichText(
-                    markdown=theme.content,
-                ),
-                label=RichText(
-                    markdown=theme.title,
-                )
-            ) for theme in output.final_output.themes
         ]
-
         nodes[0].style.type = NodeType.SHEET
-        for node in nodes[1:]:
-            node.style.type = NodeType.RECTANGLE
 
-        links = [
-            Link(
-                source=nodes[0].id,
-                target=node.id
-            ) for node in nodes[1:]
-        ]
-        return nodes, links
+        return nodes, []

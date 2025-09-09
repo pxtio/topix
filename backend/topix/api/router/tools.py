@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Query, Request, Response
 
-from topix.agents.mindmap.mapify import MapifyAgent
+from topix.agents.mindmap.notify import NotifyAgent
 from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.helpers import with_standard_response
@@ -27,7 +27,7 @@ async def convert_mindmap(
     body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
 ):
     """Convert a mindmap to a graph."""
-    mapify_agent = MapifyAgent()
+    mapify_agent = NotifyAgent()
     res = await AgentRunner.run(mapify_agent, body.answer)
     notes, links = res
 

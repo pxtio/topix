@@ -84,6 +84,7 @@ export const useConvertToMindMap = () => {
 
   return {
     convertToMindMap: mutation.mutate,
+    convertToMindMapAsync: mutation.mutateAsync,
     ...mutation
   }
 }

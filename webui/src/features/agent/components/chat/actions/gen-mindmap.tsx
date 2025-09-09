@@ -1,6 +1,12 @@
 import { Button } from "@/components/ui/button"
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuLabel,
+  ContextMenuSeparator, ContextMenuTrigger
+} from "@/components/ui/context-menu"
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
 import { useListChats } from "@/features/agent/api/list-chats"
 import { useChat } from "@/features/agent/hooks/chat-context"
 import { useConvertToMindMap } from "@/features/board/api/convert-to-mindmap"
@@ -13,114 +19,108 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { toast } from "sonner"
 
 
-/**
- * Generate a mind map from the selected message
- */
+// Button that generates a mind map from the given message.
 export const GenMindmapButton = ({ message }: { message: string }) => {
   const { chatId } = useChat()
-
   const { userId } = useAppStore()
 
-  const { convertToMindMap } = useConvertToMindMap()
+  const { convertToMindMapAsync } = useConvertToMindMap()
   const { data: boardList } = useListBoards({ userId })
   const { data: chatList } = useListChats({ userId })
-
   const { createBoardAsync } = useCreateBoard()
 
-  const chat = chatList?.find(chat => chat.uid === chatId)
-
+  const chat = chatList?.find((c) => c.uid === chatId)
   const attachedBoardId = chat?.graphUid
 
-  const launchGeneration = (boardId: string) => {
+  const ensureMessage = () => {
     if (!message.trim()) {
       toast.error("No message to convert!")
-      return
+      return false
     }
-    convertToMindMap({
+    return true
+  }
+
+  // Launch on an existing board, with loading/success/error toasts
+  const launchGeneration = (boardId: string) => {
+    if (!ensureMessage()) return
+
+    const promise = convertToMindMapAsync({
       boardId,
-      answer: message
+      answer: message,
+    })
+
+    toast.promise(promise, {
+      loading: "Rewriting into notes…",
+      success: "Notes updated.",
+      error: "Failed to rewrite.",
     })
   }
 
-  const createAndLaunch = async () => {
-    const boardId = await createBoardAsync({ userId })
-    launchGeneration(boardId)
+  // Create a new board, then generate — one toast sequence for the whole flow
+  const createAndLaunch = () => {
+    if (!ensureMessage()) return
+
+    const promise = (async () => {
+      const boardId = await createBoardAsync({ userId })
+      await convertToMindMapAsync({ boardId, answer: message })
+    })()
+
+    toast.promise(promise, {
+      loading: "Creating board and rewriting…",
+      success: "Mind map created from your notes.",
+      error: "Could not create the board or rewrite.",
+    })
   }
 
   return (
     <>
-      {
-        !attachedBoardId ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="transition-all text-xs text-muted-foreground/50 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md"
-              >
-                <HugeiconsIcon
-                  icon={MagicWand05Icon}
-                  className='size-4'
-                  strokeWidth={1.75}
-                />
-                <span>Mapify</span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48">
-              <DropdownMenuLabel>Boards</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className='bg-accent/50'
-                onClick={createAndLaunch}
-              >
-                <span>Create New Board</span>
+      {!attachedBoardId ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="transition-all text-xs text-muted-foreground/50 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md">
+              <HugeiconsIcon icon={MagicWand05Icon} className="size-4" strokeWidth={1.75} />
+              <span>Mapify</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-48">
+            <DropdownMenuLabel>Boards</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="bg-accent/50" onClick={createAndLaunch}>
+              <span>Create New Board</span>
+            </DropdownMenuItem>
+            {boardList?.map((board) => (
+              <DropdownMenuItem key={board.uid} onClick={() => launchGeneration(board.uid)}>
+                {board.label || UNTITLED_LABEL}
               </DropdownMenuItem>
-              {boardList?.map((board) => (
-                <DropdownMenuItem
-                  key={board.uid}
-                  onClick={() => launchGeneration(board.uid)}
-                >
-                  {board.label || UNTITLED_LABEL}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-        :
-        (
-          <ContextMenu>
-            <ContextMenuTrigger asChild>
-              <Button
-                variant={null}
-                className="text-xs text-muted-foreground hover:text-foreground hover:bg-muted flex flex-row items-center gap-2"
-                onClick={() => launchGeneration(attachedBoardId)}
-              >
-                <HugeiconsIcon
-                  icon={MagicWand05Icon}
-                  className='text-primary'
-                />
-                <span>Mapify</span>
-              </Button>
-            </ContextMenuTrigger>
-            <ContextMenuContent className='w-48'>
-              <ContextMenuLabel>Select a different board</ContextMenuLabel>
-              <ContextMenuSeparator />
-              <ContextMenuItem
-                className='bg-accent/50'
-                onClick={createAndLaunch}
-              >
-                <span>Create New Board</span>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
+            <Button
+              variant={null}
+              className="text-xs text-muted-foreground hover:text-foreground hover:bg-muted flex flex-row items-center gap-2"
+              onClick={() => launchGeneration(attachedBoardId)}
+            >
+              <HugeiconsIcon icon={MagicWand05Icon} className="text-primary" />
+              <span>Mapify</span>
+            </Button>
+          </ContextMenuTrigger>
+          <ContextMenuContent className="w-48">
+            <ContextMenuLabel>Select a different board</ContextMenuLabel>
+            <ContextMenuSeparator />
+            <ContextMenuItem className="bg-accent/50" onClick={createAndLaunch}>
+              <span>Create New Board</span>
+            </ContextMenuItem>
+            {boardList?.map((board) => (
+              <ContextMenuItem key={board.uid} onClick={() => launchGeneration(board.uid)}>
+                {board.label || UNTITLED_LABEL}
               </ContextMenuItem>
-              {boardList?.map((board) => (
-                <ContextMenuItem
-                  key={board.uid}
-                  onClick={() => launchGeneration(board.uid)}
-                >
-                  {board.label || UNTITLED_LABEL}
-                </ContextMenuItem>
-              ))}
-            </ContextMenuContent>
-          </ContextMenu>
-        )
-      }
+            ))}
+          </ContextMenuContent>
+        </ContextMenu>
+      )}
     </>
   )
 }

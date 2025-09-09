@@ -40,7 +40,7 @@ export const ModelChoiceMenu = () => {
     <Select onValueChange={handleModelChange} defaultValue={llmModel}>
       <Tooltip delayDuration={400}>
         <TooltipTrigger asChild>
-          <SelectTrigger className="h-8 w-auto rounded-full bg-card text-card-foreground border border-border text-xs px-3 shadow-md">
+          <SelectTrigger className="w-auto rounded-full text-xs p-2 shadow-none border-none" size="sm">
             <SelectValue defaultValue={llmModel} />
           </SelectTrigger>
         </TooltipTrigger>

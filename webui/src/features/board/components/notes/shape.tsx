@@ -26,7 +26,7 @@ export const Shape = memo(function Shape({
   styleHelpers
 }: ShapeProps) {
   const base = `
-    w-full h-full p-4 border-none resize-none
+    w-full p-4 border-none resize-none
     focus:outline-none focus:ring-0 focus:border-none
     overflow-hidden whitespace-normal break-words
     ${styleHelpers.text} ${styleHelpers.font} ${styleHelpers.size}
@@ -34,7 +34,7 @@ export const Shape = memo(function Shape({
   `
 
   return (
-    <div className='w-full h-full'>
+    <div className='w-full h-full flex items-center justify-center'>
       {labelEditing ? (
         <TextareaAutosize
           className={`${base} nodrag nopan nowheel`}
@@ -45,7 +45,7 @@ export const Shape = memo(function Shape({
           readOnly={!labelEditing}
         />
       ) : (
-        <div className={base}>
+        <div className={`${base} whitespace-pre-wrap`}>
           <span>{value || ''}</span>
         </div>
       )}

@@ -1,29 +1,31 @@
-import { MarkdownView } from "@/components/markdown-view"
+import { MarkdownView } from "@/components/markdown/markdown-view"
 import { useChatStore } from "../../store/chat-store"
 import { ReasoningStepsView } from "./reasoning-steps"
-import { MiniLinkCard } from "../link-preview"
+import { LinkPreviewCard } from "../link-preview"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { Copy, MousePointerClick } from "lucide-react"
-import { extractNamedLinksFromMarkdown } from "../../utils/md"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
 import type { ChatMessage } from "../../types/chat"
-import { isMainResponse } from "../../types/stream"
+import { isMainResponse, type AgentResponse } from "../../types/stream"
 import { GenMindmapButton } from "./actions/gen-mindmap"
+import { extractAnswerWebSources } from "../../utils/url"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { CopyIcon, Link04Icon } from "@hugeicons/core-free-icons"
+import { extractFinalSegment } from "../../utils/stream/text"
+import { useMemo } from "react"
 
 
 /**
  * Component that renders a list of sources for a chat response.
  */
-const SourcesView = ({ answer }: { answer: string }) => {
-  const links = extractNamedLinksFromMarkdown(answer)
+const SourcesView = ({ answer }: { answer: AgentResponse }) => {
+  const annotations = extractAnswerWebSources(answer)
 
-  if (links.length === 0) return null
+  if (annotations.length === 0) return null
 
   return (
     <div className='w-full p-2 min-w-0'>
       <div className='w-full border-b border-border p-2 flex items-center gap-2'>
-        <MousePointerClick className='size-4 shrink-0 text-primary' strokeWidth={1.75} />
+        <HugeiconsIcon icon={Link04Icon} className='size-5 shrink-0 text-primary' strokeWidth={1.75} />
         <span className='text-base text-primary font-semibold'>Sources</span>
       </div>
 
@@ -37,9 +39,9 @@ const SourcesView = ({ answer }: { answer: string }) => {
           className='px-2 py-4 flex flex-wrap md:flex-nowrap gap-2 md:w-max
                      md:overflow-visible'
         >
-          {links.map((link, index) => (
+          {annotations.map((annotation, index) => (
             <div key={index} className='shrink-0'>
-              <MiniLinkCard url={link.url} siteName={link.siteName} />
+              <LinkPreviewCard url={annotation.url} title={annotation.title} content={annotation.content} />
             </div>
           ))}
         </div>
@@ -70,14 +72,13 @@ const ResponseActions = ({ message }: { message: string }) => {
 
   return (
     <div className="flex flex-row items-center gap-2">
-      <Button
-        variant={null}
-        className="text-xs text-muted-foreground hover:text-foreground hover:bg-muted flex flex-row items-center gap-2"
+      <button
+        className="transition-all text-xs text-muted-foreground/50 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md"
         onClick={() => handleCopy(message)}
       >
-        <Copy className='size-4 shrink-0' strokeWidth={1.75} />
-        <span>Copy Answer</span>
-      </Button>
+        <HugeiconsIcon icon={CopyIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+        <span>Copy</span>
+      </button>
       <GenMindmapButton message={message} />
     </div>
   )
@@ -93,7 +94,8 @@ export const AssistantMessage = ({
   message: ChatMessage
 }) => {
   const streamingMessage = useChatStore((state) => state.streams.get(message.id))
-  const { isStreaming, streamingMessageId } = useChatStore()
+  const isStreaming = useChatStore((state) => state.isStreaming)
+  const streamingMessageId = useChatStore((state) => state.streamingMessageId)
 
   const streaming = isStreaming && streamingMessageId === message.id
 
@@ -106,13 +108,20 @@ export const AssistantMessage = ({
     streamingMessage.steps.length > 0
   ) || message
 
-  const messageContent = message.content.markdown ?
-    message.content.markdown
-    :
-    lastStep?.response && isMainResponse(lastStep.name) ?
-    lastStep.response
+  const messageContent = message.content.markdown ? message.content.markdown : null
+
+  const rawContent = lastStep?.output && isMainResponse(lastStep.name) ?
+    lastStep.output as string
     :
     ""
+
+    // extract final-only view for rendering
+  const { final: finalContent, started } = useMemo(
+    () => extractFinalSegment(rawContent),
+    [rawContent]
+  )
+
+  const markdownMessage = streaming ? (started ? finalContent : '') : (messageContent ? messageContent : finalContent)
 
   const agentResponse = streamingMessage ?
     streamingMessage
@@ -123,10 +132,10 @@ export const AssistantMessage = ({
     undefined
 
   const lastStepMessage = showLastStepMessage ? (
-    <div className="w-full p-4">
-      <MarkdownView content={messageContent} />
-      {!streaming && <SourcesView answer={messageContent} />}
-      {!streaming && <ResponseActions message={messageContent} />}
+    <div className="w-full p-4 space-y-2">
+      <MarkdownView content={markdownMessage} />
+      {!streaming && agentResponse && <SourcesView answer={agentResponse} />}
+      {!streaming && <ResponseActions message={finalContent} />}
     </div>
   ) : null
 

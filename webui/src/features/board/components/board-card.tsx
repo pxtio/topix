@@ -26,22 +26,25 @@ export const BoardCard = ({
   return (
     <div
       className={`
+        bg-card hover:bg-accent
         transition-all
         rounded-xl
         text-card-foreground
-        border border-transparent hover:border-border
+        border border-dashed border-border hover:border-primary
+        hover:ring-2 hover:ring-primary/10
         shadow-none hover:shadow-sm
         cursor-pointer
         w-60
         flex flex-col
         overflow-hidden
         gap-1
+        p-1
       `}
       onClick={handleClick}
     >
       {
         board.thumbnail ? (
-          <div className='bg-card rounded-xl'>
+          <div className='bg-transparent rounded-xl'>
             <img
               src={board.thumbnail}
               alt={board.label || UNTITLED_LABEL}
@@ -85,9 +88,10 @@ export const NewBoardCard = () => {
       className={`
         transition-all
         rounded-xl
-        bg-card/75
+        bg-card hover:bg-accent
+        hover:ring-2 hover:ring-primary/10
         text-card-foreground
-        border border-dashed border-border hover:border-border
+        border border-dashed border-border hover:border-primary
         shadow-none hover:shadow-sm
         cursor-pointer
         w-60 h-40
@@ -95,6 +99,7 @@ export const NewBoardCard = () => {
         overflow-hidden
         gap-1
         flex items-center justify-center
+        p-1
       `}
       onClick={handleClick}
     >

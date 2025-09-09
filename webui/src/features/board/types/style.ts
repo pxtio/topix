@@ -126,7 +126,7 @@ export interface Style {
   fontFamily: FontFamily
   fontSize: FontSize
   textAlign: TextAlign
-  textColor: string | null
+  textColor: string
   textStyle: TextStyle
 }
 
@@ -145,7 +145,7 @@ export const createDefaultStyle = ({
     strokeColor: "transparent",
     strokeWidth: 0.75,
     strokeStyle: "solid",
-    backgroundColor: "#ffedd5",
+    backgroundColor: "#fed7aa",
     fillStyle: "solid",
     textColor: "#000000",
     textStyle: "normal",

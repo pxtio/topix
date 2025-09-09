@@ -17,7 +17,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 // subcomponents
 import { Shape } from '../notes/shape'
 import { StickyNote } from '../notes/sticky-note'
-import { TAILWIND_100 } from '../../lib/colors/tailwind'
+import { TAILWIND_200 } from '../../lib/colors/tailwind'
+import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 
 type NoteWithPin = Note & { pinned?: boolean }
 
@@ -26,6 +27,7 @@ type NodeCardProps = {
   selected: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  isDark: boolean
 }
 
 /**
@@ -34,7 +36,7 @@ type NodeCardProps = {
  * - Shape (others): must click the floating "View Note" button to open dialog
  * - Sheet-only toolbar: palette (bg color), pin, delete
  */
-export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) => {
+export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCardProps) => {
   const isSheet = note.style.type === 'sheet'
 
   const [internalOpen, setInternalOpen] = useState(false)
@@ -45,13 +47,18 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const [labelEditing, setLabelEditing] = useState(false)
 
+  const textColor = isDark ? darkModeDisplayHex(note.style.textColor) || undefined : note.style.textColor
+
   // classNames derived from style
   const labelClass = useMemo(() => clsx(
-    'relative bg-transparent overflow-visible w-[300px] min-h-[50px] flex items-center justify-center',
-    isSheet ? `h-[300px] ${fontFamilyToTwClass(note.style.fontFamily)} p-4 pt-8` : 'p-2'
+    'relative bg-transparent overflow-visible flex items-center justify-center',
+    isSheet ?
+    `w-[300px] h-[300px] ${fontFamilyToTwClass(note.style.fontFamily)} p-4 pt-8`
+    :
+    'w-full h-full p-2'
   ), [isSheet, note.style.fontFamily])
 
-  const titleEditorClass = 'text-3xl focus:outline-none focus:ring-0 focus:border-none overflow-hidden whitespace-normal break-words resize-none w-full'
+  const titleEditorClass = 'text-3xl focus:outline-none focus:ring-0 focus:border-none overflow-visible whitespace-normal break-words resize-none w-full'
 
   const setDialogOpen = useCallback((v: boolean) => {
     if (typeof open === 'boolean') onOpenChange?.(v)
@@ -150,10 +157,10 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
         className={labelClass}
         onDoubleClick={onDoubleClick}
         onPointerDown={stopDragging}
-        style={{ color: note.style.textColor || 'inherit' }}
+        style={{ color: textColor || 'inherit' }}
       >
         {isSheet && (
-          <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 border-b border-border justify-end bg-background/20'>
+          <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 shadow-xs justify-end bg-background/20'>
             {/* Palette popover */}
             <Popover>
               <PopoverTrigger asChild>
@@ -168,7 +175,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
               </PopoverTrigger>
               <PopoverContent align='end' className='w-auto p-2'>
                 <div className='grid grid-cols-6 gap-2'>
-                  {TAILWIND_100.map(c => (
+                  {TAILWIND_200.map(c => (
                     <button
                       key={c.name}
                       className='h-6 w-6 rounded-full border border-border hover:brightness-95'
@@ -242,7 +249,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
       {/* DIALOG CONTENT (full editor) */}
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2'>
         {isSheet ? (
-          <DialogHeader className='invisible'>
+          <DialogHeader className='hidden'>
             <DialogTitle />
             <DialogDescription />
           </DialogHeader>
@@ -258,11 +265,11 @@ export const NodeCard = ({ note, selected, open, onOpenChange }: NodeCardProps) 
                 />
               </div>
             </DialogTitle>
-            <DialogDescription className='invisible'>Note description</DialogDescription>
+            <DialogDescription className='hidden'>Note description</DialogDescription>
           </DialogHeader>
         )}
 
-        <div className='min-h-0 flex-1 flex items-center w-full'>
+        <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
           <ScrollArea className='h-full w-full'>
             <MilkdownProvider>
               <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />

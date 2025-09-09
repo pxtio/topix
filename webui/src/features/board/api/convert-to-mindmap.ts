@@ -44,9 +44,8 @@ export const useConvertToMindMap = () => {
 
   const {
     setMindMap,
-    isProcessing,
-    setIsProcessing,
-    setInProcessingBoardId
+    generatingMindMap,
+    setGeneratingMindmap,
   } = useMindMapStore()
 
   const mutation = useMutation({
@@ -54,11 +53,10 @@ export const useConvertToMindMap = () => {
       boardId,
       answer
     }: { boardId: string, answer: string }): Promise<{ status: string }> => {
-      if (isProcessing) {
+      if (generatingMindMap) {
         return { status: "processing" }
       }
-      setIsProcessing(true)
-      setInProcessingBoardId(boardId)
+      setGeneratingMindmap(true)
       const { notes, links } = await convertToMindMap(userId, answer)
 
       notes.forEach(note => {
@@ -75,8 +73,7 @@ export const useConvertToMindMap = () => {
       // will be consumed by board component
       // and then cleared
       setMindMap(boardId, nodes, edges)
-      setIsProcessing(false)
-      setInProcessingBoardId(undefined)
+      setGeneratingMindmap(false)
 
       return { status: "success" }
     }

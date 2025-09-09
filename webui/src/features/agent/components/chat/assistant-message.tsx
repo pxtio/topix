@@ -3,15 +3,14 @@ import { useChatStore } from "../../store/chat-store"
 import { ReasoningStepsView } from "./reasoning-steps"
 import { LinkPreviewCard } from "../link-preview"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { toast } from "sonner"
 import type { ChatMessage } from "../../types/chat"
 import { isMainResponse, type AgentResponse } from "../../types/stream"
-import { GenMindmapButton } from "./actions/gen-mindmap"
 import { extractAnswerWebSources } from "../../utils/url"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { CopyIcon, Link04Icon } from "@hugeicons/core-free-icons"
+import { Link04Icon } from "@hugeicons/core-free-icons"
 import { extractFinalSegment } from "../../utils/stream/text"
 import { useMemo } from "react"
+import { ResponseActions } from "./actions/response-actions"
 
 
 /**
@@ -53,37 +52,6 @@ const SourcesView = ({ answer }: { answer: AgentResponse }) => {
                      scrollbar-thumb-muted-foreground/40 scrollbar-track-transparent'
         />
       </ScrollArea>
-    </div>
-  )
-}
-
-
-/**
- * Component that renders action buttons for a chat response.
- */
-const ResponseActions = ({ message }: { message: string }) => {
-  const handleCopy = (text: string) => {
-    if (!text.trim()) {
-      toast("No answer to copy!")
-      return
-    }
-    navigator.clipboard.writeText(text).then(() => {
-      toast('Answer copied to clipboard!')
-    }).catch(() => {
-      toast("Failed to copy answer!")
-    })
-  }
-
-  return (
-    <div className="flex flex-row items-center gap-2">
-      <button
-        className="transition-all text-xs text-muted-foreground/50 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md"
-        onClick={() => handleCopy(message)}
-      >
-        <HugeiconsIcon icon={CopyIcon} className='size-4 shrink-0' strokeWidth={1.75} />
-        <span>Copy</span>
-      </button>
-      <GenMindmapButton message={message} />
     </div>
   )
 }

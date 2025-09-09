@@ -32,7 +32,7 @@ export function RootLayout() {
           </SidebarInset>
         </SidebarProvider>
       </main>
-      <Toaster position="top-center" />
+      <Toaster position="bottom-right" />
     </ThemeProvider>
   )
 }

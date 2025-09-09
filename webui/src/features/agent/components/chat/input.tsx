@@ -6,18 +6,15 @@ import { generateUuid, trimText } from '@/lib/common'
 import { useAppStore } from '@/store'
 import { SendButton } from './send-button'
 import TextareaAutosize from 'react-textarea-autosize'
-import { Oc } from '@/components/oc'
-import { ModelChoiceMenu } from './input-settings/model-card'
-import { SearchEngineChoiceMenu } from './input-settings/web-search'
 import { useChat } from '../../hooks/chat-context'
 import { useCreateChat } from '../../api/create-chat'
 import { useUpdateChat } from '../../api/update-chat'
 import { useNavigate } from '@tanstack/react-router'
 import { ChatUrl } from '@/routes'
 import { useDescribeChat } from '../../api/describe-chat'
-import { MemorySearchChoiceMenu } from './input-settings/memory-search'
-import { CodeInterpreterChoiceMenu } from './input-settings/code-interpreter'
 import type { SendMessageRequestPayload } from '../../api/types'
+import { WelcomeMessage } from './welcome-message'
+import { InputSettings } from './input-settings/settings'
 
 
 export interface InputBarProps {
@@ -107,14 +104,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   return (
     <div className={className}>
       {
-        !chatId && (
-          <div className='relative w-full h-72 flex flex-col items-center justify-center'>
-            <Oc/>
-            <div className='absolute bottom-10 inset-x-0text-center text-xl text-card-foreground'>
-              <span>Ask me anything — I'll sniff out the answer!</span>
-            </div>
-          </div>
-        )
+        !chatId && <WelcomeMessage />
       }
       <div className='flex flex-col space-y-2 w-full items-center justify-center'>
         <div
@@ -129,10 +119,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
           `}
         >
           <div className='absolute -top-9 left-0 transform flex flex-row items-center gap-1'>
-            <ModelChoiceMenu />
-            <SearchEngineChoiceMenu />
-            <MemorySearchChoiceMenu />
-            <CodeInterpreterChoiceMenu />
+            <InputSettings />
           </div>
           <div className="relative flex flex-row items-center space-y-1 items-stretch">
             <div className='flex-1 p-2 flex items-center justify-center'>

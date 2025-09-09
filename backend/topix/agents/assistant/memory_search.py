@@ -3,6 +3,7 @@
 import re
 
 from agents import ModelSettings, RunResult
+
 from topix.agents.base import BaseAgent
 from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.annotations import RefAnnotation
@@ -66,7 +67,7 @@ class MemorySearch(BaseAgent):
             context._memory_cache.add(resource.id)
             content = resource.content.markdown
             short_id = resource.id[:4]
-            memory = f'<CONTEXT url="{short_id}" type="{resource.type}"> \
+            memory = f'<CONTEXT url="/{short_id}/" type="{resource.type}"> \
                 \n{content}\n</CONTEXT>'
             memories.append(memory)
 
@@ -97,8 +98,8 @@ class MemorySearch(BaseAgent):
     ) -> MemorySearchOutput:
         final_output: str = output.final_output
 
-        # Extract the cited url in format [type](url)
-        pattern = r'\[([^\]]+)\]\(([0-9a-fA-F]{4})\)'
+        # Extract the cited url in format [type](/url/)
+        pattern = r'\[([^\]]+)\]\(/([a-zA-Z0-9]{4})/\)'
         matches = re.findall(pattern, final_output)
 
         if not matches:
@@ -108,12 +109,9 @@ class MemorySearch(BaseAgent):
         id_map = {idx[:4]: idx for idx in context._memory_cache}
         ref_ids = []
 
-        def _replace_link(match):
-            _, short_id = match.groups()
+        for _, short_id in matches:
             long_id = id_map.get(short_id, None)
-            if long_id is not None:
+            if long_id:
                 ref_ids.append(RefAnnotation(ref_id=long_id))
 
-        rewritten = re.sub(pattern, _replace_link, final_output)
-
-        return MemorySearchOutput(answer=rewritten, references=ref_ids)
+        return MemorySearchOutput(answer=final_output, references=ref_ids)

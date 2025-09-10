@@ -14,13 +14,13 @@ import { useCreateBoard } from "@/features/board/api/create-board"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { useAppStore } from "@/store"
-import { MagicWand05Icon } from "@hugeicons/core-free-icons"
+import { NotebookIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { toast } from "sonner"
 
 
 // Button that generates a mind map from the given message.
-export const GenMindmapButton = ({ message }: { message: string }) => {
+export const SaveAsNote = ({ message }: { message: string }) => {
   const { chatId } = useChat()
   const { userId } = useAppStore()
 
@@ -50,7 +50,7 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
     })
 
     toast.promise(promise, {
-      loading: "Rewriting into notes…",
+      loading: "Rewriting into note…",
       success: "Notes updated.",
       error: "Failed to rewrite.",
     })
@@ -67,7 +67,7 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
 
     toast.promise(promise, {
       loading: "Creating board and rewriting…",
-      success: "Mind map created from your notes.",
+      success: "Notes updated.",
       error: "Could not create the board or rewrite.",
     })
   }
@@ -77,9 +77,13 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
       {!attachedBoardId ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="transition-all text-xs text-muted-foreground/50 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md">
-              <HugeiconsIcon icon={MagicWand05Icon} className="size-4" strokeWidth={1.75} />
-              <span>Mapify</span>
+            <button
+              className="transition-all text-xs text-muted-foreground/50 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md"
+              aria-label="Notify"
+              title="Notify"
+            >
+              <HugeiconsIcon icon={NotebookIcon} className="text-primary size-4" strokeWidth={1.75} />
+              <span>Notify</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-48">
@@ -103,7 +107,7 @@ export const GenMindmapButton = ({ message }: { message: string }) => {
               className="text-xs text-muted-foreground hover:text-foreground hover:bg-muted flex flex-row items-center gap-2"
               onClick={() => launchGeneration(attachedBoardId)}
             >
-              <HugeiconsIcon icon={MagicWand05Icon} className="text-primary" />
+              <HugeiconsIcon icon={NotebookIcon} className="text-primary size-4" />
               <span>Mapify</span>
             </Button>
           </ContextMenuTrigger>

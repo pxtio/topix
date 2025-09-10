@@ -22,7 +22,7 @@ const SourcesView = ({ answer }: { answer: AgentResponse }) => {
   if (annotations.length === 0) return null
 
   return (
-    <div className='w-full p-2 min-w-0'>
+    <div className='w-full mt-2 min-w-0'>
       <div className='w-full border-b border-border p-2 flex items-center gap-2'>
         <HugeiconsIcon icon={Link04Icon} className='size-5 shrink-0 text-primary' strokeWidth={1.75} />
         <span className='text-base text-primary font-semibold'>Sources</span>
@@ -30,10 +30,6 @@ const SourcesView = ({ answer }: { answer: AgentResponse }) => {
 
       {/* Root must not overflow its parent */}
       <ScrollArea className='w-full overflow-hidden'>
-        {/*
-          Mobile: flex-wrap so items wrap within the viewport (no overflow)
-          md+: no-wrap + x-scroll. w-max ensures content width equals sum of children for scrolling.
-        */}
         <div
           className='px-2 py-4 flex flex-wrap md:flex-nowrap gap-2 md:w-max
                      md:overflow-visible'

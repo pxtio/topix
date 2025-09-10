@@ -1,4 +1,4 @@
-import { CopyIcon } from "@hugeicons/core-free-icons"
+import { CopyIcon, Tick01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -18,7 +18,7 @@ export const CopyAnswer = ({ answer }: { answer: string }) => {
     })
   }
 
-  const icon = copied ? CopyIcon : CopyIcon
+  const icon = copied ? Tick01Icon : CopyIcon
 
   return (
     <button

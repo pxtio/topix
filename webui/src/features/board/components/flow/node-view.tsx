@@ -1,5 +1,5 @@
-import { memo, useEffect, useMemo } from 'react'
-import { type ControlPosition, Handle, type NodeProps, NodeResizeControl, Position, useReactFlow } from '@xyflow/react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { type ControlPosition, Handle, type NodeProps, NodeResizeControl, Position, useReactFlow, useUpdateNodeInternals } from '@xyflow/react'
 import type { NoteNode } from '../../types/flow'
 import { RoughRect } from '@/components/rough/rect'
 import { NodeCard } from './note-card'
@@ -41,6 +41,34 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     { pos: 'bottom-right', class: 'bottom-0 right-0 cursor-nwse-resize' },
   ]), [])
 
+  const updateNodeInternals = useUpdateNodeInternals()
+
+  // 1) observe content height
+  const contentRef = useRef<HTMLDivElement | null>(null)
+  const [contentH, setContentH] = useState(0)
+  const VERTICAL_EXTRA = 24
+  const computedMinH = Math.max(100, Math.ceil(contentH + VERTICAL_EXTRA))
+
+  useLayoutEffect(() => {
+    if (!contentRef.current) return
+    const ro = new ResizeObserver(([entry]) => {
+      setContentH(Math.ceil(entry.contentRect.height))
+    })
+    ro.observe(contentRef.current)
+    return () => ro.disconnect()
+  }, [])
+
+  // 2) set wrapper div's minHeight imperatively
+  useLayoutEffect(() => {
+    const sel = `.react-flow__node[data-id="${CSS?.escape ? CSS.escape(id) : id}"]`
+    const el = document.querySelector<HTMLElement>(sel)
+    if (el) {
+      el.style.minHeight = `${computedMinH}px`
+    }
+    updateNodeInternals(id)
+  }, [id, computedMinH, updateNodeInternals])
+
+
   const node = getNode(id)
   if (!node) return null
 
@@ -53,10 +81,11 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     'shadow-lg rounded-md border border-border',
     data.pinned && 'ring-2 ring-primary',
   )
+  const textNodeClass = 'bg-transparent w-full h-full'
 
   const content = (
     <div className={nodeClass}>
-      <NodeCard note={data} selected={selected} isDark={isDark} />
+      <NodeCard note={data} selected={selected} isDark={isDark} contentRef={contentRef} />
       {selected && <div className='absolute -inset-1 border border-primary pointer-events-none rounded z-10' />}
     </div>
   )
@@ -79,6 +108,10 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
       {nodeType === 'sheet' ? (
         <div className={frameClass} style={{ backgroundColor, color: textColor }}>
+          {content}
+        </div>
+      ) : nodeType === 'text' ? (
+        <div className={textNodeClass} style={{ color: textColor }}>
           {content}
         </div>
       ) : nodeType === 'ellipse' ? (

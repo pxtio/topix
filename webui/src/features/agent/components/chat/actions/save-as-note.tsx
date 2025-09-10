@@ -111,7 +111,7 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
               className="text-xs text-muted-foreground hover:text-foreground hover:bg-muted flex flex-row items-center gap-2"
               onClick={() => launchGeneration(attachedBoardId)}
             >
-              <HugeiconsIcon icon={NotebookIcon} className="text-primary size-4" />
+              <HugeiconsIcon icon={icon} className="text-primary size-4" />
               <span>{label}</span>
             </Button>
           </ContextMenuTrigger>

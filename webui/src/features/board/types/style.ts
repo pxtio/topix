@@ -142,7 +142,7 @@ export const createDefaultStyle = ({
   const defaultOptions = {
     type: type,
     angle: 0.0,
-    strokeColor: "transparent",
+    strokeColor: "#00000000",
     strokeWidth: 0.75,
     strokeStyle: "solid",
     backgroundColor: "#fed7aa",
@@ -196,10 +196,10 @@ export const createDefaultStyle = ({
         ...defaultOptions,
         roughness: 0,
         roundness: 0,
-        fontFamily: "sans-serif",
+        fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "left",
-        backgroundColor: "transparent"
+        backgroundColor: "#00000000"
       } as Style
   }
 }

@@ -15,6 +15,7 @@ interface ShapeProps {
     font: string
     size: string
   }
+  contentRef: RefObject<HTMLDivElement | null>
 }
 
 export const Shape = memo(function Shape({
@@ -23,7 +24,8 @@ export const Shape = memo(function Shape({
   onChange,
   textareaRef,
   textAlign,
-  styleHelpers
+  styleHelpers,
+  contentRef,
 }: ShapeProps) {
   const base = `
     w-full p-4 border-none resize-none
@@ -35,20 +37,22 @@ export const Shape = memo(function Shape({
 
   return (
     <div className='w-full h-full flex items-center justify-center'>
-      {labelEditing ? (
-        <TextareaAutosize
-          className={`${base} nodrag nopan nowheel`}
-          value={value}
-          onChange={onChange}
-          placeholder=""
-          ref={textareaRef}
-          readOnly={!labelEditing}
-        />
-      ) : (
-        <div className={`${base} whitespace-pre-wrap`}>
-          <span>{value || ''}</span>
-        </div>
-      )}
+      <div className='w-full' ref={contentRef}>
+        {labelEditing ? (
+          <TextareaAutosize
+            className={`${base} nodrag nopan nowheel`}
+            value={value}
+            onChange={onChange}
+            placeholder=""
+            ref={textareaRef}
+            readOnly={!labelEditing}
+          />
+        ) : (
+          <div className={`${base} whitespace-pre-wrap`}>
+            <span>{value || ''}</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 })

@@ -112,7 +112,7 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
               onClick={() => launchGeneration(attachedBoardId)}
             >
               <HugeiconsIcon icon={NotebookIcon} className="text-primary size-4" />
-              <span>Mapify</span>
+              <span>{label}</span>
             </Button>
           </ContextMenuTrigger>
           <ContextMenuContent className="w-48">

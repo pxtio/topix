@@ -145,7 +145,7 @@
   --sidebar-border: oklch(0.34 0.010 260);
   --sidebar-ring: oklch(0.78 0.12 2.6555);
 
-  --font-sans: 'Instrument Sans', 'Geist Fallback', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans: -apple-system, 'Instrument Sans', 'Geist Fallback', ui-sans-serif, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif: "Source Serif 4", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: "Ubuntu Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-handwriting: "Shantell Sans", "Geist Handwriting Fallback", ui-handwriting, cursive;

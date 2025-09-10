@@ -2,9 +2,9 @@
 
 import logging
 
+from agents import ModelSettings, RunResult
 from pydantic import BaseModel
 
-from agents import ModelSettings, RunResult
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import ModelEnum

@@ -23,16 +23,23 @@ export function RootLayout() {
               </div>
             </header>
 
-            {/* 👇 Active route gets rendered here */}
+            {/* Active route gets rendered here */}
             <div className="flex flex-1 w-full relative min-w-0">
               <div className='absolute inset-0 h-full w-full overflow-hidden'>
                 <Outlet />
               </div>
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  style: {
+                    borderRadius: 'var(--radius-xl)'
+                  },
+                }}
+              />
             </div>
           </SidebarInset>
         </SidebarProvider>
       </main>
-      <Toaster position="top-center" />
     </ThemeProvider>
   )
 }

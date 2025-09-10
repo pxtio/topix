@@ -234,7 +234,7 @@ export function LinearNoteCard({ node }: Props) {
                   <button
                     key={c.name}
                     className='h-6 w-6 rounded-md border border-border hover:brightness-95'
-                    style={{ backgroundColor: darkModeDisplayHex(c.hex) || c.hex }}
+                    style={{ backgroundColor: isDark ? darkModeDisplayHex(c.hex) || c.hex : c.hex }}
                     title={`${c.name}-100`}
                     aria-label={`${c.name}-100`}
                     onClick={() => onPickColor(c.hex)}

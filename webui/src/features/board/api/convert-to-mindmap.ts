@@ -9,6 +9,8 @@ import { autoLayout } from "../lib/graph/auto-layout"
 import { defaultLayoutOptions } from "../lib/graph/settings"
 import { useMindMapStore } from "@/features/agent/store/mindmap-store"
 import { createDefaultStyle } from "../types/style"
+import { colorTree } from "../utils/bfs"
+import { pickRandomColorOfShade } from "../lib/colors/tailwind"
 
 
 /**
@@ -16,12 +18,13 @@ import { createDefaultStyle } from "../types/style"
  */
 export async function convertToMindMap(
   userId: string,
-  answer: string
+  answer: string,
+  toolType: "notify" | "mapify"
 ): Promise<{ notes: Note[], links: Link[] }> {
   const headers = new Headers()
   headers.set("Content-Type", "application/json")
 
-  const response = await fetch(`${API_URL}/tools/mindmaps:convert?user_id=${userId}`, {
+  const response = await fetch(`${API_URL}/tools/mindmaps:${toolType}?user_id=${userId}`, {
     method: "POST",
     headers,
     body: JSON.stringify({ answer })
@@ -44,28 +47,35 @@ export const useConvertToMindMap = () => {
 
   const {
     setMindMap,
-    isProcessing,
-    setIsProcessing,
-    setInProcessingBoardId
+    generatingMindMap,
+    setGeneratingMindmap,
   } = useMindMapStore()
 
   const mutation = useMutation({
     mutationFn: async ({
       boardId,
-      answer
-    }: { boardId: string, answer: string }): Promise<{ status: string }> => {
-      if (isProcessing) {
+      answer,
+      toolType
+    }: { boardId: string, answer: string, toolType: "notify" | "mapify" }): Promise<{ status: string }> => {
+      if (generatingMindMap) {
         return { status: "processing" }
       }
-      setIsProcessing(true)
-      setInProcessingBoardId(boardId)
-      const { notes, links } = await convertToMindMap(userId, answer)
+      setGeneratingMindmap(true)
+      const { notes, links } = await convertToMindMap(userId, answer, toolType)
 
       notes.forEach(note => {
         note.graphUid = boardId
-        note.style = createDefaultStyle({ type: "sheet" })
+        note.style = createDefaultStyle({ type: note.style.type })
       })
       links.forEach(link => link.graphUid = boardId)
+      if (toolType === "mapify") {
+        // color tree if mapify
+        colorTree({ notes, links })
+      } else {
+        if (notes.length > 0) {
+          notes[0].style.backgroundColor = pickRandomColorOfShade(200, ['blue', 'amber', 'green', 'orange', 'rose'])?.hex || notes[0].style.backgroundColor
+        }
+      }
       const rawNodes = notes.map(convertNoteToNode)
       const rawEdges = links.map(convertLinkToEdge)
 
@@ -75,8 +85,7 @@ export const useConvertToMindMap = () => {
       // will be consumed by board component
       // and then cleared
       setMindMap(boardId, nodes, edges)
-      setIsProcessing(false)
-      setInProcessingBoardId(undefined)
+      setGeneratingMindmap(false)
 
       return { status: "success" }
     }
@@ -84,6 +93,7 @@ export const useConvertToMindMap = () => {
 
   return {
     convertToMindMap: mutation.mutate,
+    convertToMindMapAsync: mutation.mutateAsync,
     ...mutation
   }
 }

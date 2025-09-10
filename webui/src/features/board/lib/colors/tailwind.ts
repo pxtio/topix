@@ -17,8 +17,16 @@ export const TAILWIND_HEX: Record<string, Record<number, string>> = {
   red:    { 50:"#fef2f2",100:"#fee2e2",200:"#fecaca",300:"#fca5a5",400:"#f87171",500:"#ef4444",600:"#dc2626",700:"#b91c1c",800:"#991b1b",900:"#7f1d1d",950:"#450a0a" },
 }
 
-export type TailwindShade = 50|100|200|300|400|500|600|700|800|900|950
+export const TailwindShades = [50,100,200,300,400,500,600,700,800,900,950] as const
 
+export type TailwindShade = typeof TailwindShades[number]
+
+/**
+ * Build a palette for a given Tailwind shade across all supported families
+ *
+ * @param shade - Tailwind shade value (e.g., 200, 500)
+ * @returns Array of { name, hex } objects for families that define this shade
+ */
 export const buildPalette = (shade: TailwindShade) =>
   Object.entries(TAILWIND_HEX).flatMap(([name, shades]) => {
     const hex = shades[shade]
@@ -27,6 +35,13 @@ export const buildPalette = (shade: TailwindShade) =>
 
 export const TAILWIND_200 = buildPalette(200)
 
+/**
+ * Resolve a hex value given a Tailwind family and shade
+ *
+ * @param family - Tailwind family name (e.g., 'blue', 'neutral')
+ * @param shade - Shade number to resolve
+ * @returns Hex string (e.g., '#3b82f6') or null if not found
+ */
 export const resolveFamilyShade = (family: string, shade: number) =>
   TAILWIND_HEX[family]?.[shade] ?? null
 
@@ -43,8 +58,8 @@ export type Family = {
 
 export const FAMILIES: Family[] = [
   { id: 'transparent', key: 'q', transparent: true },
-  { id: 'white', key: 'w', fixedHex: '#ffffff' },   // add key
-  { id: 'black', key: 'e', fixedHex: '#000000' },   // add key
+  { id: 'white', key: 'w', fixedHex: '#ffffff' },
+  { id: 'black', key: 'e', fixedHex: '#000000' },
   { id: 'slate', key: 'r', family: 'slate' },
   { id: 'neutral', key: 't', family: 'neutral' },
   { id: 'stone', key: 'y', family: 'stone' },
@@ -62,6 +77,16 @@ export const FAMILIES: Family[] = [
 ]
 
 /* helpers */
+
+/**
+ * Normalize any CSS color or hex-like string to a 7-char base hex (#rrggbb)
+ *
+ * - Supports CSS custom properties by resolving with cssVarToHex
+ * - Accepts 3- or 6-digit hex and truncates longer values to 6 digits
+ *
+ * @param c - CSS color string or hex
+ * @returns Normalized '#rrggbb' or null if input is invalid
+ */
 export const toBaseHex = (c?: string | null) => {
   if (!c) return null
   const hex = cssVarToHex(c) ?? c
@@ -71,18 +96,43 @@ export const toBaseHex = (c?: string | null) => {
   return '#' + base
 }
 
+
+/**
+ * Compare two color strings for equality by normalizing to base hex
+ *
+ * @param a - First color string
+ * @param b - Second color string
+ * @returns true if both normalize to the same '#rrggbb', otherwise false
+ */
 export const isSameColor = (a?: string | null, b?: string | null) => {
   const A = toBaseHex(a)
   const B = toBaseHex(b)
   return !!A && !!B && A === B
 }
 
+
+/**
+ * Determine whether a value should be treated as transparent
+ *
+ * - null/undefined values are considered transparent
+ * - If a CSS variable resolves to '#00000000' (8-digit hex with 0 alpha), it is transparent
+ *
+ * @param v - CSS color string or variable
+ * @returns true if transparent-like, otherwise false
+ */
 export const isTransparent = (v?: string | null) => {
   if (v == null) return true
   const hx = cssVarToHex(v)
   return hx === '#00000000'
 }
 
+
+/**
+ * Find the Tailwind family and shade that exactly matches a given hex
+ *
+ * @param hex - Color to match (any hex-like value, 3- or 6-digit, with '#')
+ * @returns { family, shade } if an exact match exists, otherwise null
+ */
 export const findFamilyShadeFromHex = (hex: string | null): { family?: string, shade?: Shade } | null => {
   const base = toBaseHex(hex)
   if (!base) return null
@@ -96,6 +146,15 @@ export const findFamilyShadeFromHex = (hex: string | null): { family?: string, s
   return null
 }
 
+
+/**
+ * Compute relative luminance (WCAG) for a given hex color
+ *
+ * Formula per WCAG 2.1 using sRGB → linear conversion
+ *
+ * @param hex - Hex color string ('#rgb' or '#rrggbb')
+ * @returns Relative luminance in [0, 1]
+ */
 export const getLuminance = (hex: string): number => {
   const clean = hex.replace('#','')
   const bigint = parseInt(clean.length === 3
@@ -109,4 +168,30 @@ export const getLuminance = (hex: string): number => {
     return c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4)
   })
   return 0.2126*srgb[0] + 0.7152*srgb[1] + 0.0722*srgb[2]
+}
+
+
+/**
+ * Pick a random Tailwind color for a given shade
+ *
+ * @param shade - The Tailwind shade to pick from (e.g., 200, 500)
+ * @param families - Optional whitelist of family names to restrict the random pick (e.g., ['blue','violet'])
+ * @returns An object { family, hex } for the chosen color, or null if none available
+ *
+ * @example
+ * const c = pickRandomColorOfShade(500)         // random among all families at 500
+ * const d = pickRandomColorOfShade(300, ['blue','teal']) // random among blue/teal at 300
+ */
+export const pickRandomColorOfShade = (
+  shade: TailwindShade,
+  families?: string[]
+): { family: string, hex: string } | null => {
+  const palette = buildPalette(shade)
+  const filtered = families && families.length > 0
+    ? palette.filter(p => families.includes(p.name))
+    : palette
+  if (filtered.length === 0) return null
+  const idx = Math.floor(Math.random() * filtered.length)
+  const choice = filtered[idx]
+  return { family: choice.name, hex: choice.hex }
 }

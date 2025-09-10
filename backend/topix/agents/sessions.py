@@ -1,6 +1,7 @@
 """Assistant session management."""
 
 from agents.memory import Session
+
 from topix.datatypes.chat.chat import Message
 from topix.store.chat import ChatStore
 

@@ -12,7 +12,7 @@ import { createDefaultStyle } from "../types/style"
  */
 export const convertNoteToNode = (note: Note): NoteNode => {
   const position = note.properties?.nodePosition?.position || { x: 0, y: 0 }
-  const size = note.properties?.nodeSize?.size || { width: 100, height: 100 }
+  const size = note.properties?.nodeSize?.size || { width: 300, height: 100 }
 
   const type = note.style.type
   const isSheet = type === 'sheet'

@@ -4,6 +4,10 @@ import { CodeIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import clsx from "clsx"
 
+
+/**
+ * Button component to toggle the Code Interpreter tool in the chat interface.
+ */
 export const CodeInterpreterChoiceMenu = () => {
   const { enabledTools, setEnabledTools } = useChatStore()
 

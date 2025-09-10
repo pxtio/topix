@@ -1,8 +1,6 @@
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Conversation } from "./chat/conversation"
 import { InputBar } from "./chat/input"
-import { useMindMapStore } from "../store/mindmap-store"
-import { ProgressBar } from "@/components/progress-bar"
 import { ContextBoard } from "./context-board"
 import { useListChats } from "../api/list-chats"
 import { useAppStore } from "@/store"
@@ -26,8 +24,6 @@ export const Chat = ({ chatId, hideContextBoard = false, initialBoardId = undefi
   const { userId } = useAppStore()
 
   const { data: chatList } = useListChats({ userId })
-
-  const { isProcessing } = useMindMapStore()
 
   const { updateChat } = useUpdateChat()
 
@@ -61,15 +57,6 @@ export const Chat = ({ chatId, hideContextBoard = false, initialBoardId = undefi
               />
             </div>
           )
-        }
-        {
-          isProcessing &&
-          <div className="absolute inset-0 bg-transparent flex items-center justify-center">
-            <ProgressBar
-              message="Mapifying"
-              viewMode="compact"
-            />
-          </div>
         }
         {
           chatId && (

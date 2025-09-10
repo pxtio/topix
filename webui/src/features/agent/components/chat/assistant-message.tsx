@@ -3,15 +3,14 @@ import { useChatStore } from "../../store/chat-store"
 import { ReasoningStepsView } from "./reasoning-steps"
 import { LinkPreviewCard } from "../link-preview"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { toast } from "sonner"
 import type { ChatMessage } from "../../types/chat"
 import { isMainResponse, type AgentResponse } from "../../types/stream"
-import { GenMindmapButton } from "./actions/gen-mindmap"
 import { extractAnswerWebSources } from "../../utils/url"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { CopyIcon, Link04Icon } from "@hugeicons/core-free-icons"
+import { Link04Icon } from "@hugeicons/core-free-icons"
 import { extractFinalSegment } from "../../utils/stream/text"
 import { useMemo } from "react"
+import { ResponseActions } from "./actions/response-actions"
 
 
 /**
@@ -23,7 +22,7 @@ const SourcesView = ({ answer }: { answer: AgentResponse }) => {
   if (annotations.length === 0) return null
 
   return (
-    <div className='w-full p-2 min-w-0'>
+    <div className='w-full mt-2 min-w-0'>
       <div className='w-full border-b border-border p-2 flex items-center gap-2'>
         <HugeiconsIcon icon={Link04Icon} className='size-5 shrink-0 text-primary' strokeWidth={1.75} />
         <span className='text-base text-primary font-semibold'>Sources</span>
@@ -31,10 +30,6 @@ const SourcesView = ({ answer }: { answer: AgentResponse }) => {
 
       {/* Root must not overflow its parent */}
       <ScrollArea className='w-full overflow-hidden'>
-        {/*
-          Mobile: flex-wrap so items wrap within the viewport (no overflow)
-          md+: no-wrap + x-scroll. w-max ensures content width equals sum of children for scrolling.
-        */}
         <div
           className='px-2 py-4 flex flex-wrap md:flex-nowrap gap-2 md:w-max
                      md:overflow-visible'
@@ -53,33 +48,6 @@ const SourcesView = ({ answer }: { answer: AgentResponse }) => {
                      scrollbar-thumb-muted-foreground/40 scrollbar-track-transparent'
         />
       </ScrollArea>
-    </div>
-  )
-}
-
-
-/**
- * Component that renders action buttons for a chat response.
- */
-const ResponseActions = ({ message }: { message: string }) => {
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      toast('Answer copied to clipboard!')
-    }).catch(() => {
-      toast("Failed to copy answer!")
-    })
-  }
-
-  return (
-    <div className="flex flex-row items-center gap-2">
-      <button
-        className="transition-all text-xs text-muted-foreground/50 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md"
-        onClick={() => handleCopy(message)}
-      >
-        <HugeiconsIcon icon={CopyIcon} className='size-4 shrink-0' strokeWidth={1.75} />
-        <span>Copy</span>
-      </button>
-      <GenMindmapButton message={message} />
     </div>
   )
 }
@@ -135,7 +103,7 @@ export const AssistantMessage = ({
     <div className="w-full p-4 space-y-2">
       <MarkdownView content={markdownMessage} />
       {!streaming && agentResponse && <SourcesView answer={agentResponse} />}
-      {!streaming && <ResponseActions message={finalContent} />}
+      {!streaming && <ResponseActions message={markdownMessage} />}
     </div>
   ) : null
 

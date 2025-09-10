@@ -97,6 +97,12 @@ class AnthropicConfig(BaseAPIConfig):
     pass
 
 
+class E2BConfig(BaseAPIConfig):
+    """Configuration for E2B API."""
+
+    pass
+
+
 class APIsConfig(BaseModel):
     """Configuration for external APIs used in the application."""
 
@@ -107,6 +113,7 @@ class APIsConfig(BaseModel):
     linkup: LinkUpConfig
     gemini: GeminiConfig
     anthropic: AnthropicConfig
+    e2b: E2BConfig
 
 
 class RunConfig(BaseModel):

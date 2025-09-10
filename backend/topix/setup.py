@@ -17,6 +17,7 @@ async def setup(stage: StageEnum):
     os.environ["PERPLEXITY_API_KEY"] = config.run.apis.perplexity.api_key
     os.environ["GEMINI_API_KEY"] = config.run.apis.gemini.api_key
     os.environ["ANTHROPIC_API_KEY"] = config.run.apis.anthropic.api_key
+    os.environ["E2B_API_KEY"] = config.run.apis.e2b.api_key
 
     await QdrantStore.from_config().create_collection()
     return config

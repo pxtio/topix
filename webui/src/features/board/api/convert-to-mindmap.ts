@@ -9,6 +9,8 @@ import { autoLayout } from "../lib/graph/auto-layout"
 import { defaultLayoutOptions } from "../lib/graph/settings"
 import { useMindMapStore } from "@/features/agent/store/mindmap-store"
 import { createDefaultStyle } from "../types/style"
+import { colorTree } from "../utils/bfs"
+import { pickRandomColorOfShade } from "../lib/colors/tailwind"
 
 
 /**
@@ -66,6 +68,14 @@ export const useConvertToMindMap = () => {
         note.style = createDefaultStyle({ type: note.style.type })
       })
       links.forEach(link => link.graphUid = boardId)
+      if (toolType === "mapify") {
+        // color tree if mapify
+        colorTree({ notes, links })
+      } else {
+        if (notes.length > 0) {
+          notes[0].style.backgroundColor = pickRandomColorOfShade(200, ['blue', 'amber', 'green', 'orange', 'rose'])?.hex || notes[0].style.backgroundColor
+        }
+      }
       const rawNodes = notes.map(convertNoteToNode)
       const rawEdges = links.map(convertLinkToEdge)
 

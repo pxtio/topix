@@ -77,8 +77,7 @@ class MapifyAgent(BaseAgent):
             parent: Note | None = None,
         ) -> Note:
             note = Note(
-                label=RichText(markdown=theme.label),
-                content=RichText(markdown=theme.description)
+                label=RichText(markdown=f"{theme.label} - {theme.description}"),
             )
             note.style.type = NodeType.RECTANGLE
             notes.append(note)

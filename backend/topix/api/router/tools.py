@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Query, Request, Response
 
+from topix.agents.mindmap.mapify import MapifyAgent
 from topix.agents.mindmap.notify import NotifyAgent
 from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
@@ -17,10 +18,10 @@ router = APIRouter(
 )
 
 
-@router.post("/mindmaps:convert/", include_in_schema=False)
-@router.post("/mindmaps:convert")
+@router.post("/mindmaps:notify/", include_in_schema=False)
+@router.post("/mindmaps:notify")
 @with_standard_response
-async def convert_mindmap(
+async def notify(
     response: Response,
     request: Request,
     user_id: Annotated[str, Query(description="User Unique ID")],
@@ -28,6 +29,26 @@ async def convert_mindmap(
 ):
     """Convert a mindmap to a graph."""
     mapify_agent = NotifyAgent()
+    res = await AgentRunner.run(mapify_agent, body.answer)
+    notes, links = res
+
+    return {
+        "notes": [note.model_dump(exclude_none=True) for note in notes],
+        "links": [link.model_dump(exclude_none=True) for link in links]
+    }
+
+
+@router.post("/mindmaps:mapify/", include_in_schema=False)
+@router.post("/mindmaps:mapify")
+@with_standard_response
+async def mapify(
+    response: Response,
+    request: Request,
+    user_id: Annotated[str, Query(description="User Unique ID")],
+    body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
+):
+    """Convert a mindmap to a graph."""
+    mapify_agent = MapifyAgent()
     res = await AgentRunner.run(mapify_agent, body.answer)
     notes, links = res
 

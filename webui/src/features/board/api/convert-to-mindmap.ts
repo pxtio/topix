@@ -16,12 +16,13 @@ import { createDefaultStyle } from "../types/style"
  */
 export async function convertToMindMap(
   userId: string,
-  answer: string
+  answer: string,
+  toolType: "notify" | "mapify"
 ): Promise<{ notes: Note[], links: Link[] }> {
   const headers = new Headers()
   headers.set("Content-Type", "application/json")
 
-  const response = await fetch(`${API_URL}/tools/mindmaps:convert?user_id=${userId}`, {
+  const response = await fetch(`${API_URL}/tools/mindmaps:${toolType}?user_id=${userId}`, {
     method: "POST",
     headers,
     body: JSON.stringify({ answer })
@@ -51,13 +52,14 @@ export const useConvertToMindMap = () => {
   const mutation = useMutation({
     mutationFn: async ({
       boardId,
-      answer
-    }: { boardId: string, answer: string }): Promise<{ status: string }> => {
+      answer,
+      toolType
+    }: { boardId: string, answer: string, toolType: "notify" | "mapify" }): Promise<{ status: string }> => {
       if (generatingMindMap) {
         return { status: "processing" }
       }
       setGeneratingMindmap(true)
-      const { notes, links } = await convertToMindMap(userId, answer)
+      const { notes, links } = await convertToMindMap(userId, answer, toolType)
 
       notes.forEach(note => {
         note.graphUid = boardId

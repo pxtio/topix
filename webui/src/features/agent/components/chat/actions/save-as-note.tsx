@@ -14,13 +14,13 @@ import { useCreateBoard } from "@/features/board/api/create-board"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { useAppStore } from "@/store"
-import { NotebookIcon } from "@hugeicons/core-free-icons"
+import { GitForkIcon, NotebookIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { toast } from "sonner"
 
 
 // Button that generates a mind map from the given message.
-export const SaveAsNote = ({ message }: { message: string }) => {
+export const SaveAsNote = ({ message, type }: { message: string, type: "notify" | "mapify" }) => {
   const { chatId } = useChat()
   const { userId } = useAppStore()
 
@@ -47,10 +47,11 @@ export const SaveAsNote = ({ message }: { message: string }) => {
     const promise = convertToMindMapAsync({
       boardId,
       answer: message,
+      toolType: type
     })
 
     toast.promise(promise, {
-      loading: "Rewriting into note…",
+      loading: "Rewriting…",
       success: "Notes updated.",
       error: "Failed to rewrite.",
     })
@@ -62,7 +63,7 @@ export const SaveAsNote = ({ message }: { message: string }) => {
 
     const promise = (async () => {
       const boardId = await createBoardAsync({ userId })
-      await convertToMindMapAsync({ boardId, answer: message })
+      await convertToMindMapAsync({ boardId, answer: message, toolType: type})
     })()
 
     toast.promise(promise, {
@@ -72,6 +73,9 @@ export const SaveAsNote = ({ message }: { message: string }) => {
     })
   }
 
+  const label = type === "notify" ? "Notify" : "Mapify"
+  const icon = type === "notify" ? NotebookIcon : GitForkIcon
+
   return (
     <>
       {!attachedBoardId ? (
@@ -79,11 +83,11 @@ export const SaveAsNote = ({ message }: { message: string }) => {
           <DropdownMenuTrigger asChild>
             <button
               className="transition-all text-xs text-muted-foreground/50 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md"
-              aria-label="Notify"
-              title="Notify"
+              aria-label={label}
+              title={label}
             >
-              <HugeiconsIcon icon={NotebookIcon} className="text-primary size-4" strokeWidth={1.75} />
-              <span>Notify</span>
+              <HugeiconsIcon icon={icon} className="text-primary size-4" strokeWidth={1.75} />
+              <span>{label}</span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-48">

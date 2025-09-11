@@ -244,6 +244,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark, contentRe
               size: fontSizeToTwClass(note.style.fontSize)
             }}
             contentRef={contentRef}
+            showPlaceholder={note.style.type === 'text'}
           />
         )}
       </div>

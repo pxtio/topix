@@ -16,6 +16,7 @@ interface ShapeProps {
     size: string
   }
   contentRef: RefObject<HTMLDivElement | null>
+  showPlaceholder?: boolean
 }
 
 export const Shape = memo(function Shape({
@@ -26,6 +27,7 @@ export const Shape = memo(function Shape({
   textAlign,
   styleHelpers,
   contentRef,
+  showPlaceholder = false
 }: ShapeProps) {
   const base = `
     w-full p-4 border-none resize-none
@@ -35,6 +37,10 @@ export const Shape = memo(function Shape({
     ${textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'}
   `
 
+  const placeHolder = showPlaceholder ? 'Add text...' : ''
+
+  const notEditingSpanClass = value.trim() ? '' : 'text-muted-foreground/50'
+
   return (
     <div className='w-full h-full flex items-center justify-center'>
       <div className='w-full' ref={contentRef}>
@@ -43,13 +49,13 @@ export const Shape = memo(function Shape({
             className={`${base} nodrag nopan nowheel`}
             value={value}
             onChange={onChange}
-            placeholder=""
+            placeholder={placeHolder}
             ref={textareaRef}
             readOnly={!labelEditing}
           />
         ) : (
           <div className={`${base} whitespace-pre-wrap`}>
-            <span>{value || ''}</span>
+            <span className={notEditingSpanClass}>{value || placeHolder}</span>
           </div>
         )}
       </div>

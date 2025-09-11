@@ -33,8 +33,8 @@ export function useAddNoteNode() {
     const cw = container?.width ?? 800
     const ch = container?.height ?? 600
 
-    const screenX = cw / 3 + jitter()
-    const screenY = ch / 3 + jitter()
+    const screenX = cw / 2 + jitter()
+    const screenY = ch / 2 + jitter()
 
     const { x: vx, y: vy, zoom } = getViewport()
 
@@ -45,7 +45,10 @@ export function useAddNoteNode() {
       newNote.properties = {}
     }
     newNote.properties.nodePosition = { position: { x: graphX, y: graphY }, type: 'position' }
-    setNodes([...nodes, convertNoteToNode(newNote)])
+    const node = convertNoteToNode(newNote)
+    const newNodes = nodes.map(n => ({ ...n, selected: false }))
+    node.selected = true
+    setNodes([...newNodes, node])
     const notes: Note[] = [newNote]
     addNotes({ boardId, userId, notes })
   }, [boardId, getViewport, setNodes, nodes, addNotes, userId])

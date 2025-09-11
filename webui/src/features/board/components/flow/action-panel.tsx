@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GitMergeIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, StickyNote03Icon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GitMergeIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, StickyNote03Icon, TextIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { NodeType } from '../../types/style'
@@ -220,6 +220,18 @@ export function ActionPanel({
             aria-label='Add Diamond'
           >
             <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+          </Button>
+
+          {/* Add text */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => onAddNode({ nodeType: 'text' })}
+            title='Add Text'
+            aria-label='Add Text'
+          >
+            <HugeiconsIcon icon={TextIcon} className='size-4 shrink-0' strokeWidth={1.75} />
           </Button>
         </>
       )}

@@ -28,6 +28,7 @@ type NodeCardProps = {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   isDark: boolean
+  contentRef: React.RefObject<HTMLDivElement | null>
 }
 
 /**
@@ -36,7 +37,7 @@ type NodeCardProps = {
  * - Shape (others): must click the floating "View Note" button to open dialog
  * - Sheet-only toolbar: palette (bg color), pin, delete
  */
-export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCardProps) => {
+export const NodeCard = ({ note, selected, open, onOpenChange, isDark, contentRef }: NodeCardProps) => {
   const isSheet = note.style.type === 'sheet'
 
   const [internalOpen, setInternalOpen] = useState(false)
@@ -242,6 +243,8 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
               font: fontFamilyToTwClass(note.style.fontFamily),
               size: fontSizeToTwClass(note.style.fontSize)
             }}
+            contentRef={contentRef}
+            showPlaceholder={note.style.type === 'text'}
           />
         )}
       </div>

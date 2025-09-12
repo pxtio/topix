@@ -24,11 +24,11 @@ import { useUpdateNote } from '../../api/update-note'
 import type { NumberProperty } from '../../types/property'
 import { useAppStore } from '@/store'
 
+export type LinearViewProps = {
+  cols?: number   // number of columns
+  gapPx?: number  // gap between items in px
+}
 
-const COLUMNS = 3
-
-
-// Return nodes sorted by listOrder property
 function useSortedNodes(nodes: NoteNode[]) {
   return useMemo(
     () =>
@@ -41,11 +41,7 @@ function useSortedNodes(nodes: NoteNode[]) {
   )
 }
 
-
-/**
- * Linear view component for displaying nodes in a multi-column layout with drag-and-drop reordering.
- */
-export function LinearView() {
+export function LinearView({ cols = 3, gapPx = 16 }: LinearViewProps) {
   const userId = useAppStore(state => state.userId)
   const nodes = useGraphStore(state => state.nodes)
   const setNodes = useGraphStore(state => state.setNodes)
@@ -55,22 +51,12 @@ export function LinearView() {
   const sortedNodes = useSortedNodes(
     (nodes as NoteNode[]).filter(n => n.data?.style?.type === 'sheet')
   )
-  const ids = sortedNodes.map(n => n.id)
+  const ids = useMemo(() => sortedNodes.map(n => n.id), [sortedNodes])
 
-  // sensors: require a small move to start dragging, plus keyboard support
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 6 }
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
-
-  const columns: NoteNode[][] = Array.from({ length: COLUMNS }, () => [])
-  sortedNodes.forEach((n, i) => {
-    columns[i % COLUMNS].push(n)
-  })
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -81,14 +67,12 @@ export function LinearView() {
     if (oldIndex === -1 || newIndex === -1) return
 
     const newOrder = arrayMove(sortedNodes, oldIndex, newIndex)
-
     const prev = newOrder[newIndex - 1] ?? null
     const next = newOrder[newIndex + 1] ?? null
 
     let newOrderValue: number
     if (prev && next) {
-      newOrderValue =
-        (prev.data.properties.listOrder.number + next.data.properties.listOrder.number) / 2
+      newOrderValue = (prev.data.properties.listOrder.number + next.data.properties.listOrder.number) / 2
     } else if (next) {
       newOrderValue = next.data.properties.listOrder.number - 100
     } else if (prev) {
@@ -122,19 +106,14 @@ export function LinearView() {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={ids} strategy={rectSortingStrategy}>
-        <div className={`grid grid-cols-${COLUMNS} gap-4 px-4 pt-20 pb-20 mx-auto max-w-[800px]`}>
-          {columns.map((col, cIdx) => (
-            <div key={cIdx} className='flex flex-col gap-4'>
-              {col.map(n => (
-                <SortableNoteCard key={n.id} node={n} />
-              ))}
-            </div>
+        <div
+          className='grid gap-4 px-4 pt-20 pb-20 mx-auto max-w-[1000px]'
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, columnGap: gapPx }}
+        >
+          {sortedNodes.map(n => (
+            <SortableNoteCard key={n.id} node={n} />
           ))}
         </div>
       </SortableContext>
@@ -160,23 +139,22 @@ function SortableNoteCard({ node }: SortableNoteCardProps) {
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 100 : undefined,
-    opacity: isDragging ? 0.7 : 1
+    opacity: isDragging ? 0.7 : 1,
+    minWidth: 0
   }
 
   return (
     <div ref={setNodeRef} style={style} className='relative'>
-      {/* drag handle — only this starts a drag */}
       <button
         {...attributes}
         {...listeners}
         aria-label='Drag to reorder'
-        className='transition-all absolute left-1 top-1 p-1 rounded-md cursor-grab active:cursor-grabbing touch-none text-muted-foreground/30 hover:text-muted-foreground z-20'
+        className='absolute left-1 top-1 z-20 p-1 rounded-md cursor-grab active:cursor-grabbing touch-none text-muted-foreground/30 hover:text-muted-foreground transition'
         onClick={e => e.preventDefault()}
       >
         <Grip className='size-4' />
       </button>
 
-      {/* the card stays fully interactive */}
       <LinearNoteCard node={node} />
     </div>
   )

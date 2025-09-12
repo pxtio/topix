@@ -208,11 +208,12 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
       fill,
       fillStyle,
       bowing: 2,
-      curveStepCount: 24,
+      curveStepCount: 9,
       maxRandomnessOffset: 1.5,
       seed: seed || 1337,
       strokeLineDash,
-      strokeLineDashOffset: 0
+      strokeLineDashOffset: 0,
+      dashOffset: 8
     })
 
     ctx.save()

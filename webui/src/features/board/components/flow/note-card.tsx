@@ -1,6 +1,6 @@
 // components/flow/node-label.tsx
 import { useReactFlow } from '@xyflow/react'
-import type { Note } from '../../types/note'
+import type { Note, NoteProperties } from '../../types/note'
 import TextareaAutosize from 'react-textarea-autosize'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { NoteNode } from '../../types/flow'
@@ -132,15 +132,15 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark, contentRe
 
   const onTogglePin = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
-    const isPinned = note.pinned === true
+    const isPinned = note.properties.pinned.boolean === true
     setNodes(nds =>
       nds.map(n =>
         n.id === note.id
-          ? ({ ...n, data: { ...n.data, pinned: !isPinned } }) as NoteNode
+          ? ({ ...n, data: { ...n.data, properties: { ...(n.data.properties as NoteProperties), pinned: { type: "boolean", boolean: !isPinned } } } }) as NoteNode
           : n
       )
     )
-  }, [note.id, note.pinned, setNodes])
+  }, [note.id, note.properties.pinned.boolean, setNodes])
 
   const onDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()

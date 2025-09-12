@@ -49,12 +49,14 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     { pos: 'bottom-right', class: 'bottom-0 right-0 cursor-nwse-resize' },
   ]), [])
 
+  const isPinned = !!data.properties.pinned.boolean
+
   const handleClassRight = 'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none -translate-x-[calc(50%-10px)] border-none'
   const handleClassLeft = 'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none translate-x-1/2 border-none'
 
   const nodeClass = 'w-full h-full relative font-handwriting drag-handle pointer-events-auto bg-transparent'
   const rounded = data.style.roundness > 0 ? 'rounded-2xl' : 'none'
-  const frameClass = clsx('shadow-lg rounded-md border border-border', data.pinned && 'ring-2 ring-primary')
+  const frameClass = clsx('shadow-lg rounded-md border border-border', isPinned && 'ring-2 ring-primary')
 
   const backgroundColor = isDark ? darkModeDisplayHex(data.style.backgroundColor) || undefined : data.style.backgroundColor
   const strokeColor = isDark ? darkModeDisplayHex(data.style.strokeColor) || undefined : data.style.strokeColor

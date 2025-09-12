@@ -102,7 +102,7 @@ export type Sloppiness = typeof SloppyPresets[number]
 /**
  * Stroke width options for the node.
  */
-export const StrokeWidthPresets = [0.75, 1.5, 3]
+export const StrokeWidthPresets = [1, 2, 4]
 
 export type StrokeWidth = typeof StrokeWidthPresets[number]
 

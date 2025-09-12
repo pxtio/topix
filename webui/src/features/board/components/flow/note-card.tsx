@@ -50,6 +50,8 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark, contentRe
 
   const textColor = isDark ? darkModeDisplayHex(note.style.textColor) || undefined : note.style.textColor
 
+  const isPinned = note.properties.pinned.boolean === true
+
   // classNames derived from style
   const labelClass = useMemo(() => clsx(
     'relative bg-transparent overflow-visible flex items-center justify-center',
@@ -132,7 +134,6 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark, contentRe
 
   const onTogglePin = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
-    const isPinned = note.properties.pinned.boolean === true
     setNodes(nds =>
       nds.map(n =>
         n.id === note.id
@@ -140,7 +141,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark, contentRe
           : n
       )
     )
-  }, [note.id, note.properties.pinned.boolean, setNodes])
+  }, [isPinned, note.id, setNodes])
 
   const onDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -196,7 +197,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark, contentRe
               aria-label='Toggle pin'
               title='Pin/Unpin'
             >
-              {note.pinned
+              {isPinned
                 ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-primary' strokeWidth={1.75} />
                 : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={1.75} />
               }

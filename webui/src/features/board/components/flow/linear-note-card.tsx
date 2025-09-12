@@ -105,7 +105,7 @@ export function LinearNoteCard({ node }: Props) {
   const isDark = resolvedTheme === 'dark'
 
   const color = isDark ? darkModeDisplayHex(node.data.style.backgroundColor) ?? '#a5c9ff' : node.data.style.backgroundColor
-  const isPinned = !!node.data.properties.pinned.boolean
+  const isPinned = node.data.properties.pinned.boolean
   const title = node.data.label?.markdown || ''
   const { text: timeAgo, tooltip: fullDate } = formatDistanceToNow(node.data.updatedAt)
 
@@ -198,7 +198,7 @@ export function LinearNoteCard({ node }: Props) {
 
       {/* content area with MASK fade at the bottom (no background painting) */}
       <div
-        className='p-4 md:p-6 mb-12 min-h-[100px] max-h-[225px] overflow-hidden text-foreground relative z-10 space-y-1'
+        className='p-4 pt-8 md:p-6 md:pt-10 mb-12 min-h-[100px] max-h-[225px] overflow-hidden text-foreground relative z-10 space-y-1'
         style={buildFadeMaskStyle({ solidUntil: 90 })}
       >
         {title && (

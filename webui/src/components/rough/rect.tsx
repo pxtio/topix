@@ -129,14 +129,17 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       strokeWidth: strokeWidth ?? 1,
       fill,
       fillStyle,
+      fillWeight: 1,
       bowing: 2,
       curveStepCount: 9,
       maxRandomnessOffset: 1.5,
       seed: seed || 1337,
-      // ✅ only properties that exist on RoughJS Options
       strokeLineDash,
       strokeLineDashOffset: 0,
-      dashOffset: 8
+      dashOffset: 8,
+      dashGap: 16,
+      hachureGap: 5,
+      disableMultiStrokeFill: true
     })
 
     // Apply desired lineCap directly on the canvas context (RoughJS Options lacks this key)

@@ -49,7 +49,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     { pos: 'bottom-right', class: 'bottom-0 right-0 cursor-nwse-resize' },
   ]), [])
 
-  const isPinned = !!data.properties.pinned.boolean
+  const isPinned = data.properties.pinned.boolean
 
   const handleClassRight = 'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none -translate-x-[calc(50%-10px)] border-none'
   const handleClassLeft = 'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none translate-x-1/2 border-none'

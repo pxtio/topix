@@ -61,6 +61,7 @@ export default function GraphEditor() {
   const [isDragging, setIsDragging] = useState<boolean>(false)
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [moving, setMoving] = useState<boolean>(false)
+  const [isSelecting, setIsSelecting] = useState<boolean>(false)
 
   const { zoomIn, zoomOut, fitView, viewportInitialized } = useReactFlow()
 
@@ -180,6 +181,10 @@ export default function GraphEditor() {
 
   const handleDragStart = useCallback(() => setIsDragging(true), [])
   const handleDragStop = useCallback(() => setIsDragging(false), [])
+  const handleSelectionStart = useCallback(() => setIsSelecting(true), [])
+  const handleSelectionDragStart = useCallback(() => setIsSelecting(true), [])
+  const handleSelectionEnd = useCallback(() => setIsSelecting(false), [])
+  const handleSelectionDragStop = useCallback(() => setIsSelecting(false), [])
 
   useOnViewportChange({
     onChange: () => setMoving(true),
@@ -202,7 +207,7 @@ export default function GraphEditor() {
       />
 
       {/* Graph-only sidebar (style controls) */}
-      {viewMode === 'graph' && !isDragging && !moving && !isResizingNode && (
+      {viewMode === 'graph' && !isDragging && !moving && !isResizingNode && !isSelecting && (
         <div className='absolute top-1 left-1 w-auto max-w-[300px] h-auto z-50'>
           <GraphSidebar />
         </div>
@@ -229,6 +234,10 @@ export default function GraphEditor() {
           selectionKeyCode={null}
           onNodeDragStart={handleDragStart}
           onNodeDragStop={handleDragStop}
+          onSelectionStart={handleSelectionStart}
+          onSelectionEnd={handleSelectionEnd}
+          onSelectionDragStart={handleSelectionDragStart}
+          onSelectionDragStop={handleSelectionDragStop}
           nodesDraggable={!isLocked}
           nodesConnectable={!isLocked}
           elementsSelectable={!isLocked}
@@ -237,7 +246,9 @@ export default function GraphEditor() {
           panOnScroll={!isLocked}
           onlyRenderVisibleElements
         >
-          {!moving && !isDragging && !isResizingNode && <MiniMap className='!bg-card rounded-lg'/>}
+          {!moving && !isDragging && !isResizingNode && !isSelecting && (
+            <MiniMap className='!bg-card rounded-lg'/>
+          )}
         </ReactFlow>
       ) : viewMode === 'linear' ? (
         <LinearView cols={1} />

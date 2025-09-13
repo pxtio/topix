@@ -6,7 +6,7 @@ import {
   type EdgeProps
 } from '@xyflow/react'
 import type { CSSProperties, ReactElement } from 'react'
-import { useEffect, useMemo, useRef } from 'react'
+import { memo, useEffect, useMemo, useRef } from 'react'
 import { RoughSVG } from 'roughjs/bin/svg'
 import type { Options as RoughOptions } from 'roughjs/bin/core'
 import type { LinkEdge } from '../../types/flow'
@@ -14,6 +14,11 @@ import type { ArrowheadType, LinkStyle } from '../../types/style'
 import { getEdgeParams } from '../../utils/flow'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
+import { useDebouncedCallback } from 'use-debounce'
+import { DEBOUNCE_DELAY } from '../../const'
+import { useAppStore } from '@/store'
+import { useGraphStore } from '../../store/graph-store'
+import { useUpdateLink } from '../../api/update-link'
 
 function markerId(edgeId: string, which: 'start' | 'end'): string {
   return `edge-${edgeId}-${which}-marker`
@@ -23,14 +28,8 @@ function markerOrient(which: 'start' | 'end'): 'auto-start-reverse' | 'auto' {
   return which === 'start' ? 'auto-start-reverse' : 'auto'
 }
 
-// Build a triangle or barb shape pointing right within a size x size box.
-// We keep coordinates consistent so orient=auto rotates it correctly.
 function markerPath(kind: Exclude<ArrowheadType, 'none'>, size: number): string {
-  if (kind === 'barb') {
-    // simple V shape (no base)
-    return `M 0 0 L ${size} ${size / 2} L 0 ${size}`
-  }
-  // triangle (used by both 'arrow' and 'arrow-filled')
+  if (kind === 'barb') return `M 0 0 L ${size} ${size / 2} L 0 ${size}`
   return `M 0 0 L ${size} ${size / 2} L 0 ${size} Z`
 }
 
@@ -52,14 +51,14 @@ function shouldUseRough(style?: LinkStyle): boolean {
   return (style.roughness ?? 0) > 0 || style.strokeStyle !== 'solid'
 }
 
-export const EdgeView = ({
+export const EdgeView = memo(function EdgeView({
   id,
   source,
   target,
   style = {},
   data,
   selected
-}: EdgeProps<LinkEdge>): ReactElement | null => {
+}: EdgeProps<LinkEdge>): ReactElement | null {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
 
@@ -91,7 +90,6 @@ export const EdgeView = ({
 
   const strokeWidth = linkStyle?.strokeWidth ?? 1.5
 
-  // Arrowheads: 'none' | 'arrow' | 'barb' | 'arrow-filled'
   const startKind = (linkStyle?.sourceArrowhead ?? 'none') as ArrowheadType
   const endKind = (linkStyle?.targetArrowhead ?? 'none') as ArrowheadType
   const startMarkerId = startKind !== 'none' ? markerId(id, 'start') : undefined
@@ -106,6 +104,20 @@ export const EdgeView = ({
     fill: 'none'
   }), [style, displayStroke, strokeWidth])
 
+  // —— Debounced persistence (like NodeView) ——
+  const userId = useAppStore(state => state.userId)
+  const boardId = useGraphStore(state => state.boardId)
+  const { updateLink } = useUpdateLink()
+
+  const persist = useDebouncedCallback(() => {
+    if (boardId && userId && data) {
+      updateLink({ boardId, userId, linkId: id, linkData: data })
+    }
+  }, DEBOUNCE_DELAY)
+
+  useEffect(() => { persist() }, [persist, data])
+
+  // —— RoughJS render layer ——
   useEffect(() => {
     const g = roughGroupRef.current
     if (!g) return
@@ -125,21 +137,18 @@ export const EdgeView = ({
 
   if (!geom) return null
 
-  // Head size in 'strokeWidth' units thanks to markerUnits="strokeWidth"
-  // Keeps proportion consistent across different scales.
   const headSize = 6
-  const headStrokeWidth = Math.max(1, strokeWidth * 0.9) // slightly thinner so sides don't look bolder than the shaft
+  const headStrokeWidth = Math.max(1, strokeWidth * 0.9)
 
   return (
     <>
-      {/* marker defs (theme-aware) */}
       <svg width='0' height='0' style={{ position: 'absolute' }}>
         <defs>
           {startMarkerId && startKind !== 'none' && (
             <marker
               id={startMarkerId}
               viewBox={`0 0 ${headSize} ${headSize}`}
-              refX={`${headSize * 0.9}`}          // tip close to the marker edge
+              refX={`${headSize * 0.9}`}
               refY={`${headSize / 2}`}
               markerWidth={headSize}
               markerHeight={headSize}
@@ -147,11 +156,7 @@ export const EdgeView = ({
               orient={markerOrient('start')}
             >
               {startKind === 'arrow-filled' ? (
-                <path
-                  d={markerPath('arrow-filled', headSize)}
-                  fill={displayStroke}
-                  stroke='none'
-                />
+                <path d={markerPath('arrow-filled', headSize)} fill={displayStroke} stroke='none' />
               ) : startKind === 'arrow' ? (
                 <path
                   d={markerPath('arrow', headSize)}
@@ -186,11 +191,7 @@ export const EdgeView = ({
               orient={markerOrient('end')}
             >
               {endKind === 'arrow-filled' ? (
-                <path
-                  d={markerPath('arrow-filled', headSize)}
-                  fill={displayStroke}
-                  stroke='none'
-                />
+                <path d={markerPath('arrow-filled', headSize)} fill={displayStroke} stroke='none' />
               ) : endKind === 'arrow' ? (
                 <path
                   d={markerPath('arrow', headSize)}
@@ -215,12 +216,8 @@ export const EdgeView = ({
         </defs>
       </svg>
 
-      {/* Rough layer (drawn only when needed) */}
-      {shouldUseRough(linkStyle) && (
-        <g ref={roughGroupRef} />
-      )}
+      {shouldUseRough(linkStyle) && <g ref={roughGroupRef} />}
 
-      {/* BaseEdge for hit-testing and solid rendering */}
       <BaseEdge
         path={geom.edgePath}
         style={{
@@ -231,21 +228,10 @@ export const EdgeView = ({
         markerEnd={!shouldUseRough(linkStyle) && endMarkerId ? `url(#${endMarkerId})` : undefined}
       />
 
-      {/* selection handles — shadcn primary via Tailwind */}
       {selected && (
         <>
-          <circle
-            cx={geom.sx}
-            cy={geom.sy}
-            r={6}
-            className='pointer-events-none stroke-current stroke-2 text-primary fill-transparent'
-          />
-          <circle
-            cx={geom.tx}
-            cy={geom.ty}
-            r={6}
-            className='pointer-events-none stroke-current stroke-2 text-primary fill-transparent'
-          />
+          <circle cx={geom.sx} cy={geom.sy} r={6} className='pointer-events-none stroke-current stroke-2 text-primary fill-transparent' />
+          <circle cx={geom.tx} cy={geom.ty} r={6} className='pointer-events-none stroke-current stroke-2 text-primary fill-transparent' />
         </>
       )}
 
@@ -253,9 +239,7 @@ export const EdgeView = ({
         <EdgeLabelRenderer>
           <div
             className='nodrag nopan absolute origin-center pointer-events-auto'
-            style={{
-              transform: `translate(-50%, -50%) translate(${geom.labelX}px, ${geom.labelY}px)`
-            }}
+            style={{ transform: `translate(-50%, -50%) translate(${geom.labelX}px, ${geom.labelY}px)` }}
           >
             {data.label}
           </div>
@@ -263,4 +247,4 @@ export const EdgeView = ({
       )}
     </>
   )
-}
+})

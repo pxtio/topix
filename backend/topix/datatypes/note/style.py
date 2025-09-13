@@ -100,10 +100,19 @@ class Style(BaseModel):
     text_style: str | None = None
 
 
+class Arrowhead(StrEnum):
+    """Enumeration for arrowhead types."""
+
+    ARROW = "arrow"
+    BARB = "barb"
+    ARROW_FILLED = "arrow-filled"
+    NONE = "none"
+
+
 class LinkStyle(Style):
     """Style for links in a graph."""
 
     type: Literal["arrow"] = "arrow"
 
-    source_arrowhead: str | None = "arrow"
-    target_arrowhead: str | None = None
+    source_arrowhead: Arrowhead = Arrowhead.NONE
+    target_arrowhead: Arrowhead = Arrowhead.ARROW

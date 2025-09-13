@@ -3,6 +3,8 @@ import type { LinkEdge, NoteNode } from "../types/flow"
 import { create } from "zustand/react"
 import { convertEdgeToLink, convertNodeToNote } from "../utils/graph"
 import { generateUuid } from "@/lib/common"
+import { createDefaultLinkStyle } from "../types/style"
+import type { Link } from "../types/link"
 
 
 export interface GraphStore {
@@ -163,8 +165,18 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const edgeId = generateUuid()
     const newEdge: LinkEdge = {
       ...params,
-      id: edgeId
+      id: edgeId,
     }
+    newEdge.data = {
+      id: edgeId,
+      type: "link",
+      version: 1,
+      source: newEdge.source,
+      target: newEdge.target,
+      style: createDefaultLinkStyle(),
+      createdAt: new Date().toISOString(),
+      graphUid: get().boardId
+    } as Link
     const newEdges = addEdge(newEdge, get().edges)
     if (newEdges.length > get().edges.length) {
       set({ edges: newEdges })

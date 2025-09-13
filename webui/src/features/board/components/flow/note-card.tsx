@@ -181,7 +181,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark, contentRe
                     <button
                       key={c.name}
                       className='h-6 w-6 rounded-full border border-border hover:brightness-95'
-                      style={{ backgroundColor: c.hex }}
+                      style={{ backgroundColor: isDark ? darkModeDisplayHex(c.hex) || c.hex : c.hex }}
                       title={`${c.name}-100`}
                       aria-label={`${c.name}-100`}
                       onClick={() => onPickPalette(c.hex)}

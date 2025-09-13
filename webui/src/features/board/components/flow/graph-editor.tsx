@@ -33,6 +33,7 @@ import { saveThumbnail } from '../../api/save-thumbnail'
 import { useShallow } from 'zustand/shallow'
 import { ActionPanel } from './action-panel'
 import { LinearView } from './linear-view'
+import { useCopyPasteNodes } from '../../hooks/copy-paste'
 
 const proOptions = { hideAttribution: true }
 
@@ -82,6 +83,11 @@ export default function GraphEditor() {
   const { removeLink } = useRemoveLink()
   const { addLinks } = useAddLinks()
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
+
+  useCopyPasteNodes({
+    jitterMax: 40,
+    shortcuts: true
+  })
 
   const deleteNodes: OnNodesDelete<NoteNode> = useCallback((nodes) => {
     if (!boardId || !userId) return

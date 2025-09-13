@@ -137,7 +137,7 @@ export const EdgeView = memo(function EdgeView({
 
   if (!geom) return null
 
-  const headSize = 6
+  const headSize = 10
   const headStrokeWidth = Math.max(1, strokeWidth * 0.9)
 
   return (

@@ -3,7 +3,7 @@ import type { LinkEdge, NoteNode } from "../types/flow"
 import { create } from "zustand/react"
 import { convertEdgeToLink, convertNodeToNote } from "../utils/graph"
 import { generateUuid } from "@/lib/common"
-import { createDefaultLinkStyle } from "../types/style"
+import { createDefaultLinkStyle, type LinkStyle } from "../types/style"
 import type { Link } from "../types/link"
 
 
@@ -23,7 +23,7 @@ export interface GraphStore {
   onEdgesChange: (changes: EdgeChange<LinkEdge>[]) => void
   onNodesDelete: (nodes: NoteNode[]) => void
   onEdgesDelete: (edges: LinkEdge[]) => void
-  onConnect: (params: Connection) => LinkEdge | undefined
+  onConnect: (params: Connection, style?: LinkStyle) => LinkEdge | undefined
   setDeletedNodes: (nodes: NoteNode[]) => void
   setDeletedEdges: (edges: LinkEdge[]) => void
   setIsResizingNode: (resizing: boolean) => void
@@ -161,7 +161,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     })
   },
 
-  onConnect: (params) => {
+  onConnect: (params, style) => {
     const edgeId = generateUuid()
     const newEdge: LinkEdge = {
       ...params,
@@ -173,7 +173,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       version: 1,
       source: newEdge.source,
       target: newEdge.target,
-      style: createDefaultLinkStyle(),
+      style: style || createDefaultLinkStyle(),
       createdAt: new Date().toISOString(),
       graphUid: get().boardId
     } as Link

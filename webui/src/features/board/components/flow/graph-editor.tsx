@@ -34,6 +34,7 @@ import { useShallow } from 'zustand/shallow'
 import { ActionPanel } from './action-panel'
 import { LinearView } from './linear-view'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
+import { useStyleDefaults } from '../../style-provider'
 
 const proOptions = { hideAttribution: true }
 
@@ -84,6 +85,8 @@ export default function GraphEditor() {
   const { addLinks } = useAddLinks()
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
 
+  const { applyDefaultLinkStyle } = useStyleDefaults()
+
   useCopyPasteNodes({
     jitterMax: 40,
     shortcuts: true
@@ -107,14 +110,16 @@ export default function GraphEditor() {
 
   const connectNodes: OnConnect = useCallback((params) => {
     if (!boardId || !userId) return
-    const newEdge = onConnect(params)
+    const style = applyDefaultLinkStyle()
+    const newEdge = onConnect(params, style)
     if (!newEdge) return
+    const link = convertEdgeToLink(boardId, newEdge)
     addLinks({
       boardId,
       userId,
-      links: [convertEdgeToLink(boardId, newEdge)]
+      links: [link]
     })
-  }, [onConnect, boardId, userId, addLinks])
+  }, [onConnect, boardId, userId, addLinks, applyDefaultLinkStyle])
 
   const handleAddNode = useAddNoteNode()
 

@@ -23,6 +23,7 @@ import { useGraphStore } from '../../store/graph-store'
 import { AlignCenter, AlignLeft, AlignRight } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ColorGrid } from './color-panel'
+import { useStyleDefaults } from '../../style-provider'
 
 /** Shared glyphs */
 const Section = ({ title, children }: { title: string, children: React.ReactNode }): ReactElement => (
@@ -356,9 +357,11 @@ export function StylePanel<T extends StyleLike>({
   )
 }
 
-/** ———————————————————————————————— Sidebar ———————————————————————————————— **/
+/** ———————————————————————————————— Graph Sidebar ———————————————————————————————— **/
 
 export function GraphSidebar(): ReactElement | null {
+  const { recordNodeStyleChange, recordLinkStyleChange } = useStyleDefaults()
+
   const { nodes, edges } = useGraphStore()
   const { setNodes, setEdges } = useReactFlow()
 
@@ -381,6 +384,7 @@ export function GraphSidebar(): ReactElement | null {
   const edgeStyle: LinkStyle | null = selectedEdges[0]?.data?.style ?? null
 
   const handleNodeStyleChange = (next: Partial<Style>): void => {
+    recordNodeStyleChange(next)
     setNodes(ns =>
       (ns as NoteNode[]).map(n => {
         if (!n.selected) return n
@@ -397,6 +401,7 @@ export function GraphSidebar(): ReactElement | null {
   }
 
   const handleEdgeStyleChange = (next: Partial<LinkStyle>): void => {
+    recordLinkStyleChange(next)
     setEdges(es =>
       (es as LinkEdge[]).map(e => {
         if (!e.selected) return e

@@ -228,7 +228,7 @@ export const createDefaultStyle = ({
 export const createDefaultLinkStyle = (): LinkStyle => ({
   type: "arrow",
   angle: 0.0,
-  strokeColor: "#000000",
+  strokeColor: "#292524",
   strokeWidth: 1.5,
   strokeStyle: "solid",
   backgroundColor: "#00000000",

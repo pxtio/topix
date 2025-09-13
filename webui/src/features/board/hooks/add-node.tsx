@@ -1,5 +1,5 @@
 import { useReactFlow } from "@xyflow/react"
-import { createDefaultNote, type Note } from "../types/note"
+import { createDefaultNote, createDefaultNoteProperties, type Note } from "../types/note"
 import { useCallback } from "react"
 import { useGraphStore } from "../store/graph-store"
 import { convertNoteToNode } from "../utils/graph"
@@ -42,7 +42,7 @@ export function useAddNoteNode() {
     const graphY = (screenY - vy) / zoom
 
     if (!newNote.properties) {
-      newNote.properties = {}
+      newNote.properties = createDefaultNoteProperties({ type: nodeType })
     }
     newNote.properties.nodePosition = { position: { x: graphX, y: graphY }, type: 'position' }
     const node = convertNoteToNode(newNote)

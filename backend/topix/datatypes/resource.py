@@ -6,7 +6,7 @@ import logging
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
 from topix.datatypes.property import DataProperty
 from topix.utils.common import gen_uid
@@ -21,6 +21,14 @@ class RichText(BaseModel):
     searchable: bool = True
 
 
+class ResourceProperties(BaseModel):
+    """Properties for a resource."""
+
+    __pydantic_extra__: dict[str, DataProperty] = Field(init=False)
+
+    model_config = ConfigDict(extra='allow')
+
+
 class Resource(BaseModel):
     """Base class for notes, documents, etc..."""
 
@@ -29,7 +37,9 @@ class Resource(BaseModel):
     version: int = 1
 
     # properties
-    properties: dict[str, DataProperty] = {}
+    properties: ResourceProperties = Field(
+        default_factory=ResourceProperties
+    )
 
     # content
     label: RichText | None = None

@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncGenerator
 
+import litellm
+
 from agents import (
     Agent,
     ModelSettings,
@@ -42,6 +44,7 @@ from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.utils.tools import tool_execution_handler
 
 logger = logging.getLogger(__name__)
+litellm.drop_params = True
 
 RAW_RESPONSE_EVENT = "raw_response_event"
 PROMPT_DIR = Path(__file__).parent.parent / "prompts"

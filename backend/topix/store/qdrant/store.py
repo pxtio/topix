@@ -211,7 +211,7 @@ class ContentStore:
                     indices.append(i)
 
                 # Get all searchable text properties
-                for prop in entry.properties.values():
+                for prop in entry.properties.__dict__.values():
                     if isinstance(prop, TextProperty):
                         if prop.searchable and prop.text:
                             searchable_texts.append(prop.text)

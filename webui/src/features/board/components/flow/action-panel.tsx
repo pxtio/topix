@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GitMergeIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, StickyNote03Icon, TextIcon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GitMergeIcon, GridViewIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, StickyNote03Icon, TextIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { NodeType } from '../../types/style'
+import { Separator } from '@/components/ui/separator'
 
-type ViewMode = 'graph' | 'linear'
+type ViewMode = 'graph' | 'linear' | 'grid'
 
 interface ActionPanelProps {
   onAddNode: ({ nodeType }: { nodeType: NodeType }) => void
@@ -37,15 +38,15 @@ export function ActionPanel({
 }: ActionPanelProps) {
   const normalButtonClass = `
     transition-colors
-    bg-card text-card-foreground
-    hover:bg-accent
+    text-card-foreground
+    hover:bg-sidebar-primary hover:text-primary
     p-4
     rounded-lg
   `
 
   const activeButtonClass = clsx(
     normalButtonClass,
-    'bg-accent text-accent-foreground',
+    'bg-sidebar-primary text-primary ring-1 ring-primary/30',
   )
 
   const selectionModeButtonClass = enableSelection ? activeButtonClass : normalButtonClass
@@ -99,6 +100,12 @@ export function ActionPanel({
       <ModeButton mode='linear' label='Linear'>
         <HugeiconsIcon icon={LeftToRightListBulletIcon} className='size-4 shrink-0' strokeWidth={1.75} />
       </ModeButton>
+
+      <ModeButton mode='grid' label='Grid'>
+        <HugeiconsIcon icon={GridViewIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+      </ModeButton>
+
+      <Separator orientation="vertical" className='!h-6' />
 
       {/* ——— GRAPH MODE CONTROLS ——— */}
       {viewMode === 'graph' && (
@@ -174,6 +181,8 @@ export function ActionPanel({
             )}
           </Button>
 
+          <Separator orientation="vertical" className='!h-6' />
+
           {/* Add sheet */}
           <Button
             variant={null}
@@ -237,7 +246,7 @@ export function ActionPanel({
       )}
 
       {/* ——— LINEAR MODE CONTROLS ——— */}
-      {viewMode === 'linear' && (
+      {viewMode !== "graph" && (
         <>
           {/* Keep it simple in linear: only Add sheet */}
           <Button

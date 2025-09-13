@@ -4,7 +4,7 @@
 export interface PositionProperty {
   type: "position"
   id?: string
-  position?: {
+  position: {
     x: number
     y: number
   }
@@ -17,7 +17,7 @@ export interface PositionProperty {
 export interface SizeProperty {
   type: "size"
   id?: string
-  size?: {
+  size: {
     width: number
     height: number
   }
@@ -29,7 +29,7 @@ export interface SizeProperty {
 export interface IconProperty {
   type: "icon"
   id?: string
-  icon?: {
+  icon: {
     type: "icon"
     icon: string
   } | {
@@ -39,6 +39,24 @@ export interface IconProperty {
 }
 
 /**
+ * Interface for the boolean property.
+ */
+export interface BooleanProperty {
+  type: "boolean"
+  id?: string
+  boolean: boolean
+}
+
+/**
+ * Interface for the number property.
+ */
+export interface NumberProperty {
+  type: "number"
+  id?: string
+  number: number
+}
+
+/**
  * Union type for all properties.
  */
-export type Property = PositionProperty | SizeProperty | IconProperty
+export type Property = PositionProperty | SizeProperty | IconProperty | BooleanProperty

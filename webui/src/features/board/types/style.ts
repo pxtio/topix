@@ -22,7 +22,6 @@ export type FillStyle = "solid" | "hachure" | "cross-hatch" | "zigzag" | "dots"
  */
 export type TextAlign = "left" | "center" | "right"
 
-
 /**
  * Font size options for the node.
  */
@@ -36,9 +35,9 @@ export function fontSizeToTwClass(size?: FontSize): string {
     case "M":
       return "text-base"
     case "L":
-      return "text-lg"
-    case "XL":
       return "text-xl"
+    case "XL":
+      return "text-2xl"
     default:
       return "text-base"
   }
@@ -103,16 +102,12 @@ export type Sloppiness = typeof SloppyPresets[number]
 /**
  * Stroke width options for the node.
  */
-export const StrokeWidthPresets = [0.75, 1, 2]
+export const StrokeWidthPresets = [1, 2, 4]
 
 export type StrokeWidth = typeof StrokeWidthPresets[number]
 
 
-/**
- * Interface for the style of a node in the board.
- */
-export interface Style {
-  type: NodeType
+export interface BaseStyle {
   angle: number
   strokeColor: string
   strokeWidth: number
@@ -128,6 +123,24 @@ export interface Style {
   textAlign: TextAlign
   textColor: string
   textStyle: TextStyle
+}
+
+
+/**
+ * Interface for the style of a node in the board.
+ */
+export interface Style extends BaseStyle {
+  type: NodeType
+}
+
+
+/**
+ * Interface for the style of a link in the board.
+ */
+export interface LinkStyle extends BaseStyle {
+  type: "arrow"
+  sourceArrowhead?: "arrow" | "barb" | "circle"
+  targetArrowhead?: "arrow" | "barb" | "circle"
 }
 
 
@@ -203,3 +216,28 @@ export const createDefaultStyle = ({
       } as Style
   }
 }
+
+
+/**
+ * Default style for links in the board.
+ */
+export const createDefaultLinkStyle = (): LinkStyle => ({
+  type: "arrow",
+  angle: 0.0,
+  strokeColor: "#000000",
+  strokeWidth: 1.5,
+  strokeStyle: "solid",
+  backgroundColor: "#00000000",
+  fillStyle: "solid",
+  roughness: 1,
+  roundness: 0,
+  opacity: 100,
+  groupIds: [],
+  fontFamily: "sans-serif",
+  fontSize: "M",
+  textAlign: "center",
+  textColor: "#000000",
+  textStyle: "normal",
+  sourceArrowhead: undefined,
+  targetArrowhead: "arrow"
+})

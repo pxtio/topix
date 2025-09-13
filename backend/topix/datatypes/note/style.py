@@ -1,6 +1,7 @@
 """Classes representing the style of a node in a graph."""
 
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -97,3 +98,12 @@ class Style(BaseModel):
     text_align: TextAlign = TextAlign.LEFT
     text_color: str = "#000000"
     text_style: str | None = None
+
+
+class LinkStyle(Style):
+    """Style for links in a graph."""
+
+    type: Literal["arrow"] = "arrow"
+
+    source_arrowhead: str | None = "arrow"
+    target_arrowhead: str | None = None

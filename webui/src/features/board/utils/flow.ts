@@ -1,99 +1,146 @@
-import { Position, MarkerType, type InternalNode, type Node } from '@xyflow/react'
+import { Position, type InternalNode, type Node } from '@xyflow/react'
 
-// this helper function returns the intersection point
-// of the line between the center of the intersectionNode and the target node
-function getNodeIntersection(intersectionNode: InternalNode<Node>, targetNode: InternalNode<Node>) {
-  const { width: intersectionNodeWidth, height: intersectionNodeHeight } =
-    intersectionNode.measured
-  const intersectionNodePosition = intersectionNode.internals.positionAbsolute
-  const targetPosition = targetNode.internals.positionAbsolute
+type Point = { x: number; y: number }
+type Rect = { x: number; y: number; w: number; h: number }
+type ShapeType = 'rectangle' | 'ellipse' | 'diamond'
 
-  const w = (intersectionNodeWidth || 1) / 2
-  const h = (intersectionNodeHeight || 1) / 2
-
-  const x2 = intersectionNodePosition.x + w
-  const y2 = intersectionNodePosition.y + h
-  const x1 = targetPosition.x + (targetNode.measured.width || 1) / 2
-  const y1 = targetPosition.y + (targetNode.measured.height || 1) / 2
-
-  const xx1 = (x1 - x2) / (2 * w) - (y1 - y2) / (2 * h)
-  const yy1 = (x1 - x2) / (2 * w) + (y1 - y2) / (2 * h)
-  const a = 1 / (Math.abs(xx1) + Math.abs(yy1) || 1)
-  const xx3 = a * xx1
-  const yy3 = a * yy1
-  const x = w * (xx3 + yy3) + x2
-  const y = h * (-xx3 + yy3) + y2
-
-  return { x, y }
+/**
+ * Read the visual shape of a node from node.data.style.type.
+ * Treat 'sheet' and 'text' as rectangles.
+ */
+function getNodeShape(node: InternalNode<Node>): ShapeType {
+  const t = (node.data?.style as { type?: string } | undefined)?.type
+  if (t === 'ellipse') return 'ellipse'
+  if (t === 'diamond') return 'diamond'
+  return 'rectangle'
 }
 
-
-function getEdgePosition(node: InternalNode<Node>, intersectionPoint: { x: number, y: number }) {
-  const n = { ...node.internals.positionAbsolute, ...node }
-  const nx = Math.round(n.x)
-  const ny = Math.round(n.y)
-  const px = Math.round(intersectionPoint.x)
-  const py = Math.round(intersectionPoint.y)
-
-  if (px <= nx + 1) {
-    return Position.Left
-  }
-  if (px >= nx + (n.measured.width || 1) - 1) {
-    return Position.Right
-  }
-  if (py <= ny + 1) {
-    return Position.Top
-  }
-  if (py >= n.y + (n.measured.height || 1) - 1) {
-    return Position.Bottom
-  }
-
-  return Position.Top
+function nodeRect(n: InternalNode<Node>): Rect {
+  const pos = n.internals.positionAbsolute
+  const w = n.measured.width ?? 1
+  const h = n.measured.height ?? 1
+  return { x: pos.x, y: pos.y, w, h }
 }
 
-// returns the parameters (sx, sy, tx, ty, sourcePos, targetPos) you need to create an edge
-export function getEdgeParams(source: InternalNode<Node>, target: InternalNode<Node>) {
-  const sourceIntersectionPoint = getNodeIntersection(source, target)
-  const targetIntersectionPoint = getNodeIntersection(target, source)
+function nodeCenter(n: InternalNode<Node>): Point {
+  const r = nodeRect(n)
+  return { x: r.x + r.w / 2, y: r.y + r.h / 2 }
+}
 
-  const sourcePos = getEdgePosition(source, sourceIntersectionPoint)
-  const targetPos = getEdgePosition(target, targetIntersectionPoint)
+/**
+ * Point-in-node for rectangle, ellipse, diamond.
+ */
+function pointInNode(p: Point, node: InternalNode<Node>): boolean {
+  const { x, y, w, h } = nodeRect(node)
+  const cx = x + w / 2
+  const cy = y + h / 2
+
+  const shape = getNodeShape(node)
+  if (shape === 'ellipse') {
+    const dx = (p.x - cx) / (w / 2)
+    const dy = (p.y - cy) / (h / 2)
+    return dx * dx + dy * dy <= 1
+  }
+
+  if (shape === 'diamond') {
+    const dx = Math.abs(p.x - cx) / (w / 2)
+    const dy = Math.abs(p.y - cy) / (h / 2)
+    return dx + dy <= 1
+  }
+
+  return p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h
+}
+
+/**
+ * Find boundary intersection on the ray from the node center toward targetPoint.
+ * This is shape-agnostic via in/out checks + bisection.
+ */
+function boundaryIntersectionToward(
+  node: InternalNode<Node>,
+  targetPoint: Point,
+  iters = 20
+): Point {
+  const c = nodeCenter(node)
+
+  // Ensure the far point is *outside* the node
+  const dir = { x: targetPoint.x - c.x, y: targetPoint.y - c.y }
+  const len = Math.hypot(dir.x, dir.y) || 1
+  const ux = dir.x / len
+  const uy = dir.y / len
+
+  const { w, h } = nodeRect(node)
+  const farDist = Math.max(w, h) * 4
+  const far: Point = { x: c.x + ux * farDist, y: c.y + uy * farDist }
+
+  let a = c
+  let b = far
+  if (pointInNode(b, node)) {
+    b = { x: c.x + ux * farDist * 8, y: c.y + uy * farDist * 8 }
+  }
+
+  for (let k = 0; k < iters; k++) {
+    const mid: Point = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+    if (pointInNode(mid, node)) {
+      a = mid
+    } else {
+      b = mid
+    }
+  }
+
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+}
+
+/**
+ * Choose XYFlow Position (Left/Right/Top/Bottom) based on where the boundary
+ * point lies relative to the node center. Works for all shapes.
+ */
+function edgeSideForPoint(node: InternalNode<Node>, boundary: Point): Position {
+  const c = nodeCenter(node)
+  const { w, h } = nodeRect(node)
+
+  const dx = boundary.x - c.x
+  const dy = boundary.y - c.y
+
+  const nx = dx / (w / 2 || 1)
+  const ny = dy / (h / 2 || 1)
+
+  if (Math.abs(nx) > Math.abs(ny)) {
+    return nx < 0 ? Position.Left : Position.Right
+  } else {
+    return ny < 0 ? Position.Top : Position.Bottom
+  }
+}
+
+/**
+ * Returns the parameters (sx, sy, tx, ty, sourcePos, targetPos) needed to create an edge.
+ * Now shape-aware (rectangle/ellipse/diamond).
+ */
+export function getEdgeParams(
+  source: InternalNode<Node>,
+  target: InternalNode<Node>
+): {
+  sx: number
+  sy: number
+  tx: number
+  ty: number
+  sourcePos: Position
+  targetPos: Position
+} {
+  const tc = nodeCenter(target)
+  const sc = nodeCenter(source)
+
+  const sourceBoundary = boundaryIntersectionToward(source, tc)
+  const targetBoundary = boundaryIntersectionToward(target, sc)
+
+  const sourcePos = edgeSideForPoint(source, sourceBoundary)
+  const targetPos = edgeSideForPoint(target, targetBoundary)
 
   return {
-    sx: sourceIntersectionPoint.x,
-    sy: sourceIntersectionPoint.y,
-    tx: targetIntersectionPoint.x,
-    ty: targetIntersectionPoint.y,
+    sx: sourceBoundary.x,
+    sy: sourceBoundary.y,
+    tx: targetBoundary.x,
+    ty: targetBoundary.y,
     sourcePos,
-    targetPos,
+    targetPos
   }
-}
-
-export function createNodesAndEdges() {
-  const nodes = []
-  const edges = []
-  const center = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
-
-  nodes.push({ id: 'target', data: { label: 'Target' }, position: center })
-
-  for (let i = 0; i < 8; i++) {
-    const degrees = i * (360 / 8)
-    const radians = degrees * (Math.PI / 180)
-    const x = 250 * Math.cos(radians) + center.x
-    const y = 250 * Math.sin(radians) + center.y
-
-    nodes.push({ id: `${i}`, data: { label: 'Source' }, position: { x, y } })
-
-    edges.push({
-      id: `edge-${i}`,
-      target: 'target',
-      source: `${i}`,
-      type: 'floating',
-      markerEnd: {
-        type: MarkerType.Arrow,
-      },
-    })
-  }
-
-  return { nodes, edges }
 }

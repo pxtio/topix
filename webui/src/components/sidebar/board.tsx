@@ -86,7 +86,11 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
           className="group/collapsible w-full"
         >
           <ContextMenuTrigger asChild>
-            <SidebarMenuButton onClick={handleClick} className="text-xs font-medium truncate" isActive={isActive}>
+            <SidebarMenuButton
+              onClick={handleClick}
+              className="text-xs font-medium truncate data-[active=true]:ring-1 data-[active=true]:ring-primary/30"
+              isActive={isActive}
+            >
               <NoteSimpleIcon className="shrink-0 size-4" strokeWidth={1.75} />
               <span>{trimText(label || UNTITLED_LABEL, 20)}</span>
             </SidebarMenuButton>

@@ -134,13 +134,17 @@ export interface Style extends BaseStyle {
 }
 
 
+// Arrowhead types for links
+export type ArrowheadType = 'none' | 'arrow' | 'barb' | 'arrow-filled'
+
+
 /**
  * Interface for the style of a link in the board.
  */
 export interface LinkStyle extends BaseStyle {
   type: "arrow"
-  sourceArrowhead?: "arrow" | "barb" | "circle"
-  targetArrowhead?: "arrow" | "barb" | "circle"
+  sourceArrowhead: ArrowheadType
+  targetArrowhead: ArrowheadType
 }
 
 
@@ -156,7 +160,7 @@ export const createDefaultStyle = ({
     type: type,
     angle: 0.0,
     strokeColor: "#00000000",
-    strokeWidth: 0.75,
+    strokeWidth: 1,
     strokeStyle: "solid",
     backgroundColor: "#fed7aa",
     fillStyle: "solid",
@@ -224,7 +228,7 @@ export const createDefaultStyle = ({
 export const createDefaultLinkStyle = (): LinkStyle => ({
   type: "arrow",
   angle: 0.0,
-  strokeColor: "#000000",
+  strokeColor: "#292524",
   strokeWidth: 1.5,
   strokeStyle: "solid",
   backgroundColor: "#00000000",
@@ -238,6 +242,6 @@ export const createDefaultLinkStyle = (): LinkStyle => ({
   textAlign: "center",
   textColor: "#000000",
   textStyle: "normal",
-  sourceArrowhead: undefined,
+  sourceArrowhead: "none",
   targetArrowhead: "arrow"
 })

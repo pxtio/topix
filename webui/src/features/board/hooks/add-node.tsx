@@ -6,6 +6,7 @@ import { convertNoteToNode } from "../utils/graph"
 import { useAddNotes } from "../api/add-notes"
 import { useAppStore } from "@/store"
 import type { NodeType } from "../types/style"
+import { useStyleDefaults } from "../style-provider"
 
 
 /**
@@ -19,6 +20,7 @@ export function useAddNoteNode() {
   const { boardId, nodes, setNodes } = useGraphStore()
 
   const { addNotes } = useAddNotes()
+  const { applyDefaultNodeStyle } = useStyleDefaults()
 
   return useCallback(({
     nodeType = 'rectangle'
@@ -27,6 +29,7 @@ export function useAddNoteNode() {
   }) => {
     if (!boardId) return
     const newNote = createDefaultNote({ boardId, nodeType })
+    newNote.style = applyDefaultNodeStyle(nodeType)
     const jitter = () => Math.random() * 100 - 50
 
     const container = document.querySelector('.react-flow__viewport')?.getBoundingClientRect()
@@ -51,5 +54,5 @@ export function useAddNoteNode() {
     setNodes([...newNodes, node])
     const notes: Note[] = [newNote]
     addNotes({ boardId, userId, notes })
-  }, [boardId, getViewport, setNodes, nodes, addNotes, userId])
+  }, [boardId, getViewport, setNodes, nodes, addNotes, userId, applyDefaultNodeStyle])
 }

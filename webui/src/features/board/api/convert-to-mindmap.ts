@@ -8,7 +8,7 @@ import { convertLinkToEdge, convertNoteToNode } from "../utils/graph"
 import { autoLayout } from "../lib/graph/auto-layout"
 import { defaultLayoutOptions } from "../lib/graph/settings"
 import { useMindMapStore } from "@/features/agent/store/mindmap-store"
-import { createDefaultStyle } from "../types/style"
+import { createDefaultLinkStyle, createDefaultStyle } from "../types/style"
 import { colorTree } from "../utils/bfs"
 import { pickRandomColorOfShade } from "../lib/colors/tailwind"
 
@@ -67,7 +67,10 @@ export const useConvertToMindMap = () => {
         note.graphUid = boardId
         note.style = createDefaultStyle({ type: note.style.type })
       })
-      links.forEach(link => link.graphUid = boardId)
+      links.forEach(link => {
+        link.graphUid = boardId
+        link.style = createDefaultLinkStyle()
+      })
       if (toolType === "mapify") {
         // color tree if mapify
         colorTree({ notes, links })

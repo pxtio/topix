@@ -33,6 +33,8 @@ import { saveThumbnail } from '../../api/save-thumbnail'
 import { useShallow } from 'zustand/shallow'
 import { ActionPanel } from './action-panel'
 import { LinearView } from './linear-view'
+import { useCopyPasteNodes } from '../../hooks/copy-paste'
+import { useStyleDefaults } from '../../style-provider'
 
 const proOptions = { hideAttribution: true }
 
@@ -61,6 +63,7 @@ export default function GraphEditor() {
   const [isDragging, setIsDragging] = useState<boolean>(false)
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [moving, setMoving] = useState<boolean>(false)
+  const [isSelecting, setIsSelecting] = useState<boolean>(false)
 
   const { zoomIn, zoomOut, fitView, viewportInitialized } = useReactFlow()
 
@@ -82,6 +85,13 @@ export default function GraphEditor() {
   const { addLinks } = useAddLinks()
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
 
+  const { applyDefaultLinkStyle } = useStyleDefaults()
+
+  useCopyPasteNodes({
+    jitterMax: 40,
+    shortcuts: true
+  })
+
   const deleteNodes: OnNodesDelete<NoteNode> = useCallback((nodes) => {
     if (!boardId || !userId) return
     onNodesDelete(nodes)
@@ -100,14 +110,16 @@ export default function GraphEditor() {
 
   const connectNodes: OnConnect = useCallback((params) => {
     if (!boardId || !userId) return
-    const newEdge = onConnect(params)
+    const style = applyDefaultLinkStyle()
+    const newEdge = onConnect(params, style)
     if (!newEdge) return
+    const link = convertEdgeToLink(boardId, newEdge)
     addLinks({
       boardId,
       userId,
-      links: [convertEdgeToLink(boardId, newEdge)]
+      links: [link]
     })
-  }, [onConnect, boardId, userId, addLinks])
+  }, [onConnect, boardId, userId, addLinks, applyDefaultLinkStyle])
 
   const handleAddNode = useAddNoteNode()
 
@@ -180,6 +192,10 @@ export default function GraphEditor() {
 
   const handleDragStart = useCallback(() => setIsDragging(true), [])
   const handleDragStop = useCallback(() => setIsDragging(false), [])
+  const handleSelectionStart = useCallback(() => setIsSelecting(true), [])
+  const handleSelectionDragStart = useCallback(() => setIsSelecting(true), [])
+  const handleSelectionEnd = useCallback(() => setIsSelecting(false), [])
+  const handleSelectionDragStop = useCallback(() => setIsSelecting(false), [])
 
   useOnViewportChange({
     onChange: () => setMoving(true),
@@ -202,7 +218,7 @@ export default function GraphEditor() {
       />
 
       {/* Graph-only sidebar (style controls) */}
-      {viewMode === 'graph' && !isDragging && !moving && !isResizingNode && (
+      {viewMode === 'graph' && !isDragging && !moving && !isResizingNode && !isSelecting && (
         <div className='absolute top-1 left-1 w-auto max-w-[300px] h-auto z-50'>
           <GraphSidebar />
         </div>
@@ -229,6 +245,10 @@ export default function GraphEditor() {
           selectionKeyCode={null}
           onNodeDragStart={handleDragStart}
           onNodeDragStop={handleDragStop}
+          onSelectionStart={handleSelectionStart}
+          onSelectionEnd={handleSelectionEnd}
+          onSelectionDragStart={handleSelectionDragStart}
+          onSelectionDragStop={handleSelectionDragStop}
           nodesDraggable={!isLocked}
           nodesConnectable={!isLocked}
           elementsSelectable={!isLocked}
@@ -237,7 +257,9 @@ export default function GraphEditor() {
           panOnScroll={!isLocked}
           onlyRenderVisibleElements
         >
-          {!moving && !isDragging && !isResizingNode && <MiniMap className='!bg-card rounded-lg'/>}
+          {!moving && !isDragging && !isResizingNode && !isSelecting && (
+            <MiniMap className='!bg-card rounded-lg'/>
+          )}
         </ReactFlow>
       ) : viewMode === 'linear' ? (
         <LinearView cols={1} />

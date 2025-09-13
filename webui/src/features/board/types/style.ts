@@ -160,7 +160,7 @@ export const createDefaultStyle = ({
     type: type,
     angle: 0.0,
     strokeColor: "#00000000",
-    strokeWidth: 0.75,
+    strokeWidth: 1,
     strokeStyle: "solid",
     backgroundColor: "#fed7aa",
     fillStyle: "solid",

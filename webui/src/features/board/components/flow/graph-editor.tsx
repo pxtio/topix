@@ -51,7 +51,7 @@ const defaultEdgeOptions = {
 }
 const connectionLineStyle = { stroke: '#a8a29e' }
 
-type ViewMode = 'graph' | 'linear'
+type ViewMode = 'graph' | 'linear' | 'grid'
 
 export default function GraphEditor() {
   const [viewMode, setViewMode] = useState<ViewMode>('graph')
@@ -239,8 +239,10 @@ export default function GraphEditor() {
         >
           {!moving && !isDragging && !isResizingNode && <MiniMap className='!bg-card rounded-lg'/>}
         </ReactFlow>
+      ) : viewMode === 'linear' ? (
+        <LinearView cols={1} />
       ) : (
-        <LinearView />
+        <LinearView cols={3} />
       )}
     </div>
   )

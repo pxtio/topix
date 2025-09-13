@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -23,10 +23,13 @@ import { LinearNoteCard } from './linear-note-card'
 import { useUpdateNote } from '../../api/update-note'
 import type { NumberProperty } from '../../types/property'
 import { useAppStore } from '@/store'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 export type LinearViewProps = {
-  cols?: number   // number of columns
-  gapPx?: number  // gap between items in px
+  cols?: number            // desired columns for >= breakpoint
+  gapPx?: number           // grid gap in px
+  mobileBreakpointPx?: number // < this width → 1 column (default 640 = Tailwind 'sm')
+  maxWidthPx?: number      // container max width
 }
 
 function useSortedNodes(nodes: NoteNode[]) {
@@ -41,7 +44,36 @@ function useSortedNodes(nodes: NoteNode[]) {
   )
 }
 
-export function LinearView({ cols = 3, gapPx = 16 }: LinearViewProps) {
+// snaps to 1 column on small screens using matchMedia
+function useEffectiveCols(cols: number, breakpointPx: number) {
+  const get = () => {
+    if (typeof window === 'undefined') return cols
+    return window.innerWidth < breakpointPx ? 1 : cols
+  }
+  const [effective, setEffective] = useState<number>(get)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia(`(max-width: ${breakpointPx - 0.5}px)`)
+    const update = () => setEffective(mq.matches ? 1 : cols)
+    update()
+    if (mq.addEventListener) mq.addEventListener('change', update)
+    else mq.addListener(update)
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', update)
+      else mq.removeListener(update)
+    }
+  }, [cols, breakpointPx])
+
+  return effective
+}
+
+export function LinearView({
+  cols = 3,
+  gapPx = 16,
+  mobileBreakpointPx = 640,
+  maxWidthPx = 1000
+}: LinearViewProps) {
   const userId = useAppStore(state => state.userId)
   const nodes = useGraphStore(state => state.nodes)
   const setNodes = useGraphStore(state => state.setNodes)
@@ -52,6 +84,8 @@ export function LinearView({ cols = 3, gapPx = 16 }: LinearViewProps) {
     (nodes as NoteNode[]).filter(n => n.data?.style?.type === 'sheet')
   )
   const ids = useMemo(() => sortedNodes.map(n => n.id), [sortedNodes])
+
+  const effectiveCols = useEffectiveCols(cols, mobileBreakpointPx)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -106,18 +140,27 @@ export function LinearView({ cols = 3, gapPx = 16 }: LinearViewProps) {
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={ids} strategy={rectSortingStrategy}>
-        <div
-          className='grid gap-4 px-4 pt-20 pb-20 mx-auto max-w-[1000px]'
-          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, columnGap: gapPx }}
-        >
-          {sortedNodes.map(n => (
-            <SortableNoteCard key={n.id} node={n} />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+    <div className='w-full h-full'>
+      <ScrollArea className='w-full h-full'>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={ids} strategy={rectSortingStrategy}>
+            <div
+              className='grid px-4 pt-20 pb-20 mx-auto'
+              style={{
+                maxWidth: maxWidthPx,
+                columnGap: gapPx,
+                rowGap: gapPx,
+                gridTemplateColumns: `repeat(${effectiveCols}, minmax(0, 1fr))`
+              }}
+            >
+              {sortedNodes.map(n => (
+                <SortableNoteCard key={n.id} node={n} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      </ScrollArea>
+    </div>
   )
 }
 

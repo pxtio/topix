@@ -35,9 +35,9 @@ export function fontSizeToTwClass(size?: FontSize): string {
     case "M":
       return "text-base"
     case "L":
-      return "text-lg"
-    case "XL":
       return "text-xl"
+    case "XL":
+      return "text-2xl"
     default:
       return "text-base"
   }

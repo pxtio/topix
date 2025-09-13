@@ -98,18 +98,18 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
         <ScrollArea className='h-full p-3'>
           <div className='flex flex-col items-start gap-4 p-1'>
             {/* Stroke */}
-            <Section title="Stroke">
-              <ColorGrid value={s.strokeColor} onPick={v => pickColor("strokeColor", v)} allowTransparent />
-            </Section>
-
-            {/* Text color */}
-            <Section title="Text color">
-              <ColorGrid value={s.textColor} onPick={v => onStyleChange({ textColor: v || undefined })} />
+            <Section title="Border">
+              <ColorGrid value={s.strokeColor} onPick={v => pickColor("strokeColor", v)} allowTransparent variant="compact" />
             </Section>
 
             {/* Background */}
             <Section title="Background">
-              <ColorGrid value={s.backgroundColor ?? null} onPick={v => pickColor("backgroundColor", v)} allowTransparent />
+              <ColorGrid value={s.backgroundColor ?? null} onPick={v => pickColor("backgroundColor", v)} allowTransparent variant="compact" />
+            </Section>
+
+            {/* Text color */}
+            <Section title="Text color">
+              <ColorGrid value={s.textColor} onPick={v => onStyleChange({ textColor: v || undefined })} variant="compact" />
             </Section>
 
             <Separator />
@@ -150,7 +150,7 @@ function StylePanel({ style, onStyleChange, className }: StylePanelProps) {
               <ToggleGroup type="single" value={String(s.roughness ?? 0)} onValueChange={v => v && onStyleChange({ roughness: Number(v) })} className="flex flex-wrap gap-2">
                 {SloppyPresets.map(val => (
                   <ToggleGroupItem key={val} value={String(val)} className="h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary">
-                    <WavyGlyph amount={val} />
+                    <WavyGlyph amount={val * 4} />
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>

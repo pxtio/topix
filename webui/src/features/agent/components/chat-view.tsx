@@ -50,7 +50,7 @@ export const Chat = ({ chatId, hideContextBoard = false, initialBoardId = undefi
       >
         {
           !hideContextBoard && (
-            <div className="absolute z-50 top-0 inset-x-0 p-4 backdrop-blur-md bg-background supports-[backdrop-filter]:bg-background/50 backdrop-saturate-150">
+            <div className="absolute z-50 top-0 inset-x-0 p-4 bg-background">
               <ContextBoard
                 contextBoardId={attachedBoardId}
                 boardAsContext={updateChatContextBoard}

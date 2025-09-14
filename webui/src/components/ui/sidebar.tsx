@@ -21,7 +21,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { SidebarSimpleIcon } from "../icons/sidebar"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { SidebarLeft01Icon } from "@hugeicons/core-free-icons"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -271,7 +272,7 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <SidebarSimpleIcon strokeWidth={1.75} />
+      <HugeiconsIcon icon={SidebarLeft01Icon} className='size-4 shrink-0' strokeWidth={1.75} />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
@@ -720,5 +721,6 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
+  // eslint-disable-next-line react-refresh/only-export-components
   useSidebar,
 }

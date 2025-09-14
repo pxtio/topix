@@ -1,15 +1,13 @@
 import { useCreateBoard } from "@/features/board/api/create-board"
 import { useAppStore } from "@/store"
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from "../ui/sidebar"
-import { Edit2SimpleIcon } from "../icons/edit2"
 import { useDeleteBoard } from "@/features/board/api/delete-board"
-import { NoteSimpleIcon } from "../icons/note"
 import { trimText } from "@/lib/common"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { useNavigate, useRouterState } from "@tanstack/react-router"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "../ui/context-menu"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { DashboardCircleAddIcon, Delete02Icon } from "@hugeicons/core-free-icons"
+import { DashboardCircleAddIcon, Delete02Icon, Edit01Icon, NoteIcon } from "@hugeicons/core-free-icons"
 import type { Chat } from "@/features/agent/types/chat"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible"
 import { Minus, Plus } from "lucide-react"
@@ -30,8 +28,12 @@ export function DashboardMenuItem() {
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton onClick={handleClick} className="text-xs font-medium truncate" isActive={isActive}>
-        <HugeiconsIcon icon={DashboardCircleAddIcon} className="shrink-0 size-4" strokeWidth={1.75} />
+      <SidebarMenuButton
+        onClick={handleClick}
+        className="text-xs font-medium truncate data-[active=true]:ring-1 data-[active=true]:ring-primary/30"
+        isActive={isActive}
+      >
+        <HugeiconsIcon icon={DashboardCircleAddIcon} className="shrink-0 size-4 text-sidebar-icon-2" strokeWidth={1.75} />
         <span>Dashboard</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -54,8 +56,8 @@ export function NewBoardItem() {
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton className="text-primary text-xs font-medium transition-all" onClick={handleClick}>
-        <Edit2SimpleIcon className="text-xs shrink-0" strokeWidth={1.75} />
+      <SidebarMenuButton className="text-xs text-sidebar-primary-foreground font-medium transition-all" onClick={handleClick}>
+        <HugeiconsIcon icon={Edit01Icon} className="text-xs shrink-0 text-sidebar-icon-1" strokeWidth={1.75} />
         <span>New Board</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -91,7 +93,7 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
               className="text-xs font-medium truncate data-[active=true]:ring-1 data-[active=true]:ring-primary/30"
               isActive={isActive}
             >
-              <NoteSimpleIcon className="shrink-0 size-4" strokeWidth={1.75} />
+              <HugeiconsIcon icon={NoteIcon} className="shrink-0 size-4" strokeWidth={1.75} />
               <span>{trimText(label || UNTITLED_LABEL, 20)}</span>
             </SidebarMenuButton>
           </ContextMenuTrigger>

@@ -56,6 +56,11 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+
+  --color-sidebar-icon-1: var(--sidebar-icon-1);
+  --color-sidebar-icon-2: var(--sidebar-icon-2);
+  --color-sidebar-icon-3: var(--sidebar-icon-3);
+  --color-sidebar-icon-4: var(--sidebar-icon-4);
 }
 
 :root {
@@ -109,6 +114,11 @@
   --shadow-2xl: 0px 2px 4px 0px hsl(0 0% 0% / 0.13);
   --tracking-normal: 0rem;
   --spacing: 0.25rem;
+
+  --sidebar-icon-1: #1d4ed8;
+  --sidebar-icon-2: #15803d;
+  --sidebar-icon-3: #b45309;
+  --sidebar-icon-4: #7c3aed;
 }
 
 .dark {
@@ -160,6 +170,11 @@
   --shadow-lg: 0px 2px 4px 0px hsl(0 0% 0% / 0.10), 0px 4px 6px -1px hsl(0 0% 0% / 0.10);
   --shadow-xl: 0px 2px 4px 0px hsl(0 0% 0% / 0.10), 0px 8px 10px -1px hsl(0 0% 0% / 0.10);
   --shadow-2xl: 0px 2px 4px 0px hsl(0 0% 0% / 0.25);
+
+  --sidebar-icon-1: #93c5fd;
+  --sidebar-icon-2: #86efac;
+  --sidebar-icon-3: #fcd34d;
+  --sidebar-icon-4: #c4b5fd;
 }
 
 @layer base {

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GitMergeIcon, GridViewIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, StickyNote03Icon, TextIcon } from '@hugeicons/core-free-icons'
+import { ChartRelationshipIcon, CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GridViewIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, StickyNote03Icon, TextIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { NodeType } from '../../types/style'
@@ -94,7 +94,7 @@ export function ActionPanel({
     >
       {/* View mode toggle */}
       <ModeButton mode='graph' label='Graph'>
-        <HugeiconsIcon icon={GitMergeIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+        <HugeiconsIcon icon={ChartRelationshipIcon} className='size-4 shrink-0' strokeWidth={1.75} />
       </ModeButton>
 
       <ModeButton mode='linear' label='Linear'>

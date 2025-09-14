@@ -3,8 +3,8 @@ import { Input } from "../ui/input"
 import { Button } from "../ui/button"
 import { useClickOutside } from "@/hooks/use-click-outside"
 import { UNTITLED_LABEL } from "@/features/board/const"
-import { EditSimpleIcon } from "../icons/edit"
-import { TickSimpleIcon } from "../icons/tick"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { PencilEditIcon, Tick01Icon } from "@hugeicons/core-free-icons"
 
 
 /**
@@ -67,9 +67,9 @@ export const LabelEditor = ({ initialLabel, onSave }: LabelEditorProps) => {
       )}
       <Button variant="ghost" onClick={handleClick} size='icon'>
         {editMode ? (
-          <TickSimpleIcon className='size-4' strokeWidth={1.75} />
+          <HugeiconsIcon icon={Tick01Icon} className='size-4 shrink-0' strokeWidth={1.75} />
         ) : (
-          <EditSimpleIcon className='size-4' strokeWidth={1.75} />
+          <HugeiconsIcon icon={PencilEditIcon} className='size-4 shrink-0' strokeWidth={1.75} />
         )}
       </Button>
     </div>

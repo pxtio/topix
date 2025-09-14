@@ -109,8 +109,8 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
 
           <CollapsibleTrigger asChild>
             <SidebarMenuAction>
-              <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
-              <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
+              <Plus className="!-ml-2 group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
+              <Minus className="!-ml-2 group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
             </SidebarMenuAction>
           </CollapsibleTrigger>
           <CollapsibleContent>

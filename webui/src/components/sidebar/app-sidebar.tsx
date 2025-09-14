@@ -101,7 +101,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <NewChatItem />
-                <Collapsible defaultOpen className="group/collapsible w-full">
+                <Collapsible className="group/collapsible w-full">
                   <CollapsibleTrigger asChild>
                     <SidebarMenuItem>
                       <SidebarMenuButton className="font-medium text-xs flex flex-row items-center w-full">

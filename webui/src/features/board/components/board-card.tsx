@@ -26,16 +26,16 @@ export const BoardCard = ({
   return (
     <div
       className={`
-        bg-card hover:bg-accent
+        bg-transparent hover:bg-accent
         transition-all
         rounded-xl
         text-card-foreground
-        border border-dashed border-border hover:border-primary
+        border border-border hover:border-primary
         hover:ring-2 hover:ring-primary/10
         shadow-none hover:shadow-sm
         cursor-pointer
-        w-60
-        flex flex-col
+        w-60 h-60
+        flex flex-col justify-between
         overflow-hidden
         gap-1
         p-1
@@ -59,7 +59,7 @@ export const BoardCard = ({
         <h4 className='inline-block font-medium text-sm'>{board.label || UNTITLED_LABEL}</h4>
         {
           dateString && (
-            <div className='w-full text-xs text-muted-foreground mt-1'>
+            <div className='w-full text-xs text-muted-foreground font-mono mt-1'>
               <span>Last edited on </span>
               <span className='ml-auto'>{dateString}</span>
             </div>
@@ -88,13 +88,13 @@ export const NewBoardCard = () => {
       className={`
         transition-all
         rounded-xl
-        bg-card hover:bg-accent
+        bg-transparent hover:bg-accent
         hover:ring-2 hover:ring-primary/10
         text-card-foreground
-        border border-dashed border-border hover:border-primary
+        border border-border hover:border-primary
         shadow-none hover:shadow-sm
         cursor-pointer
-        w-60 h-40
+        w-60 h-60
         flex flex-col
         overflow-hidden
         gap-1

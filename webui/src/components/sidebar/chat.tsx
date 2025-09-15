@@ -41,7 +41,7 @@ export function NewChatItem({
       <SidebarMenuSubItem>
         <SidebarMenuSubButton
           onClick={handleClick}
-          className='text-xs font-medium truncate cursor-pointer'
+          className='text-xs text-muted-foreground font-medium truncate cursor-pointer data-[active=true]:ring-1 data-[active=true]:ring-primary/30'
           isActive={isActive}
         >
           <span>New Chat</span>

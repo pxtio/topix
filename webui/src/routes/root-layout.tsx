@@ -34,7 +34,8 @@ export function RootLayout() {
                   position="top-right"
                   toastOptions={{
                     style: {
-                      borderRadius: 'var(--radius-xl)'
+                      borderRadius: 'var(--radius-xl)',
+                      top: '3rem',
                     },
                   }}
                 />

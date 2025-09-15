@@ -56,7 +56,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
   const nodeClass = 'w-full h-full relative font-handwriting drag-handle pointer-events-auto bg-transparent'
   const rounded = data.style.roundness > 0 ? 'rounded-2xl' : 'none'
-  const frameClass = clsx('shadow-lg rounded-md border border-border', isPinned && 'ring-2 ring-primary')
+  const frameClass = clsx('shadow-lg rounded-lg border border-border', isPinned && 'ring-2 ring-primary')
 
   const backgroundColor = isDark ? darkModeDisplayHex(data.style.backgroundColor) || undefined : data.style.backgroundColor
   const strokeColor = isDark ? darkModeDisplayHex(data.style.strokeColor) || undefined : data.style.strokeColor

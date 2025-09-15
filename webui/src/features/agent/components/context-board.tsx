@@ -36,7 +36,7 @@ export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardPro
 
   return (
     <Select value={value} onValueChange={handleSelectBoard}>
-      <SelectTrigger className='border border-border rounded-full text-xs font-medium'>
+      <SelectTrigger className='border border-border rounded-lg bg-card text-xs font-medium'>
         <HugeiconsIcon
           icon={AiChipIcon}
         />

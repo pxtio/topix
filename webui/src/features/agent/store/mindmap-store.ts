@@ -9,8 +9,6 @@ export interface MindMapStore {
   mindmaps: Map<string, { nodes: NoteNode[], edges: LinkEdge[] }[]>
   setMindMap: (boardId: string, nodes: NoteNode[], edges: LinkEdge[]) => void
   clearMindMap: (boardId: string) => void
-  generatingMindMap: boolean
-  setGeneratingMindmap: (generatingMindMap: boolean) => void
 }
 
 
@@ -33,9 +31,5 @@ export const useMindMapStore = create<MindMapStore>((set) => ({
     const newMindmaps = new Map(state.mindmaps)
     newMindmaps.delete(boardId)
     return { mindmaps: newMindmaps }
-  }),
-
-  generatingMindMap: false,
-
-  setGeneratingMindmap: (generatingMindMap) => set(() => ({ generatingMindMap }))
+  })
 }))

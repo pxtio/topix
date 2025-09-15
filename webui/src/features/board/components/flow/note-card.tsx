@@ -57,15 +57,17 @@ export const NodeCard = ({
 
   const isPinned = note.properties.pinned.boolean === true
 
+  const fontFamily = note.style.type === 'sheet' ? 'sans-serif' : note.style.fontFamily
+
   const labelClass = useMemo(
     () =>
       clsx(
         'relative bg-transparent overflow-visible flex items-center justify-center',
         isSheet
-          ? `w-[300px] h-[300px] ${fontFamilyToTwClass(note.style.fontFamily)} p-2 pt-8`
+          ? `w-[400px] h-[400px] ${fontFamilyToTwClass(fontFamily)} p-2 pt-8`
           : 'w-full h-full p-2'
       ),
-    [isSheet, note.style.fontFamily]
+    [isSheet, fontFamily]
   )
 
   const titleEditorClass =
@@ -301,7 +303,7 @@ export const NodeCard = ({
             textAlign={note.style.textAlign}
             styleHelpers={{
               text: textStyleToTwClass(note.style.textStyle),
-              font: fontFamilyToTwClass(note.style.fontFamily),
+              font: fontFamilyToTwClass(fontFamily),
               size: fontSizeToTwClass(note.style.fontSize)
             }}
             contentRef={contentRef}

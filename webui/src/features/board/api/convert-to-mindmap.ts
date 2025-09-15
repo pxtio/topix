@@ -45,11 +45,7 @@ export async function convertToMindMap(
 export const useConvertToMindMap = () => {
   const { userId } = useAppStore()
 
-  const {
-    setMindMap,
-    generatingMindMap,
-    setGeneratingMindmap,
-  } = useMindMapStore()
+  const setMindMap = useMindMapStore(state => state.setMindMap)
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -57,10 +53,6 @@ export const useConvertToMindMap = () => {
       answer,
       toolType
     }: { boardId: string, answer: string, toolType: "notify" | "mapify" }): Promise<{ status: string }> => {
-      if (generatingMindMap) {
-        return { status: "processing" }
-      }
-      setGeneratingMindmap(true)
       const { notes, links } = await convertToMindMap(userId, answer, toolType)
 
       notes.forEach(note => {
@@ -88,7 +80,6 @@ export const useConvertToMindMap = () => {
       // will be consumed by board component
       // and then cleared
       setMindMap(boardId, nodes, edges)
-      setGeneratingMindmap(false)
 
       return { status: "success" }
     }

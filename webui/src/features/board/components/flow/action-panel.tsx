@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { ChartRelationshipIcon, CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GridViewIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, StickyNote03Icon, TextIcon } from '@hugeicons/core-free-icons'
+import { ChartRelationshipIcon, CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GridViewIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { NodeType } from '../../types/style'
@@ -192,7 +192,7 @@ export function ActionPanel({
             title='Add Sticky Note'
             aria-label='Add Sticky Note'
           >
-            <HugeiconsIcon icon={StickyNote03Icon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={1.75} />
           </Button>
 
           {/* Add rectangle */}
@@ -254,10 +254,10 @@ export function ActionPanel({
             className={normalButtonClass}
             size='icon'
             onClick={() => onAddNode({ nodeType: 'sheet' })}
-            title='Add sheet'
-            aria-label='Add sheet'
+            title='Add Sticky Note'
+            aria-label='Add Sticky Note'
           >
-            <HugeiconsIcon icon={StickyNote03Icon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={1.75} />
           </Button>
         </>
       )}

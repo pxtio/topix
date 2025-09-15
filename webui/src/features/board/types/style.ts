@@ -204,7 +204,7 @@ export const createDefaultStyle = ({
         ...defaultOptions,
         roughness: 0,
         roundness: 0,
-        fontFamily: "sans-serif",
+        fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "left"
       } as Style

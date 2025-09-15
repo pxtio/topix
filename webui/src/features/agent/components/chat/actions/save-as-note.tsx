@@ -13,7 +13,7 @@ import { useCreateBoard } from "@/features/board/api/create-board"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { useAppStore } from "@/store"
-import { GitForkIcon, NotebookIcon, ReloadIcon } from "@hugeicons/core-free-icons"
+import { CancelIcon, CheckmarkCircle03Icon, GitForkIcon, NotebookIcon, ReloadIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useNavigate } from "@tanstack/react-router"
 import clsx from "clsx"
@@ -25,6 +25,19 @@ import { toast } from "sonner"
 const LoadingIcon = () => <HugeiconsIcon
   icon={ReloadIcon}
   className="text-accent-foreground size-4 animate-spin [animation-duration:750ms]"
+  strokeWidth={1.75}
+/>
+
+const SuccessIcon = () => <HugeiconsIcon
+  icon={CheckmarkCircle03Icon}
+  className="text-foreground size-4"
+  strokeWidth={1.75}
+/>
+
+const ErrorIcon = () => <HugeiconsIcon
+  icon={CancelIcon}
+  className="text-destructive size-4"
+  strokeWidth={1.75}
 />
 
 
@@ -71,7 +84,7 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
       })
       toast.success("Notes updated.", {
         id,
-        icon: undefined,
+        icon: <SuccessIcon />,
         duration: undefined,
         action: {
           label: "Go to board",
@@ -82,7 +95,11 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
       })
     } catch (error) {
       console.error("Error converting to mind map:", error)
-      toast.error("Failed to rewrite.", { id, icon: undefined, duration: undefined })
+      toast.error("Failed to rewrite.", {
+        id,
+        icon: <ErrorIcon />,
+        duration: undefined
+      })
     } finally {
       setProcessing(false)
     }
@@ -108,7 +125,7 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
         "Notes updated.",
         {
           id,
-          icon: undefined,
+          icon: <SuccessIcon />,
           duration: undefined,
           action: {
             label: "Go to board",
@@ -124,7 +141,7 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
         "Could not create the board or rewrite.",
         {
           id,
-          icon: undefined,
+          icon: <ErrorIcon />,
           duration: undefined
         })
     } finally {

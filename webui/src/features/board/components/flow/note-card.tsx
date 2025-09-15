@@ -312,7 +312,12 @@ export const NodeCard = ({
 
       {/* DIALOG CONTENT */}
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2'>
-        {!isSheet && (
+        {isSheet ? (
+          <DialogHeader className='hidden'>
+            <DialogTitle />
+            <DialogDescription />
+          </DialogHeader>
+        ) : (
           <DialogHeader className='w-full'>
             <DialogTitle asChild>
               <div className='flex items-center gap-2 w-full pt-10 px-20'>

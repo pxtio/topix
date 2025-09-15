@@ -1,3 +1,21 @@
+/**
+ * useCopyPasteNodes
+ *
+ * A React hook for copy–pasting selected React Flow note-nodes while preserving their relative layout.
+ * When multiple nodes are pasted in one operation, a single shared jitter offset (dx, dy) is applied to
+ * every cloned node so the pasted group keeps its internal structure intact.
+ *
+ * Features
+ * - Copy currently selected nodes (with optional filter)
+ * - Paste clones into the graph with a single shared jitter offset
+ * - Optional global keyboard shortcuts: ⌘/Ctrl+C to copy, ⌘/Ctrl+V (and ⌘/Ctrl+B) to paste
+ * - Clipboard paste gesture support: any paste event triggers a clone paste (does not read clipboard data)
+ *
+ * Notes
+ * - Uses crypto.randomUUID() to generate new IDs for cloned notes
+ * - Only operates when focus is not in an editable element (inputs, textareas, contentEditable)
+ */
+
 import { useCallback, useEffect, useRef } from 'react'
 import { useReactFlow } from '@xyflow/react'
 import { useGraphStore } from '../store/graph-store'
@@ -8,13 +26,26 @@ import type { Note } from '../types/note'
 import type { NoteNode } from '../types/flow'
 
 type CopyPasteOptions = {
-  /** max absolute jitter in px applied independently to x and y (default 30) */
+  /**
+   * Maximum absolute jitter in pixels applied to both x and y for a paste operation
+   * A single shared dx,dy is generated per paste and applied to all pasted nodes
+   * @default 30
+   */
   jitterMax?: number
-  /** enable built-in keybindings: Ctrl/Cmd+C to copy, Ctrl/Cmd+V (and Ctrl/Cmd+B) to paste (default true) */
+  /**
+   * Enable built-in keybindings:
+   * - Ctrl/Cmd+C to copy
+   * - Ctrl/Cmd+V and Ctrl/Cmd+B to paste
+   * @default true
+   */
   shortcuts?: boolean
-  /** optional filter to decide which nodes are copyable */
+  /**
+   * Optional filter that decides which selected nodes are copyable
+   */
   isCopyableNode?: (node: NoteNode) => boolean
 }
+
+type Jitter = { dx: number, dy: number }
 
 export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
   const { jitterMax = 30, shortcuts = true, isCopyableNode } = opts
@@ -36,6 +67,9 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     return isCopyableNode ? selected.filter(isCopyableNode) : selected
   }, [nodes, isCopyableNode])
 
+  /**
+   * Copies currently selected note nodes into an in-memory buffer
+   */
   const copySelected = useCallback(() => {
     const selected = getSelectedNoteNodes()
     if (!selected.length) {
@@ -56,11 +90,14 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     copiedRef.current = notes
   }, [getSelectedNoteNodes])
 
-  const cloneNoteWithJitter = useCallback((note: Note): Note => {
+  /**
+   * Returns a cloned note with a shared jitter offset applied
+   */
+  const cloneNoteWithJitter = useCallback((note: Note, jitter: Jitter): Note => {
     const ox = note.properties?.nodePosition?.position?.x ?? 0
     const oy = note.properties?.nodePosition?.position?.y ?? 0
-    const nx = ox + randJitter()
-    const ny = oy + randJitter()
+    const nx = ox + jitter.dx
+    const ny = oy + jitter.dy
 
     const cloned: Note = {
       ...note,
@@ -76,14 +113,20 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     }
 
     return cloned
-  }, [randJitter])
+  }, [])
 
+  /**
+   * Pastes the copied notes as new nodes, applying a single shared jitter for the whole batch
+   */
   const pasteCopied = useCallback(async () => {
     if (!boardId || !userId) return
     const copied = copiedRef.current
     if (!copied || !copied.length) return
 
-    const clones = copied.map(cloneNoteWithJitter)
+    // one shared jitter per paste to preserve the internal structure
+    const jitter = { dx: randJitter(), dy: randJitter() }
+
+    const clones = copied.map(note => cloneNoteWithJitter(note, jitter))
     const newNodes = clones.map(convertNoteToNode).map(n => ({ ...n, selected: true }))
 
     setNodes(curr => {
@@ -92,7 +135,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     })
 
     await addNotes({ boardId, userId, notes: clones })
-  }, [boardId, userId, cloneNoteWithJitter, setNodes, addNotes])
+  }, [boardId, userId, randJitter, cloneNoteWithJitter, setNodes, addNotes])
 
   useEffect(() => {
     if (!shortcuts) return
@@ -115,7 +158,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
         return
       }
 
-      // paste: prefer V, also support B if you want it
+      // paste: prefer V, also support B
       if (mod && (e.key.toLowerCase() === 'v' || e.key.toLowerCase() === 'b')) {
         e.preventDefault()
         pasteCopied()
@@ -140,8 +183,17 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
   }, [shortcuts, copySelected, pasteCopied])
 
   return {
+    /**
+     * Copies the currently selected, copyable nodes into the buffer
+     */
     copySelected,
+    /**
+     * Pastes buffered nodes as new nodes, applying a shared jitter per paste
+     */
     pasteCopied,
+    /**
+     * Returns true if there is anything in the copy buffer
+     */
     hasCopied: () => !!copiedRef.current?.length
   }
 }

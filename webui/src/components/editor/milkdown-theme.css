@@ -103,7 +103,3 @@
 .sheet-editor .milkdown-slash-menu {
   visibility: hidden;
 }
-
-.milkdown .editor h1:first-child {
-  margin-top: 0;
-}

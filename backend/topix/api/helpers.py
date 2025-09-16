@@ -1,6 +1,5 @@
 """Helper functions for API responses."""
 import logging
-
 from functools import wraps
 from typing import Any, AsyncGenerator, Awaitable, Callable, TypeVar
 

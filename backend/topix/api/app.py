@@ -1,12 +1,10 @@
 """FastAPI application setup."""
 
 import asyncio
-
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 
 import uvicorn
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

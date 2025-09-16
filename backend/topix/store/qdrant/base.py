@@ -1,7 +1,6 @@
 """QdrantStore class for managing a Qdrant database."""
 
 import logging
-
 from collections.abc import Sequence
 from typing import TypeVar
 
@@ -18,7 +17,7 @@ from qdrant_client.models import (
     ScalarQuantization,
     ScalarQuantizationConfig,
     ScoredPoint,
-    VectorParams,
+    VectorParams
 )
 
 from topix.config.config import Config

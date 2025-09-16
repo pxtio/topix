@@ -1,6 +1,5 @@
 """Evaluation metrics for evaluating the performance of the query rewriting model."""
 import mlflow
-
 from mlflow.metrics.genai import EvaluationExample
 
 query_rewrite_examples = [

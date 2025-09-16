@@ -2,7 +2,6 @@
 
 import base64
 import logging
-
 from datetime import datetime
 from pathlib import Path
 

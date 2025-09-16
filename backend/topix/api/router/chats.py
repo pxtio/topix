@@ -19,9 +19,8 @@ from topix.api.datatypes.requests import (
     SendMessageRequest,
 )
 from topix.api.helpers import with_standard_response, with_streaming
-from topix.api.router.users import get_current_active_user, verify_chat_user
+from topix.api.router.users import get_current_user_uid, verify_chat_user
 from topix.datatypes.chat.chat import Chat
-from topix.datatypes.user import User
 from topix.store.chat import ChatStore
 
 logger = logging.getLogger(__name__)
@@ -39,11 +38,11 @@ router = APIRouter(
 async def create_chat(
     response: Response,
     request: Request,
-    current_user: Annotated[User, Depends(get_current_active_user)],
+    current_user_uid: Annotated[str, Depends(get_current_user_uid)],
     board_id: Annotated[str, Query(description="Board Unique ID")] = None,
 ):
     """Create a new chat for the user."""
-    new_chat = Chat(user_uid=current_user.uid, graph_uid=board_id)
+    new_chat = Chat(user_uid=current_user_uid, graph_uid=board_id)
 
     store: ChatStore = request.app.chat_store
     await store.create_chat(new_chat)
@@ -57,7 +56,7 @@ async def describe_chat(
     response: Response,
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
-    _: Annotated[User, Depends(verify_chat_user)],
+    _: Annotated[None, Depends(verify_chat_user)],
 ):
     """Describe a chat by its ID."""
     store: ChatStore = request.app.chat_store
@@ -78,7 +77,7 @@ async def update_chat(
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
     body: Annotated[ChatUpdateRequest, Body(description="Chat update data")],
-    _: Annotated[User, Depends(verify_chat_user)]
+    _: Annotated[None, Depends(verify_chat_user)]
 ):
     """Update an existing chat by its ID."""
     store: ChatStore = request.app.chat_store
@@ -92,7 +91,7 @@ async def get_chat(
     response: Response,
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
-    _: Annotated[User, Depends(verify_chat_user)],
+    _: Annotated[None, Depends(verify_chat_user)],
 ):
     """Get a chat by its ID."""
     store: ChatStore = request.app.chat_store
@@ -106,10 +105,10 @@ async def get_chat(
 async def list_chats(
     response: Response,
     request: Request,
-    current_user: Annotated[User, Depends(get_current_active_user)]
+    current_user_uid: Annotated[str, Depends(get_current_user_uid)]
 ):
     """List all chats for the user."""
-    user_id = current_user.uid
+    user_id = current_user_uid
     store: ChatStore = request.app.chat_store
     chats = await store.list_chats(user_uid=user_id)
     return {"chats": [chat.model_dump(exclude_none=True) for chat in chats]}
@@ -122,7 +121,7 @@ async def delete_chat(
     response: Response,
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
-    _: Annotated[User, Depends(verify_chat_user)],
+    _: Annotated[None, Depends(verify_chat_user)],
 ):
     """Delete a chat by its ID."""
     return await request.app.chat_store.delete_chat(chat_id, hard_delete=True)
@@ -135,7 +134,7 @@ async def send_message(
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
     body: Annotated[SendMessageRequest, Body(description="Message content")],
-    _: Annotated[User, Depends(verify_chat_user)]
+    _: Annotated[None, Depends(verify_chat_user)]
 ):
     """Send a message to a chat."""
     chat_store: ChatStore = request.app.chat_store
@@ -186,7 +185,7 @@ async def update_message(
     chat_id: Annotated[str, Path(description="Chat ID")],
     message_id: Annotated[str, Path(description="Message ID")],
     body: Annotated[MessageUpdateRequest, Body(description="Message update data")],
-    _: Annotated[User, Depends(verify_chat_user)],
+    _: Annotated[None, Depends(verify_chat_user)],
 ):
     """Update a message in a chat."""
     chat_store: ChatStore = request.app.chat_store
@@ -201,7 +200,7 @@ async def list_messages(
     response: Response,
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
-    _: Annotated[User, Depends(verify_chat_user)],
+    _: Annotated[None, Depends(verify_chat_user)],
 ):
     """List all messages in a chat."""
     chat_store: ChatStore = request.app.chat_store

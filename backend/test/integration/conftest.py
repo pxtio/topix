@@ -1,7 +1,6 @@
 """Integration tests setup."""
 import pytest
 import pytest_asyncio
-
 from psycopg import AsyncConnection
 
 from topix.config.config import Config

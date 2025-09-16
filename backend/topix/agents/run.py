@@ -1,6 +1,5 @@
 """Agent runner supporting streaming mode."""
 import asyncio
-
 from collections.abc import AsyncGenerator
 from typing import Any
 

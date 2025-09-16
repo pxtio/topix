@@ -1,12 +1,10 @@
 """Evaluate an agent on a dataset."""
 
 import asyncio
-
 from typing import Any, Awaitable, Callable
 
 import mlflow
 import pandas as pd
-
 from datasets import load_dataset
 
 from topix.agents.base import BaseAgent

@@ -30,8 +30,8 @@ export const BoardCard = ({
         transition-all
         rounded-xl
         text-card-foreground
-        border border-border hover:border-primary
-        hover:ring-2 hover:ring-primary/10
+        border border-border hover:border-secondary
+        hover:ring-2 hover:ring-secondary/10
         shadow-none hover:shadow-sm
         cursor-pointer
         w-60 h-60
@@ -89,9 +89,9 @@ export const NewBoardCard = () => {
         transition-all
         rounded-xl
         bg-transparent hover:bg-accent
-        hover:ring-2 hover:ring-primary/10
+        hover:ring-2 hover:ring-secondary/10
         text-card-foreground
-        border border-border hover:border-primary
+        border border-border hover:border-secondary
         shadow-none hover:shadow-sm
         cursor-pointer
         w-60 h-60
@@ -105,10 +105,10 @@ export const NewBoardCard = () => {
     >
       <HugeiconsIcon
         icon={PlusSignIcon}
-        className='shrink-0 size-6 text-primary'
+        className='shrink-0 size-6 text-secondary'
         strokeWidth={1.75}
       />
-      <span className='font-medium text-sm text-primary'>New Board</span>
+      <span className='font-medium text-sm text-secondary'>New Board</span>
     </div>
   )
 }

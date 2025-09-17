@@ -261,7 +261,7 @@ export const NodeCard = ({
               title='Pin/Unpin'
             >
               {isPinned
-                ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-primary' strokeWidth={1.75} />
+                ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={1.75} />
                 : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={1.75} />
               }
             </button>

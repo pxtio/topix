@@ -230,8 +230,8 @@ export const EdgeView = memo(function EdgeView({
 
       {selected && (
         <>
-          <circle cx={geom.sx} cy={geom.sy} r={6} className='pointer-events-none stroke-current stroke-2 text-primary fill-transparent' />
-          <circle cx={geom.tx} cy={geom.ty} r={6} className='pointer-events-none stroke-current stroke-2 text-primary fill-transparent' />
+          <circle cx={geom.sx} cy={geom.sy} r={6} className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent' />
+          <circle cx={geom.tx} cy={geom.ty} r={6} className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent' />
         </>
       )}
 

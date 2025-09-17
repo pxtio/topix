@@ -32,7 +32,7 @@ export const MiniLinkCard = ({
             <span>{linkLabel}</span>
           </a>
         </HoverCardTrigger>
-        <HoverCardContent className='p-0 shadow-lg border border-border w-auto rounded-lg overflow-hidden'>
+        <HoverCardContent className='p-0 shadow-lg border border-border w-auto rounded-lg overflow-hidden' sideOffset={8}>
           <LinkPreviewCard
             url={annotation.url}
             siteName={domain}

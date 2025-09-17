@@ -180,7 +180,7 @@ export function StylePanel<T extends StyleLike>({
                 className='flex flex-wrap gap-2'
               >
                 {(['hachure', 'dots', 'zigzag', 'solid', 'cross-hatch'] as FillStyle[]).map(kind => (
-                  <ToggleGroupItem key={kind} value={kind} className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>
+                  <ToggleGroupItem key={kind} value={kind} className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>
                     <FillGlyph kind={kind} />
                   </ToggleGroupItem>
                 ))}
@@ -196,7 +196,7 @@ export function StylePanel<T extends StyleLike>({
                 className='flex flex-wrap gap-2'
               >
                 {StrokeWidthPresets.map(w => (
-                  <ToggleGroupItem key={w} value={String(w)} className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>
+                  <ToggleGroupItem key={w} value={String(w)} className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>
                     <LineGlyph width={w} />
                   </ToggleGroupItem>
                 ))}
@@ -211,9 +211,9 @@ export function StylePanel<T extends StyleLike>({
                 onValueChange={v => v && onStyleChange({ strokeStyle: v as T[keyof T] } as Partial<T>)}
                 className='flex flex-wrap gap-2'
               >
-                <ToggleGroupItem value='solid' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary'><LineGlyph width={2} /></ToggleGroupItem>
-                <ToggleGroupItem value='dashed' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary'><LineGlyph width={2} dash={[6, 4]} /></ToggleGroupItem>
-                <ToggleGroupItem value='dotted' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary'><LineGlyph width={2} dash={[1, 5]} /></ToggleGroupItem>
+                <ToggleGroupItem value='solid' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'><LineGlyph width={2} /></ToggleGroupItem>
+                <ToggleGroupItem value='dashed' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'><LineGlyph width={2} dash={[6, 4]} /></ToggleGroupItem>
+                <ToggleGroupItem value='dotted' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'><LineGlyph width={2} dash={[1, 5]} /></ToggleGroupItem>
               </ToggleGroup>
             </Section>
 
@@ -226,7 +226,7 @@ export function StylePanel<T extends StyleLike>({
                 className='flex flex-wrap gap-2'
               >
                 {SloppyPresets.map(val => (
-                  <ToggleGroupItem key={val} value={String(val)} className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>
+                  <ToggleGroupItem key={val} value={String(val)} className='h-9 w-9 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>
                     <WavyGlyph amount={val * 4} />
                   </ToggleGroupItem>
                 ))}
@@ -241,10 +241,10 @@ export function StylePanel<T extends StyleLike>({
                 onValueChange={v => v && onStyleChange({ roundness: Number(v) as T[keyof T] } as Partial<T>)}
                 className='flex gap-2'
               >
-                <ToggleGroupItem value='0' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>
+                <ToggleGroupItem value='0' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>
                   <CornerGlyph r={0} />
                 </ToggleGroupItem>
-                <ToggleGroupItem value='2' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>
+                <ToggleGroupItem value='2' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>
                   <CornerGlyph r={2} />
                 </ToggleGroupItem>
               </ToggleGroup>
@@ -260,9 +260,9 @@ export function StylePanel<T extends StyleLike>({
                 onValueChange={v => v && onStyleChange({ textAlign: v as T[keyof T] } as Partial<T>)}
                 className='flex gap-2'
               >
-                <ToggleGroupItem value='left' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'><AlignLeft className='h-4 w-4' /></ToggleGroupItem>
-                <ToggleGroupItem value='center' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'><AlignCenter className='h-4 w-4' /></ToggleGroupItem>
-                <ToggleGroupItem value='right' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'><AlignRight className='h-4 w-4' /></ToggleGroupItem>
+                <ToggleGroupItem value='left' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'><AlignLeft className='h-4 w-4' /></ToggleGroupItem>
+                <ToggleGroupItem value='center' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'><AlignCenter className='h-4 w-4' /></ToggleGroupItem>
+                <ToggleGroupItem value='right' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'><AlignRight className='h-4 w-4' /></ToggleGroupItem>
               </ToggleGroup>
             </Section>
 
@@ -274,10 +274,10 @@ export function StylePanel<T extends StyleLike>({
                 onValueChange={v => v && onStyleChange({ fontFamily: v as T[keyof T] } as Partial<T>)}
                 className='flex gap-2'
               >
-                <ToggleGroupItem value='handwriting' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-handwriting'>Aa</ToggleGroupItem>
-                <ToggleGroupItem value='sans-serif' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-sans'>Aa</ToggleGroupItem>
-                <ToggleGroupItem value='serif' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-serif'>Aa</ToggleGroupItem>
-                <ToggleGroupItem value='monospace' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-mono'>{'<>'}</ToggleGroupItem>
+                <ToggleGroupItem value='handwriting' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary font-handwriting'>Aa</ToggleGroupItem>
+                <ToggleGroupItem value='sans-serif' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary font-sans'>Aa</ToggleGroupItem>
+                <ToggleGroupItem value='serif' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary font-serif'>Aa</ToggleGroupItem>
+                <ToggleGroupItem value='monospace' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary font-mono'>{'<>'}</ToggleGroupItem>
               </ToggleGroup>
             </Section>
 
@@ -289,10 +289,10 @@ export function StylePanel<T extends StyleLike>({
                 onValueChange={v => v && onStyleChange({ fontSize: v as T[keyof T] } as Partial<T>)}
                 className='flex gap-2'
               >
-                <ToggleGroupItem value='S' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>S</ToggleGroupItem>
-                <ToggleGroupItem value='M' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>M</ToggleGroupItem>
-                <ToggleGroupItem value='L' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>L</ToggleGroupItem>
-                <ToggleGroupItem value='XL' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>XL</ToggleGroupItem>
+                <ToggleGroupItem value='S' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>S</ToggleGroupItem>
+                <ToggleGroupItem value='M' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>M</ToggleGroupItem>
+                <ToggleGroupItem value='L' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>L</ToggleGroupItem>
+                <ToggleGroupItem value='XL' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>XL</ToggleGroupItem>
               </ToggleGroup>
             </Section>
 
@@ -304,11 +304,11 @@ export function StylePanel<T extends StyleLike>({
                 onValueChange={v => v && onStyleChange({ textStyle: v as T[keyof T] } as Partial<T>)}
                 className='flex gap-2'
               >
-                <ToggleGroupItem value='normal' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>A</ToggleGroupItem>
-                <ToggleGroupItem value='italic' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary italic'>I</ToggleGroupItem>
-                <ToggleGroupItem value='bold' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary font-bold'>B</ToggleGroupItem>
-                <ToggleGroupItem value='underline' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary underline'>U</ToggleGroupItem>
-                <ToggleGroupItem value='strikethrough' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-primary/10 data-[state=on]:text-primary line-through'>S</ToggleGroupItem>
+                <ToggleGroupItem value='normal' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>A</ToggleGroupItem>
+                <ToggleGroupItem value='italic' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary italic'>I</ToggleGroupItem>
+                <ToggleGroupItem value='bold' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary font-bold'>B</ToggleGroupItem>
+                <ToggleGroupItem value='underline' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary underline'>U</ToggleGroupItem>
+                <ToggleGroupItem value='strikethrough' className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary line-through'>S</ToggleGroupItem>
               </ToggleGroup>
             </Section>
 
@@ -325,7 +325,7 @@ export function StylePanel<T extends StyleLike>({
                       className='flex gap-2'
                     >
                       {(['none', 'arrow', 'arrow-filled', 'barb'] as ArrowheadType[]).map(kind => (
-                        <ToggleGroupItem key={`src-${kind}`} value={kind} className='h-9 w-12 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>
+                        <ToggleGroupItem key={`src-${kind}`} value={kind} className='h-9 w-12 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>
                           <ArrowheadGlyph kind={kind} />
                         </ToggleGroupItem>
                       ))}
@@ -341,7 +341,7 @@ export function StylePanel<T extends StyleLike>({
                       className='flex gap-2'
                     >
                       {(['none', 'arrow', 'arrow-filled', 'barb'] as ArrowheadType[]).map(kind => (
-                        <ToggleGroupItem key={`dst-${kind}`} value={kind} className='h-9 w-12 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-primary/10 data-[state=on]:text-primary'>
+                        <ToggleGroupItem key={`dst-${kind}`} value={kind} className='h-9 w-12 items-center justify-center rounded-xl border bg-muted text-muted-foreground data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary'>
                           <ArrowheadGlyph kind={kind} />
                         </ToggleGroupItem>
                       ))}

@@ -200,8 +200,8 @@ export function LinearNoteCard({ node }: Props) {
   const cardClass = clsx(
     'rounded-xl relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group',
     isPinned
-      ? 'ring-2 ring-primary/60 border border-transparent shadow-md'
-      : 'border border-transparent rounded-none hover:ring-2 hover:ring-primary/40 hover:border-transparent hover:shadow-md'
+      ? 'ring-2 ring-secondary/60 border border-transparent shadow-md'
+      : 'border border-transparent rounded-none hover:ring-2 hover:ring-secondary/40 hover:border-transparent hover:shadow-md'
   )
 
   const CardBody = useMemo(() => (
@@ -223,7 +223,7 @@ export function LinearNoteCard({ node }: Props) {
           title='Pin/Unpin'
         >
           {isPinned
-            ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-primary' strokeWidth={1.75} />
+            ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={1.75} />
             : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={1.75} />
           }
         </button>
@@ -263,7 +263,7 @@ export function LinearNoteCard({ node }: Props) {
           <Popover>
             <PopoverTrigger asChild>
               <button
-                className='h-4 w-4 rounded-full ring-2 ring-primary/40 shadow hover:brightness-95 transition'
+                className='h-4 w-4 rounded-full ring-2 ring-secondary/40 shadow hover:brightness-95 transition'
                 style={{ backgroundColor: color }}
                 aria-label='Change background color'
                 title='Change background color'

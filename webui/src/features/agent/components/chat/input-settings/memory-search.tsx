@@ -22,7 +22,7 @@ export const MemorySearchChoiceMenu = () => {
 
   const buttonClass = clsx(
     "transition-all shrink-0 my-icon p-2 rounded-full hover:bg-accent dark:bg-input/30 dark:hover:bg-accent/50",
-    isEnabled ? '!text-primary' : 'text-muted-foreground'
+    isEnabled ? '!text-secondary' : 'text-muted-foreground'
   )
 
   return (

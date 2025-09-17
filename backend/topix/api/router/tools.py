@@ -9,7 +9,7 @@ from topix.agents.mindmap.notify import NotifyAgent
 from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.helpers import with_standard_response
-from topix.utils.web import preview_webpage
+from topix.utils.web.preview import preview_webpage
 
 router = APIRouter(
     prefix="/tools",

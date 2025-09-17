@@ -36,7 +36,12 @@ const SourcesView = ({ answer }: { answer: AgentResponse }) => {
         >
           {annotations.map((annotation, index) => (
             <div key={index} className='shrink-0'>
-              <LinkPreviewCard url={annotation.url} title={annotation.title} content={annotation.content} />
+              <LinkPreviewCard
+                url={annotation.url}
+                title={annotation.title}
+                content={annotation.content}
+                favicon={annotation.favicon}
+              />
             </div>
           ))}
         </div>
@@ -108,7 +113,7 @@ export const AssistantMessage = ({
   ) : null
 
   return (
-    <div className='w-full'>
+    <div className='w-full space-y-4'>
       {
         agentResponse &&
         <ReasoningStepsView response={agentResponse} isStreaming={streaming} />

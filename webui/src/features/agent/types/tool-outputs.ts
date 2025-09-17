@@ -6,6 +6,8 @@ export interface UrlAnnotation {
   url: string
   title?: string
   content?: string
+  favicon?: string
+  coverImage?: string
 }
 
 export interface FileAnnotation {

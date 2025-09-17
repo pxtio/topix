@@ -13,17 +13,23 @@ export const MiniLinkCard = ({
   annotation: UrlAnnotation
 }) => {
   const domain = extractMainDomain(annotation.url) || annotation.url
+
+  const trimmedTitle = trimText(annotation.title || "", 10)
+  const trimmedDomain = trimText(domain, 20)
+
+  const linkLabel = trimmedTitle ? `${trimmedTitle} - ${trimmedDomain}` : trimmedDomain
+
   return (
     <div className="transition-all px-2 py-1 rounded-lg border border-border bg-card hover:bg-accent text-muted-foreground text-xs flex flex-row items-center gap-1">
       <HoverCard>
         <HoverCardTrigger asChild>
-          <a className="font-mono font-medium flex flex-row items-center gap-2" href={annotation.url} target="_blank" rel="noopener noreferrer">
+          <a className="font-mono font-medium flex flex-row items-center gap-1" href={annotation.url} target="_blank" rel="noopener noreferrer">
             {
               annotation.favicon && (
                 <img src={annotation.favicon} alt="favicon" className="size-3 rounded-sm object-cover" />
               )
             }
-            <span>{trimText(domain, 20)}</span>
+            <span>{linkLabel}</span>
           </a>
         </HoverCardTrigger>
         <HoverCardContent className='p-0 shadow-lg border border-border w-auto rounded-lg overflow-hidden'>

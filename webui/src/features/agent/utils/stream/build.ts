@@ -188,9 +188,6 @@ export async function* buildResponse(
  */
 export function extractStepDescription(step: ReasoningStep): { reasoning: string, message: string } {
   if (step.name !== RAW_MESSAGE) {
-    if (step.eventMessages && step.eventMessages.length > 0) {
-      return { reasoning: step.thought || "", message: step.eventMessages[step.eventMessages.length - 1] }
-    }
     return { reasoning: step.thought || "", message: ToolNameDescription[step.name] }
   }
   const { reasoning: reasoningOutLoud } = extractReasoning(step.output as string || "")

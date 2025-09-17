@@ -56,7 +56,7 @@ export function NewBoardItem() {
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton className="text-xs text-sidebar-primary-foreground font-medium transition-all" onClick={handleClick}>
+      <SidebarMenuButton className="text-xs text-secondary font-medium transition-all" onClick={handleClick}>
         <HugeiconsIcon icon={Edit01Icon} className="text-xs shrink-0 text-sidebar-icon-1" strokeWidth={1.75} />
         <span>New Board</span>
       </SidebarMenuButton>

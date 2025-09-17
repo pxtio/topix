@@ -118,7 +118,7 @@
   --sidebar-icon-1: #1d4ed8;
   --sidebar-icon-2: #15803d;
   --sidebar-icon-3: #b45309;
-  --sidebar-icon-4: #7c3aed;
+  --sidebar-icon-4: #be185d;
 }
 
 .dark {
@@ -174,7 +174,7 @@
   --sidebar-icon-1: #93c5fd;
   --sidebar-icon-2: #86efac;
   --sidebar-icon-3: #fcd34d;
-  --sidebar-icon-4: #c4b5fd;
+  --sidebar-icon-4: #f9a8d4;
 }
 
 @layer base {

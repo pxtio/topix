@@ -41,7 +41,7 @@ export function NewChatItem({
       <SidebarMenuSubItem>
         <SidebarMenuSubButton
           onClick={handleClick}
-          className='text-xs text-muted-foreground font-medium truncate cursor-pointer data-[active=true]:ring-1 data-[active=true]:ring-primary/30'
+          className='text-xs text-muted-foreground font-medium truncate cursor-pointer'
           isActive={isActive}
         >
           <span>New Chat</span>
@@ -53,7 +53,7 @@ export function NewChatItem({
     <SidebarMenuItem>
       <SidebarMenuButton
         onClick={handleClick}
-        className='text-xs text-sidebar-primary-foreground font-medium truncate cursor-pointer data-[active=true]:ring-1 data-[active=true]:ring-primary/30'
+        className='text-xs text-sidebar-primary-foreground font-medium truncate cursor-pointer'
         isActive={isActive}
       >
         <BotMessageSquare className='text-xs shrink-0 text-sidebar-icon-4' strokeWidth={1.75} />
@@ -91,7 +91,7 @@ export function ChatMenuItem({ chatId, label }: { chatId: string, label?: string
         <ContextMenuTrigger asChild>
           <SidebarMenuSubButton
             onClick={handleClick}
-            className='transition-all text-xs font-medium truncate cursor-pointer data-[active=true]:ring-1 data-[active=true]:ring-primary/30'
+            className='transition-all text-xs font-medium truncate cursor-pointer'
             isActive={isActive}
           >
             <span>{chatLabel}</span>

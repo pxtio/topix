@@ -39,14 +39,14 @@ export function ActionPanel({
   const normalButtonClass = `
     transition-colors
     text-card-foreground
-    hover:bg-sidebar-primary hover:text-primary
+    hover:bg-sidebar-primary hover:text-sidebar-primary-foreground
     p-4
     rounded-lg
   `
 
   const activeButtonClass = clsx(
     normalButtonClass,
-    'bg-sidebar-primary text-primary ring-1 ring-primary/30',
+    'bg-sidebar-primary text-sidebar-primary-foreground',
   )
 
   const selectionModeButtonClass = enableSelection ? activeButtonClass : normalButtonClass

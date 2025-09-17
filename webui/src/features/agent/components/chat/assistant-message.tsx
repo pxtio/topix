@@ -113,7 +113,7 @@ export const AssistantMessage = ({
   ) : null
 
   return (
-    <div className='w-full'>
+    <div className='w-full space-y-4'>
       {
         agentResponse &&
         <ReasoningStepsView response={agentResponse} isStreaming={streaming} />

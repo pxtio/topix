@@ -31,6 +31,7 @@ from topix.agents.utils.tools import (
     ToolCall,
     tool_execution_handler,
 )
+from topix.utils.web.favicon import fetch_meta_images_batch
 
 
 class WebSearchAgentHook(AgentHooks):
@@ -152,6 +153,13 @@ class WebSearch(BaseAgent):
                 for annotation in item.raw_item.content[0].annotations
                 if annotation.type == "url_citation"
             ]
+            meta_images = await fetch_meta_images_batch(
+                [result.url for result in search_results]
+            )
+            for result in search_results:
+                if result.url in meta_images:
+                    result.favicon = str(meta_images[result.url].favicon) if meta_images[result.url].favicon else None
+                    result.cover_image = str(meta_images[result.url].cover_image) if meta_images[result.url].cover_image else None
             return WebSearchOutput(
                 answer=output.final_output, search_results=search_results
             )

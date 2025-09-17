@@ -70,10 +70,6 @@ class BaseAgent(Agent[Context]):
         if model_settings.max_tokens is None:
             model_settings.max_tokens = 8000
 
-        # increase this to avoid tail repetition
-        if model_settings.frequency_penalty is None:
-            model_settings.frequency_penalty = 0.2
-
         if support_reasoning(model):
             if not model_settings.reasoning:
                 model_settings.reasoning = {"effort": "low", "summary": "auto"}

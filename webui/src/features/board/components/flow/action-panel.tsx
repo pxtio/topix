@@ -105,7 +105,7 @@ export function ActionPanel({
         <HugeiconsIcon icon={GridViewIcon} className='size-4 shrink-0' strokeWidth={1.75} />
       </ModeButton>
 
-      <Separator orientation="vertical" className='!h-6' />
+      <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
 
       {/* ——— GRAPH MODE CONTROLS ——— */}
       {viewMode === 'graph' && (
@@ -181,7 +181,7 @@ export function ActionPanel({
             )}
           </Button>
 
-          <Separator orientation="vertical" className='!h-6' />
+          <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
 
           {/* Add sheet */}
           <Button

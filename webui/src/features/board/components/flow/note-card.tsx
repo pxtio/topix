@@ -5,7 +5,6 @@ import type { Note, NoteProperties } from '../../types/note'
 import type { NoteNode } from '../../types/flow'
 import { MilkdownProvider } from '@milkdown/react'
 import { MdEditor } from '@/components/editor/milkdown'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowDiagonalIcon, Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
@@ -336,11 +335,11 @@ export const NodeCard = ({
         )}
 
         <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
-          <ScrollArea className='h-full w-full'>
+          <div className='h-full w-full min-w-0 overflow-auto scrollbar-thin'>
             <MilkdownProvider>
               <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
             </MilkdownProvider>
-          </ScrollArea>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

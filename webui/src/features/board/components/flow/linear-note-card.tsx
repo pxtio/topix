@@ -247,7 +247,7 @@ export function LinearNoteCard({ node }: Props) {
             {title}
           </h2>
         )}
-        <div className='prose dark:prose-invert max-w-none'>
+        <div className='prose dark:prose-invert max-w-none min-w-0'>
           <MarkdownView content={node.data.content?.markdown || ''} />
         </div>
       </div>

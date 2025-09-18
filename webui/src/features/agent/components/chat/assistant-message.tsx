@@ -105,7 +105,7 @@ export const AssistantMessage = ({
     undefined
 
   const lastStepMessage = showLastStepMessage ? (
-    <div className="w-full p-4 space-y-2">
+    <div className="w-full p-4 space-y-2 min-w-0">
       <MarkdownView content={markdownMessage} />
       {!streaming && agentResponse && <SourcesView answer={agentResponse} />}
       {!streaming && <ResponseActions message={markdownMessage} />}

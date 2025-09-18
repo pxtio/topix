@@ -1,4 +1,3 @@
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { MarkdownView } from '@/components/markdown/markdown-view'
 import { memo } from 'react'
 
@@ -21,9 +20,11 @@ export const StickyNote = memo(function StickyNote({ content, onOpen }: StickyNo
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onOpen?.() }}
       aria-label='Open note'
     >
-      <ScrollArea className='h-full w-full flex flex-col justify-start p-2'>
-        <MarkdownView content={content || ''} />
-      </ScrollArea>
+      <div className='h-full w-full flex flex-col justify-start p-2 overflow-auto scrollbar-thin'>
+        <div className='min-w-0 w-full'>
+          <MarkdownView content={content || ''} />
+        </div>
+      </div>
     </div>
   )
 })

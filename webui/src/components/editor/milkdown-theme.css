@@ -103,3 +103,193 @@
 .sheet-editor .milkdown-slash-menu {
   visibility: hidden;
 }
+
+/* ==========================================================================
+   Milkdown editor styles — consistent with your Streamdown MarkdownView
+   Scope: .milkdown
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Base text
+   -------------------------------------------------------------------------- */
+.milkdown {
+  line-height: 1.75;
+  font-size: 1rem;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Headings
+   -------------------------------------------------------------------------- */
+.milkdown h1,
+.milkdown h2,
+.milkdown h3,
+.milkdown h4 {
+  font-family: var(--font-heading, var(--font-sans, ui-sans-serif, system-ui));
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  scroll-margin-top: 5rem;
+  margin-top: 1.25rem;
+}
+
+.milkdown h1 {
+  margin-top: 1.75rem;
+  padding-bottom: 0.5rem;
+  font-size: 1.5rem;
+  line-height: 1.33;
+  border-bottom: 1px solid color-mix(in oklab, var(--muted-foreground) 20%, transparent);
+}
+
+.milkdown h2 {
+  margin-top: 1.5rem;
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.milkdown h3 {
+  margin-top: 1.25rem;
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+.milkdown h4 {
+  margin-top: 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------------------------
+   Paragraphs
+   -------------------------------------------------------------------------- */
+.milkdown p {
+  margin: 1rem 0 0 0;
+}
+.milkdown p:first-child {
+  margin-top: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Blockquote
+   -------------------------------------------------------------------------- */
+.milkdown blockquote {
+  margin: 1rem 0 0 0;
+  padding-left: 1.5rem;
+  border-left: 2px solid var(--border);
+  font-style: italic;
+  font-size: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   Lists
+   -------------------------------------------------------------------------- */
+.milkdown ul,
+.milkdown ol {
+  margin: 1.5rem 0;
+  padding-left: 1.5rem;
+}
+.milkdown ul { list-style: disc; }
+.milkdown ol { list-style: decimal; }
+.milkdown li {
+  margin-top: 0.5rem;
+  word-wrap: break-word;
+  min-width: 0;
+}
+.milkdown li > ul,
+.milkdown li > ol {
+  margin-top: 0.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Links
+   -------------------------------------------------------------------------- */
+.milkdown a {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 0.5rem;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.milkdown a:hover { background: var(--accent); }
+.milkdown a:focus {
+  outline: 2px solid color-mix(in oklab, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Inline formatting
+   -------------------------------------------------------------------------- */
+.milkdown b,
+.milkdown strong { font-weight: 600; }
+.milkdown em { font-style: italic; }
+.milkdown del,
+.milkdown s { text-decoration: line-through; }
+
+/* --------------------------------------------------------------------------
+   Images
+   -------------------------------------------------------------------------- */
+.milkdown img {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+/* --------------------------------------------------------------------------
+   Horizontal rule
+   -------------------------------------------------------------------------- */
+.milkdown hr {
+  margin: 1.5rem 0;
+  border: 0;
+  border-top: 1px solid color-mix(in oklab, var(--muted-foreground) 20%, transparent);
+}
+/* --------------------------------------------------------------------------
+   Code blocks & inline code
+   -------------------------------------------------------------------------- */
+.milkdown code:not(pre code) {
+  font-family: var(--font-mono) !important;
+  font-size: 0.9em;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  background: color-mix(in oklab, var(--card) 80%, transparent);
+}
+
+.milkdown .milkdown-code-block {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+    border-radius: 0.5rem;
+    background: var(--color-card);
+    .cm-line {
+      font-family: var(--font-mono) !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Math / KaTeX
+   -------------------------------------------------------------------------- */
+.milkdown .katex-display { margin: 1rem 0; }
+
+/* --------------------------------------------------------------------------
+   Figures & captions
+   -------------------------------------------------------------------------- */
+.milkdown figure { margin: 1rem 0; }
+.milkdown figcaption {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Cleanup edges
+   -------------------------------------------------------------------------- */

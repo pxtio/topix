@@ -3,7 +3,11 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from topix.agents.datatypes.annotations import FileAnnotation, RefAnnotation, SearchResult
+from topix.agents.datatypes.annotations import (
+    FileAnnotation,
+    RefAnnotation,
+    SearchResult,
+)
 
 type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput | MemorySearchOutput
 
@@ -17,13 +21,13 @@ class WebSearchOutput(BaseModel):
 
     def __str__(self) -> str:
         """Convert output to string."""
-        if self.answer is None:
+        if not self.answer:
             # raw search results
             formatted = "Search Results:\n\n"
-            for i, result in enumerate(self.search_results, 1):
-                formatted += f"{i}. **{result.title}**\n"
-                formatted += f"   URL: {result.url}\n"
-                formatted += f"   Content: {result.content}\n\n"
+            for result in self.search_results:
+                formatted += f"""<document url=/{result.url}/ title="{result.title}">
+                {result.content}
+                </document>\n\n"""
             return formatted
         else:
             """The final output of the Websearch Agent."""

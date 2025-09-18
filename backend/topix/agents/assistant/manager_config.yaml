@@ -6,7 +6,7 @@ query_rewrite:
 
 plan:
   model: openai/gpt-4.1
-  instructions_template: plan.system.jinja
+  instructions_template: plan.system_v2.jinja
   model_settings:
     temperature: 0.01
     max_tokens: 8000
@@ -31,8 +31,8 @@ plan:
     model_settings:
       temperature: 0.01
 
-  answer_reformulate:
-    model: openai/gpt-4.1
-    instructions_template: answer_reformulation.system.jinja
-    model_settings:
-      temperature: 0.01
+synthesis:
+  model: openai/gpt-4.1
+  instructions_template: answer_reformulation.system.jinja
+  model_settings:
+    temperature: 0.01

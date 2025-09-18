@@ -157,7 +157,7 @@ class BaseAgent(Agent[Context]):
             ) as tool_id:
                 # Handle tool execution within an async context manager
                 hook_result = await self._as_tool_hook(
-                    context.context, input, tool_id=tool_id
+                    context.context, input_str, tool_id=tool_id
                 )
                 if hook_result is not None:
                     output = hook_result

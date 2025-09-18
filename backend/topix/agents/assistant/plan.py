@@ -13,7 +13,7 @@ from agents import (
 
 from topix.agents.assistant.code_interpreter import CodeInterpreter
 from topix.agents.assistant.memory_search import NOT_FOUND, MemorySearch
-from topix.agents.assistant.web_search import WebSearch
+from topix.agents.assistant.websearch.broad import BroadWebSearch
 from topix.agents.base import BaseAgent
 from topix.agents.config import PlanConfig
 from topix.agents.datatypes.context import ReasoningContext
@@ -66,7 +66,7 @@ class Plan(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4_1,
         instructions_template: str = "plan.system.jinja",
         model_settings: ModelSettings | None = None,
-        web_search: WebSearch | None = None,
+        web_search: BroadWebSearch | None = None,
         memory_search: MemorySearch | None = None,
         code_interpreter: CodeInterpreter | None = None,
         content_store: ContentStore | None = None,
@@ -80,7 +80,7 @@ class Plan(BaseAgent):
 
         model_settings = model_settings or ModelSettings(max_tokens=8000)
 
-        web_search = web_search or WebSearch()
+        web_search = web_search or BroadWebSearch()
         content_store = content_store or ContentStore.from_config()
         memory_search = memory_search or MemorySearch(content_store=content_store)
         code_interpreter = code_interpreter or CodeInterpreter()
@@ -106,7 +106,7 @@ class Plan(BaseAgent):
     def from_config(cls, content_store: ContentStore, config: PlanConfig):
         """Create an instance of Plan from configuration."""
         return cls(
-            web_search=WebSearch.from_config(config.web_search),
+            web_search=BroadWebSearch.from_config(config.web_search),
             memory_search=MemorySearch.from_config(content_store, config.memory_search),
             code_interpreter=CodeInterpreter.from_config(config.code_interpreter),
             model=config.model,
@@ -131,7 +131,7 @@ class Plan(BaseAgent):
         messages = "\n\n".join(self._format_message(msg) for msg in input[:-1])
 
         user_prompt = self._render_prompt(
-            "plan.user.jinja",
+            "plan.user_v2.jinja",
             messages=messages,
             user_query=user_query,
             time=datetime.now().isoformat(),

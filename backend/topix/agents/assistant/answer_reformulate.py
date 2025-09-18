@@ -5,8 +5,6 @@ from agents import ModelSettings
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
-from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType
-from topix.agents.datatypes.tools import AgentToolName
 
 
 class AnswerReformulate(BaseAgent):
@@ -54,25 +52,3 @@ class AnswerReformulate(BaseAgent):
         )
 
         return input_items + [{"role": "user", "content": prompt}]
-
-    async def _as_tool_hook(
-        self, context: ReasoningContext, input: str, tool_id: str
-    ) -> str | None:
-        # No need to launch the answer_reformulate if there is only one search result
-        if len(context.tool_calls) == 1:
-            if context.tool_calls[0].name in [
-                AgentToolName.WEB_SEARCH, AgentToolName.MEMORY_SEARCH
-            ]:
-                await context._message_queue.put(
-                    AgentStreamMessage(
-                        tool_id=tool_id,
-                        tool_name=AgentToolName.ANSWER_REFORMULATE,
-                        content=Content(
-                            type=ContentType.MESSAGE,
-                            text=str(context.tool_calls[0].output),
-                        ),
-                        is_stop=True,
-                    )
-                )
-                return context.tool_calls[0].output
-        return None

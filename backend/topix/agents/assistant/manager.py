@@ -1,40 +1,55 @@
 """Main agent manager."""
 
+import logging
+
 from collections.abc import AsyncGenerator
 
+from topix.agents.assistant.answer_reformulate import AnswerReformulate
 from topix.agents.assistant.plan import Plan
 from topix.agents.assistant.query_rewrite import QueryRewrite
 from topix.agents.config import AssistantManagerConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.inputs import QueryRewriteInput
-from topix.agents.datatypes.stream import AgentStreamMessage, Content, ContentType, StreamingMessageType
+from topix.agents.datatypes.stream import (
+    AgentStreamMessage,
+    Content,
+    ContentType,
+)
 from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
-from topix.agents.utils.text import extract_final_answer
 from topix.datatypes.chat.chat import Message
 from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
 from topix.store.qdrant.store import ContentStore
 from topix.utils.common import gen_uid
 
+logger = logging.getLogger(__name__)
+
 
 class AssistantManager:
     """Orchestrates the full flow: query rewrite, planning, searching ..."""
 
-    def __init__(self, query_rewrite_agent: QueryRewrite, plan_agent: Plan):
+    def __init__(
+        self,
+        query_rewrite_agent: QueryRewrite,
+        plan_agent: Plan,
+        synthesis_agent: AnswerReformulate,
+    ):
         """Init method."""
         self.query_rewrite_agent = query_rewrite_agent
         self.plan_agent = plan_agent
+        self.synthesis_agent = synthesis_agent
 
     @classmethod
     def from_config(cls, content_store: ContentStore, config: AssistantManagerConfig):
         """Create an instance of AssistantManager from configuration."""
         plan_agent = Plan.from_config(content_store, config.plan)
         query_rewrite_agent = QueryRewrite.from_config(config.query_rewrite)
+        synthesis_agent = AnswerReformulate.from_config(config.synthesis)
 
-        return cls(query_rewrite_agent, plan_agent)
+        return cls(query_rewrite_agent, plan_agent, synthesis_agent)
 
     async def _compose_input(
         self,
@@ -86,9 +101,16 @@ class AssistantManager:
                 ]
             )
         # launch plan:
-        res = await AgentRunner.run(
-            self.plan_agent, input=input, context=context, max_turns=max_turns
-        )
+        try:
+            res = await AgentRunner.run(
+                self.plan_agent, input=input, context=context, max_turns=max_turns
+            )
+        except Exception:
+            logger.info(f"Max turns exceeded: {max_turns}", exc_info=True)
+
+        # launch synthesis:
+        res = await AgentRunner.run(self.synthesis_agent, input=query, context=context)
+
         if session:
             await session.add_items(
                 [{"id": gen_uid(), "role": "assistant", "content": {"markdown": res}}]
@@ -96,10 +118,12 @@ class AssistantManager:
         return res
 
     def _convert_tool_call_to_annotation_message(
-        self,
-        tool_call: ToolCall
+        self, tool_call: ToolCall
     ) -> AgentStreamMessage | None:
-        if tool_call.name not in [AgentToolName.WEB_SEARCH, AgentToolName.MEMORY_SEARCH]:
+        if tool_call.name not in [
+            AgentToolName.WEB_SEARCH,
+            AgentToolName.MEMORY_SEARCH,
+        ]:
             return None
 
         annotations = []
@@ -112,9 +136,7 @@ class AssistantManager:
         return AgentStreamMessage(
             tool_id=tool_call.id,
             tool_name=tool_call.name,
-            content=Content(
-                annotations=annotations
-            )
+            content=Content(annotations=annotations),
         )
 
     async def run_streamed(  # noqa: C901
@@ -156,66 +178,55 @@ class AssistantManager:
             self.plan_agent, input=agent_input, context=context, max_turns=max_turns
         )
 
-        thought = ""
-        current_id = None
         plan_message = ""
-        in_message = False
+        plan_id = None
 
-        steps = []
+        steps = context.tool_calls
 
         async for message in res:
             if isinstance(message, AgentStreamMessage):
-                if message.tool_name == AgentToolName.RAW_MESSAGE:
-                    if not in_message:
-                        in_message = True
-                        current_id = message.tool_id
-
-                    if message.content and message.content.type in [ContentType.MESSAGE, ContentType.TOKEN]:
-                        if message.type == StreamingMessageType.STREAM_MESSAGE:
-                            plan_message += message.content.text
-                        elif message.type == StreamingMessageType.STREAM_REASONING_MESSAGE:
-                            thought += message.content.text
-                else:
-                    if in_message:
-                        if current_id and (plan_message or thought):
-                            step = ToolCall(
-                                id=current_id,
-                                name=AgentToolName.RAW_MESSAGE,
-                                output=plan_message,
-                                thought=thought,
-                                state=ToolCallState.COMPLETED
-                            )
-                            steps.append(step)
-                        # in new plan message, reset
-                        in_message = False
-                        current_id = None
-                        thought = ""
-                        plan_message = ""
-
+                if message.content and message.content.type in [
+                    ContentType.MESSAGE,
+                    ContentType.TOKEN,
+                ]:
+                    if message.tool_name == AgentToolName.RAW_MESSAGE:
+                        plan_message += message.content.text
+                        plan_id = message.tool_id
                 yield message
             elif isinstance(message, ToolCall):
-                annotation_message = self._convert_tool_call_to_annotation_message(message)
-                steps.append(message)
+                annotation_message = self._convert_tool_call_to_annotation_message(
+                    message
+                )
                 if annotation_message is not None:
                     yield annotation_message
 
-        if current_id and (plan_message or thought):
-            step = ToolCall(
-                id=current_id,
+        # Launch the synthesis agent:
+        res = AgentRunner.run_streamed(
+            self.synthesis_agent, input=query, context=context
+        )
+
+        final_answer = ""
+        async for message in res:
+            if isinstance(message, AgentStreamMessage):
+                if message.content and message.content.type in [
+                    ContentType.MESSAGE,
+                    ContentType.TOKEN,
+                ]:
+                    final_answer += message.content.text
+                yield message
+
+        steps.append(
+            ToolCall(
+                id=plan_id,
                 name=AgentToolName.RAW_MESSAGE,
                 output=plan_message,
-                thought=thought,
-                state=ToolCallState.COMPLETED
+                state=ToolCallState.COMPLETED,
             )
-            steps.append(step)
+        )
 
         if session:
             if not steps:
                 raise Exception("No steps created during streaming!")
-
-            final_answer: str = str(steps[-1].output)
-
-            final_answer = extract_final_answer(final_answer)
 
             await session.add_items(
                 [
@@ -225,8 +236,7 @@ class AssistantManager:
                         properties={
                             "reasoning": ReasoningProperty(
                                 reasoning=[
-                                    step.model_dump(exclude_none=True)
-                                    for step in steps
+                                    step.model_dump(exclude_none=True) for step in steps
                                 ]
                             )
                         },

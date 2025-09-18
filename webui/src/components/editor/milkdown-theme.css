@@ -224,6 +224,10 @@
   outline-offset: 2px;
 }
 
+.milkdown .milkdown-link-preview > .link-preview {
+  height: auto !important;
+}
+
 /* --------------------------------------------------------------------------
    Inline formatting
    -------------------------------------------------------------------------- */

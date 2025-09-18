@@ -82,7 +82,7 @@ export const LinkPreviewCard = ({
           </div>
         )}
         <h4 className="text-sm font-medium w-full truncate">{title}</h4>
-        <span className="text-xs w-full truncate">{description}</span>
+        { description && <p className="text-xs w-full truncate">{description}</p> }
         <div className="flex flex-row items-center gap-1 text-xs text-muted-foreground font-medium font-mono">
           {favicon ? (
             <img src={favicon} alt="favicon" className="size-3 rounded-sm object-cover" />

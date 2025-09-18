@@ -27,14 +27,16 @@ export const MemorySearchChoiceMenu = () => {
 
   return (
     <Tooltip delayDuration={400}>
-      <TooltipTrigger asChild>
-        <button
-          className={buttonClass}
-          onClick={handleToggle}
-        >
-          <HugeiconsIcon icon={ChipIcon} className='size-4 shrink-0' strokeWidth={1.75} />
-        </button>
-      </TooltipTrigger>
+      <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50">
+        <TooltipTrigger asChild>
+          <button
+            className={buttonClass}
+            onClick={handleToggle}
+          >
+            <HugeiconsIcon icon={ChipIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+          </button>
+        </TooltipTrigger>
+      </div>
       <TooltipContent>
         {tooltipText}
       </TooltipContent>

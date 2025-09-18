@@ -28,16 +28,18 @@ export const CodeInterpreterChoiceMenu = () => {
 
   return (
     <Tooltip delayDuration={400}>
-      <TooltipTrigger asChild>
-        <button
-          className={buttonClass}
-          onClick={toggleCodeInterpreter}
-          aria-label="Toggle Code Interpreter"
-          title="Toggle Code Interpreter"
-        >
-          <HugeiconsIcon icon={CodeIcon} className="size-4" strokeWidth={1.75} />
-        </button>
-      </TooltipTrigger>
+      <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50">
+        <TooltipTrigger asChild>
+          <button
+            className={buttonClass}
+            onClick={toggleCodeInterpreter}
+            aria-label="Toggle Code Interpreter"
+            title="Toggle Code Interpreter"
+          >
+            <HugeiconsIcon icon={CodeIcon} className="size-4" strokeWidth={1.75} />
+          </button>
+        </TooltipTrigger>
+      </div>
       <TooltipContent>
         {isEnabled ? "Disable Code Interpreter" : "Enable Code Interpreter"}
       </TooltipContent>

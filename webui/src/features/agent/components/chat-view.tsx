@@ -1,4 +1,3 @@
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Conversation } from "./chat/conversation"
 import { InputBar } from "./chat/input"
 import { ContextBoard } from "./context-board"
@@ -50,7 +49,7 @@ export const Chat = ({ chatId, hideContextBoard = false, initialBoardId = undefi
       >
         {
           !hideContextBoard && (
-            <div className="absolute z-50 top-0 inset-x-0 p-4 bg-background">
+            <div className="absolute z-50 top-0 inset-x-0 p-4 bg-transparent">
               <ContextBoard
                 contextBoardId={attachedBoardId}
                 boardAsContext={updateChatContextBoard}
@@ -60,13 +59,13 @@ export const Chat = ({ chatId, hideContextBoard = false, initialBoardId = undefi
         }
         {
           chatId && (
-            <ScrollArea className='w-full min-w-0 h-full p-4 pt-16'>
+            <div className='w-full min-w-0 h-full p-4 pt-16 overflow-auto scrollbar-thin'>
               <div className='w-full h-full flex flex-col items-center justify-center'>
                 <div className='w-full max-w-[800px] h-full'>
                   <Conversation chatId={chatId} />
                 </div>
               </div>
-            </ScrollArea>
+            </div>
           )
         }
         <InputBar attachedBoardId={attachedBoardId} />

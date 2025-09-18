@@ -97,7 +97,7 @@
   --sidebar-border: oklch(0.88 0.003 95);
   --sidebar-ring: #0c0a09;
 
-  --font-sans: 'Instrument Sans', 'Geist Fallback', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans: system-ui, 'Instrument Sans', 'Geist Fallback', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif: "Source Serif 4", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: "Ubuntu Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-handwriting: "Shantell Sans", "Geist Handwriting Fallback", ui-handwriting, cursive;
@@ -130,7 +130,7 @@
   --popover-foreground: oklch(0.94 0.02 270);
   --primary: #ffffff;
   --primary-foreground: #0c0a09;
-  --secondary: oklch(0.5277 0.0793 227.7159);
+  --secondary: oklch(78.968% 0.07472 215.87);
   --secondary-foreground: oklch(0.22 0.012 260);
   --muted: oklch(0.30 0.020 260);
   --muted-foreground: oklch(0.78 0.02 270);
@@ -155,7 +155,7 @@
   --sidebar-border: oklch(0.34 0.010 260);
   --sidebar-ring: oklch(0.30 0.010 260);
 
-  --font-sans: -apple-system, 'Instrument Sans', 'Geist Fallback', ui-sans-serif, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans: system-ui, -apple-system, 'Instrument Sans', 'Geist Fallback', ui-sans-serif, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif: "Source Serif 4", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: "Ubuntu Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-handwriting: "Shantell Sans", "Geist Handwriting Fallback", ui-handwriting, cursive;
@@ -183,5 +183,76 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* =========================
+     Firefox (no real animation)
+     ========================= */
+  .scrollbar-thin {
+    /* keep gutter reserved */
+    scrollbar-width: thin;
+    /* thumb invisible at rest (Firefox can't animate this) */
+    scrollbar-color: transparent transparent;
+  }
+  .scrollbar-thin:hover {
+    scrollbar-color: rgba(120,120,130,.5) transparent; /* appears on hover */
+  }
+
+  /* =========================
+     WebKit/Blink (Chrome/Edge/Safari)
+     ========================= */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;   /* reserve space always */
+    height: 6px;
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Thumb fades in/out on hover */
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(120,120,130,.5);
+    border-radius: 9999px;
+    opacity: 0; /* invisible at rest */
+    transition: opacity .2s ease, background-color .2s ease;
+  }
+  .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+    opacity: 1; /* visible on hover */
+  }
+  .scrollbar-thin:hover::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(120,120,130,.7);
+  }
+
+  /* Hide ALL arrow buttons (top/bottom/left/right) */
+  .scrollbar-thin::-webkit-scrollbar-button,
+  .scrollbar-thin::-webkit-scrollbar-button:single-button,
+  .scrollbar-thin::-webkit-scrollbar-button:double-button,
+  .scrollbar-thin::-webkit-scrollbar-button:vertical:increment,
+  .scrollbar-thin::-webkit-scrollbar-button:vertical:decrement,
+  .scrollbar-thin::-webkit-scrollbar-button:horizontal:increment,
+  .scrollbar-thin::-webkit-scrollbar-button:horizontal:decrement,
+  .scrollbar-thin::-webkit-scrollbar-button:increment,
+  .scrollbar-thin::-webkit-scrollbar-button:decrement {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide the corner square where H+V scrollbars meet */
+  .scrollbar-thin::-webkit-scrollbar-corner {
+    background: transparent !important;
+  }
+
+  /* Motion safety */
+  @media (prefers-reduced-motion: reduce) {
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      transition: none;
+    }
   }
 }

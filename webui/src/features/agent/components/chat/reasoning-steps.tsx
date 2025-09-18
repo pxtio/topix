@@ -174,7 +174,7 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
       className={`
         relative
         w-full
-        p-4
+        p-3
         bg-card
         text-muted-foreground
         rounded-xl
@@ -216,7 +216,7 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
         }
       </div>
       <button
-        className='absolute bottom-0 right-1/2 transform translate-x-1/2'
+        className='absolute bottom-1 right-1/2 transform translate-x-1/2'
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className='transition-all text-xs text-accent-foreground hover:text-card-foreground'>

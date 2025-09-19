@@ -16,4 +16,4 @@ class WebSearchContextSize(StrEnum):
 
     SMALL = "small"
     MEDIUM = "medium"
-    LARGE = "large"
+    HIGH = "high"

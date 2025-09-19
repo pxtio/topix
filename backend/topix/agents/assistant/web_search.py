@@ -111,7 +111,7 @@ class WebSearch(BaseAgent):
         match search_engine:
             case WebSearchOption.OPENAI:
                 if model.startswith("openai"):
-                    return [WebSearchTool(search_context_size=WebSearchContextSize.MEDIUM)]
+                    return [WebSearchTool(search_context_size=search_context_size)]
                 else:
                     raise ValueError(
                         "OpenAI search engine is only compatible with OpenAI models,"
@@ -334,7 +334,7 @@ def search_tavily(
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}",
     }
-    if search_context_size in [WebSearchContextSize.MEDIUM, WebSearchContextSize.LARGE]:
+    if search_context_size in [WebSearchContextSize.MEDIUM, WebSearchContextSize.HIGH]:
         search_depth = "advanced"
     else:
         search_depth = "basic"
@@ -385,7 +385,7 @@ def search_linkup(
         "Authorization": f"Bearer {api_key}",
     }
 
-    if search_context_size == "large":
+    if search_context_size == WebSearchContextSize.HIGH:
         search_depth = "deep"
     else:
         search_depth = "standard"

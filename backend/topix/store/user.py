@@ -8,7 +8,7 @@ from topix.store.postgres.user import (
     delete_user_by_uid,
     get_user_by_email,
     get_user_by_uid,
-    update_user_by_uid
+    update_user_by_uid,
 )
 
 

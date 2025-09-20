@@ -3,6 +3,7 @@ from datetime import datetime
 
 import pytest
 import pytest_asyncio
+
 from psycopg import AsyncConnection
 
 from topix.datatypes.user import User
@@ -12,7 +13,7 @@ from topix.store.postgres.user import (
     delete_user_by_uid,
     get_user_by_uid,
     get_user_id_by_uid,
-    update_user_by_uid
+    update_user_by_uid,
 )
 from topix.utils.common import gen_uid
 

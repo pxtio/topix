@@ -1,15 +1,15 @@
 """Users API Router."""
 import logging
+
 from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from topix.api.utils.security import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token, get_password_hash, Token, authenticate_user
+from topix.api.utils.security import ACCESS_TOKEN_EXPIRE_MINUTES, Token, authenticate_user, create_access_token, get_password_hash
 from topix.datatypes.user import User
 from topix.store.user import UserStore
-
 
 router = APIRouter(
     prefix="/users",

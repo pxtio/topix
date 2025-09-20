@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import abc
+
 from enum import IntEnum, StrEnum
 from typing import Annotated, Literal, Type
 

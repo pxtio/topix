@@ -2,6 +2,7 @@
 import logging
 
 import cloudscraper
+
 from linkpreview import Link, LinkPreview
 from pydantic import BaseModel
 

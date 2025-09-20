@@ -7,7 +7,7 @@ from topix.store.postgres.chat import (
     delete_chat_by_uid,
     get_chat_by_uid,
     list_chats_by_user_uid,
-    update_chat_by_uid
+    update_chat_by_uid,
 )
 from topix.store.postgres.pool import create_pool
 from topix.store.qdrant.store import ContentStore

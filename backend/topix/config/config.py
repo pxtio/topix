@@ -124,6 +124,7 @@ class AppSettings(BaseModel):
 
 class SecuritySettings(BaseModel):
     """JWT Security settings."""
+
     secret_key: str
     algorithm: str
 

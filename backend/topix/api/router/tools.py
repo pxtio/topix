@@ -25,7 +25,7 @@ router = APIRouter(
 async def notify(
     response: Response,
     request: Request,
-    current_user_uid: Annotated[str, Depends(get_current_user_uid)],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
 ):
     """Convert a mindmap to a graph."""
@@ -45,7 +45,7 @@ async def notify(
 async def mapify(
     response: Response,
     request: Request,
-    current_user_uid: Annotated[str, Depends(get_current_user_uid)],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
 ):
     """Convert a mindmap to a graph."""
@@ -65,7 +65,7 @@ async def mapify(
 async def link_preview(
     response: Response,
     request: Request,
-    current_user_uid: Annotated[str, Depends(get_current_user_uid)],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[WebPagePreviewRequest, Body(description="Webpage URL to preview")]
 ):
     """Fetch a preview of the webpage at the given URL."""

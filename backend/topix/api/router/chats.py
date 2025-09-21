@@ -38,11 +38,11 @@ router = APIRouter(
 async def create_chat(
     response: Response,
     request: Request,
-    current_user_uid: Annotated[str, Depends(get_current_user_uid)],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     board_id: Annotated[str, Query(description="Board Unique ID")] = None,
 ):
     """Create a new chat for the user."""
-    new_chat = Chat(user_uid=current_user_uid, graph_uid=board_id)
+    new_chat = Chat(user_uid=user_id, graph_uid=board_id)
 
     store: ChatStore = request.app.chat_store
     await store.create_chat(new_chat)
@@ -105,10 +105,9 @@ async def get_chat(
 async def list_chats(
     response: Response,
     request: Request,
-    current_user_uid: Annotated[str, Depends(get_current_user_uid)]
+    user_id: Annotated[str, Depends(get_current_user_uid)]
 ):
     """List all chats for the user."""
-    user_id = current_user_uid
     store: ChatStore = request.app.chat_store
     chats = await store.list_chats(user_uid=user_id)
     return {"chats": [chat.model_dump(exclude_none=True) for chat in chats]}

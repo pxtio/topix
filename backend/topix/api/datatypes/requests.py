@@ -19,6 +19,12 @@ class UserSignupRequest(BaseModel):
     username: str
 
 
+class RefreshRequest(BaseModel):
+    """Refresh token request model."""
+
+    refresh_token: str
+
+
 class SendMessageRequest(BaseModel):
     """Request model for sending a message to a chat."""
 

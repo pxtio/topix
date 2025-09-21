@@ -10,6 +10,15 @@ from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 
 
+class UserSignupRequest(BaseModel):
+    """Request model for user signup."""
+
+    email: str
+    password: str
+    name: str
+    username: str
+
+
 class SendMessageRequest(BaseModel):
     """Request model for sending a message to a chat."""
 

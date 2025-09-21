@@ -19,7 +19,7 @@ from topix.api.datatypes.requests import (
     SendMessageRequest,
 )
 from topix.api.helpers import with_standard_response, with_streaming
-from topix.api.router.users import get_current_user_uid, verify_chat_user
+from topix.api.utils.security import get_current_user_uid, verify_chat_user
 from topix.datatypes.chat.chat import Chat
 from topix.store.chat import ChatStore
 

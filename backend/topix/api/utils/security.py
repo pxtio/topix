@@ -53,7 +53,7 @@ async def authenticate_user(user_store: UserStore, email: str, password: str) ->
     return user
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Generate an access token with data encrypted."""
     config: Config = Config.instance()
     to_encode = data.copy()

@@ -1,6 +1,6 @@
 import camelcaseKeys from "camelcase-keys"
 import type { Note } from "../types/note"
-import { API_URL } from "@/config/api"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -16,18 +16,11 @@ export async function getNote(
   userId: string,
   noteId: string
 ): Promise<Note> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/boards/${boardId}/notes/${noteId}?user_id=${userId}`, {
+  const res = await apiFetch({
+    path: `/boards/${boardId}/notes/${noteId}`,
     method: "GET",
-    headers
+    params: { user_id: userId }
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch note: ${response.statusText}`)
-  }
-
-  const resp = await response.json()
-  return camelcaseKeys(resp.data, { deep: true }) as Note
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return camelcaseKeys((res as any).data, { deep: true }) as Note
 }

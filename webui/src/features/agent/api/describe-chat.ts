@@ -1,6 +1,6 @@
-import { API_URL } from "@/config/api"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { type Chat } from "../types/chat"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -13,19 +13,12 @@ export async function describeChat({
   chatId: string,
   userId: string
 }): Promise<string> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-  const response = await fetch(`${API_URL}/chats/${chatId}:describe?user_id=${userId}`, {
-      method: "POST",
-      headers
+  const res = await apiFetch<{ data: { label: string } }>({
+    path: `/chats/${chatId}:describe`,
+    method: "POST",
+    params: { user_id: userId },
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to describe chat: ${response.statusText}`)
-  }
-
-  const data = await response.json()
-  return data.data.label
+  return res.data.label
 }
 
 

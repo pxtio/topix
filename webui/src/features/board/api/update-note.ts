@@ -1,7 +1,7 @@
-import { API_URL } from "@/config/api"
 import type { Note } from "../types/note"
 import snakecaseKeys from "snakecase-keys"
 import { useMutation } from "@tanstack/react-query"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -19,18 +19,12 @@ export async function updateNote(
   noteId: string,
   noteData: Partial<Note>
 ): Promise<void> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/boards/${boardId}/notes/${noteId}?user_id=${userId}`, {
+  await apiFetch({
+    path: `/boards/${boardId}/notes/${noteId}`,
     method: "PATCH",
-    headers,
-    body: JSON.stringify({ data: snakecaseKeys(noteData, { deep: true }) })
+    params: { user_id: userId },
+    body: { data: snakecaseKeys(noteData, { deep: true }) }
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to update note: ${response.statusText}`)
-  }
 }
 
 

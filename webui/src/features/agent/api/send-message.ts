@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type {ChatMessage } from "../types/chat"
 import snakecaseKeys from "snakecase-keys"
 import { buildResponse } from "../utils/stream/build"
+import { fetchWithAuthRaw } from "@/api"
 
 
 /**
@@ -20,22 +21,35 @@ import { buildResponse } from "../utils/stream/build"
 export async function* sendMessage(
   payload: SendMessageRequestPayload,
   chatId: string,
-  userId: string
+  userId: string,
+  opts?: { signal?: AbortSignal }
 ): AsyncGenerator<AgentStreamMessage> {
+  const url = new URL(`/chats/${chatId}/messages`, API_URL)
+  url.searchParams.set("user_id", userId)
+
+  // Build headers without Authorization; fetchWithAuthRaw adds it
   const headers = new Headers()
   headers.set("Content-Type", "application/json")
 
-  const response = await fetch(`${API_URL}/chats/${chatId}/messages?user_id=${userId}`, {
+  const body = JSON.stringify(
+    snakecaseKeys(payload as unknown as Record<string, unknown>, { deep: true })
+  )
+
+  const response = await fetchWithAuthRaw(url.toString(), {
     method: "POST",
     headers,
-    body: JSON.stringify(snakecaseKeys(
-      payload as unknown as Record<string, unknown>,
-      { deep: true }
-    )),
-    cache: 'no-store',
-    keepalive: false
+    body,
+    cache: "no-store",
+    keepalive: false,
+    signal: opts?.signal,
   })
 
+  if (!response.ok) {
+    // If refresh failed, fetchWithAuthRaw may have redirected; this protects the generator
+    throw new Error(`sendMessage failed: ${response.status} ${response.statusText}`)
+  }
+
+  // hand off to your streaming parser (SSE/NDJSON/etc.)
   yield* handleStreamingResponse<AgentStreamMessage>(response)
 }
 

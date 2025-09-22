@@ -1,7 +1,7 @@
-import { API_URL } from "@/config/api"
 import { sleep } from "@/lib/common"
 import { useMutation } from "@tanstack/react-query"
 import { DEBOUNCE_DELAY } from "../const"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -17,17 +17,11 @@ export async function removeLink(
   userId: string,
   linkId: string
 ): Promise<void> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/boards/${boardId}/links/${linkId}?user_id=${userId}`, {
+  await apiFetch({
+    path: `/boards/${boardId}/links/${linkId}`,
     method: "DELETE",
-    headers
+    params: { user_id: userId }
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to remove link: ${response.statusText}`)
-  }
 }
 
 

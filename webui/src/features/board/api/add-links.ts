@@ -1,9 +1,9 @@
-import { API_URL } from "@/config/api"
 import type { Link } from "../types/link"
 import { useMutation } from "@tanstack/react-query"
 import snakecaseKeys from "snakecase-keys"
 import { DEBOUNCE_DELAY } from "../const"
 import { sleep } from "@/lib/common"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -20,23 +20,12 @@ export async function addLinks(
   userId: string,
   links: Link[]
 ): Promise<void> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const reformattedLinks = links.map(link => snakecaseKeys(
-    link as unknown as Record<string, unknown>,
-    { deep: true }
-  ))
-
-  const response = await fetch(`${API_URL}/boards/${boardId}/links?user_id=${userId}`, {
+  await apiFetch({
+    path: `/boards/${boardId}/links`,
     method: "POST",
-    headers,
-    body: JSON.stringify({ links: reformattedLinks })
+    params: { user_id: userId },
+    body: { links: snakecaseKeys(links, { deep: true }) }
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to add links: ${response.statusText}`)
-  }
 }
 
 

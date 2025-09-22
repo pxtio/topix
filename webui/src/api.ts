@@ -7,6 +7,27 @@ import {
   clearTokens,
 } from "./features/signin/auth-storage"
 
+let isRedirecting = false
+
+function isAuthPage() {
+  const p = location.pathname
+  return p === "/signin" || p === "/signup"
+}
+
+function isBrowserAsset(reqUrl: string) {
+  try {
+    const u = new URL(reqUrl, location.origin)
+    return u.pathname === "/favicon.ico"
+  } catch {
+    return false
+  }
+}
+
+let logoutHandler: (() => void) | null = null
+export function registerLogoutHandler(cb: () => void) {
+  logoutHandler = cb
+}
+
 /**
  * HTTP methods supported by the API.
  */
@@ -147,7 +168,22 @@ export async function apiFetch<TResponse = unknown, TBody = unknown>(
       })
     } catch {
       clearTokens()
-      window.location.replace("/signin")
+      // If it's a favicon or we're on an auth page, do NOT bounce again
+      if (isAuthPage() || isBrowserAsset(url.toString())) {
+        throw new Error("Unauthorized")
+      }
+
+      // Prefer SPA logout handler if registered
+      if (logoutHandler && !isRedirecting) {
+        isRedirecting = true
+        logoutHandler()
+        return await new Promise<never>(() => {}) // stop here
+      }
+
+      if (!isRedirecting) {
+        isRedirecting = true
+        window.location.replace("/signin")
+      }
       throw new Error("Unauthorized")
     }
   }
@@ -236,4 +272,62 @@ export async function refresh(): Promise<TokenPayload> {
     token_type: "bearer",
     refresh_token: getRefreshToken(),
   }
+}
+
+
+export type RawInit = RequestInit & { noAuth?: boolean }
+
+/**
+ * Fetch that:
+ *  - attaches Bearer from localStorage
+ *  - if 401 (and not noAuth), calls refresh() once
+ *  - retries the original request
+ *  - returns the Response without reading it (safe for streaming)
+ */
+export async function fetchWithAuthRaw(input: string | URL, init: RawInit = {}): Promise<Response> {
+  const { noAuth, headers, ...rest } = init
+
+  const h = new Headers(headers)
+  if (!noAuth) {
+    const token = getAccessToken()
+    if (token) h.set("Authorization", `Bearer ${token}`)
+  }
+
+  const doFetch = (hdrs: Headers) =>
+    fetch(typeof input === "string" ? input : input.toString(), { ...rest, headers: hdrs })
+
+  // first attempt
+  let res = await doFetch(h)
+
+  if (res.status === 401 && !noAuth) {
+    try {
+      await refresh() // will set new access token (and maybe refresh token)
+      const h2 = new Headers(h)
+      const t2 = getAccessToken()
+      if (t2) h2.set("Authorization", `Bearer ${t2}`)
+      res = await doFetch(h2)
+    } catch {
+      clearTokens()
+
+      // If it's a favicon or we're on an auth page, do NOT bounce again
+      if (isAuthPage()) {
+        throw new Error("Unauthorized")
+      }
+
+      // Prefer SPA logout handler if registered
+      if (logoutHandler && !isRedirecting) {
+        isRedirecting = true
+        logoutHandler()
+        return await new Promise<never>(() => {}) // stop here
+      }
+
+      if (!isRedirecting) {
+        isRedirecting = true
+        window.location.replace("/signin")
+      }
+      throw new Error("Unauthorized")
+    }
+  }
+
+  return res
 }

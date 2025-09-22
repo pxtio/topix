@@ -1,20 +1,15 @@
-import { API_URL } from "@/config/api"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { type Chat } from "../types/chat"
+import { apiFetch } from "@/api"
 
 
 export async function deleteChat(chatId: string, userId: string): Promise<void> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/chats/${chatId}?user_id=${userId}`, {
+  await apiFetch({
+    path: `/chats/${chatId}`,
     method: "DELETE",
-    headers
+    params: { user_id: userId },
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete chat: ${response.statusText}`)
-  }
+  return
 }
 
 

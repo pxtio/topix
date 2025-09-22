@@ -89,54 +89,78 @@ export function RootLayout() {
  * - subtle canvas-generated grain texture (PNG tile)
  */
 export function AuthBackground() {
-  const [dataUrl, setDataUrl] = useState<string | null>(null)
+  const [urlA, setUrlA] = useState<string | null>(null)
+  const [urlB, setUrlB] = useState<string | null>(null)
+  const [posA, setPosA] = useState<string>("0px 0px")
+  const [posB, setPosB] = useState<string>("0px 0px")
 
   useEffect(() => {
-    const size = 80 // smaller tile → finer grain
-    const density = 0.20 // more pixels "on"
-    const alphaMin = 20
-    const alphaMax = 50
+    const rand = (n: number) => Math.floor(Math.random() * n)
+    setPosA(`${rand(80)}px ${rand(80)}px`)
+    setPosB(`${rand(128)}px ${rand(128)}px`)
 
-    const canvas = document.createElement("canvas")
-    canvas.width = size
-    canvas.height = size
-    const ctx = canvas.getContext("2d", { willReadFrequently: true })
-    if (!ctx) return
-
-    const img = ctx.createImageData(size, size)
-    const buf = img.data
-
-    for (let i = 0; i < buf.length; i += 4) {
-      const on = Math.random() < density
-      const val = on ? 255 : 0
-      buf[i] = val
-      buf[i + 1] = val
-      buf[i + 2] = val
-      buf[i + 3] = on
-        ? alphaMin + Math.floor(Math.random() * (alphaMax - alphaMin))
-        : 0
+    const makeNoise = (size: number, density: number, aMin: number, aMax: number) => {
+      const c = document.createElement("canvas")
+      c.width = size
+      c.height = size
+      const ctx = c.getContext("2d", { willReadFrequently: true })
+      if (!ctx) return null
+      const img = ctx.createImageData(size, size)
+      const d = img.data
+      for (let i = 0; i < d.length; i += 4) {
+        const on = Math.random() < density
+        const v = on ? 255 : 0
+        d[i] = v
+        d[i + 1] = v
+        d[i + 2] = v
+        d[i + 3] = on ? aMin + Math.floor(Math.random() * (aMax - aMin)) : 0
+      }
+      ctx.putImageData(img, 0, 0)
+      return c.toDataURL("image/png")
     }
 
-    ctx.putImageData(img, 0, 0)
-    setDataUrl(canvas.toDataURL("image/png"))
+    // Layer A: finer & denser (smaller tile => tiny grains)
+    setUrlA(makeNoise(80, 0.20, 18, 42))
+    // Layer B: larger tile, slightly sparser to break repetition
+    setUrlB(makeNoise(128, 0.12, 14, 36))
   }, [])
 
   return (
     <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      {/* soft blobs */}
+      {/* soft secondary blobs */}
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-[40vh] w-[70vw] rounded-full bg-secondary/20 blur-3xl" />
       <div className="absolute -bottom-24 -left-24 h-[45vh] w-[55vw] rounded-full bg-secondary/15 blur-3xl" />
       <div className="absolute -bottom-40 -right-40 h-[35vh] w-[45vw] rounded-full bg-secondary/10 blur-3xl" />
 
-      {/* grain overlay */}
+      {/* Noise layer A */}
       <div
-        className="absolute inset-0 opacity-35 mix-blend-multiply"
+        className="absolute inset-0 opacity-30 mix-blend-multiply"
         style={
-          dataUrl
+          urlA
             ? {
-                backgroundImage: `url(${dataUrl})`,
+                backgroundImage: `url(${urlA})`,
                 backgroundRepeat: "repeat",
-                backgroundSize: "80px 80px", // match tile size
+                backgroundSize: "80px 80px",
+                backgroundPosition: posA,
+                transform: "rotate(0.5deg) scale(1.01)",
+                transformOrigin: "center",
+              }
+            : undefined
+        }
+      />
+
+      {/* Noise layer B */}
+      <div
+        className="absolute inset-0 opacity-22 mix-blend-multiply"
+        style={
+          urlB
+            ? {
+                backgroundImage: `url(${urlB})`,
+                backgroundRepeat: "repeat",
+                backgroundSize: "128px 128px",
+                backgroundPosition: posB,
+                transform: "rotate(-0.6deg) scale(1.012)",
+                transformOrigin: "center",
               }
             : undefined
         }

@@ -38,7 +38,7 @@ export function SigninPage() {
     <div className="w-full max-w-md mx-auto">
       <Card className="bg-card text-card-foreground border border-border shadow-xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome back!</CardTitle>
+          <CardTitle className="text-2xl">Welcome back! 👋</CardTitle>
           <CardDescription className="text-muted-foreground">
             Sign in to continue to your workspace
           </CardDescription>

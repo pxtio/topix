@@ -67,7 +67,7 @@ class WebSearchAgentHook(AgentHooks):
         3. In your report, you should return inline citations for each source that the researcher found.
         4. Make sure to include ALL RELEVANT sources that the researcher gathered in the report, and how they were used to answer the question!
         6. It's really important not to lose any relevant sources. A later LLM will be used to merge this report with others, so having all of the sources is critical.
-        """
+        """  # noqa: E501
         input_items.append({"role": "user", "content": enhance_prompt})
 
 

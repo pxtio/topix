@@ -1,6 +1,6 @@
 import snakecaseKeys from "snakecase-keys"
 import type { ChatMessage } from "../types/chat"
-import { API_URL } from "@/config/api"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -18,16 +18,10 @@ export async function updateMessage(
   userId: string,
   messageData: Partial<ChatMessage>
 ): Promise<void> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/chats/${chatId}/messages/${messageId}?user_id=${userId}`, {
+  await apiFetch({
+    path: `/chats/${chatId}/messages/${messageId}`,
     method: "PATCH",
-    headers,
-    body: JSON.stringify({ data: snakecaseKeys(messageData, { deep: true }) })
+    params: { user_id: userId },
+    body: { data: snakecaseKeys(messageData, { deep: true }) }
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to update message: ${response.statusText}`)
-  }
 }

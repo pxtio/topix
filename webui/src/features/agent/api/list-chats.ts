@@ -1,7 +1,23 @@
-import { API_URL } from "@/config/api"
 import type { Chat } from "../types/chat"
 import camelcaseKeys from "camelcase-keys"
 import { useQuery } from "@tanstack/react-query"
+import { apiFetch } from "@/api"
+
+
+interface ListChatsResponse {
+  data: {
+    chats: Array<{
+      id: number,
+      uid: string,
+      label?: string,
+      user_uid?: string,
+      graph_uid?: string,
+      created_at?: string,
+      updated_at?: string,
+      deleted_at?: string
+    }>
+  }
+}
 
 
 /**
@@ -10,28 +26,12 @@ import { useQuery } from "@tanstack/react-query"
 export async function listChats(
   userId: string
 ): Promise<Chat[]> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-  const response = await fetch(`${API_URL}/chats?user_id=${userId}`, {
+  const res = await apiFetch<ListChatsResponse>({
+    path: `/chats`,
     method: "GET",
-    headers
+    params: { user_id: userId },
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch chats: ${response.statusText}`)
-  }
-
-  const data = await response.json()
-  return data.data.chats.map((chat: {
-    id: number,
-    uid: string,
-    label?: string,
-    user_uid?: string,
-    graph_uid?: string,
-    created_at?: string,
-    updated_at?: string,
-    deleted_at?: string
-  }) => camelcaseKeys(chat, { deep: true })) as Chat[]
+  return res.data.chats.map((chat) => camelcaseKeys(chat, { deep: true })) as Chat[]
 }
 
 

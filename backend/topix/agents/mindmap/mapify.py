@@ -8,9 +8,9 @@ from pydantic import BaseModel
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import ModelEnum
-from topix.datatypes.note.style import NodeType
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
+from topix.datatypes.note.style import NodeType
 from topix.datatypes.resource import RichText
 
 

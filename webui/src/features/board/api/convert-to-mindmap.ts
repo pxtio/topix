@@ -1,4 +1,3 @@
-import { API_URL } from "@/config/api"
 import type { Link } from "../types/link"
 import type { Note } from "../types/note"
 import camelcaseKeys from "camelcase-keys"
@@ -11,6 +10,7 @@ import { useMindMapStore } from "@/features/agent/store/mindmap-store"
 import { createDefaultLinkStyle, createDefaultStyle } from "../types/style"
 import { colorTree } from "../utils/bfs"
 import { pickRandomColorOfShade } from "../lib/colors/tailwind"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -21,21 +21,15 @@ export async function convertToMindMap(
   answer: string,
   toolType: "notify" | "mapify"
 ): Promise<{ notes: Note[], links: Link[] }> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/tools/mindmaps:${toolType}?user_id=${userId}`, {
+  const res = await apiFetch({
+    path: `/tools/mindmaps:${toolType}`,
     method: "POST",
-    headers,
-    body: JSON.stringify({ answer })
+    params: { user_id: userId },
+    body: { answer }
   })
 
-  if (!response.ok) {
-    throw new Error(`Failed to convert to mind map: ${response.statusText}`)
-  }
-
-  const data = await response.json()
-  return camelcaseKeys(data.data, { deep: true }) as { notes: Note[], links: Link[] }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return camelcaseKeys((res as any).data, { deep: true }) as { notes: Note[], links: Link[] }
 }
 
 

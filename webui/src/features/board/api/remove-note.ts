@@ -1,7 +1,7 @@
-import { API_URL } from "@/config/api"
 import { sleep } from "@/lib/common"
 import { useMutation } from "@tanstack/react-query"
 import { DEBOUNCE_DELAY } from "../const"
+import { apiFetch } from "@/api"
 
 /**
  * Remove a note from a board for the user.
@@ -11,21 +11,15 @@ import { DEBOUNCE_DELAY } from "../const"
  * @param noteId - The ID of the note to be removed.
  * @returns A promise that resolves when the note is successfully removed.
  */
-export function removeNote(
+export async function removeNote(
   boardId: string,
   userId: string,
   noteId: string
 ): Promise<void> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  return fetch(`${API_URL}/boards/${boardId}/notes/${noteId}?user_id=${userId}`, {
+  await apiFetch({
+    path: `/boards/${boardId}/notes/${noteId}`,
     method: "DELETE",
-    headers
-  }).then((response) => {
-    if (!response.ok) {
-      throw new Error(`Failed to remove note: ${response.statusText}`)
-    }
+    params: { user_id: userId }
   })
 }
 

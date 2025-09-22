@@ -1,7 +1,7 @@
-import { API_URL } from "@/config/api"
 import type { Graph } from "../types/board"
 import snakecaseKeys from "snakecase-keys"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -17,18 +17,12 @@ export async function updateBoard(
   userId: string,
   graphData: Partial<Graph>
 ): Promise<void> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/boards/${boardId}?user_id=${userId}`, {
+  await apiFetch({
+    path: `/boards/${boardId}`,
     method: "PATCH",
-    headers,
-    body: JSON.stringify({ data: snakecaseKeys(graphData, { deep: true }) })
+    params: { user_id: userId },
+    body: { data: snakecaseKeys(graphData, { deep: true }) }
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to update board: ${response.statusText}`)
-  }
 }
 
 

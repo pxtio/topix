@@ -2,7 +2,14 @@
 
 from topix.datatypes.user import User
 from topix.store.postgres.pool import create_pool
-from topix.store.postgres.user import _dangerous_hard_delete_user_by_uid, create_user, delete_user_by_uid, get_user_by_uid, update_user_by_uid
+from topix.store.postgres.user import (
+    _dangerous_hard_delete_user_by_uid,
+    create_user,
+    delete_user_by_uid,
+    get_user_by_email,
+    get_user_by_uid,
+    update_user_by_uid,
+)
 
 
 class UserStore:
@@ -25,6 +32,11 @@ class UserStore:
         """Retrieve a user by their UID."""
         async with self._pg_pool.connection() as conn:
             return await get_user_by_uid(conn, user_uid)
+
+    async def get_user_by_email(self, email: str) -> User | None:
+        """Retrieve a user by their email."""
+        async with self._pg_pool.connection() as conn:
+            return await get_user_by_email(conn, email)
 
     async def update_user(self, user_uid: str, data: dict):
         """Update a user's information."""

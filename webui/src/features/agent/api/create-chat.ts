@@ -1,6 +1,6 @@
-import { API_URL } from "@/config/api"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { type Chat } from "../types/chat"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -15,31 +15,12 @@ export async function createNewChat({
   userId: string,
   boardId?: string,
 }): Promise<string> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const url = new URL("/chats", API_URL)
-
-  // query params
-  const params = new URLSearchParams()
-  params.set("user_id", userId)
-  if (boardId) {
-    params.set("board_id", boardId)
-  }
-
-  url.search = params.toString()
-
-  const response = await fetch(url.toString(), {
+  const res = await apiFetch<{ data: { chat_id: string } }>({
+    path: "/chats",
     method: "PUT",
-    headers
+    params: { user_id: userId, board_id: boardId },
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to create chat: ${response.statusText}`)
-  }
-
-  const data = await response.json()
-  return data.data.chat_id
+  return res.data.chat_id
 }
 
 

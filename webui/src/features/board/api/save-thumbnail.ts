@@ -1,4 +1,4 @@
-import { API_URL } from "@/config/api"
+import { apiFetch } from "@/api"
 
 export async function saveThumbnail({
   userId,
@@ -9,21 +9,18 @@ export async function saveThumbnail({
   boardId: string
   blob: Blob
 }) {
-  const headers = new Headers()
-  headers.append('X-User-Id', userId)
-  headers.append('Accept', 'application/json')
-
   const form = new FormData()
   form.append('board_id', boardId)
   form.append('file', blob, 'thumb.png')
 
-  const res = await fetch(`${API_URL}/boards/${boardId}/thumbnail`, {
-    method: 'POST',
+  const res = await apiFetch<{ data: { path: string } }>({
+    path: `/boards/${boardId}/thumbnail`,
+    method: "POST",
     body: form,
-    headers
+    headers: {
+      "X-User-Id": userId,
+      Accept: "application/json",
+    }
   })
-
-  if (!res.ok) throw new Error(`failed to save thumbnail: ${res.status}`)
-  const data = await res.json()
-  return data.data.path
+  return res.data.path
 }

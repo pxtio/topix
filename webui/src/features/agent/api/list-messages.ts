@@ -1,7 +1,39 @@
 import camelcaseKeys from "camelcase-keys"
 import type { ChatMessage, MessageRole } from "../types/chat"
-import { API_URL } from "@/config/api"
 import { useQuery } from "@tanstack/react-query"
+import { apiFetch } from "@/api"
+import type { ToolExecutionState, ToolName } from "../types/stream"
+import type { ToolOutput } from "../types/tool-outputs"
+
+
+interface ListMessagesResponse {
+  data: {
+    messages: Array<{
+      id: string,
+      role: MessageRole,
+      content: {
+        markdown: string
+      },
+      created_at?: string,
+      updated_at?: string,
+      deleted_at?: string,
+      chat_uid: string,
+      properties: {
+        reasoning: {
+          type: "reasoning",
+          reasoning: {
+            id: string
+            name: ToolName
+            thought: string
+            output: ToolOutput
+            state: ToolExecutionState
+            event_messages: string[]
+          }[]
+        }
+      }
+    }>
+  }
+}
 
 
 /**
@@ -14,30 +46,12 @@ export async function listMessages(
   chatId: string,
   userId: string
 ): Promise<ChatMessage[]> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-  const response = await fetch(`${API_URL}/chats/${chatId}/messages?user_id=${userId}`, {
+  const res = await apiFetch<ListMessagesResponse>({
+    path: `/chats/${chatId}/messages`,
     method: "GET",
-    headers
+    params: { user_id: userId },
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch messages: ${response.statusText}`)
-  }
-
-  const data = await response.json()
-
-  const resp =  data.data.messages.map((message: {
-    id: string,
-    role: MessageRole,
-    content: string,
-    created_at?: string,
-    updated_at?: string,
-    deleted_at?: string,
-    chat_uid: string,
-    reasoning_steps?: unknown
-  }) => camelcaseKeys(message, { deep: true })) as ChatMessage[]
-  return resp
+  return res.data.messages.map((message) => camelcaseKeys(message, { deep: true })) as ChatMessage[]
 }
 
 

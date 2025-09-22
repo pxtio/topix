@@ -2,13 +2,14 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Query, Request, Response
+from fastapi import APIRouter, Body, Depends, Request, Response
 
 from topix.agents.mindmap.mapify import MapifyAgent
 from topix.agents.mindmap.notify import NotifyAgent
 from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.helpers import with_standard_response
+from topix.api.utils.security import get_current_user_uid
 from topix.utils.web.preview import preview_webpage
 
 router = APIRouter(
@@ -24,7 +25,7 @@ router = APIRouter(
 async def notify(
     response: Response,
     request: Request,
-    user_id: Annotated[str, Query(description="User Unique ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
 ):
     """Convert a mindmap to a graph."""
@@ -44,7 +45,7 @@ async def notify(
 async def mapify(
     response: Response,
     request: Request,
-    user_id: Annotated[str, Query(description="User Unique ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
 ):
     """Convert a mindmap to a graph."""
@@ -64,7 +65,7 @@ async def mapify(
 async def link_preview(
     response: Response,
     request: Request,
-    user_id: Annotated[str, Query(description="User Unique ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[WebPagePreviewRequest, Body(description="Webpage URL to preview")]
 ):
     """Fetch a preview of the webpage at the given URL."""

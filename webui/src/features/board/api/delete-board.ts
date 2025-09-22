@@ -1,6 +1,6 @@
-import { API_URL } from "@/config/api"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { Graph } from "../types/board"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -9,20 +9,14 @@ import type { Graph } from "../types/board"
  * @param boardId - The ID of the board to be deleted.
  * @param userId - The ID of the user who owns the board.
  */
-export function deleteBoard(
+export async function deleteBoard(
   boardId: string,
   userId: string
 ): Promise<void> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  return fetch(`${API_URL}/boards/${boardId}?user_id=${userId}`, {
+  await apiFetch({
+    path: `/boards/${boardId}`,
     method: "DELETE",
-    headers,
-  }).then((response) => {
-    if (!response.ok) {
-      throw new Error(`Failed to delete board: ${response.statusText}`)
-    }
+    params: { user_id: userId }
   })
 }
 

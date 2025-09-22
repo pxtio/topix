@@ -1,7 +1,7 @@
-import { API_URL } from "@/config/api"
 import snakecaseKeys from "snakecase-keys"
 import type { Link } from "../types/link"
 import { useMutation } from "@tanstack/react-query"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -19,18 +19,12 @@ export async function updateLink(
   linkId: string,
   linkData: Partial<Link>
 ): Promise<void> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/boards/${boardId}/links/${linkId}?user_id=${userId}`, {
+  await apiFetch({
+    path: `/boards/${boardId}/links/${linkId}`,
     method: "PATCH",
-    headers,
-    body: JSON.stringify({ data: snakecaseKeys(linkData, { deep: true }) })
+    params: { user_id: userId },
+    body: { data: snakecaseKeys(linkData, { deep: true }) }
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to update link: ${response.statusText}`)
-  }
 }
 
 

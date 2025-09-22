@@ -20,7 +20,7 @@ import { ChatMenuItem, NewChatItem } from "./chat"
 import { BoardItem, DashboardMenuItem, NewBoardItem } from "./board"
 import { useMemo } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Clock02Icon } from "@hugeicons/core-free-icons"
+import { Clock02Icon, MinusSignIcon, PlusSignIcon } from "@hugeicons/core-free-icons"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -147,7 +147,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                       <SidebarMenuButton className="font-medium text-xs flex flex-row items-center w-full">
                         <HugeiconsIcon icon={Clock02Icon} className="size-4 shrink-0" strokeWidth={1.75} />
                         <span>Chat History</span>
-                        {/* your +/- icons */}
+                        <HugeiconsIcon icon={PlusSignIcon} className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
+                        <HugeiconsIcon icon={MinusSignIcon} className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   </CollapsibleTrigger>

@@ -108,7 +108,7 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
           </ContextMenuContent>
 
           <CollapsibleTrigger asChild>
-            <SidebarMenuAction className='right-2'>
+            <SidebarMenuAction className='right-1.5'>
               <Plus className="group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
               <Minus className="group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
             </SidebarMenuAction>

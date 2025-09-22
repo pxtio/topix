@@ -139,7 +139,7 @@ async def send_message(
     session = AssistantSession(session_id=chat_id, chat_store=chat_store)
 
     assistant_config = AssistantManagerConfig.from_yaml()
-    assistant_config.set_plan_model(body.model)
+    assistant_config.set_model(body.model)
     assistant_config.set_web_engine(body.web_search_engine)
     assistant_config.set_reasoning(body.reasoning_effort)
 

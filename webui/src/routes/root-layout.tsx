@@ -56,7 +56,7 @@ export function RootLayout() {
                 </header>
 
                 <div className="flex flex-1 w-full min-w-0">
-                  <div className="flex-1 min-w-0">
+                  <div className="relative flex-1 min-w-0">
                     <Outlet />
                   </div>
                   <Toaster position="top-right" toastOptions={{ style: { borderRadius: 'var(--radius-xl)', top: '3.6rem' } }} />

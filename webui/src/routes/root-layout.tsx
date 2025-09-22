@@ -10,7 +10,7 @@ import { StyleDefaultsProvider } from '@/features/board/style-provider'
 // 👉 passive bootstrap (fills store from token, no redirects)
 import { useAppStore } from '@/store'
 import { clearTokens } from '@/features/signin/auth-storage'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/features/signin/hooks/use-auth'
 
 export function RootLayout() {
@@ -82,33 +82,64 @@ export function RootLayout() {
   )
 }
 
+// grainy background for auth pages
+/**
+ * Full-screen auth background:
+ * - soft "secondary" blobs
+ * - subtle canvas-generated grain texture (PNG tile)
+ */
 export function AuthBackground() {
-  const noise =
-    "url(\"data:image/svg+xml;utf8," +
-    encodeURIComponent(
-      `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
-        <filter id='n'>
-          <feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/>
-          <feColorMatrix type='saturate' values='0'/>
-        </filter>
-        <rect width='100%' height='100%' filter='url(%23n)' opacity='.06'/>
-      </svg>`
-    ) +
-    "\")"
+  const [dataUrl, setDataUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const size = 80 // smaller tile → finer grain
+    const density = 0.20 // more pixels "on"
+    const alphaMin = 20
+    const alphaMax = 50
+
+    const canvas = document.createElement("canvas")
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })
+    if (!ctx) return
+
+    const img = ctx.createImageData(size, size)
+    const buf = img.data
+
+    for (let i = 0; i < buf.length; i += 4) {
+      const on = Math.random() < density
+      const val = on ? 255 : 0
+      buf[i] = val
+      buf[i + 1] = val
+      buf[i + 2] = val
+      buf[i + 3] = on
+        ? alphaMin + Math.floor(Math.random() * (alphaMax - alphaMin))
+        : 0
+    }
+
+    ctx.putImageData(img, 0, 0)
+    setDataUrl(canvas.toDataURL("image/png"))
+  }, [])
 
   return (
     <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      {/* blob 1 (top center) */}
-      <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-[40vh] w-[70vw] rounded-full bg-secondary/25 blur-3xl" />
-      {/* blob 2 (bottom-left) */}
-      <div className="absolute -bottom-24 -left-24 h-[45vh] w-[55vw] rounded-full bg-secondary/20 blur-3xl" />
-      {/* blob 3 (bottom-right, faint) */}
+      {/* soft blobs */}
+      <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-[40vh] w-[70vw] rounded-full bg-secondary/20 blur-3xl" />
+      <div className="absolute -bottom-24 -left-24 h-[45vh] w-[55vw] rounded-full bg-secondary/15 blur-3xl" />
       <div className="absolute -bottom-40 -right-40 h-[35vh] w-[45vw] rounded-full bg-secondary/10 blur-3xl" />
 
-      {/* grain */}
+      {/* grain overlay */}
       <div
-        className="absolute inset-0 opacity-70 mix-blend-multiply"
-        style={{ backgroundImage: noise }}
+        className="absolute inset-0 opacity-35 mix-blend-multiply"
+        style={
+          dataUrl
+            ? {
+                backgroundImage: `url(${dataUrl})`,
+                backgroundRepeat: "repeat",
+                backgroundSize: "80px 80px", // match tile size
+              }
+            : undefined
+        }
       />
     </div>
   )

@@ -227,7 +227,7 @@ export async function signin(username: string, password: string): Promise<TokenP
   const token = (json as { data?: { token?: TokenPayload }; token?: TokenPayload }).data?.token
     ?? (json as { token?: TokenPayload }).token
 
-  if (!token?.access_token) throw new Error("Bad signin payload")
+  if (!token?.access_token) throw new Error("Wrong password or username.")
 
   setAccessToken(token.access_token)
   if (token.refresh_token) setRefreshToken(token.refresh_token)

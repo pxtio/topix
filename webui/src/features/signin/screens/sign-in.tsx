@@ -14,7 +14,6 @@ import { Separator } from "@/components/ui/separator"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Mail01Icon, LockIcon } from "@hugeicons/core-free-icons"
 import { Loader2 } from "lucide-react"
-
 import { PasswordInput } from "../components/password-input"
 
 export function SigninPage() {
@@ -36,89 +35,97 @@ export function SigninPage() {
   })
 
   return (
-    <div className="relative h-svh grid place-items-center px-4 overflow-hidden">
-      <div className="w-full max-w-md mx-auto">
-        <Card className="shadow-xl backdrop-blur supports-[backdrop-filter]:bg-white/80">
-          <CardHeader>
-            <CardTitle className="text-2xl">Welcome back</CardTitle>
-            <CardDescription>Sign in to continue to your workspace</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              className="space-y-5"
-              onSubmit={e => {
-                e.preventDefault()
-                mut.mutate()
-              }}
-            >
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                    className="pl-9"
-                  />
-                  <HugeiconsIcon
-                    icon={Mail01Icon}
-                    className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                    strokeWidth={1.75}
-                  />
-                </div>
+    <div className="w-full max-w-md mx-auto">
+      <Card className="bg-card text-card-foreground border border-border shadow-xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Welcome back!</CardTitle>
+          <CardDescription className="text-muted-foreground">
+            Sign in to continue to your workspace
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="space-y-5"
+            onSubmit={e => {
+              e.preventDefault()
+              mut.mutate()
+            }}
+          >
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                  autoFocus
+                  className="pl-9"
+                />
+                <HugeiconsIcon
+                  icon={Mail01Icon}
+                  className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <PasswordInput
-                    id="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                    className="pl-9 pr-9"
-                  />
-                  <HugeiconsIcon
-                    icon={LockIcon}
-                    className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                    strokeWidth={1.75}
-                  />
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <PasswordInput
+                  id="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  className="pl-9 pr-9"
+                />
+                <HugeiconsIcon
+                  icon={LockIcon}
+                  className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
+                  strokeWidth={1.75}
+                />
               </div>
+            </div>
 
-              {mut.isError ? (
-                <p className="text-sm text-red-600">
-                  {(mut.error as Error).message || "Unable to sign in"}
-                </p>
-              ) : null}
+            {mut.isError ? (
+              <p className="text-sm text-destructive">
+                {(mut.error as Error).message || "Unable to sign in"}
+              </p>
+            ) : null}
 
-              <Button type="submit" className="w-full rounded-md" disabled={mut.isPending}>
-                {mut.isPending ? (
-                  <span className="inline-flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Signing in…
-                  </span>
-                ) : (
-                  "Sign in"
-                )}
-              </Button>
+            <Button type="submit" className="w-full" disabled={mut.isPending}>
+              {mut.isPending ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Signing in…
+                </span>
+              ) : (
+                "Sign in"
+              )}
+            </Button>
 
-              <Separator />
+            <Separator />
 
-              <p className="text-sm text-muted-foreground">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
                 Don’t have an account?{" "}
                 <Link to="/signup" className="font-medium underline">
                   Create one
                 </Link>
-              </p>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+              </span>
+              <Link to="/forgot-password" className="text-muted-foreground underline">
+                Forgot password?
+              </Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

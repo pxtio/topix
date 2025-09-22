@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useListChats } from "@/features/agent/api/list-chats"
 import { useAppStore } from "@/store"
-import { History, Minus, Plus } from "lucide-react"
+import { Minus, Plus } from "lucide-react"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { Collapsible, CollapsibleTrigger } from "../ui/collapsible"
 import { CollapsibleContent } from "@radix-ui/react-collapsible"
@@ -19,6 +19,8 @@ import { ScrollArea } from "../ui/scroll-area"
 import { ChatMenuItem, NewChatItem } from "./chat"
 import { BoardItem, DashboardMenuItem, NewBoardItem } from "./board"
 import { useMemo } from "react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Clock02Icon } from "@hugeicons/core-free-icons"
 
 
 /**
@@ -99,11 +101,11 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <NewChatItem />
-                <Collapsible defaultOpen className="group/collapsible w-full">
+                <Collapsible className="group/collapsible w-full">
                   <CollapsibleTrigger asChild>
                     <SidebarMenuItem>
                       <SidebarMenuButton className="font-medium text-xs flex flex-row items-center w-full">
-                        <History className="size-4 shrink-0" strokeWidth={1.75} />
+                        <HugeiconsIcon icon={Clock02Icon} className="size-4 shrink-0" strokeWidth={1.75} />
                         <span>Chat History</span>
                         <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
                         <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />

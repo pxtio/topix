@@ -8,7 +8,7 @@ import { convertLinkToEdge, convertNoteToNode } from "../utils/graph"
 import { autoLayout } from "../lib/graph/auto-layout"
 import { defaultLayoutOptions } from "../lib/graph/settings"
 import { useMindMapStore } from "@/features/agent/store/mindmap-store"
-import { createDefaultStyle } from "../types/style"
+import { createDefaultLinkStyle, createDefaultStyle } from "../types/style"
 import { colorTree } from "../utils/bfs"
 import { pickRandomColorOfShade } from "../lib/colors/tailwind"
 
@@ -45,11 +45,7 @@ export async function convertToMindMap(
 export const useConvertToMindMap = () => {
   const { userId } = useAppStore()
 
-  const {
-    setMindMap,
-    generatingMindMap,
-    setGeneratingMindmap,
-  } = useMindMapStore()
+  const setMindMap = useMindMapStore(state => state.setMindMap)
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -57,17 +53,16 @@ export const useConvertToMindMap = () => {
       answer,
       toolType
     }: { boardId: string, answer: string, toolType: "notify" | "mapify" }): Promise<{ status: string }> => {
-      if (generatingMindMap) {
-        return { status: "processing" }
-      }
-      setGeneratingMindmap(true)
       const { notes, links } = await convertToMindMap(userId, answer, toolType)
 
       notes.forEach(note => {
         note.graphUid = boardId
         note.style = createDefaultStyle({ type: note.style.type })
       })
-      links.forEach(link => link.graphUid = boardId)
+      links.forEach(link => {
+        link.graphUid = boardId
+        link.style = createDefaultLinkStyle()
+      })
       if (toolType === "mapify") {
         // color tree if mapify
         colorTree({ notes, links })
@@ -85,7 +80,6 @@ export const useConvertToMindMap = () => {
       // will be consumed by board component
       // and then cleared
       setMindMap(boardId, nodes, edges)
-      setGeneratingMindmap(false)
 
       return { status: "success" }
     }

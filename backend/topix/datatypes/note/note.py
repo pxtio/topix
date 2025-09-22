@@ -4,14 +4,53 @@ from typing import Literal
 
 from pydantic import Field
 
-from topix.datatypes.graph.style import Style
+from topix.datatypes.note.style import Style
 from topix.datatypes.property import (
+    BooleanProperty,
     DataProperty,
     IconProperty,
+    NumberProperty,
     PositionProperty,
     SizeProperty,
+    TextProperty,
 )
-from topix.datatypes.resource import Resource
+from topix.datatypes.resource import Resource, ResourceProperties
+
+
+class NoteProperties(ResourceProperties):
+    """Note properties."""
+
+    # need to repeat this for every subclass of ResourceProperties
+    # otherwise pydantic gets confused
+    __pydantic_extra__: dict[str, DataProperty] = Field(init=False)
+
+    node_position: PositionProperty = Field(
+        default_factory=lambda: PositionProperty(
+            position=PositionProperty.Position(x=0, y=0)
+        )
+    )
+    node_size: SizeProperty = Field(
+        default_factory=lambda: SizeProperty(
+            size=SizeProperty.Size(width=300, height=100)
+        )
+    )
+    emoji: IconProperty = Field(
+        default_factory=lambda: IconProperty(
+            icon=IconProperty.Emoji(emoji="")
+        )
+    )
+    pinned: BooleanProperty = Field(
+        default_factory=lambda: BooleanProperty(boolean=False)
+    )
+    list_order: NumberProperty = Field(
+        default_factory=lambda: NumberProperty(number=0.0)
+    )
+    link: TextProperty = Field(
+        default_factory=lambda: TextProperty()
+    )
+    image_link: TextProperty = Field(
+        default_factory=lambda: TextProperty()
+    )
 
 
 class Note(Resource):
@@ -20,20 +59,10 @@ class Note(Resource):
     type: Literal["note"] = "note"
 
     # properties
-    properties: dict[str, DataProperty] | None = {
-        "node_position": PositionProperty(
-            position=PositionProperty.Position(x=0, y=0)
-        ),
-        "node_size": SizeProperty(
-            size=SizeProperty.Size(width=300, height=100)
-        ),
-        "emoji": IconProperty(
-            icon=IconProperty.Emoji(emoji="")
-        )
-    }
+    properties: NoteProperties = Field(
+        default_factory=NoteProperties
+    )
 
     # graph attributes
     graph_uid: str | None = None
     style: Style = Field(default_factory=Style)
-
-    pinned: bool = False

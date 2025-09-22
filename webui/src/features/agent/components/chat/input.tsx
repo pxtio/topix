@@ -94,7 +94,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   )
 
   const className = clsx(
-    "transition-all absolute inset-x-0 p-4 pt-10 z-50 flex flex-col justify-center items-center gap-16 bg-background/80 supports-[backdrop-filter]:bg-background/60 backdrop-blur-md",
+    "transition-all absolute inset-x-0 p-4 pt-10 z-20 flex flex-col justify-center items-center gap-16 bg-transparent",
     chatId ?
     "bottom-0"
     :

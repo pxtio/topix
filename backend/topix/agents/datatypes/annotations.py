@@ -11,6 +11,8 @@ class SearchResult(BaseModel):
     url: str
     title: str | None = None
     content: str | None = None
+    favicon: str | None = None
+    cover_image: str | None = None
 
 
 class RefAnnotation(BaseModel):

@@ -3,7 +3,7 @@
 from pydantic import Field
 from typing_extensions import Literal
 
-from topix.datatypes.graph.style import Style
+from topix.datatypes.note.style import LinkStyle
 from topix.datatypes.resource import Resource
 
 
@@ -15,6 +15,6 @@ class Link(Resource):
     source: str
     target: str
 
-    style: Style = Field(default_factory=Style)
+    style: LinkStyle = Field(default_factory=LinkStyle)
 
     graph_uid: str | None = None

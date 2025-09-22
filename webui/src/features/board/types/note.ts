@@ -1,5 +1,5 @@
 import { generateUuid, uuidToNumber } from "@/lib/common"
-import type { IconProperty, PositionProperty, SizeProperty } from "./property"
+import type { BooleanProperty, IconProperty, NumberProperty, PositionProperty, SizeProperty,   } from "./property"
 import { createDefaultStyle, type NodeType, type Style } from "./style"
 
 
@@ -7,9 +7,11 @@ import { createDefaultStyle, type NodeType, type Style } from "./style"
  * Interface for properties of a note.
  */
 export interface NoteProperties {
-  nodePosition?: PositionProperty
-  nodeSize?: SizeProperty
-  emoji?: IconProperty
+  nodePosition: PositionProperty
+  nodeSize: SizeProperty
+  emoji: IconProperty
+  pinned: BooleanProperty
+  listOrder: NumberProperty
 }
 
 
@@ -33,7 +35,7 @@ export interface Note extends Record<string, unknown> {
   updatedAt?: string
   deletedAt?: string
 
-  properties?: NoteProperties
+  properties: NoteProperties
 
   label?: RichText
   content?: RichText
@@ -43,8 +45,6 @@ export interface Note extends Record<string, unknown> {
 
   minWidth?: number
   minHeight?: number
-
-  pinned: boolean
 
   roughSeed?: number
 }
@@ -57,10 +57,15 @@ export const DEFAULT_STICKY_NOTE_WIDTH = 300
 export const DEFAULT_STICKY_NOTE_HEIGHT = 300
 
 
+/**
+ * Function to create default properties for a note.
+ * @returns Default properties for a note.
+ */
 export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: NodeType }): NoteProperties => {
   const defaultSize = type === 'sheet' ?
     { width: DEFAULT_STICKY_NOTE_WIDTH, height: DEFAULT_STICKY_NOTE_HEIGHT }
     : { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT }
+
   return {
     nodePosition: {
       position: { x: 0, y: 0 },
@@ -73,6 +78,14 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     emoji: {
       type: "icon",
       icon: { type: "emoji", emoji: "" },
+    },
+    pinned: {
+      type: "boolean",
+      boolean: false,
+    },
+    listOrder: {
+      type: "number",
+      number: 0,
     }
   }
 }
@@ -103,7 +116,6 @@ export const createDefaultNote = ({
     minWidth: DEFAULT_NOTE_WIDTH,
     minHeight: DEFAULT_NOTE_HEIGHT,
     properties: createDefaultNoteProperties({ type: nodeType }),
-    pinned: false,
     roughSeed
   }
 }

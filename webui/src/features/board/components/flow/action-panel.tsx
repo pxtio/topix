@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GitMergeIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, StickyNote03Icon } from '@hugeicons/core-free-icons'
+import { ChartRelationshipIcon, CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GridViewIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { NodeType } from '../../types/style'
+import { Separator } from '@/components/ui/separator'
 
-type ViewMode = 'graph' | 'linear'
+type ViewMode = 'graph' | 'linear' | 'grid'
 
 interface ActionPanelProps {
   onAddNode: ({ nodeType }: { nodeType: NodeType }) => void
@@ -37,15 +38,15 @@ export function ActionPanel({
 }: ActionPanelProps) {
   const normalButtonClass = `
     transition-colors
-    bg-card text-card-foreground
-    hover:bg-accent
+    text-card-foreground
+    hover:bg-sidebar-primary hover:text-sidebar-primary-foreground
     p-4
     rounded-lg
   `
 
   const activeButtonClass = clsx(
     normalButtonClass,
-    'bg-accent text-accent-foreground',
+    'bg-sidebar-primary text-sidebar-primary-foreground',
   )
 
   const selectionModeButtonClass = enableSelection ? activeButtonClass : normalButtonClass
@@ -93,12 +94,18 @@ export function ActionPanel({
     >
       {/* View mode toggle */}
       <ModeButton mode='graph' label='Graph'>
-        <HugeiconsIcon icon={GitMergeIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+        <HugeiconsIcon icon={ChartRelationshipIcon} className='size-4 shrink-0' strokeWidth={1.75} />
       </ModeButton>
 
       <ModeButton mode='linear' label='Linear'>
         <HugeiconsIcon icon={LeftToRightListBulletIcon} className='size-4 shrink-0' strokeWidth={1.75} />
       </ModeButton>
+
+      <ModeButton mode='grid' label='Grid'>
+        <HugeiconsIcon icon={GridViewIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+      </ModeButton>
+
+      <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
 
       {/* ——— GRAPH MODE CONTROLS ——— */}
       {viewMode === 'graph' && (
@@ -174,6 +181,8 @@ export function ActionPanel({
             )}
           </Button>
 
+          <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
+
           {/* Add sheet */}
           <Button
             variant={null}
@@ -183,7 +192,7 @@ export function ActionPanel({
             title='Add Sticky Note'
             aria-label='Add Sticky Note'
           >
-            <HugeiconsIcon icon={StickyNote03Icon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={1.75} />
           </Button>
 
           {/* Add rectangle */}
@@ -221,11 +230,23 @@ export function ActionPanel({
           >
             <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={1.75} />
           </Button>
+
+          {/* Add text */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => onAddNode({ nodeType: 'text' })}
+            title='Add Text'
+            aria-label='Add Text'
+          >
+            <HugeiconsIcon icon={TextIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+          </Button>
         </>
       )}
 
       {/* ——— LINEAR MODE CONTROLS ——— */}
-      {viewMode === 'linear' && (
+      {viewMode !== "graph" && (
         <>
           {/* Keep it simple in linear: only Add sheet */}
           <Button
@@ -233,10 +254,10 @@ export function ActionPanel({
             className={normalButtonClass}
             size='icon'
             onClick={() => onAddNode({ nodeType: 'sheet' })}
-            title='Add sheet'
-            aria-label='Add sheet'
+            title='Add Sticky Note'
+            aria-label='Add Sticky Note'
           >
-            <HugeiconsIcon icon={StickyNote03Icon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={1.75} />
           </Button>
         </>
       )}

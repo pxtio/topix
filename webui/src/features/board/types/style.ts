@@ -22,7 +22,6 @@ export type FillStyle = "solid" | "hachure" | "cross-hatch" | "zigzag" | "dots"
  */
 export type TextAlign = "left" | "center" | "right"
 
-
 /**
  * Font size options for the node.
  */
@@ -36,9 +35,9 @@ export function fontSizeToTwClass(size?: FontSize): string {
     case "M":
       return "text-base"
     case "L":
-      return "text-lg"
-    case "XL":
       return "text-xl"
+    case "XL":
+      return "text-2xl"
     default:
       return "text-base"
   }
@@ -103,16 +102,12 @@ export type Sloppiness = typeof SloppyPresets[number]
 /**
  * Stroke width options for the node.
  */
-export const StrokeWidthPresets = [0.75, 1, 2]
+export const StrokeWidthPresets = [1, 2, 4]
 
 export type StrokeWidth = typeof StrokeWidthPresets[number]
 
 
-/**
- * Interface for the style of a node in the board.
- */
-export interface Style {
-  type: NodeType
+export interface BaseStyle {
   angle: number
   strokeColor: string
   strokeWidth: number
@@ -132,6 +127,28 @@ export interface Style {
 
 
 /**
+ * Interface for the style of a node in the board.
+ */
+export interface Style extends BaseStyle {
+  type: NodeType
+}
+
+
+// Arrowhead types for links
+export type ArrowheadType = 'none' | 'arrow' | 'barb' | 'arrow-filled'
+
+
+/**
+ * Interface for the style of a link in the board.
+ */
+export interface LinkStyle extends BaseStyle {
+  type: "arrow"
+  sourceArrowhead: ArrowheadType
+  targetArrowhead: ArrowheadType
+}
+
+
+/**
  * Default style for nodes in the board.
  */
 export const createDefaultStyle = ({
@@ -142,8 +159,8 @@ export const createDefaultStyle = ({
   const defaultOptions = {
     type: type,
     angle: 0.0,
-    strokeColor: "transparent",
-    strokeWidth: 0.75,
+    strokeColor: "#00000000",
+    strokeWidth: 1,
     strokeStyle: "solid",
     backgroundColor: "#fed7aa",
     fillStyle: "solid",
@@ -187,7 +204,7 @@ export const createDefaultStyle = ({
         ...defaultOptions,
         roughness: 0,
         roundness: 0,
-        fontFamily: "sans-serif",
+        fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "left"
       } as Style
@@ -196,10 +213,35 @@ export const createDefaultStyle = ({
         ...defaultOptions,
         roughness: 0,
         roundness: 0,
-        fontFamily: "sans-serif",
+        fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "left",
-        backgroundColor: "transparent"
+        backgroundColor: "#00000000"
       } as Style
   }
 }
+
+
+/**
+ * Default style for links in the board.
+ */
+export const createDefaultLinkStyle = (): LinkStyle => ({
+  type: "arrow",
+  angle: 0.0,
+  strokeColor: "#292524",
+  strokeWidth: 1.5,
+  strokeStyle: "solid",
+  backgroundColor: "#00000000",
+  fillStyle: "solid",
+  roughness: 1,
+  roundness: 0,
+  opacity: 100,
+  groupIds: [],
+  fontFamily: "sans-serif",
+  fontSize: "M",
+  textAlign: "center",
+  textColor: "#000000",
+  textStyle: "normal",
+  sourceArrowhead: "none",
+  targetArrowhead: "arrow"
+})

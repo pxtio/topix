@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncGenerator
 
+import litellm
+
 from agents import (
     Agent,
     ModelSettings,
@@ -42,6 +44,7 @@ from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.utils.tools import tool_execution_handler
 
 logger = logging.getLogger(__name__)
+litellm.drop_params = True
 
 RAW_RESPONSE_EVENT = "raw_response_event"
 PROMPT_DIR = Path(__file__).parent.parent / "prompts"
@@ -66,10 +69,6 @@ class BaseAgent(Agent[Context]):
 
         if model_settings.max_tokens is None:
             model_settings.max_tokens = 8000
-
-        # increase this to avoid tail repetition
-        if model_settings.frequency_penalty is None:
-            model_settings.frequency_penalty = 0.2
 
         if support_reasoning(model):
             if not model_settings.reasoning:

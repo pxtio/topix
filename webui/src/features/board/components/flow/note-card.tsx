@@ -1,24 +1,21 @@
 // components/flow/node-label.tsx
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useReactFlow } from '@xyflow/react'
-import type { Note } from '../../types/note'
-import TextareaAutosize from 'react-textarea-autosize'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { Note, NoteProperties } from '../../types/note'
 import type { NoteNode } from '../../types/flow'
-import { MdEditor } from '@/components/editor/milkdown'
 import { MilkdownProvider } from '@milkdown/react'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from '../../types/style'
+import { MdEditor } from '@/components/editor/milkdown'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowDiagonalIcon, Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
-import { clsx } from 'clsx'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { clsx } from 'clsx'
 
-// subcomponents
 import { Shape } from '../notes/shape'
 import { StickyNote } from '../notes/sticky-note'
 import { TAILWIND_200 } from '../../lib/colors/tailwind'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
+import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from '../../types/style'
 
 type NoteWithPin = Note & { pinned?: boolean }
 
@@ -28,15 +25,17 @@ type NodeCardProps = {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   isDark: boolean
+  contentRef: React.RefObject<HTMLDivElement | null>
 }
 
-/**
- * Renders the node's inline preview and the full editor dialog.
- * - StickyNote (type "sheet"): click preview to open dialog
- * - Shape (others): must click the floating "View Note" button to open dialog
- * - Sheet-only toolbar: palette (bg color), pin, delete
- */
-export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCardProps) => {
+export const NodeCard = ({
+  note,
+  selected,
+  open,
+  onOpenChange,
+  isDark,
+  contentRef
+}: NodeCardProps) => {
   const isSheet = note.style.type === 'sheet'
 
   const [internalOpen, setInternalOpen] = useState(false)
@@ -47,24 +46,46 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const [labelEditing, setLabelEditing] = useState(false)
 
+  // local draft that controls the textarea while editing
+  const [labelDraft, setLabelDraft] = useState<string>(note.label?.markdown || '')
+
+  // selection cache for resilient caret restore if remounts happen
+  const selRef = useRef<{ start: number; end: number } | null>(null)
+
   const textColor = isDark ? darkModeDisplayHex(note.style.textColor) || undefined : note.style.textColor
 
-  // classNames derived from style
-  const labelClass = useMemo(() => clsx(
-    'relative bg-transparent overflow-visible flex items-center justify-center',
-    isSheet ?
-    `w-[300px] h-[300px] ${fontFamilyToTwClass(note.style.fontFamily)} p-2 pt-8`
-    :
-    'w-full h-full p-2'
-  ), [isSheet, note.style.fontFamily])
+  const isPinned = note.properties.pinned.boolean === true
 
-  const titleEditorClass = 'text-3xl focus:outline-none focus:ring-0 focus:border-none overflow-visible whitespace-normal break-words resize-none w-full'
+  const fontFamily = note.style.type === 'sheet' ? 'sans-serif' : note.style.fontFamily
 
-  const setDialogOpen = useCallback((v: boolean) => {
-    if (typeof open === 'boolean') onOpenChange?.(v)
-    else setInternalOpen(v)
-  }, [open, onOpenChange])
+  const labelClass = useMemo(
+    () =>
+      clsx(
+        'relative bg-transparent overflow-visible flex items-center justify-center',
+        isSheet
+          ? `w-[400px] h-[400px] ${fontFamilyToTwClass(fontFamily)} p-2 pt-8`
+          : 'w-full h-full p-2'
+      ),
+    [isSheet, fontFamily]
+  )
 
+  const titleEditorClass =
+    'text-3xl focus:outline-none focus:ring-0 focus:border-none overflow-visible whitespace-normal break-words resize-none w-full'
+
+  const setDialogOpen = useCallback(
+    (v: boolean) => {
+      if (typeof open === 'boolean') onOpenChange?.(v)
+      else setInternalOpen(v)
+    },
+    [open, onOpenChange]
+  )
+
+  // keep draft in sync when not editing or when external value changes
+  useEffect(() => {
+    if (!labelEditing) setLabelDraft(note.label?.markdown || '')
+  }, [labelEditing, note.label?.markdown])
+
+  // leave editing state if deselected or dialog is closed by selection change
   useEffect(() => {
     if (!selected) {
       setLabelEditing(false)
@@ -72,29 +93,72 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
     }
   }, [selected, setDialogOpen])
 
+  // focus and put caret at end when entering edit mode
+  useEffect(() => {
+    if (!labelEditing) return
+    const el = textareaRef.current
+    if (!el) return
+    el.focus()
+    const len = el.value.length
+    try {
+      el.setSelectionRange(len, len)
+    } catch {
+      console.warn('Failed to set selection range')
+    }
+  }, [labelEditing])
+
+  // robust caret restore in case the node remounts while typing
+  useLayoutEffect(() => {
+    if (!labelEditing) return
+    const el = textareaRef.current
+    const sel = selRef.current
+    if (!el || !sel) return
+
+    const restore = () => {
+      try {
+        el.setSelectionRange(sel.start, sel.end)
+      } catch {
+        console.warn('Failed to restore selection range')
+      }
+    }
+
+    restore()
+    const id = requestAnimationFrame(restore)
+    return () => cancelAnimationFrame(id)
+  }, [labelDraft, labelEditing])
+
   // handlers
   const handleLabelChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newLabel = event.target.value
+    const next = event.target.value
+
+    // capture selection before any possible remount
+    selRef.current = {
+      start: event.target.selectionStart ?? next.length,
+      end: event.target.selectionEnd ?? next.length
+    }
+
+    // 1) update draft so the textarea stays stable
+    setLabelDraft(next)
+
+    // 2) also update the graph so other parts of the app see changes live
     setNodes(nds =>
-      nds.map(node => {
-        if (node.id === note.id) {
-          return {
-            ...node,
-            data: { ...node.data, label: { markdown: newLabel } }
-          } as NoteNode
+      nds.map(n => {
+        if (n.id !== note.id) return n
+        const data = n.data as NoteNode['data']
+        return {
+          ...n,
+          data: { ...data, label: { markdown: next } }
         }
-        return node
       })
     )
   }, [note.id, setNodes])
 
   const handleNoteChange = useCallback((markdown: string) => {
     setNodes(nds =>
-      nds.map(node => {
-        if (node.id === note.id) {
-          return { ...node, data: { ...node.data, content: { markdown } } }
-        }
-        return node
+      nds.map(n => {
+        if (n.id !== note.id) return n
+        const data = n.data as NoteNode['data']
+        return { ...n, data: { ...data, content: { markdown } } }
       })
     )
   }, [note.id, setNodes])
@@ -103,8 +167,9 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
     setNodes(nds =>
       nds.map(n => {
         if (n.id !== note.id) return n
-        const prevStyle = n.data.style as Note['style']
-        return { ...n, data: { ...n.data, style: { ...prevStyle, ...next } } }
+        const data = n.data as NoteNode['data']
+        const prevStyle = data.style as Note['style']
+        return { ...n, data: { ...data, style: { ...prevStyle, ...next } } }
       })
     )
   }, [note.id, setNodes])
@@ -116,13 +181,6 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
   const onDoubleClick = useCallback(() => {
     if (isSheet) return
     setLabelEditing(true)
-    setTimeout(() => {
-      const textarea = textareaRef.current
-      if (!textarea) return
-      textarea.focus()
-      const len = textarea.value.length
-      textarea.setSelectionRange(len, len)
-    }, 0)
   }, [isSheet])
 
   const openDialogFromSticky = useCallback(() => {
@@ -131,15 +189,22 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
 
   const onTogglePin = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
-    const isPinned = note.pinned === true
     setNodes(nds =>
-      nds.map(n =>
-        n.id === note.id
-          ? ({ ...n, data: { ...n.data, pinned: !isPinned } }) as NoteNode
-          : n
-      )
+      nds.map(n => {
+        if (n.id !== note.id) return n
+        const data = n.data as NoteNode['data']
+        const props = data.properties as NoteProperties
+        const nextPinned = !isPinned
+        return {
+          ...n,
+          data: {
+            ...data,
+            properties: { ...props, pinned: { type: 'boolean', boolean: nextPinned } }
+          }
+        }
+      })
     )
-  }, [note.id, note.pinned, setNodes])
+  }, [isPinned, note.id, setNodes])
 
   const onDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -161,7 +226,6 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
       >
         {isSheet && (
           <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 shadow-xs justify-end bg-background/20'>
-            {/* Palette popover */}
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -179,7 +243,7 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
                     <button
                       key={c.name}
                       className='h-6 w-6 rounded-full border border-border hover:brightness-95'
-                      style={{ backgroundColor: c.hex }}
+                      style={{ backgroundColor: isDark ? darkModeDisplayHex(c.hex) || c.hex : c.hex }}
                       title={`${c.name}-100`}
                       aria-label={`${c.name}-100`}
                       onClick={() => onPickPalette(c.hex)}
@@ -195,8 +259,8 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
               aria-label='Toggle pin'
               title='Pin/Unpin'
             >
-              {note.pinned
-                ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-primary' strokeWidth={1.75} />
+              {isPinned
+                ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={1.75} />
                 : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={1.75} />
               }
             </button>
@@ -212,7 +276,6 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
           </div>
         )}
 
-        {/* SHAPE: top-center button to open dialog */}
         {selected && !isSheet && (
           <div className='absolute top-2 inset-x-0 -translate-y-[calc(100%+0.5rem)] text-xs font-sans flex items-center justify-center gap-2 z-40'>
             <DialogTrigger asChild>
@@ -232,21 +295,23 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
           <StickyNote content={note.content?.markdown || ''} onOpen={openDialogFromSticky} />
         ) : (
           <Shape
-            value={note.label?.markdown || ''}
+            value={labelEditing ? labelDraft : (note.label?.markdown || '')}
             labelEditing={labelEditing}
             onChange={handleLabelChange}
             textareaRef={textareaRef}
             textAlign={note.style.textAlign}
             styleHelpers={{
               text: textStyleToTwClass(note.style.textStyle),
-              font: fontFamilyToTwClass(note.style.fontFamily),
+              font: fontFamilyToTwClass(fontFamily),
               size: fontSizeToTwClass(note.style.fontSize)
             }}
+            contentRef={contentRef}
+            showPlaceholder={note.style.type === 'text'}
           />
         )}
       </div>
 
-      {/* DIALOG CONTENT (full editor) */}
+      {/* DIALOG CONTENT */}
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2'>
         {isSheet ? (
           <DialogHeader className='hidden'>
@@ -257,10 +322,10 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
           <DialogHeader className='w-full'>
             <DialogTitle asChild>
               <div className='flex items-center gap-2 w-full pt-10 px-20'>
-                <TextareaAutosize
+                <textarea
                   className={titleEditorClass}
-                  value={note.label?.markdown || ''}
-                  onChange={handleLabelChange}
+                  value={labelEditing ? labelDraft : (note.label?.markdown || '')}
+                  onChange={e => setLabelDraft(e.target.value)}
                   placeholder=''
                 />
               </div>
@@ -270,11 +335,11 @@ export const NodeCard = ({ note, selected, open, onOpenChange, isDark }: NodeCar
         )}
 
         <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
-          <ScrollArea className='h-full w-full'>
+          <div className='h-full w-full min-w-0 overflow-auto scrollbar-thin'>
             <MilkdownProvider>
               <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
             </MilkdownProvider>
-          </ScrollArea>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

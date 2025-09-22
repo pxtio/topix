@@ -10,7 +10,7 @@ from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.helpers import with_standard_response
 from topix.api.utils.security import get_current_user_uid
-from topix.utils.web import preview_webpage
+from topix.utils.web.preview import preview_webpage
 
 router = APIRouter(
     prefix="/tools",

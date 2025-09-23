@@ -1,56 +1,46 @@
 import { ReactFlowProvider } from "@xyflow/react"
+import { useEffect, useMemo } from "react"
 import GraphEditor from "./flow/graph-editor"
 import { useGraphStore } from "../store/graph-store"
-import { useEffect, useState } from "react"
 import { ProgressBar } from "@/components/progress-bar"
 import { useGetBoard } from "../api/get-board"
 
-
-// This is the response focus component
-export const GraphView = () => {
-  const [loaded, setLoaded] = useState<boolean>(false)
-  const { boardId } = useGraphStore()
-
-  const { getBoardAsync } = useGetBoard()
-
-  useEffect(() => {
-    const fetchBoard = async () => {
-      const fetched = await getBoardAsync()
-      if (fetched) {
-        setLoaded(true)
-      }
-    }
-    // update local store current board id with param from path
-    if (!loaded) {
-      fetchBoard()
-    }
-  }, [boardId, getBoardAsync, loaded])
+/**
+ * GraphView
+ *
+ * Board-aware shell for the graph editor that triggers a fetch on board changes
+ * and renders purely from derived loading state. It resets the mutation state
+ * when the boardId changes, fires a single fetch, and relies on React Query's
+ * status combined with the graph store's isLoading to avoid local race conditions.
+ */
+export const GraphView: React.FC = () => {
+  const { boardId, isLoading: storeLoading } = useGraphStore()
+  const { getBoardAsync, isPending, isSuccess, reset } = useGetBoard()
 
   useEffect(() => {
-    setLoaded(false)
-  }, [boardId])
+    if (!boardId) return
+    reset()
+    void getBoardAsync()
+  }, [boardId, getBoardAsync, reset])
+
+  const loading = useMemo(
+    () => !isSuccess || isPending || storeLoading,
+    [isSuccess, isPending, storeLoading]
+  )
 
   return (
-    <>
-      <div
-        className="absolute inset-0 h-full w-full overflow-hidden"
-      >
-        <ReactFlowProvider>
-          <div className="relative h-full w-full bg-background">
-            {
-              !loaded ?
-              <div className="absolute inset-0 bg-background flex items-center justify-center">
-                <ProgressBar
-                  message="Loading board"
-                  viewMode="compact"
-                />
-              </div>
-              :
-              <GraphEditor />
-            }
-          </div>
-        </ReactFlowProvider>
-      </div>
-    </>
+    <div className="absolute inset-0 h-full w-full overflow-hidden">
+      <ReactFlowProvider>
+        <div className="relative h-full w-full bg-background">
+          {loading ? (
+            <div className="absolute inset-0 bg-background flex items-center justify-center">
+              <ProgressBar message="Loading board" viewMode="compact" />
+            </div>
+          ) : (
+            <GraphEditor />
+          )}
+        </div>
+      </ReactFlowProvider>
+    </div>
   )
 }

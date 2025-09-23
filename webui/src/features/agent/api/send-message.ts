@@ -100,11 +100,12 @@ export const useSendMessage = () => {
         let streamingMessageId: string | undefined
         let count = 0
         for await (const resp of response) {
-          if (resp.steps.length === 0) {
+          const { response: rep, isStop } = resp
+          if (rep.steps.length === 0) {
             continue
           }
           count ++
-          const step = resp.steps[0]
+          const step = rep.steps[0]
           const responseId = step.id
 
           if (!streamingMessageId) {
@@ -137,9 +138,8 @@ export const useSendMessage = () => {
               }
             )
           }
-          const lastStepName = resp.steps.length > 0 ? resp.steps[resp.steps.length - 1].name : ""
-          if (count % 10 === 1 || lastStepName === "raw_message") {
-            setStream(responseId, resp)
+          if (count % 5 === 1 || isStop) {
+            setStream(responseId, rep)
           }
         }
       } catch (error) {

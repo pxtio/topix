@@ -120,19 +120,21 @@ class BroadWebSearch(BaseAgent):
                     )
             case WebSearchOption.TAVILY:
                 @function_tool
-                def web_search(query: str) -> WebSearchOutput:
+                async def web_search(query: str) -> WebSearchOutput:
                     """Search using Tavily."""
-                    return search_tavily(
-                        query, search_context_size=search_context_size
+                    return await search_tavily(
+                        query,
+                        search_context_size=search_context_size
                     )
                 tools.append(web_search)
                 return tools
             case WebSearchOption.LINKUP:
                 @function_tool
-                def web_search(query: str) -> WebSearchOutput:
+                async def web_search(query: str) -> WebSearchOutput:
                     """Search using LinkUp."""
-                    return search_linkup(
-                        query, search_context_size=search_context_size
+                    return await search_linkup(
+                        query,
+                        search_context_size=search_context_size
                     )
                 tools.append(web_search)
                 return tools
@@ -201,7 +203,8 @@ class BroadWebSearch(BaseAgent):
         [see details](https://github.com/openai/openai-agents-python/issues/1346)
 
         """
-        if isinstance(self.model, str):
+        # for openai models with not-generative search, use the built-in web search tool
+        if isinstance(self.model, str) and not self.search_engine == WebSearchOption.LINKUP:
             return super().as_tool(
                 tool_name=tool_name,
                 tool_description=tool_description,
@@ -225,40 +228,55 @@ class BroadWebSearch(BaseAgent):
             async with tool_execution_handler(
                 context, name_override, input
             ) as tool_id:
-                if streamed:
-                    _, stream = await self._call_litellm(streamed=True, input=input)
-                    async for chunk in stream:
-                        if chunk.choices[0].delta.content is not None:
-                            # Create the message for the stream
-                            message = AgentStreamMessage(
-                                content=Content(
-                                    type=ContentType.TOKEN,
-                                    text=chunk.choices[0].delta.content,
-                                ),
-                                tool_id=tool_id,
-                                tool_name=name_override,
-                                is_stop=False,
-                            )
-                            # Add the message to the context
-                            await context._message_queue.put(message)
-                            content += chunk.choices[0].delta.content
-                        # If there are search results, add them to the context
-                        if hasattr(chunk, "search_results") and chunk.search_results:
-                            search_results = chunk.search_results
-
+                # if search engine is linkup, use directly the embedded web search tool as
+                # it includes already generative answer with citations
+                if self.search_engine == WebSearchOption.LINKUP:
+                    web_search_output: WebSearchOutput = await self.tools[0](input)
+                    msg = AgentStreamMessage(
+                        tool_id=tool_id,
+                        tool_name=name_override,
+                        content=Content(
+                            type=ContentType.MESSAGE,
+                            text=web_search_output.answer,
+                        ),
+                        is_stop=True,
+                    )
+                    await context._message_queue.put(msg)
                 else:
-                    response = await self._call_litellm(stream=False, input=input)
-                    content = response.choices[0].message.content
-                    search_results: list[dict] = response.search_results
+                    if streamed:
+                        _, stream = await self._call_litellm(streamed=True, input=input)
+                        async for chunk in stream:
+                            if chunk.choices[0].delta.content is not None:
+                                # Create the message for the stream
+                                message = AgentStreamMessage(
+                                    content=Content(
+                                        type=ContentType.TOKEN,
+                                        text=chunk.choices[0].delta.content,
+                                    ),
+                                    tool_id=tool_id,
+                                    tool_name=name_override,
+                                    is_stop=False,
+                                )
+                                # Add the message to the context
+                                await context._message_queue.put(message)
+                                content += chunk.choices[0].delta.content
+                            # If there are search results, add them to the context
+                            if hasattr(chunk, "search_results") and chunk.search_results:
+                                search_results = chunk.search_results
 
-                if search_results:
-                    content = self._process_perplexity_response(content, search_results)
+                    else:
+                        response = await self._call_litellm(stream=False, input=input)
+                        content = response.choices[0].message.content
+                        search_results: list[dict] = response.search_results
 
-            searches = [SearchResult(**result) for result in search_results]
-            web_search_output = WebSearchOutput(
-                answer=content,
-                search_results=searches,
-            )
+                    if search_results:
+                        content = self._process_perplexity_response(content, search_results)
+
+                searches = [SearchResult(**result) for result in search_results]
+                web_search_output = WebSearchOutput(
+                    answer=content,
+                    search_results=searches,
+                )
             tool_call = ToolCall(
                 id=tool_id,
                 name=name_override,

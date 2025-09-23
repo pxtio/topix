@@ -124,7 +124,7 @@ class DeepWebSearch(BaseAgent):
         tools = []
 
         @function_tool
-        def navigate_webpage(web_url: str) -> str:
+        async def navigate_webpage(web_url: str) -> str:
             """Read the content of a website given its URL.
 
             Args:
@@ -134,20 +134,22 @@ class DeepWebSearch(BaseAgent):
                 str: The full content of the website.
 
             """
-            return navigate(web_url, extract_depth)
+            return await navigate(web_url, extract_depth, client=self._httpx_client)
 
         tools.append(navigate_webpage)
 
         @function_tool
-        def web_search(query: str) -> WebSearchOutput:
+        async def web_search(query: str) -> WebSearchOutput:
             """Search using Tavily / Linkup."""
             if self.search_engine == WebSearchOption.TAVILY:
-                return search_tavily(
-                    query, search_context_size=WebSearchContextSize.MEDIUM
+                return await search_tavily(
+                    query,
+                    search_context_size=WebSearchContextSize.MEDIUM
                 )
             elif self.search_engine == WebSearchOption.LINKUP:
-                return search_linkup(
-                    query, search_context_size=WebSearchContextSize.MEDIUM
+                return await search_linkup(
+                    query,
+                    search_context_size=WebSearchContextSize.MEDIUM
                 )
             else:
                 raise ValueError(

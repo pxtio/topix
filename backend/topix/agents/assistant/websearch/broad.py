@@ -65,7 +65,7 @@ class BroadWebSearch(BaseAgent):
 
     def __init__(
         self,
-        model: str = ModelEnum.OpenAI.GPT_5,
+        model: str = ModelEnum.OpenAI.GPT_4_1_MINI,
         instructions_template: str = "web_search.jinja",
         model_settings: ModelSettings | None = None,
         search_engine: WebSearchOption = WebSearchOption.OPENAI,
@@ -161,17 +161,6 @@ class BroadWebSearch(BaseAgent):
                                     SearchResult(url=annotation.url, title=annotation.title)
                                 )
 
-            # Fetch favicons and cover images for the search results
-            meta_images = await fetch_meta_images_batch(
-                [result.url for result in search_results]
-            )
-            for result in search_results:
-                if result.url in meta_images:
-                    result.favicon = str(meta_images[result.url].favicon) if meta_images[result.url].favicon else None
-                    result.cover_image = str(meta_images[result.url].cover_image) if meta_images[result.url].cover_image else None
-            return WebSearchOutput(
-                answer=output.final_output, search_results=search_results
-            )
         else:
             search_results = []
             for item in output.new_items:
@@ -184,9 +173,18 @@ class BroadWebSearch(BaseAgent):
                             "Expected WebSearchOutput from tool call, got "
                             f"{type(item.output)}"
                         )
-            return WebSearchOutput(
-                answer=output.final_output, search_results=search_results
-            )
+        # Fetch favicons and cover images for the search results
+        meta_images = await fetch_meta_images_batch(
+            [result.url for result in search_results]
+        )
+        for result in search_results:
+            if result.url in meta_images:
+                result.favicon = str(meta_images[result.url].favicon) if meta_images[result.url].favicon else None
+                result.cover_image = str(meta_images[result.url].cover_image) if meta_images[result.url].cover_image else None
+
+        return WebSearchOutput(
+            answer=output.final_output, search_results=search_results
+        )
 
     def as_tool(
         self,

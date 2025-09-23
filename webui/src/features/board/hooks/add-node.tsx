@@ -1,11 +1,12 @@
 import { useReactFlow } from "@xyflow/react"
-import { createDefaultNote, type Note } from "../types/note"
+import { createDefaultNote, createDefaultNoteProperties, type Note } from "../types/note"
 import { useCallback } from "react"
 import { useGraphStore } from "../store/graph-store"
 import { convertNoteToNode } from "../utils/graph"
 import { useAddNotes } from "../api/add-notes"
 import { useAppStore } from "@/store"
 import type { NodeType } from "../types/style"
+import { useStyleDefaults } from "../style-provider"
 
 
 /**
@@ -19,6 +20,7 @@ export function useAddNoteNode() {
   const { boardId, nodes, setNodes } = useGraphStore()
 
   const { addNotes } = useAddNotes()
+  const { applyDefaultNodeStyle } = useStyleDefaults()
 
   return useCallback(({
     nodeType = 'rectangle'
@@ -27,6 +29,7 @@ export function useAddNoteNode() {
   }) => {
     if (!boardId) return
     const newNote = createDefaultNote({ boardId, nodeType })
+    newNote.style = applyDefaultNodeStyle(nodeType)
     const jitter = () => Math.random() * 100 - 50
 
     const container = document.querySelector('.react-flow__viewport')?.getBoundingClientRect()
@@ -42,7 +45,7 @@ export function useAddNoteNode() {
     const graphY = (screenY - vy) / zoom
 
     if (!newNote.properties) {
-      newNote.properties = {}
+      newNote.properties = createDefaultNoteProperties({ type: nodeType })
     }
     newNote.properties.nodePosition = { position: { x: graphX, y: graphY }, type: 'position' }
     const node = convertNoteToNode(newNote)
@@ -51,5 +54,5 @@ export function useAddNoteNode() {
     setNodes([...newNodes, node])
     const notes: Note[] = [newNote]
     addNotes({ boardId, userId, notes })
-  }, [boardId, getViewport, setNodes, nodes, addNotes, userId])
+  }, [boardId, getViewport, setNodes, nodes, addNotes, userId, applyDefaultNodeStyle])
 }

@@ -1,7 +1,22 @@
-import { API_URL } from "@/config/api"
 import { useQuery } from "@tanstack/react-query"
 import type { Graph } from "../types/board"
 import camelcaseKeys from "camelcase-keys"
+import { apiFetch } from "@/api"
+
+interface ListBoardsResponse {
+  data: {
+    graphs: Array<{
+      uid: string
+      type: "graph"
+      label?: string
+      readonly: boolean
+      thumbnail?: string
+      created_at: string
+      updated_at?: string
+      deleted_at?: string
+    }>
+  }
+}
 
 
 /**
@@ -13,20 +28,12 @@ import camelcaseKeys from "camelcase-keys"
 export async function listBoards(
   userId: string
 ): Promise<Graph[]> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/boards?user_id=${userId}`, {
+  const res = await apiFetch<ListBoardsResponse>({
+    path: "/boards",
     method: "GET",
-    headers
+    params: { user_id: userId },
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to list boards: ${response.statusText}`)
-  }
-
-  const data = await response.json()
-  return camelcaseKeys(data.data.graphs, { deep: true })
+  return res.data.graphs.map((board) => camelcaseKeys(board, { deep: true })) as Graph[]
 }
 
 

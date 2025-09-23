@@ -29,6 +29,7 @@ from topix.agents.utils.tools import (
     ToolCall,
     tool_execution_handler,
 )
+from topix.utils.web.favicon import fetch_meta_images_batch
 
 
 class WebSearchAgentHook(AgentHooks):
@@ -145,15 +146,29 @@ class BroadWebSearch(BaseAgent):
             case _:
                 raise ValueError(f"Unsupported search engine: {search_engine}")
 
-    async def _output_extractor(self, context, output) -> WebSearchOutput:
+    async def _output_extractor(self, context, output) -> WebSearchOutput:  # noqa: C901
         if self.search_engine in [WebSearchOption.OPENAI, WebSearchOption.PERPLEXITY]:
-            search_results = [
-                SearchResult(url=annotation.url, title=annotation.title)
-                for item in output.new_items
-                if item.type == "message_output_item"
-                for annotation in item.raw_item.content[0].annotations
-                if annotation.type == "url_citation"
-            ]
+            existing_urls = set()
+            search_results: list[SearchResult] = []
+            # Extract citations from the final output
+            for item in output.new_items:
+                if item.type == "message_output_item":
+                    for annotation in item.raw_item.content[0].annotations:
+                        if annotation.type == "url_citation":
+                            if annotation.url not in existing_urls:
+                                existing_urls.add(annotation.url)
+                                search_results.append(
+                                    SearchResult(url=annotation.url, title=annotation.title)
+                                )
+
+            # Fetch favicons and cover images for the search results
+            meta_images = await fetch_meta_images_batch(
+                [result.url for result in search_results]
+            )
+            for result in search_results:
+                if result.url in meta_images:
+                    result.favicon = str(meta_images[result.url].favicon) if meta_images[result.url].favicon else None
+                    result.cover_image = str(meta_images[result.url].cover_image) if meta_images[result.url].cover_image else None
             return WebSearchOutput(
                 answer=output.final_output, search_results=search_results
             )

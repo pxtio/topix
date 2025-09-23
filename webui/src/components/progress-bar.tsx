@@ -1,4 +1,4 @@
-import { Idea01Icon } from "@hugeicons/core-free-icons"
+import { IdeaIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Loader2 } from "lucide-react"
 
@@ -9,7 +9,7 @@ export const ThinkingDots = ({ message, isStopped = false }: { message: string, 
   return (
     <div className="flex flex-row items-center gap-2">
       <HugeiconsIcon
-        icon={Idea01Icon}
+        icon={IdeaIcon}
         className='size-5'
       />
       <span>{message}</span>

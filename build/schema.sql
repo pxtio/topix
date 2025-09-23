@@ -3,6 +3,7 @@ CREATE TABLE users (
     uid TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
     username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
     name TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP,
@@ -11,8 +12,8 @@ CREATE TABLE users (
 CREATE INDEX idx_users_uid ON users(uid);
 
 
-INSERT INTO users (uid, email, username, name)
-VALUES ('root', 'root@root.ai', 'root', 'Root User')
+INSERT INTO users (uid, email, username, name, password_hash)
+VALUES ('root', 'root@root.ai', 'root', 'Root User', 'RandomHash')
 ON CONFLICT (uid) DO NOTHING;
 
 

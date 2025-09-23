@@ -1,7 +1,7 @@
-import { API_URL } from "@/config/api"
 import type { Chat } from "../types/chat"
 import snakecaseKeys from "snakecase-keys"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -17,18 +17,12 @@ export async function updateChat(
   userId: string,
   chatData: Partial<Chat>
 ): Promise<void> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/chats/${chatId}?user_id=${userId}`, {
+  await apiFetch({
+    path: `/chats/${chatId}`,
     method: "PATCH",
-    headers,
-    body: JSON.stringify({ data: snakecaseKeys(chatData, { deep: true }) })
+    params: { user_id: userId },
+    body: { data: snakecaseKeys(chatData, { deep: true }) }
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to update chat: ${response.statusText}`)
-  }
 }
 
 

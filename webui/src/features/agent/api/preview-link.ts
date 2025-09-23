@@ -1,7 +1,17 @@
 import camelcaseKeys from "camelcase-keys"
 import type { LinkPreview } from "../types/web"
-import { API_URL } from "@/config/api"
 import { useQuery } from "@tanstack/react-query"
+import { apiFetch } from "@/api"
+
+interface LinkPreviewResponse {
+  data: {
+    title?: string
+    description?: string
+    image?: string
+    site_name?: string
+    favicon?: string
+  }
+}
 
 
 /**
@@ -12,21 +22,13 @@ import { useQuery } from "@tanstack/react-query"
  * @throws An error if the fetch request fails.
  */
 export async function previewWebpage(userId: string, url: string): Promise<LinkPreview> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/tools/webpages/preview?user_id=${userId}`, {
+  const res = await apiFetch<LinkPreviewResponse>({
+    path: `/tools/webpages/preview`,
     method: "POST",
-    headers: headers,
-    body: JSON.stringify({ url }),
+    params: { user_id: userId },
+    body: { url },
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch link preview: ${response.statusText}`)
-  }
-
-  const data = await response.json()
-  return camelcaseKeys(data.data, { deep: true }) as LinkPreview
+  return camelcaseKeys(res.data, { deep: true }) as LinkPreview
 }
 
 

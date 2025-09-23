@@ -1,9 +1,9 @@
-import { API_URL } from "@/config/api"
 import type { Note } from "../types/note"
 import { useMutation } from "@tanstack/react-query"
 import snakecaseKeys from "snakecase-keys"
 import { sleep } from "@/lib/common"
 import { DEBOUNCE_DELAY } from "../const"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -19,23 +19,12 @@ export async function addNotes(
   userId: string,
   notes: Note[]
 ): Promise<void> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const reformattedNotes = notes.map(note => snakecaseKeys(
-    note as unknown as Record<string, unknown>,
-    { deep: true }
-  ))
-
-  const response = await fetch(`${API_URL}/boards/${boardId}/notes?user_id=${userId}`, {
+  await apiFetch({
+    path: `/boards/${boardId}/notes`,
     method: "POST",
-    headers,
-    body: JSON.stringify({ notes: reformattedNotes })
+    params: { user_id: userId },
+    body: { notes: snakecaseKeys(notes, { deep: true }) }
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to add notes: ${response.statusText}`)
-  }
 }
 
 

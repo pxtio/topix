@@ -23,16 +23,18 @@ import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 
 type Props = { node: NoteNode }
 
-/* ---------- color & gradient helpers ---------- */
+/* ---------- color & gradient helpers (drop-in) ---------- */
 function clamp(n: number, min = 0, max = 100) {
   return Math.max(min, Math.min(max, n))
 }
+
 function hexToRgb(hex: string) {
   const clean = hex.replace('#', '')
   const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean
   const num = parseInt(full, 16)
   return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 }
 }
+
 function rgbToHsl(r: number, g: number, b: number) {
   r /= 255
   g /= 255
@@ -54,7 +56,13 @@ function rgbToHsl(r: number, g: number, b: number) {
   }
   return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) }
 }
-function buildSubtleHueGradient(hex: string) {
+
+/**
+ * Strong, nuanced hue gradient.
+ * - `mode: 'light' | 'dark'` tunes alphas/ratios for multiply vs screen blending.
+ * - Defaults to 'light' to remain backward-compatible with your current call site.
+ */
+function buildSubtleHueGradient(hex: string, mode: 'light' | 'dark' = 'light') {
   let h = 215, s = 60, l = 70
   try {
     const { r, g, b } = hexToRgb(hex)
@@ -62,21 +70,54 @@ function buildSubtleHueGradient(hex: string) {
     h = hsl.h
     s = hsl.s
     l = hsl.l
-  } catch { /* empty */ }
+  } catch { /* noop */ }
 
-  const s1 = clamp(s * 1.05)
-  const l1 = clamp(l * 1.10)
-  const s2 = clamp(s * 0.9)
-  const l2 = clamp(l * 0.90)
-  const l3 = clamp(l - 12)
+  // local variants
+  const sHi = clamp(s * 1.06)
+  const lHiLight = clamp(l * 1.16)   // highlight lift (light mode)
+  const lHiDark  = clamp(l * 1.08)   // gentler in dark (screen pops more)
+  const sMid = clamp(s * 0.94)
+  const lMid = clamp(l * 0.94)
+  const lLo  = clamp(l - 14)
 
-  // dialed-down alphas — base gradient is softer
-  const radial = `radial-gradient(1000px 600px at 15% 0%, hsla(${h} ${s1}% ${l1}% / 0.14), transparent 55%)`
-  const linear = `linear-gradient(135deg,
-    hsla(${h} ${s}% ${l}% / 0.06) 0%,
-    hsla(${h} ${s2}% ${l2}% / 0.14) 45%,
-    hsla(${h} ${s}% ${l3}% / 0.10) 100%)`
-  return `${radial}, ${linear}`
+  if (mode === 'dark') {
+    // DARK — screen blend:
+    // - smaller/softer bottom-left glow (avoid overshoot)
+    // - slightly stronger counter layer top-right to prevent "transparent" feel
+    // - overall lower alphas to keep chroma from looking neon
+    const radialBL = `radial-gradient(900px 560px at 10% 96%,
+      hsla(${h} ${sHi}% ${lHiDark}% / 0.20) 0%,
+      hsla(${h} ${s}%   ${l}%      / 0.10) 40%,
+      transparent 68%)`
+
+    const radialTR = `radial-gradient(1000px 680px at 100% 0%,
+      hsla(${h} ${sMid}% ${lLo}% / 0.24) 0%,
+      transparent 62%)`
+
+    const linearSweep = `linear-gradient(to top right,
+      hsla(${h} ${s}%   ${clamp(l + 4)}% / 0.10) 0%,
+      hsla(${h} ${sMid}% ${lMid}%        / 0.08) 48%,
+      hsla(${h} ${s}%   ${lLo}%          / 0.16) 100%)`
+
+    return `${radialTR}, ${radialBL}, ${linearSweep}`
+  }
+
+  // LIGHT — multiply blend (richer, wider transition)
+  const radialBL = `radial-gradient(1200px 800px at 8% 100%,
+    hsla(${h} ${sHi}% ${lHiLight}% / 0.34) 0%,
+    hsla(${h} ${s}%   ${l}%        / 0.20) 45%,
+    transparent 70%)`
+
+  const radialTR = `radial-gradient(900px 600px at 100% 0%,
+    hsla(${h} ${sMid}% ${lLo}% / 0.18),
+    transparent 60%)`
+
+  const linearSweep = `linear-gradient(to top right,
+    hsla(${h} ${s}%   ${clamp(l + 6)}% / 0.18) 0%,
+    hsla(${h} ${sMid}% ${lMid}%       / 0.12) 45%,
+    hsla(${h} ${s}%   ${lLo}%         / 0.22) 100%)`
+
+  return `${radialTR}, ${radialBL}, ${linearSweep}`
 }
 
 /* ---------- fade mask helper (no background painting) ---------- */
@@ -105,11 +146,11 @@ export function LinearNoteCard({ node }: Props) {
   const isDark = resolvedTheme === 'dark'
 
   const color = isDark ? darkModeDisplayHex(node.data.style.backgroundColor) ?? '#a5c9ff' : node.data.style.backgroundColor
-  const isPinned = !!node.data.pinned
+  const isPinned = node.data.properties.pinned.boolean
   const title = node.data.label?.markdown || ''
   const { text: timeAgo, tooltip: fullDate } = formatDistanceToNow(node.data.updatedAt)
 
-  const gradientBg = useMemo(() => buildSubtleHueGradient(color), [color])
+  const gradientBg = useMemo(() => buildSubtleHueGradient(color, resolvedTheme), [color, resolvedTheme])
 
   const onPickColor = useCallback((hex: string) => {
     if (!boardId) return
@@ -134,7 +175,8 @@ export function LinearNoteCard({ node }: Props) {
   const onTogglePin = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     if (!boardId) return
-    const newNode = { ...node, data: { ...node.data, pinned: !isPinned } } as NoteNode
+    const noteProperties = { ...node.data.properties, pinned: { type: "boolean", boolean: !isPinned } }
+    const newNode = { ...node, data: { ...node.data, properties: noteProperties } } as NoteNode
     setStore(state => ({ ...state, nodes: state.nodes.map(n => n.id === node.id ? newNode : n) }))
     updateNote({ boardId, userId, noteId: node.data.id, noteData: newNode.data })
   }, [boardId, isPinned, node, setStore, updateNote, userId])
@@ -158,8 +200,8 @@ export function LinearNoteCard({ node }: Props) {
   const cardClass = clsx(
     'rounded-xl relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group',
     isPinned
-      ? 'ring-2 ring-primary/60 border border-transparent shadow-md'
-      : 'border border-transparent rounded-none hover:ring-2 hover:ring-primary/40 hover:border-transparent hover:shadow-md'
+      ? 'ring-2 ring-secondary/60 border border-transparent shadow-md'
+      : 'border border-transparent rounded-none hover:ring-2 hover:ring-secondary/40 hover:border-transparent hover:shadow-md'
   )
 
   const CardBody = useMemo(() => (
@@ -181,7 +223,7 @@ export function LinearNoteCard({ node }: Props) {
           title='Pin/Unpin'
         >
           {isPinned
-            ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-primary' strokeWidth={1.75} />
+            ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={1.75} />
             : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={1.75} />
           }
         </button>
@@ -197,7 +239,7 @@ export function LinearNoteCard({ node }: Props) {
 
       {/* content area with MASK fade at the bottom (no background painting) */}
       <div
-        className='p-4 md:p-6 mb-12 min-h-[100px] max-h-[225px] overflow-hidden text-foreground relative z-10 space-y-1'
+        className='p-4 pt-8 md:p-6 md:pt-10 mb-12 min-h-[100px] max-h-[225px] overflow-hidden text-foreground relative z-10 space-y-1'
         style={buildFadeMaskStyle({ solidUntil: 90 })}
       >
         {title && (
@@ -205,7 +247,7 @@ export function LinearNoteCard({ node }: Props) {
             {title}
           </h2>
         )}
-        <div className='prose dark:prose-invert max-w-none'>
+        <div className='prose dark:prose-invert max-w-none min-w-0'>
           <MarkdownView content={node.data.content?.markdown || ''} />
         </div>
       </div>
@@ -221,7 +263,7 @@ export function LinearNoteCard({ node }: Props) {
           <Popover>
             <PopoverTrigger asChild>
               <button
-                className='h-4 w-4 rounded-full ring-2 ring-primary/40 shadow hover:brightness-95 transition'
+                className='h-4 w-4 rounded-full ring-2 ring-secondary/40 shadow hover:brightness-95 transition'
                 style={{ backgroundColor: color }}
                 aria-label='Change background color'
                 title='Change background color'

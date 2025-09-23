@@ -53,7 +53,7 @@ export const SearchEngineChoiceMenu = () => {
 
   const iconClass = clsx(
     "size-4 shrink-0 my-icon",
-    enabledTools.includes("web_search") ? '!text-primary' : ''
+    enabledTools.includes("web_search") ? '!text-secondary' : ''
   )
 
   const defaultValue = enabledTools.includes("web_search") ? webSearchEngine : "-1"
@@ -61,11 +61,13 @@ export const SearchEngineChoiceMenu = () => {
   return (
     <Select onValueChange={handleEngineChange} defaultValue={defaultValue}>
       <Tooltip delayDuration={400}>
-        <TooltipTrigger asChild>
-          <SelectTrigger className="w-auto rounded-full text-xs p-2 shadow-none border-none hover:bg-accent [&>svg:not(.my-icon)]:hidden" size="sm">
-            <HugeiconsIcon icon={InternetIcon} className={iconClass} strokeWidth={1.75} />
-          </SelectTrigger>
-        </TooltipTrigger>
+        <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50">
+          <TooltipTrigger asChild>
+            <SelectTrigger className="w-auto rounded-full text-xs p-2 shadow-none border-none hover:bg-accent [&>svg:not(.my-icon)]:hidden" size="sm">
+              <HugeiconsIcon icon={InternetIcon} className={iconClass} strokeWidth={1.75} />
+            </SelectTrigger>
+          </TooltipTrigger>
+        </div>
         <TooltipContent>
           Select Web Search Engine
         </TooltipContent>

@@ -2,11 +2,12 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile
-from fastapi.params import Body, Path, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
+from fastapi.params import Body, Path
 
 from topix.api.datatypes.requests import AddLinksRequest, AddNotesRequest, GraphUpdateRequest, LinkUpdateRequest, NoteUpdateRequest
 from topix.api.helpers import with_standard_response
+from topix.api.utils.security import get_current_user_uid
 from topix.api.utils.thumbnail import load_png_as_data_url, save_thumbnail
 from topix.datatypes.graph.graph import Graph
 from topix.store.graph import GraphStore
@@ -24,7 +25,7 @@ router = APIRouter(
 async def create_graph(
     response: Response,
     request: Request,
-    user_id: Annotated[str, Query(description="User Unique ID")]
+    user_id: Annotated[str, Depends(get_current_user_uid)]
 ):
     """Create a new graph for the user."""
     store: GraphStore = request.app.graph_store
@@ -41,7 +42,7 @@ async def update_graph(
     response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[GraphUpdateRequest, Body(description="Graph update data")]
 ):
     """Update an existing graph by its ID."""
@@ -56,7 +57,7 @@ async def delete_graph(
     response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")]
+    user_id: Annotated[str, Depends(get_current_user_uid)]
 ):
     """Delete a graph by its ID."""
     store: GraphStore = request.app.graph_store
@@ -72,7 +73,7 @@ async def get_graph(
     response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")]
+    user_id: Annotated[str, Depends(get_current_user_uid)]
 ):
     """Get a graph by its ID."""
     store: GraphStore = request.app.graph_store
@@ -93,7 +94,7 @@ async def get_graph(
 async def list_graphs(
     response: Response,
     request: Request,
-    user_id: Annotated[str, Query(description="User Unique ID")]
+    user_id: Annotated[str, Depends(get_current_user_uid)]
 ):
     """List all graphs for the user."""
     store: GraphStore = request.app.graph_store
@@ -115,7 +116,7 @@ async def add_notes_to_graph(
     response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[AddNotesRequest, Body(description="Notes to add")]
 ):
     """Add notes to a graph."""
@@ -141,7 +142,7 @@ async def get_note(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     note_id: Annotated[str, Path(description="Note ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")]
+    user_id: Annotated[str, Depends(get_current_user_uid)]
 ):
     """Get a note from a graph."""
     store: GraphStore = request.app.graph_store
@@ -161,7 +162,7 @@ async def update_note(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     note_id: Annotated[str, Path(description="Note ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[NoteUpdateRequest, Body(description="Note update data")]
 ):
     """Update a note in a graph."""
@@ -179,7 +180,7 @@ async def remove_note_from_graph(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     note_id: Annotated[str, Path(description="Note ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)]
 ):
     """Remove notes from a graph."""
     store: GraphStore = request.app.graph_store
@@ -195,7 +196,7 @@ async def add_links_to_graph(
     response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[AddLinksRequest, Body(description="Links to add")]
 ):
     """Add links to a graph."""
@@ -220,7 +221,7 @@ async def get_link(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     link_id: Annotated[str, Path(description="Link ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")]
+    user_id: Annotated[str, Depends(get_current_user_uid)]
 ):
     """Get a link from a graph."""
     store: GraphStore = request.app.graph_store
@@ -240,7 +241,7 @@ async def update_link(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     link_id: Annotated[str, Path(description="Link ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[LinkUpdateRequest, Body(description="Link update data")]
 ):
     """Update a link in a graph."""
@@ -258,7 +259,7 @@ async def remove_link_from_graph(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     link_id: Annotated[str, Path(description="Link ID")],
-    user_id: Annotated[str, Query(description="User Unique ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)]
 ):
     """Remove links from a graph."""
     store: GraphStore = request.app.graph_store
@@ -273,7 +274,8 @@ async def remove_link_from_graph(
 async def save_graph_thumbnail(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
-    file: UploadFile = File(...)
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    file: UploadFile = File(...),
 ):
     """Save a thumbnail image for the graph."""
     file_bytes = await file.read()

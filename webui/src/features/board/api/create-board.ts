@@ -1,7 +1,7 @@
-import { API_URL } from "@/config/api"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useGraphStore } from "../store/graph-store"
 import type { Graph } from "../types/board"
+import { apiFetch } from "@/api"
 
 
 /**
@@ -12,20 +12,12 @@ import type { Graph } from "../types/board"
 export async function createBoard(
   userId: string
 ): Promise<string> {
-  const headers = new Headers()
-  headers.set("Content-Type", "application/json")
-
-  const response = await fetch(`${API_URL}/boards?user_id=${userId}`, {
+  const res = await apiFetch<{ data: { graph_id: string } }>({
+    path: "/boards",
     method: "PUT",
-    headers
+    params: { user_id: userId }
   })
-
-  if (!response.ok) {
-    throw new Error(`Failed to create board: ${response.statusText}`)
-  }
-
-  const data = await response.json()
-  return data.data.graph_id
+  return res.data.graph_id
 }
 
 

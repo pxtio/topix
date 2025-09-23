@@ -46,7 +46,7 @@ export const Shape = memo(function Shape({
       <div className='w-full' ref={contentRef}>
         {labelEditing ? (
           <TextareaAutosize
-            className={`${base} nodrag nopan nowheel`}
+            className={`${base} nodrag nopan nowheel !-mb-2`}
             value={value}
             onChange={onChange}
             placeholder={placeHolder}

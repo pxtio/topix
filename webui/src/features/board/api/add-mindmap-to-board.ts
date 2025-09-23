@@ -19,20 +19,25 @@ export const useAddMindMapToBoard = () => {
         return false
       }
       const boardMindmaps = mindmaps.get(boardId) || []
+      let nodes_ = [...nodes]
+      let edges_ = [...edges]
+
       for (const mindMap of boardMindmaps) {
         const { nodes: mindMapNodes, edges: mindMapEdges } = mindMap
 
         // Displace mind map nodes to avoid overlap with existing nodes
-        const displacedMindMapNodes = displaceNodes(nodes, mindMapNodes)
-        clearMindMap(boardId)
-
+        const displacedMindMapNodes = displaceNodes(nodes_, mindMapNodes)
         // Update the main graph with the displaced mind map nodes and edges
-        setNodes([...displacedMindMapNodes, ...nodes])
-        setEdges([...mindMapEdges, ...edges])
+        nodes_ = [...displacedMindMapNodes, ...nodes_]
+        edges_ = [...mindMapEdges, ...edges_]
+
+        setNodes(nodes_)
+        setEdges(edges_)
 
         await addNotes(boardId, userId, displacedMindMapNodes.map(node => convertNodeToNote(boardId, node)))
         await addLinks(boardId, userId, mindMapEdges.map(edge => convertEdgeToLink(boardId, edge)))
       }
+      clearMindMap(boardId)
       return true
     }
   })

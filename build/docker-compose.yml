@@ -1,25 +1,56 @@
+x-qdrant: &qdrant-base
+  image: qdrant/qdrant:latest
+
+x-postgres: &postgres-base
+  image: postgres:15
+  environment:
+    POSTGRES_DB: topix
+    POSTGRES_USER: topix
+    POSTGRES_HOST_AUTH_METHOD: trust
+
 services:
-  qdrant:
-    container_name: qdrant
-    image: qdrant/qdrant:latest
+  # -------- LOCAL PROFILE --------
+  qdrant-local:
+    <<: *qdrant-base
+    container_name: qdrant-local
+    profiles: ["local"]
     ports:
       - "6333:6333"
     volumes:
-      - qdrant_data:/qdrant/storage
+      - qdrant_data_local:/qdrant/storage
 
-  postgres:
-    container_name: postgres
-    image: postgres:15
+  postgres-local:
+    <<: *postgres-base
+    container_name: postgres-local
+    profiles: ["local"]
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_DB: topix
-      POSTGRES_USER: topix
-      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_data_local:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  # -------- DEV PROFILE --------
+  qdrant-dev:
+    <<: *qdrant-base
+    container_name: qdrant-dev
+    profiles: ["dev"]
+    ports:
+      - "6334:6333"   # host:container
+    volumes:
+      - qdrant_data_dev:/qdrant/storage
+
+  postgres-dev:
+    <<: *postgres-base
+    container_name: postgres-dev
+    profiles: ["dev"]
+    ports:
+      - "5433:5432"   # host:container
+    volumes:
+      - pg_data_dev:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
 
 volumes:
-  qdrant_data:
-  pg_data:
+  qdrant_data_local:
+  pg_data_local:
+  qdrant_data_dev:
+  pg_data_dev:

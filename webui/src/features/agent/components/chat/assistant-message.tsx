@@ -36,7 +36,12 @@ const SourcesView = ({ answer }: { answer: AgentResponse }) => {
         >
           {annotations.map((annotation, index) => (
             <div key={index} className='shrink-0'>
-              <LinkPreviewCard url={annotation.url} title={annotation.title} content={annotation.content} />
+              <LinkPreviewCard
+                url={annotation.url}
+                title={annotation.title}
+                content={annotation.content}
+                favicon={annotation.favicon}
+              />
             </div>
           ))}
         </div>
@@ -100,7 +105,7 @@ export const AssistantMessage = ({
     undefined
 
   const lastStepMessage = showLastStepMessage ? (
-    <div className="w-full p-4 space-y-2">
+    <div className="w-full p-4 space-y-2 min-w-0">
       <MarkdownView content={markdownMessage} />
       {!streaming && agentResponse && <SourcesView answer={agentResponse} />}
       {!streaming && <ResponseActions message={markdownMessage} />}
@@ -108,7 +113,7 @@ export const AssistantMessage = ({
   ) : null
 
   return (
-    <div className='w-full'>
+    <div className='w-full space-y-4'>
       {
         agentResponse &&
         <ReasoningStepsView response={agentResponse} isStreaming={streaming} />

@@ -22,19 +22,21 @@ export const MemorySearchChoiceMenu = () => {
 
   const buttonClass = clsx(
     "transition-all shrink-0 my-icon p-2 rounded-full hover:bg-accent dark:bg-input/30 dark:hover:bg-accent/50",
-    isEnabled ? '!text-primary' : 'text-muted-foreground'
+    isEnabled ? '!text-secondary' : 'text-muted-foreground'
   )
 
   return (
     <Tooltip delayDuration={400}>
-      <TooltipTrigger asChild>
-        <button
-          className={buttonClass}
-          onClick={handleToggle}
-        >
-          <HugeiconsIcon icon={ChipIcon} className='size-4 shrink-0' strokeWidth={1.75} />
-        </button>
-      </TooltipTrigger>
+      <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50">
+        <TooltipTrigger asChild>
+          <button
+            className={buttonClass}
+            onClick={handleToggle}
+          >
+            <HugeiconsIcon icon={ChipIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+          </button>
+        </TooltipTrigger>
+      </div>
       <TooltipContent>
         {tooltipText}
       </TooltipContent>

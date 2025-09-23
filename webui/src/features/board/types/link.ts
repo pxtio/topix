@@ -1,5 +1,5 @@
 import { generateUuid } from "@/lib/common"
-import { createDefaultStyle, type Style } from "./style"
+import { createDefaultLinkStyle, type LinkStyle } from "./style"
 
 
 /**
@@ -13,7 +13,7 @@ export interface Link extends Record<string, unknown> {
   source: string
   target: string
   label?: string
-  style: Style
+  style: LinkStyle
 
   createdAt: string
   updatedAt?: string
@@ -41,7 +41,7 @@ export const createDefaultLink = (
   version: 1,
   source,
   target,
-  style: createDefaultStyle({}),
+  style: createDefaultLinkStyle(),
   createdAt: new Date().toISOString(),
   graphUid: boardId,
 })

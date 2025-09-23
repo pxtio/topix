@@ -122,11 +122,19 @@ class AppSettings(BaseModel):
     port: int = 8888
 
 
+class SecuritySettings(BaseModel):
+    """JWT Security settings."""
+
+    secret_key: str
+    algorithm: str
+
+
 class AppConfig(BaseModel):
     """Application configuration settings."""
 
     name: str = "TopiX"
     settings: AppSettings = AppSettings()
+    security: SecuritySettings
 
 
 class ConfigMeta(SingletonMeta, type(BaseModel)):

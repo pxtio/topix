@@ -10,14 +10,14 @@ from topix.datatypes.user import User
 async def create_user(conn: AsyncConnection, user: User) -> User:
     """Create a new user in the database."""
     query = (
-        "INSERT INTO users (uid, email, username, name, created_at) "
-        "VALUES (%s, %s, %s, %s, %s) RETURNING id"
+        "INSERT INTO users (uid, email, username, name, created_at, password_hash) "
+        "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id"
     )
     try:
         async with conn.cursor() as cur:
             await cur.execute(
                 query,
-                (user.uid, user.email, user.username, user.name, user.created_at)
+                (user.uid, user.email, user.username, user.name, user.created_at, user.password_hash)
             )
             row = await cur.fetchone()
             user.id = row[0]
@@ -57,6 +57,31 @@ async def get_user_by_uid(conn: AsyncConnection, uid: str) -> User | None:
             created_at=row[5].isoformat() if row[5] else None,
             updated_at=row[6].isoformat() if row[6] else None,
             deleted_at=row[7].isoformat() if row[7] else None
+        )
+
+
+async def get_user_by_email(conn: AsyncConnection, email: str) -> User | None:
+    """Fetch a user by their email."""
+    query = (
+        "SELECT id, uid, email, username, name, created_at, "
+        "updated_at, deleted_at, password_hash "
+        "FROM users WHERE email = %s"
+    )
+    async with conn.cursor() as cur:
+        await cur.execute(query, (email,))
+        row = await cur.fetchone()
+        if not row:
+            return None
+        return User(
+            id=row[0],
+            uid=row[1],
+            email=row[2],
+            username=row[3],
+            name=row[4],
+            created_at=row[5].isoformat() if row[5] else None,
+            updated_at=row[6].isoformat() if row[6] else None,
+            deleted_at=row[7].isoformat() if row[7] else None,
+            password_hash=row[8] if row[8] else None
         )
 
 

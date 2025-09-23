@@ -6,7 +6,9 @@ import { create } from "zustand/react"
  */
 export interface AppStore {
   userId: string
+  userEmail: string
   setUserId: (userId: string) => void
+  setUserEmail: (email: string) => void
 }
 
 
@@ -16,5 +18,9 @@ export interface AppStore {
 export const useAppStore = create<AppStore>((set) => ({
   userId: "root",
 
+  userEmail: "root@localhost",
+
   setUserId: (userId) => set({ userId }),
+
+  setUserEmail: (userEmail) => set({ userEmail }),
 }))

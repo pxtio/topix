@@ -23,21 +23,23 @@ export const CodeInterpreterChoiceMenu = () => {
 
   const buttonClass = clsx(
     "transition-all shrink-0 my-icon p-2 rounded-full hover:bg-accent dark:bg-input/30 dark:hover:bg-accent/50",
-    isEnabled ? '!text-primary' : 'text-muted-foreground'
+    isEnabled ? '!text-secondary' : 'text-muted-foreground'
   )
 
   return (
     <Tooltip delayDuration={400}>
-      <TooltipTrigger asChild>
-        <button
-          className={buttonClass}
-          onClick={toggleCodeInterpreter}
-          aria-label="Toggle Code Interpreter"
-          title="Toggle Code Interpreter"
-        >
-          <HugeiconsIcon icon={CodeIcon} className="size-4" strokeWidth={1.75} />
-        </button>
-      </TooltipTrigger>
+      <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50">
+        <TooltipTrigger asChild>
+          <button
+            className={buttonClass}
+            onClick={toggleCodeInterpreter}
+            aria-label="Toggle Code Interpreter"
+            title="Toggle Code Interpreter"
+          >
+            <HugeiconsIcon icon={CodeIcon} className="size-4" strokeWidth={1.75} />
+          </button>
+        </TooltipTrigger>
+      </div>
       <TooltipContent>
         {isEnabled ? "Disable Code Interpreter" : "Enable Code Interpreter"}
       </TooltipContent>

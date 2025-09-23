@@ -9,7 +9,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from topix.datatypes.property import DataProperty, ReasoningProperty
-from topix.datatypes.resource import Resource
+from topix.datatypes.resource import Resource, ResourceProperties
 from topix.utils.common import gen_uid
 
 
@@ -21,6 +21,16 @@ class MessageRole(StrEnum):
     ASSISTANT = "assistant"
 
 
+class MessageProperties(ResourceProperties):
+    """Message properties."""
+
+    __pydantic_extra__: dict[str, DataProperty] = Field(init=False)
+
+    reasoning: ReasoningProperty = Field(
+        default_factory=lambda: ReasoningProperty()
+    )
+
+
 class Message(Resource):
     """Message in a chat."""
 
@@ -30,9 +40,9 @@ class Message(Resource):
 
     role: MessageRole
 
-    properties: dict[str, DataProperty] = {
-        "reasoning": ReasoningProperty()
-    }
+    properties: MessageProperties = Field(
+        default_factory=MessageProperties
+    )
 
     def to_chat_message(self) -> dict[str, str]:
         """Convert to a chat message format."""

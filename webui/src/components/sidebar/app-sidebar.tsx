@@ -20,7 +20,7 @@ import { ChatMenuItem, NewChatItem } from "./chat"
 import { BoardItem, DashboardMenuItem, NewBoardItem } from "./board"
 import { useMemo } from "react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Clock02Icon, MinusSignIcon, PlusSignIcon } from "@hugeicons/core-free-icons"
+import { Clock02Icon, LogoutSquareIcon, MinusSignIcon, PlusSignIcon, Settings01Icon, UserIcon } from "@hugeicons/core-free-icons"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -29,7 +29,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LogOut, User, Settings } from "lucide-react"
 
 type AppSidebarProps = {
   onLogout: () => void
@@ -104,16 +103,16 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" side="right" className="w-56">
                       <DropdownMenuItem disabled>
-                        <User className="mr-2 h-4 w-4" />
+                        <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" strokeWidth={1.75} />
                         <span>Profile</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem disabled>
-                        <Settings className="mr-2 h-4 w-4" />
+                        <HugeiconsIcon icon={Settings01Icon} className="mr-2 h-4 w-4" strokeWidth={1.75} />
                         <span>Settings</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={onLogout}>
-                        <LogOut className="mr-2 h-4 w-4" />
+                        <HugeiconsIcon icon={LogoutSquareIcon} className="mr-2 h-4 w-4" strokeWidth={1.75} />
                         <span>Logout</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>

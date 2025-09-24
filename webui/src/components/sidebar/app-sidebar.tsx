@@ -94,7 +94,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <SidebarMenuButton className="flex items-center gap-2 font-medium text-xs">
-                        <Avatar className="h-6 w-6">
+                        <Avatar className="h-6 w-6 -ml-1">
                           <AvatarImage alt={userEmail} />
                           <AvatarFallback>{initials}</AvatarFallback>
                         </Avatar>

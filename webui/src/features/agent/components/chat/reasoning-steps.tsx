@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp } from "lucide-react"
 import { ToolNameDescription, type AgentResponse, type ReasoningStep } from "../../types/stream"
 import { extractStepDescription, getWebSearchUrls } from "../../utils/stream/build"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { IdeaIcon } from "@hugeicons/core-free-icons"
+import { IdeaIcon, Tick01Icon } from "@hugeicons/core-free-icons"
 import { ThinkingDots } from "@/components/progress-bar"
 import { MiniLinkCard } from "../link-preview"
 import { cn } from "@/lib/utils"
@@ -49,7 +49,7 @@ const ReasoningStepViewImpl = ({
   }
 
   const messageClass = cn(
-    'transition-all w-full h-auto min-h-2 p-2 rounded-xl border border-transparent',
+    'transition-all w-full h-auto min-h-2 p-2 rounded-xl',
     viewMore ? 'bg-card' : ''
   )
 
@@ -69,12 +69,14 @@ const ReasoningStepViewImpl = ({
       <div className='relative flex-shrink-0'>
         {
           isLoading &&
-          <div className='absolute animate-ping w-2 h-2 rounded-full bg-secondary/50 z-20' />
+          <div className='absolute animate-ping w-2.5 h-2.5 rounded-full bg-secondary/50 z-20 mt-0.5' />
         }
         {
           isLoading ?
-          <div className='relative w-2 h-2 rounded-full bg-secondary/75 z-20' /> :
-          <div className='relative w-2 h-2 rounded-full bg-secondary z-20' />
+          <div className='relative w-2.5 h-2.5 rounded-full bg-secondary/75 z-20 mt-0.5' /> :
+          <div className='relative w-2.5 h-2.5 rounded-full bg-secondary z-20 flex items-center justify-center mt-0.5'>
+            <HugeiconsIcon icon={Tick01Icon} className="size-2 text-secondary-foreground" strokeWidth={1.75} />
+          </div>
         }
       </div>
       <div className='relative flex-1 flex flex-col items-start rounded-lg text-xs'>
@@ -210,7 +212,7 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
         {
           isOpen &&
           <div
-            className='absolute left-[0.73rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
+            className='absolute left-[0.785rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
           >
           </div>
         }

@@ -19,7 +19,6 @@ import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { useContentMinHeight } from '../../hooks/content-min-height'
 import { ShapeChrome } from './shape-chrome'
 
-
 /**
  * Node view component for rendering a note node in the graph.
  */
@@ -62,11 +61,15 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const strokeColor = isDark ? darkModeDisplayHex(data.style.strokeColor) || undefined : data.style.strokeColor
   const textColor = isDark ? darkModeDisplayHex(data.style.textColor) || undefined : data.style.textColor
 
-  // content block
   const content = (
     <div className={nodeClass}>
       <NodeCard note={data} selected={selected} isDark={isDark} contentRef={contentRef} />
-      {selected && <div className='absolute -inset-1 border border-secondary pointer-events-none rounded z-10' />}
+      {selected && (
+        <div className='absolute -inset-1 border border-secondary pointer-events-none rounded z-10' />
+      )}
+      {!selected && data.isNew && (
+        <div className='absolute -inset-1 border-2 border-dashed border-secondary pointer-events-none rounded z-10' />
+      )}
     </div>
   )
 

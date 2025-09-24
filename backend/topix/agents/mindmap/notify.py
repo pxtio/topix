@@ -1,4 +1,4 @@
-"""Mapify Agent."""
+"""Notify Agent."""
 
 from agents import ModelSettings, RunResult
 from pydantic import BaseModel
@@ -13,14 +13,14 @@ from topix.datatypes.resource import RichText
 
 
 class NotifyOutput(BaseModel):
-    """Mapify Output."""
+    """Notify Output."""
 
     title: str
     content: str
 
 
 class NotifyAgent(BaseAgent):
-    """Mapify Agent for synthesizing and thematically analyzing text."""
+    """Notify Agent for synthesizing and thematically analyzing text."""
 
     def __init__(
         self,
@@ -29,7 +29,7 @@ class NotifyAgent(BaseAgent):
         model_settings: ModelSettings | None = None,
     ):
         """Init method."""
-        name = "Mapify"
+        name = "Notify"
         instructions = self._render_prompt(instructions_template)
         if model_settings is None:
             model_settings = ModelSettings(temperature=0.01)

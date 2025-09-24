@@ -14,7 +14,6 @@ import type {
   Annotation,
   UrlAnnotation
 } from "../../types/tool-outputs"
-import { extractReasoning } from "./text"
 
 type BlockKind = "raw" | "tools" | null
 
@@ -55,7 +54,7 @@ const makeToolOutput = (acc: StepAccum): ToolOutput => {
 
 export async function* buildResponse(
   chunks: AsyncGenerator<AgentStreamMessage>
-): AsyncGenerator<AgentResponse> {
+): AsyncGenerator<{ response: AgentResponse, isStop: boolean }> {
   const stepsById = new Map<string, StepAccum>()
   const order: string[] = []
 
@@ -161,22 +160,24 @@ export async function* buildResponse(
       }
     }
 
-    yield {
+    const resp = {
       steps: order.map(id => toReasoningStep(stepsById.get(id)!))
     }
+    yield { response: resp, isStop: false }
   }
 
   // finalize at stream end
   if (currentBlock === "raw") completeLastRawIfAny()
   if (currentBlock === "tools") completeAll()
 
-  yield {
+  const resp = {
     steps: order.map(id => {
       const s = stepsById.get(id)!
       if (s.state !== "failed") s.state = "completed"
       return toReasoningStep(s)
     })
   }
+  yield { response: resp, isStop: true }
 }
 
 
@@ -190,7 +191,7 @@ export function extractStepDescription(step: ReasoningStep): { reasoning: string
   if (step.name !== RAW_MESSAGE) {
     return { reasoning: step.thought || "", message: ToolNameDescription[step.name] }
   }
-  const { reasoning: reasoningOutLoud } = extractReasoning(step.output as string || "")
+  const reasoningOutLoud = step.output as string || ""
   return { reasoning: step.thought || "", message: reasoningOutLoud }
 }
 

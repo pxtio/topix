@@ -1,6 +1,6 @@
-import { IdeaIcon } from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Loader2 } from "lucide-react"
+import { ShinyText } from "./animations/shiny-text"
+import { Orbit } from "./animate-ui/icons/orbit"
+import { ListTree } from "lucide-react"
 
 /**
  * ThinkingDots component displays a "Thinking" message with animated dots.
@@ -8,14 +8,15 @@ import { Loader2 } from "lucide-react"
 export const ThinkingDots = ({ message, isStopped = false }: { message: string, isStopped?: boolean }) => {
   return (
     <div className="flex flex-row items-center gap-2">
-      <HugeiconsIcon
-        icon={IdeaIcon}
-        className='size-5'
-      />
-      <span>{message}</span>
       {
-        !isStopped && <Loader2 className='size-4 animate-spin [animation-duration:750ms]' />
+        !isStopped ?
+        <Orbit animate animation="path-loop" loop speed={2} className='size-4 text-foreground/50' strokeWidth={1.75} /> :
+        <ListTree
+          className='size-4 text-foreground/50'
+          strokeWidth={1.75}
+        />
       }
+      <ShinyText text={message} disabled={isStopped} speed={1} className='font-medium text-foreground/50' />
     </div>
   )
 }

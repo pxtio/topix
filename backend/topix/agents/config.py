@@ -37,6 +37,7 @@ class AssistantManagerConfig(BaseModel):
     """Manager Config class."""
 
     plan: PlanConfig
+    synthesis: BaseAgentConfig
     query_rewrite: BaseAgentConfig
 
     @staticmethod
@@ -55,9 +56,10 @@ class AssistantManagerConfig(BaseModel):
         else:
             self.plan.web_search.instructions_template = "decoupled_web_search.jinja"
 
-    def set_plan_model(self, model: str):
+    def set_model(self, model: str):
         """Switch the plan model."""
         self.plan.model = model
+        self.synthesis.model = model
 
     def set_reasoning(self, effort: Literal["low", "medium", "high"] | None):
         """Set the reasoning."""

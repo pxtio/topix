@@ -89,40 +89,67 @@ export function RootLayout() {
  * - subtle canvas-generated grain texture (PNG tile)
  */
 export function AuthBackground() {
-  const [urlA, setUrlA] = useState<string | null>(null)
-  const [urlB, setUrlB] = useState<string | null>(null)
-  const [posA, setPosA] = useState<string>("0px 0px")
-  const [posB, setPosB] = useState<string>("0px 0px")
+  const [dataUrl, setDataUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    const rand = (n: number) => Math.floor(Math.random() * n)
-    setPosA(`${rand(80)}px ${rand(80)}px`)
-    setPosB(`${rand(128)}px ${rand(128)}px`)
+    let rAF = 0
+    let timer: number | undefined
 
-    const makeNoise = (size: number, density: number, aMin: number, aMax: number) => {
-      const c = document.createElement("canvas")
-      c.width = size
-      c.height = size
-      const ctx = c.getContext("2d", { willReadFrequently: true })
-      if (!ctx) return null
-      const img = ctx.createImageData(size, size)
-      const d = img.data
-      for (let i = 0; i < d.length; i += 4) {
+    const makeGrain = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2) // cap for perf
+      const width = Math.ceil(window.innerWidth * dpr)
+      const height = Math.ceil(window.innerHeight * dpr)
+
+      // downscale factor to keep perf while preserving fine grain
+      const scale = 0.75 // 1 = max detail; lower = faster
+      const w = Math.max(1, Math.floor(width * scale))
+      const h = Math.max(1, Math.floor(height * scale))
+
+      const canvas = document.createElement("canvas")
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext("2d", { willReadFrequently: true })
+      if (!ctx) return
+
+      const img = ctx.createImageData(w, h)
+      const buf = img.data
+
+      // tiny but denser specks
+      const density = 0.18 // 0..1
+      const alphaMin = 18
+      const alphaMax = 45
+
+      for (let i = 0; i < buf.length; i += 4) {
         const on = Math.random() < density
-        const v = on ? 255 : 0
-        d[i] = v
-        d[i + 1] = v
-        d[i + 2] = v
-        d[i + 3] = on ? aMin + Math.floor(Math.random() * (aMax - aMin)) : 0
+        const val = on ? 255 : 0
+        buf[i] = val
+        buf[i + 1] = val
+        buf[i + 2] = val
+        buf[i + 3] = on
+          ? alphaMin + Math.floor(Math.random() * (alphaMax - alphaMin))
+          : 0
       }
+
       ctx.putImageData(img, 0, 0)
-      return c.toDataURL("image/png")
+      setDataUrl(canvas.toDataURL("image/png"))
     }
 
-    // Layer A: finer & denser (smaller tile => tiny grains)
-    setUrlA(makeNoise(80, 0.20, 18, 42))
-    // Layer B: larger tile, slightly sparser to break repetition
-    setUrlB(makeNoise(128, 0.12, 14, 36))
+    const debouncedMake = () => {
+      if (timer) window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        rAF = window.requestAnimationFrame(makeGrain)
+      }, 120)
+    }
+
+    // initial render
+    debouncedMake()
+    window.addEventListener("resize", debouncedMake)
+
+    return () => {
+      window.removeEventListener("resize", debouncedMake)
+      if (timer) window.clearTimeout(timer)
+      if (rAF) window.cancelAnimationFrame(rAF)
+    }
   }, [])
 
   return (
@@ -132,35 +159,16 @@ export function AuthBackground() {
       <div className="absolute -bottom-24 -left-24 h-[45vh] w-[55vw] rounded-full bg-secondary/15 blur-3xl" />
       <div className="absolute -bottom-40 -right-40 h-[35vh] w-[45vw] rounded-full bg-secondary/10 blur-3xl" />
 
-      {/* Noise layer A */}
+      {/* seamless grain overlay (no tiling) */}
       <div
-        className="absolute inset-0 opacity-30 mix-blend-multiply"
+        className="absolute inset-0 opacity-35 mix-blend-multiply"
         style={
-          urlA
+          dataUrl
             ? {
-                backgroundImage: `url(${urlA})`,
-                backgroundRepeat: "repeat",
-                backgroundSize: "80px 80px",
-                backgroundPosition: posA,
-                transform: "rotate(0.5deg) scale(1.01)",
-                transformOrigin: "center",
-              }
-            : undefined
-        }
-      />
-
-      {/* Noise layer B */}
-      <div
-        className="absolute inset-0 opacity-22 mix-blend-multiply"
-        style={
-          urlB
-            ? {
-                backgroundImage: `url(${urlB})`,
-                backgroundRepeat: "repeat",
-                backgroundSize: "128px 128px",
-                backgroundPosition: posB,
-                transform: "rotate(-0.6deg) scale(1.012)",
-                transformOrigin: "center",
+                backgroundImage: `url(${dataUrl})`,
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                backgroundSize: "cover",
               }
             : undefined
         }

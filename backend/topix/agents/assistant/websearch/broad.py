@@ -1,12 +1,9 @@
 """Unified Web Search Agent with Citation Support."""
 
 import datetime
-import os
 import re
 
 from typing import Any
-
-import requests
 
 from agents import (
     Agent,
@@ -20,6 +17,7 @@ from agents import (
     generation_span,
 )
 
+from topix.agents.assistant.websearch.tools import search_linkup, search_tavily
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
@@ -59,7 +57,7 @@ class WebSearchAgentHook(AgentHooks):
         tool.is_enabled = False
 
 
-class WebSearch(BaseAgent):
+class BroadWebSearch(BaseAgent):
     """Web Search Agent returning an answer with web page citations.
 
     Supports multiple search engines (OpenAI, Perplexity, Tavily).
@@ -67,14 +65,14 @@ class WebSearch(BaseAgent):
 
     def __init__(
         self,
-        model: str = ModelEnum.OpenAI.GPT_4O_MINI,
+        model: str = ModelEnum.OpenAI.GPT_4_1_MINI,
         instructions_template: str = "web_search.jinja",
         model_settings: ModelSettings | None = None,
         search_engine: WebSearchOption = WebSearchOption.OPENAI,
         search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
     ):
         """Initialize the WebSearch agent."""
-        name = "Web Search"
+        name = "Broad Web Search"
         self.search_engine = search_engine
 
         # Enhanced instructions that include citation requirements
@@ -105,13 +103,16 @@ class WebSearch(BaseAgent):
         self,
         model: str,
         search_engine: WebSearchOption,
-        search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
+        search_context_size: WebSearchContextSize,
     ) -> list[Tool]:
         """Configure tools based on search engine and model."""
+        tools = []
+
         match search_engine:
             case WebSearchOption.OPENAI:
                 if model.startswith("openai"):
-                    return [WebSearchTool(search_context_size=WebSearchContextSize.MEDIUM)]
+                    tools.append(WebSearchTool(search_context_size=WebSearchContextSize.MEDIUM))
+                    return tools
                 else:
                     raise ValueError(
                         "OpenAI search engine is only compatible with OpenAI models,"
@@ -119,21 +120,22 @@ class WebSearch(BaseAgent):
                     )
             case WebSearchOption.TAVILY:
                 @function_tool
-                def web_search(query: str) -> WebSearchOutput:
+                async def web_search(query: str) -> WebSearchOutput:
                     """Search using Tavily."""
-                    return search_tavily(
+                    return await search_tavily(
                         query, search_context_size=search_context_size
                     )
-
-                return [web_search]
+                tools.append(web_search)
+                return tools
             case WebSearchOption.LINKUP:
                 @function_tool
-                def web_search(query: str) -> WebSearchOutput:
+                async def web_search(query: str) -> WebSearchOutput:
                     """Search using LinkUp."""
-                    return search_linkup(
+                    return await search_linkup(
                         query, search_context_size=search_context_size
                     )
-                return [web_search]
+                tools.append(web_search)
+                return tools
             case WebSearchOption.PERPLEXITY:
                 if model.startswith("perplexity"):
                     return []
@@ -159,17 +161,6 @@ class WebSearch(BaseAgent):
                                     SearchResult(url=annotation.url, title=annotation.title)
                                 )
 
-            # Fetch favicons and cover images for the search results
-            meta_images = await fetch_meta_images_batch(
-                [result.url for result in search_results]
-            )
-            for result in search_results:
-                if result.url in meta_images:
-                    result.favicon = str(meta_images[result.url].favicon) if meta_images[result.url].favicon else None
-                    result.cover_image = str(meta_images[result.url].cover_image) if meta_images[result.url].cover_image else None
-            return WebSearchOutput(
-                answer=output.final_output, search_results=search_results
-            )
         else:
             search_results = []
             for item in output.new_items:
@@ -182,9 +173,18 @@ class WebSearch(BaseAgent):
                             "Expected WebSearchOutput from tool call, got "
                             f"{type(item.output)}"
                         )
-            return WebSearchOutput(
-                answer=output.final_output, search_results=search_results
-            )
+        # Fetch favicons and cover images for the search results
+        meta_images = await fetch_meta_images_batch(
+            [result.url for result in search_results]
+        )
+        for result in search_results:
+            if result.url in meta_images:
+                result.favicon = str(meta_images[result.url].favicon) if meta_images[result.url].favicon else None
+                result.cover_image = str(meta_images[result.url].cover_image) if meta_images[result.url].cover_image else None
+
+        return WebSearchOutput(
+            answer=output.final_output, search_results=search_results
+        )
 
     def as_tool(
         self,
@@ -310,105 +310,3 @@ class WebSearch(BaseAgent):
             # Replace the citations in the content
             content = re.sub(r"\[(\d+)\]", repl, content)
         return content
-
-
-def search_tavily(
-    query: str,
-    max_results: int = 10,
-    search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
-) -> WebSearchOutput:
-    """Search for a query using the Tavily API.
-
-    Args:
-        query (str): The query to search for.
-        max_results (int): The maximum number of results to return. Default is 20.
-        search_context_size (str): The size of the search context. Default is "medium".
-
-    Returns:
-        str: The results of the search.
-
-    """
-    url = "https://api.tavily.com/search"
-    api_key = os.environ.get("TAVILY_API_KEY")
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}",
-    }
-    if search_context_size in [WebSearchContextSize.MEDIUM, WebSearchContextSize.LARGE]:
-        search_depth = "advanced"
-    else:
-        search_depth = "basic"
-    data = {
-        "query": query,
-        "max_results": max_results,
-        "search_depth": search_depth,
-        "auto_parameters": True,
-    }
-    response = requests.post(url, headers=headers, json=data)
-    response.raise_for_status()
-
-    json_response = response.json()
-
-    results = json_response.get("results", [])
-
-    return WebSearchOutput(
-        search_results=[
-            SearchResult(
-                url=result["url"],
-                title=result.get("title", ""),
-                content=result.get("content", ""),
-            )
-            for result in results
-        ]
-    )
-
-
-def search_linkup(
-    query: str,
-    search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
-) -> WebSearchOutput:
-    """Search for a query using the LinkUp API.
-
-    Args:
-        query (str): The query to search for.
-        max_results (int): The maximum number of results to return. Default is 20.
-        search_context_size (str): The size of the search context. Default is "medium".
-
-    Returns:
-        WebSearchOutput: The results of the search.
-
-    """
-    url = "https://api.linkup.so/v1/search"
-    api_key = os.environ.get("LINKUP_API_KEY")
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}",
-    }
-
-    if search_context_size == "large":
-        search_depth = "deep"
-    else:
-        search_depth = "standard"
-
-    data = {
-        "q": query,
-        "outputType": "searchResults",
-        "depth": search_depth,
-    }
-    response = requests.post(url, headers=headers, json=data)
-    response.raise_for_status()
-
-    json_response = response.json()
-
-    results = json_response.get("results", [])
-
-    return WebSearchOutput(
-        search_results=[
-            SearchResult(
-                url=result["url"],
-                title=result.get("name", ""),
-                content=result.get("content", ""),
-            )
-            for result in results
-        ]
-    )

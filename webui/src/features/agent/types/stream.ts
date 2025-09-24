@@ -87,7 +87,7 @@ export const ToolNameDescription: Record<ToolName, string> = {
   "web_search": "Search the web",
   "memory_search": "Search memory",
   "code_interpreter": "Interpret code",
-  "raw_message": "Reasoning message"
+  "raw_message": "Reasoning"
 }
 
 // The RAW_MESSAGE tool name is used to indicate raw messages in the stream.

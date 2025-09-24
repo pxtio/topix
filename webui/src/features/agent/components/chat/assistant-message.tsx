@@ -8,9 +8,8 @@ import { isMainResponse, type AgentResponse } from "../../types/stream"
 import { extractAnswerWebSources } from "../../utils/url"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Link04Icon } from "@hugeicons/core-free-icons"
-import { extractFinalSegment } from "../../utils/stream/text"
-import { useMemo } from "react"
 import { ResponseActions } from "./actions/response-actions"
+import { useMemo } from "react"
 
 
 /**
@@ -88,13 +87,21 @@ export const AssistantMessage = ({
     :
     ""
 
-    // extract final-only view for rendering
-  const { final: finalContent, started } = useMemo(
-    () => extractFinalSegment(rawContent),
-    [rawContent]
-  )
+  const finalContent = useMemo(() => {
+    if (streamingMessage && streamingMessage.steps.length > 0) {
+      const uniqueRawMessageIds = new Set(
+        streamingMessage.steps
+          .filter(step => isMainResponse(step.name))
+          .map(step => step.id)
+      )
+      if (uniqueRawMessageIds.size > 1) {
+        return rawContent
+      }
+    }
+    return ""
+  }, [rawContent, streamingMessage])
 
-  const markdownMessage = streaming ? (started ? finalContent : '') : (messageContent ? messageContent : finalContent)
+  const markdownMessage = streaming ? finalContent : (messageContent ? messageContent : finalContent)
 
   const agentResponse = streamingMessage ?
     streamingMessage

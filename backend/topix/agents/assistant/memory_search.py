@@ -86,10 +86,11 @@ class MemorySearch(BaseAgent):
 
     async def _as_tool_hook(
         self, context: ReasoningContext, input: str, tool_id: str
-    ) -> MemorySearchOutput:
+    ) -> MemorySearchOutput | None:
         # No memory extracted from the memory base
         if not input:
             return MemorySearchOutput(answer=NOT_FOUND)
+        return None
 
     async def _output_extractor(
         self,

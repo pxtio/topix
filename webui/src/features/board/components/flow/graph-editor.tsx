@@ -65,11 +65,16 @@ export default function GraphEditor() {
   const [moving, setMoving] = useState<boolean>(false)
   const [isSelecting, setIsSelecting] = useState<boolean>(false)
 
-  const { zoomIn, zoomOut, fitView, viewportInitialized } = useReactFlow()
+  const {
+    zoomIn,
+    zoomOut,
+    fitView,
+    viewportInitialized,
+    setNodes: rfSetNodes
+  } = useReactFlow()
 
   const userId = useAppStore(state => state.userId)
   const boardId = useGraphStore(state => state.boardId)
-  const isLoading = useGraphStore(state => state.isLoading)
   const nodes = useGraphStore(useShallow(state => state.nodes))
   const edges = useGraphStore(useShallow(state => state.edges))
   const onNodesChange = useGraphStore(state => state.onNodesChange)
@@ -124,14 +129,9 @@ export default function GraphEditor() {
   const handleAddNode = useAddNoteNode()
 
   useEffect(() => {
-    if (!isLoading) setShouldRecenter(true)
-  }, [isLoading])
-
-  useEffect(() => {
     const integrateMindmap = async () => {
       if (boardId && mindmaps.has(boardId)) {
-        const added = await addMindMapToBoardAsync()
-        if (added) setShouldRecenter(true)
+        await addMindMapToBoardAsync()
       }
     }
     integrateMindmap()
@@ -144,7 +144,7 @@ export default function GraphEditor() {
   }, [shouldRecenter, fitView, viewMode])
 
   useEffect(() => {
-    if (viewportInitialized) fitView({ padding: 0.2, minZoom: 1, maxZoom: 1 })
+    if (viewportInitialized) fitView({ padding: 0.2, maxZoom: 1 })
   }, [viewportInitialized, fitView])
 
   const wrapperRef = useRef<HTMLDivElement | null>(null)
@@ -201,6 +201,43 @@ export default function GraphEditor() {
     onChange: () => setMoving(true),
     onEnd: () => setMoving(false)
   })
+
+  // --- NEW: frontend-only expiration for data.isNew (centralized)
+  const newTimersRef = useRef<Map<string, number>>(new Map())
+
+  useEffect(() => {
+    // schedule timers for nodes that are marked isNew and don't already have one
+    nodes.forEach(n => {
+      const isNew = !!n.data?.isNew
+      const hasTimer = newTimersRef.current.has(n.id)
+      if (isNew && !hasTimer) {
+        const t = window.setTimeout(() => {
+          rfSetNodes(ns =>
+            ns.map(m => m.id === n.id ? { ...m, data: { ...m.data, isNew: false } } : m)
+          )
+          newTimersRef.current.delete(n.id)
+        }, 5000)
+        newTimersRef.current.set(n.id, t)
+      }
+    })
+
+    // clear timers for nodes no longer needing them (removed or isNew flipped)
+    for (const [id, t] of newTimersRef.current) {
+      const stillNew = nodes.some(n => n.id === id && n.data?.isNew)
+      if (!stillNew) {
+        clearTimeout(t)
+        newTimersRef.current.delete(id)
+      }
+    }
+  }, [nodes, rfSetNodes])
+
+  // clear all timers on unmount
+  useEffect(() => {
+    return () => {
+      for (const [, t] of newTimersRef.current) clearTimeout(t)
+      newTimersRef.current.clear()
+    }
+  }, [])
 
   return (
     <div ref={wrapperRef} className='w-full h-full'>

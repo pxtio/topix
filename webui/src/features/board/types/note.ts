@@ -47,6 +47,8 @@ export interface Note extends Record<string, unknown> {
   minHeight?: number
 
   roughSeed?: number
+  // only used client-side
+  isNew?: boolean
 }
 
 

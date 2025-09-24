@@ -11,7 +11,7 @@ import { StyleDefaultsProvider } from '@/features/board/style-provider'
 import { useAppStore } from '@/store'
 import { clearTokens } from '@/features/signin/auth-storage'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useAuth } from '@/features/signin/hooks/use-auth'
+import { useAuth } from '@/features/signin/hooks/auth'
 
 export function RootLayout() {
   // only hydrates store from token; does not navigate

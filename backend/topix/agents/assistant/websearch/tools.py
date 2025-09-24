@@ -1,7 +1,6 @@
 """Tools for searching the web (async httpx version)."""
 
 import os
-import re
 
 from typing import Literal, Optional
 
@@ -115,9 +114,8 @@ async def search_linkup(
 
     data = {
         "q": query,
-        "outputType": "sourcedAnswer",
+        "outputType": "searchResults",
         "depth": depth,
-        "includeInlineCitations": True
     }
 
     if client is None:
@@ -125,29 +123,20 @@ async def search_linkup(
             resp = await ac.post(url, headers=headers, json=data, timeout=timeout)
     else:
         resp = await client.post(url, headers=headers, json=data, timeout=timeout)
+
     resp.raise_for_status()
     json_response = resp.json()
     results = json_response.get("results", [])
 
-    def _extract_source_ids(text: str) -> set[int]:
-        ids = [int(i) for i in re.findall(r'\[(\d+)\]', text)]
-        return set(ids)
-
-    answer = json_response.get("answer", "")
-    source_ids = _extract_source_ids(answer)
-    hits = []
-    for idx in source_ids:
-        if idx < 1 or idx > len(results):
-            continue
-        hit = SearchResult(
-            url=results[idx - 1]["url"],
-            title=results[idx - 1].get("title", ""),
-            content=results[idx - 1].get("content", "")
-        )
-        answer = answer.replace(f'[{idx}]', f'[{hit.title}]({hit.url})')
     return WebSearchOutput(
-        answer=answer,
-        search_results=hits
+        search_results=[
+            SearchResult(
+                url=result["url"],
+                title=result.get("name", ""),
+                content=result.get("content", ""),
+            )
+            for result in results
+        ]
     )
 
 

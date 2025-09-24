@@ -29,7 +29,6 @@ from topix.agents.utils.tools import (
     ToolCall,
     tool_execution_handler,
 )
-from topix.utils.web.favicon import fetch_meta_images_batch
 
 
 class WebSearchAgentHook(AgentHooks):
@@ -173,14 +172,6 @@ class BroadWebSearch(BaseAgent):
                             "Expected WebSearchOutput from tool call, got "
                             f"{type(item.output)}"
                         )
-        # Fetch favicons and cover images for the search results
-        meta_images = await fetch_meta_images_batch(
-            [result.url for result in search_results]
-        )
-        for result in search_results:
-            if result.url in meta_images:
-                result.favicon = str(meta_images[result.url].favicon) if meta_images[result.url].favicon else None
-                result.cover_image = str(meta_images[result.url].cover_image) if meta_images[result.url].cover_image else None
 
         return WebSearchOutput(
             answer=output.final_output, search_results=search_results

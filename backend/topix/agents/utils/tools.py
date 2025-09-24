@@ -116,7 +116,7 @@ def tool_execution_decorator(tool_name: str):
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
-        async def wrapper(
+        async def wrapper_func(
             wrapper: RunContextWrapper[Context], *args: Any, **kwargs: Any
         ) -> Any:
             log_params = {}
@@ -124,7 +124,7 @@ def tool_execution_decorator(tool_name: str):
                 bound_args = inspect.signature(func).bind(wrapper, *args, **kwargs)
                 bound_args.apply_defaults()
                 for name, value in bound_args.arguments.items():
-                    if name in ("context", "tool_id"):
+                    if name in ("wrapper", "tool_id"):
                         continue
                     if isinstance(value, BaseModel):
                         log_params[name] = value.model_dump()
@@ -145,6 +145,8 @@ def tool_execution_decorator(tool_name: str):
                 sig = inspect.signature(func)
                 if "tool_id" in sig.parameters:
                     result = await func(wrapper, tool_id=tool_id, *args, **kwargs)
+                else:
+                    result = await func(wrapper, *args, **kwargs)
 
             tool_call = ToolCall(
                 id=tool_id,
@@ -154,7 +156,10 @@ def tool_execution_decorator(tool_name: str):
                 state=ToolCallState.COMPLETED
             )
             wrapper.context.tool_calls.append(tool_call)
+            await wrapper.context._message_queue.put(tool_call)
 
-        return wrapper
+            return result
+
+        return wrapper_func
 
     return decorator

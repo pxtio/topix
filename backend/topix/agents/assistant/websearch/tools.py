@@ -6,9 +6,12 @@ from typing import Literal, Optional
 
 import httpx
 
+from agents import FunctionTool, RunContextWrapper, function_tool
+
 from topix.agents.datatypes.annotations import SearchResult
 from topix.agents.datatypes.outputs import WebSearchOutput
-from topix.agents.datatypes.web_search import WebSearchContextSize
+from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
+from topix.agents.utils.tools import tool_execution_decorator
 
 
 def _get_env_or_raise(key: str) -> str:
@@ -85,6 +88,7 @@ async def search_tavily(
 
 async def search_linkup(
     query: str,
+    max_results: int = 10,
     search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
     *,
     client: Optional[httpx.AsyncClient] = None,
@@ -94,6 +98,7 @@ async def search_linkup(
 
     Args:
         query: The query to search for.
+        max_results: Maximum number of results to return.
         search_context_size: Size of the search context.
         client: Optional shared httpx.AsyncClient to reuse.
         timeout: Optional httpx timeout (per-request).
@@ -135,7 +140,7 @@ async def search_linkup(
                 title=result.get("name", ""),
                 content=result.get("content", ""),
             )
-            for result in results
+            for result in results[:max_results]
         ]
     )
 
@@ -182,3 +187,34 @@ async def navigate(
     raw_content = resp.json().get("results", [{}])[0].get("raw_content", "")
 
     return f'<document url="{web_url}">\n\n{raw_content}\n\n</document>'
+
+
+def convert_search_func_to_tool(
+    name: str,
+    search_engine: Literal[WebSearchOption.TAVILY, WebSearchOption.LINKUP],
+    max_results: int = 10,
+    search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
+    *,
+    client: Optional[httpx.AsyncClient] = None,
+    timeout: Optional[httpx.Timeout] = None
+) -> FunctionTool:
+    """Convert a search function to a tool."""
+    if search_engine == WebSearchOption.TAVILY:
+        search_func = search_tavily
+    elif search_engine == WebSearchOption.LINKUP:
+        search_func = search_linkup
+    else:
+        raise ValueError(f"Invalid search engine: {search_engine}")
+
+    @function_tool(name_override=name)
+    @tool_execution_decorator(tool_name=name)
+    async def web_search(wrapper: RunContextWrapper, query: str) -> WebSearchOutput:
+        return await search_func(
+            query,
+            max_results=max_results,
+            search_context_size=search_context_size,
+            client=client,
+            timeout=timeout
+        )
+
+    return web_search

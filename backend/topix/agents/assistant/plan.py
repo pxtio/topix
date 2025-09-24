@@ -14,6 +14,7 @@ from agents import (
 from topix.agents.assistant.code_interpreter import CodeInterpreter
 from topix.agents.assistant.memory_search import NOT_FOUND, MemorySearch
 from topix.agents.assistant.websearch.broad import BroadWebSearch
+from topix.agents.assistant.websearch.tools import convert_search_func_to_tool
 from topix.agents.base import BaseAgent
 from topix.agents.config import PlanConfig
 from topix.agents.datatypes.context import ReasoningContext
@@ -66,7 +67,7 @@ class Plan(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4_1,
         instructions_template: str = "plan.system.jinja",
         model_settings: ModelSettings | None = None,
-        web_search: BroadWebSearch | None = None,
+        web_search: BroadWebSearch | Tool | None = None,
         memory_search: MemorySearch | None = None,
         code_interpreter: CodeInterpreter | None = None,
         content_store: ContentStore | None = None,
@@ -85,8 +86,12 @@ class Plan(BaseAgent):
         memory_search = memory_search or MemorySearch(content_store=content_store)
         code_interpreter = code_interpreter or CodeInterpreter()
 
+        if isinstance(web_search, BroadWebSearch):
+            web_search = web_search.as_tool(
+                AgentToolName.WEB_SEARCH, streamed=True
+            )
         tools = [
-            web_search.as_tool(AgentToolName.WEB_SEARCH, streamed=True),
+            web_search,
             memory_search.as_tool(AgentToolName.MEMORY_SEARCH, streamed=True),
             code_interpreter.as_tool(AgentToolName.CODE_INTERPRETER, streamed=True),
         ]
@@ -105,8 +110,20 @@ class Plan(BaseAgent):
     @classmethod
     def from_config(cls, content_store: ContentStore, config: PlanConfig):
         """Create an instance of Plan from configuration."""
+        if not config.enable_web_summarization:
+            web_search = convert_search_func_to_tool(
+                name=AgentToolName.WEB_SEARCH,
+                search_engine=config.web_search.search_engine,
+                max_results=config.web_search.max_results,
+                search_context_size=config.web_search.search_context_size
+            )
+        else:
+            web_search_agent = BroadWebSearch.from_config(config.web_search)
+            web_search = web_search_agent.as_tool(
+                AgentToolName.WEB_SEARCH, streamed=True
+            )
         return cls(
-            web_search=BroadWebSearch.from_config(config.web_search),
+            web_search=web_search,
             memory_search=MemorySearch.from_config(content_store, config.memory_search),
             code_interpreter=CodeInterpreter.from_config(config.code_interpreter),
             model=config.model,

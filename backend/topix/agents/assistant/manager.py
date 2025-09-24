@@ -24,6 +24,7 @@ from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
 from topix.store.qdrant.store import ContentStore
 from topix.utils.common import gen_uid
+from topix.utils.web.favicon import fetch_meta_images_batch
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +118,7 @@ class AssistantManager:
             )
         return res
 
-    def _convert_tool_call_to_annotation_message(
+    async def _convert_tool_call_to_annotation_message(
         self, tool_call: ToolCall
     ) -> AgentStreamMessage | None:
         if tool_call.name not in [
@@ -129,7 +130,24 @@ class AssistantManager:
         annotations = []
         match tool_call.name:
             case AgentToolName.WEB_SEARCH:
-                annotations = tool_call.output.search_results
+                # Fetch favicons and cover images for the search results
+                search_results = tool_call.output.search_results
+                meta_images = await fetch_meta_images_batch(
+                    [result.url for result in search_results]
+                )
+                for result in search_results:
+                    if result.url in meta_images:
+                        result.favicon = (
+                            str(meta_images[result.url].favicon)
+                            if meta_images[result.url].favicon
+                            else None
+                        )
+                        result.cover_image = (
+                            str(meta_images[result.url].cover_image)
+                            if meta_images[result.url].cover_image
+                            else None
+                        )
+                annotations = search_results
             case AgentToolName.MEMORY_SEARCH:
                 annotations = tool_call.output.references
 
@@ -194,7 +212,7 @@ class AssistantManager:
                         plan_id = message.tool_id
                 yield message
             elif isinstance(message, ToolCall):
-                annotation_message = self._convert_tool_call_to_annotation_message(
+                annotation_message = await self._convert_tool_call_to_annotation_message(  # noqa: E501
                     message
                 )
                 if annotation_message is not None:

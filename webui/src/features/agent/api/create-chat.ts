@@ -11,14 +11,16 @@ import { apiFetch } from "@/api"
 export async function createNewChat({
   userId,
   boardId,
+  chatId
 }: {
   userId: string,
   boardId?: string,
+  chatId?: string
 }): Promise<string> {
   const res = await apiFetch<{ data: { chat_id: string } }>({
     path: "/chats",
     method: "PUT",
-    params: { user_id: userId, board_id: boardId },
+    params: { user_id: userId, board_id: boardId, chat_id: chatId },
   })
   return res.data.chat_id
 }
@@ -30,11 +32,11 @@ export const useCreateChat = () => {
 
   const mutation = useMutation({
     mutationFn: createNewChat,
-    onSuccess: (chatId, { userId, boardId }) => {
+    onSuccess: (newChatId, { userId, boardId, chatId }) => {
       queryClient.setQueryData<Chat[]>(["listChats", userId], (oldData) => {
         const newChat = {
           id: -1,
-          uid: chatId,
+          uid: chatId || newChatId,
           label: undefined,
           createdAt: new Date().toISOString(),
           userId,

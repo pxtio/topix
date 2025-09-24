@@ -55,10 +55,13 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
     let id: string
     if (!chatId) {
       createNewChat = true
-      id = await createChatAsync({ userId, boardId: attachedBoardId })
-      setChatId(id)
-      navigate({ to: ChatUrl, params: { id } })
-      await updateChatAsync({ chatId: id, userId, chatData: { label: trimText(input.trim(), 20) } })
+      const newChatId = generateUuid()
+      setChatId(newChatId)
+      navigate({ to: ChatUrl, params: { id: newChatId } })
+
+      createChatAsync({ userId, boardId: attachedBoardId, chatId: newChatId })
+      updateChatAsync({ chatId: newChatId, userId, chatData: { label: trimText(input.trim(), 20) } })
+      id = newChatId
     } else {
       id = chatId
     }

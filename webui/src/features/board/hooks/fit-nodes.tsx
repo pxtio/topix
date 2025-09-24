@@ -1,13 +1,15 @@
-// useFitNodes.ts
-// Fits view to the provided nodes and waits (via requestAnimationFrame) until nodes are measured
 import { useCallback } from 'react'
 import { useReactFlow, type FitViewOptions, type Node } from '@xyflow/react'
 
+// Options for fitting nodes in the view
 export type FitNodesOptions = Omit<FitViewOptions, 'nodes'> & {
   includeHidden?: boolean
   timeoutMs?: number // how long to wait for measurements before giving up
 }
 
+/**
+ * A hook that returns a function to fit the view to specified nodes.
+ */
 export function useFitNodes() {
   const { fitView, getNodes } = useReactFlow()
 

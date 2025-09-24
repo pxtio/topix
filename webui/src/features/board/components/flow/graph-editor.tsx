@@ -233,9 +233,10 @@ export default function GraphEditor() {
 
   // clear all timers on unmount
   useEffect(() => {
+    const timers = newTimersRef.current
     return () => {
-      for (const [, t] of newTimersRef.current) clearTimeout(t)
-      newTimersRef.current.clear()
+      for (const [, t] of timers) clearTimeout(t)
+      timers.clear()
     }
   }, [])
 

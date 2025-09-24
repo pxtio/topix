@@ -34,8 +34,8 @@ export function useSaveThumbnailOnUnmount({
     height = 180,
     pixelRatio = 1,
     backgroundColor = 'transparent',
-    minZoom = 0.5,
-    maxZoom = 2,
+    minZoom = 0.1,
+    maxZoom = 1,
     padding = 0.1,
   } = opts ?? {}
 

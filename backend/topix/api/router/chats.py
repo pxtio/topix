@@ -22,6 +22,7 @@ from topix.api.helpers import with_standard_response, with_streaming
 from topix.api.utils.security import get_current_user_uid, verify_chat_user
 from topix.datatypes.chat.chat import Chat
 from topix.store.chat import ChatStore
+from topix.utils.common import gen_uid
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +41,11 @@ async def create_chat(
     request: Request,
     user_id: Annotated[str, Depends(get_current_user_uid)],
     board_id: Annotated[str, Query(description="Board Unique ID")] = None,
+    chat_id: Annotated[str | None, Query(description="Optional Chat ID")] = None,
 ):
     """Create a new chat for the user."""
-    new_chat = Chat(user_uid=user_id, graph_uid=board_id)
+    uid = chat_id or gen_uid()
+    new_chat = Chat(uid=uid, user_uid=user_id, graph_uid=board_id)
 
     store: ChatStore = request.app.chat_store
     await store.create_chat(new_chat)

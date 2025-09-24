@@ -23,6 +23,7 @@ class WebSearchConfig(BaseAgentConfig):
 
     search_engine: WebSearchOption
     search_context_size: WebSearchContextSize
+    max_results: int = 10
 
 
 class PlanConfig(BaseAgentConfig):
@@ -31,6 +32,9 @@ class PlanConfig(BaseAgentConfig):
     web_search: WebSearchConfig
     memory_search: BaseAgentConfig
     code_interpreter: BaseAgentConfig
+
+    # For Tavily and LinkUp
+    enable_web_summarization: bool = True
 
 
 class AssistantManagerConfig(BaseModel):
@@ -47,14 +51,22 @@ class AssistantManagerConfig(BaseModel):
             cf = yaml.safe_load(f)
         return AssistantManagerConfig.model_validate(cf)
 
-    def set_web_engine(self, engine: WebSearchOption):
+    def set_web_engine(
+        self, engine: WebSearchOption, enable_summarization: bool = False
+    ):
         """Switch the web search engine."""
         self.plan.web_search.search_engine = engine
 
         if engine in [WebSearchOption.OPENAI, WebSearchOption.PERPLEXITY]:
             self.plan.web_search.instructions_template = "web_search.jinja"
+            self.plan.enable_web_summarization = True
         else:
-            self.plan.web_search.instructions_template = "decoupled_web_search.jinja"
+            if enable_summarization:
+                # The raw web results will be summarized by LLM model
+                self.plan.web_search.instructions_template = "decoupled_web_search.jinja"
+                self.plan.enable_web_summarization = True
+            else:
+                self.plan.enable_web_summarization = False
 
     def set_model(self, model: str):
         """Switch the plan model."""
@@ -66,7 +78,4 @@ class AssistantManagerConfig(BaseModel):
         if not effort:
             self.plan.model_settings.reasoning = None
         else:
-            self.plan.model_settings.reasoning = {
-                "effort": effort,
-                "summary": "auto"
-            }
+            self.plan.model_settings.reasoning = {"effort": effort, "summary": "auto"}

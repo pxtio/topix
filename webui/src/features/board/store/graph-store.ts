@@ -1,4 +1,4 @@
-import { addEdge, applyEdgeChanges, applyNodeChanges, type Connection, type EdgeChange, type NodeChange } from "@xyflow/react"
+import { addEdge, applyEdgeChanges, applyNodeChanges, type Connection, type EdgeChange, type NodeChange, type Viewport } from "@xyflow/react"
 import type { LinkEdge, NoteNode } from "../types/flow"
 import { create } from "zustand/react"
 import { convertEdgeToLink, convertNodeToNote } from "../utils/graph"
@@ -27,6 +27,9 @@ export interface GraphStore {
   setDeletedNodes: (nodes: NoteNode[]) => void
   setDeletedEdges: (edges: LinkEdge[]) => void
   setIsResizingNode: (resizing: boolean) => void
+
+  graphViewports: Record<string, Viewport>
+  setGraphViewport: (boardId: string, viewport: Viewport) => void
 }
 
 
@@ -189,5 +192,15 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   setDeletedEdges: (edges) => set({ deletedEdges: edges }),
 
-  setIsResizingNode: (resizing) => set({ isResizingNode: resizing })
+  setIsResizingNode: (resizing) => set({ isResizingNode: resizing }),
+
+  graphViewports: {},
+
+  setGraphViewport: (boardId, vp) =>
+    set((state) => ({
+      graphViewports: {
+        ...state.graphViewports,
+        [boardId]: vp,
+      },
+    })),
 }))

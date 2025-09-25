@@ -69,11 +69,11 @@ const ReasoningStepViewImpl = ({
       <div className='relative flex-shrink-0'>
         {
           isLoading &&
-          <div className='absolute animate-ping w-2.5 h-2.5 rounded-full bg-secondary/50 z-20 mt-0.5' />
+          <div className='absolute animate-ping w-2.5 h-2.5 rounded-full bg-secondary/75 z-20 mt-0.5' />
         }
         {
           isLoading ?
-          <div className='relative w-2.5 h-2.5 rounded-full bg-secondary/75 z-20 mt-0.5' /> :
+          <div className='relative w-2.5 h-2.5 rounded-full bg-secondary z-20 mt-0.5' /> :
           <div className='relative w-2.5 h-2.5 rounded-full bg-secondary z-20 flex items-center justify-center mt-0.5'>
             <HugeiconsIcon icon={Tick01Icon} className="size-2 text-secondary-foreground" strokeWidth={1.75} />
           </div>

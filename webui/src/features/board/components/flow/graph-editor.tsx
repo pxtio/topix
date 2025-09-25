@@ -9,7 +9,8 @@ import {
   SelectionMode,
   type NodeChange,
   type EdgeChange,
-  useOnViewportChange
+  useOnViewportChange,
+  type ReactFlowInstance,
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import NodeView from './node-view'
@@ -84,6 +85,8 @@ export default function GraphEditor() {
   const onConnect = useGraphStore(state => state.onConnect)
   const mindmaps = useMindMapStore(state => state.mindmaps)
   const isResizingNode = useGraphStore(state => state.isResizingNode)
+  const graphViewports = useGraphStore(state => state.graphViewports)
+  const setGraphViewport = useGraphStore(state => state.setGraphViewport)
 
   const { removeNote } = useRemoveNote()
   const { removeLink } = useRemoveLink()
@@ -128,6 +131,8 @@ export default function GraphEditor() {
 
   const handleAddNode = useAddNoteNode()
 
+  const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
+
   useEffect(() => {
     const integrateMindmap = async () => {
       if (boardId && mindmaps.has(boardId)) {
@@ -144,8 +149,11 @@ export default function GraphEditor() {
   }, [shouldRecenter, fitView, viewMode])
 
   useEffect(() => {
-    if (viewportInitialized) fitView({ padding: 0.2, maxZoom: 1 })
-  }, [viewportInitialized, fitView])
+    if (!viewportInitialized) return
+    if (!boardId || !graphViewports[boardId]) {
+      fitView({ padding: 0.2, maxZoom: 1 })
+    }
+  }, [viewportInitialized, fitView, boardId, graphViewports])
 
   const wrapperRef = useRef<HTMLDivElement | null>(null)
 
@@ -199,7 +207,12 @@ export default function GraphEditor() {
 
   useOnViewportChange({
     onChange: () => setMoving(true),
-    onEnd: () => setMoving(false)
+    onEnd: (vp) => {
+      if (boardId) {
+        setGraphViewport(boardId, vp)
+      }
+      setMoving(false)
+    }
   })
 
   // --- NEW: frontend-only expiration for data.isNew (centralized)
@@ -294,6 +307,16 @@ export default function GraphEditor() {
           zoomOnPinch={!isLocked}
           panOnScroll={!isLocked}
           onlyRenderVisibleElements
+          onInit={(instance) => {
+            rfInstanceRef.current = instance
+            if (boardId) {
+              const saved = graphViewports[boardId]
+              if (saved) {
+                // restore immediately, no animation
+                instance.setViewport(saved, { duration: 0 })
+              }
+            }
+          }}
         >
           {!moving && !isDragging && !isResizingNode && !isSelecting && (
             <MiniMap className='!bg-card rounded-lg'/>

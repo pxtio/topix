@@ -26,6 +26,7 @@ async def user_obj(conn):
         username=user_uid,
         name="GraphUserTest",
         created_at=datetime.now(),
+        password_hash="hashed_password"
     )
     await create_user(conn, user)
     return user
@@ -81,6 +82,7 @@ async def test_graph_user_assoc_and_listing(conn, user_obj, graph_obj):
         username=user2_uid,
         name="SecondUser",
         created_at=datetime.now(),
+        password_hash="hashed_password"
     )
     await create_user(conn, user2)
     result3 = await add_user_to_graph_by_uid(conn, graph_uid, user2_uid, "member")

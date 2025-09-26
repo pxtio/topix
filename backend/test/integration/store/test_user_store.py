@@ -12,7 +12,8 @@ def make_test_user():
     return User(
         email=f"test_{uuid.uuid4().hex[:8]}@example.com",
         username=f"user_{uuid.uuid4().hex[:8]}",
-        name="Test User"
+        name="Test User",
+        password_hash="hashed_password",
     )
 
 

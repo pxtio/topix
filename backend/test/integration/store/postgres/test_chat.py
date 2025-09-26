@@ -32,7 +32,8 @@ async def test_chat_crud(conn, chat_uid):
     user = User(
         uid=user_uid,
         email=f"{user_uid}@gmail.com",
-        username=user_uid
+        username=user_uid,
+        password_hash="hashed_password"
     )
 
     await create_user(conn, user)

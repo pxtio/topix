@@ -34,7 +34,8 @@ async def test_user_crud(conn: AsyncConnection, user_uid: str):
         email=email,
         username=user_uid,
         name="Test User",
-        creaated_at=now
+        created_at=now,
+        password_hash="hashed_password"
     )
 
     # CREATE

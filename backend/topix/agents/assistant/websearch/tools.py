@@ -52,9 +52,19 @@ async def search_perplexity(
         "Authorization": f"Bearer {api_key}",
     }
 
+    tokens_per_page = 1024  # default value
+    match search_context_size:
+        case WebSearchContextSize.SMALL:
+            tokens_per_page = 512
+        case WebSearchContextSize.MEDIUM:
+            tokens_per_page = 1200
+        case WebSearchContextSize.LARGE:
+            tokens_per_page = 2000
+
     data = {
         "query": query,
         "max_results": max_results,
+        "max_tokens_per_page": tokens_per_page
     }
 
     if client is None:

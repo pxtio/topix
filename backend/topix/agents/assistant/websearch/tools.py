@@ -24,6 +24,61 @@ def _get_env_or_raise(key: str) -> str:
     return value
 
 
+async def search_perplexity(
+    query: str,
+    max_results: int = 10,
+    search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
+    *,
+    client: Optional[httpx.AsyncClient] = None,
+    timeout: Optional[httpx.Timeout] = None,
+) -> WebSearchOutput:
+    """Search for a query using the Perplexity API (async).
+
+    Args:
+        query: The query to search for.
+        max_results: Maximum number of results to return.
+        search_context_size: Size of the search context.
+        client: Optional shared httpx.AsyncClient to reuse.
+        timeout: Optional httpx timeout (per-request).
+
+    Returns:
+        WebSearchOutput
+
+    """
+    url = "https://api.perplexity.ai/search"
+    api_key = _get_env_or_raise("PERPLEXITY_API_KEY")
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+
+    data = {
+        "query": query,
+        "max_results": max_results,
+    }
+
+    if client is None:
+        async with httpx.AsyncClient() as ac:
+            resp = await ac.post(url, headers=headers, json=data, timeout=timeout)
+    else:
+        resp = await client.post(url, headers=headers, json=data, timeout=timeout)
+
+    resp.raise_for_status()
+    json_response = resp.json()
+    results = json_response.get("results", [])
+
+    return WebSearchOutput(
+        search_results=[
+            SearchResult(
+                url=result["url"],
+                title=result.get("title", ""),
+                content=result.get("snippet", ""),
+            )
+            for result in results
+        ]
+    )
+
+
 async def search_tavily(
     query: str,
     max_results: int = 10,
@@ -203,6 +258,8 @@ def convert_search_func_to_tool(
         search_func = search_tavily
     elif search_engine == WebSearchOption.LINKUP:
         search_func = search_linkup
+    elif search_engine == WebSearchOption.PERPLEXITY:
+        search_func = search_perplexity
     else:
         raise ValueError(f"Invalid search engine: {search_engine}")
 

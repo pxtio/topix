@@ -5,9 +5,9 @@ import type { Note, NoteProperties } from '../../types/note'
 import type { NoteNode } from '../../types/flow'
 import { MilkdownProvider } from '@milkdown/react'
 import { MdEditor } from '@/components/editor/milkdown'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowDiagonalIcon, Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
+import { Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { clsx } from 'clsx'
 
@@ -244,8 +244,8 @@ export const NodeCard = ({
                       key={c.name}
                       className='h-6 w-6 rounded-full border border-border hover:brightness-95'
                       style={{ backgroundColor: isDark ? darkModeDisplayHex(c.hex) || c.hex : c.hex }}
-                      title={`${c.name}-100`}
-                      aria-label={`${c.name}-100`}
+                      title={`${c.name}-200`}
+                      aria-label={`${c.name}-200`}
                       onClick={() => onPickPalette(c.hex)}
                     />
                   ))}
@@ -273,20 +273,6 @@ export const NodeCard = ({
             >
               <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4' strokeWidth={1.75} />
             </button>
-          </div>
-        )}
-
-        {selected && !isSheet && (
-          <div className='absolute top-2 inset-x-0 -translate-y-[calc(100%+0.5rem)] text-xs font-sans flex items-center justify-center gap-2 z-40'>
-            <DialogTrigger asChild>
-              <button
-                className='transition-colors px-2 py-1 text-foreground/50 hover:text-foreground flex items-center justify-center gap-2'
-                aria-label='View note'
-              >
-                <HugeiconsIcon icon={ArrowDiagonalIcon} className='size-4 shrink-0' strokeWidth={1.75} />
-                <span>View Note</span>
-              </button>
-            </DialogTrigger>
           </div>
         )}
 
@@ -335,7 +321,7 @@ export const NodeCard = ({
         )}
 
         <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
-          <div className='h-full w-full min-w-0 overflow-auto scrollbar-thin'>
+          <div className='h-full w-full min-w-0 overflow-y-auto overflow-x-hidden scrollbar-thin'>
             <MilkdownProvider>
               <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
             </MilkdownProvider>

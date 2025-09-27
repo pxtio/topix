@@ -51,7 +51,7 @@ export function ShapeChrome({
 
   if (type === 'text') {
     return (
-      <div className={clsx('bg-transparent w-full h-full', className)} style={{ color: textColor, minHeight }}>
+      <div className={clsx('bg-transparent w-full h-full', className)} style={{ color: textColor }}>
         {children}
       </div>
     )

@@ -30,7 +30,7 @@ export const Shape = memo(function Shape({
   showPlaceholder = false
 }: ShapeProps) {
   const base = `
-    w-full p-4 border-none resize-none
+    w-full p-2 border-none resize-none
     focus:outline-none focus:ring-0 focus:border-none
     overflow-hidden whitespace-normal break-words
     ${styleHelpers.text} ${styleHelpers.font} ${styleHelpers.size}

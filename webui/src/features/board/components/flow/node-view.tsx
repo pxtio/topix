@@ -39,7 +39,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   useEffect(() => { debounce() }, [debounce, data])
 
   // measure content & drive minHeight
-  const { contentRef, computedMinH } = useContentMinHeight(id, 24, 100)
+  const { contentRef, computedMinH } = useContentMinHeight(id, 24, 24)
 
   const resizeHandles = useMemo(() => ([
     { pos: 'top-left', class: 'top-0 left-0 cursor-nwse-resize' },

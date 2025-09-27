@@ -212,9 +212,10 @@ class AssistantManager:
                         plan_id = message.tool_id
                 yield message
             elif isinstance(message, ToolCall):
-                annotation_message = await self._convert_tool_call_to_annotation_message(  # noqa: E501
-                    message
-                )
+                annotation_message = \
+                    await self._convert_tool_call_to_annotation_message(
+                        message
+                    )
                 if annotation_message is not None:
                     yield annotation_message
 

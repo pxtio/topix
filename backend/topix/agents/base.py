@@ -217,9 +217,7 @@ class BaseAgent(Agent[Context]):
     async def _input_formatter(
         self, context: Context, input: Any
     ) -> str | list[dict[str, str]]:
-        if isinstance(input, str):
-            return input
-        elif isinstance(input, list):
+        if isinstance(input, (str, list)):
             return input
         raise NotImplementedError("_input_formatter method is not implemented")
 

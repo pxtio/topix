@@ -14,6 +14,7 @@ class ContentType(StrEnum):
     TOKEN = "token"
     STATUS = "status"
     MESSAGE = "message"
+    INPUT = "input"
 
 
 class Content(BaseModel):

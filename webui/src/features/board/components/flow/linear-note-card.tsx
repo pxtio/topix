@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState } from 'react'
 import type { NoteNode } from '../../types/flow'
 import { MarkdownView } from '@/components/markdown/markdown-view'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { MilkdownProvider } from '@milkdown/react'
 import { MdEditor } from '@/components/editor/milkdown'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -307,12 +306,12 @@ export function LinearNoteCard({ node }: Props) {
           <DialogDescription />
         </DialogHeader>
 
-        <div className='min-h-0 flex-1 flex items-center w-full'>
-          <ScrollArea className='h-full w-full'>
+        <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
+          <div className='h-full w-full min-w-0 overflow-y-auto overflow-x-hidden scrollbar-thin'>
             <MilkdownProvider>
               <MdEditor markdown={node.data.content?.markdown || ''} onSave={onSaveContent} />
             </MilkdownProvider>
-          </ScrollArea>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

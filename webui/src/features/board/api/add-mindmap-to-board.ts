@@ -60,24 +60,21 @@ export const useAddMindMapToBoard = () => {
         addedLinks.push(...newLinks)
       }
 
+      // backend persistence
+      await addNotes(
+        boardId,
+        userId,
+        addedNotes
+      )
+      await addLinks(
+        boardId,
+        userId,
+        addedLinks
+      )
+
       // fit view to new nodes
       if (newIds.length > 0) {
         await fitNodes(newIds, { padding: 0.25, duration: 100 })
-      }
-      // backend persistence
-      if (addedNotes.length > 0) {
-        await addNotes(
-          boardId,
-          userId,
-          addedNotes
-        )
-      }
-      if (addedLinks.length > 0) {
-        await addLinks(
-          boardId,
-          userId,
-          addedLinks
-        )
       }
 
       clearMindMap(boardId)

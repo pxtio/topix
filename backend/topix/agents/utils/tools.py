@@ -40,7 +40,9 @@ def format_tool_failed_message(tool_name: str, message: str | None = None) -> st
 
 
 def format_params(
-    params: dict[str:Any], max_val_len: int = 60, max_params: int = 5
+    params: dict[str, Any],
+    max_val_len: int = 60,
+    max_params: int = 5
 ) -> str:
     """Format input params as a bullet list for starting message."""
     parts = []
@@ -57,17 +59,17 @@ def format_params(
 
 @asynccontextmanager
 async def tool_execution_handler(
-    context: Context, tool_name: str, start_msg: str | None = None
+    context: Context, tool_name: str, formatted_input: str | None = None
 ):
     """Async context manager to handle tool execution."""
     fixed_params = {
         "tool_id": gen_uid(),
         "tool_name": tool_name,
     }
-    if start_msg:
-        start_message = f"Calling with: `{start_msg}`."
+    if formatted_input:
+        start_message = f"Calling with: `{formatted_input}`."
     else:
-        start_message = ""
+        start_message = None
     # __aenter__:
     await context._message_queue.put(
         AgentStreamMessage(
@@ -79,6 +81,17 @@ async def tool_execution_handler(
             **fixed_params,
         )
     )
+    if formatted_input:
+        await context._message_queue.put(
+            AgentStreamMessage(
+                content=Content(
+                    type=ContentType.INPUT,
+                    text=formatted_input,
+                ),
+                is_stop=False,
+                **fixed_params,
+            )
+        )
     try:
         yield fixed_params["tool_id"]
     except Exception as e:
@@ -134,13 +147,12 @@ def tool_execution_decorator(tool_name: str):
                 pass
 
             if log_params:
-                formatted_params = format_params(log_params)
-                start_message = f"Calling with: {formatted_params}"
+                formatted_input = format_params(log_params)
             else:
-                start_message = ""
+                formatted_input = None
 
             async with tool_execution_handler(
-                wrapper.context, tool_name, start_msg=start_message
+                wrapper.context, tool_name, formatted_input=formatted_input
             ) as tool_id:
                 sig = inspect.signature(func)
                 if "tool_id" in sig.parameters:

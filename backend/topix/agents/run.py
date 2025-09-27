@@ -138,7 +138,7 @@ class AgentRunner:
 
         async def stream_events():
             async with tool_execution_handler(
-                context, tool_name=AgentToolName.RAW_MESSAGE, start_msg=input_msg
+                context, tool_name=AgentToolName.RAW_MESSAGE, formatted_input=input_msg
             ) as tool_id:
                 res = Runner.run_streamed(
                     starting_agent,

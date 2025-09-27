@@ -92,7 +92,7 @@ export const AssistantMessage = ({
       const uniqueRawMessageIds = new Set(
         streamingMessage.steps
           .filter(step => isMainResponse(step.name))
-          .map(step => step.id)
+          .map(step => step.id.split('::')[0])
       )
       if (uniqueRawMessageIds.size > 1) {
         return rawContent
@@ -100,6 +100,7 @@ export const AssistantMessage = ({
     }
     return ""
   }, [rawContent, streamingMessage])
+
 
   const markdownMessage = streaming ? finalContent : (messageContent ? messageContent : finalContent)
 

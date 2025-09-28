@@ -19,3 +19,11 @@ def to_display_output(tool_name: str) -> bool:
         AgentToolName.ANSWER_REFORMULATE,
         AgentToolName.RAW_MESSAGE,
     ]
+
+
+tool_descriptions = {
+    AgentToolName.MEMORY_SEARCH: "Search the memory",
+    AgentToolName.WEB_SEARCH: "Search the web",
+    AgentToolName.CODE_INTERPRETER: "Run code",
+    AgentToolName.RAW_MESSAGE: "Reasoning message",
+}

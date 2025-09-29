@@ -1,8 +1,11 @@
+import { v4 as uuidv4 } from 'uuid'
+
+
 /**
  * Generates a UUID without dashes.
  */
 export function generateUuid(): string {
-  return crypto.randomUUID().replace(/-/g, '')
+  return uuidv4().replace(/-/g, '')
 }
 
 

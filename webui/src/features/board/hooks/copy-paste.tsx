@@ -24,6 +24,7 @@ import { useAddNotes } from '../api/add-notes'
 import { useAppStore } from '@/store'
 import type { Note } from '../types/note'
 import type { NoteNode } from '../types/flow'
+import { generateUuid } from '@/lib/common'
 
 type CopyPasteOptions = {
   /**
@@ -101,7 +102,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
 
     const cloned: Note = {
       ...note,
-      id: crypto.randomUUID(),
+      id: generateUuid(),
       properties: {
         ...note.properties,
         nodePosition: {

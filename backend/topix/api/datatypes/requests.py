@@ -30,8 +30,8 @@ class SendMessageRequest(BaseModel):
 
     message_id: str | None = None
     query: str
-    model: str = "openai/gpt-4o"
-    web_search_engine: WebSearchOption = WebSearchOption.OPENAI
+    model: str = "openai/gpt-4.1"
+    web_search_engine: WebSearchOption = WebSearchOption.PERPLEXITY
     force_tool: AgentToolName | None = None
 
     enabled_tools: list[AgentToolName] = [

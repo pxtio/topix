@@ -17,7 +17,7 @@ from agents import (
     generation_span,
 )
 
-from topix.agents.assistant.websearch.tools import search_linkup, search_tavily
+from topix.agents.assistant.websearch.tools import search_linkup, search_perplexity, search_tavily
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
@@ -136,17 +136,19 @@ class BroadWebSearch(BaseAgent):
                 tools.append(web_search)
                 return tools
             case WebSearchOption.PERPLEXITY:
-                if model.startswith("perplexity"):
-                    return []
-                raise ValueError(
-                    "Perplexity search engine is only compatible with Perplexity models,"
-                    f"got {model}."
-                )
+                @function_tool
+                async def web_search(query: str) -> WebSearchOutput:
+                    """Search using Perplexity."""
+                    return await search_perplexity(
+                        query, search_context_size=search_context_size
+                    )
+                tools.append(web_search)
+                return tools
             case _:
                 raise ValueError(f"Unsupported search engine: {search_engine}")
 
     async def _output_extractor(self, context, output) -> WebSearchOutput:  # noqa: C901
-        if self.search_engine in [WebSearchOption.OPENAI, WebSearchOption.PERPLEXITY]:
+        if self.search_engine in [WebSearchOption.OPENAI]:
             existing_urls = set()
             search_results: list[SearchResult] = []
             # Extract citations from the final output

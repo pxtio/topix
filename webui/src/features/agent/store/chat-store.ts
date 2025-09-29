@@ -40,7 +40,7 @@ export const useChatStore = create<ChatStore>((set) => ({
 
   llmModel: "openai/gpt-4.1",
 
-  webSearchEngine: "openai",
+  webSearchEngine: "perplexity",
 
   enabledTools: ["web_search", "memory_search", "code_interpreter"],
 

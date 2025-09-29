@@ -57,7 +57,7 @@ class AssistantManagerConfig(BaseModel):
         """Switch the web search engine."""
         self.plan.web_search.search_engine = engine
 
-        if engine in [WebSearchOption.OPENAI, WebSearchOption.PERPLEXITY]:
+        if engine in [WebSearchOption.OPENAI]:
             self.plan.web_search.instructions_template = "web_search.jinja"
             self.plan.enable_web_summarization = True
         else:

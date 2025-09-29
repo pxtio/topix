@@ -73,6 +73,7 @@
     "tailwindcss": "^4.1.11",
     "tldts": "^7.0.12",
     "use-debounce": "^10.0.5",
+    "uuid": "^13.0.0",
     "zustand": "^5.0.6"
   },
   "devDependencies": {

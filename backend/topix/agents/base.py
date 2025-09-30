@@ -40,7 +40,9 @@ from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.tool_handler import ToolHandler
 
 logger = logging.getLogger(__name__)
+
 litellm.drop_params = True
+
 
 RAW_RESPONSE_EVENT = "raw_response_event"
 PROMPT_DIR = Path(__file__).parent.parent / "prompts"
@@ -63,7 +65,9 @@ class BaseAgent(Agent[Context]):
                 self.model = LitellmModel(self.model)
 
     def _adjust_model_settings(
-        self, model: str, model_settings: ModelSettings | None
+        self,
+        model: str | LitellmModel,
+        model_settings: ModelSettings | None
     ) -> ModelSettings:
         model_settings = model_settings or ModelSettings()
 
@@ -85,7 +89,16 @@ class BaseAgent(Agent[Context]):
         if support_penalties(model):
             if model_settings.frequency_penalty is None:
                 model_settings.frequency_penalty = 0.2
+        else:
+            model_settings.presence_penalty = None
+            model_settings.frequency_penalty = None
 
+        # TODO: remove this when litellm supports penalties for non-openai models
+        if isinstance(model, LitellmModel):
+            model_settings.extra_args = {
+                "drop_params": True,
+                "additional_drop_params": ["frequency_penalty", "presence_penalty"]
+            }
         return model_settings
 
     @classmethod

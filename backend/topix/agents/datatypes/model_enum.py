@@ -85,7 +85,9 @@ def support_penalties(model: str) -> bool:
         OpenAIModel.GPT_4_1_NANO,
         OpenAIModel.GPT_5,
         OpenAIModel.GPT_5_MINI,
-        OpenAIModel.GPT_5_NANO
+        OpenAIModel.GPT_5_NANO,
+        GeminiModel.GEMINI_2_5_FLASH,
+        GeminiModel.GEMINI_2_5_PRO,
     ]:
         return False
     return True

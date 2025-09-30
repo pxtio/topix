@@ -9,6 +9,7 @@ from typing import Annotated, Literal, Type
 
 from pydantic import BaseModel, Field
 
+from topix.agents.datatypes.annotations import SearchResult
 from topix.agents.datatypes.tool_call import ToolCall
 from topix.datatypes.mime import MimeTypeEnum
 from topix.utils.common import gen_uid
@@ -32,6 +33,7 @@ class PropertyType(StrEnum):
     FILE = "file"
     URL = "url"
     REASONING = "reasoning"
+    MULTI_SOURCE = "multi_source"
 
 
 class Property(abc.ABC, BaseModel):
@@ -196,6 +198,13 @@ class ReasoningProperty(Property):
 
     type: Literal[PropertyType.REASONING] = PropertyType.REASONING
     reasoning: list[ToolCall] = []
+
+
+class MultiSourceProperty(Property):
+    """Property for multiple web source values."""
+
+    type: Literal[PropertyType.MULTI_SOURCE] = PropertyType.MULTI_SOURCE
+    sources: list[SearchResult] = []
 
 
 type DataProperty = Annotated[

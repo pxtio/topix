@@ -7,6 +7,7 @@ import json
 from typing import Any, Awaitable, Callable
 
 from agents import (
+    Agent,
     FunctionTool,
     RunContextWrapper,
     Runner,
@@ -20,17 +21,19 @@ from openai.types.responses import (
 )
 from pydantic import BaseModel
 
-from topix.agents.base import (
+from topix.agents.datatypes.context import Context
+from topix.agents.datatypes.outputs import (
+    MemorySearchOutput,
+    ToolOutput,
+    WebSearchOutput,
+)
+from topix.agents.datatypes.stream import (
     AgentStreamMessage,
-    BaseAgent,
     Content,
     ContentType,
-    ToolCallState,
-    ToolOutput,
+    StreamingMessageType,
 )
-from topix.agents.datatypes.context import Context, ToolCall
-from topix.agents.datatypes.outputs import MemorySearchOutput, WebSearchOutput
-from topix.agents.datatypes.stream import StreamingMessageType
+from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
 from topix.utils.common import gen_uid
 from topix.utils.web.favicon import fetch_meta_images_batch
 
@@ -43,7 +46,7 @@ class ToolHandler:
     @classmethod
     def convert_agent_to_tool(
         cls,
-        agent: BaseAgent,
+        agent: Agent,
         tool_name: str,
         tool_description: str = "",
         max_turns: int = 5,
@@ -143,7 +146,7 @@ class ToolHandler:
     @classmethod
     def convert_agent_to_func(
         cls,
-        agent: BaseAgent,
+        agent: Agent,
         tool_name: str,
         max_turns: int = 5,
         streamed: bool = False,
@@ -320,6 +323,7 @@ class ToolHandler:
             meta_images = await fetch_meta_images_batch(
                 [result.url for result in search_results]
             )
+            new_results = []
             for result in search_results:
                 if result.url in meta_images:
                     result.favicon = (
@@ -332,7 +336,10 @@ class ToolHandler:
                         if meta_images[result.url].cover_image
                         else None
                     )
-            annotations = search_results
+                new_result = result.model_copy()
+                new_result.content = new_result.content[:500] if new_result.content else None
+                new_results.append(new_result)
+            annotations = new_results
         elif isinstance(output, MemorySearchOutput):
             annotations = output.references
         else:
@@ -391,5 +398,7 @@ class ToolHandler:
             for message in raw_response.output:
                 if message.type == "reasoning":
                     if message.summary:
-                        thought += "\n\n".join(summary for summary in message.summary)
+                        thought += "\n\n".join(
+                            summary.text for summary in message.summary
+                        )
         return thought

@@ -25,6 +25,9 @@ class WebSearchConfig(BaseAgentConfig):
     search_context_size: WebSearchContextSize
     max_results: int = 10
 
+    enable_summary: bool = False
+    streamed: bool = False
+
 
 class PlanConfig(BaseAgentConfig):
     """Plan Config class."""

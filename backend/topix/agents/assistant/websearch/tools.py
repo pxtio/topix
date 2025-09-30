@@ -54,11 +54,11 @@ async def search_perplexity(
 
     tokens_per_page = 1024  # default value
     match search_context_size:
-        case WebSearchContextSize.SMALL:
+        case WebSearchContextSize.LOW:
             tokens_per_page = 512
         case WebSearchContextSize.MEDIUM:
             tokens_per_page = 1200
-        case WebSearchContextSize.LARGE:
+        case WebSearchContextSize.HIGH:
             tokens_per_page = 2000
 
     data = {
@@ -119,7 +119,7 @@ async def search_tavily(
 
     search_depth = "advanced" if search_context_size in (
         WebSearchContextSize.MEDIUM,
-        WebSearchContextSize.LARGE,
+        WebSearchContextSize.HIGH,
     ) else "basic"
 
     data = {
@@ -180,7 +180,7 @@ async def search_linkup(
     }
 
     # Use enum to determine depth (fixing prior string comparison)
-    depth = "deep" if search_context_size == WebSearchContextSize.LARGE else "standard"
+    depth = "deep" if search_context_size == WebSearchContextSize.HIGH else "standard"
 
     data = {
         "q": query,

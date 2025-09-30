@@ -222,8 +222,9 @@ class BaseAgent(Agent[Context]):
         raise NotImplementedError("_input_formatter method is not implemented")
 
     async def _output_extractor(
-        self, context: Context, output: RunResult
+        self, context: Context, output: RunResult | RunResultStreaming
     ) -> ToolOutput:
+        """Extract the final output from the agent's response."""
         return output.final_output
 
     @classmethod

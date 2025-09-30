@@ -15,11 +15,7 @@ def make_web_search_tool(
     if isinstance(web_search, BroadWebSearch):
         web_search = web_search.as_tool(
             AgentToolName.WEB_SEARCH,
-            streamed=True,
-            options={
-                "search_engine": WebSearchOption.PERPLEXITY,
-                "context_size": "medium"  # could be small, medium, large
-            }
+            streamed=True
         )
     return web_search
 

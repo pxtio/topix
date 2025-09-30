@@ -17,7 +17,11 @@ from agents import (
     generation_span,
 )
 
-from topix.agents.assistant.websearch.tools import search_linkup, search_perplexity, search_tavily
+from topix.agents.assistant.websearch.tools import (
+    search_linkup,
+    search_perplexity,
+    search_tavily,
+)
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
@@ -29,6 +33,7 @@ from topix.agents.utils.tools import (
     ToolCall,
     tool_execution_handler,
 )
+from topix.agents.config import WebSearchConfig
 
 
 class WebSearchAgentHook(AgentHooks):
@@ -97,6 +102,20 @@ class BroadWebSearch(BaseAgent):
         )
 
         super().__post_init__()
+
+    @classmethod
+    def from_config(
+        cls,
+        config: WebSearchConfig,
+    ):
+        """Create an instance of WebSearchAgent from configuration."""
+        return cls(
+            model=config.model,
+            instructions_template=config.instructions_template,
+            model_settings=config.model_settings,
+            search_engine=config.search_engine,
+            search_context_size=config.search_context_size,
+        )
 
     def _configure_tools(
         self,

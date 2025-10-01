@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
 
-CONFIG_DIR = Path(__file__).parent / "manager_configs"
+CONFIG_DIR = Path(__file__).parent / "configs"
 
 
 class BaseAgentConfig(BaseModel):
@@ -54,7 +54,7 @@ class AssistantManagerConfig(BaseModel):
     def from_yaml(filepath: str | None = None):
         """Create an instance of ManagerConfig from a YAML file."""
         if not filepath:
-            filepath = CONFIG_DIR / "assistant.yaml"
+            filepath = CONFIG_DIR / "assistant.yml"
         with open(filepath) as f:
             cf = yaml.safe_load(f)
         return AssistantManagerConfig.model_validate(cf)
@@ -105,7 +105,7 @@ class DeepResearchConfig(BaseModel):
     def from_yaml(filepath: str | None = None):
         """Create an instance of LearningModuleConfig from a YAML file."""
         if not filepath:
-            filepath = CONFIG_DIR / "deep_research.yaml"
+            filepath = CONFIG_DIR / "deep_research.yml"
         with open(filepath) as f:
             cf = yaml.safe_load(f)
         return DeepResearchConfig.model_validate(cf)

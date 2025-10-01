@@ -1,0 +1,41 @@
+# Synthesizer Input
+
+## Collected Items
+{{ items }}
+
+---
+
+## Time
+{{ time }}
+
+## Tracker
+
+### Topic
+{{ topic }}
+
+### Description
+{{ description }}
+
+### Sub Topics
+{{ sub_topics }}
+
+### Keywords
+{{ keywords }}
+
+### Seed Sources
+{{ seed_sources }}
+
+---
+
+# Recap — Synthesis Rules (Reminder)
+- **Format**: Return a single **Markdown newsletter** only, no JSON or commentary.
+- **Sections**: Headlines, Products & Releases, Research & Benchmarks, Policy/Security & Safety, Developer Changelogs, Quick Hits (omit empty ones).
+- **Item micro-format**:
+  - **[Title](URL)** — 1–2 sentences (28–60 words), factual, present tense, light witty aside optional.
+  - Always end with `(source_domain, Mon DD)`. Append `(paywalled)` if applicable. Add region/language tags if needed.
+- **Ranking**: High significance first → medium → low (only if completes a story). Deduplicate by `story_id`; keep canonical (usually official) URL.
+- **Freshness**: Prefer items closest to {{ time }}.
+- **Accuracy**: Never invent facts; use only collected items.
+- **Links**: Double-check every link is present, canonical (no tracking params), and correct. Broken or missing links = unusable output.
+- **Tone**: Concise, direct, lightly witty, but sober on security/regulation.
+- **Output**: Begin with `# {{ topic }} — Daily Briefing ({{ time }})`, optional 1–2 sentence intro, then sections with bullets.

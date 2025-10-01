@@ -1,0 +1,36 @@
+collector:
+  model: openai/gpt-4.1
+  instructions_template: newsfeed/collector.system.jinja
+  model_settings:
+    temperature: 0.01
+    max_tokens: 8000
+
+  web_search:
+    model: openai/gpt-4.1-mini
+    instructions_template: web_search.jinja
+    search_engine: openai
+    search_context_size: medium
+    model_settings:
+      temperature: 0.01
+
+synthesizer:
+  model: openai/gpt-4.1
+  instructions_template: newsfeed/synthesizer.system.jinja
+  model_settings:
+    temperature: 0.2
+    max_tokens: 8000
+
+topic_setup:
+  model: openai/gpt-4.1
+  instructions_template: newsfeed/topic_setup.system.jinja
+  model_settings:
+    temperature: 0.01
+    max_tokens: 4000
+
+  web_search:
+    model: openai/gpt-4.1-mini
+    instructions_template: web_search.jinja
+    search_engine: openai
+    search_context_size: large
+    model_settings:
+      temperature: 0.01

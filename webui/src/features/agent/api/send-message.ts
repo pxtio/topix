@@ -98,13 +98,13 @@ export const useSendMessage = () => {
         let setNewAssistantMessageId = false
 
         let streamingMessageId: string | undefined
-        let count = 0
+
         for await (const resp of response) {
-          const { response: rep, isStop } = resp
+          const { response: rep } = resp
           if (rep.steps.length === 0) {
             continue
           }
-          count ++
+
           const step = rep.steps[0]
           const responseId = step.id
 
@@ -138,9 +138,7 @@ export const useSendMessage = () => {
               }
             )
           }
-          if (count % 5 === 1 || isStop) {
-            setStream(responseId, rep)
-          }
+          setStream(responseId, rep)
         }
       } catch (error) {
         console.error("Error sending message:", error)

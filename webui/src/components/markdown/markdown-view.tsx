@@ -5,7 +5,6 @@ import remarkGfm from "remark-gfm"
 import "katex/dist/katex.min.css"
 import { cn } from "@/lib/utils"
 import { CustomTable } from "./custom-table"
-import { useRafThrottledString } from "@/features/agent/hooks/throttle-string"
 import { Pre } from "./custom-pre"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize"
@@ -210,14 +209,10 @@ export interface MarkdownViewProps {
  *  MarkdownView — Streamdown + throttling (typed)
  *  ------------------------------------------------------*/
 export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
-  ({ content, isStreaming = false }) => {
+  ({ content }) => {
     React.useEffect(() => {
       ensureScrollbarStyleInjected()
     }, [])
-
-    // throttle + defer for smooth streaming
-    const throttled = useRafThrottledString(content, isStreaming)
-    const deferred = React.useDeferredValue(throttled)
 
     return (
       <div className="w-full min-w-0">
@@ -227,7 +222,7 @@ export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
           rehypePlugins={[rehypeRaw, [rehypeSanitize, brOnlySchema]]}
           components={components}
         >
-          {deferred}
+          {content}
         </Streamdown>
       </div>
     )

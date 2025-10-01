@@ -13,12 +13,13 @@ from agents import (
 
 from topix.agents.assistant.code_interpreter import CodeInterpreter
 from topix.agents.assistant.memory_search import NOT_FOUND, MemorySearch
+from topix.agents.assistant.websearch.broad import BroadWebSearch
+from topix.agents.assistant.websearch.make_tool import make_web_search_tool, make_web_search_tool_from_config
 from topix.agents.base import BaseAgent
 from topix.agents.config import PlanConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName
-from topix.agents.websearch.handler import WebSearchHandler
 from topix.store.qdrant.store import ContentStore
 
 
@@ -66,7 +67,7 @@ class Plan(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4_1,
         instructions_template: str = "plan.system.jinja",
         model_settings: ModelSettings | None = None,
-        web_search_tool: Tool | None = None,
+        web_search: BroadWebSearch | Tool | None = None,
         memory_search: MemorySearch | None = None,
         code_interpreter: CodeInterpreter | None = None,
         content_store: ContentStore | None = None,
@@ -80,15 +81,13 @@ class Plan(BaseAgent):
 
         model_settings = model_settings or ModelSettings(max_tokens=8000)
 
-        if not web_search_tool:
-            web_search_tool = WebSearchHandler.get_openai_web_tool()
-
+        web_search = web_search or BroadWebSearch()
         content_store = content_store or ContentStore.from_config()
         memory_search = memory_search or MemorySearch(content_store=content_store)
         code_interpreter = code_interpreter or CodeInterpreter()
 
         tools = [
-            web_search_tool,
+            make_web_search_tool(web_search),
             memory_search.as_tool(AgentToolName.MEMORY_SEARCH, streamed=True),
             code_interpreter.as_tool(AgentToolName.CODE_INTERPRETER, streamed=True),
         ]
@@ -107,9 +106,9 @@ class Plan(BaseAgent):
     @classmethod
     def from_config(cls, content_store: ContentStore, config: PlanConfig):
         """Create an instance of Plan from configuration."""
-        web_search_tool = WebSearchHandler.from_config(config.web_search)
+        web_search = make_web_search_tool_from_config(config.web_search)
         return cls(
-            web_search_tool=web_search_tool,
+            web_search=web_search,
             memory_search=MemorySearch.from_config(content_store, config.memory_search),
             code_interpreter=CodeInterpreter.from_config(config.code_interpreter),
             model=config.model,

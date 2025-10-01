@@ -1,6 +1,4 @@
 """Agent Output Data Types."""
-from __future__ import annotations
-
 from typing import Literal
 
 from pydantic import BaseModel
@@ -11,22 +9,7 @@ from topix.agents.datatypes.annotations import (
     SearchResult,
 )
 
-type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput | MemorySearchOutput | NotifyOutput | MapifyTheme
-
-
-class MapifyTheme(BaseModel):
-    """Theme."""
-
-    label: str
-    description: str
-    subthemes: list[MapifyTheme] = []
-
-
-class NotifyOutput(BaseModel):
-    """Notify Output."""
-
-    title: str
-    content: str
+type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput | MemorySearchOutput
 
 
 class WebSearchOutput(BaseModel):

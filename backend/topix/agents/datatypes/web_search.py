@@ -14,6 +14,6 @@ class WebSearchOption(StrEnum):
 class WebSearchContextSize(StrEnum):
     """Enumeration of web search context sizes."""
 
-    SMALL = "small"
+    LOW = "low"
     MEDIUM = "medium"
-    LARGE = "large"
+    HIGH = "high"

@@ -1,22 +1,15 @@
 """Notify Agent."""
 
-from agents import ModelSettings, RunResult
-from pydantic import BaseModel
+from agents import ModelSettings
 
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import ModelEnum
+from topix.agents.datatypes.outputs import NotifyOutput
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.datatypes.note.style import NodeType
 from topix.datatypes.resource import RichText
-
-
-class NotifyOutput(BaseModel):
-    """Notify Output."""
-
-    title: str
-    content: str
 
 
 class NotifyAgent(BaseAgent):
@@ -63,16 +56,16 @@ class NotifyAgent(BaseAgent):
         )
         return user_prompt
 
-    async def _output_extractor(
-        self, context: Context, output: RunResult
-    ) -> tuple[list[Note], list[Link]]:
-        nodes = [
-            Note(
-                content=RichText(
-                    markdown=f"# {output.final_output.title}\n\n{output.final_output.content}".strip(),
-                )
-            )
-        ]
-        nodes[0].style.type = NodeType.SHEET
 
-        return nodes, []
+def convert_notify_output_to_notes_links(output: NotifyOutput) -> tuple[list[Note], list[Link]]:
+    """Convert NotifyOutput to notes and links."""
+    nodes = [
+        Note(
+            content=RichText(
+                markdown=f"# {output.title}\n\n{output.content}".strip(),
+            )
+        )
+    ]
+    nodes[0].style.type = NodeType.SHEET
+
+    return nodes, []

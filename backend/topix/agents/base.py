@@ -11,12 +11,9 @@ import litellm
 from agents import (
     Agent,
     ModelSettings,
-    RunContextWrapper,
-    Runner,
     RunResult,
     RunResultStreaming,
     Tool,
-    function_tool,
 )
 from agents.extensions.models.litellm_model import LitellmModel
 from jinja2 import Template
@@ -39,9 +36,8 @@ from topix.agents.datatypes.stream import (
     ContentType,
     StreamingMessageType,
 )
-from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
 from topix.agents.datatypes.tools import AgentToolName
-from topix.agents.utils.tools import tool_execution_handler
+from topix.agents.tool_handler import ToolHandler
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +55,9 @@ class BaseAgent(Agent[Context]):
     def __post_init__(self):
         """Automatically load Litellm Model if not openai's."""
         # if the model does not support temperature, set it to None
-        self.model_settings = self._adjust_model_settings(self.model, self.model_settings)
+        self.model_settings = self._adjust_model_settings(
+            self.model, self.model_settings
+        )
 
         if isinstance(self.model, str):
             model_type = self.model.split("/")[0]
@@ -140,89 +138,9 @@ class BaseAgent(Agent[Context]):
             Tool: The tool that can be used by other agents.
 
         """
-        name_override = tool_name or self.name
-
-        @function_tool(
-            name_override=name_override,
-            description_override=tool_description or "",
+        return ToolHandler.convert_agent_to_tool(
+            self, tool_name, tool_description, max_turns, streamed
         )
-        async def run_agent(context: RunContextWrapper[Context], input: str) -> str:
-            """Execute the agent with the provided context and input.
-
-            Args:
-                context: The context wrapper for the agent.
-                input: The input data for the agent, can be a string or a model instance
-
-            Returns:
-                The final output from the agent as a string.
-
-            """
-            # Determine the name to override, using tool_name or defaulting
-            # to the agent's name
-
-            # Format the input for the agent
-            input_str = await self._input_formatter(context.context, input)
-
-            thought = ""
-            output = ""
-
-            async with tool_execution_handler(
-                context.context, name_override, input
-            ) as tool_id:
-                # Handle tool execution within an async context manager
-                hook_result = await self._as_tool_hook(
-                    context.context, input_str, tool_id=tool_id
-                )
-                if hook_result is not None:
-                    output = hook_result
-                else:
-                    if streamed:
-                        # Run the agent in streaming mode
-                        output = Runner.run_streamed(
-                            self,
-                            context=context.context,
-                            input=input_str,
-                            max_turns=max_turns,
-                        )
-                        # Process and forward stream events
-                        p = {"tool_id": tool_id, "tool_name": name_override}
-
-                        async for stream_chunk in self._handle_stream_events(output, **p):
-                            if stream_chunk.type == StreamingMessageType.STREAM_REASONING_MESSAGE \
-                                    and stream_chunk.content is not None \
-                                    and stream_chunk.type in (ContentType.TOKEN, ContentType.MESSAGE):
-                                thought += stream_chunk.content.text
-                            await context.context._message_queue.put(stream_chunk)
-                    else:
-                        # Run the agent and get the result
-                        output: RunResult = await Runner.run(
-                            starting_agent=self,
-                            input=input_str,
-                            context=context.context,
-                            max_turns=max_turns,
-                        )
-
-                    # Extract the final output from the agent
-                    output: ToolOutput = await self._output_extractor(
-                        context.context, output
-                    )
-            toolcall_output = ToolCall(
-                id=tool_id,
-                name=name_override,
-                arguments={"input": input},
-                thought=thought,
-                output=output,
-                state=ToolCallState.COMPLETED,
-            )
-            # append tool call output to message queue for streaming
-            await context.context._message_queue.put(toolcall_output)
-
-            # keep track of all tool calls made during the agent's execution for context
-            context.context.tool_calls.append(toolcall_output)
-
-            return str(output)
-
-        return run_agent
 
     async def _as_tool_hook(
         self, context: Context, input: Any, tool_id: str
@@ -237,8 +155,9 @@ class BaseAgent(Agent[Context]):
         raise NotImplementedError("_input_formatter method is not implemented")
 
     async def _output_extractor(
-        self, context: Context, output: RunResult
+        self, context: Context, output: RunResult | RunResultStreaming
     ) -> ToolOutput:
+        """Extract the final output from the agent's response."""
         return output.final_output
 
     @classmethod
@@ -268,8 +187,7 @@ class BaseAgent(Agent[Context]):
                         yield AgentStreamMessage(
                             type=msg_type,
                             content=Content(
-                                type=ContentType.TOKEN,
-                                text=event.data.delta
+                                type=ContentType.TOKEN, text=event.data.delta
                             ),
                             **fixed_params,
                             is_stop=False,

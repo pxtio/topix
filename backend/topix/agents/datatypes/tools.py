@@ -10,6 +10,10 @@ class AgentToolName(StrEnum):
     WEB_SEARCH = "web_search"
     CODE_INTERPRETER = "code_interpreter"
 
+    OUTLINE_GENERATOR = "outline_generator"
+    WEB_COLLECTOR = "web_collector"
+    SYNTHESIZER = "synthesizer"
+
     RAW_MESSAGE = "raw_message"
 
 

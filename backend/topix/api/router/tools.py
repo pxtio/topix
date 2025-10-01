@@ -4,8 +4,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, Request, Response
 
-from topix.agents.mindmap.mapify import MapifyAgent
-from topix.agents.mindmap.notify import NotifyAgent
+from topix.agents.datatypes.context import Context
+from topix.agents.mindmap.mapify import MapifyAgent, convert_mapify_output_to_notes_links
+from topix.agents.mindmap.notify import NotifyAgent, convert_notify_output_to_notes_links
 from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.helpers import with_standard_response
@@ -29,9 +30,10 @@ async def notify(
     body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
 ):
     """Convert a mindmap to a graph."""
+    context = Context()
     mapify_agent = NotifyAgent()
-    res = await AgentRunner.run(mapify_agent, body.answer)
-    notes, links = res
+    res = await AgentRunner.run(mapify_agent, body.answer, context=context)
+    notes, links = convert_notify_output_to_notes_links(res)
 
     return {
         "notes": [note.model_dump(exclude_none=True) for note in notes],
@@ -49,9 +51,10 @@ async def mapify(
     body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
 ):
     """Convert a mindmap to a graph."""
+    context = Context()
     mapify_agent = MapifyAgent()
-    res = await AgentRunner.run(mapify_agent, body.answer)
-    notes, links = res
+    res = await AgentRunner.run(mapify_agent, body.answer, context=context)
+    notes, links = convert_mapify_output_to_notes_links(res)
 
     return {
         "notes": [note.model_dump(exclude_none=True) for note in notes],

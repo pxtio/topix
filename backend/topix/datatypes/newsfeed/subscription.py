@@ -3,7 +3,7 @@ from enum import StrEnum
 
 from pydantic import Field
 
-from topix.datatypes.property import BooleanProperty, DataProperty, IconProperty, KeywordProperty, MultiTextProperty, TextProperty
+from topix.datatypes.property import BooleanProperty, DataProperty, IconProperty, MultiTextProperty, TextProperty
 from topix.datatypes.resource import Resource, ResourceProperties, RichText
 
 
@@ -47,10 +47,8 @@ class SubscriptionProperties(ResourceProperties):
         default_factory=lambda: MultiTextProperty()
     )
 
-    recurrence: KeywordProperty = Field(
-        default_factory=lambda: KeywordProperty(
-            value_type=Recurrence
-        )
+    recurrence: TextProperty = Field(
+        default_factory=lambda: TextProperty()
     )
 
     collection_running: BooleanProperty = Field(

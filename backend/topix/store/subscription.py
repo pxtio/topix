@@ -1,5 +1,6 @@
 """Store for managing subscriptions."""
 
+from topix.agents.newsfeed.config import NewsfeedPipelineConfig
 from topix.agents.newsfeed.pipeline import NewsfeedPipeline
 from topix.datatypes.newsfeed.newsfeed import Newsfeed
 from topix.datatypes.newsfeed.subscription import Subscription
@@ -12,7 +13,14 @@ class SubscriptionStore:
     def __init__(self):
         """Initialize the subscription store."""
         self._content_store = ContentStore.from_config()
-        self._newsfeed_pipeline: NewsfeedPipeline = NewsfeedPipeline.from_config()
+        self._newsfeed_pipeline: NewsfeedPipeline = NewsfeedPipeline.from_config(
+            NewsfeedPipelineConfig.from_yaml(),
+            content_store=self._content_store
+        )
+
+    async def open(self):
+        """Open the subscription store."""
+        pass
 
     async def create_subscription(self, user_uid: str, topic: str, raw_description: str = "") -> Subscription:
         """Create a new subscription."""
@@ -21,9 +29,10 @@ class SubscriptionStore:
         await self._content_store.add([sub])
         return sub
 
-    async def get_subscriptions(self, ids: list[str]) -> Subscription | None:
+    async def get_subscriptions(self, ids: list[str]) -> list[Subscription]:
         """Retrieve a subscription by its UID."""
-        return await self._content_store.get(ids=ids)
+        points = await self._content_store.get(ids=ids)
+        return [point.resource for point in points]
 
     async def list_subscriptions(self, user_uid: str, limit: int = 100) -> list[Subscription]:
         """List all subscriptions for a user."""
@@ -40,9 +49,10 @@ class SubscriptionStore:
                     }
                 ]
             },
+            include=True,
             limit=100  # arbitrary large limit
         )
-        return results or []
+        return [result.resource for result in results] if results else []
 
     async def update_subscription(self, subscription_id: str, data: dict):
         """Update an existing subscription."""
@@ -61,7 +71,8 @@ class SubscriptionStore:
 
     async def get_newsfeeds(self, ids: list[str]) -> list[Newsfeed] | None:
         """Retrieve newsfeeds by their UIDs."""
-        return await self._content_store.get(ids=ids)
+        points = await self._content_store.get(ids=ids)
+        return [point.resource for point in points] if points else None
 
     async def list_newsfeeds(self, subscription_id: str, limit: int = 100) -> list[Newsfeed]:
         """List all newsfeeds for a subscription."""
@@ -78,10 +89,15 @@ class SubscriptionStore:
                     }
                 ]
             },
+            include=True,
             limit=limit  # arbitrary large limit
         )
-        return results or []
+        return [result.resource for result in results] if results else []
 
     async def delete_newsfeed(self, newsfeed_id: str, hard_delete: bool = True):
         """Delete a newsfeed by its UID."""
         await self._content_store.delete([newsfeed_id], hard_delete=hard_delete)
+
+    async def close(self):
+        """Close the subscription store."""
+        await self._content_store.close()

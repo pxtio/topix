@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from qdrant_client.models import Record, ScoredPoint
 
 from topix.datatypes.chat.chat import Message
+from topix.datatypes.newsfeed.newsfeed import Newsfeed
+from topix.datatypes.newsfeed.subscription import Subscription
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.datatypes.resource import Resource
@@ -56,6 +58,10 @@ def convert_point(
                 resource = Message.partial(**point.payload)
             case "link":
                 resource = Link.partial(**point.payload)
+            case "subscription":
+                resource = Subscription.partial(**point.payload)
+            case "newsfeed":
+                resource = Newsfeed.partial(**point.payload)
             case _:
                 raise ValueError(f"Unknown type: {type_}")
 

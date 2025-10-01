@@ -27,7 +27,7 @@ class Newsfeed(Resource):
         default_factory=ResourceProperties
     )
 
-    label: RichText
+    label: RichText | None = None
     content: RichText
 
     subscription_id: str

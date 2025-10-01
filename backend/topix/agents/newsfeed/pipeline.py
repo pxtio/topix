@@ -24,7 +24,7 @@ class NewsfeedPipeline:
         content_store: ContentStore | None = None
     ):
         """Init method."""
-        self.content_store = content_store or ContentStore()
+        self.content_store = content_store or ContentStore.from_config()
         self.topic_setup = topic_setup or TopicSetup()
         self.collector = collector or NewsfeedCollector()
         self.synthesizer = synthesizer or NewsfeedSynthesizer()

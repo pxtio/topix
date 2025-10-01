@@ -37,7 +37,7 @@ class NewsfeedPipelineConfig(BaseModel):
     synthesizer: NewsfeedSynthesizerConfig
 
     @classmethod
-    def from_config(cls, config_file: str | None = None) -> NewsfeedPipelineConfig:
+    def from_yaml(cls, config_file: str | None = None) -> NewsfeedPipelineConfig:
         """Create an instance of NewsfeedPipelineConfig from configuration file."""
         if config_file is None:
             config_file = str(NEWSFEED_DEFAULT_CONFIG_FILE)

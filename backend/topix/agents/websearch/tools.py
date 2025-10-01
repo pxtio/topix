@@ -1,17 +1,17 @@
 """Tools for searching the web (async httpx version)."""
 
+import asyncio
 import os
 
 from typing import Literal, Optional
 
 import httpx
 
-from agents import FunctionTool, RunContextWrapper, function_tool
-
 from topix.agents.datatypes.annotations import SearchResult
 from topix.agents.datatypes.outputs import WebSearchOutput
-from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
-from topix.agents.utils.tools import tool_execution_decorator
+from topix.agents.datatypes.web_search import WebSearchContextSize
+
+semaphore = asyncio.Semaphore(8)
 
 
 def _get_env_or_raise(key: str) -> str:
@@ -54,11 +54,11 @@ async def search_perplexity(
 
     tokens_per_page = 1024  # default value
     match search_context_size:
-        case WebSearchContextSize.SMALL:
+        case WebSearchContextSize.LOW:
             tokens_per_page = 512
         case WebSearchContextSize.MEDIUM:
             tokens_per_page = 1200
-        case WebSearchContextSize.LARGE:
+        case WebSearchContextSize.HIGH:
             tokens_per_page = 2000
 
     data = {
@@ -67,11 +67,12 @@ async def search_perplexity(
         "max_tokens_per_page": tokens_per_page
     }
 
-    if client is None:
-        async with httpx.AsyncClient() as ac:
-            resp = await ac.post(url, headers=headers, json=data, timeout=timeout)
-    else:
-        resp = await client.post(url, headers=headers, json=data, timeout=timeout)
+    async with semaphore:
+        if client is None:
+            async with httpx.AsyncClient() as ac:
+                resp = await ac.post(url, headers=headers, json=data, timeout=timeout)
+        else:
+            resp = await client.post(url, headers=headers, json=data, timeout=timeout)
 
     resp.raise_for_status()
     json_response = resp.json()
@@ -119,7 +120,7 @@ async def search_tavily(
 
     search_depth = "advanced" if search_context_size in (
         WebSearchContextSize.MEDIUM,
-        WebSearchContextSize.LARGE,
+        WebSearchContextSize.HIGH,
     ) else "basic"
 
     data = {
@@ -129,11 +130,12 @@ async def search_tavily(
         "auto_parameters": True,
     }
 
-    if client is None:
-        async with httpx.AsyncClient() as ac:
-            resp = await ac.post(url, headers=headers, json=data, timeout=timeout)
-    else:
-        resp = await client.post(url, headers=headers, json=data, timeout=timeout)
+    async with semaphore:
+        if client is None:
+            async with httpx.AsyncClient() as ac:
+                resp = await ac.post(url, headers=headers, json=data, timeout=timeout)
+        else:
+            resp = await client.post(url, headers=headers, json=data, timeout=timeout)
 
     resp.raise_for_status()
     json_response = resp.json()
@@ -180,7 +182,7 @@ async def search_linkup(
     }
 
     # Use enum to determine depth (fixing prior string comparison)
-    depth = "deep" if search_context_size == WebSearchContextSize.LARGE else "standard"
+    depth = "deep" if search_context_size == WebSearchContextSize.HIGH else "standard"
 
     data = {
         "q": query,
@@ -188,11 +190,12 @@ async def search_linkup(
         "depth": depth,
     }
 
-    if client is None:
-        async with httpx.AsyncClient() as ac:
-            resp = await ac.post(url, headers=headers, json=data, timeout=timeout)
-    else:
-        resp = await client.post(url, headers=headers, json=data, timeout=timeout)
+    async with semaphore:
+        if client is None:
+            async with httpx.AsyncClient() as ac:
+                resp = await ac.post(url, headers=headers, json=data, timeout=timeout)
+        else:
+            resp = await client.post(url, headers=headers, json=data, timeout=timeout)
 
     resp.raise_for_status()
     json_response = resp.json()
@@ -242,46 +245,14 @@ async def navigate(
         "extract_depth": extract_depth,
     }
 
-    if client is None:
-        async with httpx.AsyncClient() as ac:
-            resp = await ac.post(url, headers=headers, json=data, timeout=timeout)
-    else:
-        resp = await client.post(url, headers=headers, json=data, timeout=timeout)
+    async with semaphore:
+        if client is None:
+            async with httpx.AsyncClient() as ac:
+                resp = await ac.post(url, headers=headers, json=data, timeout=timeout)
+        else:
+            resp = await client.post(url, headers=headers, json=data, timeout=timeout)
 
     resp.raise_for_status()
     raw_content = resp.json().get("results", [{}])[0].get("raw_content", "")
 
     return f'<document url="{web_url}">\n\n{raw_content}\n\n</document>'
-
-
-def convert_search_func_to_tool(
-    name: str,
-    search_engine: Literal[WebSearchOption.TAVILY, WebSearchOption.LINKUP],
-    max_results: int = 10,
-    search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
-    *,
-    client: Optional[httpx.AsyncClient] = None,
-    timeout: Optional[httpx.Timeout] = None
-) -> FunctionTool:
-    """Convert a search function to a tool."""
-    if search_engine == WebSearchOption.TAVILY:
-        search_func = search_tavily
-    elif search_engine == WebSearchOption.LINKUP:
-        search_func = search_linkup
-    elif search_engine == WebSearchOption.PERPLEXITY:
-        search_func = search_perplexity
-    else:
-        raise ValueError(f"Invalid search engine: {search_engine}")
-
-    @function_tool(name_override=name)
-    @tool_execution_decorator(tool_name=name)
-    async def web_search(wrapper: RunContextWrapper, query: str) -> WebSearchOutput:
-        return await search_func(
-            query,
-            max_results=max_results,
-            search_context_size=search_context_size,
-            client=client,
-            timeout=timeout
-        )
-
-    return web_search

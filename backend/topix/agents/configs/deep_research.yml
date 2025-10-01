@@ -1,0 +1,27 @@
+outline_generator:
+  model: openai/gpt-5
+  instructions_template: deep_research/outline_generator.jinja
+  model_settings:
+    temperature: 0.01
+
+web_collector:
+  model: openai/gpt-4.1
+  instructions_template: deep_research/web_collector.jinja
+  model_settings:
+    temperature: 0.01
+
+  web_search:
+    model: openai/gpt-4.1-mini
+    instructions_template: decoupled_web_search.jinja
+    search_engine: linkup
+    search_context_size: medium
+    model_settings:
+      temperature: 0.01
+    enable_summary: false
+    streaming: false
+
+synthesis:
+  model: "openai/gpt-4.1"
+  instructions_template: deep_research/synthesis.system.jinja
+  model_settings:
+    temperature: 0.05

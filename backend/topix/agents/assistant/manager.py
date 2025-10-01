@@ -12,11 +12,8 @@ from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.inputs import QueryRewriteInput
 from topix.agents.datatypes.stream import (
     AgentStreamMessage,
-    Content,
     ContentType,
 )
-from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
-from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
 from topix.datatypes.chat.chat import Message
@@ -24,7 +21,6 @@ from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
 from topix.store.qdrant.store import ContentStore
 from topix.utils.common import gen_uid
-from topix.utils.web.favicon import fetch_meta_images_batch
 
 logger = logging.getLogger(__name__)
 
@@ -118,45 +114,6 @@ class AssistantManager:
             )
         return res
 
-    async def _convert_tool_call_to_annotation_message(
-        self, tool_call: ToolCall
-    ) -> AgentStreamMessage | None:
-        if tool_call.name not in [
-            AgentToolName.WEB_SEARCH,
-            AgentToolName.MEMORY_SEARCH,
-        ]:
-            return None
-
-        annotations = []
-        match tool_call.name:
-            case AgentToolName.WEB_SEARCH:
-                # Fetch favicons and cover images for the search results
-                search_results = tool_call.output.search_results
-                meta_images = await fetch_meta_images_batch(
-                    [result.url for result in search_results]
-                )
-                for result in search_results:
-                    if result.url in meta_images:
-                        result.favicon = (
-                            str(meta_images[result.url].favicon)
-                            if meta_images[result.url].favicon
-                            else None
-                        )
-                        result.cover_image = (
-                            str(meta_images[result.url].cover_image)
-                            if meta_images[result.url].cover_image
-                            else None
-                        )
-                annotations = search_results
-            case AgentToolName.MEMORY_SEARCH:
-                annotations = tool_call.output.references
-
-        return AgentStreamMessage(
-            tool_id=tool_call.id,
-            tool_name=tool_call.name,
-            content=Content(annotations=annotations),
-        )
-
     async def run_streamed(  # noqa: C901
         self,
         context: ReasoningContext,
@@ -196,28 +153,9 @@ class AssistantManager:
             self.plan_agent, input=agent_input, context=context, max_turns=max_turns
         )
 
-        plan_message = ""
-        plan_id = None
-
-        steps = context.tool_calls
-
         async for message in res:
             if isinstance(message, AgentStreamMessage):
-                if message.content and message.content.type in [
-                    ContentType.MESSAGE,
-                    ContentType.TOKEN,
-                ]:
-                    if message.tool_name == AgentToolName.RAW_MESSAGE:
-                        plan_message += message.content.text
-                        plan_id = message.tool_id
                 yield message
-            elif isinstance(message, ToolCall):
-                annotation_message = \
-                    await self._convert_tool_call_to_annotation_message(
-                        message
-                    )
-                if annotation_message is not None:
-                    yield annotation_message
 
         # Launch the synthesis agent:
         res = AgentRunner.run_streamed(
@@ -234,17 +172,8 @@ class AssistantManager:
                     final_answer += message.content.text
                 yield message
 
-        steps.append(
-            ToolCall(
-                id=plan_id,
-                name=AgentToolName.RAW_MESSAGE,
-                output=plan_message,
-                state=ToolCallState.COMPLETED,
-            )
-        )
-
         if session:
-            if not steps:
+            if not context.tool_calls:
                 raise Exception("No steps created during streaming!")
 
             await session.add_items(
@@ -255,18 +184,11 @@ class AssistantManager:
                         properties={
                             "reasoning": ReasoningProperty(
                                 reasoning=[
-                                    step.model_dump(exclude_none=True) for step in steps
+                                    step.model_dump(exclude_none=True)
+                                    for step in context.tool_calls
                                 ]
                             )
                         },
                     )
                 ]
             )
-
-    @staticmethod
-    def _is_response(message: str | AgentStreamMessage) -> bool:
-        """Check if the message is a response."""
-        return isinstance(message, AgentStreamMessage) and (
-            message.content
-            and message.content.type in [ContentType.MESSAGE, ContentType.TOKEN]
-        )

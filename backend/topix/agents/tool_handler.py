@@ -292,6 +292,9 @@ class ToolHandler:
             state=ToolCallState.COMPLETED,
         )
 
+        context.tool_calls.append(toolcall_output)
+        await context._message_queue.put(toolcall_output)
+
         await context._message_queue.put(
             AgentStreamMessage(
                 content=Content(
@@ -303,8 +306,6 @@ class ToolHandler:
                 tool_name=tool_name,
             )
         )
-        await context._message_queue.put(toolcall_output)
-        context.tool_calls.append(toolcall_output)
 
     @classmethod
     async def _process_tool_output(

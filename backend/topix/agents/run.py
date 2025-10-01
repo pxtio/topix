@@ -1,6 +1,8 @@
 """Agent runner supporting streaming mode."""
 
 
+import asyncio
+
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -61,6 +63,9 @@ class AgentRunner:
             is_subagent=False,
         )
         output = await run_agent(context, input)
+
+        # Empty the queue
+        context._message_queue = asyncio.Queue()
         return output
 
     @classmethod
@@ -107,7 +112,7 @@ class AgentRunner:
             streamed=True,
             is_subagent=False,
         )
-        await run_agent(context, input)
+        asyncio.create_task(run_agent(context, input))
 
         while True:
             message: AgentStreamMessage | ToolCall = await context._message_queue.get()

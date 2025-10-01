@@ -20,8 +20,8 @@ type BlockKind = "raw" | "tools" | null
 type StepAccum = {
   id: string
   name: ToolName
-  thoughtText: string
-  outputText: string
+  thoughtBuf: string[]          // array buffer for model thoughts
+  outputBuf: string[]           // array buffer for visible output
   state: ToolExecutionState
   eventMessages: string[]
   annotations: Annotation[]
@@ -35,27 +35,34 @@ type BuildResponseOptions = {
 }
 
 /**
+ * Join a buffer efficiently into a single string.
+ */
+const joinBuf = (buf: string[]) => (buf.length === 1 ? buf[0] : buf.join(""))
+
+/**
  * Build the final tool output for a reasoning step.
  */
 const makeToolOutput = (acc: StepAccum): ToolOutput => {
+  const outputText = joinBuf(acc.outputBuf)
+
   if (acc.name === "web_search") {
     const urls = acc.annotations.filter(a => a.type === "url") as WebSearchOutput["searchResults"]
-    return { type: "web_search", answer: acc.outputText, searchResults: urls }
+    return { type: "web_search", answer: outputText, searchResults: urls }
   }
   if (acc.name === "memory_search") {
     const refs = acc.annotations.filter(a => a.type === "reference") as MemorySearchOutput["references"]
-    return { type: "memory_search", answer: acc.outputText, references: refs }
+    return { type: "memory_search", answer: outputText, references: refs }
   }
   if (acc.name === "code_interpreter") {
     const files = acc.annotations.filter(a => a.type === "file") as CodeInterpreterOutput["annotations"]
     return {
       type: "code_interpreter",
-      answer: acc.outputText,
+      answer: outputText,
       executedCode: acc.executedCode ?? "",
       annotations: files
     }
   }
-  return acc.outputText
+  return outputText
 }
 
 /**
@@ -64,7 +71,7 @@ const makeToolOutput = (acc: StepAccum): ToolOutput => {
 const toReasoningStep = (acc: StepAccum): ReasoningStep => ({
   id: acc.id,
   name: acc.name,
-  thought: acc.thoughtText,
+  thought: joinBuf(acc.thoughtBuf),
   output: makeToolOutput(acc),
   state: acc.state,
   eventMessages: acc.eventMessages
@@ -72,13 +79,14 @@ const toReasoningStep = (acc: StepAccum): ReasoningStep => ({
 
 /**
  * Stream agent response with throttling for performance and UX.
+ * Uses string array buffers to avoid O(n²) concat cost.
  */
 export async function* buildResponse(
   chunks: AsyncGenerator<AgentStreamMessage>,
   opts: BuildResponseOptions = {}
 ): AsyncGenerator<{ response: AgentResponse, isStop: boolean }> {
   const {
-    maxFps = 10,
+    maxFps = 4,
     safetyMaxIntervalMs = 1000,
     sizeThresholdChars = 2000
   } = opts
@@ -109,8 +117,8 @@ export async function* buildResponse(
       step = {
         id: key,
         name: toolName,
-        thoughtText: "",
-        outputText: "",
+        thoughtBuf: [],
+        outputBuf: [],
         state: "started",
         eventMessages: [],
         annotations: []
@@ -199,14 +207,14 @@ export async function* buildResponse(
 
       if (type === "token") {
         if (chunk.type === "stream_reasoning_message") {
-          step.thoughtText += text
+          step.thoughtBuf.push(text)
           bufferedChars += text.length
         } else {
-          step.outputText += text
+          step.outputBuf.push(text)
           bufferedChars += text.length
         }
       } else if (type === "message") {
-        step.outputText += text
+        step.outputBuf.push(text)
         bufferedChars += text.length
       } else if (type === "status" && !isRaw) {
         step.eventMessages.push(text)

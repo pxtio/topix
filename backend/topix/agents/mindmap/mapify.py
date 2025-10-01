@@ -2,24 +2,16 @@
 
 from __future__ import annotations
 
-from agents import ModelSettings, RunResult
-from pydantic import BaseModel
+from agents import ModelSettings
 
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import ModelEnum
+from topix.agents.datatypes.outputs import MapifyTheme
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.datatypes.note.style import NodeType
 from topix.datatypes.resource import RichText
-
-
-class Theme(BaseModel):
-    """Theme."""
-
-    label: str
-    description: str
-    subthemes: list[Theme] = []
 
 
 class MapifyAgent(BaseAgent):
@@ -42,7 +34,7 @@ class MapifyAgent(BaseAgent):
             model=model,
             model_settings=model_settings,
             instructions=instructions,
-            output_type=Theme,
+            output_type=MapifyTheme,
         )
         super().__post_init__()
 
@@ -66,34 +58,36 @@ class MapifyAgent(BaseAgent):
         )
         return user_prompt
 
-    async def _output_extractor(
-        self, context: Context, output: RunResult
-    ) -> tuple[list[Note], list[Link]]:
-        notes = []
-        links = []
 
-        def _recursive_theme_to_note(
-            theme: Theme,
-            parent: Note | None = None,
-        ) -> Note:
-            note = Note(
-                label=RichText(markdown=f"{theme.label} - {theme.description}"),
+def convert_mapify_output_to_notes_links(
+    output: MapifyTheme,
+) -> tuple[list[Note], list[Link]]:
+    """Convert MapifyTheme output to notes and links."""
+    notes = []
+    links = []
+
+    def _recursive_theme_to_note(
+        theme: MapifyTheme,
+        parent: Note | None = None,
+    ) -> Note:
+        note = Note(
+            label=RichText(markdown=f"{theme.label} - {theme.description}"),
+        )
+        note.style.type = NodeType.RECTANGLE
+        notes.append(note)
+
+        if parent:
+            link = Link(
+                source=parent.id,
+                target=note.id,
             )
-            note.style.type = NodeType.RECTANGLE
-            notes.append(note)
+            links.append(link)
 
-            if parent:
-                link = Link(
-                    source=parent.id,
-                    target=note.id,
-                )
-                links.append(link)
+        for subtheme in theme.subthemes:
+            _recursive_theme_to_note(subtheme, parent=note)
 
-            for subtheme in theme.subthemes:
-                _recursive_theme_to_note(subtheme, parent=note)
+        return note
 
-            return note
-        theme = output.final_output
-        _recursive_theme_to_note(theme)
+    _recursive_theme_to_note(output)
 
-        return notes, links
+    return notes, links

@@ -86,7 +86,7 @@ export async function* buildResponse(
   opts: BuildResponseOptions = {}
 ): AsyncGenerator<{ response: AgentResponse, isStop: boolean }> {
   const {
-    maxFps = 4,
+    maxFps = 24,
     safetyMaxIntervalMs = 1000,
     sizeThresholdChars = 2000
   } = opts

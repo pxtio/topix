@@ -9,7 +9,7 @@ from fastapi.params import Path, Query
 
 from topix.agents.assistant.manager import AssistantManager
 from topix.agents.config import AssistantManagerConfig
-from topix.agents.datatypes.context import ReasoningContext
+from topix.agents.datatypes.context import Context, ReasoningContext
 from topix.agents.describe_chat import DescribeChat
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
@@ -62,11 +62,12 @@ async def describe_chat(
     _: Annotated[None, Depends(verify_chat_user)],
 ):
     """Describe a chat by its ID."""
+    context = Context()
     store: ChatStore = request.app.chat_store
     session = AssistantSession(session_id=chat_id, chat_store=store)
 
     chat_describer = DescribeChat()
-    label = await AgentRunner.run(chat_describer, await session.get_items())
+    label = await AgentRunner.run(chat_describer, await session.get_items(), context=context)
 
     await store.update_chat(chat_id, {"label": label})
     return {"label": label}

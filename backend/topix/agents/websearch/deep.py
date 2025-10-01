@@ -17,7 +17,6 @@ from agents import (
 from topix.agents.assistant.websearch.tools import (
     navigate,
     search_linkup,
-    search_perplexity,
     search_tavily,
 )
 from topix.agents.base import BaseAgent
@@ -149,11 +148,6 @@ class DeepWebSearch(BaseAgent):
                 )
             elif self.search_engine == WebSearchOption.LINKUP:
                 return await search_linkup(
-                    query,
-                    search_context_size=WebSearchContextSize.MEDIUM
-                )
-            elif self.search_engine == WebSearchOption.PERPLEXITY:
-                return await search_perplexity(
                     query,
                     search_context_size=WebSearchContextSize.MEDIUM
                 )

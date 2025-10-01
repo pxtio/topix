@@ -5,11 +5,11 @@ import remarkGfm from "remark-gfm"
 import "katex/dist/katex.min.css"
 import { cn } from "@/lib/utils"
 import { CustomTable } from "./custom-table"
-import { useRafThrottledString } from "@/features/agent/hooks/throttle-string"
 import { Pre } from "./custom-pre"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize"
 import type { Schema } from "hast-util-sanitize"
+import { useSmoothRevealString } from "./reveal-string"
 
 /** -------------------------------------------------------
  *  one-time transparent scrollbar styles (for tables)
@@ -215,9 +215,14 @@ export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
       ensureScrollbarStyleInjected()
     }, [])
 
-    // throttle + defer for smooth streaming
-    const throttled = useRafThrottledString(content, isStreaming)
-    const deferred = React.useDeferredValue(throttled)
+    // direct reveal over raw content (no throttle/deferred)
+    const animated = useSmoothRevealString(content, {
+      enabled: isStreaming,
+      cps: 120,           // tune feel: 40–90
+      minChunk: 1,
+      maxChunk: 6,
+      catchUpFactor: 1.0
+    })
 
     return (
       <div className="w-full min-w-0">
@@ -227,7 +232,7 @@ export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
           rehypePlugins={[rehypeRaw, [rehypeSanitize, brOnlySchema]]}
           components={components}
         >
-          {deferred}
+          {animated}
         </Streamdown>
       </div>
     )

@@ -1,6 +1,5 @@
 """Agent Config classes."""
 
-from pathlib import Path
 from typing import Literal
 
 import yaml
@@ -9,8 +8,6 @@ from agents import ModelSettings
 from pydantic import BaseModel
 
 from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
-
-CONFIG_DIR = Path(__file__).parent / "configs"
 
 
 class BaseAgentConfig(BaseModel):
@@ -27,9 +24,6 @@ class WebSearchConfig(BaseAgentConfig):
     search_engine: WebSearchOption
     search_context_size: WebSearchContextSize
     max_results: int = 10
-
-    enable_summary: bool = False
-    streamed: bool = False
 
 
 class PlanConfig(BaseAgentConfig):
@@ -51,10 +45,8 @@ class AssistantManagerConfig(BaseModel):
     query_rewrite: BaseAgentConfig
 
     @staticmethod
-    def from_yaml(filepath: str | None = None):
+    def from_yaml(filepath: str = "topix/agents/assistant/manager_config.yaml"):
         """Create an instance of ManagerConfig from a YAML file."""
-        if not filepath:
-            filepath = CONFIG_DIR / "assistant.yml"
         with open(filepath) as f:
             cf = yaml.safe_load(f)
         return AssistantManagerConfig.model_validate(cf)
@@ -87,25 +79,3 @@ class AssistantManagerConfig(BaseModel):
             self.plan.model_settings.reasoning = None
         else:
             self.plan.model_settings.reasoning = {"effort": effort, "summary": "auto"}
-
-
-class DeepResearchConfig(BaseModel):
-    """Configuration for the learning module retrieval process."""
-
-    class WebCollectorConfig(BaseAgentConfig):
-        """Web Collector Config class."""
-
-        web_search: WebSearchConfig
-
-    outline_generator: BaseAgentConfig
-    web_collector: WebCollectorConfig
-    synthesis: BaseAgentConfig
-
-    @staticmethod
-    def from_yaml(filepath: str | None = None):
-        """Create an instance of LearningModuleConfig from a YAML file."""
-        if not filepath:
-            filepath = CONFIG_DIR / "deep_research.yml"
-        with open(filepath) as f:
-            cf = yaml.safe_load(f)
-        return DeepResearchConfig.model_validate(cf)

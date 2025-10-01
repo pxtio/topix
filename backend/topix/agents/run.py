@@ -1,10 +1,11 @@
 """Agent runner supporting streaming mode."""
-
+import asyncio
 
 from collections.abc import AsyncGenerator
 from typing import Any
 
-from agents import TResponseInputItem
+from agents import RunConfig, RunHooks, Runner, TContext, TResponseInputItem
+from agents.memory import Session
 from pydantic import BaseModel
 
 from topix.agents.base import BaseAgent
@@ -12,7 +13,7 @@ from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.stream import AgentStreamMessage
 from topix.agents.datatypes.tool_call import ToolCall
 from topix.agents.datatypes.tools import AgentToolName
-from topix.agents.tool_handler import ToolHandler
+from topix.agents.utils.tools import tool_execution_handler
 
 DEFAULT_MAX_TURNS = 8
 
@@ -26,9 +27,12 @@ class AgentRunner:
         starting_agent: BaseAgent,
         input: str | list[TResponseInputItem] | BaseModel,
         *,
-        context: Context,
+        context: TContext | None = None,
         max_turns: int = DEFAULT_MAX_TURNS,
-        name: str = AgentToolName.RAW_MESSAGE,
+        hooks: RunHooks[TContext] | None = None,
+        run_config: RunConfig | None = None,
+        previous_response_id: str | None = None,
+        session: Session | None = None,
     ) -> Any:
         """Run a workflow starting at the given agent. The agent will run in a loop until a final output is generated.
 
@@ -39,6 +43,8 @@ class AgentRunner:
             4. Else, we run tool calls (if any), and re-run the loop.
             In two cases, the agent may raise an exception:
             1. If the max_turns is exceeded, a MaxTurnsExceeded exception is raised.
+            2. If a guardrail tripwire is triggered, a GuardrailTripwireTriggered exception is raised.
+            Note that only the first agent's input guardrails are run.
 
         Args:
             starting_agent: The starting agent to run.
@@ -47,21 +53,34 @@ class AgentRunner:
             context: The context to run the agent with.
             max_turns: The maximum number of turns to run the agent for. A turn is defined as one
                 AI invocation (including any tool calls that might occur).
-            name: The logged name in the tool call.
+            hooks: An object that receives callbacks on various lifecycle events.
+            run_config: Global settings for the entire agent run.
+            previous_response_id: The ID of the previous response, if using OpenAI models via the
+                Responses API, this allows you to skip passing in input from the previous turn.
+            session: The session to use for the run.
 
         Returns:
-            The final output of the agent.
+            A run result containing all the inputs, guardrail results and the output of the last agent. Agents may perform handoffs, so we don't know the specific type of the output.
 
         """  # noqa: E501
-        run_agent = ToolHandler.convert_agent_to_func(
+        if isinstance(input, str) or isinstance(input, BaseModel):
+            input = await starting_agent._input_formatter(context=context, input=input)
+
+        if not input:
+            return None
+
+        res = await Runner.run(
             starting_agent,
-            tool_name=name,
+            input,
+            context=context,
             max_turns=max_turns,
-            streamed=False,
-            is_subagent=False,
+            hooks=hooks,
+            run_config=run_config,
+            previous_response_id=previous_response_id,
+            session=session,
         )
-        output = await run_agent(context, input)
-        return output
+
+        return await starting_agent._output_extractor(context=context, output=res)
 
     @classmethod
     async def run_streamed(
@@ -70,7 +89,10 @@ class AgentRunner:
         input: str | list[TResponseInputItem] | BaseModel,
         context: Context,
         max_turns: int = DEFAULT_MAX_TURNS,
-        name: str = AgentToolName.RAW_MESSAGE,
+        hooks: RunHooks[TContext] | None = None,
+        run_config: RunConfig | None = None,
+        previous_response_id: str | None = None,
+        session: Session | None = None
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Run a workflow starting at the given agent in streaming mode.
 
@@ -94,24 +116,50 @@ class AgentRunner:
             context: The context to run the agent with.
             max_turns: The maximum number of turns to run the agent for. A turn is defined as one
                 AI invocation (including any tool calls that might occur).
-            name: The logged name in the tool call.
+            hooks: An object that receives callbacks on various lifecycle events.
+            run_config: Global settings for the entire agent run.
+            previous_response_id: The ID of the previous response, if using OpenAI models via the
+                Responses API, this allows you to skip passing in input from the previous turn.
+            session: The session to use for the run.
 
         Returns:
             A result object that contains data about the run, as well as a method to stream events.
 
         """  # noqa: D205, E501
-        run_agent = ToolHandler.convert_agent_to_func(
-            starting_agent,
-            tool_name=name,
-            max_turns=max_turns,
-            streamed=True,
-            is_subagent=False,
-        )
-        await run_agent(context, input)
+        if isinstance(input, str):
+            input_msg = input
+        else:
+            input_msg = ""
+
+        input = await starting_agent._input_formatter(context=context, input=input)
+
+        if not input:
+            return
+
+        async def stream_events():
+            async with tool_execution_handler(
+                context, tool_name=AgentToolName.RAW_MESSAGE, formatted_input=input_msg
+            ) as tool_id:
+                res = Runner.run_streamed(
+                    starting_agent,
+                    input,
+                    context=context,
+                    max_turns=max_turns,
+                    hooks=hooks,
+                    run_config=run_config,
+                    previous_response_id=previous_response_id,
+                    session=session,
+                )
+                async for stream_chunk in starting_agent._handle_stream_events(
+                    res, tool_id=tool_id, tool_name=AgentToolName.RAW_MESSAGE
+                ):
+                    await context._message_queue.put(stream_chunk)
+
+        asyncio.create_task(stream_events())
 
         while True:
             message: AgentStreamMessage | ToolCall = await context._message_queue.get()
             yield message
             if message.type != "tool_call" and message.is_stop:
-                if message.tool_name == name:
+                if message.tool_name == AgentToolName.RAW_MESSAGE:
                     break

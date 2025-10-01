@@ -5,12 +5,11 @@ from datetime import datetime
 
 from agents import ModelSettings, Tool
 
-from topix.agents.assistant.websearch.broad import BroadWebSearch
-from topix.agents.assistant.websearch.make_tool import make_web_search_tool, make_web_search_tool_from_config
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.newsfeed.config import NewsfeedCollectorConfig, NewsfeedSynthesizerConfig
 from topix.agents.newsfeed.context import NewsfeedContext
+from topix.agents.websearch.handler import WebSearchHandler
 from topix.datatypes.newsfeed.subscription import Subscription
 
 
@@ -22,7 +21,7 @@ class NewsfeedCollector(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4_1,
         instructions_template: str = "newsfeed/collector.system.jinja",
         model_settings: ModelSettings | None = None,
-        web_search: BroadWebSearch | Tool | None = None
+        web_search: Tool | None = None
     ):
         """Init method."""
         name = "Newsfeed Collector"
@@ -31,7 +30,8 @@ class NewsfeedCollector(BaseAgent):
             time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
-        web_search = make_web_search_tool(web_search or BroadWebSearch())
+        if not web_search:
+            web_search = WebSearchHandler.get_openai_web_tool()
 
         super().__init__(
             name=name,
@@ -45,7 +45,7 @@ class NewsfeedCollector(BaseAgent):
     @classmethod
     def from_config(cls, config: NewsfeedCollectorConfig) -> NewsfeedCollector:
         """Create an instance of NewsfeedCollector from configuration."""
-        web_search = make_web_search_tool_from_config(config.web_search)
+        web_search = WebSearchHandler.from_config(config.web_search)
 
         return cls(
             model=config.model,

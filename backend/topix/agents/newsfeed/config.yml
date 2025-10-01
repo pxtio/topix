@@ -9,7 +9,7 @@ collector:
     model: openai/gpt-4.1-mini
     instructions_template: web_search.jinja
     search_engine: openai
-    search_context_size: medium
+    search_context_size: high
     model_settings:
       temperature: 0.01
 
@@ -31,6 +31,6 @@ topic_setup:
     model: openai/gpt-4.1-mini
     instructions_template: web_search.jinja
     search_engine: openai
-    search_context_size: large
+    search_context_size: high
     model_settings:
       temperature: 0.01

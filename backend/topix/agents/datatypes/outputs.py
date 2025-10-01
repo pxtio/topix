@@ -11,7 +11,16 @@ from topix.agents.datatypes.annotations import (
     SearchResult,
 )
 
-type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput | MemorySearchOutput | NotifyOutput | MapifyTheme
+type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput | MemorySearchOutput | NotifyOutput | MapifyTheme | Topic
+
+
+class Topic(BaseModel):
+    """Topic data model."""
+
+    description: str
+    sub_topics: list[str]
+    keywords: list[str]
+    seed_sources: list[str]
 
 
 class MapifyTheme(BaseModel):

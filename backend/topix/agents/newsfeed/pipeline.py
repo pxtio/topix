@@ -54,9 +54,11 @@ class NewsfeedPipeline:
 
     async def create_subscription(self, topic: str, raw_description: str = "") -> Subscription:
         """Run the newsfeed pipeline."""
+        context = NewsfeedContext()
         topic_obj = await AgentRunner.run(
             self.topic_setup,
-            TopicSetupInput(topic=topic, raw_description=raw_description)
+            TopicSetupInput(topic=topic, raw_description=raw_description),
+            context=context
         )
         return self._convert_topic_to_subscription(
             label=topic,

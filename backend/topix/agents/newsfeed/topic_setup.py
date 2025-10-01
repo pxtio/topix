@@ -6,11 +6,11 @@ from datetime import datetime
 from agents import ModelSettings, Tool
 from pydantic import BaseModel
 
-from topix.agents.assistant.websearch.broad import BroadWebSearch
-from topix.agents.assistant.websearch.make_tool import make_web_search_tool, make_web_search_tool_from_config
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.model_enum import ModelEnum
+from topix.agents.datatypes.outputs import Topic
 from topix.agents.newsfeed.config import TopicSetupConfig
+from topix.agents.websearch.handler import WebSearchHandler
 
 
 class TopicSetupInput(BaseModel):
@@ -18,15 +18,6 @@ class TopicSetupInput(BaseModel):
 
     topic: str
     raw_description: str = ""
-
-
-class Topic(BaseModel):
-    """Topic data model."""
-
-    description: str
-    sub_topics: list[str]
-    keywords: list[str]
-    seed_sources: list[str]
 
 
 class TopicSetup(BaseAgent):
@@ -37,7 +28,7 @@ class TopicSetup(BaseAgent):
         model: str = ModelEnum.OpenAI.GPT_4_1,
         instructions_template: str = "newsfeed/topic_setup.system.jinja",
         model_settings: ModelSettings | None = None,
-        web_search: BroadWebSearch | Tool | None = None
+        web_search: Tool | None = None
     ):
         """Init method."""
         name = "Topic Setup"
@@ -46,7 +37,7 @@ class TopicSetup(BaseAgent):
             time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
 
-        web_search = make_web_search_tool(web_search or BroadWebSearch())
+        web_search = web_search or WebSearchHandler.get_openai_web_tool()
 
         super().__init__(
             name=name,
@@ -61,7 +52,7 @@ class TopicSetup(BaseAgent):
     @classmethod
     def from_config(cls, config: TopicSetupConfig) -> TopicSetup:
         """Create an instance of TopicSetup from configuration."""
-        web_search = make_web_search_tool_from_config(config.web_search)
+        web_search = WebSearchHandler.from_config(config.web_search)
 
         return cls(
             model=config.model,

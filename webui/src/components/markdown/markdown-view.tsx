@@ -9,7 +9,6 @@ import { Pre } from "./custom-pre"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize"
 import type { Schema } from "hast-util-sanitize"
-import { useSmoothRevealString } from "./reveal-string"
 
 /** -------------------------------------------------------
  *  one-time transparent scrollbar styles (for tables)
@@ -210,19 +209,10 @@ export interface MarkdownViewProps {
  *  MarkdownView — Streamdown + throttling (typed)
  *  ------------------------------------------------------*/
 export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
-  ({ content, isStreaming = false }) => {
+  ({ content }) => {
     React.useEffect(() => {
       ensureScrollbarStyleInjected()
     }, [])
-
-    // direct reveal over raw content (no throttle/deferred)
-    const animated = useSmoothRevealString(content, {
-      enabled: isStreaming,
-      cps: 120,           // tune feel: 40–90
-      minChunk: 1,
-      maxChunk: 6,
-      catchUpFactor: 1.0
-    })
 
     return (
       <div className="w-full min-w-0">
@@ -232,7 +222,7 @@ export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
           rehypePlugins={[rehypeRaw, [rehypeSanitize, brOnlySchema]]}
           components={components}
         >
-          {animated}
+          {content}
         </Streamdown>
       </div>
     )

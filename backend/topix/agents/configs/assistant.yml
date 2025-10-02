@@ -6,7 +6,7 @@ query_rewrite:
 
 plan:
   model: openai/gpt-4.1
-  instructions_template: plan.system_v2.jinja
+  instructions_template: plan.system.jinja
   model_settings:
     temperature: 0.01
     max_tokens: 8000

@@ -134,7 +134,7 @@ class Plan(BaseAgent):
         messages = "\n\n".join(self._format_message(msg) for msg in input[:-1])
 
         user_prompt = self._render_prompt(
-            "plan.user_v2.jinja",
+            "plan.user.jinja",
             messages=messages,
             user_query=user_query,
             time=datetime.now().isoformat(),

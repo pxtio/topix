@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from topix.datatypes.property import DataProperty, MultiSourceProperty
+from topix.datatypes.property import BooleanProperty, DataProperty, MultiSourceProperty
 from topix.datatypes.resource import Resource, ResourceProperties, RichText
 
 
@@ -14,6 +14,10 @@ class NewsfeedProperties(ResourceProperties):
 
     news_grid: MultiSourceProperty = Field(
         default_factory=lambda: MultiSourceProperty()
+    )
+
+    marked_as_read: BooleanProperty = Field(
+        default_factory=lambda: BooleanProperty()
     )
 
 

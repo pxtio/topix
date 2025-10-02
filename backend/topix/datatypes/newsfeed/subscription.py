@@ -10,12 +10,10 @@ from topix.datatypes.resource import Resource, ResourceProperties, RichText
 class Recurrence(StrEnum):
     """Recurrence enum."""
 
-    ONE_DAY = "1d"
-    ONE_WEEK = "7d"
-    ONE_MONTH = "30d"
-    THREE_MONTHS = "90d"
-    SIX_MONTHS = "180d"
-    ONE_YEAR = "365d"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    YEARLY = "yearly"
 
 
 class SubscriptionProperties(ResourceProperties):

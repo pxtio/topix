@@ -74,6 +74,11 @@ class SubscriptionStore:
         points = await self._content_store.get(ids=ids)
         return [point.resource for point in points] if points else None
 
+    async def update_newsfeed(self, newsfeed_id: str, data: dict):
+        """Update an existing newsfeed."""
+        data["id"] = newsfeed_id
+        await self._content_store.update([data])
+
     async def list_newsfeeds(self, subscription_id: str, limit: int = 100) -> list[Newsfeed]:
         """List all newsfeeds for a subscription."""
         results = await self._content_store.filt(

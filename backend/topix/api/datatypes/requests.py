@@ -85,6 +85,12 @@ class AddSubscriptionRequest(BaseModel):
     raw_description: str | None = None
 
 
+class NewsfeedUpdateRequest(BaseModel):
+    """Request model for updating a newsfeed."""
+
+    data: dict
+
+
 class AddNotesRequest(BaseModel):
     """Request model for adding notes to a graph."""
 

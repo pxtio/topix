@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.params import Body, Path, Query
 
-from topix.api.datatypes.requests import AddSubscriptionRequest, SubscriptionUpdateRequest
+from topix.api.datatypes.requests import AddSubscriptionRequest, NewsfeedUpdateRequest, SubscriptionUpdateRequest
 from topix.api.helpers import with_standard_response
 from topix.api.utils.security import get_current_user_uid
 from topix.store.subscription import SubscriptionStore
@@ -148,6 +148,23 @@ async def get_newsfeed(
     if not newsfeeds:
         raise HTTPException(status_code=404, detail="Newsfeed not found")
     return {"newsfeed": newsfeeds[0].model_dump(exclude_none=True)}
+
+
+@router.patch("/{subscription_id}/newsfeeds/{newsfeed_id}/", include_in_schema=False)
+@router.patch("/{subscription_id}/newsfeeds/{newsfeed_id}")
+@with_standard_response
+async def update_newsfeed(
+    response: Response,
+    request: Request,
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    subscription_id: Annotated[str, Path(description="Subscription Unique ID")],
+    newsfeed_id: Annotated[str, Path(description="Newsfeed Unique ID")],
+    body: Annotated[NewsfeedUpdateRequest, Body(description="Newsfeed update data")],
+):
+    """Update a newsfeed by its ID."""
+    store: SubscriptionStore = request.app.subscription_store
+    await store.update_newsfeed(newsfeed_id, body.data)
+    return {"updated": True}
 
 
 @router.delete("/{subscription_id}/newsfeeds/{newsfeed_id}/", include_in_schema=False)

@@ -73,11 +73,12 @@ class NewsfeedPipeline:
         """Convert NewsfeedOutput to markdown string."""
         summary = ""
         for section in output.sections:
+            if not section.articles:
+                continue
             summary += f"## {section.title}\n\n"
             for article in section.articles:
                 summary += f"### [{article.title}]({article.url})\n\n"
-                summary += f"{article.summary}\n"
-            summary += "\n"
+                summary += f"{article.summary}\n\n"
         return summary
 
     def _convert_newsfeed_article_to_search_result(self, article: NewsfeedArticle) -> SearchResult:
@@ -87,7 +88,6 @@ class NewsfeedPipeline:
             url=article.url,
             content=article.summary,
             published_at=article.published_at,
-            score=article.score,
             source_domain=article.source_domain
         )
 

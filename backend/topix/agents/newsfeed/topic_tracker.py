@@ -10,6 +10,7 @@ from topix.agents.base import BaseAgent
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.outputs import TopicTracker
 from topix.agents.newsfeed.config import TopicSetupConfig
+from topix.agents.newsfeed.default_seed_sources import DefaultSeedSources
 from topix.agents.websearch.handler import WebSearchHandler
 
 
@@ -67,8 +68,14 @@ class TopicSetup(BaseAgent):
         input: TopicSetupInput
     ):
         """Format input for the agent."""
+        default_seed_sources = DefaultSeedSources()
+        topic_lower = input.topic.lower()
+        seed_sources = "N/A"
+        if topic_lower in default_seed_sources.model_fields_set:
+            seed_sources = '\n'.join(f'- {src}' for src in getattr(default_seed_sources, topic_lower).seed_sources)
         return self._render_prompt(
             "newsfeed/topic_setup.user.jinja",
             topic=input.topic,
-            raw_description=input.raw_description
+            raw_description=input.raw_description,
+            seed_sources=seed_sources
         )

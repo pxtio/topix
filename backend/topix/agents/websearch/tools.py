@@ -10,6 +10,8 @@ import httpx
 from topix.agents.datatypes.annotations import SearchResult
 from topix.agents.datatypes.outputs import WebSearchOutput
 from topix.agents.datatypes.web_search import WebSearchContextSize
+from topix.agents.websearch.utils import get_from_date
+from topix.datatypes.recurrence import Recurrence
 
 semaphore = asyncio.Semaphore(8)
 
@@ -28,6 +30,7 @@ async def search_perplexity(
     query: str,
     max_results: int = 10,
     search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
+    recency: Recurrence | None = None,
     *,
     client: Optional[httpx.AsyncClient] = None,
     timeout: Optional[httpx.Timeout] = None,
@@ -38,6 +41,7 @@ async def search_perplexity(
         query: The query to search for.
         max_results: Maximum number of results to return.
         search_context_size: Size of the search context.
+        recency: Optional Recurrence filter. Returns results from the last 'daily', 'weekly', 'monthly', or 'yearly'.
         client: Optional shared httpx.AsyncClient to reuse.
         timeout: Optional httpx timeout (per-request).
 
@@ -67,6 +71,20 @@ async def search_perplexity(
         "max_tokens_per_page": tokens_per_page
     }
 
+    if recency:
+        match recency:
+            case Recurrence.DAILY:
+                recency_filter = "day"
+            case Recurrence.WEEKLY:
+                recency_filter = "week"
+            case Recurrence.MONTHLY:
+                recency_filter = "month"
+            case Recurrence.YEARLY:
+                recency_filter = "year"
+            case _:
+                raise ValueError(f"Invalid recency: {recency}. Must be one of 'daily', 'weekly', 'monthly', 'yearly'.")
+        data["search_recency_filter"] = recency_filter
+
     async with semaphore:
         if client is None:
             async with httpx.AsyncClient() as ac:
@@ -94,6 +112,7 @@ async def search_tavily(
     query: str,
     max_results: int = 10,
     search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
+    recency: Recurrence | None = None,
     *,
     client: Optional[httpx.AsyncClient] = None,
     timeout: Optional[httpx.Timeout] = None,
@@ -104,6 +123,8 @@ async def search_tavily(
         query: The query to search for.
         max_results: Maximum number of results to return.
         search_context_size: Size of the search context.
+        recency: Optional Recurrence filter. Returns results from the last 'daily', 'weekly', 'monthly', or 'yearly'.
+            If not specified, no date filtering will be applied. Default is None (i.e., no filtering).
         client: Optional shared httpx.AsyncClient to reuse.
         timeout: Optional httpx timeout (per-request).
 
@@ -129,6 +150,10 @@ async def search_tavily(
         "search_depth": search_depth,
         "auto_parameters": True,
     }
+
+    if recency:
+        from_date = get_from_date(recency).isoformat()
+        data["start_date"] = from_date
 
     async with semaphore:
         if client is None:
@@ -157,6 +182,7 @@ async def search_linkup(
     query: str,
     max_results: int = 10,
     search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
+    recency: Recurrence | None = None,
     *,
     client: Optional[httpx.AsyncClient] = None,
     timeout: Optional[httpx.Timeout] = None,
@@ -167,6 +193,8 @@ async def search_linkup(
         query: The query to search for.
         max_results: Maximum number of results to return.
         search_context_size: Size of the search context.
+        recency: Optional Recurrence filter. Returns results from the last 'daily', 'weekly', 'monthly', or 'yearly'.
+            If not specified, no date filtering will be applied. Default is None (i.e., no filtering).
         client: Optional shared httpx.AsyncClient to reuse.
         timeout: Optional httpx timeout (per-request).
 
@@ -189,6 +217,10 @@ async def search_linkup(
         "outputType": "searchResults",
         "depth": depth,
     }
+
+    if recency:
+        from_date = get_from_date(recency).isoformat()
+        data["fromDate"] = from_date
 
     async with semaphore:
         if client is None:

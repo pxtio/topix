@@ -9,6 +9,7 @@ from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.outputs import SearchResult, WebSearchOutput
 from topix.agents.datatypes.web_search import WebSearchContextSize
+from topix.datatypes.recurrence import Recurrence
 
 
 class OpenAIWebSearch(BaseAgent):
@@ -23,6 +24,7 @@ class OpenAIWebSearch(BaseAgent):
         instructions_template: str = "web_search.jinja",
         model_settings: ModelSettings | None = None,
         search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
+        recency: Recurrence | None = None,
     ):
         """Initialize the WebSearch agent."""
         name = "OpenAI Web Search"

@@ -31,6 +31,13 @@ class DefaultSeedSources(BaseModel):
             "perplexity.ai/blog",
             "stability.ai/news",
             "x.ai/blog",
+            "mlcommons.org/insights",
+            "openllm-leaderboard.com",
+            "blogs.nvidia.com/",
+            "microsoft.com/en-us/research",
+            "techcrunch.com/tag/artificial-intelligence",
+            "venturebeat.com/ai",
+            "nature.com/subjects/computer-science"
 
             # OSS / research
             "huggingface.co/blog",

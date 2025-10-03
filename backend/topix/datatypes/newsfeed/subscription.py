@@ -1,19 +1,8 @@
 """Subscription datatype."""
-from enum import StrEnum
-
 from pydantic import Field
 
 from topix.datatypes.property import BooleanProperty, DataProperty, IconProperty, MultiTextProperty, TextProperty
 from topix.datatypes.resource import Resource, ResourceProperties, RichText
-
-
-class Recurrence(StrEnum):
-    """Recurrence enum."""
-
-    DAILY = "daily"
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
-    YEARLY = "yearly"
 
 
 class SubscriptionProperties(ResourceProperties):

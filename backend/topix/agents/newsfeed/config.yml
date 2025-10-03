@@ -8,10 +8,13 @@ collector:
   web_search:
     model: openai/gpt-5-mini
     instructions_template: newsfeed/web_search.jinja
-    search_engine: openai
+    search_engine: linkup
     search_context_size: high
+    recency: monthly
     model_settings:
       temperature: 0.01
+    enable_summary: true
+    streaming: false
 
 synthesizer:
   model: openai/gpt-4.1

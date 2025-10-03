@@ -21,7 +21,6 @@ class NewsfeedArticle(BaseModel):
     url: str
     summary: str
     published_at: str
-    score: int
     source_domain: str
 
 

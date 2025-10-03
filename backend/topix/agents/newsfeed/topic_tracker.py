@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.model_enum import ModelEnum
-from topix.agents.datatypes.outputs import Topic
+from topix.agents.datatypes.outputs import TopicTracker
 from topix.agents.newsfeed.config import TopicSetupConfig
 from topix.agents.websearch.handler import WebSearchHandler
 
@@ -45,7 +45,7 @@ class TopicSetup(BaseAgent):
             model_settings=model_settings,
             instructions=instructions,
             tools=[web_search],
-            output_type=Topic
+            output_type=TopicTracker
         )
         super().__post_init__()
 

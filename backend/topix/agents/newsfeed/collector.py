@@ -7,6 +7,7 @@ from agents import ModelSettings, Tool
 
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.model_enum import ModelEnum
+from topix.agents.datatypes.outputs import NewsfeedOutput
 from topix.agents.newsfeed.config import NewsfeedCollectorConfig, NewsfeedSynthesizerConfig
 from topix.agents.newsfeed.context import NewsfeedContext
 from topix.agents.websearch.handler import WebSearchHandler
@@ -95,6 +96,7 @@ class NewsfeedSynthesizer(BaseAgent):
             model_settings=model_settings,
             instructions=instructions,
             tools=[],
+            output_type=NewsfeedOutput
         )
         super().__post_init__()
 

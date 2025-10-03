@@ -27,8 +27,8 @@ class Newsfeed(Resource):
     type: Literal["newsfeed"] = "newsfeed"
 
     # properties
-    properties: ResourceProperties = Field(
-        default_factory=ResourceProperties
+    properties: NewsfeedProperties = Field(
+        default_factory=NewsfeedProperties
     )
 
     label: RichText | None = None

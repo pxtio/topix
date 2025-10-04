@@ -8,6 +8,7 @@ from topix.agents.newsfeed.config import NewsfeedPipelineConfig
 from topix.agents.newsfeed.context import NewsfeedContext
 from topix.agents.newsfeed.topic_tracker import TopicSetup, TopicSetupInput
 from topix.agents.run import AgentRunner
+from topix.agents.websearch.utils import pretty_date
 from topix.datatypes.newsfeed.newsfeed import Newsfeed, NewsfeedProperties
 from topix.datatypes.newsfeed.subscription import Subscription, SubscriptionProperties
 from topix.datatypes.property import MultiSourceProperty, MultiTextProperty, TextProperty
@@ -77,7 +78,12 @@ class NewsfeedPipeline:
                 continue
             summary += f"## {section.title}\n\n"
             for article in section.articles:
-                summary += f"### [{article.title}]({article.url})\n\n"
+                article_title = article.title
+                if article.published_at:
+                    pretty_date_str = pretty_date(article.published_at)
+                    if pretty_date_str:
+                        article_title = f"{article.title} ({pretty_date_str})"
+                summary += f"### [{article_title}]({article.url})\n\n"
                 summary += f"{article.summary}\n\n"
         return summary
 
@@ -88,7 +94,8 @@ class NewsfeedPipeline:
             url=article.url,
             content=article.summary,
             published_at=article.published_at,
-            source_domain=article.source_domain
+            source_domain=article.source_domain,
+            tags=article.tags
         )
 
     async def _add_articles_annotations(self, hits: list[SearchResult]) -> list[SearchResult]:
@@ -114,17 +121,22 @@ class NewsfeedPipeline:
             input=subscription,
             context=context
         )
-        output = await AgentRunner.run(
+
+        output: NewsfeedOutput = await AgentRunner.run(
             self.synthesizer,
             input=subscription,
             context=context
         )
         summary = self._convert_newsfeed_output_to_markdown(output)
+
         hits = []
         for section in output.sections:
             for article in section.articles:
-                hits.append(self._convert_newsfeed_article_to_search_result(article))
+                hit = self._convert_newsfeed_article_to_search_result(article)
+                hit.tags = [section.title] + hit.tags
+                hits.append(hit)
         hits = await self._add_articles_annotations(hits)
+
         return Newsfeed(
             content=RichText(markdown=summary),
             subscription_id=subscription.id,

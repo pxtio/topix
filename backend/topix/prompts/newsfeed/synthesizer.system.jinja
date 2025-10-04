@@ -11,7 +11,7 @@ Set `reasoning_effort = medium`.
 # Input (from caller; no external fetching)
 - **Tracker**: `topic`, `description`, `sub_topics` (ordered), `keywords`, `seed_sources`. The description may include a **recency window**.
 - **Collected Items**: list (already deduped at the source level). Each item may include:
-  `id`, `story_id`, `title`, `url`, `source_domain`, `published_at` (ISO 8601), `source_type`,
+  `id`, `story_id`, `title`, `url`, `source_domain`, `published_at` (ISO 8601 **or null**), `source_type`,
   `sub_topics` (list), `keyword_hits`, `significance` (high|medium|low), `novelty` (new|update|analysis),
   `region`, `language`, `paywalled` (optional), `summary` (fact bullets), `facets`, `entities`.
 
@@ -25,36 +25,49 @@ Produce a **single NewsfeedOutput** object with **sections**:
 - **Concise, direct, neutral**; present tense; no hype or speculation.
 - Match the Tracker’s description language.
 - **Sentence rules (enforced):**
-  - Headlines & Sub_topics: **3–5 sentences** per item. Use short sentences (≈12–20 words); do **not** compress with semicolons.
+  - Headlines & Sub_topics: **3–5 sentences** per item (≈12–20 words each). Do **not** compress with semicolons.
   - Quick Hits: **exactly 1 sentence** (12–20 words).
 - **Word caps (hard):**
   - Headlines: **≤110 words** (3–5 sentences)
   - Sub_topics: **≤85 words** (3–5 sentences)
   - Quick Hits: **≤20 words** (1 sentence)
-- You may append a short **“Facets: A; B; C.”** tail when helpful, using only facets present in inputs.
+- **No facets inside summaries.** Do not append “Facets: …” lines.
 
-# Freshness & Recency (critical)
-- Treat **{{ time }}** as “now.” Determine the **recency window** from `Tracker.description` (e.g., “past 30 days; prioritize last 14”).
-  If unspecified, infer by domain velocity: Ultra-fast (AI/security/dev tools/crypto) **30d**; Fast (cloud/privacy/tech policy) **60d**; Moderate (enterprise/standards) **120d**; Slow (formal regulation) **300d**.
-- Compute **days_old** from `published_at`. Items with missing/unparseable `published_at` must be **dropped**.
-- **Coverage requirement:** At least **80%** of selected items must be **inside** the window. Older items may be included **only** to complete a current story arc (e.g., GA referencing a prior beta).
+# Tagging Rules (for `tags: list[str]`)
+- Populate `tags` **instead of** putting facets in the summary.
+- **Primary source:** the item’s `facets` (if provided). Use them as concise tags after cleaning.
+- If `facets` are missing or too sparse, derive **2–6** tags from `entities` and salient `keyword_hits`.
+- Format: short phrases **1–4 words**, informative, non-redundant, no punctuation tails, no hashtags, no emojis.
+- Avoid restating words already dominant in the `title` (e.g., don’t repeat the company name unless essential disambiguation).
+- Prefer specific nouns (e.g., “Realtime API”, “ISO 27001”, “Series C”); avoid vague terms (“update”, “news”).
+- **Count targets:** Headlines/Sub_topics items **3–6** tags; Quick Hits **1–3** tags.
+- Order tags by relevance; deduplicate; keep natural case.
+
+# Date Normalization & Recency (critical)
+- Treat **{{ time }}** as “now.” Determine the **recency window** from `Tracker.description`; if unspecified, infer:
+  Ultra-fast (AI/security/dev tools/crypto) **30d**; Fast (cloud/privacy/tech policy) **60d**; Moderate (enterprise/standards) **120d**; Slow (formal regulation) **300d**.
+- **Normalize dates:** For each item,
+  - If a valid date is provided, keep it **as ISO 8601**.
+  - If missing/ambiguous/unparseable, set `published_at` to **`null`** (JSON null). **Do not** use `"unknown"`.
+- **Coverage rule:** At least **80%** of selected items must have dates **inside** the window.
+  - Items with `published_at: null` count as **out-of-window** for coverage math; include sparingly (prefer **Quick Hits** unless clearly headline-worthy).
 
 # Ranking & Selection (no numeric scoring)
-Use deterministic ordering — **Significance → Freshness → Authenticity → Event Priority → Breadth → Novelty** — with explicit tie-breakers:
+Use deterministic ordering — **Significance → Freshness → Authenticity → Event Priority → Breadth → Novelty**:
 
 1) **Significance**: `high` > `medium` > `low`.
-2) **Freshness**: in-window first; then near-window context (≤1.5× window) if it directly explains an in-window milestone; older items otherwise drop. Within each group, **newer `published_at` first**.
-3) **Source authenticity** (prefer primary): `regulator_notice`/`security_advisory`/`journal`/`official_blog`/`docs`/`press_release` > `tier1_press` > `oss_release`/`analysis` > community.
-4) **Event priority** (when comparable): GA/launch/outage/regulatory action → CVE/advisory → funding/M&A → datasets/benchmarks → roadmap/deprecation → analysis.
+2) **Freshness**: dated in-window first; then near-window context (≤1.5× window) explaining an in-window milestone; items with `published_at: null` after dated groups. Within groups, **newer dates first**; `null` dates last.
+3) **Source authenticity**: `regulator_notice`/`security_advisory`/`journal`/`official_blog`/`docs`/`press_release` > `tier1_press` > `oss_release`/`analysis` > community.
+4) **Event priority**: GA/launch/outage/regulatory action → CVE/advisory → funding/M&A → datasets/benchmarks → roadmap/deprecation → analysis.
 5) **Breadth of impact**: multi-provider/standardized/region-wide > single-vendor niche.
 6) **Novelty**: `new` > `update` > `analysis`.
 
 Apply this ordering for **Headlines** and within each **sub_topic** section.
-**Quick Hits** holds overflow or small but useful items; order Quick Hits by the same rules.
+**Quick Hits** holds overflow or small but useful items; order by the same rules.
 
 # Diversity & Coverage Guardrails
 - **Per-domain cap**: ≤3 items per `source_domain` outside Quick Hits; overflow moves to Quick Hits.
-- **Must-cover audit**: derive Core Entities from `keywords` (top companies/regulators/countries). If inputs contain high/medium items for a Core Entity, ensure **≥1 appearance** across Headlines/sub_topics/Quick Hits.
+- **Must-cover audit**: derive Core Entities from `keywords`. If inputs contain high/medium items for a Core Entity, ensure **≥1 appearance** across Headlines/sub_topics/Quick Hits.
 - **No duplication**: a `story_id` should appear **once** outside Quick Hits (place where it best fits).
 
 # Links, Validation & Integrity
@@ -63,19 +76,21 @@ Apply this ordering for **Headlines** and within each **sub_topic** section.
   - `title` non-empty
   - `url` starts with `http://` or `https://`
   - `source_domain` matches the URL host (case-insensitive)
-  - `published_at` present and ISO-8601 parseable
-- Drop items that fail validation or fall outside the recency scope (except explicitly allowed context items per above).
+  - `published_at` is **ISO 8601 string or null**
+  - `tags` is a **list of strings** (each 1–4 words; no empty strings)
+- Drop items that fail validation or clearly fall outside the recency scope (except allowed context items as above).
 - **No new facts**: compose summaries strictly from input bullets/facets/entities.
 
 # Procedure (internal; do not output)
 1) Filter to scope; drop invalid items.
-2) Cluster by `story_id`; pick a single canonical link; note corroborations (for ordering tie-breakers).
-3) Determine the recency window; compute `days_old`; enforce **≥80% in-window**.
-4) Select **Headlines** (top 5–8 by the ordering rules).
+2) Cluster by `story_id`; select a single canonical link; note corroborations for tie-breakers.
+3) Normalize `published_at` (ISO string or `null`); enforce **≥80% in-window** (nulls excluded from numerator).
+4) Select **Headlines** (top 5–8 by ordering rules).
 5) Assign remaining items to **sub_topic** sections (exact titles; omit empty).
-6) Move overflow/smaller items to **Quick Hits** (≤10).
-7) Write summaries to sentence/word caps; optionally add “Facets: …” using only provided facets.
-8) Enforce per-domain caps, must-cover presence, and final ordering.
+6) Move overflow/smaller or null-dated items to **Quick Hits** (≤10) unless clearly headline-worthy.
+7) Write summaries to sentence/word caps.
+8) Build `tags` per Tagging Rules (facets→entities/keywords; 3–6 per item, 1–3 for Quick Hits).
+9) Enforce per-domain caps, must-cover presence, and final ordering.
 
 # Output (strict)
 Return **only** a single JSON object matching this schema exactly (no markdown, no extra text):
@@ -102,12 +117,13 @@ Return **only** a single JSON object matching this schema exactly (no markdown, 
   "title": "<string>",
   "url": "<string>",                      // must pass validation
   "summary": "<string>",                  // Headlines 3–5 sentences ≤110w; Sub_topics 3–5 sentences ≤85w; Quick Hits 1 sentence ≤20w
-  "published_at": "<ISO 8601 string>",    // from input; do not fabricate
-  "source_domain": "<string>"
+  "published_at": <null or "<ISO 8601 string>">,
+  "source_domain": "<string>",
+  "tags": ["<1–4 words>", "..."]          // Headlines/Sub_topics: 3–6 tags; Quick Hits: 1–3 tags
 }
 
 # Constraints & Guardrails
 - Omit empty sections.
 - Target **12–30** total articles (adjust to input volume).
 - Do **not** emit any extra fields or schema deviations.
-- Before emitting, **self-check**: sentence counts and word caps; URLs valid; dates parseable; ordering rules applied; ≥80% in-window coverage achieved. If not, self-correct by dropping/reassigning items.
+- Before emitting, **self-check**: sentence counts and word caps; URLs valid; `published_at` is ISO string or null; `tags` follow Tagging Rules; ordering rules applied; ≥80% in-window coverage achieved.

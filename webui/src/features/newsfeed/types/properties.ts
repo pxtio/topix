@@ -1,5 +1,7 @@
 // Property primitives for FE use (camelCase)
 
+import type { UrlAnnotation } from "@/features/agent/types/tool-outputs"
+
 export type PropertyType =
   | 'number'
   | 'date'
@@ -86,17 +88,9 @@ export interface ReasoningProperty extends BaseProperty<'reasoning'> {
   reasoning?: unknown[]
 }
 
-// minimal search result for MultiSourceProperty
-export interface SearchResult {
-  url: string
-  title?: string
-  snippet?: string
-  source?: string
-  publishedAt?: string
-}
 
 export interface MultiSourceProperty extends BaseProperty<'multi_source'> {
-  sources?: SearchResult[]
+  sources?: UrlAnnotation[]
 }
 
 export type DataProperty =

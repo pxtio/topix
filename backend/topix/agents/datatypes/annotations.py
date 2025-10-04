@@ -16,6 +16,7 @@ class SearchResult(BaseModel):
     published_at: str | None = None
     score: int | None = None
     source_domain: str | None = None
+    tags: list[str] = []
 
 
 class RefAnnotation(BaseModel):

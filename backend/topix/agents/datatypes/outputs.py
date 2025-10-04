@@ -22,6 +22,7 @@ class NewsfeedArticle(BaseModel):
     summary: str
     published_at: str
     source_domain: str
+    tags: list[str] = []
 
 
 class NewsfeedSection(BaseModel):

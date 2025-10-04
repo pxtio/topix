@@ -8,6 +8,9 @@ export interface UrlAnnotation {
   content?: string
   favicon?: string
   coverImage?: string
+  sourceDomain?: string
+  publishedAt?: string // ISO 8601 date string
+  tags?: string[]
 }
 
 export interface FileAnnotation {

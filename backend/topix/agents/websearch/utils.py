@@ -1,4 +1,5 @@
 """Utils for web search."""
+import logging
 
 from datetime import datetime, timedelta
 
@@ -6,6 +7,8 @@ from topix.agents.datatypes.outputs import WebSearchOutput
 from topix.agents.datatypes.stream import AgentStreamMessage, Content
 from topix.datatypes.recurrence import Recurrence
 from topix.utils.web.favicon import fetch_meta_images_batch
+
+logger = logging.getLogger(__name__)
 
 
 async def convert_search_output_to_annotation_message(
@@ -63,3 +66,21 @@ def get_from_date(recency: Recurrence, now: datetime = None) -> datetime:
             return today - timedelta(days=366)
         case _:
             raise ValueError(f"Invalid recency: {recency}. Must be one of 'daily', 'weekly', 'monthly', 'yearly'.")
+
+
+def pretty_date(iso_str: str) -> str | None:
+    """Convert ISO datetime string to a readable format like 'Sep 3rd, 2025'."""
+    try:
+        dt = datetime.fromisoformat(iso_str)
+    except ValueError:
+        logger.warning(f"Invalid ISO datetime string: {iso_str}")
+        return None
+    day = dt.day
+
+    # Determine suffix
+    if 10 <= day % 100 <= 20:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+
+    return dt.strftime(f"%b {day}{suffix}, %Y")

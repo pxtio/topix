@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from topix.agents.datatypes.annotations import SearchResult
 from topix.agents.datatypes.outputs import NewsfeedArticle, NewsfeedOutput, TopicTracker
-from topix.agents.newsfeed.collector import NewsfeedCollector, NewsfeedSynthesizer
+from topix.agents.newsfeed.collector import NewsfeedCollector, NewsfeedCollectorInput, NewsfeedSynthesizer
 from topix.agents.newsfeed.config import NewsfeedPipelineConfig
 from topix.agents.newsfeed.context import NewsfeedContext
 from topix.agents.newsfeed.topic_tracker import TopicSetup, TopicSetupInput
@@ -113,18 +113,33 @@ class NewsfeedPipeline:
                 result.cover_image = str(images.cover_image) if images.cover_image else None
         return hits
 
-    async def collect_and_synthesize(self, subscription: Subscription) -> Newsfeed:
+    def _extract_existing_urls(self, history: list[Newsfeed]) -> list[tuple[str, str]]:
+        """Extract existing URLs + titles from history."""
+        existing_urls = []
+        for newsfeed in history:
+            if not newsfeed.properties or not newsfeed.properties.news_grid:
+                continue
+            for source in newsfeed.properties.news_grid.sources or []:
+                existing_urls.append((source.url, source.title or ""))
+        return existing_urls
+
+    async def collect_and_synthesize(self, subscription: Subscription, history: list[Newsfeed] = []) -> Newsfeed:
         """Collect and synthesize newsfeed items."""
         context = NewsfeedContext()
+
+        input_obj = NewsfeedCollectorInput(
+            subscription=subscription,
+            history=self._extract_existing_urls(history)
+        )
         _ = await AgentRunner.run(
             self.collector,
-            input=subscription,
+            input=input_obj,
             context=context
         )
 
         output: NewsfeedOutput = await AgentRunner.run(
             self.synthesizer,
-            input=subscription,
+            input=input_obj,
             context=context
         )
         summary = self._convert_newsfeed_output_to_markdown(output)

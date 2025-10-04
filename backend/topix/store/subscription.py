@@ -63,9 +63,13 @@ class SubscriptionStore:
         """Delete a subscription by its UID."""
         await self._content_store.delete([subscription_id], hard_delete=hard_delete)
 
-    async def create_newsfeed(self, subscription: Subscription) -> Newsfeed:
+    async def create_newsfeed(self, subscription: Subscription | str) -> Newsfeed:
         """Create a new newsfeed for a subscription."""
-        newsfeed = await self._newsfeed_pipeline.collect_and_synthesize(subscription)
+        if isinstance(subscription, str):
+            subscription = (await self.get_subscriptions([subscription]))[0]
+
+        history = await self.list_newsfeeds(subscription.id, limit=30)
+        newsfeed = await self._newsfeed_pipeline.collect_and_synthesize(subscription, history=history)
         await self._content_store.add([newsfeed])
         return newsfeed
 

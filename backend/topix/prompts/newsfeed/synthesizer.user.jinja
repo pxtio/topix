@@ -27,6 +27,15 @@
 
 ---
 
+## History (optional — previously covered items)
+Provide recent items as plain-text lines in the form:
+`<url> — <title>`
+Used to avoid repeating already covered stories unless there’s a clear progression (e.g., beta → GA, draft → final, new funding round, postmortem, etc.).
+
+{{ history }}
+
+---
+
 # Recap — Synthesis Rules (Reminder)
 - **Format**: Return a single **Markdown newsletter** only, no JSON or commentary.
 - **Sections**: Headlines, Products & Releases, Research & Benchmarks, Policy/Security & Safety, Developer Changelogs, Quick Hits (omit empty ones).
@@ -37,5 +46,6 @@
 - **Freshness**: Prefer items closest to {{ time }}.
 - **Accuracy**: Never invent facts; use only collected items.
 - **Links**: Double-check every link is present, canonical (no tracking params), and correct. Broken or missing links = unusable output.
+- **Novelty**: Skip items already in **History**, unless they clearly advance an ongoing story.
 - **Tone**: Concise, direct, lightly witty, but sober on security/regulation.
 - **Output**: Begin with `# {{ topic }} — Daily Briefing ({{ time }})`, optional 1–2 sentence intro, then sections with bullets.

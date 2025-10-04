@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from agents import ModelSettings, Tool
+from pydantic import BaseModel
 
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.model_enum import ModelEnum
@@ -12,6 +13,13 @@ from topix.agents.newsfeed.config import NewsfeedCollectorConfig, NewsfeedSynthe
 from topix.agents.newsfeed.context import NewsfeedContext
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.datatypes.newsfeed.subscription import Subscription
+
+
+class NewsfeedCollectorInput(BaseModel):
+    """Input for the NewsfeedCollector agent."""
+
+    subscription: Subscription
+    history: list[tuple[str, str]] = []  # (url, title) newsfeed history
 
 
 class NewsfeedCollector(BaseAgent):
@@ -58,19 +66,26 @@ class NewsfeedCollector(BaseAgent):
     async def _input_formatter(
         self,
         context,
-        input: Subscription,
+        input: NewsfeedCollectorInput,
     ):
         """Format input for the agent."""
-        sub_topics_str = '\n'.join(f"- {st}" for st in input.properties.sub_topics.texts) if input.properties.sub_topics.texts else "None"
-        keywords_str = ', '.join(kw for kw in input.properties.keywords.texts) if input.properties.keywords.texts else "None"
-        seed_sources_str = '\n'.join(f"- {ss}" for ss in input.properties.seed_sources.texts) if input.properties.seed_sources.texts else "None"
+        sub_topics_str = '\n'.join(f"- {st}" for st in input.subscription.properties.sub_topics.texts) \
+            if input.subscription.properties.sub_topics.texts else "None"
+        keywords_str = ', '.join(kw for kw in input.subscription.properties.keywords.texts) \
+            if input.subscription.properties.keywords.texts else "None"
+        seed_sources_str = '\n'.join(f"- {ss}" for ss in input.subscription.properties.seed_sources.texts) \
+            if input.subscription.properties.seed_sources.texts else "None"
+
+        history_str = '\n'.join(f"- {title} ({url})" for url, title in input.history) if input.history else "None"
+
         return self._render_prompt(
             "newsfeed/collector.user.jinja",
-            topic=input.label.markdown,
+            topic=input.subscription.label.markdown,
             sub_topics=sub_topics_str,
-            description=input.properties.description.text,
+            description=input.subscription.properties.description.text,
             keywords=keywords_str,
-            seed_sources=seed_sources_str
+            seed_sources=seed_sources_str,
+            history=history_str
         )
 
 
@@ -112,21 +127,27 @@ class NewsfeedSynthesizer(BaseAgent):
     async def _input_formatter(
         self,
         context: NewsfeedContext,
-        input: Subscription
+        input: NewsfeedCollectorInput
     ):
         """Format input for the agent."""
-        sub_topics_str = '\n'.join(f"- {st}" for st in input.properties.sub_topics.texts) if input.properties.sub_topics.texts else "None"
-        keywords_str = ', '.join(kw for kw in input.properties.keywords.texts) if input.properties.keywords.texts else "None"
-        seed_sources_str = '\n'.join(f"- {ss}" for ss in input.properties.seed_sources.texts) if input.properties.seed_sources.texts else "None"
+        sub_topics_str = '\n'.join(f"- {st}" for st in input.subscription.properties.sub_topics.texts) \
+            if input.subscription.properties.sub_topics.texts else "None"
+        keywords_str = ', '.join(kw for kw in input.subscription.properties.keywords.texts) \
+            if input.subscription.properties.keywords.texts else "None"
+        seed_sources_str = '\n'.join(f"- {ss}" for ss in input.subscription.properties.seed_sources.texts) \
+            if input.subscription.properties.seed_sources.texts else "None"
+
+        history_str = '\n'.join(f"- {title} ({url})" for url, title in input.history) if input.history else "None"
         return self._render_prompt(
             "newsfeed/synthesizer.user.jinja",
             time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            topic=input.label.markdown,
+            topic=input.subscription.label.markdown,
             sub_topics=sub_topics_str,
-            description=input.properties.description.text,
+            description=input.subscription.properties.description.text,
             keywords=keywords_str,
             seed_sources=seed_sources_str,
             items='\n\n---\n\n'.join([
                 str(tool_call.output) for tool_call in context.tool_calls
-            ])
+            ]),
+            history=history_str
         )

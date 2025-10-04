@@ -22,6 +22,7 @@ class NewsfeedArticle(BaseModel):
     summary: str
     published_at: str
     source_domain: str
+    score: int | None = None
     tags: list[str] = []
 
 

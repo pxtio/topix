@@ -49,6 +49,16 @@ Produce a single **NewsfeedOutput** JSON object composed of **sections**:
     - new **funding round** / material expansion
     - **postmortem/RCA** following an earlier incident note
 
+# DIVERSITY & BALANCE (“democracy” rule)
+Avoid a feed dominated by a few mega-vendors or outlets. Enforce breadth **when supply permits**:
+- **Vendor family cap (Headlines):** ≤1 item per vendor family (e.g., hostnames containing **google**, **openai**, **meta/facebook**, **microsoft**, **apple**, **amazon/aws**, **nvidia**, **anthropic**, **deepmind**, **x.ai**).
+  If more qualify, keep the strongest and **demote the rest** to sub_topics or **Quick Hits**.
+- **Big-vendor share (entire feed):** aim for **≤40%** of total articles from the vendor-family set above; promote solid non-megacap items to meet this target before adding more mega-vendor items.
+- **Distinct sources:** ensure **≥6 distinct source domains** across the newsletter when volume allows; break ties in favor of underrepresented domains.
+- **Section diversity:** each non-empty section should include **at least one** non-megacap source if available.
+- **Regional diversity:** if items cover multiple regions, include **≥1** non-US item (or tag region) when quality allows.
+- **Tie-breaking for breadth:** when items are otherwise comparable, prefer (a) underrepresented vendor/domain, then (b) underrepresented sub_topic, then (c) non-paywalled.
+
 # SCORING (integer 1–5)
 Assign a final editorial score (`article.score`) per kept item. Start from significance, then apply modifiers; **clamp to 1–5**:
 
@@ -66,17 +76,16 @@ Assign a final editorial score (`article.score`) per kept item. Start from signi
    - `–2` if >1.5×window (only if essential progression)
 2. **Authenticity**: `+1` if `source_type` ∈ {official_blog, docs, regulator_notice, security_advisory, journal}
 3. **Breadth/Impact**: `+1` if multi-provider/standardized/regional breadth
-4. **Corroboration**: `+1` if another reputable item shares the same `story_id`
-5. **Superseded**: `–1` if older than a newer update in the same cluster
-6. **Paywall**: `–1` if paywalled and a comparable non-paywalled canonical exists
+4. **Diversity boost**: `+1` if from an **underrepresented** domain/region/sub_topic or **outside** the mega-vendor family (as defined above)
+5. **Corroboration**: `+1` if another reputable item shares the same `story_id`
+6. **Superseded**: `–1` if older than a newer update in the same cluster
+7. **Paywall**: `–1` if paywalled and a comparable non-paywalled canonical exists
 
 # RANKING & SELECTION
-- **Headlines**: order by **score DESC → published_at DESC → source authenticity → breadth → novelty**.
-- **Sub_topic sections**: same ordering within each section; sections follow Tracker.sub_topics order; omit empty.
+- **Headlines**: order by **score DESC → published_at DESC → source authenticity → breadth → novelty**, while **enforcing the vendor family cap** and distinct-source target.
+- **Sub_topic sections**: same ordering; sections follow Tracker.sub_topics order; omit empty.
 - **Quick Hits**: overflow/smaller items; order by **score DESC → published_at DESC**.
-- **Diversity guardrails**:
-  - Max **3 items per `source_domain`** outside Quick Hits; overflow to Quick Hits.
-  - **Must-cover audit**: From `keywords`, infer core entities (top companies/regulators/countries). If high/medium items exist for a core entity, ensure at least one appearance across the feed.
+- **Must-cover audit**: From `keywords`, infer core entities (top companies/regulators/countries). If high/medium items exist for a core entity, ensure at least one appearance across the feed **without breaching diversity caps** (move others to Quick Hits).
 
 # DEDUP, LINKS & INTEGRITY
 - Cluster by `story_id`; keep one canonical link (prefer official). No duplicate `story_id` outside Quick Hits.
@@ -91,11 +100,11 @@ Assign a final editorial score (`article.score`) per kept item. Start from signi
 1) Filter to scope; apply recency and History novelty rules; drop invalid items.
 2) Cluster by `story_id`; select canonical; count corroborations.
 3) Compute **score (1–5)** per rubric; clamp 1–5.
-4) Select **Headlines** (top 5–8).
-5) Distribute remaining items to **sub_topic** sections (exact titles; omit empty).
-6) Overflow to **Quick Hits** (≤10).
+4) Select **Headlines** (top 5–8), enforcing **vendor family cap** and distinct-source target.
+5) Distribute remaining items to **sub_topic** sections (exact titles; omit empty), ensuring **section diversity** when possible.
+6) Move overflow or cap-violating items to **Quick Hits** (≤10).
 7) Write blurbs within word caps; optionally append “Facets: …” using provided facets only.
-8) Enforce diversity/must-cover, recency ≥80%, and final ordering.
+8) Final pass: enforce **big-vendor share ≤40%**, recency ≥80%, and overall distinct-domain target.
 
 # OUTPUT (strict)
 Return **only** a single JSON object matching exactly:

@@ -95,7 +95,8 @@ class NewsfeedPipeline:
             content=article.summary,
             published_at=article.published_at,
             source_domain=article.source_domain,
-            tags=article.tags
+            tags=article.tags,
+            score=article.score
         )
 
     async def _add_articles_annotations(self, hits: list[SearchResult]) -> list[SearchResult]:
@@ -148,7 +149,6 @@ class NewsfeedPipeline:
         for section in output.sections:
             for article in section.articles:
                 hit = self._convert_newsfeed_article_to_search_result(article)
-                hit.tags = [section.title] + hit.tags
                 hits.append(hit)
         hits = await self._add_articles_annotations(hits)
 

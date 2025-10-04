@@ -13,6 +13,7 @@ from topix.agents.datatypes.inputs import QueryRewriteInput
 from topix.agents.datatypes.stream import (
     AgentStreamMessage,
     ContentType,
+    StreamingMessageType,
 )
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
@@ -164,7 +165,7 @@ class AssistantManager:
 
         final_answer = ""
         async for message in res:
-            if isinstance(message, AgentStreamMessage):
+            if isinstance(message, AgentStreamMessage) and message.type == StreamingMessageType.STREAM_MESSAGE:
                 if message.content and message.content.type in [
                     ContentType.MESSAGE,
                     ContentType.TOKEN,

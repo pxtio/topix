@@ -15,6 +15,7 @@ import { clearTokens, getAccessToken } from "@/features/signin/auth-storage"
 import { decodeJwt } from "@/lib/decode-jwt"
 import { SubscriptionsScreen } from "@/features/newsfeed/screens/subscriptions"
 import { NewsfeedsScreen } from "@/features/newsfeed/screens/newsfeeds"
+import { NewsfeedLinearPage } from "@/features/newsfeed/screens/newsfeed-linear-page"
 export const rootRoute = createRootRoute({ component: RootLayout })
 
 // --- auth guard ---
@@ -105,12 +106,23 @@ const subscriptionsRoute = createRoute({
 })
 
 // /subscriptions/:id/newsfeeds (protected)
-export const NewsfeedsUrl = "/subscriptions/$id/newsfeeds"
+export const NewsfeedsUrl = "/subscriptions/$id"
 const newsfeedsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: NewsfeedsUrl,
   beforeLoad: requireAuth,
   component: NewsfeedsScreen,
+})
+
+/**
+ * /subscriptions/:id/newsfeeds/:newsfeedId → single newsletter
+ * (child of the list route, same file for convenience)
+ */
+export const newsfeedDetailRoute = createRoute({
+  getParentRoute: () => newsfeedsRoute,
+  path: '/subscriptions/$id/newsfeeds/$newsfeedId',
+  beforeLoad: requireAuth,
+  component: NewsfeedLinearPage
 })
 
 const routeTree = rootRoute.addChildren([
@@ -124,6 +136,7 @@ const routeTree = rootRoute.addChildren([
   boardRoute,
   subscriptionsRoute,
   newsfeedsRoute,
+  newsfeedDetailRoute,
 ])
 
 export const router = createRouter({ routeTree })

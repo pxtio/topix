@@ -1,7 +1,9 @@
+import SubscriptionsPage from "../components/subscriptions-page"
+
 export function SubscriptionsScreen() {
   return (
-    <div>
-      Subscriptions
-    </div>
+    <>
+      <SubscriptionsPage />
+    </>
   )
 }

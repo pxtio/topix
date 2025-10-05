@@ -83,6 +83,7 @@ class AddSubscriptionRequest(BaseModel):
 
     topic: str
     raw_description: str | None = None
+    uid: str | None = None
 
 
 class NewsfeedUpdateRequest(BaseModel):

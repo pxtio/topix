@@ -13,6 +13,8 @@ import { SigninPage } from "@/features/signin/screens/sign-in"
 import { SignupPage } from "@/features/signin/screens/sign-up"
 import { clearTokens, getAccessToken } from "@/features/signin/auth-storage"
 import { decodeJwt } from "@/lib/decode-jwt"
+import { SubscriptionsScreen } from "@/features/newsfeed/screens/subscriptions"
+import { NewsfeedsScreen } from "@/features/newsfeed/screens/newsfeeds"
 export const rootRoute = createRootRoute({ component: RootLayout })
 
 // --- auth guard ---
@@ -93,6 +95,24 @@ const boardRoute = createRoute({
   component: BoardScreen,
 })
 
+// /subscriptions (protected)
+export const SubscriptionsUrl = "/subscriptions"
+const subscriptionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: SubscriptionsUrl,
+  beforeLoad: requireAuth,
+  component: SubscriptionsScreen,
+})
+
+// /subscriptions/:id/newsfeeds (protected)
+export const NewsfeedsUrl = "/subscriptions/$id/newsfeeds"
+const newsfeedsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: NewsfeedsUrl,
+  beforeLoad: requireAuth,
+  component: NewsfeedsScreen,
+})
+
 const routeTree = rootRoute.addChildren([
   redirectRoot,
   redirectHome,
@@ -102,6 +122,8 @@ const routeTree = rootRoute.addChildren([
   chatRoute,
   dashboardRoute,
   boardRoute,
+  subscriptionsRoute,
+  newsfeedsRoute,
 ])
 
 export const router = createRouter({ routeTree })

@@ -26,4 +26,6 @@ export interface Newsfeed {
   createdAt: string
   updatedAt: string
   deletedAt?: string
+
+  generated?: boolean
 }

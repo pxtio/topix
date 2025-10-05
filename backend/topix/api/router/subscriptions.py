@@ -32,7 +32,7 @@ async def create_subscription(
 ):
     """Create a new subscription for the user."""
     store: SubscriptionStore = request.app.subscription_store
-    sub = await store.create_subscription(user_id, body.topic, body.raw_description or "")
+    sub = await store.create_subscription(user_id, body.topic, body.raw_description or "", uid=body.uid)
     return {"subscription": sub.model_dump(exclude_none=True)}
 
 
@@ -107,13 +107,14 @@ async def create_newsfeed(
     request: Request,
     user_id: Annotated[str, Depends(get_current_user_uid)],
     subscription_id: Annotated[str, Path(description="Subscription Unique ID")],
+    uid: Annotated[str | None, Query(description="Optional Newsfeed Unique ID")] = None,
 ):
     """Create a new newsfeed for a subscription."""
     store: SubscriptionStore = request.app.subscription_store
     subs = await store.get_subscriptions([subscription_id])
     if not subs:
         raise HTTPException(status_code=404, detail="Subscription not found")
-    newsfeed = await store.create_newsfeed(subs[0])
+    newsfeed = await store.create_newsfeed(subs[0], uid=uid)
     return {"newsfeed": newsfeed.model_dump(exclude_none=True)}
 
 

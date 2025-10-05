@@ -22,10 +22,18 @@ class SubscriptionStore:
         """Open the subscription store."""
         pass
 
-    async def create_subscription(self, user_uid: str, topic: str, raw_description: str = "") -> Subscription:
+    async def create_subscription(
+        self,
+        user_uid: str,
+        topic: str,
+        raw_description: str = "",
+        uid: str | None = None,
+    ) -> Subscription:
         """Create a new subscription."""
         sub = await self._newsfeed_pipeline.create_subscription(topic, raw_description)
         sub.user_uid = user_uid
+        if uid:
+            sub.id = uid
         await self._content_store.add([sub])
         return sub
 
@@ -63,13 +71,19 @@ class SubscriptionStore:
         """Delete a subscription by its UID."""
         await self._content_store.delete([subscription_id], hard_delete=hard_delete)
 
-    async def create_newsfeed(self, subscription: Subscription | str) -> Newsfeed:
+    async def create_newsfeed(
+        self,
+        subscription: Subscription | str,
+        uid: str | None = None
+    ) -> Newsfeed:
         """Create a new newsfeed for a subscription."""
         if isinstance(subscription, str):
             subscription = (await self.get_subscriptions([subscription]))[0]
 
         history = await self.list_newsfeeds(subscription.id, limit=30)
         newsfeed = await self._newsfeed_pipeline.collect_and_synthesize(subscription, history=history)
+        if uid:
+            newsfeed.id = uid
         await self._content_store.add([newsfeed])
         return newsfeed
 

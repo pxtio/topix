@@ -12,11 +12,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 export async function createSubscription(input: {
   topic: string
   rawDescription?: string
+  uid: string
 }): Promise<Subscription> {
   const body = snakecaseKeys(input, { deep: true })
   const res = await apiFetch<{ data: Record<string, unknown> }>({
     path: '/subscriptions',
     method: 'PUT',
+    params: { uid: input.uid },
     body
   })
   const data = camelcaseKeys(res.data, { deep: true })
@@ -24,7 +26,7 @@ export async function createSubscription(input: {
 }
 
 
-type Vars = { topic: string, rawDescription?: string }
+type Vars = { topic: string, rawDescription?: string, uid: string }
 
 /**
  * React query mutation hook to create a new subscription.
@@ -32,14 +34,14 @@ type Vars = { topic: string, rawDescription?: string }
 export function useCreateSubscription() {
   const qc = useQueryClient()
 
-  return useMutation<Subscription, unknown, Vars, { prev?: Subscription[] | undefined, optimistic?: Subscription }>({
+  return useMutation<Subscription, unknown, Vars, { prev?: Subscription[] | undefined }>({
     mutationFn: vars => createSubscription(vars),
     onMutate: async vars => {
       await qc.cancelQueries({ queryKey: subscriptionsKey })
       const prev = qc.getQueryData<Subscription[]>(subscriptionsKey)
 
       const optimistic: Subscription = {
-        id: `optimistic-${Date.now()}`,
+        id: vars.uid,                // use caller-provided uid
         type: 'subscription',
         label: { markdown: vars.topic },
         createdAt: new Date().toISOString(),
@@ -50,15 +52,16 @@ export function useCreateSubscription() {
       }
 
       qc.setQueryData<Subscription[]>(subscriptionsKey, old => [optimistic, ...(old ?? [])])
-      return { prev, optimistic }
+      return { prev }
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(subscriptionsKey, ctx.prev)
     },
     onSuccess: sub => {
+      // replace the optimistic row with matching uid
       qc.setQueryData<Subscription[]>(subscriptionsKey, old => {
         if (!old) return [sub]
-        const idx = old.findIndex(s => s.id.startsWith('optimistic-'))
+        const idx = old.findIndex(s => s.id === sub.id)
         if (idx >= 0) {
           const copy = old.slice()
           copy[idx] = sub

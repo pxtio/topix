@@ -29,6 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { SubscriptionsMenuItem } from "./subscription"
 
 type AppSidebarProps = {
   onLogout: () => void
@@ -127,6 +128,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             <SidebarGroupLabel><span>Workspace</span></SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                <SubscriptionsMenuItem />
                 <DashboardMenuItem />
                 <NewBoardItem />
                 {boardItems}

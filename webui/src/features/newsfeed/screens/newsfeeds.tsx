@@ -73,11 +73,11 @@ function NewsletterCard({
       className='text-left'
       aria-label={title}
     >
-      <Card className={cn('rounded-xl h-24 transition hover:shadow-sm hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary')}>
+      <Card className={cn('rounded-xl h-24 transition hover:shadow-sm hover:bg-accent hover:border-secondary hover:ring-2 hover:ring-secondary/20')}>
         <CardContent className='h-full flex items-center text-center justify-center px-4'>
           <div className='space-y-1'>
             <div className='font-medium'>{title}</div>
-            <div className='text-xs text-muted-foreground'>{subtitle}</div>
+            <div className='text-xs text-muted-foreground font-mono'>{subtitle}</div>
           </div>
         </CardContent>
       </Card>

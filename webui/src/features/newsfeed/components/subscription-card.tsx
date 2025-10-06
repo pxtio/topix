@@ -2,9 +2,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { cn } from '@/lib/utils'
 import type { Subscription } from '../types/subscription'
-import { TOPIC_DISPLAY, matchPredefined } from '../constants/topics'
+import { TOPIC_DISPLAY, TOPIC_EMOJI, matchPredefined } from '../constants/topics'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete02Icon } from '@hugeicons/core-free-icons'
+import { Delete02Icon, NewReleasesIcon } from '@hugeicons/core-free-icons'
+import { SquareDashedKanban } from '@/components/animate-ui/icons/square-dashed-kanban'
 
 
 /**
@@ -35,8 +36,8 @@ export function SubscriptionCard({
       <ContextMenuTrigger asChild>
         <Card
           className={cn(
-            'w-56 h-20 justify-center items-center flex rounded-xl transition shadow-none hover:shadow md:w-64 p-0 overflow-hidden',
-            disabled && 'opacity-60 pointer-events-none'
+            'w-56 h-20 justify-center items-center flex rounded-xl transition shadow-none hover:shadow hover:border-secondary hover:ring-2 hover:ring-secondary/20 md:w-64 p-0 overflow-hidden cursor-pointer',
+            disabled && 'opacity-60'
           )}
         >
           <CardContent className='p-0 w-full h-full'>
@@ -49,6 +50,17 @@ export function SubscriptionCard({
               onClick={onClick}
               title={label}
             >
+              {
+                disabled ? (
+                  <SquareDashedKanban animate animation="default" loop speed={2} className='size-4 text-foreground/50' strokeWidth={1.75} />
+                ): (
+                  <HugeiconsIcon
+                    icon={topicKey ? TOPIC_EMOJI[topicKey] : NewReleasesIcon}
+                    className='w-5 h-5 text-muted-foreground flex-shrink-0'
+                    strokeWidth={1.5}
+                  />
+                )
+              }
               <span className='truncate text-base font-medium'>
                 {label}
               </span>
@@ -77,8 +89,8 @@ export function SubscriptionCardLoading({
     <Card className='w-56 h-20 md:w-64 rounded-xl shadow-sm'>
       <CardContent className='p-0 w-full h-full'>
         <div className='w-full h-full rounded-xl flex items-center gap-3 px-4 animate-pulse bg-gradient-to-r from-muted/40 via-muted/60 to-muted/40'>
-          <div className='w-6 h-6 rounded-full bg-muted-foreground/20' />
-          <div className='flex-1 h-4 rounded bg-muted-foreground/20' />
+          <div className='w-6 h-6 bg-transparent' />
+          <div className='flex-1 h-4 bg-transparent' />
           <span className='sr-only'>{text}</span>
         </div>
       </CardContent>

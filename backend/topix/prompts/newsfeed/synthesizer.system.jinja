@@ -10,7 +10,7 @@ Think through a concise internal checklist (3–7 bullets). **Do not output** th
 # INPUT (no external fetching)
 - **Tracker**: `topic`, `description`, `sub_topics` (prioritized), `keywords`, `seed_sources`. The description may state a **recency window**.
 - **Collected Items**: deduplicated list of items; each may include
-  `id`, `story_id`, `title`, `url`, `source_domain`, `published_at` (ISO 8601), `source_type`, `sub_topics` (list), `keyword_hits`, `significance` (high|medium|low), `novelty` (new|update|analysis), `region`, `language`, `paywalled` (optional), `summary` (fact bullets), `facets`, `entities`.
+  `id`, `story_id`, `title`, `url`, `source_domain`, `published_at` (ISO 8601), `source_type`, `sub_topics` (list), `keyword_hits`, `significance` (high|medium|low), `novelty` (new|update/analysis), `region`, `language`, `paywalled` (optional), `summary` (fact bullets), `facets`, `entities`, `significance_tags`.
 - **History (optional)**: plain-text lines, each **`<url> — <title>`**, representing articles **already covered in prior newsfeeds**. Use **only** for novelty filtering and progression checks.
 
 # OBJECTIVE
@@ -26,7 +26,7 @@ Produce a single **NewsfeedOutput** JSON object composed of **sections**:
   - Headlines: ≤85 words (2–4 sentences)
   - Sub_topics: ≤60 words (2–3 sentences)
   - Quick Hits: ≤20 words (1 sentence)
-- Optionally append **“Facets: A; B; C.”** at the end of a blurb **only** if facets are provided in inputs.
+- **Do not append facets to summaries.** Use the new `tags` field (see below).
 
 # FRESHNESS & NOVELTY (critical)
 - Treat **{{ time }}** as “now.” Determine/Infer the **recency window**:
@@ -51,13 +51,18 @@ Produce a single **NewsfeedOutput** JSON object composed of **sections**:
 
 # DIVERSITY & BALANCE (“democracy” rule)
 Avoid a feed dominated by a few mega-vendors or outlets. Enforce breadth **when supply permits**:
-- **Vendor family cap (Headlines):** ≤1 item per vendor family (e.g., hostnames containing **google**, **openai**, **meta/facebook**, **microsoft**, **apple**, **amazon/aws**, **nvidia**, **anthropic**, **deepmind**, **x.ai**).
-  If more qualify, keep the strongest and **demote the rest** to sub_topics or **Quick Hits**.
-- **Big-vendor share (entire feed):** aim for **≤40%** of total articles from the vendor-family set above; promote solid non-megacap items to meet this target before adding more mega-vendor items.
+- **Vendor family cap (Headlines):** ≤1 item per vendor family (e.g., hosts containing **google**, **openai**, **meta/facebook**, **microsoft**, **apple**, **amazon/aws**, **nvidia**, **anthropic**, **deepmind**, **x.ai**). Demote extras to sub_topics or **Quick Hits**.
+- **Big-vendor share (entire feed):** aim for **≤40%** of total articles from the vendor-family set above; prefer strong non-megacap items to meet this target.
 - **Distinct sources:** ensure **≥6 distinct source domains** across the newsletter when volume allows; break ties in favor of underrepresented domains.
-- **Section diversity:** each non-empty section should include **at least one** non-megacap source if available.
-- **Regional diversity:** if items cover multiple regions, include **≥1** non-US item (or tag region) when quality allows.
-- **Tie-breaking for breadth:** when items are otherwise comparable, prefer (a) underrepresented vendor/domain, then (b) underrepresented sub_topic, then (c) non-paywalled.
+- **Section diversity:** each non-empty section should include **≥1** non-megacap source if available.
+- **Regional diversity:** if items span regions, include **≥1** non-US item (or tag region) when quality allows.
+- **Tie-breakers for breadth:** when items are otherwise comparable, prefer (a) underrepresented domain/vendor, (b) underrepresented sub_topic, (c) non-paywalled.
+
+# TAGS (new field; required per article)
+Populate `tags` with 2–6 short, high-signal phrases derived **only** from inputs (no new facts). Use them instead of appending facets to summaries.
+- **Allowed sources for tags:** `facets`, `entities`, `significance_tags`, `region`/`language` markers, matched `sub_topics` (1 tag max), milestone words (e.g., **GA**, **beta**, **CVE-2025-…**, **RCA**, **Series C**), and `paywalled` if provided.
+- **Format:** 1–3 words each; concise; no punctuation except necessary hyphens or IDs; de-duplicate; consistent casing (natural case).
+- **Examples:** `General availability`, `Realtime API`, `ISO 27001`, `EU`, `Leaderboard`, `Draft rule`, `CVE-2025-12345`, `Series C`, `Paywalled`.
 
 # SCORING (integer 1–5)
 Assign a final editorial score (`article.score`) per kept item. Start from significance, then apply modifiers; **clamp to 1–5**:
@@ -76,16 +81,16 @@ Assign a final editorial score (`article.score`) per kept item. Start from signi
    - `–2` if >1.5×window (only if essential progression)
 2. **Authenticity**: `+1` if `source_type` ∈ {official_blog, docs, regulator_notice, security_advisory, journal}
 3. **Breadth/Impact**: `+1` if multi-provider/standardized/regional breadth
-4. **Diversity boost**: `+1` if from an **underrepresented** domain/region/sub_topic or **outside** the mega-vendor family (as defined above)
+4. **Diversity boost**: `+1` if from an **underrepresented** domain/region/sub_topic or **outside** the mega-vendor family
 5. **Corroboration**: `+1` if another reputable item shares the same `story_id`
 6. **Superseded**: `–1` if older than a newer update in the same cluster
 7. **Paywall**: `–1` if paywalled and a comparable non-paywalled canonical exists
 
 # RANKING & SELECTION
-- **Headlines**: order by **score DESC → published_at DESC → source authenticity → breadth → novelty**, while **enforcing the vendor family cap** and distinct-source target.
+- **Headlines**: order by **score DESC → published_at DESC → source authenticity → breadth → novelty**, enforcing the **vendor family cap** and distinct-source target.
 - **Sub_topic sections**: same ordering; sections follow Tracker.sub_topics order; omit empty.
 - **Quick Hits**: overflow/smaller items; order by **score DESC → published_at DESC**.
-- **Must-cover audit**: From `keywords`, infer core entities (top companies/regulators/countries). If high/medium items exist for a core entity, ensure at least one appearance across the feed **without breaching diversity caps** (move others to Quick Hits).
+- **Must-cover audit**: From `keywords`, infer core entities (top companies/regulators/countries). If high/medium items exist for a core entity, ensure at least one appearance across the feed **without breaching diversity caps** (move extras to Quick Hits).
 
 # DEDUP, LINKS & INTEGRITY
 - Cluster by `story_id`; keep one canonical link (prefer official). No duplicate `story_id` outside Quick Hits.
@@ -100,11 +105,11 @@ Assign a final editorial score (`article.score`) per kept item. Start from signi
 1) Filter to scope; apply recency and History novelty rules; drop invalid items.
 2) Cluster by `story_id`; select canonical; count corroborations.
 3) Compute **score (1–5)** per rubric; clamp 1–5.
-4) Select **Headlines** (top 5–8), enforcing **vendor family cap** and distinct-source target.
-5) Distribute remaining items to **sub_topic** sections (exact titles; omit empty), ensuring **section diversity** when possible.
+4) Select **Headlines** (top 5–8), enforcing diversity rules.
+5) Distribute remaining items to **sub_topic** sections (exact titles; omit empty), ensuring section diversity when possible.
 6) Move overflow or cap-violating items to **Quick Hits** (≤10).
-7) Write blurbs within word caps; optionally append “Facets: …” using provided facets only.
-8) Final pass: enforce **big-vendor share ≤40%**, recency ≥80%, and overall distinct-domain target.
+7) Write blurbs within word caps. **Do not append facets**; place them in `tags`.
+8) Final pass: enforce big-vendor share ≤40%, recency ≥80%, distinct-domain target, and validate all fields.
 
 # OUTPUT (strict)
 Return **only** a single JSON object matching exactly:
@@ -133,7 +138,8 @@ Return **only** a single JSON object matching exactly:
   "summary": "<string>",   // Headlines ≤85 words; Sub_topics ≤60; Quick Hits ≤20
   "published_at": "<ISO 8601 string>",
   "score": <integer 1–5>,
-  "source_domain": "<string>"
+  "source_domain": "<string>",
+  "tags": ["<short phrase>", "..."]   // 2–6 items, from inputs only
 }
 
 # CONSTRAINTS

@@ -10,7 +10,8 @@ import { NewsletterCard } from './card'
 import { NewsfeedGrid } from './grid'
 import type { UrlAnnotation } from '@/features/agent/types/tool-outputs'
 import { CreateNewsfeedTile } from './create-new'
-
+import { useQueryClient } from '@tanstack/react-query'
+import { newsfeedsKey } from '../../api/query-keys'
 
 /**
  * The main view for newsfeeds, supporting 3 modes:
@@ -22,6 +23,7 @@ export function NewsfeedsView() {
   const { id } = useParams({ from: '/subscriptions/$id', shouldThrow: false })
   const subId = id as string | undefined
 
+  const qc = useQueryClient()
   const feedsQuery = useListNewsfeeds(subId)
 
   const sorted = useMemo(() => {
@@ -31,19 +33,43 @@ export function NewsfeedsView() {
 
   const latestId = sorted[0]?.id
 
-  // selection + mode
+  // view + selection
   const [viewMode, setViewMode] = useState<ViewMode>('history')
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
 
-  // choose default after load
+  // ensure default is chosen only once (avoid redirects on refetch)
+  const [didSetDefault, setDidSetDefault] = useState(false)
   useEffect(() => {
+    if (didSetDefault) return
     if (!feedsQuery.isLoading) {
       setViewMode(latestId ? 'linear' : 'history')
       setSelectedId(undefined)
+      setDidSetDefault(true)
     }
-  }, [feedsQuery.isLoading, latestId])
+  }, [feedsQuery.isLoading, latestId, didSetDefault])
 
-  // fetch content for linear view (selected or latest)
+  // pending id (optimistic creation) → show generating state on that item & poll only it
+  const [pendingId, setPendingId] = useState<string | undefined>(undefined)
+  const pendingFeed = useGetNewsfeed(subId, pendingId)
+
+  // poll pending item
+  useEffect(() => {
+    if (!pendingId) return
+    const t = setInterval(() => pendingFeed.refetch(), 2500)
+    return () => clearInterval(t)
+  }, [pendingId]) // eslint-disable-line
+
+  // when pending item is ready, clear and refresh list
+  useEffect(() => {
+    if (!pendingId) return
+    const ready = !!pendingFeed.data?.content?.markdown
+    if (ready) {
+      setPendingId(undefined)
+      if (subId) qc.invalidateQueries({ queryKey: newsfeedsKey(subId) })
+    }
+  }, [pendingId, pendingFeed.data?.content, subId, qc])
+
+  // fetch content for linear/grid (selected or latest)
   const currentId = viewMode !== 'history' ? (selectedId ?? latestId) : undefined
   const currentFeed = useGetNewsfeed(subId, currentId)
   const markdown = currentFeed.data?.content?.markdown ?? ''
@@ -51,12 +77,10 @@ export function NewsfeedsView() {
   const openFromGrid = (id: string) => {
     setSelectedId(id)
     setViewMode('linear')
-    // scroll to top for a nice transition
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
   }
 
   const annotations: UrlAnnotation[] = useMemo(() => {
-    console.log(currentFeed.data?.properties)
     return (currentFeed.data?.properties?.newsGrid?.sources || []) as UrlAnnotation[]
   }, [currentFeed.data?.properties])
 
@@ -79,6 +103,7 @@ export function NewsfeedsView() {
           <ErrorWindow message='Failed to load newsletters' viewMode='full' className='bg-transparent' />
         )}
 
+        {/* LINEAR */}
         {viewMode === 'linear' && currentId && (
           <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin'>
             <div className='mx-auto max-w-[900px] space-y-3'>
@@ -100,24 +125,33 @@ export function NewsfeedsView() {
           </div>
         )}
 
+        {/* HISTORY */}
         {(viewMode === 'history' || (!latestId && !feedsQuery.isLoading)) && (
           <div className='mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto scrollbar-thin pt-16 pb-16'>
             <CreateNewsfeedTile
               subscriptionId={subId}
-              onCreated={(id) => openFromGrid(id)}
+              onStart={uid => {
+                // stay on history, mark as pending so the optimistic item pulses
+                setViewMode('history')
+                setPendingId(uid)
+              }}
             />
 
             {sorted.map(feed => (
               <NewsletterCard
                 key={feed.id}
+                id={feed.id}
+                subscriptionId={subId!}
                 createdAt={feed.createdAt}
                 active={feed.id === selectedId}
+                generating={feed.id === pendingId}
                 onClick={() => openFromGrid(feed.id)}
               />
             ))}
           </div>
         )}
 
+        {/* GRID */}
         {viewMode === 'grid' && currentId && (
           <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin p-2 pt-16 pb-16'>
             <div className='mx-auto max-w-[1100px] space-y-3 px-2'>

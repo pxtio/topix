@@ -1,19 +1,17 @@
-import { useCreateNewsfeed } from '../../api/create-newsfeed'
-import { generateUuid } from '@/lib/common'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Card, CardContent } from '@/components/ui/card'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { PlusSignIcon } from '@hugeicons/core-free-icons'
-import { cn } from '@/lib/utils'
+import { useCreateNewsfeed } from '@/features/newsfeed/api/create-newsfeed'
+import { generateUuid } from '@/lib/common'
 
-
-// A tile button to create a new newsfeed
 export function CreateNewsfeedTile({
   subscriptionId,
-  onCreated
+  onStart
 }: {
   subscriptionId?: string
-  onCreated?: (id: string) => void
+  onStart?: (uid: string) => void
 }) {
   const create = useCreateNewsfeed(subscriptionId)
   const pending = create.isPending
@@ -21,15 +19,8 @@ export function CreateNewsfeedTile({
   const handleClick = () => {
     if (!subscriptionId || pending) return
     const uid = generateUuid()
-    create.mutate(
-      { uid },
-      {
-        onSuccess: nf => {
-          // open the newly created one in linear view
-          onCreated?.(nf.id)
-        }
-      }
-    )
+    onStart?.(uid)            // tell parent which id is "generating"
+    create.mutate({ uid })    // optimistic insert is handled in the hook
   }
 
   return (

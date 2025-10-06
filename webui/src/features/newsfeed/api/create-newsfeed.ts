@@ -4,7 +4,6 @@ import camelcaseKeys from 'camelcase-keys'
 import { newsfeedsKey } from './query-keys'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-
 /**
  * Create a new newsfeed under a subscription.
  */
@@ -24,10 +23,15 @@ type Vars = {
   subscriptionIdOverride?: string
 }
 
+type Ctx = {
+  prev?: Newsfeed[]
+  subId?: string
+}
+
 export function useCreateNewsfeed(subscriptionId: string | undefined) {
   const qc = useQueryClient()
 
-  return useMutation<Newsfeed, unknown, Vars, { prev?: Newsfeed[] | undefined }>({
+  return useMutation<Newsfeed, unknown, Vars, Ctx>({
     mutationFn: ({ uid, subscriptionIdOverride }) =>
       createNewsfeed((subscriptionIdOverride ?? subscriptionId) as string, uid),
 
@@ -35,26 +39,30 @@ export function useCreateNewsfeed(subscriptionId: string | undefined) {
       const subId = subscriptionIdOverride ?? subscriptionId
       if (!subId) return {}
 
-      await qc.cancelQueries({ queryKey: newsfeedsKey(subId) })
-      const prev = qc.getQueryData<Newsfeed[]>(newsfeedsKey(subId))
+      const key = newsfeedsKey(subId)
+      await qc.cancelQueries({ queryKey: key })
+      const prev = qc.getQueryData<Newsfeed[]>(key)
 
+      const now = new Date().toISOString()
       const optimistic: Newsfeed = {
         id: uid,
         type: 'newsfeed',
         subscriptionId: subId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
+        createdAt: now,
+        updatedAt: now
+        // list endpoint excludes content; UI will show "Generating…" by pendingId
+      } as Newsfeed
 
-      qc.setQueryData<Newsfeed[]>(newsfeedsKey(subId), old => [optimistic, ...(old ?? [])])
-      return { prev }
+      qc.setQueryData<Newsfeed[]>(key, old => [optimistic, ...(old ?? [])])
+
+      return { prev, subId }
     },
 
     onError: (_err, _vars, ctx) => {
-      // best-effort rollback when we know the list snapshot
-      if (ctx?.prev) {
-        // caller will trigger an invalidate on settle, so no manual restore needed here
-      }
+      if (!ctx?.subId) return
+      const key = newsfeedsKey(ctx.subId)
+      if (ctx.prev) qc.setQueryData(key, ctx.prev)
+      else qc.invalidateQueries({ queryKey: key })
     },
 
     onSettled: (_data, _err, vars) => {

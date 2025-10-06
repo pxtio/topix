@@ -9,7 +9,15 @@ import { TopViewPanel } from './top-panel'
 import { NewsletterCard } from './card'
 import { NewsfeedGrid } from './grid'
 import type { UrlAnnotation } from '@/features/agent/types/tool-outputs'
+import { CreateNewsfeedTile } from './create-new'
 
+
+/**
+ * The main view for newsfeeds, supporting 3 modes:
+ * - Linear: show one newsfeed in full markdown
+ * - Grid: show one newsfeed in a grid of link previews
+ * - History: show all newsfeeds as cards to pick from
+ */
 export function NewsfeedsView() {
   const { id } = useParams({ from: '/subscriptions/$id', shouldThrow: false })
   const subId = id as string | undefined
@@ -63,16 +71,12 @@ export function NewsfeedsView() {
         hasLatest={!!latestId}
       />
 
-      <div className='w-full h-full p-6 pt-16 space-y-6 relative'>
-        <div className='text-center'>
-          <h1 className='text-xl text-secondary font-semibold'>Newsletters</h1>
-        </div>
-
+      <div className='w-full h-full p-6 space-y-4 relative'>
         {feedsQuery.isLoading && (
-          <div className='text-center text-sm text-muted-foreground'>Loading…</div>
+          <ProgressBar message='Loading newsletters…' viewMode='full' className='bg-transparent' />
         )}
         {feedsQuery.isError && (
-          <div className='text-center text-sm text-destructive'>Failed to load newsletters</div>
+          <ErrorWindow message='Failed to load newsletters' viewMode='full' className='bg-transparent' />
         )}
 
         {viewMode === 'linear' && currentId && (
@@ -85,7 +89,10 @@ export function NewsfeedsView() {
                 <ErrorWindow message='Failed to load newsfeed' viewMode='full' className='bg-transparent' />
               )}
               {markdown && (
-                <div className='prose max-w-[800px] mx-auto'>
+                <div className='prose max-w-[800px] mx-auto p-4 pt-16 pb-16'>
+                  <div className='text-center mt-16'>
+                    <h1 className='text-xl text-secondary font-semibold'>Newsletter</h1>
+                  </div>
                   <MarkdownView content={markdown} />
                 </div>
               )}
@@ -94,7 +101,12 @@ export function NewsfeedsView() {
         )}
 
         {(viewMode === 'history' || (!latestId && !feedsQuery.isLoading)) && (
-          <div className='mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+          <div className='mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto scrollbar-thin pt-16 pb-16'>
+            <CreateNewsfeedTile
+              subscriptionId={subId}
+              onCreated={(id) => openFromGrid(id)}
+            />
+
             {sorted.map(feed => (
               <NewsletterCard
                 key={feed.id}
@@ -107,7 +119,7 @@ export function NewsfeedsView() {
         )}
 
         {viewMode === 'grid' && currentId && (
-          <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin'>
+          <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin p-2 pt-16 pb-16'>
             <div className='mx-auto max-w-[1100px] space-y-3 px-2'>
               {currentFeed.isLoading && (
                 <ProgressBar message='Loading…' viewMode='full' className='bg-transparent' />
@@ -115,7 +127,9 @@ export function NewsfeedsView() {
               {currentFeed.isError && (
                 <ErrorWindow message='Failed to load newsfeed' viewMode='full' className='bg-transparent' />
               )}
-
+              <div className='text-center mt-16 mb-4'>
+                <h1 className='text-xl text-secondary font-semibold'>Newsletter</h1>
+              </div>
               {annotations.length > 0 ? (
                 <NewsfeedGrid annotations={annotations} />
               ) : (

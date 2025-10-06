@@ -13,7 +13,13 @@ export function NewsfeedGrid({ annotations }: { annotations: UrlAnnotation[] }) 
     <div className='columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4'>
       {annotations.map((ann, i) => (
         <div key={ann.url || `item-${i}`} className='break-inside-avoid mb-4'>
-          <LinkPreviewCard annotation={ann} className='w-full' />
+          <LinkPreviewCard
+            annotation={ann}
+            className='w-full p-3'
+            clipText={false}
+            useWideLayoutIfPossible={true}
+            useSmallFontSize={false}
+          />
         </div>
       ))}
     </div>

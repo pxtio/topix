@@ -4,7 +4,9 @@ import type { UrlAnnotation } from "../types/tool-outputs"
 import { extractMainDomain } from "../utils/url"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Link02Icon } from "@hugeicons/core-free-icons"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 
 
 // MiniLinkCard component displays a compact link card with a hover preview.
@@ -46,10 +48,20 @@ export const MiniLinkCard = ({
 /**
  * LinkPreviewCard component displays a preview of a webpage link.
  */
-const cn = (...xs: (string | false | undefined)[]) => xs.filter(Boolean).join(" ")
-
-export const LinkPreviewCard = ({ annotation, className = undefined }: { annotation: UrlAnnotation, className?: string }) => {
-  const { url, title, content, favicon, coverImage } = annotation
+export const LinkPreviewCard = ({
+  annotation,
+  className = undefined,
+  clipText = true,
+  useWideLayoutIfPossible = false,
+  useSmallFontSize = true
+}: {
+  annotation: UrlAnnotation
+  className?: string
+  clipText?: boolean
+  useWideLayoutIfPossible?: boolean
+  useSmallFontSize?: boolean
+}) => {
+  const { url, title, content, favicon, coverImage, tags = [] } = annotation
   const name = extractMainDomain(url) || url
   const description = content || ""
 
@@ -61,52 +73,128 @@ export const LinkPreviewCard = ({ annotation, className = undefined }: { annotat
   const [favLoaded, setFavLoaded] = useState(false)
   const [favOk, setFavOk] = useState(Boolean(favicon))
 
-  const clName = cn("transition-all rounded-lg p-2 cursor-pointer bg-card hover:bg-accent hover:shadow-md w-40 block", className)
+  // responsive: move image right when card is wide
+  const rootRef = useRef<HTMLAnchorElement | null>(null)
+  const [wideLayout, setWideLayout] = useState(false) // true if width >= 300
+
+  useEffect(() => {
+    if (!rootRef.current) return
+    const el = rootRef.current
+    const ro = new ResizeObserver((entries) => {
+      for (const e of entries) {
+        setWideLayout(e.contentRect.width >= 300 && !!coverImage && coverOk && useWideLayoutIfPossible)
+      }
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [coverImage, coverOk, useWideLayoutIfPossible])
+
+  const clName = cn(
+    "transition-all rounded-lg p-2 cursor-pointer bg-card hover:bg-accent hover:shadow-md block w-40",
+    // let width be controlled by parent; your old w-40 can still be passed via className
+    className
+  )
+
+  // tag rendering (limit + “+N” overflow badge)
+  const MAX_TAGS = 3
+  const shownTags = tags.slice(0, MAX_TAGS)
+  const extraCount = Math.max(0, tags.length - shownTags.length)
+
+  // shared cover <img/>
+  const CoverImage = () =>
+    coverImage && coverOk ? (
+      <div
+        className={cn(
+          "overflow-hidden bg-muted rounded-sm shrink-0",
+          wideLayout ? "w-28 h-24" : "w-full h-24"
+        )}
+      >
+        <img
+          src={coverImage}
+          alt="cover"
+          loading="lazy"
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onLoad={() => setCoverLoaded(true)}
+          onError={() => setCoverOk(false)}
+          className={cn("w-full h-full object-cover", coverLoaded ? "visible" : "invisible")}
+        />
+      </div>
+    ) : null
 
   return (
     <a
+      ref={rootRef}
       href={url}
       target="_blank"
       rel="noopener noreferrer"
       className={clName}
     >
-      <div className="space-y-2">
-        {/* COVER */}
-        {coverImage && coverOk && (
-          <div className="w-full h-20 rounded-sm overflow-hidden bg-muted">
-            <img
-              src={coverImage}
-              alt="cover"
-              loading="lazy"
-              decoding="async"
-              referrerPolicy="no-referrer"
-              onLoad={() => setCoverLoaded(true)}
-              onError={() => setCoverOk(false)}
-              className={cn("w-full h-full object-cover", coverLoaded ? "visible" : "invisible")}
-            />
+      <div className={cn("space-y-2", wideLayout && "space-y-0")}>
+        {/* Layout container */}
+        <div className={cn(wideLayout ? "flex items-start gap-3" : "block space-y-1")}>
+          {/* Cover on top (narrow) or right (wide, rendered last with order) */}
+          {!wideLayout && <CoverImage />}
+
+          {/* Text content */}
+          <div className={cn("min-w-0", wideLayout && "flex-1", useSmallFontSize ? "space-y-1" : "space-y-2")}>
+            <h4 className={cn("font-medium w-full", clipText && "truncate", useSmallFontSize ? "text-sm" : "text-base")}>
+              {title}
+            </h4>
+
+            {description && (
+              <p className={cn("w-full", clipText && "truncate", useSmallFontSize ? "text-xs" : "text-sm")}>
+                {description}
+              </p>
+            )}
+
+            {/* Tags */}
+            {tags.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {shownTags.map((t) => (
+                  <Badge
+                    key={t}
+                    variant="outline"
+                    className={cn("rounded-full", useSmallFontSize ? "text-[0.6rem] py-0.5" : "text-xs py-1")}
+                  >
+                    {t}
+                  </Badge>
+                ))}
+                {extraCount > 0 && (
+                  <Badge
+                    variant="outline"
+                    className={cn("rounded-md", useSmallFontSize ? "text-[0.6rem] py-0.5" : "text-xs py-1")}
+                  >
+                    {`+${extraCount}`}
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* DOMAIN + FAVICON */}
+            <div className="mt-1 flex flex-row items-center gap-1 text-xs text-muted-foreground font-medium font-mono">
+              {favOk && favicon ? (
+                <img
+                  src={favicon}
+                  alt="favicon"
+                  loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  onLoad={() => setFavLoaded(true)}
+                  onError={() => setFavOk(false)}
+                  className={cn(
+                    "size-3 rounded-sm object-cover",
+                    favLoaded ? "visible" : "invisible"
+                  )}
+                />
+              ) : (
+                <HugeiconsIcon icon={Link02Icon} className="size-3" strokeWidth={1.75} />
+              )}
+              {name && <span className={cn(clipText && "truncate")}>{name}</span>}
+            </div>
           </div>
-        )}
 
-        <h4 className="text-sm font-medium w-full truncate">{title}</h4>
-        {description && <p className="text-xs w-full truncate">{description}</p>}
-
-        {/* DOMAIN + FAVICON */}
-        <div className="flex flex-row items-center gap-1 text-xs text-muted-foreground font-medium font-mono">
-          {favOk && favicon ? (
-            <img
-              src={favicon}
-              alt="favicon"
-              loading="lazy"
-              decoding="async"
-              referrerPolicy="no-referrer"
-              onLoad={() => setFavLoaded(true)}
-              onError={() => setFavOk(false)}
-              className={cn("size-3 rounded-sm object-cover", favLoaded ? "visible" : "invisible")}
-            />
-          ) : (
-            <HugeiconsIcon icon={Link02Icon} className="size-3" strokeWidth={1.75} />
-          )}
-          {name && <span className="truncate">{name}</span>}
+          {wideLayout && <CoverImage />}
         </div>
       </div>
     </a>

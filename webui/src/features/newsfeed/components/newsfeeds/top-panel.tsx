@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Clock02Icon, LeftToRightListBulletIcon } from '@hugeicons/core-free-icons'
+import { Clock02Icon, GridViewIcon, LeftToRightListBulletIcon } from '@hugeicons/core-free-icons'
 import type { ViewMode } from '../../types/newsfeeds-view'
 
 export function TopViewPanel({
@@ -69,6 +69,12 @@ export function TopViewPanel({
       role='toolbar'
       aria-label='Newsfeed view modes'
     >
+      <ModeButton
+        mode='grid'
+        label='Grid'
+        icon={<HugeiconsIcon icon={GridViewIcon} className='size-4 shrink-0' strokeWidth={1.75} />}
+        disabled={!hasLatest}
+      />
       <ModeButton
         mode='linear'
         label='Linear'

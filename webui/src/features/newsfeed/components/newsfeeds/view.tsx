@@ -3,12 +3,12 @@ import { useParams } from '@tanstack/react-router'
 import { useListNewsfeeds } from '@/features/newsfeed/api/list-newsfeeds'
 import { useGetNewsfeed } from '@/features/newsfeed/api/get-newsfeed'
 import { MarkdownView } from '@/components/markdown/markdown-view'
-import { Button } from '@/components/ui/button'
 import { ErrorWindow, ProgressBar } from '@/components/progress-bar'
-import { formatNewsletterDate } from '../../utils/date'
 import type { ViewMode } from '../../types/newsfeeds-view'
 import { TopViewPanel } from './top-panel'
 import { NewsletterCard } from './card'
+import { NewsfeedGrid } from './grid'
+import type { UrlAnnotation } from '@/features/agent/types/tool-outputs'
 
 export function NewsfeedsView() {
   const { id } = useParams({ from: '/subscriptions/$id', shouldThrow: false })
@@ -36,7 +36,7 @@ export function NewsfeedsView() {
   }, [feedsQuery.isLoading, latestId])
 
   // fetch content for linear view (selected or latest)
-  const currentId = viewMode === 'linear' ? (selectedId ?? latestId) : undefined
+  const currentId = viewMode !== 'history' ? (selectedId ?? latestId) : undefined
   const currentFeed = useGetNewsfeed(subId, currentId)
   const markdown = currentFeed.data?.content?.markdown ?? ''
 
@@ -46,6 +46,11 @@ export function NewsfeedsView() {
     // scroll to top for a nice transition
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
   }
+
+  const annotations: UrlAnnotation[] = useMemo(() => {
+    console.log(currentFeed.data?.properties)
+    return (currentFeed.data?.properties?.newsGrid?.sources || []) as UrlAnnotation[]
+  }, [currentFeed.data?.properties])
 
   return (
     <div className='relative w-full h-full'>
@@ -73,19 +78,6 @@ export function NewsfeedsView() {
         {viewMode === 'linear' && currentId && (
           <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin'>
             <div className='mx-auto max-w-[900px] space-y-3'>
-              <div className='flex items-center justify-between text-xs text-muted-foreground'>
-                <span>
-                  {selectedId
-                    ? `Viewing: ${formatNewsletterDate(
-                        sorted.find(f => f.id === selectedId)?.createdAt ?? ''
-                      )}`
-                    : `Latest newsletter`}
-                </span>
-                <Button variant='ghost' size='sm' onClick={() => setViewMode('history')}>
-                  History
-                </Button>
-              </div>
-
               {currentFeed.isLoading && (
                 <ProgressBar message='Loading…' viewMode='full' className='bg-transparent' />
               )}
@@ -111,6 +103,27 @@ export function NewsfeedsView() {
                 onClick={() => openFromGrid(feed.id)}
               />
             ))}
+          </div>
+        )}
+
+        {viewMode === 'grid' && currentId && (
+          <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin'>
+            <div className='mx-auto max-w-[1100px] space-y-3 px-2'>
+              {currentFeed.isLoading && (
+                <ProgressBar message='Loading…' viewMode='full' className='bg-transparent' />
+              )}
+              {currentFeed.isError && (
+                <ErrorWindow message='Failed to load newsfeed' viewMode='full' className='bg-transparent' />
+              )}
+
+              {annotations.length > 0 ? (
+                <NewsfeedGrid annotations={annotations} />
+              ) : (
+                <div className='text-center text-sm text-muted-foreground py-8'>
+                  No links in this newsfeed
+                </div>
+              )}
+            </div>
           </div>
         )}
 

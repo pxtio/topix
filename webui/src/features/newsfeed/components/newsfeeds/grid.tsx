@@ -15,7 +15,7 @@ export function NewsfeedGrid({ annotations }: { annotations: UrlAnnotation[] }) 
         <div key={ann.url || `item-${i}`} className='break-inside-avoid mb-4'>
           <LinkPreviewCard
             annotation={ann}
-            className='w-full p-3'
+            className='w-full p-3 border border-border'
             clipText={false}
             useWideLayoutIfPossible={true}
             useSmallFontSize={false}

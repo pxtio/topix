@@ -7,6 +7,7 @@ import { Link02Icon } from "@hugeicons/core-free-icons"
 import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { formatNewsletterDate } from "@/features/newsfeed/utils/date"
 
 
 // MiniLinkCard component displays a compact link card with a hover preview.
@@ -61,7 +62,7 @@ export const LinkPreviewCard = ({
   useWideLayoutIfPossible?: boolean
   useSmallFontSize?: boolean
 }) => {
-  const { url, title, content, favicon, coverImage, tags = [] } = annotation
+  const { url, title, content, favicon, coverImage, tags = [], publishedAt } = annotation
   const name = extractMainDomain(url) || url
   const description = content || ""
 
@@ -91,16 +92,13 @@ export const LinkPreviewCard = ({
 
   const clName = cn(
     "transition-all rounded-lg p-2 cursor-pointer bg-card hover:bg-accent hover:shadow-md block w-40",
-    // let width be controlled by parent; your old w-40 can still be passed via className
     className
   )
 
-  // tag rendering (limit + “+N” overflow badge)
   const MAX_TAGS = 3
   const shownTags = tags.slice(0, MAX_TAGS)
   const extraCount = Math.max(0, tags.length - shownTags.length)
 
-  // shared cover <img/>
   const CoverImage = () =>
     coverImage && coverOk ? (
       <div
@@ -131,31 +129,60 @@ export const LinkPreviewCard = ({
       className={clName}
     >
       <div className={cn("space-y-2", wideLayout && "space-y-0")}>
-        {/* Layout container */}
         <div className={cn(wideLayout ? "flex items-start gap-3" : "block space-y-1")}>
-          {/* Cover on top (narrow) or right (wide, rendered last with order) */}
           {!wideLayout && <CoverImage />}
 
-          {/* Text content */}
-          <div className={cn("min-w-0", wideLayout && "flex-1", useSmallFontSize ? "space-y-1" : "space-y-2")}>
-            <h4 className={cn("font-medium w-full", clipText && "truncate", useSmallFontSize ? "text-sm" : "text-base")}>
+          <div
+            className={cn(
+              "min-w-0",
+              wideLayout && "flex-1",
+              useSmallFontSize ? "space-y-1" : "space-y-2"
+            )}
+          >
+            {/* --- NEW: Published Date --- */}
+            {publishedAt && (
+              <p
+                className={cn(
+                  "text-muted-foreground",
+                  useSmallFontSize ? "text-[0.65rem]" : "text-xs"
+                )}
+              >
+                {formatNewsletterDate(publishedAt)}
+              </p>
+            )}
+
+            <h4
+              className={cn(
+                "font-medium w-full",
+                clipText && "truncate",
+                useSmallFontSize ? "text-sm" : "text-base"
+              )}
+            >
               {title}
             </h4>
 
             {description && (
-              <p className={cn("w-full", clipText && "truncate", useSmallFontSize ? "text-xs" : "text-sm")}>
+              <p
+                className={cn(
+                  "w-full",
+                  clipText && "truncate",
+                  useSmallFontSize ? "text-xs" : "text-sm"
+                )}
+              >
                 {description}
               </p>
             )}
 
-            {/* Tags */}
             {tags.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1">
                 {shownTags.map((t) => (
                   <Badge
                     key={t}
                     variant="outline"
-                    className={cn("rounded-full", useSmallFontSize ? "text-[0.6rem] py-0.5" : "text-xs py-1")}
+                    className={cn(
+                      "rounded-full",
+                      useSmallFontSize ? "text-[0.6rem] py-0.5" : "text-xs py-1"
+                    )}
                   >
                     {t}
                   </Badge>
@@ -163,7 +190,10 @@ export const LinkPreviewCard = ({
                 {extraCount > 0 && (
                   <Badge
                     variant="outline"
-                    className={cn("rounded-md", useSmallFontSize ? "text-[0.6rem] py-0.5" : "text-xs py-1")}
+                    className={cn(
+                      "rounded-md",
+                      useSmallFontSize ? "text-[0.6rem] py-0.5" : "text-xs py-1"
+                    )}
                   >
                     {`+${extraCount}`}
                   </Badge>
@@ -171,7 +201,6 @@ export const LinkPreviewCard = ({
               </div>
             )}
 
-            {/* DOMAIN + FAVICON */}
             <div className="mt-1 flex flex-row items-center gap-1 text-xs text-muted-foreground font-medium font-mono">
               {favOk && favicon ? (
                 <img

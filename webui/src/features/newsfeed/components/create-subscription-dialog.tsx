@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,9 +24,7 @@ export function CreateSubscriptionDialog({
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<Step>('topic')
   const [topic, setTopic] = useState<string>('')
-  const [desc, setDesc] = useState<string>(defaultDescription())
-
-  const matched = useMemo(() => matchPredefined(topic), [topic])
+  const [desc, setDesc] = useState<string>("")
 
   const createSub = useCreateSubscription()
   const createFeed = useCreateNewsfeed(undefined)
@@ -34,7 +32,7 @@ export function CreateSubscriptionDialog({
   const reset = () => {
     setStep('topic')
     setTopic('')
-    setDesc(defaultDescription())
+    setDesc("")
   }
 
   const nextFromTopic = () => {
@@ -68,7 +66,7 @@ export function CreateSubscriptionDialog({
         )}
       </DialogTrigger>
       <DialogContent className='sm:max-w-xl'>
-        <DialogHeader>
+        <DialogHeader className='w-full flex flex-row items-center justify-center'>
           <DialogTitle>
             {step === 'topic' && 'Enter a topic of your choice'}
             {step === 'description' && 'Describe your topic'}
@@ -82,6 +80,7 @@ export function CreateSubscriptionDialog({
               placeholder='custom topic'
               value={topic}
               onChange={e => setTopic(e.target.value)}
+              className='focus-visible:ring-2 focus-visible:ring-secondary/20 focus-visible:border-secondary transition-all'
             />
             <div className='flex flex-wrap gap-2'>
               {PREDEFINED_TOPICS.map(k => {
@@ -91,7 +90,7 @@ export function CreateSubscriptionDialog({
                   <Badge
                     key={k}
                     className={[
-                      'cursor-pointer select-none px-3 py-2 rounded-lg border border-border',
+                      'cursor-pointer select-none p-2 rounded-lg border border-border',
                       active
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-card text-card-foreground backdrop-blur hover:bg-accent transition-all'
@@ -102,7 +101,7 @@ export function CreateSubscriptionDialog({
                     <span className='inline-flex items-center gap-1'>
                       {active
                         ? <HugeiconsIcon icon={Tick01Icon} strokeWidth={1.75} className='w-4 h-4' />
-                        : <span className='text-base leading-none'>{TOPIC_EMOJI[k]}</span>
+                        : <HugeiconsIcon icon={TOPIC_EMOJI[k]} strokeWidth={1.75} className='w-4 h-4' />
                       }
                     </span>
                     {label}
@@ -110,11 +109,13 @@ export function CreateSubscriptionDialog({
                 )
               })}
             </div>
-            <div className='flex items-center justify-between'>
-              <div className='text-sm text-muted-foreground'>
-                {matched ? `Matched to: ${TOPIC_DISPLAY[matched]}` : 'Custom topic'}
-              </div>
-              <Button onClick={nextFromTopic} disabled={!topic.trim()}>
+            <div className='flex items-center justify-center'>
+              <Button
+                onClick={nextFromTopic}
+                disabled={!topic.trim()}
+                variant={!topic.trim() ? 'ghost' : 'default'}
+                className='transition-all rounded-lg'
+              >
                 Validate
               </Button>
             </div>
@@ -127,7 +128,8 @@ export function CreateSubscriptionDialog({
               rows={6}
               value={desc}
               onChange={e => setDesc(e.target.value)}
-              className='resize-none'
+              className='resize-none focus-visible:ring-2 focus-visible:ring-secondary/20 focus-visible:border-secondary transition-all'
+              placeholder='Describe your topic in more details'
             />
             <div className='flex justify-end gap-2'>
               <Button variant='ghost' onClick={() => setStep('topic')}>Back</Button>
@@ -144,10 +146,4 @@ export function CreateSubscriptionDialog({
       </DialogContent>
     </Dialog>
   )
-}
-
-function defaultDescription() {
-  return [
-    'Add more details about your topic to help generate better newsfeeds.'
-  ].join('\n')
 }

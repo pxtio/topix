@@ -4,7 +4,13 @@ import { useListNewsfeeds } from '../api/list-newsfeeds'
 import { SubscriptionCard } from '../components/subscription-card'
 import { CreateSubscriptionDialog } from '../components/create-subscription-dialog'
 import { CreateSubscriptionCardTrigger } from '../components/create-subscription-card-trigger'
+import { useNavigate } from '@tanstack/react-router'
+import { useDeleteSubscription } from '../api/delete-subscription'
 
+
+/**
+ * SubscriptionsPage shows all subscriptions in a grid with a create button.
+ */
 export default function SubscriptionsPage() {
   const subs = useListSubscriptions()
 
@@ -38,6 +44,10 @@ export default function SubscriptionsPage() {
   )
 }
 
+
+/**
+ * A button that shows the latest newsfeed of a subscription, or is disabled if none exist.
+ */
 function SubscriptionButton({
   subId,
   label
@@ -47,6 +57,8 @@ function SubscriptionButton({
 }) {
   const feeds = useListNewsfeeds(subId)
   const latestId = feeds.data?.[0]?.id
+  const navigate = useNavigate()
+  const del = useDeleteSubscription()
 
   return (
     <SubscriptionCard
@@ -60,9 +72,9 @@ function SubscriptionButton({
       disabled={!latestId}
       onClick={() => {
         if (!latestId) return
-        // click opens latest newsfeed, as before
-        window.location.assign(`/subscriptions/${subId}/newsfeeds/${latestId}`)
+        navigate({ to: '/subscriptions/$id', params: { id: subId } })
       }}
+      onDelete={() => del.mutate({ subscriptionId: subId })}
     />
   )
 }

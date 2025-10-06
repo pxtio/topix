@@ -118,9 +118,10 @@ const newsfeedsRoute = createRoute({
  * /subscriptions/:id/newsfeeds/:newsfeedId → single newsletter
  * (child of the list route, same file for convenience)
  */
-export const newsfeedDetailRoute = createRoute({
-  getParentRoute: () => newsfeedsRoute,
-  path: '/subscriptions/$id/newsfeeds/$newsfeedId',
+export const NewsfeedDetailUrl = "/subscriptions/$id/newsfeeds/$newsfeedId"
+const newsfeedDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: NewsfeedDetailUrl,
   beforeLoad: requireAuth,
   component: NewsfeedLinearPage
 })

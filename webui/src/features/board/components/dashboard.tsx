@@ -1,8 +1,6 @@
 import { useAppStore } from "@/store"
 import { useListBoards } from "../api/list-boards"
 import { BoardCard, NewBoardCard } from "./board-card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-
 
 /**
  * Dashboard component displaying user' boards
@@ -12,7 +10,7 @@ export const Dashboard = () => {
   const { data: boards } = useListBoards({ userId })
   return (
     <div className='w-full h-full absolute inset-0'>
-      <ScrollArea className='w-full h-full'>
+      <div className='w-full h-full overflow-x-hidden overflow-y-auto scrollbar-thin'>
         <div className='p-4 mt-4 gap-8 flex flex-row flex-wrap justify-start'>
           <h3 className='w-full text-xl text-secondary font-semibold text-center'>Your Boards</h3>
           <NewBoardCard />
@@ -20,7 +18,7 @@ export const Dashboard = () => {
             <BoardCard key={board.uid} board={board} />
           ))}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   )
 }

@@ -24,13 +24,13 @@ export function NewsfeedsView() {
   const latestId = sorted[0]?.id
 
   // selection + mode
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [viewMode, setViewMode] = useState<ViewMode>('history')
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
 
   // choose default after load
   useEffect(() => {
     if (!feedsQuery.isLoading) {
-      setViewMode(latestId ? 'linear' : 'grid')
+      setViewMode(latestId ? 'linear' : 'history')
       setSelectedId(undefined)
     }
   }, [feedsQuery.isLoading, latestId])
@@ -53,7 +53,7 @@ export function NewsfeedsView() {
         viewMode={viewMode}
         setViewMode={m => {
           setViewMode(m)
-          if (m === 'grid') setSelectedId(undefined)
+          if (m === 'history') setSelectedId(undefined)
         }}
         hasLatest={!!latestId}
       />
@@ -81,7 +81,7 @@ export function NewsfeedsView() {
                       )}`
                     : `Latest newsletter`}
                 </span>
-                <Button variant='ghost' size='sm' onClick={() => setViewMode('grid')}>
+                <Button variant='ghost' size='sm' onClick={() => setViewMode('history')}>
                   History
                 </Button>
               </div>
@@ -101,7 +101,7 @@ export function NewsfeedsView() {
           </div>
         )}
 
-        {(viewMode === 'grid' || (!latestId && !feedsQuery.isLoading)) && (
+        {(viewMode === 'history' || (!latestId && !feedsQuery.isLoading)) && (
           <div className='mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
             {sorted.map(feed => (
               <NewsletterCard

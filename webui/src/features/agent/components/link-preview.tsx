@@ -34,12 +34,7 @@ export const MiniLinkCard = ({
         </HoverCardTrigger>
         <HoverCardContent className='p-0 shadow-lg border border-border w-auto rounded-lg overflow-hidden' sideOffset={8}>
           <LinkPreviewCard
-            url={annotation.url}
-            siteName={domain}
-            title={annotation.title}
-            content={annotation.content}
-            favicon={annotation.favicon}
-            coverImage={annotation.coverImage}
+            annotation={annotation}
           />
         </HoverCardContent>
       </HoverCard>
@@ -51,21 +46,12 @@ export const MiniLinkCard = ({
  * LinkPreviewCard component displays a preview of a webpage link.
  */
 export const LinkPreviewCard = ({
-  url,
-  siteName = undefined,
-  title = undefined,
-  content = undefined,
-  favicon = undefined,
-  coverImage = undefined
+  annotation
 }: {
-  url: string
-  siteName?: string
-  title?: string
-  content?: string
-  favicon?: string
-  coverImage?: string
+  annotation: UrlAnnotation
 }) => {
-  const name = siteName || extractMainDomain(url) || url
+  const { url, title, content, favicon, coverImage } = annotation
+  const name = extractMainDomain(url) || url
   const description = content || ''
 
   return (
@@ -77,7 +63,7 @@ export const LinkPreviewCard = ({
     >
       <div className="space-y-2">
         {coverImage && (
-          <div className="w-full h-20 rounded-md overflow-hidden bg-muted">
+          <div className="w-full h-20 rounded-sm overflow-hidden bg-muted">
             <img src={coverImage} alt="cover" className="w-full h-full object-cover" />
           </div>
         )}

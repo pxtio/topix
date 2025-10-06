@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import type { Subscription } from '../types/subscription'
 import { TOPIC_DISPLAY, TOPIC_EMOJI, matchPredefined } from '../constants/topics'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete02Icon, NewReleasesIcon } from '@hugeicons/core-free-icons'
+import { Delete02Icon, PropertyNewIcon } from '@hugeicons/core-free-icons'
 import { SquareDashedKanban } from '@/components/animate-ui/icons/square-dashed-kanban'
 
 
@@ -37,7 +37,7 @@ export function SubscriptionCard({
         <Card
           className={cn(
             'w-56 h-20 justify-center items-center flex rounded-xl transition shadow-none hover:shadow hover:border-secondary hover:ring-2 hover:ring-secondary/20 md:w-64 p-0 overflow-hidden cursor-pointer',
-            disabled && 'opacity-60'
+            disabled && 'bg-muted'
           )}
         >
           <CardContent className='p-0 w-full h-full'>
@@ -52,10 +52,10 @@ export function SubscriptionCard({
             >
               {
                 disabled ? (
-                  <SquareDashedKanban animate animation="default" loop speed={2} className='size-4 text-foreground/50' strokeWidth={1.75} />
+                  <SquareDashedKanban animate animation="default" loop speed={2} className='size-5 text-foreground/50' strokeWidth={1.75} />
                 ): (
                   <HugeiconsIcon
-                    icon={topicKey ? TOPIC_EMOJI[topicKey] : NewReleasesIcon}
+                    icon={topicKey ? TOPIC_EMOJI[topicKey] : PropertyNewIcon}
                     className='w-5 h-5 text-muted-foreground flex-shrink-0'
                     strokeWidth={1.5}
                   />

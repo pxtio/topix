@@ -16,6 +16,8 @@ from topix.datatypes.resource import RichText
 from topix.store.qdrant.store import ContentStore
 from topix.utils.web.favicon import fetch_meta_images_batch
 
+COLLECTOR_MAX_TURNS = 30
+
 
 class NewsfeedPipeline:
     """Newsfeed pipeline."""
@@ -83,7 +85,7 @@ class NewsfeedPipeline:
                     pretty_date_str = pretty_date(article.published_at)
                     if pretty_date_str:
                         article_title = f"{article.title} ({pretty_date_str})"
-                summary += f"### [{article_title}]({article.url})\n\n"
+                summary += f"### {article_title} [🡕]({article.url})\n\n"
                 summary += f"{article.summary}\n\n"
         return summary
 
@@ -135,7 +137,8 @@ class NewsfeedPipeline:
         _ = await AgentRunner.run(
             self.collector,
             input=input_obj,
-            context=context
+            context=context,
+            max_turns=COLLECTOR_MAX_TURNS
         )
 
         output: NewsfeedOutput = await AgentRunner.run(

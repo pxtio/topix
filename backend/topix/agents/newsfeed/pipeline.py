@@ -85,7 +85,7 @@ class NewsfeedPipeline:
                     pretty_date_str = pretty_date(article.published_at)
                     if pretty_date_str:
                         article_title = f"{article.title} ({pretty_date_str})"
-                summary += f"### {article_title} [🡕]({article.url})\n\n"
+                summary += f"### {article_title} [→]({article.url})\n\n"
                 summary += f"{article.summary}\n\n"
         return summary
 

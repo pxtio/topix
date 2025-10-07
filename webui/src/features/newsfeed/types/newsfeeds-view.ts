@@ -1,2 +1,2 @@
 
-export type ViewMode = 'linear' | 'grid' | 'history'
+export type ViewMode = 'linear' | 'grid' | 'history' | 'article'

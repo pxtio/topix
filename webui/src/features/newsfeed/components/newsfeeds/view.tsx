@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from '@tanstack/react-router'
 import { useListNewsfeeds } from '@/features/newsfeed/api/list-newsfeeds'
 import { useGetNewsfeed } from '@/features/newsfeed/api/get-newsfeed'
@@ -10,79 +10,83 @@ import { NewsletterCard } from './card'
 import { NewsfeedGrid } from './grid'
 import type { UrlAnnotation } from '@/features/agent/types/tool-outputs'
 import { CreateNewsfeedTile } from './create-new'
-import { useQueryClient } from '@tanstack/react-query'
-import { newsfeedsKey } from '../../api/query-keys'
+import type { Newsfeed } from '../../types/newsfeed'
+import { useNewsfeedsStore } from '../../store/newsfeeds'
 
-/**
- * The main view for newsfeeds, supporting 3 modes:
- * - Linear: show one newsfeed in full markdown
- * - Grid: show one newsfeed in a grid of link previews
- * - History: show all newsfeeds as cards to pick from
- */
+const EMPTY_LIST = [] as Newsfeed[]
+
 export function NewsfeedsView() {
   const { id } = useParams({ from: '/subscriptions/$id', shouldThrow: false })
   const subId = id as string | undefined
 
-  const qc = useQueryClient()
   const feedsQuery = useListNewsfeeds(subId)
 
-  const sorted = useMemo(() => {
-    const feeds = feedsQuery.data ?? []
-    return feeds.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  }, [feedsQuery.data])
+  // subscribe directly to the slice for this subscription (stable empty fallback)
+  const selector = useCallback(
+    (s: ReturnType<typeof useNewsfeedsStore.getState>) =>
+      subId ? s.pending[subId] ?? EMPTY_LIST : EMPTY_LIST,
+    [subId]
+  )
+  const pendingList = useNewsfeedsStore(selector)
 
-  const latestId = sorted[0]?.id
+  // build a Set for quick membership checks
+  const pendingIdSet = useMemo(
+    () => new Set(pendingList.map(p => p.id)),
+    [pendingList]
+  )
+
+  // fuse pending placeholders with server list, dedupe by id, newest first
+  const fused = useMemo<Newsfeed[]>(() => {
+    const server = feedsQuery.data ?? []
+    if (!subId) return server
+    const serverIds = new Set(server.map(n => n.id))
+    const synthetic: Newsfeed[] = pendingList
+      .filter(p => !serverIds.has(p.id))
+      .map(p => ({
+        id: p.id,
+        type: 'newsfeed',
+        subscriptionId: subId,
+        createdAt: p.createdAt,
+        updatedAt: p.createdAt
+      } as Newsfeed))
+    return [...synthetic, ...server].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }, [feedsQuery.data, pendingList, subId])
+
+  // pick the first READY item (skip pendings)
+  const latestReadyId = useMemo(
+    () => fused.find(n => !pendingIdSet.has(n.id))?.id,
+    [fused, pendingIdSet]
+  )
 
   // view + selection
   const [viewMode, setViewMode] = useState<ViewMode>('history')
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
 
-  // ensure default is chosen only once (avoid redirects on refetch)
-  const [didSetDefault, setDidSetDefault] = useState(false)
+  // default-once guard
+  const didSetDefault = useRef(false)
   useEffect(() => {
-    if (didSetDefault) return
+    if (didSetDefault.current) return
     if (!feedsQuery.isLoading) {
-      setViewMode(latestId ? 'linear' : 'history')
+      setViewMode(latestReadyId ? 'article' : 'history')
       setSelectedId(undefined)
-      setDidSetDefault(true)
+      didSetDefault.current = true
     }
-  }, [feedsQuery.isLoading, latestId, didSetDefault])
+  }, [feedsQuery.isLoading, latestReadyId])
 
-  // pending id (optimistic creation) → show generating state on that item & poll only it
-  const [pendingId, setPendingId] = useState<string | undefined>(undefined)
-  const pendingFeed = useGetNewsfeed(subId, pendingId)
-
-  // poll pending item
-  useEffect(() => {
-    if (!pendingId) return
-    const t = setInterval(() => pendingFeed.refetch(), 2500)
-    return () => clearInterval(t)
-  }, [pendingId]) // eslint-disable-line
-
-  // when pending item is ready, clear and refresh list
-  useEffect(() => {
-    if (!pendingId) return
-    const ready = !!pendingFeed.data?.content?.markdown
-    if (ready) {
-      setPendingId(undefined)
-      if (subId) qc.invalidateQueries({ queryKey: newsfeedsKey(subId) })
-    }
-  }, [pendingId, pendingFeed.data?.content, subId, qc])
-
-  // fetch content for linear/grid (selected or latest)
-  const currentId = viewMode !== 'history' ? (selectedId ?? latestId) : undefined
+  // current content for article/grid (prefer selected, fall back to first ready)
+  const currentId = viewMode !== 'history' ? (selectedId ?? latestReadyId) : undefined
   const currentFeed = useGetNewsfeed(subId, currentId)
   const markdown = currentFeed.data?.content?.markdown ?? ''
-
-  const openFromGrid = (id: string) => {
-    setSelectedId(id)
-    setViewMode('linear')
-    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
-  }
 
   const annotations: UrlAnnotation[] = useMemo(() => {
     return (currentFeed.data?.properties?.newsGrid?.sources || []) as UrlAnnotation[]
   }, [currentFeed.data?.properties])
+
+  const openFromGrid = (id: string) => {
+    setSelectedId(id)
+    setViewMode('article')
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
+  }
 
   return (
     <div className='relative w-full h-full'>
@@ -92,7 +96,7 @@ export function NewsfeedsView() {
           setViewMode(m)
           if (m === 'history') setSelectedId(undefined)
         }}
-        hasLatest={!!latestId}
+        hasLatest={!!latestReadyId}
       />
 
       <div className='w-full h-full p-6 space-y-4 relative'>
@@ -103,8 +107,8 @@ export function NewsfeedsView() {
           <ErrorWindow message='Failed to load newsletters' viewMode='full' className='bg-transparent' />
         )}
 
-        {/* LINEAR */}
-        {viewMode === 'linear' && currentId && (
+        {/* ARTICLE */}
+        {viewMode === 'article' && currentId && (
           <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin'>
             <div className='mx-auto max-w-[900px] space-y-3'>
               {currentFeed.isLoading && (
@@ -126,25 +130,22 @@ export function NewsfeedsView() {
         )}
 
         {/* HISTORY */}
-        {(viewMode === 'history' || (!latestId && !feedsQuery.isLoading)) && (
+        {(viewMode === 'history' || (!latestReadyId && !feedsQuery.isLoading)) && (
           <div className='mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto scrollbar-thin pt-16 pb-16'>
             <CreateNewsfeedTile
               subscriptionId={subId}
-              onStart={uid => {
-                // stay on history, mark as pending so the optimistic item pulses
-                setViewMode('history')
-                setPendingId(uid)
+              onStart={() => {
+                setViewMode('history') // stay here; hook handles pending add/remove
               }}
             />
-
-            {sorted.map(feed => (
+            {fused.map(feed => (
               <NewsletterCard
                 key={feed.id}
                 id={feed.id}
                 subscriptionId={subId!}
                 createdAt={feed.createdAt}
                 active={feed.id === selectedId}
-                generating={feed.id === pendingId}
+                generating={pendingIdSet.has(feed.id)}
                 onClick={() => openFromGrid(feed.id)}
               />
             ))}
@@ -152,7 +153,7 @@ export function NewsfeedsView() {
         )}
 
         {/* GRID */}
-        {viewMode === 'grid' && currentId && (
+        {(viewMode === 'grid' || viewMode === "linear") && currentId && (
           <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin p-2 pt-16 pb-16'>
             <div className='mx-auto max-w-[1100px] space-y-3 px-2'>
               {currentFeed.isLoading && (
@@ -165,7 +166,7 @@ export function NewsfeedsView() {
                 <h1 className='text-xl text-secondary font-semibold'>Newsletter</h1>
               </div>
               {annotations.length > 0 ? (
-                <NewsfeedGrid annotations={annotations} />
+                <NewsfeedGrid annotations={annotations} viewMode={viewMode} />
               ) : (
                 <div className='text-center text-sm text-muted-foreground py-8'>
                   No links in this newsfeed
@@ -175,7 +176,7 @@ export function NewsfeedsView() {
           </div>
         )}
 
-        {!feedsQuery.isLoading && sorted.length === 0 && (
+        {!feedsQuery.isLoading && fused.length === 0 && (
           <div className='text-center text-sm text-muted-foreground'>No newsletters yet</div>
         )}
       </div>

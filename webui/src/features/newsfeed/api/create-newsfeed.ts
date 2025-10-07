@@ -3,10 +3,9 @@ import { apiFetch } from '@/api'
 import camelcaseKeys from 'camelcase-keys'
 import { newsfeedsKey } from './query-keys'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNewsfeedsStore } from '@/features/newsfeed/store/newsfeeds'
 
-/**
- * Create a new newsfeed under a subscription.
- */
+
 export async function createNewsfeed(subscriptionId: string, uid: string): Promise<Newsfeed> {
   const res = await apiFetch<{ data: Record<string, unknown> }>({
     path: `/subscriptions/${subscriptionId}/newsfeeds`,
@@ -19,17 +18,19 @@ export async function createNewsfeed(subscriptionId: string, uid: string): Promi
 
 type Vars = {
   uid: string
-  // lets you create a feed for a subscription whose id you just created (predefined uid)
   subscriptionIdOverride?: string
 }
 
 type Ctx = {
   prev?: Newsfeed[]
   subId?: string
+  uid?: string
 }
 
 export function useCreateNewsfeed(subscriptionId: string | undefined) {
   const qc = useQueryClient()
+  const addPending = useNewsfeedsStore(s => s.addPending)
+  const removePending = useNewsfeedsStore(s => s.removePending)
 
   return useMutation<Newsfeed, unknown, Vars, Ctx>({
     mutationFn: ({ uid, subscriptionIdOverride }) =>
@@ -39,6 +40,10 @@ export function useCreateNewsfeed(subscriptionId: string | undefined) {
       const subId = subscriptionIdOverride ?? subscriptionId
       if (!subId) return {}
 
+      // 1) mark pending in zustand
+      addPending(subId, uid)
+
+      // 2) optimistic insert in list cache
       const key = newsfeedsKey(subId)
       await qc.cancelQueries({ queryKey: key })
       const prev = qc.getQueryData<Newsfeed[]>(key)
@@ -50,19 +55,27 @@ export function useCreateNewsfeed(subscriptionId: string | undefined) {
         subscriptionId: subId,
         createdAt: now,
         updatedAt: now
-        // list endpoint excludes content; UI will show "Generating…" by pendingId
       } as Newsfeed
 
       qc.setQueryData<Newsfeed[]>(key, old => [optimistic, ...(old ?? [])])
 
-      return { prev, subId }
+      return { prev, subId, uid }
+    },
+
+    onSuccess: (_data, _vars, ctx) => {
+      const subId = ctx?.subId
+      if (!subId || !ctx?.uid) return
+      // remove pending immediately on success
+      removePending(subId, ctx.uid)
+      qc.invalidateQueries({ queryKey: newsfeedsKey(subId) })
     },
 
     onError: (_err, _vars, ctx) => {
       if (!ctx?.subId) return
       const key = newsfeedsKey(ctx.subId)
       if (ctx.prev) qc.setQueryData(key, ctx.prev)
-      else qc.invalidateQueries({ queryKey: key })
+      // also clear pending on error
+      if (ctx.uid) removePending(ctx.subId, ctx.uid)
     },
 
     onSettled: (_data, _err, vars) => {

@@ -11,7 +11,41 @@ from topix.agents.datatypes.annotations import (
     SearchResult,
 )
 
-type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput | MemorySearchOutput | NotifyOutput | MapifyTheme
+type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput | MemorySearchOutput | NotifyOutput | MapifyTheme | TopicTracker | NewsfeedOutput
+
+
+class NewsfeedArticle(BaseModel):
+    """Newsfeed article data model."""
+
+    title: str
+    url: str
+    summary: str
+    published_at: str
+    source_domain: str
+    score: int | None = None
+    tags: list[str] = []
+
+
+class NewsfeedSection(BaseModel):
+    """Newsfeed section data model."""
+
+    title: str
+    articles: list[NewsfeedArticle]
+
+
+class NewsfeedOutput(BaseModel):
+    """Newsfeed output data model."""
+
+    sections: list[NewsfeedSection]
+
+
+class TopicTracker(BaseModel):
+    """Topic data model."""
+
+    description: str
+    sub_topics: list[str]
+    keywords: list[str]
+    seed_sources: list[str]
 
 
 class MapifyTheme(BaseModel):

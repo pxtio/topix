@@ -13,6 +13,9 @@ import { SigninPage } from "@/features/signin/screens/sign-in"
 import { SignupPage } from "@/features/signin/screens/sign-up"
 import { clearTokens, getAccessToken } from "@/features/signin/auth-storage"
 import { decodeJwt } from "@/lib/decode-jwt"
+import { SubscriptionsScreen } from "@/features/newsfeed/screens/subscriptions"
+import { NewsfeedsScreen } from "@/features/newsfeed/screens/newsfeeds"
+import { NewsfeedLinearPage } from "@/features/newsfeed/screens/newsfeed-linear-page"
 export const rootRoute = createRootRoute({ component: RootLayout })
 
 // --- auth guard ---
@@ -93,6 +96,36 @@ const boardRoute = createRoute({
   component: BoardScreen,
 })
 
+// /subscriptions (protected)
+export const SubscriptionsUrl = "/subscriptions"
+const subscriptionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: SubscriptionsUrl,
+  beforeLoad: requireAuth,
+  component: SubscriptionsScreen,
+})
+
+// /subscriptions/:id/newsfeeds (protected)
+export const NewsfeedsUrl = "/subscriptions/$id"
+const newsfeedsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: NewsfeedsUrl,
+  beforeLoad: requireAuth,
+  component: NewsfeedsScreen,
+})
+
+/**
+ * /subscriptions/:id/newsfeeds/:newsfeedId → single newsletter
+ * (child of the list route, same file for convenience)
+ */
+export const NewsfeedDetailUrl = "/subscriptions/$id/newsfeeds/$newsfeedId"
+const newsfeedDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: NewsfeedDetailUrl,
+  beforeLoad: requireAuth,
+  component: NewsfeedLinearPage
+})
+
 const routeTree = rootRoute.addChildren([
   redirectRoot,
   redirectHome,
@@ -102,6 +135,9 @@ const routeTree = rootRoute.addChildren([
   chatRoute,
   dashboardRoute,
   boardRoute,
+  subscriptionsRoute,
+  newsfeedsRoute,
+  newsfeedDetailRoute,
 ])
 
 export const router = createRouter({ routeTree })

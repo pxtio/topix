@@ -13,6 +13,10 @@ class SearchResult(BaseModel):
     content: str | None = None
     favicon: str | None = None
     cover_image: str | None = None
+    published_at: str | None = None
+    score: int | None = None
+    source_domain: str | None = None
+    tags: list[str] = []
 
 
 class RefAnnotation(BaseModel):

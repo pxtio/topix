@@ -18,13 +18,13 @@ export async function getBoard(
   boardId: string,
   userId: string
 ): Promise<Graph> {
-  const res = await apiFetch({
+  const res = await apiFetch<{ data: Record<string, unknown> }>({
     path: `/boards/${boardId}`,
     method: "GET",
     params: { user_id: userId }
   })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return camelcaseKeys((res as any).data.graph, { deep: true }) as Graph
+  const data = camelcaseKeys(res.data, { deep: true })
+  return data.graph as Graph
 }
 
 

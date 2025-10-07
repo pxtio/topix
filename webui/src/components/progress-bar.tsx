@@ -1,6 +1,9 @@
 import { ShinyText } from "./animations/shiny-text"
 import { Orbit } from "./animate-ui/icons/orbit"
 import { ListTree } from "lucide-react"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Alert02Icon } from "@hugeicons/core-free-icons"
+import clsx from "clsx"
 
 /**
  * ThinkingDots component displays a "Thinking" message with animated dots.
@@ -31,24 +34,54 @@ export const ThinkingDots = ({ message, isStopped = false }: { message: string, 
 export interface ProgressBarProps {
   message?: string
   viewMode?: "full" | "compact"
+  className?: string
 }
 
 
 /**
  * ProgressBar component that displays a progress bar with an estimated time and an optional message.
  */
-export const ProgressBar = ({ message, viewMode = "compact" }: ProgressBarProps) => {
-  const className = "z-30 flex flex-col items-center justify-center gap-2 p-4 bg-card text-card-foreground " + (viewMode === "full" ? " w-full h-full border-none" : " w-64 border border-border rounded-xl shadow-lg")
-
+export const ProgressBar = ({ message, viewMode = "compact", className = undefined }: ProgressBarProps) => {
+  const clName = clsx(
+    "z-30 flex flex-col items-center justify-center gap-2 p-4 bg-card text-card-foreground",
+    viewMode === "full" ? "absolute inset-0 z-20 w-full h-full border-none" : " w-64 border border-border rounded-xl shadow-lg",
+    className
+  )
   return (
     <>
-      <div className={className}>
+      <div className={clName}>
         {
           message &&
           <div className="text-medium text-xs text-center">
             <ThinkingDots message={message} />
           </div>
         }
+      </div>
+    </>
+  )
+}
+
+export interface ErrorWindowProps {
+  message: string
+  viewMode?: "full" | "compact"
+  className?: string
+}
+
+// ErrorWindow component that displays an error message.
+export const ErrorWindow = ({ message, viewMode = "compact", className = undefined }: ErrorWindowProps) => {
+  const clName = clsx(
+    "z-30 flex flex-col items-center justify-center gap-2 p-4 bg-card text-card-foreground",
+    viewMode === "full" ? "absolute inset-0 z-20 w-full h-full border-none" : "w-64 border border-border rounded-xl shadow-lg",
+    className
+  )
+
+  return (
+    <>
+      <div className={clName}>
+        <div className="text-medium text-xs text-center text-destructive flex flex-row items-center gap-2">
+          <HugeiconsIcon icon={Alert02Icon} className='w-4 h-4' strokeWidth={1.75} />
+          <span>{message}</span>
+        </div>
       </div>
     </>
   )

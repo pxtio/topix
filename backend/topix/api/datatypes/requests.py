@@ -72,6 +72,26 @@ class LinkUpdateRequest(BaseModel):
     data: dict
 
 
+class SubscriptionUpdateRequest(BaseModel):
+    """Request model for updating a subscription."""
+
+    data: dict
+
+
+class AddSubscriptionRequest(BaseModel):
+    """Request model for adding a subscription."""
+
+    topic: str
+    raw_description: str | None = None
+    uid: str | None = None
+
+
+class NewsfeedUpdateRequest(BaseModel):
+    """Request model for updating a newsfeed."""
+
+    data: dict
+
+
 class AddNotesRequest(BaseModel):
     """Request model for adding notes to a graph."""
 

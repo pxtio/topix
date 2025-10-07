@@ -22,7 +22,7 @@ export function NewsfeedGrid({ annotations, viewMode = "grid" }: { annotations: 
   return (
     <div className={className}>
       {annotations.map((ann, i) => (
-        <div key={ann.url || `item-${i}`} className='break-inside-avoid mb-4'>
+        <div key={`item-${i}`} className='break-inside-avoid mb-4'>
           <LinkPreviewCard
             annotation={ann}
             className={previewCardClass}

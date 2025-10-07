@@ -104,7 +104,7 @@ export const LinkPreviewCard = ({
       <div
         className={cn(
           "overflow-hidden bg-muted rounded-sm shrink-0",
-          wideLayout ? "w-28 h-24" : "w-full h-24"
+          wideLayout ? "w-32 h-28" : "w-full h-24"
         )}
       >
         <img

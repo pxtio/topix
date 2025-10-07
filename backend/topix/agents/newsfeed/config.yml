@@ -9,7 +9,7 @@ collector:
     model: openai/gpt-5-mini
     instructions_template: newsfeed/web_search.jinja
     search_engine: linkup
-    search_context_size: high
+    search_context_size: medium
     recency: monthly
     model_settings:
       temperature: 0.01
@@ -31,9 +31,9 @@ topic_setup:
     max_tokens: 4000
 
   web_search:
-    model: openai/gpt-4.1-mini
+    model: openai/gpt-5-mini
     instructions_template: web_search.jinja
     search_engine: openai
-    search_context_size: high
+    search_context_size: medium
     model_settings:
       temperature: 0.01

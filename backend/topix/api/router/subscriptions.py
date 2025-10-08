@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.params import Body, Path, Query
 
 from topix.api.datatypes.requests import AddSubscriptionRequest, NewsfeedUpdateRequest, SubscriptionUpdateRequest
-from topix.api.helpers import with_standard_response
+from topix.api.utils.decorators import with_standard_response
 from topix.api.utils.security import get_current_user_uid
 from topix.store.subscription import SubscriptionStore
 

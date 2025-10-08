@@ -8,7 +8,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from topix.api.datatypes.requests import RefreshRequest, UserSignupRequest
-from topix.api.helpers import with_standard_response
+from topix.api.utils.decorators import with_standard_response
 from topix.api.utils.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     REFRESH_TOKEN_EXPIRE_DAYS,

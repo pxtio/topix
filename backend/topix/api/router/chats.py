@@ -18,7 +18,8 @@ from topix.api.datatypes.requests import (
     MessageUpdateRequest,
     SendMessageRequest,
 )
-from topix.api.helpers import with_standard_response, with_streaming
+from topix.api.utils.decorators import with_standard_response
+from topix.api.utils.resilient_streaming import with_streaming_resilient_ndjson
 from topix.api.utils.security import get_current_user_uid, verify_chat_user
 from topix.datatypes.chat.chat import Chat
 from topix.store.chat import ChatStore
@@ -132,7 +133,11 @@ async def delete_chat(
 
 @router.post("/{chat_id}/messages/", include_in_schema=False)
 @router.post("/{chat_id}/messages")
-@with_streaming
+@with_streaming_resilient_ndjson(
+    media_type="application/x-ndjson",
+    queue_maxsize=128,
+    continue_on_disconnect=True,
+)
 async def send_message(
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],

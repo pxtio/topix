@@ -234,7 +234,7 @@ class DeepResearch:
                 final_answer = msg.output
 
         if not final_answer:
-            raise ValueError("Problem on synthesizing learning module")
+            raise ValueError("Problem on synthesizing report.")
 
         steps = context.tool_calls
 

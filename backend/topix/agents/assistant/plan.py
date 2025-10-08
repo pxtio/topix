@@ -1,4 +1,5 @@
 """Main agent manager."""
+from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
@@ -19,6 +20,7 @@ from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.websearch.handler import WebSearchHandler
+from topix.agents.websearch.navigate import NavigateAgent
 from topix.store.qdrant.store import ContentStore
 
 
@@ -70,6 +72,7 @@ class Plan(BaseAgent):
         memory_search: MemorySearch | None = None,
         code_interpreter: CodeInterpreter | None = None,
         content_store: ContentStore | None = None,
+        navigate: NavigateAgent | None = None,
     ):
         """Init method."""
         name = "Plan"
@@ -86,11 +89,13 @@ class Plan(BaseAgent):
         content_store = content_store or ContentStore.from_config()
         memory_search = memory_search or MemorySearch(content_store=content_store)
         code_interpreter = code_interpreter or CodeInterpreter()
+        navigate = navigate or NavigateAgent()
 
         tools = [
             web_search_tool,
             memory_search.as_tool(AgentToolName.MEMORY_SEARCH, streamed=True),
             code_interpreter.as_tool(AgentToolName.CODE_INTERPRETER, streamed=True),
+            navigate.as_tool(AgentToolName.NAVIGATE, streamed=True),
         ]
         hooks = PlanHooks()
 
@@ -105,7 +110,7 @@ class Plan(BaseAgent):
         super().__post_init__()
 
     @classmethod
-    def from_config(cls, content_store: ContentStore, config: PlanConfig):
+    def from_config(cls, content_store: ContentStore, config: PlanConfig) -> Plan:
         """Create an instance of Plan from configuration."""
         web_search_tool = WebSearchHandler.from_config(config.web_search)
         return cls(
@@ -115,6 +120,7 @@ class Plan(BaseAgent):
             model=config.model,
             instructions_template=config.instructions_template,
             model_settings=config.model_settings,
+            navigate=NavigateAgent.from_config(config.navigate),
         )
 
     def _format_message(self, message: dict[str, str]) -> str:
@@ -134,7 +140,7 @@ class Plan(BaseAgent):
         messages = "\n\n".join(self._format_message(msg) for msg in input[:-1])
 
         user_prompt = self._render_prompt(
-            "plan.user_v2.jinja",
+            "plan.user.jinja",
             messages=messages,
             user_query=user_query,
             time=datetime.now().isoformat(),

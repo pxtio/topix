@@ -37,7 +37,8 @@ class SendMessageRequest(BaseModel):
     enabled_tools: list[AgentToolName] = [
         AgentToolName.WEB_SEARCH,
         AgentToolName.MEMORY_SEARCH,
-        AgentToolName.CODE_INTERPRETER
+        AgentToolName.CODE_INTERPRETER,
+        AgentToolName.NAVIGATE,
     ]
     reasoning_effort: Literal["low", "medium", "high"] | None = None
 
@@ -68,6 +69,26 @@ class NoteUpdateRequest(BaseModel):
 
 class LinkUpdateRequest(BaseModel):
     """Request model for updating a link."""
+
+    data: dict
+
+
+class SubscriptionUpdateRequest(BaseModel):
+    """Request model for updating a subscription."""
+
+    data: dict
+
+
+class AddSubscriptionRequest(BaseModel):
+    """Request model for adding a subscription."""
+
+    topic: str
+    raw_description: str | None = None
+    uid: str | None = None
+
+
+class NewsfeedUpdateRequest(BaseModel):
+    """Request model for updating a newsfeed."""
 
     data: dict
 

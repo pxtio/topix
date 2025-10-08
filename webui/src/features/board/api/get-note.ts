@@ -16,11 +16,10 @@ export async function getNote(
   userId: string,
   noteId: string
 ): Promise<Note> {
-  const res = await apiFetch({
+  const res = await apiFetch<{ data: Record<string, unknown> }>({
     path: `/boards/${boardId}/notes/${noteId}`,
     method: "GET",
     params: { user_id: userId }
   })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return camelcaseKeys((res as any).data, { deep: true }) as Note
+  return camelcaseKeys(res.data, { deep: true }) as Note
 }

@@ -25,6 +25,9 @@ from topix.cli.utils import Renderer, SessionRun, StepRun
 from topix.setup import setup
 from topix.store.chat import ChatStore
 from topix.utils.common import gen_uid
+from topix.utils.logging import logging_config
+
+logging_config(level="WARNING")
 
 console = Console()
 

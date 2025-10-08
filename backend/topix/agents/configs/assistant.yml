@@ -6,7 +6,7 @@ query_rewrite:
 
 plan:
   model: openai/gpt-4.1
-  instructions_template: plan.system_v2.jinja
+  instructions_template: plan.system.jinja
   model_settings:
     temperature: 0.01
     max_tokens: 8000
@@ -14,12 +14,16 @@ plan:
   web_search:
     model: openai/gpt-4.1-mini
     instructions_template: web_search.jinja
-    search_engine: perplexity
+    search_engine: openai
     search_context_size: medium
     model_settings:
       temperature: 0.01
     enable_summary: false
     streaming: false
+
+  navigate:
+    model: openai/gpt-4.1-mini
+    instructions_template: navigate.system.jinja
 
   memory_search:
     model: openai/gpt-4.1-mini

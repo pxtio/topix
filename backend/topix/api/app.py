@@ -10,12 +10,13 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from topix.api.router import boards, chats, tools, users
+from topix.api.router import boards, chats, subscriptions, tools, users
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
 from topix.setup import setup
 from topix.store.chat import ChatStore
 from topix.store.graph import GraphStore
+from topix.store.subscription import SubscriptionStore
 from topix.store.user import UserStore
 from topix.utils.logging import logging_config
 
@@ -33,10 +34,13 @@ def create_app(stage: StageEnum):
         await app.user_store.open()
         app.chat_store = ChatStore()
         await app.chat_store.open()
+        app.subscription_store = SubscriptionStore()
+        await app.subscription_store.open()
         yield
         await app.graph_store.close()
         await app.user_store.close()
         await app.chat_store.close()
+        await app.subscription_store.close()
 
     app = FastAPI(lifespan=lifespan)
 
@@ -54,6 +58,7 @@ def create_app(stage: StageEnum):
     app.include_router(chats.router)
     app.include_router(tools.router)
     app.include_router(users.router)
+    app.include_router(subscriptions.router)
 
     return app
 

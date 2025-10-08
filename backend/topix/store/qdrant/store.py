@@ -43,10 +43,11 @@ INDEX_FIELDS = [
     ("type", "keyword"),
     # message
     ("chat_uid", "keyword"),
-    # note
+    # note, link
     ("graph_uid", "keyword"),
-    # link
-    ("graph_uid", "keyword"),
+    # subscription
+    ("user_uid", "keyword"),
+    ("subscription_id", "keyword"),
     # the unique id for each resource
     ("id", "uuid"),
 ]

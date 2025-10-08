@@ -21,15 +21,14 @@ export async function convertToMindMap(
   answer: string,
   toolType: "notify" | "mapify"
 ): Promise<{ notes: Note[], links: Link[] }> {
-  const res = await apiFetch({
+  const res = await apiFetch<{ data: Record<string, unknown> }>({
     path: `/tools/mindmaps:${toolType}`,
     method: "POST",
     params: { user_id: userId },
     body: { answer }
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return camelcaseKeys((res as any).data, { deep: true }) as { notes: Note[], links: Link[] }
+  return camelcaseKeys(res.data, { deep: true }) as { notes: Note[], links: Link[] }
 }
 
 

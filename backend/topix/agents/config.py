@@ -9,6 +9,7 @@ from agents import ModelSettings
 from pydantic import BaseModel
 
 from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
+from topix.datatypes.recurrence import Recurrence
 
 CONFIG_DIR = Path(__file__).parent / "configs"
 
@@ -26,6 +27,7 @@ class WebSearchConfig(BaseAgentConfig):
 
     search_engine: WebSearchOption
     search_context_size: WebSearchContextSize
+    recency: Recurrence | None = None
     max_results: int = 10
 
     enable_summary: bool = False
@@ -38,6 +40,7 @@ class PlanConfig(BaseAgentConfig):
     web_search: WebSearchConfig
     memory_search: BaseAgentConfig
     code_interpreter: BaseAgentConfig
+    navigate: BaseAgentConfig
 
     # For Tavily and LinkUp
     enable_web_summarization: bool = True

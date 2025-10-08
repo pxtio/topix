@@ -36,10 +36,7 @@ const SourcesView = ({ answer }: { answer: AgentResponse }) => {
           {annotations.map((annotation, index) => (
             <div key={index} className='shrink-0'>
               <LinkPreviewCard
-                url={annotation.url}
-                title={annotation.title}
-                content={annotation.content}
-                favicon={annotation.favicon}
+                annotation={annotation}
               />
             </div>
           ))}

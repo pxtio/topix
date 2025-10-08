@@ -67,17 +67,19 @@ const ReasoningStepViewImpl = ({
       `}
     >
       <div className='relative flex-shrink-0'>
-        {
-          isLoading &&
-          <div className='absolute animate-ping w-2.5 h-2.5 rounded-full bg-secondary/75 z-20 mt-0.5' />
-        }
-        {
-          isLoading ?
-          <div className='relative w-2.5 h-2.5 rounded-full bg-secondary z-20 mt-0.5' /> :
-          <div className='relative w-2.5 h-2.5 rounded-full bg-secondary z-20 flex items-center justify-center mt-0.5'>
-            <HugeiconsIcon icon={Tick01Icon} className="size-2 text-secondary-foreground" strokeWidth={1.75} />
-          </div>
-        }
+        <div className="relative z-20 mt-0.5 rounded-full bg-card w-4 h-4">
+          {
+            isLoading &&
+            <div className='absolute animate-ping w-2 h-2 rounded-full bg-secondary/75 z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' />
+          }
+          {
+            isLoading ?
+            <div className='absolute w-2 h-2 rounded-full bg-secondary z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' /> :
+            <div className='absolute w-2.5 h-2.5 rounded-full bg-secondary z-20 flex items-center justify-center top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
+              <HugeiconsIcon icon={Tick01Icon} className="size-2 text-secondary-foreground" strokeWidth={1.75} />
+            </div>
+          }
+        </div>
       </div>
       <div className='relative flex-1 flex flex-col items-start rounded-lg text-xs'>
         <div className={messageClass}>
@@ -209,13 +211,9 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
             isLoading={step.state === "started"}
           />)
         }
-        {
-          isOpen &&
-          <div
-            className='absolute left-[0.785rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
-          >
-          </div>
-        }
+        <div
+          className='absolute left-[0.975rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
+        />
       </div>
       <button
         className='absolute bottom-1 right-1/2 transform translate-x-1/2'

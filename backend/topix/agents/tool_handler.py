@@ -4,7 +4,7 @@ import functools
 import inspect
 import json
 
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Type
 
 from agents import (
     Agent,
@@ -51,6 +51,7 @@ class ToolHandler:
         tool_description: str = "",
         max_turns: int = 5,
         streamed: bool = False,
+        input_type: Type | None = None,
     ) -> FunctionTool:
         """Convert agent object to a function.
 
@@ -61,13 +62,14 @@ class ToolHandler:
             tool_description: The description of the tool.
             max_turns: The maximum number of turns for the tool.
             streamed: Whether to stream the output.
+            input_type: The type of the input for the agent. If provided, it will be used to annotate the input in the function signature.
 
         Returns:
             The FunctionTool object.
 
         """
         return function_tool(
-            func=cls.convert_agent_to_func(agent, tool_name, max_turns, streamed),
+            func=cls.convert_agent_to_func(agent, tool_name, max_turns, streamed, input_type=input_type),
             name_override=tool_name,
             description_override=tool_description if tool_description else None,
         )
@@ -151,6 +153,7 @@ class ToolHandler:
         max_turns: int = 5,
         streamed: bool = False,
         is_subagent: bool = True,
+        input_type: Type | None = None
     ) -> Callable[[RunContextWrapper[Context] | Context, Any], Awaitable[Any]]:
         """Convert agent object to a function.
 
@@ -162,12 +165,13 @@ class ToolHandler:
             max_turns: The maximum number of turns for the tool.
             streamed: Whether to stream the output.
             is_subagent: Whether the agent is a subagent.
+            input_type: The type of the input for the agent. If provided,
+                it will be used to annotate the input in the function signature.
 
         Returns:
             The function that can be later converted as FunctionTool.
 
         """
-
         async def run(context: Context, input: Any) -> Any:
             """Execute the agent with the provided context and input.
 
@@ -224,9 +228,12 @@ class ToolHandler:
                 wrapper: RunContextWrapper[Context], input: str
             ) -> ToolOutput:
                 return await run(wrapper.context, input)
-
+            if input_type is not None:
+                run_agent.__annotations__["input"] = input_type
             return run_agent
 
+        if input_type is not None:
+            run.__annotations__["input"] = input_type
         return run
 
     @classmethod

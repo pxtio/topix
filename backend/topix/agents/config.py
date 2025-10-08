@@ -40,6 +40,7 @@ class PlanConfig(BaseAgentConfig):
     web_search: WebSearchConfig
     memory_search: BaseAgentConfig
     code_interpreter: BaseAgentConfig
+    navigate: BaseAgentConfig
 
     # For Tavily and LinkUp
     enable_web_summarization: bool = True

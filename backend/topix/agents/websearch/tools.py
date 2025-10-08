@@ -245,9 +245,9 @@ async def search_linkup(
     )
 
 
-async def navigate(
+async def fetch_content(
     web_url: str,
-    extract_depth: Literal["basic", "advanced"],
+    extract_depth: Literal["basic", "advanced"] = "basic",
     *,
     client: Optional[httpx.AsyncClient] = None,
     timeout: Optional[httpx.Timeout] = None,

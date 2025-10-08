@@ -1,11 +1,4 @@
 """Utils for web search."""
-<<<<<<< HEAD
-
-from topix.agents.datatypes.outputs import WebSearchOutput
-from topix.agents.datatypes.stream import AgentStreamMessage, Content
-from topix.utils.web.favicon import fetch_meta_images_batch
-
-=======
 import logging
 
 from datetime import datetime, timedelta
@@ -17,7 +10,6 @@ from topix.utils.web.favicon import fetch_meta_images_batch
 
 logger = logging.getLogger(__name__)
 
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
 
 async def convert_search_output_to_annotation_message(
     search_output: WebSearchOutput,
@@ -50,8 +42,6 @@ async def convert_search_output_to_annotation_message(
         tool_name=tool_name,
         content=Content(annotations=annotations),
     )
-<<<<<<< HEAD
-=======
 
 
 def get_from_date(recency: Recurrence, now: datetime = None) -> datetime:
@@ -94,4 +84,3 @@ def pretty_date(iso_str: str) -> str | None:
         suffix = {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
 
     return dt.strftime(f"%b {day}{suffix}, %Y")
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec

@@ -1,8 +1,4 @@
 """Web Search Handler."""
-<<<<<<< HEAD
-
-=======
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
 import httpx
 
 from agents import FunctionTool, ModelSettings, RunContextWrapper, Runner, function_tool
@@ -17,10 +13,7 @@ from topix.agents.tool_handler import ToolHandler
 from topix.agents.websearch.openai import OpenAIWebSearch
 from topix.agents.websearch.tools import search_linkup, search_perplexity, search_tavily
 from topix.agents.websearch.web_summarize import WebSummarize
-<<<<<<< HEAD
-=======
 from topix.datatypes.recurrence import Recurrence
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
 from topix.utils.common import gen_uid
 
 
@@ -47,10 +40,7 @@ class WebSearchHandler:
                 instructions_template=config.instructions_template,
                 model_settings=config.model_settings,
                 search_context_size=config.search_context_size,
-<<<<<<< HEAD
-=======
                 recency=config.recency,
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
                 streamed=config.streamed,
             )
         else:
@@ -62,10 +52,7 @@ class WebSearchHandler:
             return cls.get_web_tool(
                 search_engine=config.search_engine,
                 search_context_size=config.search_context_size,
-<<<<<<< HEAD
-=======
                 recency=config.recency,
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
                 max_results=config.max_results,
                 enable_summary=config.enable_summary,
                 streamed=config.streamed,
@@ -81,10 +68,7 @@ class WebSearchHandler:
         instructions_template: str = "web_search.jinja",
         model_settings: ModelSettings | None = None,
         search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
-<<<<<<< HEAD
-=======
         recency: Recurrence | None = None,
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
         streamed: bool = False,
     ) -> FunctionTool:
         """Get the OpenAI web search tool."""
@@ -93,10 +77,7 @@ class WebSearchHandler:
             instructions_template=instructions_template,
             model_settings=model_settings,
             search_context_size=search_context_size,
-<<<<<<< HEAD
-=======
             recency=recency,
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
         )
 
         return ToolHandler.convert_agent_to_tool(
@@ -110,10 +91,7 @@ class WebSearchHandler:
         cls,
         search_engine: WebSearchOption,
         search_context_size: WebSearchContextSize,
-<<<<<<< HEAD
-=======
         recency: Recurrence | None = None,
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
         max_results: int = 10,
         enable_summary: bool = False,
         streamed: bool = False,
@@ -142,10 +120,7 @@ class WebSearchHandler:
                 query=query,
                 max_results=max_results,
                 search_context_size=search_context_size,
-<<<<<<< HEAD
-=======
                 recency=recency,
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
                 client=client,
                 timeout=timeout,
             )

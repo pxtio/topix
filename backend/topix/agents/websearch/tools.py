@@ -10,11 +10,8 @@ import httpx
 from topix.agents.datatypes.annotations import SearchResult
 from topix.agents.datatypes.outputs import WebSearchOutput
 from topix.agents.datatypes.web_search import WebSearchContextSize
-<<<<<<< HEAD:backend/topix/agents/websearch/tools.py
-=======
 from topix.agents.websearch.utils import get_from_date
 from topix.datatypes.recurrence import Recurrence
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec:backend/topix/agents/assistant/websearch/tools.py
 
 semaphore = asyncio.Semaphore(8)
 
@@ -74,8 +71,6 @@ async def search_perplexity(
         "max_tokens_per_page": tokens_per_page
     }
 
-<<<<<<< HEAD:backend/topix/agents/websearch/tools.py
-=======
     if recency:
         match recency:
             case Recurrence.DAILY:
@@ -90,7 +85,6 @@ async def search_perplexity(
                 raise ValueError(f"Invalid recency: {recency}. Must be one of 'daily', 'weekly', 'monthly', 'yearly'.")
         data["search_recency_filter"] = recency_filter
 
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec:backend/topix/agents/assistant/websearch/tools.py
     async with semaphore:
         if client is None:
             async with httpx.AsyncClient() as ac:
@@ -157,13 +151,10 @@ async def search_tavily(
         "auto_parameters": True,
     }
 
-<<<<<<< HEAD:backend/topix/agents/websearch/tools.py
-=======
     if recency:
         from_date = get_from_date(recency).isoformat()
         data["start_date"] = from_date
 
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec:backend/topix/agents/assistant/websearch/tools.py
     async with semaphore:
         if client is None:
             async with httpx.AsyncClient() as ac:
@@ -227,13 +218,10 @@ async def search_linkup(
         "depth": depth,
     }
 
-<<<<<<< HEAD:backend/topix/agents/websearch/tools.py
-=======
     if recency:
         from_date = get_from_date(recency).isoformat()
         data["fromDate"] = from_date
 
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec:backend/topix/agents/assistant/websearch/tools.py
     async with semaphore:
         if client is None:
             async with httpx.AsyncClient() as ac:

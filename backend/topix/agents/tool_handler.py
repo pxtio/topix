@@ -4,11 +4,7 @@ import functools
 import inspect
 import json
 
-<<<<<<< HEAD
-from typing import Any, Awaitable, Callable
-=======
 from typing import Any, Awaitable, Callable, Type
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
 
 from agents import (
     Agent,
@@ -55,10 +51,7 @@ class ToolHandler:
         tool_description: str = "",
         max_turns: int = 5,
         streamed: bool = False,
-<<<<<<< HEAD
-=======
         input_type: Type | None = None,
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
     ) -> FunctionTool:
         """Convert agent object to a function.
 
@@ -69,21 +62,14 @@ class ToolHandler:
             tool_description: The description of the tool.
             max_turns: The maximum number of turns for the tool.
             streamed: Whether to stream the output.
-<<<<<<< HEAD
-=======
             input_type: The type of the input for the agent. If provided, it will be used to annotate the input in the function signature.
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
 
         Returns:
             The FunctionTool object.
 
         """
         return function_tool(
-<<<<<<< HEAD
-            func=cls.convert_agent_to_func(agent, tool_name, max_turns, streamed),
-=======
             func=cls.convert_agent_to_func(agent, tool_name, max_turns, streamed, input_type=input_type),
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
             name_override=tool_name,
             description_override=tool_description if tool_description else None,
         )
@@ -167,10 +153,7 @@ class ToolHandler:
         max_turns: int = 5,
         streamed: bool = False,
         is_subagent: bool = True,
-<<<<<<< HEAD
-=======
         input_type: Type | None = None
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
     ) -> Callable[[RunContextWrapper[Context] | Context, Any], Awaitable[Any]]:
         """Convert agent object to a function.
 
@@ -182,20 +165,13 @@ class ToolHandler:
             max_turns: The maximum number of turns for the tool.
             streamed: Whether to stream the output.
             is_subagent: Whether the agent is a subagent.
-<<<<<<< HEAD
-=======
             input_type: The type of the input for the agent. If provided,
                 it will be used to annotate the input in the function signature.
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
 
         Returns:
             The function that can be later converted as FunctionTool.
 
         """
-<<<<<<< HEAD
-
-=======
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
         async def run(context: Context, input: Any) -> Any:
             """Execute the agent with the provided context and input.
 
@@ -252,18 +228,12 @@ class ToolHandler:
                 wrapper: RunContextWrapper[Context], input: str
             ) -> ToolOutput:
                 return await run(wrapper.context, input)
-<<<<<<< HEAD
-
-            return run_agent
-
-=======
             if input_type is not None:
                 run_agent.__annotations__["input"] = input_type
             return run_agent
 
         if input_type is not None:
             run.__annotations__["input"] = input_type
->>>>>>> 80f0022b0b9e3f79a90f348bb3fae444b5ae4dec
         return run
 
     @classmethod

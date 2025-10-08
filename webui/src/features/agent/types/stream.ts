@@ -80,6 +80,7 @@ export type ToolName =
   | "web_search"
   | "memory_search"
   | "code_interpreter"
+  | "navigate"
   | "raw_message"
 
 
@@ -87,6 +88,7 @@ export const ToolNameDescription: Record<ToolName, string> = {
   "web_search": "Search the web",
   "memory_search": "Search memory",
   "code_interpreter": "Interpret code",
+  "navigate": "Fetch and analyze web page content",
   "raw_message": "Reasoning"
 }
 

@@ -21,6 +21,10 @@ plan:
     enable_summary: false
     streaming: false
 
+  navigate:
+    model: openai/gpt-4.1-mini
+    instructions_template: navigate.system.jinja
+
   memory_search:
     model: openai/gpt-4.1-mini
     instructions_template: memory_search.jinja

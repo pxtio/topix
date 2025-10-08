@@ -64,6 +64,15 @@ class BaseAgent(Agent[Context]):
             if model_type != "openai":
                 self.model = LitellmModel(self.model)
 
+        if not hasattr(self, "_input_type"):
+            # Set a default value for _input_type to avoid AttributeError
+            # When defining a new agent class, if input type is well defined, must set it explicitly in __init__
+            # This is extremely useful when converting the agent to a tool and input type is a BaseModel
+            # in _input_formatter method
+            # This is used in ToolHandler.convert_agent_to_func
+            # It provides type annotation for the input parameter of the agent and also the converted tool function
+            self._input_type = None
+
     def _adjust_model_settings(
         self,
         model: str | LitellmModel,
@@ -139,7 +148,12 @@ class BaseAgent(Agent[Context]):
 
         """
         return ToolHandler.convert_agent_to_tool(
-            self, tool_name, tool_description, max_turns, streamed
+            self,
+            tool_name,
+            tool_description,
+            max_turns,
+            streamed,
+            input_type=self._input_type if hasattr(self, "_input_type") else None,  # To be safe, check if _input_type exists otherwise set to None
         )
 
     async def _as_tool_hook(

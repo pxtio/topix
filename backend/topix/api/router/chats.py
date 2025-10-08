@@ -10,6 +10,7 @@ from fastapi.params import Path, Query
 from topix.agents.assistant.manager import AssistantManager
 from topix.agents.config import AssistantManagerConfig
 from topix.agents.datatypes.context import Context, ReasoningContext
+from topix.agents.deep_research import DeepResearch
 from topix.agents.describe_chat import DescribeChat
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
@@ -148,22 +149,27 @@ async def send_message(
     chat_store: ChatStore = request.app.chat_store
     session = AssistantSession(session_id=chat_id, chat_store=chat_store)
 
-    assistant_config = AssistantManagerConfig.from_yaml()
-    assistant_config.set_model(body.model)
-    assistant_config.set_web_engine(body.web_search_engine)
-    assistant_config.set_reasoning(body.reasoning_effort)
+    if body.use_deep_research:
+        deepsearch = DeepResearch.from_yaml()
+        run_streamed = deepsearch.run_streamed
+    else:
+        assistant_config = AssistantManagerConfig.from_yaml()
+        assistant_config.set_model(body.model)
+        assistant_config.set_web_engine(body.web_search_engine)
+        assistant_config.set_reasoning(body.reasoning_effort)
 
-    assistant: AssistantManager = AssistantManager.from_config(
-        content_store=chat_store._content_store,
-        config=assistant_config
-    )
+        assistant: AssistantManager = AssistantManager.from_config(
+            content_store=chat_store._content_store,
+            config=assistant_config
+        )
 
-    assistant.plan_agent.set_enabled_tools(body.enabled_tools)
-    if body.force_tool:
-        assistant.plan_agent.force_tool(body.force_tool)
+        assistant.plan_agent.set_enabled_tools(body.enabled_tools)
+        if body.force_tool:
+            assistant.plan_agent.force_tool(body.force_tool)
+        run_streamed = assistant.run_streamed
 
     try:
-        async for data in assistant.run_streamed(
+        async for data in run_streamed(
             query=body.query,
             context=ReasoningContext(),
             session=session,

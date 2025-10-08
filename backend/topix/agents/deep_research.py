@@ -167,7 +167,7 @@ class DeepResearch:
         config = DeepResearchConfig.from_yaml(filepath=filepath)
         return cls.from_config(config)
 
-    async def run_streamed(
+    async def run_streamed(  # noqa: C901
         self,
         context: ReasoningContext,
         query: str,

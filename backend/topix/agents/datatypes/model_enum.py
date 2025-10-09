@@ -23,16 +23,14 @@ class GeminiModel(str, Enum):
     GEMINI_2_5_PRO = "gemini/gemini-2.5-pro"
 
 
-class AnthropicModel(str, Enum):
+class OpenRouterModel(str, Enum):
     """Anthropic Models."""
-
-    # CLAUDE_SONNET_4 = "anthropic/claude-sonnet-4-20250514"
-    # CLAUDE_OPUS_4_1 = "anthropic/claude-opus-4-1-20250805"
-    # CLAUDE_HAIKU = "anthropic/claude-3-5-haiku-20241022"
 
     CLAUDE_SONNET_4 = "openrouter/anthropic/claude-sonnet-4.5"
     CLAUDE_OPUS_4_1 = "openrouter/anthropic/claude-opus-4.1"
     CLAUDE_HAIKU = "openrouter/anthropic/claude-3.5-haiku"
+    DEEPSEEK_CHAT = "openrouter/deepseek/deepseek-chat-v3.1"
+    MISTRAL_MEDIUM = "openrouter/mistralai/mistral-medium-3.1"
 
 
 class PerplexityModel(str, Enum):
@@ -47,7 +45,7 @@ class ModelEnum:
     OpenAI = OpenAIModel
     Gemini = GeminiModel
     Perplexity = PerplexityModel
-    Anthropic = AnthropicModel
+    OpenRouter = OpenRouterModel
 
 
 def support_temperature(model: str) -> bool:

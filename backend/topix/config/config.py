@@ -97,6 +97,12 @@ class AnthropicConfig(BaseAPIConfig):
     pass
 
 
+class OpenRouterConfig(BaseAPIConfig):
+    """Configuration for OpenRouter API."""
+
+    pass
+
+
 class APIsConfig(BaseModel):
     """Configuration for external APIs used in the application."""
 
@@ -107,6 +113,7 @@ class APIsConfig(BaseModel):
     linkup: LinkUpConfig
     gemini: GeminiConfig
     anthropic: AnthropicConfig
+    openrouter: OpenRouterConfig
 
 
 class RunConfig(BaseModel):

@@ -13,9 +13,9 @@ export const LlmModels = [
   "gemini/gemini-2.0-flash",
   "gemini/gemini-2.5-flash",
   "gemini/gemini-2.5-pro",
-  "anthropic/claude-opus-4-1-20250805",
-  "anthropic/claude-sonnet-4-20250514",
-  "anthropic/claude-3-5-haiku-20241022"
+  "openrouter/anthropic/claude-opus-4.1",
+  "openrouter/anthropic/claude-sonnet-4.5",
+  "openrouter/anthropic/claude-3.5-haiku"
 ] as const
 
 export type LlmModel = typeof LlmModels[number]
@@ -32,9 +32,9 @@ export const LlmName: Record<LlmModel, string> = {
   "gemini/gemini-2.0-flash": "Gemini 2.0 Flash",
   "gemini/gemini-2.5-flash": "Gemini 2.5 Flash",
   "gemini/gemini-2.5-pro": "Gemini 2.5 Pro",
-  "anthropic/claude-opus-4-1-20250805": "Claude Opus 4.1",
-  "anthropic/claude-sonnet-4-20250514": "Claude Sonnet 4",
-  "anthropic/claude-3-5-haiku-20241022": "Claude Haiku"
+  "openrouter/anthropic/claude-opus-4.1": "Claude Opus 4.1",
+  "openrouter/anthropic/claude-sonnet-4.5": "Claude Sonnet 4",
+  "openrouter/anthropic/claude-3.5-haiku": "Claude Haiku"
 }
 
 export const LlmDescription: Record<LlmModel, string> = {
@@ -49,9 +49,9 @@ export const LlmDescription: Record<LlmModel, string> = {
   "gemini/gemini-2.0-flash": "Efficient and affordable model ideal for factual, concise answers",
   "gemini/gemini-2.5-flash": "Faster Gemini model offering improved quality over 2.0 Flash",
   "gemini/gemini-2.5-pro": "Flagship Gemini model with high accuracy and rich reasoning capabilities",
-  "anthropic/claude-opus-4-1-20250805": "Powerful agentic model from Anthropic",
-  "anthropic/claude-sonnet-4-20250514": "Fast and powerful model from Anthropic",
-  "anthropic/claude-3-5-haiku-20241022": "Lightweight model from Anthropic"
+  "openrouter/anthropic/claude-opus-4.1": "Powerful agentic model from Anthropic",
+  "openrouter/anthropic/claude-sonnet-4.5": "Fast and powerful model from Anthropic",
+  "openrouter/anthropic/claude-3.5-haiku": "Lightweight model from Anthropic"
 }
 
 
@@ -67,7 +67,7 @@ export const LlmBrandIcon: Record<LlmModel, React.ComponentType<{ size?: number 
   "gemini/gemini-2.0-flash": Gemini.Color,
   "gemini/gemini-2.5-flash": Gemini.Color,
   "gemini/gemini-2.5-pro": Gemini.Color,
-  "anthropic/claude-opus-4-1-20250805": Anthropic,
-  "anthropic/claude-sonnet-4-20250514": Anthropic,
-  "anthropic/claude-3-5-haiku-20241022": Anthropic
+  "openrouter/anthropic/claude-opus-4.1": Anthropic,
+  "openrouter/anthropic/claude-sonnet-4.5": Anthropic,
+  "openrouter/anthropic/claude-3.5-haiku": Anthropic
 }

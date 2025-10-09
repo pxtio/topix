@@ -42,7 +42,7 @@ const ErrorIcon = () => <HugeiconsIcon
 
 
 // Button that generates a mind map from the given message.
-export const SaveAsNote = ({ message, type }: { message: string, type: "notify" | "mapify" }) => {
+export const SaveAsNote = ({ message, type, saveAsIs = false }: { message: string, type: "notify" | "mapify", saveAsIs?: boolean }) => {
   const [processing, setProcessing] = useState<boolean>(false)
 
   const { chatId } = useChat()
@@ -80,7 +80,8 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
       await convertToMindMapAsync({
         boardId,
         answer: message,
-        toolType: type
+        toolType: type,
+        saveAsIs
       })
       toast.success("Notes updated.", {
         id,
@@ -120,7 +121,7 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
     )
     try {
       const boardId = await createBoardAsync({ userId })
-      await convertToMindMapAsync({ boardId, answer: message, toolType: type})
+      await convertToMindMapAsync({ boardId, answer: message, toolType: type, saveAsIs })
       toast.success(
         "Notes updated.",
         {

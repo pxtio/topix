@@ -10,6 +10,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { Link04Icon } from "@hugeicons/core-free-icons"
 import { ResponseActions } from "./actions/response-actions"
 import { useMemo } from "react"
+import clsx from "clsx"
 
 
 /**
@@ -62,67 +63,95 @@ export const AssistantMessage = ({
 }: {
   message: ChatMessage
 }) => {
-  const streamingMessage = useChatStore((state) => state.streams.get(message.id))
+  const streams = useChatStore((state) => state.streams)
   const isStreaming = useChatStore((state) => state.isStreaming)
   const streamingMessageId = useChatStore((state) => state.streamingMessageId)
 
+  const streamingMessage = streams.get(message.id)
   const streaming = isStreaming && streamingMessageId === message.id
 
-  const lastStep = streamingMessage?.steps?.[streamingMessage.steps.length - 1]
+  const {
+    showLastStepMessage,
+    content,
+    agentResponse,
+  } = useMemo(() => {
+    const sm = streamingMessage
+    const messageSteps = message.properties.reasoning?.reasoning ?? []
 
-  // Determine if the last step message should be shown
-  // whether it's a streaming response or a historical message
-  const showLastStepMessage = (
-    streamingMessage &&
-    streamingMessage.steps.length > 0
-  ) || message
+    // pick the right source of truth for step metadata:
+    // - if actively streaming and we have streaming steps, use those
+    // - otherwise, use the historical message steps
+    const effectiveSteps =
+      sm?.steps?.length ? sm.steps : messageSteps
 
-  const messageContent = message.content.markdown ? message.content.markdown : null
+    const lastStep = effectiveSteps?.[effectiveSteps.length - 1]
+    const isSynthesis = lastStep?.name === 'synthesizer'
 
-  const rawContent = lastStep?.output && isMainResponse(lastStep.name) ?
-    lastStep.output as string
-    :
-    ""
+    const showLastStepMessage =
+      (effectiveSteps && effectiveSteps.length > 0) || !!message
 
-  const finalContent = useMemo(() => {
-    if (streamingMessage && streamingMessage.steps.length > 0) {
-      const uniqueRawMessageIds = new Set(
-        streamingMessage.steps
-          .filter(step => isMainResponse(step.name))
-          .map(step => step.id.split('::')[0])
-      )
-      if (uniqueRawMessageIds.size > 1) {
-        return rawContent
+    const messageContent = message.content.markdown ?? null
+
+    // only relevant for active streaming; historical uses messageContent
+    const rawContent =
+      sm &&
+      sm.steps?.length > 0 &&
+      lastStep?.output &&
+      isMainResponse(lastStep.name)
+        ? (lastStep.output as string)
+        : ''
+
+    let finalContent = ''
+    if (sm && sm.steps?.length > 0) {
+      if (isSynthesis) {
+        finalContent = rawContent
+      } else {
+        const uniqueRawMessageIds = new Set(
+          sm.steps
+            .filter(step => isMainResponse(step.name))
+            .map(step => step.id.split('::')[0])
+        )
+        if (uniqueRawMessageIds.size > 1) {
+          finalContent = rawContent
+        }
       }
     }
-    return ""
-  }, [rawContent, streamingMessage])
 
+    const markdown = streaming
+      ? finalContent
+      : (messageContent || finalContent)
 
-  const markdownMessage = streaming ? finalContent : (messageContent ? messageContent : finalContent)
+    const agentResponse =
+      sm ??
+      (messageSteps.length
+        ? { steps: messageSteps }
+        : undefined)
 
-  const agentResponse = streamingMessage ?
-    streamingMessage
-    :
-    message.properties.reasoning?.reasoning ?
-    { steps: message.properties.reasoning.reasoning }
-    :
-    undefined
+    return {
+      showLastStepMessage,
+      content: { markdown, isSynthesis },
+      agentResponse
+    }
+  }, [streamingMessage, message, streaming])
+
+  const messageClass = clsx(
+    "w-full p-4 space-y-2 min-w-0",
+    content.isSynthesis && "rounded-xl border border-border"
+  )
 
   const lastStepMessage = showLastStepMessage ? (
-    <div className="w-full p-4 space-y-2 min-w-0">
-      <MarkdownView content={markdownMessage} />
+    <div className={messageClass}>
+      <MarkdownView content={content.markdown} />
       {!streaming && agentResponse && <SourcesView answer={agentResponse} />}
-      {!streaming && <ResponseActions message={markdownMessage} />}
+      {!streaming && <ResponseActions message={content.markdown} saveAsIs={content.isSynthesis} />}
     </div>
   ) : null
 
   return (
     <div className='w-full space-y-4'>
-      {
-        agentResponse &&
+      {agentResponse && (
         <ReasoningStepsView response={agentResponse} isStreaming={streaming} />
-      }
+      )}
       {lastStepMessage}
     </div>
   )

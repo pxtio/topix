@@ -1,6 +1,6 @@
 import { memo, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
-import { type AgentResponse, type ReasoningStep } from "../../types/stream"
+import { ToolNameIcon, type AgentResponse, type ReasoningStep } from "../../types/stream"
 import { extractStepDescription, getWebSearchUrls } from "../../utils/stream/build"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { IdeaIcon, Tick01Icon } from "@hugeicons/core-free-icons"
@@ -58,6 +58,14 @@ const ReasoningStepViewImpl = ({
     message.length > 50 ? 'font-normal' : 'font-medium'
   )
 
+  const stepIcon = ToolNameIcon[step.name]
+  const successIcon = stepIcon || Tick01Icon
+  const successDivClass = cn(
+    'absolute rounded-full bg-secondary z-20 flex items-center justify-center top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2',
+    stepIcon ? 'w-3 h-3 bg-transparent text-secondary' : 'w-2.5 h-2.5 bg-secondary text-secondary-foreground'
+  )
+  const iconClass = stepIcon ? "size-3" : "size-2"
+
   return (
     <div
       className={`
@@ -75,8 +83,8 @@ const ReasoningStepViewImpl = ({
           {
             isLoading ?
             <div className='absolute w-2 h-2 rounded-full bg-secondary z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' /> :
-            <div className='absolute w-2.5 h-2.5 rounded-full bg-secondary z-20 flex items-center justify-center top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
-              <HugeiconsIcon icon={Tick01Icon} className="size-2 text-secondary-foreground" strokeWidth={1.75} />
+            <div className={successDivClass}>
+              <HugeiconsIcon icon={successIcon} className={iconClass} strokeWidth={1.75} />
             </div>
           }
         </div>

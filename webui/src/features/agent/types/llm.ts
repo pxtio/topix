@@ -1,73 +1,65 @@
-import { OpenAI, Gemini, Anthropic } from '@lobehub/icons'
+import { OpenAI, Gemini, Anthropic, DeepSeek, Mistral } from '@lobehub/icons'
 
 
 export const LlmModels = [
   "openai/gpt-4o",
-  "openai/gpt-4o-mini",
   "openai/gpt-4.1",
-  "openai/gpt-4.1-mini",
-  "openai/gpt-4.1-nano",
   "openai/gpt-5",
   "openai/gpt-5-mini",
   "openai/gpt-5-nano",
-  "gemini/gemini-2.0-flash",
   "gemini/gemini-2.5-flash",
   "gemini/gemini-2.5-pro",
-  "anthropic/claude-opus-4-1-20250805",
-  "anthropic/claude-sonnet-4-20250514",
-  "anthropic/claude-3-5-haiku-20241022"
+  "openrouter/anthropic/claude-opus-4.1",
+  "openrouter/anthropic/claude-sonnet-4.5",
+  "openrouter/anthropic/claude-3.5-haiku",
+  "openrouter/mistralai/mistral-medium-3.1",
+  "openrouter/deepseek/deepseek-chat-v3.1"
 ] as const
 
 export type LlmModel = typeof LlmModels[number]
 
 export const LlmName: Record<LlmModel, string> = {
   "openai/gpt-4o": "GPT-4o",
-  "openai/gpt-4o-mini": "GPT-4o Mini",
   "openai/gpt-4.1": "GPT-4.1",
-  "openai/gpt-4.1-mini": "GPT-4.1 Mini",
-  "openai/gpt-4.1-nano": "GPT-4.1 Nano",
   "openai/gpt-5": "GPT-5",
   "openai/gpt-5-mini": "GPT-5 Mini",
   "openai/gpt-5-nano": "GPT-5 Nano",
-  "gemini/gemini-2.0-flash": "Gemini 2.0 Flash",
   "gemini/gemini-2.5-flash": "Gemini 2.5 Flash",
   "gemini/gemini-2.5-pro": "Gemini 2.5 Pro",
-  "anthropic/claude-opus-4-1-20250805": "Claude Opus 4.1",
-  "anthropic/claude-sonnet-4-20250514": "Claude Sonnet 4",
-  "anthropic/claude-3-5-haiku-20241022": "Claude Haiku"
+  "openrouter/anthropic/claude-opus-4.1": "Claude Opus 4.1",
+  "openrouter/anthropic/claude-sonnet-4.5": "Claude Sonnet 4",
+  "openrouter/anthropic/claude-3.5-haiku": "Claude Haiku",
+  "openrouter/mistralai/mistral-medium-3.1": "Mistral Medium",
+  "openrouter/deepseek/deepseek-chat-v3.1": "DeepSeek Chat"
 }
 
 export const LlmDescription: Record<LlmModel, string> = {
-  "openai/gpt-4o": "High-quality, fast, and capable model with strong reasoning skills and low latency",
-  "openai/gpt-4o-mini": "A lighter, more affordable variant of GPT-4o for less intensive tasks",
-  "openai/gpt-4.1": "Enhanced GPT-4 model with strong general capabilities",
-  "openai/gpt-4.1-mini": "Smaller GPT-4.1 model optimized for cost-effective and fast responses",
-  "openai/gpt-4.1-nano": "Ultra-lightweight GPT-4.1 model ideal for very fast, basic tasks",
-  "openai/gpt-5": "Next-generation model with advanced capabilities and improved performance",
-  "openai/gpt-5-mini": "Compact version of GPT-5 designed for efficiency and speed",
-  "openai/gpt-5-nano": "Lightweight GPT-5 model suitable for quick tasks",
-  "gemini/gemini-2.0-flash": "Efficient and affordable model ideal for factual, concise answers",
-  "gemini/gemini-2.5-flash": "Faster Gemini model offering improved quality over 2.0 Flash",
-  "gemini/gemini-2.5-pro": "Flagship Gemini model with high accuracy and rich reasoning capabilities",
-  "anthropic/claude-opus-4-1-20250805": "Powerful agentic model from Anthropic",
-  "anthropic/claude-sonnet-4-20250514": "Fast and powerful model from Anthropic",
-  "anthropic/claude-3-5-haiku-20241022": "Lightweight model from Anthropic"
+  "openai/gpt-4o": "High-quality, fast, and capable model with strong reasoning and low latency",
+  "openai/gpt-4.1": "Enhanced GPT-4 model with balanced performance across reasoning and creativity",
+  "openai/gpt-5": "Next-generation model offering advanced reasoning and broader skill coverage",
+  "openai/gpt-5-mini": "Compact GPT-5 version optimized for efficiency and responsiveness",
+  "openai/gpt-5-nano": "Ultra-light GPT-5 variant ideal for quick or edge tasks",
+  "gemini/gemini-2.5-flash": "Optimized Gemini model delivering strong quality with near-instant responses",
+  "gemini/gemini-2.5-pro": "Advanced Gemini flagship offering deep reasoning and multimodal capabilities",
+  "openrouter/anthropic/claude-opus-4.1": "Top-tier Claude model known for its long-context reasoning and safety alignment",
+  "openrouter/anthropic/claude-sonnet-4.5": "Balanced Claude model combining speed with nuanced understanding",
+  "openrouter/anthropic/claude-3.5-haiku": "Lightweight and responsive Claude variant suited for everyday tasks",
+  "openrouter/mistralai/mistral-medium-3.1": "Efficient Mistral model offering strong multilingual and structured reasoning",
+  "openrouter/deepseek/deepseek-chat-v3.1": "High-performance open-source model with advanced reasoning and adaptability"
 }
 
 
 export const LlmBrandIcon: Record<LlmModel, React.ComponentType<{ size?: number | string, color?: string }>> = {
   "openai/gpt-4o": OpenAI,
-  "openai/gpt-4o-mini": OpenAI,
   "openai/gpt-4.1": OpenAI,
-  "openai/gpt-4.1-mini": OpenAI,
-  "openai/gpt-4.1-nano": OpenAI,
   "openai/gpt-5": OpenAI,
   "openai/gpt-5-mini": OpenAI,
   "openai/gpt-5-nano": OpenAI,
-  "gemini/gemini-2.0-flash": Gemini.Color,
   "gemini/gemini-2.5-flash": Gemini.Color,
   "gemini/gemini-2.5-pro": Gemini.Color,
-  "anthropic/claude-opus-4-1-20250805": Anthropic,
-  "anthropic/claude-sonnet-4-20250514": Anthropic,
-  "anthropic/claude-3-5-haiku-20241022": Anthropic
+  "openrouter/anthropic/claude-opus-4.1": Anthropic,
+  "openrouter/anthropic/claude-sonnet-4.5": Anthropic,
+  "openrouter/anthropic/claude-3.5-haiku": Anthropic,
+  "openrouter/mistralai/mistral-medium-3.1": Mistral.Color,
+  "openrouter/deepseek/deepseek-chat-v3.1": DeepSeek.Color
 }

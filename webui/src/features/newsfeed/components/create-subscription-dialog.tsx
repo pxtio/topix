@@ -105,8 +105,8 @@ export function CreateSubscriptionDialog({
                     >
                       <span className='inline-flex items-center gap-1'>
                         {active
-                          ? <HugeiconsIcon icon={Tick01Icon} strokeWidth={1.75} className='w-4 h-4' />
-                          : <HugeiconsIcon icon={TOPIC_EMOJI[k]} strokeWidth={1.75} className='w-4 h-4' />
+                          ? <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} className='w-4 h-4' />
+                          : <HugeiconsIcon icon={TOPIC_EMOJI[k]} strokeWidth={2} className='w-4 h-4' />
                         }
                       </span>
                       {label}

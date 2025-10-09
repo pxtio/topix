@@ -20,6 +20,7 @@ export interface ChatStore {
   llmModel: LlmModel
   webSearchEngine: WebSearchEngine
   enabledTools: ToolName[]
+  useDeepResearch: boolean
   setLlmModel: (model: LlmModel) => void
   setWebSearchEngine: (engine: WebSearchEngine) => void
   setEnabledTools: (tools: ToolName[]) => void
@@ -27,6 +28,7 @@ export interface ChatStore {
   setStreamingMessageId: (messageId?: string) => void
   setStream: (responseId: string, response: AgentResponse) => void
   clearStream: (responseId: string) => void
+  setUseDeepResearch: (useDeepResearch: boolean) => void
 }
 
 
@@ -48,6 +50,8 @@ export const useChatStore = create<ChatStore>((set) => ({
 
   streamingMessageId: undefined,
 
+  useDeepResearch: false,
+
   setLlmModel: (model) => set({ llmModel: model }),
 
   setWebSearchEngine: (engine) => set({ webSearchEngine: engine }),
@@ -66,5 +70,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     const streams = new Map(state.streams)
     streams.delete(responseId)
     return { streams }
-  })
+  }),
+
+  setUseDeepResearch: (useDeepResearch) => set({ useDeepResearch }),
 }))

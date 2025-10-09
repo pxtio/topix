@@ -34,6 +34,8 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   const isStreaming = useChatStore((state) => state.isStreaming)
   const webSearchEngine = useChatStore((state) => state.webSearchEngine)
   const enabledTools = useChatStore((state) => state.enabledTools)
+  const useDeepResearch = useChatStore((state) => state.useDeepResearch)
+  const setUseDeepResearch = useChatStore((state) => state.setUseDeepResearch)
 
   const [input, setInput] = useState<string>("")
 
@@ -72,10 +74,13 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
       model: llmModel,
       webSearchEngine,
       enabledTools,
+      useDeepResearch,
     } as SendMessageRequestPayload
 
     // clear input right before launching search
     setInput("")
+    // reset use deep research to false after sending message
+    setUseDeepResearch(false)
     await sendMessageAsync({ payload, userId, chatId: id })
     if (createNewChat) {
       await describeChatAsync({ chatId: id, userId })

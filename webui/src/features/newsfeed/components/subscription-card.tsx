@@ -52,7 +52,7 @@ export function SubscriptionCard({
             >
               {
                 disabled ? (
-                  <SquareDashedKanban animate animation="default" loop speed={2} className='size-5 text-foreground/50' strokeWidth={1.75} />
+                  <SquareDashedKanban animate animation="default" loop speed={2} className='size-5 text-foreground/50' strokeWidth={2} />
                 ): (
                   <HugeiconsIcon
                     icon={topicKey ? TOPIC_EMOJI[topicKey] : PropertyNewIcon}
@@ -74,7 +74,7 @@ export function SubscriptionCard({
           onClick={handleDelete}
           className='text-destructive focus:text-destructive'
         >
-          <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4 mr-2' strokeWidth={1.75} />
+          <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4 mr-2' strokeWidth={2} />
           Delete
         </ContextMenuItem>
       </ContextMenuContent>

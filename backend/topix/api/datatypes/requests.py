@@ -41,6 +41,7 @@ class SendMessageRequest(BaseModel):
         AgentToolName.NAVIGATE,
     ]
     reasoning_effort: Literal["low", "medium", "high"] | None = None
+    use_deep_research: bool = False
 
 
 class ChatUpdateRequest(BaseModel):

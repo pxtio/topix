@@ -94,15 +94,15 @@ export function ActionPanel({
     >
       {/* View mode toggle */}
       <ModeButton mode='graph' label='Graph'>
-        <HugeiconsIcon icon={ChartRelationshipIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+        <HugeiconsIcon icon={ChartRelationshipIcon} className='size-4 shrink-0' strokeWidth={2} />
       </ModeButton>
 
       <ModeButton mode='linear' label='Linear'>
-        <HugeiconsIcon icon={LeftToRightListBulletIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+        <HugeiconsIcon icon={LeftToRightListBulletIcon} className='size-4 shrink-0' strokeWidth={2} />
       </ModeButton>
 
       <ModeButton mode='grid' label='Grid'>
-        <HugeiconsIcon icon={GridViewIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+        <HugeiconsIcon icon={GridViewIcon} className='size-4 shrink-0' strokeWidth={2} />
       </ModeButton>
 
       <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
@@ -129,7 +129,7 @@ export function ActionPanel({
             title='Selection mode'
             aria-label='Selection mode'
           >
-            <HugeiconsIcon icon={Cursor02Icon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={Cursor02Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Zoom controls */}
@@ -141,7 +141,7 @@ export function ActionPanel({
             title='Zoom in'
             aria-label='Zoom in'
           >
-            <HugeiconsIcon icon={PlusSignIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={PlusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
           <Button
             variant={null}
@@ -151,7 +151,7 @@ export function ActionPanel({
             title='Zoom out'
             aria-label='Zoom out'
           >
-            <HugeiconsIcon icon={MinusSignIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={MinusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
           <Button
             variant={null}
@@ -161,7 +161,7 @@ export function ActionPanel({
             title='Fit view'
             aria-label='Fit view'
           >
-            <HugeiconsIcon icon={FitToScreenIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={FitToScreenIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Lock / Unlock canvas */}
@@ -175,9 +175,9 @@ export function ActionPanel({
             aria-label={isLocked ? 'Unlock canvas' : 'Lock canvas'}
           >
             {isLocked ? (
-              <HugeiconsIcon icon={SquareLock02Icon} className='size-4 shrink-0' strokeWidth={1.75} />
+              <HugeiconsIcon icon={SquareLock02Icon} className='size-4 shrink-0' strokeWidth={2} />
             ) : (
-              <HugeiconsIcon icon={SquareUnlock02Icon} className='size-4 shrink-0' strokeWidth={1.75} />
+              <HugeiconsIcon icon={SquareUnlock02Icon} className='size-4 shrink-0' strokeWidth={2} />
             )}
           </Button>
 
@@ -192,7 +192,7 @@ export function ActionPanel({
             title='Add Sticky Note'
             aria-label='Add Sticky Note'
           >
-            <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Add rectangle */}
@@ -204,7 +204,7 @@ export function ActionPanel({
             title='Add Rectangle'
             aria-label='Add Rectangle'
           >
-            <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Add circle */}
@@ -216,7 +216,7 @@ export function ActionPanel({
             title='Add Ellipse'
             aria-label='Add Ellipse'
           >
-            <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Add diamond */}
@@ -228,7 +228,7 @@ export function ActionPanel({
             title='Add Diamond'
             aria-label='Add Diamond'
           >
-            <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Add text */}
@@ -240,7 +240,7 @@ export function ActionPanel({
             title='Add Text'
             aria-label='Add Text'
           >
-            <HugeiconsIcon icon={TextIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={TextIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
         </>
       )}
@@ -257,7 +257,7 @@ export function ActionPanel({
             title='Add Sticky Note'
             aria-label='Add Sticky Note'
           >
-            <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
         </>
       )}

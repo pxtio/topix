@@ -6,8 +6,6 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
-import { useListChats } from "@/features/agent/api/list-chats"
-import { useChat } from "@/features/agent/hooks/chat-context"
 import { useConvertToMindMap } from "@/features/board/api/convert-to-mindmap"
 import { useCreateBoard } from "@/features/board/api/create-board"
 import { useListBoards } from "@/features/board/api/list-boards"
@@ -25,38 +23,41 @@ import { toast } from "sonner"
 const LoadingIcon = () => <HugeiconsIcon
   icon={ReloadIcon}
   className="text-accent-foreground size-4 animate-spin [animation-duration:750ms]"
-  strokeWidth={1.75}
+  strokeWidth={2}
 />
 
 const SuccessIcon = () => <HugeiconsIcon
   icon={CheckmarkCircle03Icon}
   className="text-foreground size-4"
-  strokeWidth={1.75}
+  strokeWidth={2}
 />
 
 const ErrorIcon = () => <HugeiconsIcon
   icon={CancelIcon}
   className="text-destructive size-4"
-  strokeWidth={1.75}
+  strokeWidth={2}
 />
 
 
+export interface SaveAsNoteProps {
+  message: string
+  type: "notify" | "mapify"
+  saveAsIs?: boolean
+  boardId?: string
+}
+
+
 // Button that generates a mind map from the given message.
-export const SaveAsNote = ({ message, type }: { message: string, type: "notify" | "mapify" }) => {
+export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsNoteProps) => {
   const [processing, setProcessing] = useState<boolean>(false)
 
-  const { chatId } = useChat()
-  const { userId } = useAppStore()
+  const userId = useAppStore(state => state.userId)
 
   const { convertToMindMapAsync } = useConvertToMindMap()
   const { data: boardList } = useListBoards({ userId })
-  const { data: chatList } = useListChats({ userId })
   const { createBoardAsync } = useCreateBoard()
 
   const navigate = useNavigate()
-
-  const chat = chatList?.find((c) => c.uid === chatId)
-  const attachedBoardId = chat?.graphUid
 
   const ensureMessage = () => {
     if (!message.trim()) {
@@ -80,7 +81,8 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
       await convertToMindMapAsync({
         boardId,
         answer: message,
-        toolType: type
+        toolType: type,
+        saveAsIs
       })
       toast.success("Notes updated.", {
         id,
@@ -120,7 +122,7 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
     )
     try {
       const boardId = await createBoardAsync({ userId })
-      await convertToMindMapAsync({ boardId, answer: message, toolType: type})
+      await convertToMindMapAsync({ boardId, answer: message, toolType: type, saveAsIs })
       toast.success(
         "Notes updated.",
         {
@@ -153,17 +155,17 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
   const icon = type === "notify" ? NotebookIcon : GitForkIcon
 
   const buttonClass = clsx(
-    "transition-all text-xs text-muted-foreground/75 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md",
+    "relative transition-all text-xs text-secondary/75 hover:text-secondary hover:bg-accent hover:shadow-xs font-medium flex flex-row items-center gap-2 p-1 rounded-md overflow-hidden",
     processing && "opacity-75 pointer-events-none"
   )
 
   const iconCpn = processing ?
     <LoadingIcon /> :
-    <HugeiconsIcon icon={icon} className="text-primary size-4" />
+    <HugeiconsIcon icon={icon} className="size-4" strokeWidth={2} />
 
   return (
     <>
-      {!attachedBoardId ? (
+      {!boardId ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -193,7 +195,7 @@ export const SaveAsNote = ({ message, type }: { message: string, type: "notify" 
           <ContextMenuTrigger asChild>
             <button
               className={buttonClass}
-              onClick={() => launchGeneration(attachedBoardId)}
+              onClick={() => launchGeneration(boardId)}
             >
               {iconCpn}
               <span>{label}</span>

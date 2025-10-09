@@ -1,88 +1,61 @@
-import { ShinyText } from "./animations/shiny-text"
-import { Orbit } from "./animate-ui/icons/orbit"
-import { ListTree } from "lucide-react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Alert02Icon } from "@hugeicons/core-free-icons"
-import clsx from "clsx"
+import { useEffect, useRef, useState } from 'react'
+import { Progress } from '@/components/ui/progress'
+
+type ProgressBarProps = {
+  estimatedTime: number  // seconds
+  isStop: boolean        // true when the task is done (streaming ended)
+}
 
 /**
- * ThinkingDots component displays a "Thinking" message with animated dots.
+ * Shows a time-based progress up to 98% while running, then hides when isStop is true
  */
-export const ThinkingDots = ({ message, isStopped = false }: { message: string, isStopped?: boolean }) => {
-  return (
-    <div className="flex flex-row items-center gap-2">
-      {
-        !isStopped ?
-        <Orbit animate animation="path-loop" loop speed={2} className='size-4 text-foreground/50' strokeWidth={1.75} /> :
-        <ListTree
-          className='size-4 text-foreground/50'
-          strokeWidth={1.75}
-        />
-      }
-      <ShinyText text={message} disabled={isStopped} speed={1} className='font-medium text-foreground/50' />
-    </div>
-  )
-}
+export const ProgressBar = ({ estimatedTime, isStop }: ProgressBarProps) => {
+  const [value, setValue] = useState(0)
+  const [visible, setVisible] = useState(false)
 
+  const startRef = useRef<number | null>(null)
+  const intervalRef = useRef<number | null>(null)
 
-/**
- * Interface for the properties of the ProgressBar component.
- *
- * @property estimatedTime - The estimated time for the operation in seconds.
- * @property message - An optional message to display alongside the progress bar.
- */
-export interface ProgressBarProps {
-  message?: string
-  viewMode?: "full" | "compact"
-  className?: string
-}
+  useEffect(() => {
+    if (!estimatedTime || estimatedTime <= 0) return
 
+    if (!isStop) {
+      setVisible(true)
+      setValue(0)
+      startRef.current = Date.now()
 
-/**
- * ProgressBar component that displays a progress bar with an estimated time and an optional message.
- */
-export const ProgressBar = ({ message, viewMode = "compact", className = undefined }: ProgressBarProps) => {
-  const clName = clsx(
-    "z-30 flex flex-col items-center justify-center gap-2 p-4 bg-card text-card-foreground",
-    viewMode === "full" ? "absolute inset-0 z-20 w-full h-full border-none" : " w-64 border border-border rounded-xl shadow-lg",
-    className
-  )
-  return (
-    <>
-      <div className={clName}>
-        {
-          message &&
-          <div className="text-medium text-xs text-center">
-            <ThinkingDots message={message} />
-          </div>
-        }
-      </div>
-    </>
-  )
-}
+      if (intervalRef.current) clearInterval(intervalRef.current)
 
-export interface ErrorWindowProps {
-  message: string
-  viewMode?: "full" | "compact"
-  className?: string
-}
+      intervalRef.current = window.setInterval(() => {
+        if (!startRef.current) return
+        const elapsed = (Date.now() - startRef.current) / 1000
+        const raw = (elapsed / estimatedTime) * 98
+        const next = Math.min(Math.floor(raw), 98)
+        setValue(p => (p >= 98 ? 98 : Math.max(p, next)))
+      }, 100)
+    } else {
+      setVisible(false)
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      startRef.current = null
+      setValue(0)
+    }
 
-// ErrorWindow component that displays an error message.
-export const ErrorWindow = ({ message, viewMode = "compact", className = undefined }: ErrorWindowProps) => {
-  const clName = clsx(
-    "z-30 flex flex-col items-center justify-center gap-2 p-4 bg-card text-card-foreground",
-    viewMode === "full" ? "absolute inset-0 z-20 w-full h-full border-none" : "w-64 border border-border rounded-xl shadow-lg",
-    className
-  )
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [isStop, estimatedTime])
+
+  if (!visible) return null
 
   return (
-    <>
-      <div className={clName}>
-        <div className="text-medium text-xs text-center text-destructive flex flex-row items-center gap-2">
-          <HugeiconsIcon icon={Alert02Icon} className='w-4 h-4' strokeWidth={1.75} />
-          <span>{message}</span>
+    <div className='px-2 pb-2 w-full flex flex-col items-center'>
+      <div className='w-full max-w-[250px]'>
+        <div className='flex items-center justify-between mb-1'>
+          <span className='text-xs text-muted-foreground font-mono'>Estimated</span>
+          <span className='text-xs font-mono tabular-nums text-secondary'>{value}%</span>
         </div>
+        <Progress value={value} className='h-2' />
       </div>
-    </>
+    </div>
   )
 }

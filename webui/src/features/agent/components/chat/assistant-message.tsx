@@ -143,7 +143,12 @@ export const AssistantMessage = ({
     <div className={messageClass}>
       <MarkdownView content={content.markdown} />
       {!streaming && agentResponse && <SourcesView answer={agentResponse} />}
-      {!streaming && <ResponseActions message={content.markdown} saveAsIs={content.isSynthesis} />}
+      {!streaming && (
+        <ResponseActions
+          message={content.markdown}
+          saveAsIs={content.isSynthesis}
+        />
+      )}
     </div>
   ) : null
 

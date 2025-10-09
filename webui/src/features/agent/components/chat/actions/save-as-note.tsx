@@ -6,8 +6,6 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
-import { useListChats } from "@/features/agent/api/list-chats"
-import { useChat } from "@/features/agent/hooks/chat-context"
 import { useConvertToMindMap } from "@/features/board/api/convert-to-mindmap"
 import { useCreateBoard } from "@/features/board/api/create-board"
 import { useListBoards } from "@/features/board/api/list-boards"
@@ -41,22 +39,25 @@ const ErrorIcon = () => <HugeiconsIcon
 />
 
 
+export interface SaveAsNoteProps {
+  message: string
+  type: "notify" | "mapify"
+  saveAsIs?: boolean
+  boardId?: string
+}
+
+
 // Button that generates a mind map from the given message.
-export const SaveAsNote = ({ message, type, saveAsIs = false }: { message: string, type: "notify" | "mapify", saveAsIs?: boolean }) => {
+export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsNoteProps) => {
   const [processing, setProcessing] = useState<boolean>(false)
 
-  const { chatId } = useChat()
-  const { userId } = useAppStore()
+  const userId = useAppStore(state => state.userId)
 
   const { convertToMindMapAsync } = useConvertToMindMap()
   const { data: boardList } = useListBoards({ userId })
-  const { data: chatList } = useListChats({ userId })
   const { createBoardAsync } = useCreateBoard()
 
   const navigate = useNavigate()
-
-  const chat = chatList?.find((c) => c.uid === chatId)
-  const attachedBoardId = chat?.graphUid
 
   const ensureMessage = () => {
     if (!message.trim()) {
@@ -164,7 +165,7 @@ export const SaveAsNote = ({ message, type, saveAsIs = false }: { message: strin
 
   return (
     <>
-      {!attachedBoardId ? (
+      {!boardId ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -194,7 +195,7 @@ export const SaveAsNote = ({ message, type, saveAsIs = false }: { message: strin
           <ContextMenuTrigger asChild>
             <button
               className={buttonClass}
-              onClick={() => launchGeneration(attachedBoardId)}
+              onClick={() => launchGeneration(boardId)}
             >
               {iconCpn}
               <span>{label}</span>

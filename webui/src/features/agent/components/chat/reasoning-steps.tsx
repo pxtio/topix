@@ -1,10 +1,10 @@
 import { memo, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
-import { ToolNameDescription, type AgentResponse, type ReasoningStep } from "../../types/stream"
+import { type AgentResponse, type ReasoningStep } from "../../types/stream"
 import { extractStepDescription, getWebSearchUrls } from "../../utils/stream/build"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { IdeaIcon, Tick01Icon } from "@hugeicons/core-free-icons"
-import { ThinkingDots } from "@/components/progress-bar"
+import { ThinkingDots } from "@/components/loading-view"
 import { MiniLinkCard } from "../link-preview"
 import { cn } from "@/lib/utils"
 
@@ -38,8 +38,7 @@ const ReasoningStepViewImpl = ({
 }: { step: ReasoningStep, isLoading?: boolean }) => {
   const [viewMore, setViewMore] = useState<boolean>(false)
 
-  const description = ToolNameDescription[step.name]
-  const { reasoning, message } = extractStepDescription(step)
+  const { reasoning, message, title } = extractStepDescription(step)
 
   const sources = viewMore ? getWebSearchUrls(step) : []
 
@@ -83,46 +82,41 @@ const ReasoningStepViewImpl = ({
       </div>
       <div className='relative flex-1 flex flex-col items-start rounded-lg text-xs'>
         <div className={messageClass}>
-          {
-            viewMore ? (
-              <div className='flex flex-col gap-1'>
+           <div className='flex flex-col gap-1'>
+            <div>
+              <h4 className='text-xs font-medium inline'>{title}</h4>
+              {
+                !viewMore && (
+                  <button
+                    className='text-xs text-secondary font-sans hover:underline ml-2'
+                    onClick={handleClick}
+                  >
+                    {"Show details"}
+                  </button>
+                )
+              }
+            </div>
+            {
+              viewMore && reasoning !== "" && <ReasoningMessage reasoning={reasoning} />
+            }
+            { viewMore && message !== "" && <span className={spanMessageClass}>{message}</span>}
+            {
+              viewMore && sources && sources.length > 0 &&
+              <div className='w-full flex flex-row flex-wrap items-start gap-1 mt-2'>
                 {
-                  reasoning !== "" && <ReasoningMessage reasoning={reasoning} />
+                  sources.map((source, index) => <MiniLinkCard key={index} annotation={source} />)
                 }
-                <span className={spanMessageClass}>
-                  {message}
-                </span>
-                {
-                  sources && sources.length > 0 &&
-                  <div className='w-full flex flex-row flex-wrap items-start gap-1 mt-2'>
-                    {
-                      sources.map((source, index) => <MiniLinkCard key={index} annotation={source} />)
-                    }
-                  </div>
-                }
-                <button
-                  className='text-xs text-secondary font-sans hover:underline ml-2'
-                  onClick={handleClick}
-                >
-                  {"Show less"}
-                </button>
               </div>
-            ) : (
-              <div>
-                {description && (
-                  <span className='text-card-foreground whitespace-pre-line font-medium'>
-                    {description}
-                  </span>
-                )}
-                <button
-                  className='text-xs text-secondary font-sans hover:underline ml-2'
-                  onClick={handleClick}
-                >
-                  {"Show details"}
-                </button>
-              </div>
-            )
-          }
+            }
+            {
+              viewMore && <button
+                className='text-xs text-secondary font-sans hover:underline ml-2'
+                onClick={handleClick}
+              >
+                {"Show less"}
+              </button>
+            }
+          </div>
         </div>
       </div>
     </div>

@@ -26,12 +26,12 @@ export const ThinkingDots = ({ message, isStopped = false }: { message: string, 
 
 
 /**
- * Interface for the properties of the ProgressBar component.
+ * Interface for the properties of the LoadingWindow component.
  *
  * @property estimatedTime - The estimated time for the operation in seconds.
- * @property message - An optional message to display alongside the progress bar.
+ * @property message - An optional message to display alongside the loading indicator.
  */
-export interface ProgressBarProps {
+export interface LoadingWindowProps {
   message?: string
   viewMode?: "full" | "compact"
   className?: string
@@ -39,9 +39,9 @@ export interface ProgressBarProps {
 
 
 /**
- * ProgressBar component that displays a progress bar with an estimated time and an optional message.
+ * LoadingWindow component that displays a loading indicator with an optional message.
  */
-export const ProgressBar = ({ message, viewMode = "compact", className = undefined }: ProgressBarProps) => {
+export const LoadingWindow = ({ message, viewMode = "compact", className = undefined }: LoadingWindowProps) => {
   const clName = clsx(
     "z-30 flex flex-col items-center justify-center gap-2 p-4 bg-card text-card-foreground",
     viewMode === "full" ? "absolute inset-0 z-20 w-full h-full border-none" : " w-64 border border-border rounded-xl shadow-lg",

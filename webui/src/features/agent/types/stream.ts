@@ -103,5 +103,5 @@ export const RAW_MESSAGE: ToolName = "raw_message"
 
 
 export function isMainResponse(toolName: ToolName): boolean {
-  return toolName === "raw_message" || toolName === "synthesizer"
+  return toolName === "raw_message" || toolName === "synthesizer" || toolName === "outline_generator"
 }

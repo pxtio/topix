@@ -3,7 +3,7 @@ import { useParams } from '@tanstack/react-router'
 import { useListNewsfeeds } from '@/features/newsfeed/api/list-newsfeeds'
 import { useGetNewsfeed } from '@/features/newsfeed/api/get-newsfeed'
 import { MarkdownView } from '@/components/markdown/markdown-view'
-import { ErrorWindow, ProgressBar } from '@/components/progress-bar'
+import { ErrorWindow, LoadingWindow } from '@/components/loading-view'
 import type { ViewMode } from '../../types/newsfeeds-view'
 import { TopViewPanel } from './top-panel'
 import { NewsletterCard } from './card'
@@ -101,7 +101,7 @@ export function NewsfeedsView() {
 
       <div className='w-full h-full p-6 space-y-4 relative'>
         {feedsQuery.isLoading && (
-          <ProgressBar message='Loading newsletters…' viewMode='full' className='bg-transparent' />
+          <LoadingWindow message='Loading newsletters…' viewMode='full' className='bg-transparent' />
         )}
         {feedsQuery.isError && (
           <ErrorWindow message='Failed to load newsletters' viewMode='full' className='bg-transparent' />
@@ -112,7 +112,7 @@ export function NewsfeedsView() {
           <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin'>
             <div className='mx-auto max-w-[900px] space-y-3'>
               {currentFeed.isLoading && (
-                <ProgressBar message='Loading…' viewMode='full' className='bg-transparent' />
+                <LoadingWindow message='Loading…' viewMode='full' className='bg-transparent' />
               )}
               {currentFeed.isError && (
                 <ErrorWindow message='Failed to load newsfeed' viewMode='full' className='bg-transparent' />
@@ -157,7 +157,7 @@ export function NewsfeedsView() {
           <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin p-2 pt-16 pb-16'>
             <div className='mx-auto max-w-[1100px] space-y-3 px-2'>
               {currentFeed.isLoading && (
-                <ProgressBar message='Loading…' viewMode='full' className='bg-transparent' />
+                <LoadingWindow message='Loading…' viewMode='full' className='bg-transparent' />
               )}
               {currentFeed.isError && (
                 <ErrorWindow message='Failed to load newsfeed' viewMode='full' className='bg-transparent' />

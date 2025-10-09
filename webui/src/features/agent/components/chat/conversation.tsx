@@ -4,7 +4,7 @@ import { UserMessage } from "./user-message"
 import { AssistantMessage } from "./assistant-message"
 import type { ChatMessage } from "../../types/chat"
 import { useChatStore } from "../../store/chat-store"
-import { ThinkingDots } from "@/components/progress-bar"
+import { ThinkingDots } from "@/components/loading-view"
 
 
 /**

@@ -136,8 +136,8 @@ export const AssistantMessage = ({
 
   const messageClass = clsx(
     "w-full p-4 space-y-2 min-w-0",
-    content.isSynthesis && "rounded-xl border border-border ",
-    content.isSynthesis && !streaming && "overflow-y-auto scrollbar-thin max-h-[800px] shadow-sm"
+    content.isSynthesis && "rounded-xl border border-border shadow-sm",
+    content.isSynthesis && !streaming && "overflow-y-auto scrollbar-thin max-h-[800px]"
   )
 
   const lastStepMessage = showLastStepMessage ? (

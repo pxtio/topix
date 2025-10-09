@@ -41,7 +41,7 @@ export function CreateNewsfeedTile({
       >
         <CardContent className='h-full flex items-center justify-center'>
           <div className='flex items-center justify-center w-10 h-10 rounded-full bg-muted'>
-            <HugeiconsIcon icon={PlusSignIcon} className='size-5' strokeWidth={1.75} />
+            <HugeiconsIcon icon={PlusSignIcon} className='size-5' strokeWidth={2} />
           </div>
         </CardContent>
       </Card>

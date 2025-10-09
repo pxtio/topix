@@ -36,7 +36,7 @@ export const CodeInterpreterChoiceMenu = () => {
             aria-label="Toggle Code Interpreter"
             title="Toggle Code Interpreter"
           >
-            <HugeiconsIcon icon={CodeIcon} className="size-4" strokeWidth={1.75} />
+            <HugeiconsIcon icon={CodeIcon} className="size-4" strokeWidth={2} />
           </button>
         </TooltipTrigger>
       </div>

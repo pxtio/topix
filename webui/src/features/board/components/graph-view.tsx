@@ -2,7 +2,7 @@ import { ReactFlowProvider } from "@xyflow/react"
 import { useEffect, useMemo } from "react"
 import GraphEditor from "./flow/graph-editor"
 import { useGraphStore } from "../store/graph-store"
-import { ProgressBar } from "@/components/progress-bar"
+import { LoadingWindow } from "@/components/loading-view"
 import { useGetBoard } from "../api/get-board"
 
 /**
@@ -34,7 +34,7 @@ export const GraphView: React.FC = () => {
         <div className="relative h-full w-full bg-background">
           {loading ? (
             <div className="absolute inset-0 bg-background flex items-center justify-center">
-              <ProgressBar message="Loading board" viewMode="compact" />
+              <LoadingWindow message="Loading board" viewMode="compact" />
             </div>
           ) : (
             <GraphEditor />

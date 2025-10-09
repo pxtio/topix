@@ -68,7 +68,7 @@ export function SigninPage() {
                 <HugeiconsIcon
                   icon={Mail01Icon}
                   className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                 />
               </div>
             </div>
@@ -88,7 +88,7 @@ export function SigninPage() {
                 <HugeiconsIcon
                   icon={LockIcon}
                   className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                 />
               </div>
             </div>

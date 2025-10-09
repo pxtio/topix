@@ -23,19 +23,19 @@ import { toast } from "sonner"
 const LoadingIcon = () => <HugeiconsIcon
   icon={ReloadIcon}
   className="text-accent-foreground size-4 animate-spin [animation-duration:750ms]"
-  strokeWidth={1.75}
+  strokeWidth={2}
 />
 
 const SuccessIcon = () => <HugeiconsIcon
   icon={CheckmarkCircle03Icon}
   className="text-foreground size-4"
-  strokeWidth={1.75}
+  strokeWidth={2}
 />
 
 const ErrorIcon = () => <HugeiconsIcon
   icon={CancelIcon}
   className="text-destructive size-4"
-  strokeWidth={1.75}
+  strokeWidth={2}
 />
 
 
@@ -155,13 +155,13 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
   const icon = type === "notify" ? NotebookIcon : GitForkIcon
 
   const buttonClass = clsx(
-    "transition-all text-xs text-muted-foreground/75 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md",
+    "relative transition-all text-xs text-secondary/75 hover:text-secondary hover:bg-accent hover:shadow-xs font-medium flex flex-row items-center gap-2 p-1 rounded-md overflow-hidden",
     processing && "opacity-75 pointer-events-none"
   )
 
   const iconCpn = processing ?
     <LoadingIcon /> :
-    <HugeiconsIcon icon={icon} className="text-primary size-4" />
+    <HugeiconsIcon icon={icon} className="size-4" strokeWidth={2} />
 
   return (
     <>

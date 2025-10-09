@@ -56,7 +56,7 @@ export function NewChatItem({
         className='text-xs text-secondary font-medium truncate cursor-pointer'
         isActive={isActive}
       >
-        <BotMessageSquare className='text-xs shrink-0 text-sidebar-icon-4' strokeWidth={1.75} />
+        <BotMessageSquare className='text-xs shrink-0 text-sidebar-icon-4' strokeWidth={2} />
         <span>New Chat</span>
       </SidebarMenuButton>
     </SidebarMenuItem>

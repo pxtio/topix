@@ -234,7 +234,7 @@ export const NodeCard = ({
                   aria-label='Background color'
                   title='Background color'
                 >
-                  <HugeiconsIcon icon={PaintBoardIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+                  <HugeiconsIcon icon={PaintBoardIcon} className='size-4 shrink-0' strokeWidth={2} />
                 </button>
               </PopoverTrigger>
               <PopoverContent align='end' className='w-auto p-2'>
@@ -260,8 +260,8 @@ export const NodeCard = ({
               title='Pin/Unpin'
             >
               {isPinned
-                ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={1.75} />
-                : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={1.75} />
+                ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={2} />
+                : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={2} />
               }
             </button>
 
@@ -271,7 +271,7 @@ export const NodeCard = ({
               aria-label='Delete note'
               title='Delete'
             >
-              <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4' strokeWidth={1.75} />
+              <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4' strokeWidth={2} />
             </button>
           </div>
         )}

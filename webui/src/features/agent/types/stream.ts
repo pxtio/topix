@@ -1,4 +1,6 @@
+import type { IconSvgElement } from "@hugeicons/react"
 import type { Annotation, ToolOutput } from "./tool-outputs"
+import { AiBrowserIcon, ChipIcon, GlobalSearchIcon, Search01Icon, SourceCodeIcon, TextAlignLeftIcon } from "@hugeicons/core-free-icons"
 
 /**
  * Represents the type of streaming message in the agent response.
@@ -98,10 +100,19 @@ export const ToolNameDescription: Record<ToolName, string> = {
   "synthesizer": "Synthesize information from multiple sources",
 }
 
+export const ToolNameIcon: Record<string, IconSvgElement> = {
+  "web_search": Search01Icon,
+  "memory_search": ChipIcon,
+  "navigate": AiBrowserIcon,
+  "code_interpreter": SourceCodeIcon,
+  "outline_generator": TextAlignLeftIcon,
+  "web_collector": GlobalSearchIcon
+}
+
 // The RAW_MESSAGE tool name is used to indicate raw messages in the stream.
 export const RAW_MESSAGE: ToolName = "raw_message"
 
 
 export function isMainResponse(toolName: ToolName): boolean {
-  return toolName === "raw_message" || toolName === "synthesizer"
+  return toolName === "raw_message" || toolName === "synthesizer" || toolName === "outline_generator"
 }

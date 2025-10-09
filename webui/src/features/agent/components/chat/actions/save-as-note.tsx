@@ -155,13 +155,13 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
   const icon = type === "notify" ? NotebookIcon : GitForkIcon
 
   const buttonClass = clsx(
-    "transition-all text-xs text-muted-foreground/75 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md",
+    "relative transition-all text-xs text-secondary/75 hover:text-secondary hover:bg-accent hover:shadow-xs font-medium flex flex-row items-center gap-2 p-1 rounded-md overflow-hidden",
     processing && "opacity-75 pointer-events-none"
   )
 
   const iconCpn = processing ?
     <LoadingIcon /> :
-    <HugeiconsIcon icon={icon} className="text-primary size-4" strokeWidth={2} />
+    <HugeiconsIcon icon={icon} className="size-4" strokeWidth={2} />
 
   return (
     <>

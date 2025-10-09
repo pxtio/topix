@@ -1,58 +1,12 @@
 import { MarkdownView } from "@/components/markdown/markdown-view"
 import { useChatStore } from "../../store/chat-store"
 import { ReasoningStepsView } from "./reasoning-steps"
-import { LinkPreviewCard } from "../link-preview"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import type { ChatMessage } from "../../types/chat"
-import { isMainResponse, type AgentResponse } from "../../types/stream"
-import { extractAnswerWebSources } from "../../utils/url"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Link04Icon } from "@hugeicons/core-free-icons"
+import { isMainResponse } from "../../types/stream"
 import { ResponseActions } from "./actions/response-actions"
 import { useMemo } from "react"
 import clsx from "clsx"
-
-
-/**
- * Component that renders a list of sources for a chat response.
- */
-const SourcesView = ({ answer }: { answer: AgentResponse }) => {
-  const annotations = extractAnswerWebSources(answer)
-
-  if (annotations.length === 0) return null
-
-  return (
-    <div className='w-full mt-2 min-w-0'>
-      <div className='w-full border-b border-border p-2 flex items-center gap-2'>
-        <HugeiconsIcon icon={Link04Icon} className='size-5 shrink-0 text-primary' strokeWidth={1.75} />
-        <span className='text-base text-primary font-semibold'>Sources</span>
-      </div>
-
-      {/* Root must not overflow its parent */}
-      <ScrollArea className='w-full overflow-hidden'>
-        <div
-          className='px-2 py-4 flex flex-wrap md:flex-nowrap gap-2 md:w-max
-                     md:overflow-visible'
-        >
-          {annotations.map((annotation, index) => (
-            <div key={index} className='shrink-0'>
-              <LinkPreviewCard
-                annotation={annotation}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* horizontal scrollbar with transparent track */}
-        <ScrollBar
-          orientation='horizontal'
-          className='scrollbar-thin scrollbar-thumb-rounded-lg
-                     scrollbar-thumb-muted-foreground/40 scrollbar-track-transparent'
-        />
-      </ScrollArea>
-    </div>
-  )
-}
+import { SourcesView } from "./sources-view"
 
 
 /**

@@ -1,4 +1,5 @@
 import { CodeInterpreterChoiceMenu } from "./code-interpreter"
+import { DeepResearchChoiceMenu } from "./deep-research"
 import { MemorySearchChoiceMenu } from "./memory-search"
 import { ModelChoiceMenu } from "./model-card"
 import { SearchEngineChoiceMenu } from "./web-search"
@@ -14,6 +15,7 @@ export const InputSettings = () => {
       <SearchEngineChoiceMenu />
       <MemorySearchChoiceMenu />
       <CodeInterpreterChoiceMenu />
+      <DeepResearchChoiceMenu />
     </>
   )
 }

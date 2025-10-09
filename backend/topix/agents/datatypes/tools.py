@@ -33,4 +33,7 @@ tool_descriptions = {
     AgentToolName.CODE_INTERPRETER: "Run code",
     AgentToolName.RAW_MESSAGE: "Reasoning message",
     AgentToolName.NAVIGATE: "Navigate the web",
+    AgentToolName.OUTLINE_GENERATOR: "Generate an outline for research",
+    AgentToolName.WEB_COLLECTOR: "Collect web content based on the outline",
+    AgentToolName.SYNTHESIZER: "Synthesize a report based on collected content",
 }

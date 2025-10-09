@@ -82,6 +82,9 @@ export type ToolName =
   | "code_interpreter"
   | "navigate"
   | "raw_message"
+  | "outline_generator"
+  | "web_collector"
+  | "synthesizer"
 
 
 export const ToolNameDescription: Record<ToolName, string> = {
@@ -89,7 +92,10 @@ export const ToolNameDescription: Record<ToolName, string> = {
   "memory_search": "Search memory",
   "code_interpreter": "Interpret code",
   "navigate": "Fetch and analyze web page content",
-  "raw_message": "Reasoning"
+  "raw_message": "Reasoning",
+  "outline_generator": "Generate an outline for the topic",
+  "web_collector": "Collect information from the web",
+  "synthesizer": "Synthesize information from multiple sources",
 }
 
 // The RAW_MESSAGE tool name is used to indicate raw messages in the stream.
@@ -97,5 +103,5 @@ export const RAW_MESSAGE: ToolName = "raw_message"
 
 
 export function isMainResponse(toolName: ToolName): boolean {
-  return toolName === "raw_message"
+  return toolName === "raw_message" || toolName === "synthesizer"
 }

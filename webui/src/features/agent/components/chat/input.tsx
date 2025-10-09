@@ -34,6 +34,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   const isStreaming = useChatStore((state) => state.isStreaming)
   const webSearchEngine = useChatStore((state) => state.webSearchEngine)
   const enabledTools = useChatStore((state) => state.enabledTools)
+  const useDeepResearch = useChatStore((state) => state.useDeepResearch)
 
   const [input, setInput] = useState<string>("")
 
@@ -72,6 +73,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
       model: llmModel,
       webSearchEngine,
       enabledTools,
+      useDeepResearch,
     } as SendMessageRequestPayload
 
     // clear input right before launching search

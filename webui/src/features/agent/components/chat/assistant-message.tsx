@@ -74,6 +74,7 @@ export const AssistantMessage = ({
     showLastStepMessage,
     content,
     agentResponse,
+    isDeepResearch,
   } = useMemo(() => {
     const sm = streamingMessage
     const messageSteps = message.properties.reasoning?.reasoning ?? []
@@ -85,6 +86,8 @@ export const AssistantMessage = ({
       sm?.steps?.length ? sm.steps : messageSteps
 
     const lastStep = effectiveSteps?.[effectiveSteps.length - 1]
+    const firstStep = effectiveSteps?.[0]
+    const isDeepResearch = firstStep?.name === 'outline_generator'
     const isSynthesis = lastStep?.name === 'synthesizer'
 
     const showLastStepMessage =
@@ -130,7 +133,8 @@ export const AssistantMessage = ({
     return {
       showLastStepMessage,
       content: { markdown, isSynthesis },
-      agentResponse
+      agentResponse,
+      isDeepResearch,
     }
   }, [streamingMessage, message, streaming])
 
@@ -149,7 +153,7 @@ export const AssistantMessage = ({
   return (
     <div className='w-full space-y-4'>
       {agentResponse && (
-        <ReasoningStepsView response={agentResponse} isStreaming={streaming} />
+        <ReasoningStepsView response={agentResponse} isStreaming={streaming} estimatedDurationSeconds={isDeepResearch ? 180 : undefined} />
       )}
       {lastStepMessage}
       {!streaming && agentResponse && <SourcesView answer={agentResponse} />}

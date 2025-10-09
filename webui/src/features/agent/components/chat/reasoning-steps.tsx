@@ -7,6 +7,7 @@ import { IdeaIcon, Tick01Icon } from "@hugeicons/core-free-icons"
 import { ThinkingDots } from "@/components/loading-view"
 import { MiniLinkCard } from "../link-preview"
 import { cn } from "@/lib/utils"
+import { ProgressBar } from "@/components/progress-bar"
 
 
 const ReasoningMessage = ({
@@ -148,6 +149,7 @@ export const ReasoningStepView = memo(ReasoningStepViewImpl, (prev, next) => {
 export interface ReasoningStepsViewProps {
   isStreaming: boolean
   response?: AgentResponse
+  estimatedDurationSeconds?: number
 }
 
 
@@ -156,7 +158,7 @@ export interface ReasoningStepsViewProps {
  * It allows toggling between showing the last step or all steps.
  * @param {ReasoningStepsViewProps} props - The properties for the component.
  */
-export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsViewProps) => {
+export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSeconds }: ReasoningStepsViewProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
 
   if (!response || response.steps.length === 0) {
@@ -182,6 +184,11 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
       <div className='font-medium text-base p-1 flex flex-row items-center justify-center'>
         <ThinkingDots message={"Thinking"} isStopped={!isStreaming} />
       </div>
+      {
+        estimatedDurationSeconds && (
+          <ProgressBar estimatedTime={estimatedDurationSeconds} isStop={!isStreaming} />
+        )
+      }
       <div
         className={`
           flex flex-col items-start

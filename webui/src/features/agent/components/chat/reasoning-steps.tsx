@@ -212,7 +212,7 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
           />)
         }
         <div
-          className='absolute left-[0.975rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
+          className='absolute left-[0.975rem] top-0 w-[1px] h-full bg-secondary rounded-lg z-10'
         />
       </div>
       <button

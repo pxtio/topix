@@ -136,19 +136,13 @@ export const AssistantMessage = ({
 
   const messageClass = clsx(
     "w-full p-4 space-y-2 min-w-0",
-    content.isSynthesis && "rounded-xl border border-border"
+    content.isSynthesis && "rounded-xl border border-border ",
+    content.isSynthesis && !streaming && "overflow-y-auto scrollbar-thin max-h-[800px] shadow-sm"
   )
 
   const lastStepMessage = showLastStepMessage ? (
     <div className={messageClass}>
       <MarkdownView content={content.markdown} />
-      {!streaming && agentResponse && <SourcesView answer={agentResponse} />}
-      {!streaming && (
-        <ResponseActions
-          message={content.markdown}
-          saveAsIs={content.isSynthesis}
-        />
-      )}
     </div>
   ) : null
 
@@ -158,6 +152,13 @@ export const AssistantMessage = ({
         <ReasoningStepsView response={agentResponse} isStreaming={streaming} />
       )}
       {lastStepMessage}
+      {!streaming && agentResponse && <SourcesView answer={agentResponse} />}
+      {!streaming && (
+        <ResponseActions
+          message={content.markdown}
+          saveAsIs={content.isSynthesis}
+        />
+      )}
     </div>
   )
 }

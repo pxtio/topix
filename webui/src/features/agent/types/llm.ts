@@ -34,18 +34,18 @@ export const LlmName: Record<LlmModel, string> = {
 }
 
 export const LlmDescription: Record<LlmModel, string> = {
-  "openai/gpt-4o": "High-quality, fast, and capable model with strong reasoning skills and low latency",
-  "openai/gpt-4.1": "Enhanced GPT-4 model with strong general capabilities",
-  "openai/gpt-5": "Next-generation model with advanced capabilities and improved performance",
-  "openai/gpt-5-mini": "Compact version of GPT-5 designed for efficiency and speed",
-  "openai/gpt-5-nano": "Lightweight GPT-5 model suitable for quick tasks",
-  "gemini/gemini-2.5-flash": "Faster Gemini model offering improved quality over 2.0 Flash",
-  "gemini/gemini-2.5-pro": "Flagship Gemini model with high accuracy and rich reasoning capabilities",
-  "openrouter/anthropic/claude-opus-4.1": "Powerful agentic model from Anthropic",
-  "openrouter/anthropic/claude-sonnet-4.5": "Fast and powerful model from Anthropic",
-  "openrouter/anthropic/claude-3.5-haiku": "Lightweight model from Anthropic",
-  "openrouter/mistralai/mistral-medium-3.1": "Powerful french model from Mistral",
-  "openrouter/deepseek/deepseek-chat-v3.1": "Stronger opensource model from DeepSeek"
+  "openai/gpt-4o": "High-quality, fast, and capable model with strong reasoning and low latency",
+  "openai/gpt-4.1": "Enhanced GPT-4 model with balanced performance across reasoning and creativity",
+  "openai/gpt-5": "Next-generation model offering advanced reasoning and broader skill coverage",
+  "openai/gpt-5-mini": "Compact GPT-5 version optimized for efficiency and responsiveness",
+  "openai/gpt-5-nano": "Ultra-light GPT-5 variant ideal for quick or edge tasks",
+  "gemini/gemini-2.5-flash": "Optimized Gemini model delivering strong quality with near-instant responses",
+  "gemini/gemini-2.5-pro": "Advanced Gemini flagship offering deep reasoning and multimodal capabilities",
+  "openrouter/anthropic/claude-opus-4.1": "Top-tier Claude model known for its long-context reasoning and safety alignment",
+  "openrouter/anthropic/claude-sonnet-4.5": "Balanced Claude model combining speed with nuanced understanding",
+  "openrouter/anthropic/claude-3.5-haiku": "Lightweight and responsive Claude variant suited for everyday tasks",
+  "openrouter/mistralai/mistral-medium-3.1": "Efficient Mistral model offering strong multilingual and structured reasoning",
+  "openrouter/deepseek/deepseek-chat-v3.1": "High-performance open-source model with advanced reasoning and adaptability"
 }
 
 
@@ -60,6 +60,6 @@ export const LlmBrandIcon: Record<LlmModel, React.ComponentType<{ size?: number 
   "openrouter/anthropic/claude-opus-4.1": Anthropic,
   "openrouter/anthropic/claude-sonnet-4.5": Anthropic,
   "openrouter/anthropic/claude-3.5-haiku": Anthropic,
-  "openrouter/mistralai/mistral-medium-3.1": Mistral,
-  "openrouter/deepseek/deepseek-chat-v3.1": DeepSeek
+  "openrouter/mistralai/mistral-medium-3.1": Mistral.Color,
+  "openrouter/deepseek/deepseek-chat-v3.1": DeepSeek.Color
 }

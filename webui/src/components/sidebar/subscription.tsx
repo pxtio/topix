@@ -23,7 +23,7 @@ export function SubscriptionsMenuItem() {
         className="text-xs font-medium truncate"
         isActive={isActive}
       >
-        <HugeiconsIcon icon={DashboardSquare03Icon} className="shrink-0 size-4 text-sidebar-icon-3" strokeWidth={1.75} />
+        <HugeiconsIcon icon={DashboardSquare03Icon} className="shrink-0 size-4 text-sidebar-icon-3" strokeWidth={2} />
         <span>Newsfeed</span>
       </SidebarMenuButton>
     </SidebarMenuItem>

@@ -22,8 +22,8 @@ export function SendButton({  className,
     >
       {
         loadingStatus === "loaded" ?
-        <Send className="size-4 shrink-0" strokeWidth={1.75} /> :
-        <LoaderCircle className="size-4 shrink-0 animate-spin" strokeWidth={1.75} />
+        <Send className="size-4 shrink-0" strokeWidth={2} /> :
+        <LoaderCircle className="size-4 shrink-0 animate-spin" strokeWidth={2} />
       }
     </Button>
   )

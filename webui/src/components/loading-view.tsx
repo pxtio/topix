@@ -13,10 +13,10 @@ export const ThinkingDots = ({ message, isStopped = false }: { message: string, 
     <div className="flex flex-row items-center gap-2">
       {
         !isStopped ?
-        <Orbit animate animation="path-loop" loop speed={2} className='size-4 text-foreground/50' strokeWidth={1.75} /> :
+        <Orbit animate animation="path-loop" loop speed={2} className='size-4 text-foreground/50' strokeWidth={2} /> :
         <ListTree
           className='size-4 text-foreground/50'
-          strokeWidth={1.75}
+          strokeWidth={2}
         />
       }
       <ShinyText text={message} disabled={isStopped} speed={1} className='font-medium text-foreground/50' />
@@ -79,7 +79,7 @@ export const ErrorWindow = ({ message, viewMode = "compact", className = undefin
     <>
       <div className={clName}>
         <div className="text-medium text-xs text-center text-destructive flex flex-row items-center gap-2">
-          <HugeiconsIcon icon={Alert02Icon} className='w-4 h-4' strokeWidth={1.75} />
+          <HugeiconsIcon icon={Alert02Icon} className='w-4 h-4' strokeWidth={2} />
           <span>{message}</span>
         </div>
       </div>

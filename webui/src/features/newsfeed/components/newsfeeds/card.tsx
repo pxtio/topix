@@ -98,7 +98,7 @@ export function NewsletterCard({
           onSelect={() => onClick?.()}
           disabled={!!generating}
         >
-          <HugeiconsIcon icon={Folder02Icon} className='mr-2 size-4' strokeWidth={1.75} />
+          <HugeiconsIcon icon={Folder02Icon} className='mr-2 size-4' strokeWidth={2} />
           Open
         </ContextMenuItem>
 
@@ -110,7 +110,7 @@ export function NewsletterCard({
           onSelect={handleDelete}
           disabled={!!generating || del.isPending}
         >
-          <HugeiconsIcon icon={Delete02Icon} className='mr-2 size-4' strokeWidth={1.75} />
+          <HugeiconsIcon icon={Delete02Icon} className='mr-2 size-4' strokeWidth={2} />
           Delete
         </ContextMenuItem>
       </ContextMenuContent>

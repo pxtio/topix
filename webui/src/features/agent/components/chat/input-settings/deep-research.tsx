@@ -28,7 +28,7 @@ export const DeepResearchChoiceMenu = () => {
             className={buttonClass}
             onClick={handleToggle}
           >
-            <HugeiconsIcon icon={MicroscopeIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={MicroscopeIcon} className='size-4 shrink-0' strokeWidth={2} />
             <span>Deep Research</span>
           </button>
         </TooltipTrigger>

@@ -20,7 +20,7 @@ const ReasoningMessage = ({
   return (
     <div className='text-muted-foreground bg-background p-2 rounded-lg space-y-1'>
       <div className='flex items-center gap-2 font-medium text-foreground cursor-pointer' onClick={handleClick}>
-        <HugeiconsIcon icon={IdeaIcon} className='size-4' strokeWidth={1.75} />
+        <HugeiconsIcon icon={IdeaIcon} className='size-4' strokeWidth={2} />
         <span>Reasoning</span>
       </div>
       {viewReasoning && <span>{reasoning}</span>}
@@ -84,7 +84,7 @@ const ReasoningStepViewImpl = ({
             isLoading ?
             <div className='absolute w-2 h-2 rounded-full bg-secondary z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' /> :
             <div className={successDivClass}>
-              <HugeiconsIcon icon={successIcon} className={iconClass} strokeWidth={1.75} />
+              <HugeiconsIcon icon={successIcon} className={iconClass} strokeWidth={2} />
             </div>
           }
         </div>

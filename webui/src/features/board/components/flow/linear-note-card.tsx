@@ -116,8 +116,8 @@ export function LinearNoteCard({ node }: Props) {
           title='Pin/Unpin'
         >
           {isPinned
-            ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={1.75} />
-            : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={1.75} />
+            ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={2} />
+            : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={2} />
           }
         </button>
         <button
@@ -126,7 +126,7 @@ export function LinearNoteCard({ node }: Props) {
           aria-label='Delete note'
           title='Delete'
         >
-          <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4' strokeWidth={1.75} />
+          <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4' strokeWidth={2} />
         </button>
       </div>
 

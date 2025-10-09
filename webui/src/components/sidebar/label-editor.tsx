@@ -67,9 +67,9 @@ export const LabelEditor = ({ initialLabel, onSave }: LabelEditorProps) => {
       )}
       <Button variant="ghost" onClick={handleClick} size='icon'>
         {editMode ? (
-          <HugeiconsIcon icon={Tick01Icon} className='size-4 shrink-0' strokeWidth={1.75} />
+          <HugeiconsIcon icon={Tick01Icon} className='size-4 shrink-0' strokeWidth={2} />
         ) : (
-          <HugeiconsIcon icon={PencilEditIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+          <HugeiconsIcon icon={PencilEditIcon} className='size-4 shrink-0' strokeWidth={2} />
         )}
       </Button>
     </div>

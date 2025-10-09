@@ -106,7 +106,7 @@ export const NewBoardCard = () => {
       <HugeiconsIcon
         icon={PlusSignIcon}
         className='shrink-0 size-6 text-secondary'
-        strokeWidth={1.75}
+        strokeWidth={2}
       />
       <span className='font-medium text-sm text-secondary'>New Board</span>
     </div>

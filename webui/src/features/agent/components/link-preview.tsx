@@ -217,7 +217,7 @@ export const LinkPreviewCard = ({
                   )}
                 />
               ) : (
-                <HugeiconsIcon icon={Link02Icon} className="size-3" strokeWidth={1.75} />
+                <HugeiconsIcon icon={Link02Icon} className="size-3" strokeWidth={2} />
               )}
               {name && <span className={cn(clipText && "truncate")}>{name}</span>}
             </div>

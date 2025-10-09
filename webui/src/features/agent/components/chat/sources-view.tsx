@@ -57,7 +57,7 @@ export const SourcesView = ({ answer }: { answer: AgentResponse }) => {
   return (
     <div className='w-full mt-2 min-w-0'>
       <div className='w-full border-b border-border p-2 flex items-center gap-2'>
-        <HugeiconsIcon icon={Link04Icon} className='size-5 shrink-0 text-primary' strokeWidth={1.75} />
+        <HugeiconsIcon icon={Link04Icon} className='size-5 shrink-0 text-primary' strokeWidth={2} />
         <span className='text-base text-primary font-semibold'>Sources</span>
       </div>
 
@@ -87,7 +87,7 @@ export const SourcesView = ({ answer }: { answer: AgentResponse }) => {
                 className='w-[min(92vw,680px)] p-0'
               >
                 <div className='border-b border-border p-3 flex items-center gap-2'>
-                  <HugeiconsIcon icon={Link04Icon} className='size-5 shrink-0 text-primary' strokeWidth={1.75} />
+                  <HugeiconsIcon icon={Link04Icon} className='size-5 shrink-0 text-primary' strokeWidth={2} />
                   <div className='flex flex-col'>
                     <SheetTitle className='text-primary'>Sources</SheetTitle>
                     <SheetDescription className='text-muted-foreground'>

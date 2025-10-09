@@ -72,26 +72,26 @@ export function TopViewPanel({
       <ModeButton
         mode='linear'
         label='Linear'
-        icon={<HugeiconsIcon icon={ListViewIcon} className='size-4 shrink-0' strokeWidth={1.75} />}
+        icon={<HugeiconsIcon icon={ListViewIcon} className='size-4 shrink-0' strokeWidth={2} />}
         disabled={!hasLatest}
       />
       <ModeButton
         mode='grid'
         label='Grid'
-        icon={<HugeiconsIcon icon={GridViewIcon} className='size-4 shrink-0' strokeWidth={1.75} />}
+        icon={<HugeiconsIcon icon={GridViewIcon} className='size-4 shrink-0' strokeWidth={2} />}
         disabled={!hasLatest}
       />
       <ModeButton
         mode='article'
         label='Article'
-        icon={<HugeiconsIcon icon={LeftToRightListBulletIcon} className='size-4 shrink-0' strokeWidth={1.75} />}
+        icon={<HugeiconsIcon icon={LeftToRightListBulletIcon} className='size-4 shrink-0' strokeWidth={2} />}
         disabled={!hasLatest}
       />
       <Separator orientation='vertical' className='md:!h-6 hidden md:block' />
       <ModeButton
         mode='history'
         label='History'
-        icon={<HugeiconsIcon icon={Clock02Icon} className='size-4 shrink-0' strokeWidth={1.75} />}
+        icon={<HugeiconsIcon icon={Clock02Icon} className='size-4 shrink-0' strokeWidth={2} />}
       />
     </div>
   )

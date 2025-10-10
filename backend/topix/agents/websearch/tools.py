@@ -251,7 +251,7 @@ async def fetch_content(
     *,
     client: Optional[httpx.AsyncClient] = None,
     timeout: Optional[httpx.Timeout] = None,
-) -> str:
+) -> WebSearchOutput:
     """Read the content of a website via Tavily Extract API (async).
 
     Args:

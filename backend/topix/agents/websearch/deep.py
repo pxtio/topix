@@ -14,8 +14,8 @@ from agents import (
     function_tool,
 )
 
-from topix.agents.assistant.websearch.tools import (
-    navigate,
+from topix.agents.websearch.tools import (
+    fetch_content,
     search_linkup,
     search_tavily,
 )
@@ -124,7 +124,7 @@ class DeepWebSearch(BaseAgent):
         tools = []
 
         @function_tool
-        async def navigate_webpage(web_url: str) -> str:
+        async def fetch_content_webpage(web_url: str) -> str:
             """Read the content of a website given its URL.
 
             Args:
@@ -134,9 +134,9 @@ class DeepWebSearch(BaseAgent):
                 str: The full content of the website.
 
             """
-            return await navigate(web_url, extract_depth, client=self._httpx_client)
+            return await fetch_content(web_url, extract_depth, client=self._httpx_client)
 
-        tools.append(navigate_webpage)
+        tools.append(fetch_content_webpage)
 
         @function_tool
         async def web_search(query: str) -> WebSearchOutput:

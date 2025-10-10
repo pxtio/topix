@@ -150,13 +150,19 @@ class AssistantManager:
             )
 
         # launch plan:
-        res = AgentRunner.run_streamed(
-            self.plan_agent, input=agent_input, context=context, max_turns=max_turns
-        )
+        try:
+            res = AgentRunner.run_streamed(
+                self.plan_agent, input=agent_input, context=context, max_turns=max_turns
+            )
 
-        async for message in res:
-            if isinstance(message, AgentStreamMessage):
-                yield message
+            async for message in res:
+                if isinstance(message, AgentStreamMessage):
+                    yield message
+        except Exception as e:
+            logger.error(
+                f"Plan agent execution error {e}, may due to Max turns exceeded",
+                exc_info=True,
+            )
 
         # Launch the synthesis agent:
         res = AgentRunner.run_streamed(

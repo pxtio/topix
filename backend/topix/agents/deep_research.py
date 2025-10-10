@@ -1,6 +1,7 @@
 """Deep Research Agents."""
 
 from datetime import datetime
+import logging
 from typing import AsyncGenerator
 
 from agents import FunctionTool, ModelSettings
@@ -18,6 +19,8 @@ from topix.agents.websearch.handler import WebSearchHandler
 from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
 from topix.utils.common import gen_uid
+
+logger = logging.getLogger(__name__)
 
 
 class OutlineGenerator(BaseAgent):
@@ -206,17 +209,19 @@ class DeepResearch:
             raise ValueError("Problem on generating outline")
 
         # Collect Web contents:
-        messages = AgentRunner.run_streamed(
-            starting_agent=self.web_collector,
-            input=outline,
-            context=context,
-            max_turns=max_turn,
-            name=AgentToolName.WEB_COLLECTOR,
-        )
-
-        async for msg in messages:
-            if not isinstance(msg, ToolCall):
-                yield msg
+        try:
+            messages = AgentRunner.run_streamed(
+                starting_agent=self.web_collector,
+                input=outline,
+                context=context,
+                max_turns=max_turn,
+                name=AgentToolName.WEB_COLLECTOR,
+            )
+            async for msg in messages:
+                if not isinstance(msg, ToolCall):
+                    yield msg
+        except Exception as e:
+            logger.warning(f"Web collection failed: {e}, mainly due to attend max turn limit.")
 
         # Synthesize learning module:
         messages = AgentRunner.run_streamed(

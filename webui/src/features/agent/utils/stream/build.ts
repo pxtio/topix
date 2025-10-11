@@ -250,7 +250,7 @@ export async function* buildResponse(
  * Extracts a human-readable description from a reasoning step.
  */
 export function extractStepDescription(step: ReasoningStep): { reasoning: string, message: string, title: string } {
-  if (!isMainResponse(step.name)) {
+  if (step.name !== "raw_message" && step.name !== "outline_generator") {
     return { reasoning: step.thought || "", message: "", title: ToolNameDescription[step.name] }
   }
   const reasoningOutLoud = (step.output as string) || ""

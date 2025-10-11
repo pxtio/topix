@@ -60,7 +60,7 @@ export async function* sendMessage(
  * @returns An object containing the sendMessage function and its state.
  */
 export const useSendMessage = () => {
-  const { setStream, setIsStreaming, setStreamingMessageId } = useChatStore()
+  const setIsStreaming = useChatStore((state) => state.setIsStreaming)
 
   const queryClient = useQueryClient()
 
@@ -85,22 +85,31 @@ export const useSendMessage = () => {
         properties: {}
       } as ChatMessage
 
+      const tmpId = "placeholder-" + Date.now().toString()
+      const newAssistantPlaceholder = {
+        id: tmpId,
+        role: "assistant",
+        content: { markdown: "" },
+        chatUid: chatId,
+        properties: { reasoning: { type: "reasoning", reasoning: [] } },
+        streaming: true
+      } as ChatMessage
+
       try {
         queryClient.setQueryData<ChatMessage[]>(
           ["listMessages", chatId, userId],
           (oldMessages) => [
             ...(oldMessages || []),
-            newUserMessage
+            newUserMessage,
+            newAssistantPlaceholder
           ]
         )
         const stream = sendMessage(payload, chatId, userId)
         const response = buildResponse(stream)
         let setNewAssistantMessageId = false
 
-        let streamingMessageId: string | undefined
-
         for await (const resp of response) {
-          const { response: rep } = resp
+          const { response: rep, isStop } = resp
           if (rep.steps.length === 0) {
             continue
           }
@@ -108,44 +117,59 @@ export const useSendMessage = () => {
           const step = rep.steps[0]
           const responseId = step.id
 
-          if (!streamingMessageId) {
-            streamingMessageId = step.id
-            setStreamingMessageId(streamingMessageId)
-          }
-
           if (!setNewAssistantMessageId) {
             setNewAssistantMessageId = true
             queryClient.setQueryData<ChatMessage[]>(
               ["listMessages", chatId, userId],
               (oldMessages) => {
-                const newAssistantMessage = {
-                  id: responseId,
-                  role: "assistant",
-                  content: { markdown: "" },
-                  chatUid: chatId,
-                  properties: { reasoning: { type: "reasoning", reasoning: [] } }
-                } as ChatMessage
-
-                const check = oldMessages && oldMessages.length > 0 && oldMessages[oldMessages.length - 1].id === newUserMessage.id
-
-                if (!check) {
-                  return [...(oldMessages || []), newUserMessage, newAssistantMessage]
-                }
-                return [
-                  ...(oldMessages || []),
-                  newAssistantMessage
-                ]
+                if (!oldMessages) return oldMessages
+                return oldMessages.map((m) => {
+                  if (m.id === tmpId) {
+                    return {
+                      ...m,
+                      id: responseId
+                    } as ChatMessage
+                  }
+                  return m
+                })
+              }
+            )
+          } else {
+            queryClient.setQueryData<ChatMessage[]>(
+              ["listMessages", chatId, userId],
+              (oldMessages) => {
+                if (!oldMessages) return oldMessages
+                return oldMessages.map((m) => {
+                  const lastStep = rep.steps[rep.steps.length - 1]
+                  let content = ""
+                  if (lastStep.name === 'synthesizer' || lastStep.name === 'answer_reformulate') {
+                    content = typeof lastStep.output === 'string' ? lastStep.output : ''
+                  }
+                  if (m.id === responseId) {
+                    return {
+                      ...m,
+                      content: { markdown: content },
+                      properties: {
+                        ...m.properties,
+                        reasoning: {
+                          type: "reasoning",
+                          reasoning: rep.steps
+                        }
+                      },
+                      streaming: !isStop
+                    } as ChatMessage
+                  }
+                  return m
+                })
               }
             )
           }
-          setStream(responseId, rep)
         }
       } catch (error) {
         console.error("Error sending message:", error)
         throw error
       } finally {
         setIsStreaming(false)
-        setStreamingMessageId(undefined)
       }
     }
   })

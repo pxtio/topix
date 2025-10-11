@@ -48,15 +48,9 @@ const ReasoningStepViewImpl = ({
     setViewMore(!viewMore)
   }
 
-  const messageClass = cn(
-    'transition-all w-full h-auto min-h-2 p-2 rounded-xl',
-    viewMore ? 'bg-card' : ''
-  )
+  const messageClass = 'transition-all w-full h-auto min-h-2 p-2 rounded-xl'
 
-  const spanMessageClass = cn(
-    'text-card-foreground whitespace-pre-line',
-    message.length > 50 ? 'font-normal' : 'font-medium'
-  )
+  const spanMessageClass = 'text-card-foreground whitespace-pre-line'
 
   const stepIcon = ToolNameIcon[step.name]
   const successIcon = stepIcon || Tick01Icon
@@ -75,7 +69,7 @@ const ReasoningStepViewImpl = ({
       `}
     >
       <div className='relative flex-shrink-0'>
-        <div className="relative z-20 mt-0.5 rounded-full bg-card w-4 h-4">
+        <div className="relative z-20 mt-0.5 rounded-full bg-sidebar w-4 h-4">
           {
             isLoading &&
             <div className='absolute animate-ping w-2 h-2 rounded-full bg-secondary/75 z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' />
@@ -183,7 +177,7 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
         relative
         w-full
         p-3
-        bg-card
+        bg-sidebar
         text-muted-foreground
         rounded-xl
         shadow-md

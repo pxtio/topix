@@ -43,6 +43,7 @@ export const AssistantMessage = ({
     const firstStep = effectiveSteps?.[0]
     const isDeepResearch = firstStep?.name === 'outline_generator'
     const isSynthesis = lastStep?.name === 'synthesizer'
+    const isAnswerReformulate = lastStep?.name === 'answer_reformulate'
 
     const showLastStepMessage =
       (effectiveSteps && effectiveSteps.length > 0) || !!message
@@ -51,27 +52,15 @@ export const AssistantMessage = ({
 
     // only relevant for active streaming; historical uses messageContent
     const rawContent =
-      sm &&
-      sm.steps?.length > 0 &&
-      lastStep?.output &&
+      lastStep &&
+      lastStep.output &&
       isMainResponse(lastStep.name)
         ? (lastStep.output as string)
         : ''
 
     let finalContent = ''
-    if (sm && sm.steps?.length > 0) {
-      if (isSynthesis) {
-        finalContent = rawContent
-      } else {
-        const uniqueRawMessageIds = new Set(
-          sm.steps
-            .filter(step => isMainResponse(step.name))
-            .map(step => step.id.split('::')[0])
-        )
-        if (uniqueRawMessageIds.size > 1) {
-          finalContent = rawContent
-        }
-      }
+    if (isSynthesis || isAnswerReformulate) {
+      finalContent = rawContent
     }
 
     const markdown = streaming

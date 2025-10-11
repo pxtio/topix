@@ -15,6 +15,7 @@ from topix.agents.datatypes.stream import (
     ContentType,
     StreamingMessageType,
 )
+from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
 from topix.datatypes.chat.chat import Message
@@ -160,7 +161,10 @@ class AssistantManager:
 
         # Launch the synthesis agent:
         res = AgentRunner.run_streamed(
-            self.synthesis_agent, input=query, context=context
+            self.synthesis_agent,
+            input=query,
+            context=context,
+            name=AgentToolName.ANSWER_REFORMULATE
         )
 
         final_answer = ""

@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { AgentResponse, ToolName } from "../types/stream"
+import type { ToolName } from "../types/stream"
 import type { LlmModel } from "../types/llm"
 import type { WebSearchEngine } from "../types/web"
 
@@ -14,9 +14,7 @@ import type { WebSearchEngine } from "../types/web"
  * @property clearStream - Function to clear the stream for a specific chat.
  */
 export interface ChatStore {
-  streams: Map<string, AgentResponse>
   isStreaming: boolean
-  streamingMessageId?: string
   llmModel: LlmModel
   webSearchEngine: WebSearchEngine
   enabledTools: ToolName[]
@@ -25,9 +23,6 @@ export interface ChatStore {
   setWebSearchEngine: (engine: WebSearchEngine) => void
   setEnabledTools: (tools: ToolName[]) => void
   setIsStreaming: (isStreaming: boolean) => void
-  setStreamingMessageId: (messageId?: string) => void
-  setStream: (responseId: string, response: AgentResponse) => void
-  clearStream: (responseId: string) => void
   setUseDeepResearch: (useDeepResearch: boolean) => void
 }
 
@@ -38,8 +33,6 @@ export interface ChatStore {
  * @returns A Zustand store with methods to add and clear chat streams.
  */
 export const useChatStore = create<ChatStore>((set) => ({
-  streams: new Map(),
-
   llmModel: "openai/gpt-4.1",
 
   webSearchEngine: "perplexity",
@@ -47,8 +40,6 @@ export const useChatStore = create<ChatStore>((set) => ({
   enabledTools: ["web_search", "memory_search", "code_interpreter", "navigate"],
 
   isStreaming: false,
-
-  streamingMessageId: undefined,
 
   useDeepResearch: false,
 
@@ -59,18 +50,6 @@ export const useChatStore = create<ChatStore>((set) => ({
   setEnabledTools: (tools) => set({ enabledTools: tools }),
 
   setIsStreaming: (isStreaming) => set({ isStreaming }),
-
-  setStreamingMessageId: (messageId) => set({ streamingMessageId: messageId }),
-
-  setStream: (responseId, response) => set((state) => {
-    return { streams: new Map(state.streams).set(responseId, response) }
-  }),
-
-  clearStream: (responseId) => set((state) => {
-    const streams = new Map(state.streams)
-    streams.delete(responseId)
-    return { streams }
-  }),
 
   setUseDeepResearch: (useDeepResearch) => set({ useDeepResearch }),
 }))

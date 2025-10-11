@@ -39,19 +39,14 @@ export const Conversation = ({ chatId }: { chatId: string }) => {
 
   if (!messages) return null
 
+  const userMessages = messages?.filter((m) => m.role === "user")
+  const lastUserMessageId = userMessages?.at(-1)?.id
+
   const items = messages?.map((message) => (
     <MessageView
       key={message.id}
       chatMessage={message}
-      isLatestUserMessage={
-        (
-          message.id === messages[messages.length - 1]?.id
-          && message.role === "user"
-        ) || (
-          message.id === messages[messages.length - 2]?.id
-          && message.role === "user"
-        )
-      }
+      isLatestUserMessage={message.id === lastUserMessageId}
     />
   )) || []
 

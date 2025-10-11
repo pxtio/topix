@@ -35,7 +35,11 @@ export const AssistantMessage = ({
 
   return (
     <div className='w-full space-y-4'>
-      <ReasoningStepsView response={resp} isStreaming={message.streaming || false} estimatedDurationSeconds={isDeepResearch ? 180 : undefined} />
+      <ReasoningStepsView
+        response={resp}
+        isStreaming={message.streaming || false}
+        estimatedDurationSeconds={isDeepResearch ? 180 : undefined}
+      />
       {lastStepMessage}
       {!message.streaming && resp && <SourcesView answer={resp} />}
       {!message.streaming && (

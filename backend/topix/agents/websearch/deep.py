@@ -14,16 +14,16 @@ from agents import (
     function_tool,
 )
 
-from topix.agents.websearch.tools import (
-    fetch_content,
-    search_linkup,
-    search_tavily,
-)
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.outputs import WebSearchOutput
 from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
+from topix.agents.websearch.tools import (
+    fetch_content,
+    search_linkup,
+    search_tavily,
+)
 
 
 class WebSearchAgentHook(AgentHooks):
@@ -124,17 +124,17 @@ class DeepWebSearch(BaseAgent):
         tools = []
 
         @function_tool
-        async def fetch_content_webpage(web_url: str) -> str:
+        async def fetch_content_webpage(web_url: str) -> WebSearchOutput:
             """Read the content of a website given its URL.
 
             Args:
                 web_url (str): The URL of the website to read.
 
             Returns:
-                str: The full content of the website.
+                WebSearchOutput: The full content of the website.
 
             """
-            return await fetch_content(web_url, extract_depth, client=self._httpx_client)
+            return await fetch_content(web_url, extract_depth)
 
         tools.append(fetch_content_webpage)
 

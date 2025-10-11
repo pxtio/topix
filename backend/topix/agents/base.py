@@ -54,7 +54,6 @@ class BaseAgent(Agent[Context]):
 
     def __post_init__(self):
         """Automatically load Litellm Model if not openai's."""
-
         if isinstance(self.model, str):
             model_type = self.model.split("/")[0]
             if model_type != "openai":

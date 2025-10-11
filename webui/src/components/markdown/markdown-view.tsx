@@ -1,13 +1,9 @@
 import React from "react"
-import { Streamdown } from "streamdown"
 import type { Components } from "react-markdown"
-import remarkGfm from "remark-gfm"
 import "katex/dist/katex.min.css"
 import { cn } from "@/lib/utils"
 import { CustomTable } from "./custom-table"
 import { Pre } from "./custom-pre"
-import rehypeRaw from "rehype-raw"
-import rehypeSanitize, { defaultSchema } from "rehype-sanitize"
 import type { Schema } from "hast-util-sanitize"
 
 /** -------------------------------------------------------
@@ -190,11 +186,99 @@ const components = {
 } satisfies Components
 
 
-const brOnlySchema: Schema = {
-  ...defaultSchema,
-  tagNames: [...(defaultSchema.tagNames ?? []), "br"],
-  // keep attributes strict (defaultSchema already is)
-}
+const HAS_MERMAID = /```(?:mermaid)[\s\S]*?```/i
+
+/* -------------------------------------------
+   Lazy renderer: loads Streamdown + plugins,
+   and conditionally loads mermaid + cytoscape
+------------------------------------------- */
+const LazyRenderer = React.lazy(async () => {
+  const [
+    streamdownMod,
+    remarkGfmMod,
+    rehypeRawMod,
+    rehypeSanitizeMod,
+  ] = await Promise.all([
+    import("streamdown"),
+    import("remark-gfm"),
+    import("rehype-raw"),
+    import("rehype-sanitize"),
+    import("katex/dist/katex.min.css"),
+  ])
+
+  const { Streamdown } = streamdownMod
+  const remarkGfm = remarkGfmMod.default
+  const rehypeRaw = rehypeRawMod.default
+  const rehypeSanitize = rehypeSanitizeMod.default
+  const defaultSchema = rehypeSanitizeMod.defaultSchema as Schema
+
+  const brOnlySchema: Schema = {
+    ...defaultSchema,
+    tagNames: [...(defaultSchema.tagNames ?? []), "br"],
+  }
+
+  const Renderer: React.FC<{ content: string }> = ({ content }) => {
+    const rootRef = React.useRef<HTMLDivElement>(null)
+
+    // Only when mermaid code fences exist, pull mermaid + cytoscape
+    React.useEffect(() => {
+      if (!HAS_MERMAID.test(content)) return
+      let cancelled = false
+
+      ;(async () => {
+        // Load mermaid + (heavy) cytoscape on demand
+        const [{ default: mermaid }] = await Promise.all([
+          import("mermaid"),
+          import("cytoscape"), // side-effect: used by mermaid for certain layouts/plugins
+        ])
+
+        if (cancelled) return
+
+        mermaid.initialize({ startOnLoad: false })
+        const container = rootRef.current
+        if (!container) return
+
+        // Find ```mermaid blocks rendered by Streamdown -> <pre><code class="language-mermaid">...</code></pre>
+        const codeBlocks = container.querySelectorAll<HTMLPreElement>("pre > code.language-mermaid")
+        let idx = 0
+        for (const code of codeBlocks) {
+          const parentPre = code.parentElement?.tagName === "PRE" ? code.parentElement as HTMLElement : code as HTMLElement
+          const source = code.textContent || ""
+          const id = `m_${Date.now()}_${idx++}`
+
+          try {
+            const { svg } = await mermaid.render(id, source)
+            const wrapper = document.createElement("div")
+            wrapper.className = "my-4"
+            wrapper.innerHTML = svg
+            parentPre.replaceWith(wrapper)
+          } catch {
+            // If render fails, keep the original code block
+            // (optionally log or show a small error badge)
+            // console.error(e)
+          }
+        }
+      })()
+
+      return () => { cancelled = true }
+    }, [content])
+
+    return (
+      <div ref={rootRef}>
+        <Streamdown
+          shikiTheme={["rose-pine-dawn", "rose-pine-moon"]}
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw, [rehypeSanitize, brOnlySchema]]}
+          components={components}
+        >
+          {content}
+        </Streamdown>
+      </div>
+    )
+  }
+
+  return { default: Renderer }
+})
 
 
 /** -------------------------------------------------------
@@ -205,25 +289,19 @@ export interface MarkdownViewProps {
   isStreaming?: boolean
 }
 
-/** -------------------------------------------------------
- *  MarkdownView — Streamdown + throttling (typed)
- *  ------------------------------------------------------*/
+
+/** -------------------------------------------
+ * MarkdownView
+ * ------------------------------------------*/
 export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
   ({ content }) => {
-    React.useEffect(() => {
-      ensureScrollbarStyleInjected()
-    }, [])
+    React.useEffect(() => { ensureScrollbarStyleInjected() }, [])
 
     return (
       <div className="w-full min-w-0">
-        <Streamdown
-          shikiTheme={["rose-pine-dawn", "rose-pine-moon"]}
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw, [rehypeSanitize, brOnlySchema]]}
-          components={components}
-        >
-          {content}
-        </Streamdown>
+        <React.Suspense fallback={<div>{content}</div>}>
+          <LazyRenderer content={content} />
+        </React.Suspense>
       </div>
     )
   },

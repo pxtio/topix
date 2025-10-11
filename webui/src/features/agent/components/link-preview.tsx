@@ -4,10 +4,11 @@ import type { UrlAnnotation } from "../types/tool-outputs"
 import { extractMainDomain } from "../utils/url"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Link02Icon } from "@hugeicons/core-free-icons"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { formatNewsletterDate } from "@/features/newsfeed/utils/date"
+import { stripMarkdown } from "../utils/md"
 
 
 // MiniLinkCard component displays a compact link card with a hover preview.
@@ -64,7 +65,7 @@ export const LinkPreviewCard = ({
 }) => {
   const { url, title, content, favicon, coverImage, tags = [], publishedAt } = annotation
   const name = extractMainDomain(url) || url
-  const description = content || ""
+  const description = useMemo(() => stripMarkdown(content || ""), [content])
 
   // cover image state
   const [coverLoaded, setCoverLoaded] = useState(false)

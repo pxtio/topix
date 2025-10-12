@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Clock02Icon, GridViewIcon, LeftToRightListBulletIcon, ListViewIcon } from '@hugeicons/core-free-icons'
+import { Clock02Icon, GridViewIcon, InformationCircleIcon, LeftToRightListBulletIcon, ListViewIcon } from '@hugeicons/core-free-icons'
 import type { ViewMode } from '../../types/newsfeeds-view'
 
 export function TopViewPanel({
@@ -92,6 +92,12 @@ export function TopViewPanel({
         mode='history'
         label='History'
         icon={<HugeiconsIcon icon={Clock02Icon} className='size-4 shrink-0' strokeWidth={2} />}
+      />
+      <Separator orientation='vertical' className='md:!h-6 hidden md:block' />
+      <ModeButton
+        mode='info'
+        label='Info'
+        icon={<HugeiconsIcon icon={InformationCircleIcon} className='size-4 shrink-0' strokeWidth={2} />}
       />
     </div>
   )

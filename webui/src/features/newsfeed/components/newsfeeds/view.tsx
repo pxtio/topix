@@ -12,6 +12,7 @@ import type { UrlAnnotation } from '@/features/agent/types/tool-outputs'
 import { CreateNewsfeedTile } from './create-new'
 import type { Newsfeed } from '../../types/newsfeed'
 import { useNewsfeedsStore } from '../../store/newsfeeds'
+import { SubscriptionInfoPanel } from './info'
 
 const EMPTY_LIST = [] as Newsfeed[]
 
@@ -175,6 +176,15 @@ export function NewsfeedsView() {
             </div>
           </div>
         )}
+
+        {/* INFO */}
+        {
+          viewMode === "info" && subId && (
+            <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin p-6 pt-16 pb-16'>
+              <SubscriptionInfoPanel subscriptionId={subId} />
+            </div>
+          )
+        }
 
         {!feedsQuery.isLoading && fused.length === 0 && (
           <div className='text-center text-sm text-muted-foreground'>No newsletters yet</div>

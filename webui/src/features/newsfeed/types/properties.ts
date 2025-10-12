@@ -21,7 +21,6 @@ export type PropertyType =
   | 'multi_source'
 
 export interface BaseProperty<TType extends PropertyType> {
-  id: string
   type: TType
 }
 

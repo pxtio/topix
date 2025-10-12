@@ -299,7 +299,7 @@ export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
 
     return (
       <div className="w-full min-w-0">
-        <React.Suspense fallback={<div>{content}</div>}>
+        <React.Suspense fallback={<div></div>}>
           <LazyRenderer content={content} />
         </React.Suspense>
       </div>

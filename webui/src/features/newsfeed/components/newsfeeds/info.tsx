@@ -217,14 +217,14 @@ export function SubscriptionInfoPanel({
               {(kwVal.length ? kwVal : ['—']).map(k => (
                 k === '—'
                   ? <span key='empty' className='text-sm text-muted-foreground'>—</span>
-                  : <Badge key={k} variant='outline' className='px-2 py-1 h-7 rounded-md bg-accent'>{k}</Badge>
+                  : <Badge key={k} variant='outline' className='px-2 py-1 h-7 rounded-md bg-accent font-mono'>{k}</Badge>
               ))}
             </div>
           ) : (
             <div className='space-y-3'>
               <div className='flex flex-wrap gap-2'>
                 {kwVal.map(k => (
-                  <Badge key={k} variant='outline' className='px-2 py-1 h-7 rounded-md flex flex-row items-center gap-1'>
+                  <Badge key={k} variant='outline' className='px-2 py-1 h-7 rounded-md flex flex-row items-center gap-1 font-mono'>
                     {k}
                     <button
                       type='button'
@@ -243,7 +243,7 @@ export function SubscriptionInfoPanel({
                   onChange={e => setKwInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') addKeyword() }}
                   placeholder='Add keyword and press Enter'
-                  className='focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:border-secondary'
+                  className='focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:border-secondary border border-border font-mono'
                 />
                 <Button type='button' size='icon' onClick={addKeyword}>
                   <HugeiconsIcon icon={PlusSignIcon} className='size-4' strokeWidth={2} />
@@ -268,7 +268,7 @@ export function SubscriptionInfoPanel({
           {!editing.seed ? (
             <div className='space-y-2'>
               {seedVal.length ? seedVal.map(u => (
-                <div key={u} className='text-sm truncate px-3 py-2 border border-border bg-accent rounded-md'>{u}</div>
+                <div key={u} className='text-sm truncate px-3 py-2 border border-border bg-accent rounded-md font-mono'>{u}</div>
               )) : <div className='text-sm text-muted-foreground'>—</div>}
             </div>
           ) : (
@@ -282,7 +282,7 @@ export function SubscriptionInfoPanel({
                         const v = e.target.value
                         setSeedVal(prev => prev.map(x => x === u ? v : x))
                       }}
-                      className='focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:border-secondary min-w-[300px] border border-border'
+                      className='focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:border-secondary min-w-[300px] border border-border font-mono text-sm'
                     />
                     <Button type='button' variant='ghost' size='icon' onClick={() => removeSeed(u)}>
                       <HugeiconsIcon icon={Delete02Icon} className='size-4' strokeWidth={2} />
@@ -296,10 +296,10 @@ export function SubscriptionInfoPanel({
                   onChange={e => setSeedInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') addSeed() }}
                   placeholder='Add a source URL then Enter'
-                  className='focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:border-secondary'
+                  className='focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:border-secondary border border-border font-mono text-sm'
                 />
                 <Button type='button' size='icon' onClick={addSeed}>
-                  <HugeiconsIcon icon={PlusSignIcon} className='size-4' strokeWidth={1.75} />
+                  <HugeiconsIcon icon={PlusSignIcon} className='size-4' strokeWidth={2} />
                 </Button>
               </div>
             </div>
@@ -314,7 +314,7 @@ export function SubscriptionInfoPanel({
 
 function Section({ title, children }: { title: string, children: React.ReactNode }) {
   return (
-    <div className='space-y-1'>
+    <div className='space-y-1 -mt-2'>
       <h3 className='text-center text-lg font-semibold text-muted-foreground'>{title}</h3>
       {children}
     </div>
@@ -347,7 +347,7 @@ function Box({
             onClick={onEdit}
             title='Edit'
             aria-label='Edit'
-            className='rounded-full !p-1 bg-accent'
+            className='rounded-full !p-1 bg-accent border border-border'
           >
             <HugeiconsIcon icon={Edit02Icon} className='size-3' strokeWidth={2} />
           </Button>
@@ -360,7 +360,7 @@ function Box({
               title='Cancel'
               aria-label='Cancel'
               disabled={saving}
-              className='rounded-full !p-1'
+              className='rounded-full !p-1 border border-border'
             >
               <HugeiconsIcon icon={Cancel01Icon} className='size-3' strokeWidth={2} />
             </Button>

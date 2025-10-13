@@ -15,6 +15,7 @@ async def setup(stage: StageEnum):
     os.environ["TAVILY_API_KEY"] = config.run.apis.tavily.api_key
     os.environ["LINKUP_API_KEY"] = config.run.apis.linkup.api_key
     os.environ["PERPLEXITY_API_KEY"] = config.run.apis.perplexity.api_key
+    os.environ["SERPER_API_KEY"] = config.run.apis.serper.api_key
     os.environ["GEMINI_API_KEY"] = config.run.apis.gemini.api_key
     os.environ["ANTHROPIC_API_KEY"] = config.run.apis.anthropic.api_key
     os.environ["OPENROUTER_API_KEY"] = config.run.apis.openrouter.api_key

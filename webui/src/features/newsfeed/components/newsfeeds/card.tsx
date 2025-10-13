@@ -38,7 +38,7 @@ export function NewsletterCard({
   const del = useDeleteNewsfeed(subscriptionId)
 
   // deterministic bg from date (shade 100)
-  const { hex } = dateToTailwindColor(createdAt, 100)
+  const { hex } = useMemo(() => dateToTailwindColor(createdAt, 100), [createdAt])
   const base = toBaseHex(hex) ?? '#f5f5f5'
 
   const { resolvedTheme } = useTheme()

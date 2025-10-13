@@ -47,8 +47,9 @@ export function useCreateSubscription() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         properties: {
-          rawDescription: vars.rawDescription ? { id: 'tmp', type: 'text', text: vars.rawDescription } : undefined
-        }
+          rawDescription: vars.rawDescription ? { type: 'text', text: vars.rawDescription } : undefined
+        },
+        creating: true               // mark as creating for UI purposes
       }
 
       qc.setQueryData<Subscription[]>(subscriptionsKey, old => [optimistic, ...(old ?? [])])
@@ -60,6 +61,7 @@ export function useCreateSubscription() {
     onSuccess: sub => {
       // replace the optimistic row with matching uid
       qc.setQueryData<Subscription[]>(subscriptionsKey, old => {
+        sub.creating = false
         if (!old) return [sub]
         const idx = old.findIndex(s => s.id === sub.id)
         if (idx >= 0) {

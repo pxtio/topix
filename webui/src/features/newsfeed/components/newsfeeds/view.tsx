@@ -131,7 +131,7 @@ export function NewsfeedsView() {
         )}
 
         {/* HISTORY */}
-        {(viewMode === 'history' || (!latestReadyId && !feedsQuery.isLoading)) && (
+        {viewMode === 'history' && (
           <div className='mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto scrollbar-thin pt-16 pb-16'>
             <CreateNewsfeedTile
               subscriptionId={subId}

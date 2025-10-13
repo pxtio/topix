@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
 import { useListSubscriptions } from '../api/list-subscriptions'
-import { useListNewsfeeds } from '../api/list-newsfeeds'
 import { SubscriptionCard } from '../components/subscription-card'
 import { CreateSubscriptionDialog } from '../components/create-subscription-dialog'
 import { CreateSubscriptionCardTrigger } from '../components/create-subscription-card-trigger'
 import { useNavigate } from '@tanstack/react-router'
 import { useDeleteSubscription } from '../api/delete-subscription'
+import type { Subscription } from '../types/subscription'
 
 
 /**
@@ -33,7 +33,7 @@ export default function SubscriptionsPage() {
           />
 
           {sorted.map(sub => (
-            <SubscriptionButton key={sub.id} subId={sub.id} label={sub.label} />
+            <SubscriptionButton key={sub.id} sub={sub} />
           ))}
         </div>
 
@@ -49,32 +49,20 @@ export default function SubscriptionsPage() {
  * A button that shows the latest newsfeed of a subscription, or is disabled if none exist.
  */
 function SubscriptionButton({
-  subId,
-  label
+  sub
 }: {
-  subId: string
-  label: { markdown: string }
+  sub: Subscription
 }) {
-  const feeds = useListNewsfeeds(subId)
-  const latestId = feeds.data?.[0]?.id
   const navigate = useNavigate()
   const del = useDeleteSubscription()
 
   return (
     <SubscriptionCard
-      sub={{
-        id: subId,
-        type: 'subscription',
-        label: { markdown: label.markdown },
-        createdAt: '',
-        updatedAt: ''
-      }}
-      disabled={!latestId}
+      sub={sub}
       onClick={() => {
-        if (!latestId) return
-        navigate({ to: '/subscriptions/$id', params: { id: subId } })
+        navigate({ to: '/subscriptions/$id', params: { id: sub.id } })
       }}
-      onDelete={() => del.mutate({ subscriptionId: subId })}
+      onDelete={() => del.mutate({ subscriptionId: sub.id })}
     />
   )
 }

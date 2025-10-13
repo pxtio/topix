@@ -29,10 +29,10 @@ export const dateToTailwindColor = (
   shade: TailwindShade = 100,
   families?: string[]
 ): { family: string, shade: TailwindShade, hex: string } => {
-  // normalize input; if invalid, just use epoch
   const norm = (() => {
     const d = new Date(iso)
-    return isNaN(d.getTime()) ? new Date(0).toISOString() : d.toISOString()
+    if (isNaN(d.getTime())) return '1970-01-01'
+    return d.toISOString().split('T')[0] // keep only YYYY-MM-DD
   })()
 
   const pool = families && families.length > 0

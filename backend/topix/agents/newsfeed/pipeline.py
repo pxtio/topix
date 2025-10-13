@@ -1,6 +1,8 @@
 """Newsfeed pipeline."""
 from __future__ import annotations
 
+from agents import MaxTurnsExceeded
+
 from topix.agents.datatypes.annotations import SearchResult
 from topix.agents.datatypes.outputs import NewsfeedArticle, NewsfeedOutput, TopicTracker
 from topix.agents.newsfeed.collector import NewsfeedCollector, NewsfeedCollectorInput, NewsfeedSynthesizer
@@ -16,7 +18,7 @@ from topix.datatypes.resource import RichText
 from topix.store.qdrant.store import ContentStore
 from topix.utils.web.favicon import fetch_meta_images_batch
 
-COLLECTOR_MAX_TURNS = 30
+COLLECTOR_MAX_TURNS = 50
 
 
 class NewsfeedPipeline:
@@ -134,12 +136,16 @@ class NewsfeedPipeline:
             subscription=subscription,
             history=self._extract_existing_urls(history)
         )
-        _ = await AgentRunner.run(
-            self.collector,
-            input=input_obj,
-            context=context,
-            max_turns=COLLECTOR_MAX_TURNS
-        )
+        try:
+            _ = await AgentRunner.run(
+                self.collector,
+                input=input_obj,
+                context=context,
+                max_turns=COLLECTOR_MAX_TURNS
+            )
+        except MaxTurnsExceeded:
+            # Collector may hit max turns, but we can still proceed to synthesis
+            pass
 
         output: NewsfeedOutput = await AgentRunner.run(
             self.synthesizer,

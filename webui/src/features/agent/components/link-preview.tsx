@@ -181,7 +181,7 @@ export const LinkPreviewCard = ({
                     key={t}
                     variant="outline"
                     className={cn(
-                      "rounded-full",
+                      "rounded-full bg-background",
                       useSmallFontSize ? "text-[0.6rem] py-0.5" : "text-xs py-1"
                     )}
                   >
@@ -192,7 +192,7 @@ export const LinkPreviewCard = ({
                   <Badge
                     variant="outline"
                     className={cn(
-                      "rounded-md",
+                      "rounded-md bg-background",
                       useSmallFontSize ? "text-[0.6rem] py-0.5" : "text-xs py-1"
                     )}
                   >

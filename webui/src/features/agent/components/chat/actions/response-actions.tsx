@@ -21,7 +21,7 @@ export const ResponseActions = ({ message, saveAsIs = false }: { message: string
     <div className="flex flex-row items-center gap-2">
       <CopyAnswer answer={message} />
       <SaveAsNote message={message} type="notify" saveAsIs={saveAsIs} boardId={attachedBoardId} />
-      <SaveAsNote message={message} type="mapify" saveAsIs={saveAsIs} boardId={attachedBoardId} />
+      <SaveAsNote message={message} type="mapify" boardId={attachedBoardId} />
     </div>
   )
 }

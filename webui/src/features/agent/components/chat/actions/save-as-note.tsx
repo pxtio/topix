@@ -22,7 +22,7 @@ import { toast } from "sonner"
 // Spinner icon for loading state
 const LoadingIcon = () => <HugeiconsIcon
   icon={ReloadIcon}
-  className="text-accent-foreground size-4 animate-spin [animation-duration:750ms]"
+  className="size-4 animate-spin [animation-duration:750ms]"
   strokeWidth={2}
 />
 
@@ -155,7 +155,7 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
   const icon = type === "notify" ? NotebookIcon : GitForkIcon
 
   const buttonClass = clsx(
-    "relative transition-all text-xs text-secondary/75 hover:text-secondary hover:bg-accent hover:shadow-xs font-medium flex flex-row items-center gap-2 p-1 rounded-md overflow-hidden",
+    "relative transition-all text-xs text-secondary hover:bg-accent hover:shadow-xs font-medium flex flex-row items-center gap-2 p-1 rounded-md overflow-hidden",
     processing && "opacity-75 pointer-events-none"
   )
 

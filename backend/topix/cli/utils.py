@@ -97,14 +97,6 @@ class Renderer:
         self.show_hint = show_hint
         self._CSI = "\x1b["
 
-        # Optional: tool name → human-friendly step title
-        self.tool_descriptions: dict[str, str] = {
-            "memory_search": "retrieve from memory",
-            "web_search": "search the web",
-            "code_interpreter": "run code",
-            "raw_message": "model message",
-        }
-
     # ---------- ANSI helpers ----------
     def enter_alt_screen(self) -> None:
         """Enter the alternate screen buffer."""

@@ -28,6 +28,7 @@ dependencies = [
     "pyjwt>=2.10.1",
     "pyyaml>=6.0.2",
     "qdrant-client>=1.14.3",
+    "questionary>=1.7.0",
     "readchar>=4.2.1",
     "rich>=13.7.1",
     "selectolax>=0.3.34",

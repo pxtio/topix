@@ -6,7 +6,9 @@ import asyncio
 import contextlib
 import time
 
-from typing import Optional
+from typing import Literal, Optional
+
+import questionary
 
 from readchar import readkey
 from readchar.key import CTRL_C, CTRL_D, ENTER, LEFT, RIGHT
@@ -18,6 +20,7 @@ from topix.agents.config import AssistantManagerConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.stream import AgentStreamMessage
 from topix.agents.datatypes.tools import AgentToolName
+from topix.agents.deep_research import DeepResearch
 from topix.agents.sessions import AssistantSession
 from topix.cli.utils import Renderer, SessionRun, StepRun
 
@@ -44,6 +47,9 @@ TOOL_TITLES: dict[str, str] = {
     "web_search": "search the web",
     "code_interpreter": "run code",
     "raw_message": "model message",
+    "outline_generator": "generate outline",
+    "web_collector": "collect web information",
+    "synthesizer": "synthesize learning module",
 }
 
 # --------- App state ----------
@@ -108,7 +114,7 @@ class FinalAnswerGate:
 
     def observe(self, msg: AgentStreamMessage) -> None:
         """Observe a message to track RAW_MESSAGE tool calls."""
-        if msg.tool_name != AgentToolName.RAW_MESSAGE:
+        if msg.tool_name != AgentToolName.RAW_MESSAGE or msg.tool_name != AgentToolName.SYNTHESIZER:
             return
         uuid = parse_tool_uuid(msg.tool_id)
         if uuid not in self.raw_seen:
@@ -123,12 +129,12 @@ class FinalAnswerGate:
             msg.tool_name == AgentToolName.RAW_MESSAGE
             and self.final_uuid is not None
             and parse_tool_uuid(msg.tool_id) == self.final_uuid
-        )
+        ) or msg.tool_name == AgentToolName.SYNTHESIZER
 
 
 async def run_agent_session(  # noqa: C901
     query: str,
-    assistant: AssistantManager,
+    assistant: AssistantManager | DeepResearch,
     session: AssistantSession,
     renderer: Renderer,
 ) -> None:
@@ -304,7 +310,7 @@ async def key_loop(renderer: Renderer) -> None:  # noqa: C901
             continue
 
 
-async def main_async() -> None:
+async def main_async(mode=Literal["assistant", "deep_research"]) -> None:
     """Run main async app."""
     global stop_requested, agent_task
 
@@ -317,10 +323,13 @@ async def main_async() -> None:
     # Create a new chat session (thread)
     session_id = gen_uid()
     session = AssistantSession(session_id, chat_store=chat_store)
-    assistant: AssistantManager = AssistantManager.from_config(
-        content_store=chat_store._content_store,
-        config=assistant_config
-    )
+    if mode == "assistant":
+        assistant: AssistantManager = AssistantManager.from_config(
+            content_store=chat_store._content_store,
+            config=assistant_config
+        )
+    else:
+        assistant: DeepResearch = DeepResearch.from_yaml()
 
     renderer = Renderer(
         console=console,
@@ -353,7 +362,23 @@ async def main_async() -> None:
 
 
 if __name__ == "__main__":
+
+    mode = questionary.select(
+        "Choose a mode to start:",
+        choices=[
+            {"name": "🧠  Assistant (general-purpose chat)", "value": "assistant"},
+            {"name": "🔬  Deep Research (Research Report)", "value": "deep_research"},
+        ],
+        qmark="👉",
+        pointer="❯",
+        style=questionary.Style([
+            ('qmark', 'fg:cyan bold'),
+            ('question', 'bold'),
+            ('pointer', 'fg:green bold'),
+        ]),
+    ).ask()
+
     try:
-        asyncio.run(main_async())
+        asyncio.run(main_async(mode))
     except KeyboardInterrupt:
         console.print(Text("Bye-bye appli.", style="red"))

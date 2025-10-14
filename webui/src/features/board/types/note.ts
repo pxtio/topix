@@ -1,6 +1,6 @@
 import { generateUuid, uuidToNumber } from "@/lib/common"
-import type { BooleanProperty, IconProperty, NumberProperty, PositionProperty, SizeProperty,   } from "./property"
 import { createDefaultStyle, type NodeType, type Style } from "./style"
+import type { BooleanProperty, IconProperty, NumberProperty, PositionProperty, SizeProperty, URLProperty } from "@/features/newsfeed/types/properties"
 
 
 /**
@@ -12,6 +12,8 @@ export interface NoteProperties {
   emoji: IconProperty
   pinned: BooleanProperty
   listOrder: NumberProperty
+  url: URLProperty
+  imageUrl: URLProperty
 }
 
 
@@ -88,6 +90,12 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     listOrder: {
       type: "number",
       number: 0,
+    },
+    url: {
+      type: "url"
+    },
+    imageUrl: {
+      type: "url"
     }
   }
 }

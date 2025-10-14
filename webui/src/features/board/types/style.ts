@@ -206,7 +206,8 @@ export const createDefaultStyle = ({
         roundness: 0,
         fontFamily: "handwriting",
         fontSize: "M",
-        textAlign: "left"
+        textAlign: "left",
+        backgroundColor: "#bfdbfe"
       } as Style
     case "text":
       return {

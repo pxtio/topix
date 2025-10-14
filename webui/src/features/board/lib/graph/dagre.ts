@@ -31,8 +31,8 @@ export const dagreLayout: LayoutAlgorithm = async (nodes: NoteNode[], edges: Lin
 
   for (const node of nodes) {
     dagreGraph.setNode(node.id, {
-      width: node.data.properties.nodeSize.size.width ?? 0,
-      height: node.data.properties.nodeSize.size.height ?? 0,
+      width: node.data.properties.nodeSize.size?.width ?? 0,
+      height: node.data.properties.nodeSize.size?.height ?? 0,
     })
 
     // Dagre currently has an open issue that prevents it from laying out sub-flows
@@ -55,8 +55,8 @@ export const dagreLayout: LayoutAlgorithm = async (nodes: NoteNode[], edges: Lin
   const nextNodes = nodes.map((node) => {
     const { x, y } = dagreGraph.node(node.id)
     const position = {
-      x: x - (node.data.properties.nodeSize.size.width ?? 0) / 2,
-      y: y - (node.data.properties.nodeSize.size.height ?? 0) / 2,
+      x: x - (node.data.properties.nodeSize.size?.width ?? 0) / 2,
+      y: y - (node.data.properties.nodeSize.size?.height ?? 0) / 2,
     }
 
     return { ...node, position }

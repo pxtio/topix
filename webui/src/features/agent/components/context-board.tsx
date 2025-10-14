@@ -39,6 +39,8 @@ export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardPro
       <SelectTrigger className='border border-border rounded-lg bg-card text-xs font-medium backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50'>
         <HugeiconsIcon
           icon={AiChipIcon}
+          className='size-4 shrink-0'
+          strokeWidth={2}
         />
         <span>{label}</span>
       </SelectTrigger>

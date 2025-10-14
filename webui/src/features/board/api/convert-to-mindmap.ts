@@ -1,5 +1,5 @@
 import type { Link } from "../types/link"
-import type { Note } from "../types/note"
+import { createDefaultNote, type Note } from "../types/note"
 import camelcaseKeys from "camelcase-keys"
 import { useMutation } from "@tanstack/react-query"
 import { useAppStore } from "@/store"
@@ -11,6 +11,7 @@ import { createDefaultLinkStyle, createDefaultStyle } from "../types/style"
 import { colorTree } from "../utils/bfs"
 import { pickRandomColorOfShade } from "../lib/colors/tailwind"
 import { apiFetch } from "@/api"
+import { escapeNonMathDollars } from "@/lib/common"
 
 
 /**
@@ -44,9 +45,23 @@ export const useConvertToMindMap = () => {
     mutationFn: async ({
       boardId,
       answer,
-      toolType
-    }: { boardId: string, answer: string, toolType: "notify" | "mapify" }): Promise<{ status: string }> => {
+      toolType,
+      saveAsIs = false
+    }: { boardId: string, answer: string, toolType: "notify" | "mapify", saveAsIs?: boolean }): Promise<{ status: string }> => {
+      // if saveAsIs and notify, just create a single note with the exact content
+      if (saveAsIs && toolType === "notify") {
+        const note = createDefaultNote({ boardId, nodeType: "sheet"})
+        note.content = { markdown: escapeNonMathDollars(answer) }
+        setMindMap(boardId, [convertNoteToNode(note)], [])
+        return { status: "success" }
+      }
+
       const { notes, links } = await convertToMindMap(userId, answer, toolType)
+      notes.forEach(note => {
+        if (note.content?.markdown) {
+          note.content.markdown = escapeNonMathDollars(note.content.markdown)
+        }
+      })
 
       notes.forEach(note => {
         note.graphUid = boardId

@@ -251,7 +251,7 @@ async def fetch_content(
     *,
     client: Optional[httpx.AsyncClient] = None,
     timeout: Optional[httpx.Timeout] = None,
-) -> str:
+) -> WebSearchOutput:
     """Read the content of a website via Tavily Extract API (async).
 
     Args:
@@ -287,4 +287,11 @@ async def fetch_content(
     resp.raise_for_status()
     raw_content = resp.json().get("results", [{}])[0].get("raw_content", "")
 
-    return f'<document url="{web_url}">\n\n{raw_content}\n\n</document>'
+    return WebSearchOutput(
+        search_results=[
+            SearchResult(
+                url=web_url,
+                content=raw_content,
+            )
+        ]
+    )

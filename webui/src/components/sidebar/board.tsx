@@ -33,7 +33,7 @@ export function DashboardMenuItem() {
         className="text-xs font-medium truncate"
         isActive={isActive}
       >
-        <HugeiconsIcon icon={DashboardCircleAddIcon} className="shrink-0 size-4 text-sidebar-icon-2" strokeWidth={1.75} />
+        <HugeiconsIcon icon={DashboardCircleAddIcon} className="shrink-0 size-4 text-sidebar-icon-2" strokeWidth={2} />
         <span>Dashboard</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -57,7 +57,7 @@ export function NewBoardItem() {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton className="text-xs text-secondary font-medium transition-all" onClick={handleClick}>
-        <HugeiconsIcon icon={Edit01Icon} className="text-xs shrink-0 text-sidebar-icon-1" strokeWidth={1.75} />
+        <HugeiconsIcon icon={Edit01Icon} className="text-xs shrink-0 text-sidebar-icon-1" strokeWidth={2} />
         <span>New Board</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -93,7 +93,7 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
               className="text-xs font-medium truncate"
               isActive={isActive}
             >
-              <HugeiconsIcon icon={NoteIcon} className="shrink-0 size-4" strokeWidth={1.75} />
+              <HugeiconsIcon icon={NoteIcon} className="shrink-0 size-4" strokeWidth={2} />
               <span>{trimText(label || UNTITLED_LABEL, 20)}</span>
             </SidebarMenuButton>
           </ContextMenuTrigger>
@@ -109,8 +109,8 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
 
           <CollapsibleTrigger asChild>
             <SidebarMenuAction className='right-1.5'>
-              <Plus className="group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
-              <Minus className="group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
+              <Plus className="group-data-[state=open]/collapsible:hidden" strokeWidth={2} />
+              <Minus className="group-data-[state=closed]/collapsible:hidden" strokeWidth={2} />
             </SidebarMenuAction>
           </CollapsibleTrigger>
           <CollapsibleContent>

@@ -13,6 +13,7 @@ export interface SendMessageRequestPayload {
   model: LlmModel
   webSearchEngine: WebSearchEngine
   enabledTools?: ToolName[]
+  useDeepResearch?: boolean
 }
 
 

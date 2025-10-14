@@ -28,13 +28,13 @@ export function PasswordInput(props: Props) {
           <HugeiconsIcon
             icon={ViewOffSlashIcon}
             className="h-4 w-4"
-            strokeWidth={1.75}
+            strokeWidth={2}
           />
         ) : (
           <HugeiconsIcon
             icon={ViewIcon}
             className="h-4 w-4"
-            strokeWidth={1.75}
+            strokeWidth={2}
           />
         )}
       </Button>

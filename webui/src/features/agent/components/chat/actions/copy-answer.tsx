@@ -22,10 +22,10 @@ export const CopyAnswer = ({ answer }: { answer: string }) => {
 
   return (
     <button
-      className="transition-all text-xs text-muted-foreground/50 hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md"
+      className="transition-all text-xs text-muted-foreground hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md"
       onClick={handleCopy}
     >
-      <HugeiconsIcon icon={icon} className='size-4 shrink-0' strokeWidth={1.75} />
+      <HugeiconsIcon icon={icon} className='size-4 shrink-0' strokeWidth={2} />
       <span>Copy</span>
     </button>
   )

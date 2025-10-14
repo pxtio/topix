@@ -3,8 +3,6 @@ import { useListMessages } from "../../api/list-messages"
 import { UserMessage } from "./user-message"
 import { AssistantMessage } from "./assistant-message"
 import type { ChatMessage } from "../../types/chat"
-import { useChatStore } from "../../store/chat-store"
-import { ThinkingDots } from "@/components/progress-bar"
 
 
 /**
@@ -37,25 +35,18 @@ const MessageView = ({
 export const Conversation = ({ chatId }: { chatId: string }) => {
   const userId = useAppStore((state) => state.userId)
 
-  const { isStreaming, streamingMessageId } = useChatStore()
-
   const { data: messages } = useListMessages({ userId, chatId })
 
   if (!messages) return null
+
+  const userMessages = messages?.filter((m) => m.role === "user")
+  const lastUserMessageId = userMessages?.at(-1)?.id
 
   const items = messages?.map((message) => (
     <MessageView
       key={message.id}
       chatMessage={message}
-      isLatestUserMessage={
-        (
-          message.id === messages[messages.length - 1]?.id
-          && message.role === "user"
-        ) || (
-          message.id === messages[messages.length - 2]?.id
-          && message.role === "user"
-        )
-      }
+      isLatestUserMessage={message.id === lastUserMessageId}
     />
   )) || []
 
@@ -63,12 +54,6 @@ export const Conversation = ({ chatId }: { chatId: string }) => {
     <>
       <div className='mt-32 flex flex-col items-end space-y-8'>
         {items}
-        {
-          isStreaming && !streamingMessageId &&
-          <div className='w-full flex flex-row justify-start items-center'>
-            <ThinkingDots message="Thinking" />
-          </div>
-        }
         <div className='h-screen'>
         </div>
       </div>

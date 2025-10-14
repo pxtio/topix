@@ -33,7 +33,7 @@ export const MemorySearchChoiceMenu = () => {
             className={buttonClass}
             onClick={handleToggle}
           >
-            <HugeiconsIcon icon={ChipIcon} className='size-4 shrink-0' strokeWidth={1.75} />
+            <HugeiconsIcon icon={ChipIcon} className='size-4 shrink-0' strokeWidth={2} />
           </button>
         </TooltipTrigger>
       </div>

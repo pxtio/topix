@@ -68,7 +68,7 @@ export function SignupPage() {
                 <HugeiconsIcon
                   icon={UserIcon}
                   className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                 />
               </div>
             </div>
@@ -88,7 +88,7 @@ export function SignupPage() {
                 <HugeiconsIcon
                   icon={UserSquareIcon}
                   className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                 />
               </div>
             </div>
@@ -109,7 +109,7 @@ export function SignupPage() {
                 <HugeiconsIcon
                   icon={Mail01Icon}
                   className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                 />
               </div>
             </div>
@@ -129,7 +129,7 @@ export function SignupPage() {
                 <HugeiconsIcon
                   icon={LockIcon}
                   className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                  strokeWidth={1.75}
+                  strokeWidth={2}
                 />
               </div>
             </div>

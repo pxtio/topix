@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { matchPredefined, PREDEFINED_TOPICS, TOPIC_DISPLAY, TOPIC_EMOJI } from '../constants/topics'
 import { useCreateSubscription } from '../api/create-subscription'
 import { useCreateNewsfeed } from '../api/create-newsfeed'
-import { SubscriptionCardLoading } from './subscription-card'
 import { generateUuid } from '@/lib/common'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Tick01Icon } from '@hugeicons/core-free-icons'
@@ -105,8 +104,8 @@ export function CreateSubscriptionDialog({
                     >
                       <span className='inline-flex items-center gap-1'>
                         {active
-                          ? <HugeiconsIcon icon={Tick01Icon} strokeWidth={1.75} className='w-4 h-4' />
-                          : <HugeiconsIcon icon={TOPIC_EMOJI[k]} strokeWidth={1.75} className='w-4 h-4' />
+                          ? <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} className='w-4 h-4' />
+                          : <HugeiconsIcon icon={TOPIC_EMOJI[k]} strokeWidth={2} className='w-4 h-4' />
                         }
                       </span>
                       {label}
@@ -141,12 +140,6 @@ export function CreateSubscriptionDialog({
                 Create
               </Button>
             </div>
-          </div>
-        )}
-
-        {step === 'creating' && (
-          <div className='flex justify-center'>
-            <SubscriptionCardLoading />
           </div>
         )}
       </DialogContent>

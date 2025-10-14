@@ -91,7 +91,7 @@ export const NewBoardCard = () => {
         bg-transparent hover:bg-accent
         hover:ring-2 hover:ring-secondary/10
         text-card-foreground
-        border border-border hover:border-secondary
+        border-2 border-border hover:border-secondary
         shadow-none hover:shadow-sm
         cursor-pointer
         w-60 h-60
@@ -106,7 +106,7 @@ export const NewBoardCard = () => {
       <HugeiconsIcon
         icon={PlusSignIcon}
         className='shrink-0 size-6 text-secondary'
-        strokeWidth={1.75}
+        strokeWidth={2}
       />
       <span className='font-medium text-sm text-secondary'>New Board</span>
     </div>

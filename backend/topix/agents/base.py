@@ -54,15 +54,15 @@ class BaseAgent(Agent[Context]):
 
     def __post_init__(self):
         """Automatically load Litellm Model if not openai's."""
-        # if the model does not support temperature, set it to None
-        self.model_settings = self._adjust_model_settings(
-            self.model, self.model_settings
-        )
-
         if isinstance(self.model, str):
             model_type = self.model.split("/")[0]
             if model_type != "openai":
                 self.model = LitellmModel(self.model)
+
+        # if the model does not support temperature, set it to None
+        self.model_settings = self._adjust_model_settings(
+            self.model, self.model_settings
+        )
 
         if not hasattr(self, "_input_type"):
             # Set a default value for _input_type to avoid AttributeError

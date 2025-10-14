@@ -34,6 +34,8 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   const isStreaming = useChatStore((state) => state.isStreaming)
   const webSearchEngine = useChatStore((state) => state.webSearchEngine)
   const enabledTools = useChatStore((state) => state.enabledTools)
+  const useDeepResearch = useChatStore((state) => state.useDeepResearch)
+  const setUseDeepResearch = useChatStore((state) => state.setUseDeepResearch)
 
   const [input, setInput] = useState<string>("")
 
@@ -72,10 +74,13 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
       model: llmModel,
       webSearchEngine,
       enabledTools,
+      useDeepResearch,
     } as SendMessageRequestPayload
 
     // clear input right before launching search
     setInput("")
+    // reset use deep research to false after sending message
+    setUseDeepResearch(false)
     await sendMessageAsync({ payload, userId, chatId: id })
     if (createNewChat) {
       await describeChatAsync({ chatId: id, userId })
@@ -114,17 +119,18 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
           className={`
             relative
             w-full max-w-[800px] mx-auto
-            rounded-xl
-            p-2
-            bg-card
-            text-card-foreground text-base
-            border border-border
           `}
         >
           <div className='absolute -top-9 left-0 transform flex flex-row items-center gap-1'>
             <InputSettings />
           </div>
-          <div className="relative flex flex-row items-center space-y-1 items-stretch">
+          <div className="relative flex flex-row items-center space-y-1 items-stretch bg-card
+            backdrop-blur-lg supports-[backdrop-filter]:bg-card/70
+            rounded-xl
+            text-card-foreground text-base
+            border border-border
+            p-2"
+          >
             <div className='flex-1 p-2 flex items-center justify-center'>
               <TextareaAutosize
                 onKeyDown={handleKeyDown}

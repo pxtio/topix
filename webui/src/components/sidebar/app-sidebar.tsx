@@ -104,16 +104,16 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" side="right" className="w-56">
                       <DropdownMenuItem disabled>
-                        <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" strokeWidth={1.75} />
+                        <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" strokeWidth={2} />
                         <span>Profile</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem disabled>
-                        <HugeiconsIcon icon={Settings01Icon} className="mr-2 h-4 w-4" strokeWidth={1.75} />
+                        <HugeiconsIcon icon={Settings01Icon} className="mr-2 h-4 w-4" strokeWidth={2} />
                         <span>Settings</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={onLogout}>
-                        <HugeiconsIcon icon={LogoutSquareIcon} className="mr-2 h-4 w-4" strokeWidth={1.75} />
+                        <HugeiconsIcon icon={LogoutSquareIcon} className="mr-2 h-4 w-4" strokeWidth={2} />
                         <span>Logout</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -146,10 +146,10 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuItem>
                       <SidebarMenuButton className="font-medium text-xs flex flex-row items-center w-full">
-                        <HugeiconsIcon icon={Clock02Icon} className="size-4 shrink-0" strokeWidth={1.75} />
+                        <HugeiconsIcon icon={Clock02Icon} className="size-4 shrink-0" strokeWidth={2} />
                         <span>Chat History</span>
-                        <HugeiconsIcon icon={PlusSignIcon} className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={1.75} />
-                        <HugeiconsIcon icon={MinusSignIcon} className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={1.75} />
+                        <HugeiconsIcon icon={PlusSignIcon} className="ml-auto group-data-[state=open]/collapsible:hidden" strokeWidth={2} />
+                        <HugeiconsIcon icon={MinusSignIcon} className="ml-auto group-data-[state=closed]/collapsible:hidden" strokeWidth={2} />
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   </CollapsibleTrigger>

@@ -3,7 +3,7 @@ import { useParams } from '@tanstack/react-router'
 import { useListNewsfeeds } from '@/features/newsfeed/api/list-newsfeeds'
 import { useGetNewsfeed } from '@/features/newsfeed/api/get-newsfeed'
 import { MarkdownView } from '@/components/markdown/markdown-view'
-import { ErrorWindow, ProgressBar } from '@/components/progress-bar'
+import { ErrorWindow, LoadingWindow } from '@/components/loading-view'
 import type { ViewMode } from '../../types/newsfeeds-view'
 import { TopViewPanel } from './top-panel'
 import { NewsletterCard } from './card'
@@ -12,6 +12,10 @@ import type { UrlAnnotation } from '@/features/agent/types/tool-outputs'
 import { CreateNewsfeedTile } from './create-new'
 import type { Newsfeed } from '../../types/newsfeed'
 import { useNewsfeedsStore } from '../../store/newsfeeds'
+import { SubscriptionInfoPanel } from './info'
+import { formatNewsletterDate } from '../../utils/date'
+import { CopyAnswer } from '@/features/agent/components/chat/actions/copy-answer'
+import { SaveAsNote } from '@/features/agent/components/chat/actions/save-as-note'
 
 const EMPTY_LIST = [] as Newsfeed[]
 
@@ -77,6 +81,7 @@ export function NewsfeedsView() {
   const currentId = viewMode !== 'history' ? (selectedId ?? latestReadyId) : undefined
   const currentFeed = useGetNewsfeed(subId, currentId)
   const markdown = currentFeed.data?.content?.markdown ?? ''
+  const currentFeedTitle = currentFeed.data ? `Newsletter ${formatNewsletterDate(currentFeed.data.createdAt)}` : ''
 
   const annotations: UrlAnnotation[] = useMemo(() => {
     return (currentFeed.data?.properties?.newsGrid?.sources || []) as UrlAnnotation[]
@@ -100,70 +105,77 @@ export function NewsfeedsView() {
       />
 
       <div className='w-full h-full p-6 space-y-4 relative'>
-        {feedsQuery.isLoading && (
-          <ProgressBar message='Loading newsletters…' viewMode='full' className='bg-transparent' />
-        )}
-        {feedsQuery.isError && (
-          <ErrorWindow message='Failed to load newsletters' viewMode='full' className='bg-transparent' />
-        )}
+        <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin pt-20 pb-16'>
+          {feedsQuery.isLoading && (
+            <LoadingWindow message='Loading newsletters…' viewMode='full' className='bg-transparent' />
+          )}
+          {feedsQuery.isError && (
+            <ErrorWindow message='Failed to load newsletters' viewMode='full' className='bg-transparent' />
+          )}
+          {
+            markdown && viewMode !== 'history' && viewMode !== 'info' && (
+              <div className='text-center flex flex-row items-center justify-center gap-4'>
+                <CopyAnswer answer={markdown} />
+                <SaveAsNote message={markdown} type="notify" saveAsIs={true} />
+                <SaveAsNote message={markdown} type="mapify" />
+              </div>
+            )
+          }
 
-        {/* ARTICLE */}
-        {viewMode === 'article' && currentId && (
-          <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin'>
+          {/* ARTICLE */}
+          {viewMode === 'article' && currentId && (
             <div className='mx-auto max-w-[900px] space-y-3'>
               {currentFeed.isLoading && (
-                <ProgressBar message='Loading…' viewMode='full' className='bg-transparent' />
+                <LoadingWindow message='Loading…' viewMode='full' className='bg-transparent' />
               )}
               {currentFeed.isError && (
                 <ErrorWindow message='Failed to load newsfeed' viewMode='full' className='bg-transparent' />
               )}
               {markdown && (
-                <div className='prose max-w-[800px] mx-auto p-4 pt-16 pb-16'>
-                  <div className='text-center mt-16'>
-                    <h1 className='text-xl text-secondary font-semibold'>Newsletter</h1>
+                <div className='prose max-w-[800px] mx-auto p-4'>
+                  <div className='text-center mt-12'>
+                    <h1 className='text-xl text-secondary font-semibold'>{currentFeedTitle}</h1>
                   </div>
                   <MarkdownView content={markdown} />
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* HISTORY */}
-        {(viewMode === 'history' || (!latestReadyId && !feedsQuery.isLoading)) && (
-          <div className='mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto scrollbar-thin pt-16 pb-16'>
-            <CreateNewsfeedTile
-              subscriptionId={subId}
-              onStart={() => {
-                setViewMode('history') // stay here; hook handles pending add/remove
-              }}
-            />
-            {fused.map(feed => (
-              <NewsletterCard
-                key={feed.id}
-                id={feed.id}
-                subscriptionId={subId!}
-                createdAt={feed.createdAt}
-                active={feed.id === selectedId}
-                generating={pendingIdSet.has(feed.id)}
-                onClick={() => openFromGrid(feed.id)}
+          {/* HISTORY */}
+          {viewMode === 'history' && (
+            <div className='mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto scrollbar-thin pt-16 pb-16'>
+              <CreateNewsfeedTile
+                subscriptionId={subId}
+                onStart={() => {
+                  setViewMode('history') // stay here; hook handles pending add/remove
+                }}
               />
-            ))}
-          </div>
-        )}
+              {fused.map(feed => (
+                <NewsletterCard
+                  key={feed.id}
+                  id={feed.id}
+                  subscriptionId={subId!}
+                  createdAt={feed.createdAt}
+                  active={feed.id === selectedId}
+                  generating={pendingIdSet.has(feed.id)}
+                  onClick={() => openFromGrid(feed.id)}
+                />
+              ))}
+            </div>
+          )}
 
-        {/* GRID */}
-        {(viewMode === 'grid' || viewMode === "linear") && currentId && (
-          <div className='w-full absolute inset-0 overflow-x-hidden overflow-y-auto scrollbar-thin p-2 pt-16 pb-16'>
+          {/* GRID */}
+          {(viewMode === 'grid' || viewMode === "linear") && currentId && (
             <div className='mx-auto max-w-[1100px] space-y-3 px-2'>
               {currentFeed.isLoading && (
-                <ProgressBar message='Loading…' viewMode='full' className='bg-transparent' />
+                <LoadingWindow message='Loading…' viewMode='full' className='bg-transparent' />
               )}
               {currentFeed.isError && (
                 <ErrorWindow message='Failed to load newsfeed' viewMode='full' className='bg-transparent' />
               )}
               <div className='text-center mt-16 mb-4'>
-                <h1 className='text-xl text-secondary font-semibold'>Newsletter</h1>
+                <h1 className='text-xl text-secondary font-semibold'>{currentFeedTitle}</h1>
               </div>
               {annotations.length > 0 ? (
                 <NewsfeedGrid annotations={annotations} viewMode={viewMode} />
@@ -173,12 +185,19 @@ export function NewsfeedsView() {
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
 
-        {!feedsQuery.isLoading && fused.length === 0 && (
-          <div className='text-center text-sm text-muted-foreground'>No newsletters yet</div>
-        )}
+          {/* INFO */}
+          {
+            viewMode === "info" && subId && (
+              <SubscriptionInfoPanel subscriptionId={subId} />
+            )
+          }
+
+          {!feedsQuery.isLoading && fused.length === 0 && (
+            <div className='text-center text-sm text-muted-foreground'>No newsletters yet</div>
+          )}
+        </div>
       </div>
     </div>
   )

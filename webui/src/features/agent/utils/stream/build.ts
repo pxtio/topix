@@ -249,12 +249,12 @@ export async function* buildResponse(
 /**
  * Extracts a human-readable description from a reasoning step.
  */
-export function extractStepDescription(step: ReasoningStep): { reasoning: string, message: string } {
-  if (step.name !== RAW_MESSAGE) {
-    return { reasoning: step.thought || "", message: ToolNameDescription[step.name] }
+export function extractStepDescription(step: ReasoningStep): { reasoning: string, message: string, title: string } {
+  if (step.name !== "raw_message" && step.name !== "outline_generator") {
+    return { reasoning: step.thought || "", message: "", title: ToolNameDescription[step.name] }
   }
   const reasoningOutLoud = (step.output as string) || ""
-  return { reasoning: step.thought || "", message: reasoningOutLoud }
+  return { reasoning: step.thought || "", message: reasoningOutLoud, title: ToolNameDescription[step.name] }
 }
 
 /**

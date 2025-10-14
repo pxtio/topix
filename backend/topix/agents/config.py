@@ -112,3 +112,9 @@ class DeepResearchConfig(BaseModel):
         with open(filepath) as f:
             cf = yaml.safe_load(f)
         return DeepResearchConfig.model_validate(cf)
+
+    def set_model(self, model: str):
+        """Switch the plan model."""
+        self.outline_generator.model = model
+        self.web_collector.model = model
+        self.synthesis.model = model

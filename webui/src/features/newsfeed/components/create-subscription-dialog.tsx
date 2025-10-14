@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { matchPredefined, PREDEFINED_TOPICS, TOPIC_DISPLAY, TOPIC_EMOJI } from '../constants/topics'
 import { useCreateSubscription } from '../api/create-subscription'
 import { useCreateNewsfeed } from '../api/create-newsfeed'
-import { SubscriptionCardLoading } from './subscription-card'
 import { generateUuid } from '@/lib/common'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Tick01Icon } from '@hugeicons/core-free-icons'
@@ -141,12 +140,6 @@ export function CreateSubscriptionDialog({
                 Create
               </Button>
             </div>
-          </div>
-        )}
-
-        {step === 'creating' && (
-          <div className='flex justify-center'>
-            <SubscriptionCardLoading />
           </div>
         )}
       </DialogContent>

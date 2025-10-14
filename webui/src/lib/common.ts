@@ -48,3 +48,10 @@ export function uuidToNumber(uuid: string): number {
   }
   return hash
 }
+
+
+// Escapes $ that are NOT math delimiters, skipping code and already-escaped \$
+// Preserves: $$...$$ display math, $...$ inline math, ```code```, `code`, and \$.
+export const escapeNonMathDollars = (md: string): string => {
+  return md.replace(/\$/g, '&#36;')
+}

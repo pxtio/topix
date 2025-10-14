@@ -7,6 +7,7 @@ import { useListBoards } from "@/features/board/api/list-boards"
 import { useUpdateBoard } from "@/features/board/api/update-board"
 import { useUpdateChat } from "@/features/agent/api/update-chat"
 import { LabelEditor } from "./label-editor"
+import { useListSubscriptions } from "@/features/newsfeed/api/list-subscriptions"
 
 export const SidebarLabel = () => {
   const { userId } = useAppStore()
@@ -15,9 +16,11 @@ export const SidebarLabel = () => {
   // If your board route is '/boards/$id/*', change it below to '/boards/$id/*'.
   const chatParams  = useParams({ from: "/chats/$id",  shouldThrow: false })
   const boardParams = useParams({ from: "/boards/$id", shouldThrow: false }) // or "/boards/$id/*"
+  const subscriptionParams = useParams({ from: "/subscriptions/$id", shouldThrow: false })
 
   const chatId  = chatParams?.id
   const boardId = boardParams?.id
+  const subscriptionId = subscriptionParams?.id
 
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isDashboard = pathname === "/boards"
@@ -27,15 +30,17 @@ export const SidebarLabel = () => {
   const active = useMemo(() => {
     if (boardId) return { view: "board" as const, id: boardId }
     if (chatId)  return { view: "chat"  as const, id: chatId }
+    if (subscriptionId) return { view: "subscriptions" as const, id: subscriptionId }
     if (isNewChat) return { view: "new-chat" as const, id: undefined }
     if (isDashboard) return { view: "dashboard" as const, id: undefined }
     if (isSubscriptions) return { view: "subscriptions" as const, id: undefined }
 
     return { view: "unknown" as const, id: undefined }
-  }, [boardId, chatId, isNewChat, isDashboard, isSubscriptions])
+  }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptions])
 
   const { data: chatList }  = useListChats({ userId })
   const { data: boardList } = useListBoards({ userId })
+  const { data: subscriptionList } = useListSubscriptions()
   const { updateBoard } = useUpdateBoard()
   const { updateChat }  = useUpdateChat()
 
@@ -58,11 +63,12 @@ export const SidebarLabel = () => {
       return
     }
     if (active.view === "subscriptions") {
-      setLabel("")
+      const c = subscriptionList?.find((s) => s.id === active.id)
+      setLabel(c?.label.markdown ?? "Subscriptions")
       return
     }
     setLabel("")
-  }, [active.view, active.id, boardList, chatList])
+  }, [active.view, active.id, boardList, chatList, subscriptionList])
 
   const handleSaveEdit = (newLabel: string) => {
     setLabel(newLabel)
@@ -89,7 +95,7 @@ export const SidebarLabel = () => {
   }
 
   if (active.view === "subscriptions") {
-    return <div className="text-sm font-medium">Subscriptions</div>
+    return <div className="text-sm font-medium">{label}</div>
   }
 
   if (active.view === "chat" || active.view === "board") {

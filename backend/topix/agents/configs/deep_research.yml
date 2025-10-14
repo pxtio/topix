@@ -1,5 +1,5 @@
 outline_generator:
-  model: openai/gpt-5
+  model: openai/gpt-4.1
   instructions_template: deep_research/outline_generator.jinja
   model_settings:
     temperature: 0.01

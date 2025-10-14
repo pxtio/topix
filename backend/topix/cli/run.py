@@ -6,7 +6,9 @@ import asyncio
 import contextlib
 import time
 
-from typing import Optional
+from typing import Literal, Optional
+
+import questionary
 
 from readchar import readkey
 from readchar.key import CTRL_C, CTRL_D, ENTER, LEFT, RIGHT
@@ -14,10 +16,11 @@ from rich.console import Console
 from rich.text import Text
 
 from topix.agents.assistant.manager import AssistantManager
-from topix.agents.config import AssistantManagerConfig
+from topix.agents.config import AssistantManagerConfig, DeepResearchConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.stream import AgentStreamMessage
-from topix.agents.datatypes.tools import AgentToolName
+from topix.agents.datatypes.tools import AgentToolName, tool_descriptions
+from topix.agents.deep_research import DeepResearch
 from topix.agents.sessions import AssistantSession
 from topix.cli.utils import Renderer, SessionRun, StepRun
 
@@ -33,18 +36,15 @@ console = Console()
 
 # --------- UI / timing ----------
 USE_ALT_SCREEN = True
-CIRCLE_FRAMES = ["◐", "◓", "◑", "◒"]
+CIRCLE_FRAMES = [
+    "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"
+]
 SPINNER_INTERVAL = 0.001
 STREAM_INTERVAL = 0.001
 CURSOR = "▌"
 
 # --------- Tool titles (step headings) ----------
-TOOL_TITLES: dict[str, str] = {
-    "memory_search": "retrieve from memory",
-    "web_search": "search the web",
-    "code_interpreter": "run code",
-    "raw_message": "model message",
-}
+TOOL_TITLES: dict[str, str] = tool_descriptions
 
 # --------- App state ----------
 history: list[SessionRun] = []
@@ -108,7 +108,7 @@ class FinalAnswerGate:
 
     def observe(self, msg: AgentStreamMessage) -> None:
         """Observe a message to track RAW_MESSAGE tool calls."""
-        if msg.tool_name != AgentToolName.RAW_MESSAGE:
+        if msg.tool_name not in (AgentToolName.RAW_MESSAGE, AgentToolName.SYNTHESIZER, AgentToolName.ANSWER_REFORMULATE):
             return
         uuid = parse_tool_uuid(msg.tool_id)
         if uuid not in self.raw_seen:
@@ -119,16 +119,12 @@ class FinalAnswerGate:
 
     def is_final_answer(self, msg: AgentStreamMessage) -> bool:
         """Check if this message belongs to the final answer stream."""
-        return (
-            msg.tool_name == AgentToolName.RAW_MESSAGE
-            and self.final_uuid is not None
-            and parse_tool_uuid(msg.tool_id) == self.final_uuid
-        )
+        return msg.tool_name in (AgentToolName.ANSWER_REFORMULATE, AgentToolName.SYNTHESIZER)
 
 
 async def run_agent_session(  # noqa: C901
     query: str,
-    assistant: AssistantManager,
+    assistant: AssistantManager | DeepResearch,
     session: AssistantSession,
     renderer: Renderer,
 ) -> None:
@@ -304,23 +300,37 @@ async def key_loop(renderer: Renderer) -> None:  # noqa: C901
             continue
 
 
-async def main_async() -> None:
+DEFAULT_MODEL = "openai/gpt-4.1"
+
+
+async def main_async(
+    mode=Literal["assistant", "deep_research"],
+    model: str = DEFAULT_MODEL,
+    search_engine: str = "perplexity",
+) -> None:
     """Run main async app."""
     global stop_requested, agent_task
 
     # One-time Topix setup & assistant manager
     await setup("local")
     chat_store = ChatStore()
-    assistant_config = AssistantManagerConfig.from_yaml()
-    assistant_config.set_web_engine("perplexity")
 
     # Create a new chat session (thread)
     session_id = gen_uid()
     session = AssistantSession(session_id, chat_store=chat_store)
-    assistant: AssistantManager = AssistantManager.from_config(
-        content_store=chat_store._content_store,
-        config=assistant_config
-    )
+    if mode == "assistant":
+        assistant_config = AssistantManagerConfig.from_yaml()
+        assistant_config.set_model(model)
+        assistant_config.set_web_engine(search_engine)
+
+        assistant: AssistantManager = AssistantManager.from_config(
+            content_store=chat_store._content_store,
+            config=assistant_config
+        )
+    else:
+        deepsearch_config = DeepResearchConfig.from_yaml()
+        deepsearch_config.set_model(model)
+        assistant: DeepResearch = DeepResearch.from_config(deepsearch_config)
 
     renderer = Renderer(
         console=console,
@@ -352,8 +362,75 @@ async def main_async() -> None:
         console.print(Text("Bye-bye appli.", style="red"))
 
 
+MODEL_DICT = {
+    "gpt-4.1": "openai/gpt-4.1",
+    "gemini-2.5-flash": "openrouter/google/gemini-2.5-flash",
+    "deepseek-chat-v3.1": "openrouter/deepseek/deepseek-chat-v3.1",
+    "mistral-medium-3.1": "openrouter/mistralai/mistral-medium-3.1",
+    "claude-sonnet-4.5": "openrouter/anthropic/claude-sonnet-4.5",
+}
+
+
+def _select_options() -> tuple[Literal["assistant", "deep_research"], str, str]:
+    mode = questionary.select(
+        "Choose a mode to start:",
+        choices=[
+            {"name": "🤖 Assistant (general-purpose chat)", "value": "assistant"},
+            {"name": "🔬 Deep Research (Research Report)", "value": "deep_research"},
+        ],
+        qmark="?",
+        pointer="❯",
+        style=questionary.Style([
+            ('qmark', 'fg:cyan bold'),
+            ('question', 'bold'),
+            ('pointer', 'fg:green bold'),
+        ]),
+    ).ask()
+
+    model_name = questionary.select(
+        "Model to use:",
+        default="gpt-4.1",
+        choices=[
+            "gpt-4.1",
+            "gemini-2.5-flash",
+            "deepseek-chat-v3.1",
+            "mistral-medium-3.1",
+            "claude-sonnet-4.5"
+        ],
+        qmark="?",
+        style=questionary.Style([
+            ('qmark', 'fg:cyan bold'),
+            ('question', 'bold'),
+        ]),
+    ).ask()
+
+    model = MODEL_DICT.get(model_name, DEFAULT_MODEL)
+
+    search_engine = questionary.select(
+        "Web search engine (if applicable):",
+        default={"name": "Linkup", "value": "linkup"},
+        choices=[
+            {"name": "Linkup", "value": "linkup"},
+            {"name": "Perplexity", "value": "perplexity"},
+            {"name": "Tavily", "value": "tavily"}
+        ],
+        qmark="?",
+        pointer="❯",
+        style=questionary.Style([
+            ('qmark', 'fg:cyan bold'),
+            ('question', 'bold'),
+            ('pointer', 'fg:green bold'),
+        ]),
+    ).ask()
+
+    return mode, model or DEFAULT_MODEL, search_engine or "perplexity"
+
+
 if __name__ == "__main__":
+
+    mode, model, search_engine = _select_options()
+
     try:
-        asyncio.run(main_async())
+        asyncio.run(main_async(mode, model, search_engine))
     except KeyboardInterrupt:
         console.print(Text("Bye-bye appli.", style="red"))

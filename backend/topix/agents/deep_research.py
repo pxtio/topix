@@ -1,5 +1,7 @@
 """Deep Research Agents."""
 
+import logging
+
 from datetime import datetime
 from typing import AsyncGenerator
 
@@ -18,6 +20,8 @@ from topix.agents.websearch.handler import WebSearchHandler
 from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
 from topix.utils.common import gen_uid
+
+logger = logging.getLogger(__name__)
 
 
 class OutlineGenerator(BaseAgent):
@@ -159,10 +163,7 @@ class DeepResearch:
         return cls(outline_generator, web_collector, synthesizer)
 
     @classmethod
-    def from_yaml(
-        cls,
-        filepath: str | None = None
-    ):
+    def from_yaml(cls, filepath: str | None = None):
         """Init web module generator from yaml file."""
         config = DeepResearchConfig.from_yaml(filepath=filepath)
         return cls.from_config(config)
@@ -206,17 +207,21 @@ class DeepResearch:
             raise ValueError("Problem on generating outline")
 
         # Collect Web contents:
-        messages = AgentRunner.run_streamed(
-            starting_agent=self.web_collector,
-            input=outline,
-            context=context,
-            max_turns=max_turn,
-            name=AgentToolName.WEB_COLLECTOR,
-        )
-
-        async for msg in messages:
-            if not isinstance(msg, ToolCall):
-                yield msg
+        try:
+            messages = AgentRunner.run_streamed(
+                starting_agent=self.web_collector,
+                input=outline,
+                context=context,
+                max_turns=max_turn,
+                name=AgentToolName.WEB_COLLECTOR,
+            )
+            async for msg in messages:
+                if not isinstance(msg, ToolCall):
+                    yield msg
+        except Exception as e:
+            logger.warning(
+                f"Web collection failed: {e}, mainly due to attend max turn limit."
+            )
 
         # Synthesize learning module:
         messages = AgentRunner.run_streamed(
@@ -243,11 +248,9 @@ class DeepResearch:
             content=RichText(markdown=final_answer),
             properties={
                 "reasoning": ReasoningProperty(
-                    reasoning=[
-                        step.model_dump(exclude_none=True) for step in steps
-                    ]
+                    reasoning=[step.model_dump(exclude_none=True) for step in steps]
                 )
-            }
+            },
         )
         if session:
             await session.add_items([main_message])

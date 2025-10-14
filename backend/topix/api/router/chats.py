@@ -8,7 +8,7 @@ from fastapi import APIRouter, Body, Depends, Request, Response
 from fastapi.params import Path, Query
 
 from topix.agents.assistant.manager import AssistantManager
-from topix.agents.config import AssistantManagerConfig
+from topix.agents.config import AssistantManagerConfig, DeepResearchConfig
 from topix.agents.datatypes.context import Context, ReasoningContext
 from topix.agents.deep_research import DeepResearch
 from topix.agents.describe_chat import DescribeChat
@@ -150,7 +150,11 @@ async def send_message(
     session = AssistantSession(session_id=chat_id, chat_store=chat_store)
 
     if body.use_deep_research:
-        deepsearch = DeepResearch.from_yaml()
+        deepsearch_config = DeepResearchConfig.from_yaml()
+        deepsearch_config.set_model(body.model)
+
+        deepsearch = DeepResearch.from_config(deepsearch_config)
+
         run_streamed = deepsearch.run_streamed
     else:
         assistant_config = AssistantManagerConfig.from_yaml()

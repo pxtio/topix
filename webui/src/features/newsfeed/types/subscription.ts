@@ -41,4 +41,6 @@ export interface Subscription {
   createdAt: string
   updatedAt: string
   deletedAt?: string
+
+  creating?: boolean
 }

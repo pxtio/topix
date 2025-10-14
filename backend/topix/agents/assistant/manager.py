@@ -15,6 +15,7 @@ from topix.agents.datatypes.stream import (
     ContentType,
     StreamingMessageType,
 )
+from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
 from topix.datatypes.chat.chat import Message
@@ -150,17 +151,26 @@ class AssistantManager:
             )
 
         # launch plan:
-        res = AgentRunner.run_streamed(
-            self.plan_agent, input=agent_input, context=context, max_turns=max_turns
-        )
+        try:
+            res = AgentRunner.run_streamed(
+                self.plan_agent, input=agent_input, context=context, max_turns=max_turns
+            )
 
-        async for message in res:
-            if isinstance(message, AgentStreamMessage):
-                yield message
+            async for message in res:
+                if isinstance(message, AgentStreamMessage):
+                    yield message
+        except Exception as e:
+            logger.error(
+                f"Plan agent execution error {e}, may due to Max turns exceeded",
+                exc_info=True,
+            )
 
         # Launch the synthesis agent:
         res = AgentRunner.run_streamed(
-            self.synthesis_agent, input=query, context=context
+            self.synthesis_agent,
+            input=query,
+            context=context,
+            name=AgentToolName.ANSWER_REFORMULATE
         )
 
         final_answer = ""

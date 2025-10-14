@@ -79,7 +79,7 @@ class IconProperty(Property):
         """Icon data model."""
 
         type: Literal['icon'] = 'icon'
-        icon: str
+        icon: str  # URL of the icon image
 
     class Emoji(BaseModel):
         """Emoji data model."""

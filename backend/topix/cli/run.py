@@ -2,12 +2,13 @@
 """Interactive CLI app for a real streaming agent."""
 from __future__ import annotations
 
-import argparse
 import asyncio
 import contextlib
 import time
 
 from typing import Literal, Optional
+
+import questionary
 
 from readchar import readkey
 from readchar.key import CTRL_C, CTRL_D, ENTER, LEFT, RIGHT
@@ -361,17 +362,23 @@ async def main_async(mode=Literal["assistant", "deep_research"]) -> None:
 
 
 if __name__ == "__main__":
-    # Add parser:
-    parser = argparse.ArgumentParser("Run Topix AI agent CLI")
-    parser.add_argument(
-        "--mode",
-        type=str,
-        choices=["assistant", "deep_research"],
-        default="assistant",
-        help="Mode to run: 'assistant' for general assistant, 'deep_research' for deep research mode",
-    )
-    args = parser.parse_args()
+
+    mode = questionary.select(
+        "Choose a mode to start:",
+        choices=[
+            {"name": "🧠  Assistant (general-purpose chat)", "value": "assistant"},
+            {"name": "🔬  Deep Research (Research Report)", "value": "deep_research"},
+        ],
+        qmark="👉",
+        pointer="❯",
+        style=questionary.Style([
+            ('qmark', 'fg:cyan bold'),
+            ('question', 'bold'),
+            ('pointer', 'fg:green bold'),
+        ]),
+    ).ask()
+
     try:
-        asyncio.run(main_async(args.mode))
+        asyncio.run(main_async(mode))
     except KeyboardInterrupt:
         console.print(Text("Bye-bye appli.", style="red"))

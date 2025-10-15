@@ -74,7 +74,10 @@ export const useSendMessage = () => {
       userId: string,
       chatId: string
     }) => {
+      const key = ['listMessages', chatId, userId] as const
       setIsStreaming(true)
+
+      await queryClient.cancelQueries({ queryKey: key, exact: true })
 
       // Optimistically update the chat messages in the query cache
       const newUserMessage = {
@@ -95,13 +98,14 @@ export const useSendMessage = () => {
         streaming: true
       } as ChatMessage
 
+      const newMessages = [newUserMessage, newAssistantPlaceholder]
+
       try {
         queryClient.setQueryData<ChatMessage[]>(
-          ["listMessages", chatId, userId],
+          key,
           (oldMessages) => [
             ...(oldMessages || []),
-            newUserMessage,
-            newAssistantPlaceholder
+            ...newMessages
           ]
         )
         const stream = sendMessage(payload, chatId, userId)
@@ -119,11 +123,15 @@ export const useSendMessage = () => {
 
           if (!setNewAssistantMessageId) {
             setNewAssistantMessageId = true
+
             queryClient.setQueryData<ChatMessage[]>(
-              ["listMessages", chatId, userId],
+              key,
               (oldMessages) => {
-                if (!oldMessages) return oldMessages
-                return oldMessages.map((m) => {
+                let msgs = oldMessages || []
+                if (!oldMessages || oldMessages.length === 0) {
+                  msgs = [...newMessages]
+                }
+                return msgs.map((m) => {
                   if (m.id === tmpId) {
                     return {
                       ...m,
@@ -138,8 +146,11 @@ export const useSendMessage = () => {
             queryClient.setQueryData<ChatMessage[]>(
               ["listMessages", chatId, userId],
               (oldMessages) => {
-                if (!oldMessages) return oldMessages
-                return oldMessages.map((m) => {
+                let msgs = oldMessages || []
+                if (!oldMessages || oldMessages.length === 0) {
+                  msgs = [...newMessages]
+                }
+                return msgs.map((m) => {
                   const lastStep = rep.steps[rep.steps.length - 1]
                   let content = ""
                   if (lastStep.name === 'synthesizer' || lastStep.name === 'answer_reformulate') {

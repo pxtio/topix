@@ -277,8 +277,9 @@ async def run_agent_session(  # noqa: C901
             # 6) Call system pager less -R so ANSI color preserved and scrolling works
             #    If less is not available, this will fall back to printing text.
             p = subprocess.Popen(["less", "-R"], stdin=subprocess.PIPE)
+            rendered_with_enter = rendered + "\n"
             try:
-                p.stdin.write(rendered.encode("utf-8"))
+                p.stdin.write(rendered_with_enter.encode("utf-8"))
                 p.stdin.close()
                 p.wait()
             except BrokenPipeError:

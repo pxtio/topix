@@ -32,6 +32,7 @@ def with_standard_response(func: Callable[..., Awaitable[Any]]) -> Callable[...,
             # Preserve HTTPException's status code and message
             if response:
                 response.status_code = http_exc.status_code
+            logger.error(f"HTTPException in {func.__name__}: {http_exc.detail}", exc_info=True)
             return {
                 "status": "error",
                 "data": {"message": http_exc.detail}

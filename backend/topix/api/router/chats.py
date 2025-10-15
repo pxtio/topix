@@ -222,5 +222,14 @@ async def list_messages(
 ):
     """List all messages in a chat."""
     chat_store: ChatStore = request.app.chat_store
-    messages = await chat_store.get_messages(chat_uid=chat_id)
+    try:
+        messages = await chat_store.get_messages(chat_uid=chat_id)
+    except Exception as e:
+        logger.error(
+            "Error while listing messages in chat %s: %s",
+            chat_id,
+            str(e),
+            exc_info=True
+        )
+        messages = []
     return {"messages": [msg.model_dump(exclude_none=True) for msg in messages]}

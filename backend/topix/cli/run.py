@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import subprocess
 import time
 
 from typing import Literal, Optional
@@ -13,6 +14,8 @@ import questionary
 from readchar import readkey
 from readchar.key import CTRL_C, CTRL_D, ENTER, LEFT, RIGHT
 from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
 from rich.text import Text
 
 from topix.agents.assistant.manager import AssistantManager
@@ -149,6 +152,8 @@ async def run_agent_session(  # noqa: C901
     renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
     context = ReasoningContext()
 
+    final_answer = ""
+
     try:
         async for msg in assistant.run_streamed(query=query, context=context, session=session):
             if stop_requested:
@@ -161,6 +166,7 @@ async def run_agent_session(  # noqa: C901
                 if msg.content and getattr(msg.content, "type", None) and str(msg.content.type) == "status":
                     continue
                 if msg.content and msg.content.text:
+                    final_answer += msg.content.text
                     # strip a leading echo of the query only on the first chunk
                     chunk = strip_query_echo_once(sess.answer, msg.content.text, query)
                     if chunk:
@@ -245,6 +251,51 @@ async def run_agent_session(  # noqa: C901
 
     # final paint
     renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+
+    if sess.answer and sess.answer.strip():
+        # 1) render final UI so user sees the latest state before switching
+        renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+
+        # 2) create a fresh Console (do NOT reuse renderer.console)
+        plain_console = Console(record=True, force_terminal=True)
+
+        # 3) Render markdown into plain_console record (this produces ANSI)
+        # print query :
+        plain_console.print(Panel(sess.query, title="Query", border_style="blue", expand=False))
+
+        md = Markdown(sess.answer)
+        plain_console.print(md)
+
+        # 4) Grab ANSI-ified text
+        rendered = plain_console.export_text()  # this contains ANSI / color codes
+
+        # 5) Exit alt screen before launching external pager (only if using alt screen)
+        if USE_ALT_SCREEN:
+            renderer.exit_alt_screen()
+
+        try:
+            # 6) Call system pager less -R so ANSI color preserved and scrolling works
+            #    If less is not available, this will fall back to printing text.
+            p = subprocess.Popen(["less", "-R"], stdin=subprocess.PIPE)
+            try:
+                p.stdin.write(rendered.encode("utf-8"))
+                p.stdin.close()
+                p.wait()
+            except BrokenPipeError:
+                # user quit pager early; ignore
+                pass
+            except Exception:
+                # fallback: print directly if pager fails
+                print(rendered)
+        finally:
+            # 7) ALWAYS try to re-enter alt screen and re-render the live UI
+            #    (the try/finally guarantees we do this even on errors / Ctrl-C)
+            if USE_ALT_SCREEN:
+                # tiny sleep helps terminals stabilize
+                time.sleep(0.05)
+                renderer.enter_alt_screen()
+            # re-draw the UI to restore state
+            renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
 
 
 async def key_loop(renderer: Renderer) -> None:  # noqa: C901

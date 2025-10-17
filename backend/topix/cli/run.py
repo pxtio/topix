@@ -273,6 +273,8 @@ async def run_agent_session(  # noqa: C901
         if USE_ALT_SCREEN:
             renderer.exit_alt_screen()
 
+        subprocess.run(["stty", "sane"], check=False)
+
         try:
             # 6) Call system pager less -R so ANSI color preserved and scrolling works
             #    If less is not available, this will fall back to printing text.
@@ -337,6 +339,7 @@ async def key_loop(renderer: Renderer) -> None:  # noqa: C901
                     agent_task = asyncio.create_task(
                         run_agent_session(q, key_loop.assistant, key_loop.session, renderer)  # type: ignore[attr-defined]
                     )
+                    await agent_task
             continue
 
         # Backspace

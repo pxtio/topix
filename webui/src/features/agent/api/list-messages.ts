@@ -74,6 +74,10 @@ export const useListMessages = ({
     queryKey: ["listMessages", chatId, userId],
     queryFn: () => listMessages(chatId, userId),
     enabled: !!chatId && !!userId,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    // keep current data visible if something triggers a fetch elsewhere
+    placeholderData: (prev) => prev,
     staleTime: 1000 * 60 * 5 // 5 minutes
   })
 }

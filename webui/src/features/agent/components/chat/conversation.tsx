@@ -27,6 +27,7 @@ const MessageView = ({
   }
 }
 
+const EMPTY_MESSAGES: ChatMessage[] = []
 
 /**
  * Conversation component displays a chat conversation by fetching messages
@@ -35,20 +36,20 @@ const MessageView = ({
 export const Conversation = ({ chatId }: { chatId: string }) => {
   const userId = useAppStore((state) => state.userId)
 
-  const { data: messages } = useListMessages({ userId, chatId })
+  const { data: serverMessages } = useListMessages({ userId, chatId })
 
-  if (!messages) return null
+  const messages = serverMessages || EMPTY_MESSAGES
 
   const userMessages = messages?.filter((m) => m.role === "user")
   const lastUserMessageId = userMessages?.at(-1)?.id
 
-  const items = messages?.map((message) => (
+  const items = messages.map((message) => (
     <MessageView
       key={message.id}
       chatMessage={message}
       isLatestUserMessage={message.id === lastUserMessageId}
     />
-  )) || []
+  ))
 
   return (
     <>

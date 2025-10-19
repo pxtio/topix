@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ChartRelationshipIcon, CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GridViewIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon } from '@hugeicons/core-free-icons'
+import { ChartRelationshipIcon, CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GridViewIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Search01Icon, GlobalSearchIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { NodeType } from '../../types/style'
 import { Separator } from '@/components/ui/separator'
+import { ImageSearchDialog } from './utils/image-search'
+import { IconSearchDialog } from './utils/icon-search'
 
 type ViewMode = 'graph' | 'linear' | 'grid'
 
@@ -24,6 +27,10 @@ interface ActionPanelProps {
   setViewMode: (mode: ViewMode) => void
 }
 
+
+/**
+ * Action panel component for graph controls and node additions.
+ */
 export function ActionPanel({
   onAddNode,
   enableSelection,
@@ -36,6 +43,10 @@ export function ActionPanel({
   viewMode,
   setViewMode
 }: ActionPanelProps) {
+  const [openImageSearch, setOpenImageSearch] = useState(false)
+
+  const [openIconSearch, setOpenIconSearch] = useState(false)
+
   const normalButtonClass = `
     transition-colors
     text-card-foreground
@@ -242,6 +253,30 @@ export function ActionPanel({
           >
             <HugeiconsIcon icon={TextIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
+
+          {/* Icon search */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => setOpenIconSearch(true)}
+            title='Search icons'
+            aria-label='Search icons'
+          >
+            <HugeiconsIcon icon={Search01Icon} className='size-4 shrink-0' strokeWidth={2} />
+          </Button>
+
+          {/* Image search */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => setOpenImageSearch(true)}
+            title='Search images'
+            aria-label='Search images'
+          >
+            <HugeiconsIcon icon={GlobalSearchIcon} className='size-4 shrink-0' strokeWidth={2} />
+          </Button>
         </>
       )}
 
@@ -259,8 +294,36 @@ export function ActionPanel({
           >
             <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
+
+          {/* Icon search */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => setOpenIconSearch(true)}
+            title='Search icons'
+            aria-label='Search icons'
+          >
+            <HugeiconsIcon icon={Search01Icon} className='size-4 shrink-0' strokeWidth={2} />
+          </Button>
+
+          {/* Image search */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => setOpenImageSearch(true)}
+            title='Search images'
+            aria-label='Search images'
+          >
+            <HugeiconsIcon icon={GlobalSearchIcon} className='size-4 shrink-0' strokeWidth={2} />
+          </Button>
         </>
       )}
+
+      {/* Dialogs */}
+      <ImageSearchDialog openImageSearch={openImageSearch} setOpenImageSearch={setOpenImageSearch} />
+      <IconSearchDialog openIconSearch={openIconSearch} setOpenIconSearch={setOpenIconSearch} />
     </div>
   )
 }

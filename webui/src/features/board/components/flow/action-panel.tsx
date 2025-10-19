@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ChartRelationshipIcon, CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GridViewIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Search01Icon, GlobalSearchIcon } from '@hugeicons/core-free-icons'
+import { ChartRelationshipIcon, CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GridViewIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, StarIcon, Image02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { NodeType } from '../../types/style'
@@ -263,7 +263,7 @@ export function ActionPanel({
             title='Search icons'
             aria-label='Search icons'
           >
-            <HugeiconsIcon icon={Search01Icon} className='size-4 shrink-0' strokeWidth={2} />
+            <HugeiconsIcon icon={StarIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Image search */}
@@ -275,7 +275,7 @@ export function ActionPanel({
             title='Search images'
             aria-label='Search images'
           >
-            <HugeiconsIcon icon={GlobalSearchIcon} className='size-4 shrink-0' strokeWidth={2} />
+            <HugeiconsIcon icon={Image02Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
         </>
       )}
@@ -304,7 +304,7 @@ export function ActionPanel({
             title='Search icons'
             aria-label='Search icons'
           >
-            <HugeiconsIcon icon={Search01Icon} className='size-4 shrink-0' strokeWidth={2} />
+            <HugeiconsIcon icon={StarIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Image search */}
@@ -316,7 +316,7 @@ export function ActionPanel({
             title='Search images'
             aria-label='Search images'
           >
-            <HugeiconsIcon icon={GlobalSearchIcon} className='size-4 shrink-0' strokeWidth={2} />
+            <HugeiconsIcon icon={Image02Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
         </>
       )}

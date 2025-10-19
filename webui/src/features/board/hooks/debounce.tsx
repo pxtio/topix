@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 
 
 export interface DebouncedOptions<T> {
@@ -17,7 +17,7 @@ export interface DebouncedOptions<T> {
 export function useDebouncedValue<T>({ value, delay = 300 }: DebouncedOptions<T>) {
   const [debounced, setDebounced] = useState<T>(value)
 
-  useMemo(() => {
+  useEffect(() => {
     const id = setTimeout(() => setDebounced(value), delay)
     return () => clearTimeout(id)
   }, [value, delay])

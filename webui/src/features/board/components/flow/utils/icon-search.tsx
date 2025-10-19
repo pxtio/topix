@@ -1,6 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSearchIcons } from "@/features/board/api/icon-search"
 import { useDebouncedValue } from "@/features/board/hooks/debounce"
@@ -40,7 +39,7 @@ export const IconSearchDialog = ({
 }: IconSearchDialogProps) => {
   const [q, setQ] = useState<string>('')
 
-  const debouncedQ = useDebouncedValue<string>({ value: q, delay: 300 })
+  const debouncedQ = useDebouncedValue<string>({ value: q, delay: 1000 })
 
   const { data, isLoading } = useSearchIcons({ query: debouncedQ })
 
@@ -52,11 +51,11 @@ export const IconSearchDialog = ({
 
   return (
     <Dialog open={openIconSearch} onOpenChange={setOpenIconSearch}>
-      <DialogContent className='sm:max-w-xl p-0 overflow-hidden'>
+      <DialogContent className='sm:max-w-xl p-0 overflow-hidden sm:w-1/3 sm:h-[50vh] flex flex-col'>
         <DialogHeader className='p-4 border-b text-secondary w-full text-center'>
           <DialogTitle>Search icons</DialogTitle>
         </DialogHeader>
-        <div className='p-4 pt-3'>
+        <div className='p-4'>
           <Input
             placeholder='Search Icon…'
             value={q}
@@ -65,31 +64,29 @@ export const IconSearchDialog = ({
             className='focus-visible:ring-2 focus-visible:ring-secondary/75 focus-visible:border-secondary'
           />
         </div>
-        <div className='px-4 pb-4'>
+        <div className='p-4 pt-2 h-full w-full flex-1 overflow-y-auto scrollbar-thin'>
           {isLoading ? (
-            <div className='grid grid-cols-3 sm:grid-cols-4 gap-3'>
+            <div className='grid grid-cols-3 sm:grid-cols-4 gap-2 w-full'>
               {Array.from({ length: 8 }).map((_, i) => (
                 <Skeleton key={i} className='aspect-square w-full' />
               ))}
             </div>
           ) : (
-            <ScrollArea className='max-h-[50vh]'>
-              <div className='grid grid-cols-3 sm:grid-cols-4 gap-3 pr-2'>
-                {data?.map(icon => (
-                  <button
-                    key={icon.url}
-                    className='group relative aspect-square rounded-md border hover:ring-2 hover:ring-secondary/75 grid place-items-center p-3 bg-card'
-                    title={icon.name}
-                    onClick={() => handleSelectIcon(icon.name)}
-                  >
-                    <ThemedIcon iconName={icon.name} />
-                  </button>
-                ))}
-                {debouncedQ && !data?.length && (
-                  <div className='col-span-full text-sm text-muted-foreground p-4'>No results</div>
-                )}
-              </div>
-            </ScrollArea>
+            <div className='grid grid-cols-3 sm:grid-cols-4 gap-2 w-full'>
+              {data?.map(icon => (
+                <button
+                  key={icon.url}
+                  className='group relative aspect-square rounded-md border hover:ring-2 hover:ring-secondary/75 grid place-items-center p-3 bg-card'
+                  title={icon.name}
+                  onClick={() => handleSelectIcon(icon.name)}
+                >
+                  <ThemedIcon iconName={icon.name} />
+                </button>
+              ))}
+              {debouncedQ && !data?.length && (
+                <div className='col-span-full text-sm text-muted-foreground p-4'>No results</div>
+              )}
+            </div>
           )}
         </div>
       </DialogContent>

@@ -14,7 +14,7 @@ export interface NoteProperties {
   listOrder: NumberProperty
   url: URLProperty
   imageUrl: ImageProperty
-  icon: IconProperty
+  iconData: IconProperty
 }
 
 
@@ -93,7 +93,7 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     },
     url: { type: "url" },
     imageUrl: { type: "image" },
-    icon: { type: "icon" }
+    iconData: { type: "icon" }
   }
 }
 

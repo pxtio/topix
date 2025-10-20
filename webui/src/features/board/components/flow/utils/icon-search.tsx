@@ -6,6 +6,7 @@ import { useDebouncedValue } from "@/features/board/hooks/debounce"
 import { useState } from "react"
 import { Icon } from "@iconify/react"
 import { cn } from "@/lib/utils"
+import { useAddNoteNode } from "@/features/board/hooks/add-node"
 
 
 /**
@@ -43,9 +44,11 @@ export const IconSearchDialog = ({
 
   const { data, isLoading } = useSearchIcons({ query: debouncedQ })
 
+  const addNode = useAddNoteNode()
+
   const handleSelectIcon = (iconName: string) => {
     // Future: insert selected icon into canvas
-    console.log("Selected icon:", iconName)
+    addNode({ nodeType: "icon", icon: iconName })
     setOpenIconSearch(false)
   }
 

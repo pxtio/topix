@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSearchImages } from "@/features/board/api/image-search"
+import { useAddNoteNode } from "@/features/board/hooks/add-node"
 import { useDebouncedValue } from "@/features/board/hooks/debounce"
 import { useState } from "react"
 
@@ -22,9 +23,11 @@ export const ImageSearchDialog = ({ openImageSearch, setOpenImageSearch }: Image
 
   const { data, isLoading } = useSearchImages({ query: debouncedQ })
 
+  const addNode = useAddNoteNode()
+
   const handleSelectImage = (imgUrl: string) => {
     // Future: insert selected image into canvas
-    console.log("Selected image:", imgUrl)
+    addNode({ nodeType: 'image', imageUrl: imgUrl })
     setOpenImageSearch(false)
   }
 

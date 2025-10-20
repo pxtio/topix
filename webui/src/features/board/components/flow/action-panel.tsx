@@ -294,30 +294,6 @@ export function ActionPanel({
           >
             <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
-
-          {/* Icon search */}
-          <Button
-            variant={null}
-            className={normalButtonClass}
-            size='icon'
-            onClick={() => setOpenIconSearch(true)}
-            title='Search icons'
-            aria-label='Search icons'
-          >
-            <HugeiconsIcon icon={StarIcon} className='size-4 shrink-0' strokeWidth={2} />
-          </Button>
-
-          {/* Image search */}
-          <Button
-            variant={null}
-            className={normalButtonClass}
-            size='icon'
-            onClick={() => setOpenImageSearch(true)}
-            title='Search images'
-            aria-label='Search images'
-          >
-            <HugeiconsIcon icon={Image02Icon} className='size-4 shrink-0' strokeWidth={2} />
-          </Button>
         </>
       )}
 

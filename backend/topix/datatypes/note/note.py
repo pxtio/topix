@@ -52,7 +52,7 @@ class NoteProperties(ResourceProperties):
     image_url: ImageProperty = Field(
         default_factory=lambda: ImageProperty()
     )
-    icon: IconProperty = Field(
+    icon_data: IconProperty = Field(
         default_factory=lambda: IconProperty()
     )
 

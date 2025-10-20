@@ -1,5 +1,6 @@
 # ai_cli_agent_app.py
 """Interactive CLI app for a real streaming agent."""
+
 from __future__ import annotations
 
 import asyncio
@@ -39,9 +40,7 @@ console = Console()
 
 # --------- UI / timing ----------
 USE_ALT_SCREEN = True
-CIRCLE_FRAMES = [
-    "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"
-]
+CIRCLE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 SPINNER_INTERVAL = 0.001
 STREAM_INTERVAL = 0.001
 CURSOR = "▌"
@@ -86,7 +85,9 @@ def ensure_paragraph_break(s: str) -> str:
     return s + "\n\n"
 
 
-def strip_query_echo_once(existing_answer: Optional[str], incoming: str, query: str) -> str:
+def strip_query_echo_once(
+    existing_answer: Optional[str], incoming: str, query: str
+) -> str:
     """If the final answer is empty, strip an initial echo of the user's query."""
     if existing_answer:
         return incoming
@@ -94,7 +95,7 @@ def strip_query_echo_once(existing_answer: Optional[str], incoming: str, query: 
     prefixes = [query, f"User: {query}", f"Query: {query}"]
     for p in prefixes:
         if inc.startswith(p):
-            dropped = inc[len(p):]
+            dropped = inc[len(p) :]
             while dropped and dropped[0] in ": -–—\n\t":
                 dropped = dropped[1:]
             return dropped.lstrip("\n")
@@ -106,12 +107,16 @@ class FinalAnswerGate:
 
     def __init__(self) -> None:
         """Init method."""
-        self.raw_seen: list[str] = []   # ordered unique UUIDs for raw_message
+        self.raw_seen: list[str] = []  # ordered unique UUIDs for raw_message
         self.final_uuid: Optional[str] = None
 
     def observe(self, msg: AgentStreamMessage) -> None:
         """Observe a message to track RAW_MESSAGE tool calls."""
-        if msg.tool_name not in (AgentToolName.RAW_MESSAGE, AgentToolName.SYNTHESIZER, AgentToolName.ANSWER_REFORMULATE):
+        if msg.tool_name not in (
+            AgentToolName.RAW_MESSAGE,
+            AgentToolName.SYNTHESIZER,
+            AgentToolName.ANSWER_REFORMULATE,
+        ):
             return
         uuid = parse_tool_uuid(msg.tool_id)
         if uuid not in self.raw_seen:
@@ -122,7 +127,10 @@ class FinalAnswerGate:
 
     def is_final_answer(self, msg: AgentStreamMessage) -> bool:
         """Check if this message belongs to the final answer stream."""
-        return msg.tool_name in (AgentToolName.ANSWER_REFORMULATE, AgentToolName.SYNTHESIZER)
+        return msg.tool_name in (
+            AgentToolName.ANSWER_REFORMULATE,
+            AgentToolName.SYNTHESIZER,
+        )
 
 
 async def run_agent_session(  # noqa: C901
@@ -149,13 +157,17 @@ async def run_agent_session(  # noqa: C901
     frame_idx = 0
 
     # initial paint
-    renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+    renderer.render_tail(
+        history=history, expand_all=expand_all, input_buffer=input_buffer
+    )
     context = ReasoningContext()
 
     final_answer = ""
 
     try:
-        async for msg in assistant.run_streamed(query=query, context=context, session=session):
+        async for msg in assistant.run_streamed(
+            query=query, context=context, session=session
+        ):
             if stop_requested:
                 break
 
@@ -163,7 +175,11 @@ async def run_agent_session(  # noqa: C901
             final_gate.observe(msg)
             if final_gate.is_final_answer(msg):
                 # skip 'status' tokens even in final mode
-                if msg.content and getattr(msg.content, "type", None) and str(msg.content.type) == "status":
+                if (
+                    msg.content
+                    and getattr(msg.content, "type", None)
+                    and str(msg.content.type) == "status"
+                ):
                     continue
                 if msg.content and msg.content.text:
                     final_answer += msg.content.text
@@ -197,7 +213,11 @@ async def run_agent_session(  # noqa: C901
             current_active_uuid = uuid
 
             if msg.content:
-                ctype = str(msg.content.type) if getattr(msg.content, "type", None) is not None else ""
+                ctype = (
+                    str(msg.content.type)
+                    if getattr(msg.content, "type", None) is not None
+                    else ""
+                )
                 text = msg.content.text or ""
                 urls = extract_urls(getattr(msg.content, "annotations", []) or [])
 
@@ -207,9 +227,11 @@ async def run_agent_session(  # noqa: C901
 
                 # 2) Inputs → ARGUMENTS (string). If you emit JSON here, json.loads & set dict instead.
                 elif ctype == "input":
-                    st.arguments = (st.arguments or "")
+                    st.arguments = st.arguments or ""
                     if isinstance(st.arguments, str) and text:
-                        st.arguments = (st.arguments + ("\n" if st.arguments else "") + text)
+                        st.arguments = (
+                            st.arguments + ("\n" if st.arguments else "") + text
+                        )
 
                 # 3) All other content types BEFORE final answer:
                 #    DO NOT append token text to the step; only show annotations (Reading: ...)
@@ -221,7 +243,9 @@ async def run_agent_session(  # noqa: C901
                             if tool_key == "web_search":
                                 st.details = ensure_paragraph_break(st.details)
                             else:
-                                if st.details and not st.details.endswith(("\n", "\n\n")):
+                                if st.details and not st.details.endswith(
+                                    ("\n", "\n\n")
+                                ):
                                     st.details += "\n"
                             st.details += urls_line
                             last_urls_for_uuid[uuid] = urls_line
@@ -240,7 +264,9 @@ async def run_agent_session(  # noqa: C901
                 expand_all=expand_all,
                 input_buffer=input_buffer,
                 active_sess=sess,
-                current_idx=by_uuid[current_active_uuid].idx if current_active_uuid else None,
+                current_idx=by_uuid[current_active_uuid].idx
+                if current_active_uuid
+                else None,
                 spinner_frame=frame,
                 show_details=True,
                 show_input_caret=True,
@@ -250,24 +276,44 @@ async def run_agent_session(  # noqa: C901
         stop_requested = True
 
     # final paint
-    renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+    renderer.render_tail(
+        history=history,
+        expand_all=expand_all,
+        input_buffer=input_buffer,
+    )
 
     if sess.answer and sess.answer.strip():
         # 1) render final UI so user sees the latest state before switching
-        renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+        renderer.render_tail(
+            history=history,
+            expand_all=expand_all,
+            input_buffer=input_buffer,
+        )
 
         # 2) create a fresh Console (do NOT reuse renderer.console)
-        plain_console = Console(record=True, force_terminal=True)
+        plain_console = Console(
+            record=True,
+            force_terminal=True,
+        )
 
         # 3) Render markdown into plain_console record (this produces ANSI)
         # print query :
-        plain_console.print(Panel(sess.query, title="Query", border_style="blue", expand=False))
+        plain_console.print(
+            Panel(
+                sess.query,
+                title="Query",
+                border_style="blue",
+                expand=False,
+            )
+        )
 
-        md = Markdown(sess.answer)
+        md = Markdown(sess.answer, code_theme="monokai", hyperlinks=False)
         plain_console.print(md)
 
         # 4) Grab ANSI-ified text
-        rendered = plain_console.export_text()  # this contains ANSI / color codes
+        rendered = plain_console.export_text(
+            styles=True
+        )  # this contains ANSI / color codes
 
         # 5) Exit alt screen before launching external pager (only if using alt screen)
         if USE_ALT_SCREEN:
@@ -298,7 +344,9 @@ async def run_agent_session(  # noqa: C901
                 time.sleep(0.05)
                 renderer.enter_alt_screen()
             # re-draw the UI to restore state
-            renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+            renderer.render_tail(
+                history=history, expand_all=expand_all, input_buffer=input_buffer
+            )
 
 
 async def key_loop(renderer: Renderer) -> None:  # noqa: C901
@@ -322,11 +370,15 @@ async def key_loop(renderer: Renderer) -> None:  # noqa: C901
         # Expand / collapse anytime
         if k == RIGHT:
             expand_all = True
-            renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+            renderer.render_tail(
+                history=history, expand_all=expand_all, input_buffer=input_buffer
+            )
             continue
         if k == LEFT:
             expand_all = False
-            renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+            renderer.render_tail(
+                history=history, expand_all=expand_all, input_buffer=input_buffer
+            )
             continue
 
         # Enter: if idle, launch; if running, ignore
@@ -334,10 +386,14 @@ async def key_loop(renderer: Renderer) -> None:  # noqa: C901
             if agent_task is None or agent_task.done():
                 q = input_buffer.strip()
                 input_buffer = ""
-                renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+                renderer.render_tail(
+                    history=history, expand_all=expand_all, input_buffer=input_buffer
+                )
                 if q:
                     agent_task = asyncio.create_task(
-                        run_agent_session(q, key_loop.assistant, key_loop.session, renderer)  # type: ignore[attr-defined]
+                        run_agent_session(
+                            q, key_loop.assistant, key_loop.session, renderer
+                        )  # type: ignore[attr-defined]
                     )
                     await agent_task
             continue
@@ -345,13 +401,17 @@ async def key_loop(renderer: Renderer) -> None:  # noqa: C901
         # Backspace
         if k == "\x7f" or k == "\b":
             input_buffer = input_buffer[:-1]
-            renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+            renderer.render_tail(
+                history=history, expand_all=expand_all, input_buffer=input_buffer
+            )
             continue
 
         # Regular char (ignore escape sequences)
         if len(k) == 1 and not k.startswith("\x1b"):
             input_buffer += k
-            renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+            renderer.render_tail(
+                history=history, expand_all=expand_all, input_buffer=input_buffer
+            )
             continue
 
 
@@ -379,8 +439,7 @@ async def main_async(
         assistant_config.set_web_engine(search_engine)
 
         assistant: AssistantManager = AssistantManager.from_config(
-            content_store=chat_store._content_store,
-            config=assistant_config
+            content_store=chat_store._content_store, config=assistant_config
         )
     else:
         deepsearch_config = DeepResearchConfig.from_yaml()
@@ -405,7 +464,9 @@ async def main_async(
     if USE_ALT_SCREEN:
         renderer.enter_alt_screen()
     try:
-        renderer.render_tail(history=history, expand_all=expand_all, input_buffer=input_buffer)
+        renderer.render_tail(
+            history=history, expand_all=expand_all, input_buffer=input_buffer
+        )
         await key_loop(renderer)
         if agent_task and not agent_task.done():
             agent_task.cancel()
@@ -435,11 +496,13 @@ def _select_options() -> tuple[Literal["assistant", "deep_research"], str, str]:
         ],
         qmark="?",
         pointer="❯",
-        style=questionary.Style([
-            ('qmark', 'fg:cyan bold'),
-            ('question', 'bold'),
-            ('pointer', 'fg:green bold'),
-        ]),
+        style=questionary.Style(
+            [
+                ("qmark", "fg:cyan bold"),
+                ("question", "bold"),
+                ("pointer", "fg:green bold"),
+            ]
+        ),
     ).ask()
 
     model_name = questionary.select(
@@ -450,13 +513,15 @@ def _select_options() -> tuple[Literal["assistant", "deep_research"], str, str]:
             "gemini-2.5-flash",
             "deepseek-chat-v3.1",
             "mistral-medium-3.1",
-            "claude-sonnet-4.5"
+            "claude-sonnet-4.5",
         ],
         qmark="?",
-        style=questionary.Style([
-            ('qmark', 'fg:cyan bold'),
-            ('question', 'bold'),
-        ]),
+        style=questionary.Style(
+            [
+                ("qmark", "fg:cyan bold"),
+                ("question", "bold"),
+            ]
+        ),
     ).ask()
 
     model = MODEL_DICT.get(model_name, DEFAULT_MODEL)
@@ -467,22 +532,23 @@ def _select_options() -> tuple[Literal["assistant", "deep_research"], str, str]:
         choices=[
             {"name": "Linkup", "value": "linkup"},
             {"name": "Perplexity", "value": "perplexity"},
-            {"name": "Tavily", "value": "tavily"}
+            {"name": "Tavily", "value": "tavily"},
         ],
         qmark="?",
         pointer="❯",
-        style=questionary.Style([
-            ('qmark', 'fg:cyan bold'),
-            ('question', 'bold'),
-            ('pointer', 'fg:green bold'),
-        ]),
+        style=questionary.Style(
+            [
+                ("qmark", "fg:cyan bold"),
+                ("question", "bold"),
+                ("pointer", "fg:green bold"),
+            ]
+        ),
     ).ask()
 
     return mode, model or DEFAULT_MODEL, search_engine or "perplexity"
 
 
 if __name__ == "__main__":
-
     mode, model, search_engine = _select_options()
 
     try:

@@ -1,10 +1,14 @@
 import TextareaAutosize from 'react-textarea-autosize'
 import { memo } from 'react'
 import type { RefObject } from 'react'
+import type { NodeType } from '../../types/style'
+import { IconShape } from './icon-shape'
+import { ImageShape } from './image-shape'
 
 type TextAlign = 'left' | 'center' | 'right'
 
 interface ShapeProps {
+  nodeType: NodeType
   value: string
   labelEditing: boolean
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
@@ -16,10 +20,16 @@ interface ShapeProps {
     size: string
   }
   contentRef: RefObject<HTMLDivElement | null>
-  showPlaceholder?: boolean
+  icon?: string
+  imageUrl?: string
 }
 
+
+/**
+ * Component representing a shape with editable text.
+ */
 export const Shape = memo(function Shape({
+  nodeType,
   value,
   labelEditing,
   onChange,
@@ -27,7 +37,8 @@ export const Shape = memo(function Shape({
   textAlign,
   styleHelpers,
   contentRef,
-  showPlaceholder = false
+  icon,
+  imageUrl
 }: ShapeProps) {
   const base = `
     w-full p-2 border-none resize-none
@@ -37,13 +48,15 @@ export const Shape = memo(function Shape({
     ${textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'}
   `
 
-  const placeHolder = showPlaceholder ? 'Add text...' : ''
+  const placeHolder = nodeType === 'text' ? 'Add text...' : ''
 
   const notEditingSpanClass = value.trim() ? '' : 'text-muted-foreground/50'
 
   return (
     <div className='w-full h-full flex items-center justify-center'>
       <div className='w-full' ref={contentRef}>
+        {icon && <IconShape iconName={icon} className="mt-1" />}
+        {imageUrl && <ImageShape imageUrl={imageUrl} className="mt-1 mb-2" />}
         {labelEditing ? (
           <TextareaAutosize
             className={`${base} nodrag nopan nowheel !-mb-2`}

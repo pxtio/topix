@@ -23,13 +23,25 @@ export function useAddNoteNode() {
   const { applyDefaultNodeStyle } = useStyleDefaults()
 
   return useCallback(({
-    nodeType = 'rectangle'
+    nodeType = 'rectangle',
+    imageUrl,
+    icon
   }: {
     nodeType?: NodeType
+    imageUrl?: string
+    icon?: string
   }) => {
     if (!boardId) return
+
     const newNote = createDefaultNote({ boardId, nodeType })
     newNote.style = applyDefaultNodeStyle(nodeType)
+
+    if (imageUrl) {
+      newNote.properties.imageUrl = { type: 'image', image: { url: imageUrl } }
+    }
+    if (icon) {
+      newNote.properties.iconData = { type: 'icon', icon: { type: 'icon', icon } }
+    }
     const jitter = () => Math.random() * 100 - 50
 
     const container = document.querySelector('.react-flow__viewport')?.getBoundingClientRect()

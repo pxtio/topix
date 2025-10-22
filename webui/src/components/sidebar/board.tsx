@@ -78,7 +78,12 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
     navigate({ to: '/boards/$id', params: { id: boardId } })
   }
 
-  const handleDelete = () => deleteBoard({ boardId, userId })
+  const handleDelete = () => {
+    deleteBoard({ boardId, userId })
+    if (isActive) {
+      navigate({ to: '/boards' })
+    }
+  }
 
   return (
     <SidebarMenuItem>

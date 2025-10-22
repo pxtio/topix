@@ -5,7 +5,7 @@
 /**
  * Type of node in the board.
  */
-export type NodeType = "rectangle" | "text" | "sheet" | "ellipse" | "diamond"
+export type NodeType = "rectangle" | "text" | "sheet" | "ellipse" | "diamond" | "image" | "icon"
 
 /**
  * Stroke style for the node.
@@ -206,7 +206,8 @@ export const createDefaultStyle = ({
         roundness: 0,
         fontFamily: "handwriting",
         fontSize: "M",
-        textAlign: "left"
+        textAlign: "left",
+        backgroundColor: "#bfdbfe"
       } as Style
     case "text":
       return {
@@ -217,6 +218,28 @@ export const createDefaultStyle = ({
         fontSize: "M",
         textAlign: "left",
         backgroundColor: "#00000000"
+      } as Style
+    case "image":
+      return {
+        ...defaultOptions,
+        roughness: 1,
+        roundness: 0,
+        fontFamily: "handwriting",
+        fontSize: "M",
+        textAlign: "center",
+        backgroundColor: "#00000000",
+        strokeColor: "#00000000",
+      } as Style
+    case "icon":
+      return {
+        ...defaultOptions,
+        roughness: 1,
+        roundness: 0,
+        fontFamily: "handwriting",
+        fontSize: "M",
+        textAlign: "center",
+        backgroundColor: "#00000000",
+        strokeColor: "#00000000",
       } as Style
   }
 }

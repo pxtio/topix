@@ -119,9 +119,9 @@ export function NewsletterCard({
 
                 {/* progress bar when generating */}
                 {generating && typeof pct === 'number' && (
-                  <div className='h-1 w-full rounded bg-black/10 overflow-hidden'>
+                  <div className='h-1 w-full rounded bg-card-foreground/10 overflow-hidden'>
                     <div
-                      className='h-full rounded bg-black/30 transition-[width]'
+                      className='h-full rounded bg-card-foreground/30 transition-[width]'
                       style={{ width: `${pct}%` }}
                       aria-hidden='true'
                     />

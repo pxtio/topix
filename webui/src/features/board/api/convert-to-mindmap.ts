@@ -12,6 +12,7 @@ import { colorTree } from "../utils/bfs"
 import { pickRandomColorOfShade } from "../lib/colors/tailwind"
 import { apiFetch } from "@/api"
 import { escapeNonMathDollars } from "@/lib/common"
+import type { LinkEdge, NoteNode } from "../types/flow"
 
 
 /**
@@ -20,7 +21,7 @@ import { escapeNonMathDollars } from "@/lib/common"
 export async function convertToMindMap(
   userId: string,
   answer: string,
-  toolType: "notify" | "mapify"
+  toolType: "notify" | "mapify" | "schemify"
 ): Promise<{ notes: Note[], links: Link[] }> {
   const res = await apiFetch<{ data: Record<string, unknown> }>({
     path: `/tools/mindmaps:${toolType}`,
@@ -47,7 +48,12 @@ export const useConvertToMindMap = () => {
       answer,
       toolType,
       saveAsIs = false
-    }: { boardId: string, answer: string, toolType: "notify" | "mapify", saveAsIs?: boolean }): Promise<{ status: string }> => {
+    }: {
+      boardId: string,
+      answer: string,
+      toolType: "notify" | "mapify" | "schemify",
+      saveAsIs?: boolean
+    }): Promise<{ status: string }> => {
       // if saveAsIs and notify, just create a single note with the exact content
       if (saveAsIs && toolType === "notify") {
         const note = createDefaultNote({ boardId, nodeType: "sheet"})
@@ -76,18 +82,28 @@ export const useConvertToMindMap = () => {
         colorTree({ notes, links })
       } else {
         if (notes.length > 0) {
-          notes[0].style.backgroundColor = pickRandomColorOfShade(200, ['blue', 'amber', 'green', 'orange', 'rose'])?.hex || notes[0].style.backgroundColor
+          notes.forEach((note) => note.style.backgroundColor = pickRandomColorOfShade(200, ['blue', 'amber', 'green', 'orange', 'rose', 'teal', 'cyan'])?.hex || note.style.backgroundColor)
         }
       }
       const rawNodes = notes.map(convertNoteToNode)
       const rawEdges = links.map(convertLinkToEdge)
 
-      const { nodes, edges } = await autoLayout(rawNodes, rawEdges, defaultLayoutOptions)
+      const ns: NoteNode[] = []
+      const es: LinkEdge[] = []
+
+      if (toolType !== "schemify") {
+        const { nodes, edges } = await autoLayout(rawNodes, rawEdges, defaultLayoutOptions)
+        ns.push(...nodes)
+        es.push(...edges)
+      } else {
+        ns.push(...rawNodes)
+        es.push(...rawEdges)
+      }
 
       // store temporarily in mind map store
       // will be consumed by board component
       // and then cleared
-      setMindMap(boardId, nodes, edges)
+      setMindMap(boardId, ns, es)
 
       return { status: "success" }
     }

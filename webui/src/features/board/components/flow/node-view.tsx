@@ -41,6 +41,8 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   // measure content & drive minHeight
   const { contentRef, computedMinH } = useContentMinHeight(id, 24, 24)
 
+  const minH = data.style.type === 'image' || data.style.type === 'icon' ? 50 : computedMinH
+
   const resizeHandles = useMemo(() => ([
     { pos: 'top-left', class: 'top-0 left-0 cursor-nwse-resize' },
     { pos: 'top-right', class: 'top-0 right-0 cursor-nesw-resize' },
@@ -55,7 +57,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
   const nodeClass = 'w-full h-full relative font-handwriting drag-handle pointer-events-auto bg-transparent'
   const rounded = data.style.roundness > 0 ? 'rounded-2xl' : 'none'
-  const frameClass = clsx('shadow-lg rounded-lg border border-border', isPinned && 'ring-2 ring-secondary')
+  const frameClass = clsx('rounded-lg', isPinned && 'ring-2 ring-secondary')
 
   const backgroundColor = isDark ? darkModeDisplayHex(data.style.backgroundColor) || undefined : data.style.backgroundColor
   const strokeColor = isDark ? darkModeDisplayHex(data.style.strokeColor) || undefined : data.style.strokeColor
@@ -108,8 +110,9 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
           position={pos as ControlPosition}
           onResizeStart={handleResizeStart}
           onResizeEnd={handleResizeEnd}
-          minHeight={computedMinH}
+          minHeight={minH}
           minWidth={200}
+          keepAspectRatio={nodeType === 'image'}
         >
           <div
             className={`absolute w-3 h-3 bg-transparent border border-secondary rounded-full ${posClass} z-20`}

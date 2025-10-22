@@ -26,13 +26,13 @@ export const BoardCard = ({
   return (
     <div
       className={`
-        bg-transparent hover:bg-accent
+        bg-accent hover:bg-muted
         transition-all
         rounded-xl
         text-card-foreground
-        border border-border hover:border-secondary
-        hover:ring-2 hover:ring-secondary/10
-        shadow-none hover:shadow-sm
+        border border-transparent hover:border-secondary
+        hover:ring-2 hover:ring-secondary/50
+        shadow-md hover:shadow-lg
         cursor-pointer
         w-60 h-60
         flex flex-col justify-between
@@ -60,7 +60,6 @@ export const BoardCard = ({
         {
           dateString && (
             <div className='w-full text-xs text-muted-foreground font-mono mt-1'>
-              <span>Last edited on </span>
               <span className='ml-auto'>{dateString}</span>
             </div>
           )
@@ -91,7 +90,7 @@ export const NewBoardCard = () => {
         bg-transparent hover:bg-accent
         hover:ring-2 hover:ring-secondary/10
         text-card-foreground
-        border-2 border-border hover:border-secondary
+        border-2 border-border hover:border-secondary border-dashed
         shadow-none hover:shadow-sm
         cursor-pointer
         w-60 h-60

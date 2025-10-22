@@ -1,7 +1,7 @@
 """Agent Output Data Types."""
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, Union
 
 from pydantic import BaseModel
 
@@ -10,8 +10,19 @@ from topix.agents.datatypes.annotations import (
     RefAnnotation,
     SearchResult,
 )
+from topix.agents.mindmap.schemify.datatypes import SchemaOutput
 
-type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput | MemorySearchOutput | NotifyOutput | MapifyTheme | TopicTracker | NewsfeedOutput
+type ToolOutput = Union[
+    str,
+    CodeInterpreterOutput,
+    WebSearchOutput,
+    MemorySearchOutput,
+    NotifyOutput,
+    MapifyTheme,
+    TopicTracker,
+    NewsfeedOutput,
+    SchemaOutput
+]
 
 
 class NewsfeedArticle(BaseModel):

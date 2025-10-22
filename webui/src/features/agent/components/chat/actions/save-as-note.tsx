@@ -11,7 +11,7 @@ import { useCreateBoard } from "@/features/board/api/create-board"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { useAppStore } from "@/store"
-import { CancelIcon, CheckmarkCircle03Icon, GitForkIcon, NotebookIcon, ReloadIcon } from "@hugeicons/core-free-icons"
+import { CancelIcon, ChartBubbleIcon, CheckmarkCircle03Icon, GitForkIcon, NotebookIcon, ReloadIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useNavigate } from "@tanstack/react-router"
 import clsx from "clsx"
@@ -41,7 +41,7 @@ const ErrorIcon = () => <HugeiconsIcon
 
 export interface SaveAsNoteProps {
   message: string
-  type: "notify" | "mapify"
+  type: "notify" | "mapify" | "schemify"
   saveAsIs?: boolean
   boardId?: string
 }
@@ -151,8 +151,8 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
     }
   }
 
-  const label = type === "notify" ? "Notify" : "Mapify"
-  const icon = type === "notify" ? NotebookIcon : GitForkIcon
+  const label = type === "notify" ? "Notify" : type === "mapify" ? "Mapify" : "Schemify"
+  const icon = type === "notify" ? NotebookIcon : type === "mapify" ? GitForkIcon : ChartBubbleIcon
 
   const buttonClass = clsx(
     "relative transition-all text-xs text-secondary hover:bg-accent hover:shadow-xs font-medium flex flex-row items-center gap-2 p-1 rounded-md overflow-hidden",

@@ -9,10 +9,11 @@ from topix.datatypes.property import (
     BooleanProperty,
     DataProperty,
     IconProperty,
+    ImageProperty,
     NumberProperty,
     PositionProperty,
     SizeProperty,
-    TextProperty,
+    URLProperty,
 )
 from topix.datatypes.resource import Resource, ResourceProperties
 
@@ -45,11 +46,14 @@ class NoteProperties(ResourceProperties):
     list_order: NumberProperty = Field(
         default_factory=lambda: NumberProperty(number=0.0)
     )
-    link: TextProperty = Field(
-        default_factory=lambda: TextProperty()
+    url: URLProperty = Field(
+        default_factory=lambda: URLProperty()
     )
-    image_link: TextProperty = Field(
-        default_factory=lambda: TextProperty()
+    image_url: ImageProperty = Field(
+        default_factory=lambda: ImageProperty()
+    )
+    icon_data: IconProperty = Field(
+        default_factory=lambda: IconProperty()
     )
 
 

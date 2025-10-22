@@ -106,11 +106,11 @@ export function LinearView({
 
     let newOrderValue: number
     if (prev && next) {
-      newOrderValue = (prev.data.properties.listOrder.number + next.data.properties.listOrder.number) / 2
+      newOrderValue = ((prev.data.properties.listOrder.number || 0) + (next.data.properties.listOrder.number || 0)) / 2
     } else if (next) {
-      newOrderValue = next.data.properties.listOrder.number - 100
+      newOrderValue = (next.data.properties.listOrder.number || 0) - 100
     } else if (prev) {
-      newOrderValue = prev.data.properties.listOrder.number + 100
+      newOrderValue = (prev.data.properties.listOrder.number || 0) + 100
     } else {
       newOrderValue = 0
     }

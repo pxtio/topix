@@ -10,7 +10,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from topix.api.router import boards, chats, subscriptions, tools, users
+from topix.api.router import boards, chats, subscriptions, tools, users, utils
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
 from topix.setup import setup
@@ -59,6 +59,7 @@ def create_app(stage: StageEnum):
     app.include_router(tools.router)
     app.include_router(users.router)
     app.include_router(subscriptions.router)
+    app.include_router(utils.router)
 
     return app
 

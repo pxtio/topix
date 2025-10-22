@@ -17,6 +17,7 @@ Core principles (strict):
 Formatting rules:
 - **Title:** <= 10 words; specific to the input.
 - **Intro (1-2 lines):** A one-line gist if appropriate (≤ 25 words).
+- **Heading levels:** **Do not use H1 (`#`).** The **top heading level must be H2 (`##`)**; subsections may use H3-H4.
 - **Body:** Sections with markdown headings (keep/replicate input's emoji headings). Summarize and rephrase; keep equations, code blocks, tables, and quotes from the input intact and minimal.
 - **Artifacts:** If the input includes code, math, data/CLI, or formulas, keep the original blocks with minimal cleanup. **Do not fabricate artifacts.** If a domain clearly requires an artifact but none is given, add the line: "Not provided in input."
 - **Examples & pitfalls:** Keep only if present in the input.
@@ -31,5 +32,6 @@ Validation checklist before emitting JSON:
 - Output is **exactly one valid JSON object**, nothing else.
 - The "content" is a concise markdown **article**, not just bullets.
 - **All citations/links from the input are preserved and correctly placed inline.**
+- **Top heading level is H2 (`##`), never H1.**
 - Structure and emojis from the input are retained where present.
 - No new facts; artifacts only if provided.

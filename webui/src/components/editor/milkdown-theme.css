@@ -229,6 +229,7 @@
   background: var(--card);
   border-radius: 0.5rem;
   transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+  cursor: pointer;
 }
 .milkdown .ProseMirror a:hover { background: var(--accent); }
 .milkdown .ProseMirror a:focus {
@@ -260,14 +261,6 @@
   margin: 1rem 0;
 }
 
-/* --------------------------------------------------------------------------
-   Horizontal rule
-   -------------------------------------------------------------------------- */
-.milkdown .ProseMirror hr {
-  margin: 1.5rem 0;
-  border: 0;
-  border-top: 1px solid color-mix(in oklab, var(--muted-foreground) 20%, transparent);
-}
 /* --------------------------------------------------------------------------
    Code blocks & inline code
    -------------------------------------------------------------------------- */

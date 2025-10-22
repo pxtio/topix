@@ -188,7 +188,7 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
       </div>
       {
         estimatedDurationSeconds && (
-          <ProgressBar estimatedTime={estimatedDurationSeconds} isStop={!isStreaming} />
+          <ProgressBar estimatedTime={estimatedDurationSeconds} isStop={!isStreaming} startedAt={response.sentAt} />
         )
       }
       <div

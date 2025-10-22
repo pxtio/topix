@@ -2,14 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { Progress } from '@/components/ui/progress'
 
 type ProgressBarProps = {
-  estimatedTime: number  // seconds
-  isStop: boolean        // true when the task is done (streaming ended)
+  estimatedTime: number   // seconds
+  isStop: boolean         // true when the task is done (streaming ended)
+  startedAt?: string      // ISO 8601 string (e.g., "2025-10-22T15:04:05.000Z")
 }
 
 /**
- * Shows a time-based progress up to 98% while running, then hides when isStop is true
+ * Time-based progress up to 98% while running.
+ * If `startedAt` is provided (ISO string), progress is computed from that timestamp
+ * so it won’t restart on remount/navigation.
  */
-export const ProgressBar = ({ estimatedTime, isStop }: ProgressBarProps) => {
+export const ProgressBar = ({ estimatedTime, isStop, startedAt }: ProgressBarProps) => {
   const [value, setValue] = useState(0)
   const [visible, setVisible] = useState(false)
 
@@ -17,33 +20,50 @@ export const ProgressBar = ({ estimatedTime, isStop }: ProgressBarProps) => {
   const intervalRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!estimatedTime || estimatedTime <= 0) return
+    const clear = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
 
-    if (!isStop) {
-      setVisible(true)
-      setValue(0)
-      startRef.current = Date.now()
-
-      if (intervalRef.current) clearInterval(intervalRef.current)
-
-      intervalRef.current = window.setInterval(() => {
-        if (!startRef.current) return
-        const elapsed = (Date.now() - startRef.current) / 1000
-        const raw = (elapsed / estimatedTime) * 98
-        const next = Math.min(Math.floor(raw), 98)
-        setValue(p => (p >= 98 ? 98 : Math.max(p, next)))
-      }, 100)
-    } else {
+    if (!estimatedTime || estimatedTime <= 0 || isStop) {
       setVisible(false)
-      if (intervalRef.current) clearInterval(intervalRef.current)
+      clear()
       startRef.current = null
       setValue(0)
+      return () => clear()
     }
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+    setVisible(true)
+
+    // Parse ISO (once per effect run)
+    let refMs: number | null = null
+    if (startedAt) {
+      const t = new Date(startedAt).getTime()
+      refMs = Number.isFinite(t) ? t : null
     }
-  }, [isStop, estimatedTime])
+    startRef.current = refMs ?? Date.now()
+
+    const computePct = () => {
+      if (!startRef.current) return 0
+      const elapsedSec = Math.max(0, (Date.now() - startRef.current) / 1000)
+      const raw = (elapsedSec / estimatedTime) * 98
+      return Math.min(98, Math.floor(raw))
+    }
+
+    // immediate paint to avoid flicker
+    const initial = computePct()
+    setValue(p => Math.max(p, initial))
+
+    clear()
+    intervalRef.current = window.setInterval(() => {
+      const next = computePct()
+      setValue(p => (p >= 98 ? 98 : Math.max(p, next)))
+    }, 100)
+
+    return () => clear()
+  }, [isStop, estimatedTime, startedAt])
 
   if (!visible) return null
 

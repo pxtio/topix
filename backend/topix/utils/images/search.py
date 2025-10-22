@@ -19,7 +19,7 @@ async def search_iconify_icons(query: str, limit: int = 5) -> list[IconifySearch
     """Search Iconify public API for icons matching a query."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         # for now we only search for streamline-freehand icons
-        params = {"query": query, "limit": str(limit), "prefix": "streamline-freehand"}
+        params = {"query": query, "limit": str(limit), "prefixes": "streamline-freehand,hugeicons,streamline-ultimate-color"}
         resp = await client.get(ICONIFY_SEARCH_URL, params=params)
 
         # Handle errors
@@ -47,7 +47,7 @@ class UnsplashImage(BaseModel):
 SEARCH_URL = "https://api.unsplash.com/search/photos"
 
 
-async def fetch_images(query: str, per_page: int = 5):
+async def fetch_images(query: str, per_page: int = 5) -> list[dict]:
     """Fetch images from Unsplash matching the query."""
     access_key = os.environ.get("UNSPLASH_ACCESS_KEY")
     headers = {"Authorization": f"Client-ID {access_key}"}

@@ -41,7 +41,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   // measure content & drive minHeight
   const { contentRef, computedMinH } = useContentMinHeight(id, 24, 24)
 
-  const minH = data.style.type === 'image' || data.style.type === 'icon' ? 100 : computedMinH
+  const minH = data.style.type === 'image' || data.style.type === 'icon' ? 50 : computedMinH
 
   const resizeHandles = useMemo(() => ([
     { pos: 'top-left', class: 'top-0 left-0 cursor-nwse-resize' },
@@ -112,7 +112,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
           onResizeEnd={handleResizeEnd}
           minHeight={minH}
           minWidth={200}
-          keepAspectRatio={nodeType === 'image' || nodeType === 'icon'}
+          keepAspectRatio={nodeType === 'image'}
         >
           <div
             className={`absolute w-3 h-3 bg-transparent border border-secondary rounded-full ${posClass} z-20`}

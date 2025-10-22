@@ -18,7 +18,7 @@ from topix.agents.datatypes.stream import (
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
-from topix.agents.utils.text import post_process_url_ciation
+from topix.agents.utils.text import post_process_url_citations
 from topix.datatypes.chat.chat import Message
 from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
@@ -88,7 +88,7 @@ class AssistantManager:
                 search_results = tool_call.output.search_results
                 for result in search_results:
                     valid_urls.append(result.url)
-        return post_process_url_ciation(answer, valid_urls)
+        return post_process_url_citations(answer, valid_urls)
 
     async def run(
         self,

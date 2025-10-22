@@ -10,6 +10,7 @@ from topix.agents.base import BaseAgent
 from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.websearch.tools import fetch_content
+from topix.api.utils.common import iso_to_clear_date
 
 
 @function_tool
@@ -62,7 +63,7 @@ class NavigateAgent(BaseAgent):
         name = "Navigate Website"
         instructions = self._render_prompt(
             instructions_template,
-            time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            time=iso_to_clear_date(datetime.now().isoformat()),
         )
 
         super().__init__(

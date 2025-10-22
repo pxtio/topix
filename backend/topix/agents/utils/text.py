@@ -39,8 +39,8 @@ def extract_final_answer(text: str) -> str:
     return result.strip()
 
 
-def post_process_url_ciation(answer: str, valid_urls: list[str]) -> str:
-    """Post process url citation to correct wrong urls."""
+def post_process_url_citations(answer: str, valid_urls: list[str]) -> str:
+    """Post process url citations to correct wrong urls."""
     valid_url_set = set(valid_urls)
 
     trie = _create_trie(valid_url_set)

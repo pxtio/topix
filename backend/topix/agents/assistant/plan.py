@@ -21,6 +21,7 @@ from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.agents.websearch.navigate import NavigateAgent
+from topix.api.utils.common import iso_to_clear_date
 from topix.store.qdrant.store import ContentStore
 
 
@@ -78,7 +79,7 @@ class Plan(BaseAgent):
         name = "Plan"
         instructions = self._render_prompt(
             instructions_template,
-            time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            time=iso_to_clear_date(datetime.now().isoformat()),
         )
 
         model_settings = model_settings or ModelSettings(max_tokens=8000)
@@ -143,7 +144,7 @@ class Plan(BaseAgent):
             "plan.user.jinja",
             messages=messages,
             user_query=user_query,
-            time=datetime.now().isoformat(),
+            time=iso_to_clear_date(datetime.now().isoformat()),
         )
 
         return user_prompt

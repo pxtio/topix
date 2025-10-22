@@ -103,6 +103,12 @@ class OpenRouterConfig(BaseAPIConfig):
     pass
 
 
+class UnsplashConfig(BaseModel):
+    """Configuration for Unsplash API."""
+
+    access_key: str
+
+
 class APIsConfig(BaseModel):
     """Configuration for external APIs used in the application."""
 
@@ -114,6 +120,7 @@ class APIsConfig(BaseModel):
     gemini: GeminiConfig
     anthropic: AnthropicConfig
     openrouter: OpenRouterConfig
+    unsplash: UnsplashConfig
 
 
 class RunConfig(BaseModel):

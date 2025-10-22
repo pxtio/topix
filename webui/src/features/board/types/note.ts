@@ -1,6 +1,6 @@
 import { generateUuid, uuidToNumber } from "@/lib/common"
-import type { BooleanProperty, IconProperty, NumberProperty, PositionProperty, SizeProperty,   } from "./property"
 import { createDefaultStyle, type NodeType, type Style } from "./style"
+import type { BooleanProperty, IconProperty, ImageProperty, NumberProperty, PositionProperty, SizeProperty, URLProperty } from "@/features/newsfeed/types/properties"
 
 
 /**
@@ -12,6 +12,9 @@ export interface NoteProperties {
   emoji: IconProperty
   pinned: BooleanProperty
   listOrder: NumberProperty
+  url: URLProperty
+  imageUrl: ImageProperty
+  iconData: IconProperty
 }
 
 
@@ -67,7 +70,6 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
   const defaultSize = type === 'sheet' ?
     { width: DEFAULT_STICKY_NOTE_WIDTH, height: DEFAULT_STICKY_NOTE_HEIGHT }
     : { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT }
-
   return {
     nodePosition: {
       position: { x: 0, y: 0 },
@@ -88,7 +90,10 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     listOrder: {
       type: "number",
       number: 0,
-    }
+    },
+    url: { type: "url" },
+    imageUrl: { type: "image" },
+    iconData: { type: "icon" }
   }
 }
 

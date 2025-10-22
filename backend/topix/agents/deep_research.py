@@ -24,38 +24,13 @@ from topix.utils.common import gen_uid
 logger = logging.getLogger(__name__)
 
 
-class OutlineGenerator(BaseAgent):
-    """Generate an outline from a query."""
-
-    def __init__(
-        self,
-        model: str = ModelEnum.OpenAI.GPT_5,
-        instructions_template: str = "deep_research/outline_generator.jinja",
-        model_settings: ModelSettings | None = None,
-    ):
-        """Init method."""
-        name = "Outline Generator"
-        instructions = self._render_prompt(instructions_template)
-
-        if model_settings is None:
-            model_settings = ModelSettings(temperature=0.1)
-
-        super().__init__(
-            name=name,
-            model=model,
-            model_settings=model_settings,
-            instructions=instructions,
-        )
-        super().__post_init__()
-
-
 class WebCollector(BaseAgent):
     """Collect information from websites given an outline."""
 
     def __init__(
         self,
         model: str = ModelEnum.OpenAI.GPT_5,
-        instructions_template: str = "learning_module/web_collector.jinja",
+        instructions_template: str = "deep_research/web_collector.jinja",
         model_settings: ModelSettings | None = None,
         web_search_tool: FunctionTool | None = None,
     ):
@@ -102,7 +77,7 @@ class Synthesizer(BaseAgent):
     def __init__(
         self,
         model: str = ModelEnum.OpenAI.GPT_4_1,
-        instructions_template: str = "learning_module/synthesis.system.jinja",
+        instructions_template: str = "deep_research/synthesis.system.jinja",
         model_settings: ModelSettings | None = None,
     ):
         """Init method."""
@@ -142,7 +117,7 @@ class DeepResearch:
 
     def __init__(
         self,
-        outline_generator: OutlineGenerator,
+        outline_generator: WebCollector,
         web_collector: WebCollector,
         synthesizer: Synthesizer,
     ):
@@ -157,7 +132,7 @@ class DeepResearch:
         config: DeepResearchConfig,
     ) -> "DeepResearch":
         """Init web module generator from config."""
-        outline_generator = OutlineGenerator.from_config(config.outline_generator)
+        outline_generator = WebCollector.from_config(config.outline_generator)
         web_collector = WebCollector.from_config(config.web_collector)
         synthesizer = Synthesizer.from_config(config.synthesis)
         return cls(outline_generator, web_collector, synthesizer)

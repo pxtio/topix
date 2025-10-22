@@ -7,6 +7,7 @@ from fastapi import APIRouter, Body, Depends, Request, Response
 from topix.agents.datatypes.context import Context
 from topix.agents.mindmap.mapify import MapifyAgent, convert_mapify_output_to_notes_links
 from topix.agents.mindmap.notify import NotifyAgent, convert_notify_output_to_notes_links
+from topix.agents.mindmap.schemify.schemify import SchemifyAgent, convert_schemify_output_to_notes_links
 from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.utils.decorators import with_standard_response
@@ -55,6 +56,27 @@ async def mapify(
     mapify_agent = MapifyAgent()
     res = await AgentRunner.run(mapify_agent, body.answer, context=context)
     notes, links = convert_mapify_output_to_notes_links(res)
+
+    return {
+        "notes": [note.model_dump(exclude_none=True) for note in notes],
+        "links": [link.model_dump(exclude_none=True) for link in links]
+    }
+
+
+@router.post("/mindmaps:schemify/", include_in_schema=False)
+@router.post("/mindmaps:schemify")
+@with_standard_response
+async def schemify(
+    response: Response,
+    request: Request,
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
+):
+    """Convert a mindmap to a graph using Schemify."""
+    context = Context()
+    schemify_agent = SchemifyAgent()
+    res = await AgentRunner.run(schemify_agent, body.answer, context=context)
+    notes, links = convert_schemify_output_to_notes_links(res)
 
     return {
         "notes": [note.model_dump(exclude_none=True) for note in notes],

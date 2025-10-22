@@ -14,6 +14,8 @@ class NodeType(StrEnum):
     DIAMOND = "diamond"
     SHEET = "sheet"
     TEXT = "text"
+    IMAGE = "image"
+    ICON = "icon"
 
 
 class StrokeStyle(StrEnum):

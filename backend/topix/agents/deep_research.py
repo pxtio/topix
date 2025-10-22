@@ -17,6 +17,7 @@ from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession, Message
 from topix.agents.websearch.handler import WebSearchHandler
+from topix.api.utils.common import iso_to_clear_date
 from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
 from topix.utils.common import gen_uid
@@ -38,7 +39,7 @@ class WebCollector(BaseAgent):
         name = "Web Collector"
         instructions = self._render_prompt(
             instructions_template,
-            time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            time=iso_to_clear_date(datetime.now().isoformat()),
         )
         if model_settings is None:
             model_settings = ModelSettings(max_tokens=8000)

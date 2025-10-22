@@ -9,6 +9,7 @@ from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.outputs import SearchResult, WebSearchOutput
 from topix.agents.datatypes.web_search import WebSearchContextSize
+from topix.api.utils.common import iso_to_clear_date
 from topix.datatypes.recurrence import Recurrence
 
 
@@ -31,7 +32,7 @@ class OpenAIWebSearch(BaseAgent):
 
         # Enhanced instructions that include citation requirements
         instructions_dict = {
-            "time": datetime.datetime.now().strftime("%Y-%m-%d"),
+            "time": iso_to_clear_date(datetime.datetime.now().isoformat()),
         }
         instructions = self._render_prompt(instructions_template, **instructions_dict)
         # Configure tools based on search engine

@@ -2,6 +2,7 @@
 import type { UrlAnnotation } from '@/features/agent/types/tool-outputs'
 import { LinkPreviewCard } from '@/features/agent/components/link-preview'
 import { cn } from '@/lib/utils'
+import { useMemo } from 'react'
 
 /**
  * Masonry using CSS columns:
@@ -19,9 +20,17 @@ export function NewsfeedGrid({ annotations, viewMode = "grid" }: { annotations: 
     viewMode === "grid" && "border border-border"
   )
 
+  const sortedAnnotations = useMemo(() => {
+    return [...annotations].sort((a, b) => {
+      if (!a.publishedAt) return 1
+      if (!b.publishedAt) return -1
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    })
+  }, [annotations])
+
   return (
     <div className={className}>
-      {annotations.map((ann, i) => (
+      {sortedAnnotations.map((ann, i) => (
         <div key={`item-${i}`} className='break-inside-avoid mb-4'>
           <LinkPreviewCard
             annotation={ann}

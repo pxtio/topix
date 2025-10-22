@@ -22,6 +22,7 @@ from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.outputs import CodeInterpreterOutput, FileAnnotation
+from topix.api.utils.common import iso_to_clear_date
 from topix.datatypes.chat.schema import (
     ImageMessageContent,
     TextMessageContent,
@@ -69,7 +70,7 @@ class CodeInterpreter(BaseAgent):
     ):
         """Initialize the gent."""
         name = "Code Interpreter"
-        instructions_dict = {"time": datetime.datetime.now().strftime("%Y-%m-%d")}
+        instructions_dict = {"time": iso_to_clear_date(datetime.datetime.now().isoformat())}
         instructions = self._render_prompt(instructions_template, **instructions_dict)
         tools = [
             CodeInterpreterTool(

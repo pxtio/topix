@@ -15,11 +15,10 @@ export const AssistantMessage = ({
   message: ChatMessage
 }) => {
   const content = message.content
-  const firstStep = message.properties?.reasoning?.reasoning[0]
   const lastStep = message.properties?.reasoning?.reasoning.slice(-1)[0]
-  const isDeepResearch = firstStep?.name === 'outline_generator'
   const isSynthesis = lastStep?.name === 'synthesizer'
-  const resp = { steps: message.properties?.reasoning?.reasoning || [] }
+  const isDeepResearch = message.isDeepResearch || isSynthesis
+  const resp = { steps: message.properties?.reasoning?.reasoning || [], isDeepResearch, sentAt: message.sentAt }
 
   const messageClass = clsx(
     "w-full p-4 space-y-2 min-w-0",

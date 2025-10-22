@@ -1,6 +1,8 @@
 """Text processing utilities for agents."""
 import re
 
+MIN_MATCHES = 10
+
 
 def extract_final_answer(text: str) -> str:
     """Extract the final answer portion of a string.
@@ -100,6 +102,7 @@ def _get_valid_url(url: str, trie: dict) -> str:
     node = trie
     valid_url = ""
 
+    num_matches = 0
     for char in url:
         if char in node:
             valid_url += char
@@ -108,6 +111,10 @@ def _get_valid_url(url: str, trie: dict) -> str:
             # If this node marks the end of a valid URL, update last_valid_url
             if '#END#' in node:
                 return valid_url
+            num_matches += 1
+
+    if num_matches < MIN_MATCHES:
+        return url
 
     while "#END#" not in node:
         key = next(iter(node.keys()))

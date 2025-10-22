@@ -100,7 +100,7 @@ class DeepResearchConfig(BaseModel):
 
         web_search: WebSearchConfig
 
-    outline_generator: BaseAgentConfig
+    outline_generator: WebCollectorConfig
     web_collector: WebCollectorConfig
     synthesis: BaseAgentConfig
 

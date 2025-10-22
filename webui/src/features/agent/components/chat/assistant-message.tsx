@@ -23,7 +23,7 @@ export const AssistantMessage = ({
 
   const messageClass = clsx(
     "w-full p-4 space-y-2 min-w-0",
-    isSynthesis && "rounded-xl border border-border shadow-sm",
+    isSynthesis && "rounded-xl border border-border shadow-sm p-6",
     isSynthesis && !message.streaming && "overflow-y-auto scrollbar-thin max-h-[800px]"
   )
 

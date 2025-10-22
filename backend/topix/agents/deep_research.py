@@ -30,7 +30,7 @@ class WebCollector(BaseAgent):
     def __init__(
         self,
         model: str = ModelEnum.OpenAI.GPT_5,
-        instructions_template: str = "learning_module/web_collector.jinja",
+        instructions_template: str = "deep_research/web_collector.jinja",
         model_settings: ModelSettings | None = None,
         web_search_tool: FunctionTool | None = None,
     ):
@@ -77,7 +77,7 @@ class Synthesizer(BaseAgent):
     def __init__(
         self,
         model: str = ModelEnum.OpenAI.GPT_4_1,
-        instructions_template: str = "learning_module/synthesis.system.jinja",
+        instructions_template: str = "deep_research/synthesis.system.jinja",
         model_settings: ModelSettings | None = None,
     ):
         """Init method."""

@@ -55,8 +55,8 @@ const ReasoningStepViewImpl = ({
   const stepIcon = ToolNameIcon[step.name]
   const successIcon = stepIcon || Tick01Icon
   const successDivClass = cn(
-    'absolute rounded-full bg-secondary z-20 flex items-center justify-center top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2',
-    stepIcon ? 'w-3 h-3 bg-transparent text-secondary' : 'w-2.5 h-2.5 bg-secondary text-secondary-foreground'
+    'absolute rounded-full bg-primary z-20 flex items-center justify-center top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2',
+    stepIcon ? 'w-3 h-3 bg-transparent text-muted-foreground' : 'w-2.5 h-2.5 bg-primary text-primary-foreground'
   )
   const iconClass = stepIcon ? "size-3" : "size-2"
 
@@ -69,14 +69,14 @@ const ReasoningStepViewImpl = ({
       `}
     >
       <div className='relative flex-shrink-0'>
-        <div className="relative z-20 mt-0.5 rounded-full bg-sidebar w-4 h-4">
+        <div className="relative z-20 mt-[2px] -ml-1 rounded-full bg-sidebar w-6 h-6">
           {
             isLoading &&
-            <div className='absolute animate-ping w-2 h-2 rounded-full bg-secondary/75 z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' />
+            <div className='absolute animate-ping w-2 h-2 rounded-full bg-primary/75 z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' />
           }
           {
             isLoading ?
-            <div className='absolute w-2 h-2 rounded-full bg-secondary z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' /> :
+            <div className='absolute w-2 h-2 rounded-full bg-primary z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' /> :
             <div className={successDivClass}>
               <HugeiconsIcon icon={successIcon} className={iconClass} strokeWidth={2} />
             </div>
@@ -215,7 +215,7 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
           />)
         }
         <div
-          className='absolute left-[0.975rem] top-0 w-[1px] h-full bg-secondary rounded-lg z-10'
+          className='absolute left-[0.975rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
         />
       </div>
       <button

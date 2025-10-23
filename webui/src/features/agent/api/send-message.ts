@@ -89,13 +89,17 @@ export const useSendMessage = () => {
       } as ChatMessage
 
       const tmpId = "placeholder-" + Date.now().toString()
+
+      const isDeepResearch = payload.useDeepResearch
       const newAssistantPlaceholder = {
         id: tmpId,
         role: "assistant",
         content: { markdown: "" },
         chatUid: chatId,
         properties: { reasoning: { type: "reasoning", reasoning: [] } },
-        streaming: true
+        streaming: true,
+        isDeepResearch,
+        sentAt: new Date().toISOString()
       } as ChatMessage
 
       const newMessages = [newUserMessage, newAssistantPlaceholder]

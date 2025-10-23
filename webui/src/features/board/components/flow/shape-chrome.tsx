@@ -42,7 +42,18 @@ export function ShapeChrome({
     return (
       <div
         className={clsx('shadow-lg rounded-md border border-border', frameClass)}
-        style={{ backgroundColor, color: textColor, minHeight }}
+        style={{ backgroundColor, color: textColor, minHeight, borderColor: strokeColor }}
+      >
+        {children}
+      </div>
+    )
+  }
+
+  if (type === "image" || type === "icon") {
+    return (
+      <div
+        className={clsx('w-full h-full transparent', frameClass)}
+        style={{ color: textColor, minHeight }}
       >
         {children}
       </div>

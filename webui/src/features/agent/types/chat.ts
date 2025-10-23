@@ -22,6 +22,8 @@ export interface ChatMessage {
     }
   }
   streaming?: boolean
+  isDeepResearch?: boolean
+  sentAt?: string
 }
 
 

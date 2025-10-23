@@ -72,6 +72,8 @@ export interface ReasoningStep {
  */
 export interface AgentResponse {
   steps: ReasoningStep[]
+  sentAt?: string
+  isDeepResearch?: boolean
 }
 
 

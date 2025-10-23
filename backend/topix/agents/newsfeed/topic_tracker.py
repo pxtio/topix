@@ -12,6 +12,7 @@ from topix.agents.datatypes.outputs import TopicTracker
 from topix.agents.newsfeed.config import TopicSetupConfig
 from topix.agents.newsfeed.default_seed_sources import DefaultSeedSources
 from topix.agents.websearch.handler import WebSearchHandler
+from topix.api.utils.common import iso_to_clear_date
 
 
 class TopicSetupInput(BaseModel):
@@ -35,7 +36,7 @@ class TopicSetup(BaseAgent):
         name = "Topic Setup"
         instructions = self._render_prompt(
             instructions_template,
-            time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            time=iso_to_clear_date(datetime.now().isoformat()),
         )
 
         web_search = web_search or WebSearchHandler.get_openai_web_tool()

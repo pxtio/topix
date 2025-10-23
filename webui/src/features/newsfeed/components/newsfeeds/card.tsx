@@ -104,10 +104,10 @@ export function NewsletterCard({
           <Card
             style={{ backgroundColor: bgColor }}
             className={cn(
-              'rounded-xl h-24 transition hover:shadow-sm hover:ring-2 hover:ring-secondary/20 hover:border-secondary/60',
+              'rounded-xl h-24 transition hover:shadow-sm hover:ring-2 hover:ring-secondary/20 hover:border-secondary/60 border border-transparent',
               active && ringWhenActive,
               (generating || del.isPending) && 'pointer-events-none',
-              'bg-transparent border'
+              'bg-transparent'
             )}
           >
             <CardContent className='h-full flex items-center justify-center px-4'>
@@ -119,9 +119,9 @@ export function NewsletterCard({
 
                 {/* progress bar when generating */}
                 {generating && typeof pct === 'number' && (
-                  <div className='h-1 w-full rounded bg-black/10 overflow-hidden'>
+                  <div className='h-1 w-full rounded bg-card-foreground/10 overflow-hidden'>
                     <div
-                      className='h-full rounded bg-black/30 transition-[width]'
+                      className='h-full rounded bg-card-foreground/30 transition-[width]'
                       style={{ width: `${pct}%` }}
                       aria-hidden='true'
                     />

@@ -18,13 +18,14 @@ export const UserMessage = ({ message, isLatest }: { message: string, isLatest: 
       <div
         className={`
           flex flex-col gap-2
-          w-auto max-w-[75%]
+          w-auto max-w-[75%] min-w-0
           bg-muted
           text-card-foreground text-base
           text-left
           rounded-xl
           px-5 py-2
           ml-auto
+          whitespace-pre-wrap break-words
         `}
       >
         {message}

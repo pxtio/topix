@@ -24,6 +24,7 @@ from topix.agents.websearch.tools import (
     search_linkup,
     search_tavily,
 )
+from topix.api.utils.common import iso_to_clear_date
 
 
 class WebSearchAgentHook(AgentHooks):
@@ -93,7 +94,7 @@ class DeepWebSearch(BaseAgent):
 
         # Enhanced instructions that include citation requirements
         instructions_dict = {
-            "time": datetime.datetime.now().strftime("%Y-%m-%d"),
+            "time": iso_to_clear_date(datetime.datetime.now().isoformat()),
         }
         instructions = self._render_prompt(instructions_template, **instructions_dict)
         # Configure tools based on search engine

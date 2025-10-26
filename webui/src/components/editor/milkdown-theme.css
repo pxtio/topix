@@ -37,6 +37,8 @@
   /* ===== Shadows ===== */
   --crepe-shadow-1: var(--shadow-sm);
   --crepe-shadow-2: var(--shadow-lg);
+
+  background: transparent !important;
 }
 
 /* Optional frame styling to match app's card UI */
@@ -58,7 +60,7 @@
 }
 
 .milkdown .ProseMirror {
-  padding: 2rem 5rem;
+  padding: 2rem 5.2rem !important;
 }
 
 @media (max-width: 1024px) {
@@ -119,6 +121,7 @@
   overflow-wrap: anywhere;
   white-space: normal;
   min-width: 0;
+  background: transparent !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -128,43 +131,44 @@
 .milkdown .ProseMirror h2,
 .milkdown .ProseMirror h3,
 .milkdown .ProseMirror h4 {
-  font-family: var(--font-heading, var(--font-sans));
+  font-family: var(--font-sans) !important;
   font-weight: 600; /* semibold */
   letter-spacing: -0.01em;
   scroll-margin-top: 5rem;
   margin-top: 1.25rem;
 }
 
-/* h1 → text-2xl */
+/* h1 → text-3xl */
 .milkdown .ProseMirror h1 {
+  margin-top: 2rem !important;
+  padding-bottom: 0.75rem !important;
+  font-size: 1.875rem !important; /* 3xl */
+  line-height: 1.45 !important;
+  border-bottom: 1px solid color-mix(in oklab, var(--muted-foreground) 20%, transparent);
+  font-weight: 700 !important;
+}
+
+/* h2 → text-2xl */
+.milkdown .ProseMirror h2 {
   margin-top: 1.75rem !important;
   padding-bottom: 0.5rem !important;
   font-size: 1.5rem !important; /* 2xl */
-  line-height: 1.33 !important;
-  border-bottom: 1px solid color-mix(in oklab, var(--muted-foreground) 20%, transparent);
+  line-height: 1.4 !important;
   font-weight: 600 !important;
 }
 
-/* h2 → text-xl */
-.milkdown .ProseMirror h2 {
+/* h3 → text-xl */
+.milkdown .ProseMirror h3 {
   margin-top: 1.5rem !important;
   font-size: 1.25rem !important; /* xl */
   line-height: 1.4 !important;
   font-weight: 600 !important;
 }
 
-/* h3 → text-lg */
-.milkdown .ProseMirror h3 {
+/* h4 → text-lg */
+.milkdown .ProseMirror h4 {
   margin-top: 1.25rem !important;
   font-size: 1.125rem !important; /* lg */
-  line-height: 1.5 !important;
-  font-weight: 600 !important;
-}
-
-/* h4 → text-base */
-.milkdown .ProseMirror h4 {
-  margin-top: 1rem !important;
-  font-size: 1rem !important; /* base */
   line-height: 1.5 !important;
   font-weight: 600 !important;
 }
@@ -225,6 +229,7 @@
   background: var(--card);
   border-radius: 0.5rem;
   transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+  cursor: pointer;
 }
 .milkdown .ProseMirror a:hover { background: var(--accent); }
 .milkdown .ProseMirror a:focus {
@@ -256,14 +261,6 @@
   margin: 1rem 0;
 }
 
-/* --------------------------------------------------------------------------
-   Horizontal rule
-   -------------------------------------------------------------------------- */
-.milkdown .ProseMirror hr {
-  margin: 1.5rem 0;
-  border: 0;
-  border-top: 1px solid color-mix(in oklab, var(--muted-foreground) 20%, transparent);
-}
 /* --------------------------------------------------------------------------
    Code blocks & inline code
    -------------------------------------------------------------------------- */

@@ -216,6 +216,15 @@ export const NodeCard = ({
     updateStyle({ backgroundColor: hex })
   }, [updateStyle])
 
+  const icon = useMemo(() => {
+    if (note.properties.iconData?.type === "icon" && note.properties.iconData.icon?.type === "icon") {
+      return note.properties.iconData.icon.icon
+    }
+    return undefined
+  }, [note.properties.iconData])
+
+  const imageUrl = note.properties.imageUrl?.image?.url
+
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <div
@@ -281,6 +290,7 @@ export const NodeCard = ({
           <StickyNote content={note.content?.markdown || ''} onOpen={openDialogFromSticky} />
         ) : (
           <Shape
+            nodeType={note.style.type}
             value={labelEditing ? labelDraft : (note.label?.markdown || '')}
             labelEditing={labelEditing}
             onChange={handleLabelChange}
@@ -292,7 +302,8 @@ export const NodeCard = ({
               size: fontSizeToTwClass(note.style.fontSize)
             }}
             contentRef={contentRef}
-            showPlaceholder={note.style.type === 'text'}
+            icon={icon}
+            imageUrl={imageUrl}
           />
         )}
       </div>

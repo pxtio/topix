@@ -4,6 +4,16 @@ outline_generator:
   model_settings:
     temperature: 0.01
 
+  web_search:
+    model: openai/gpt-4.1-mini
+    instructions_template: decoupled_web_search.jinja
+    search_engine: linkup
+    search_context_size: medium
+    model_settings:
+      temperature: 0.01
+    enable_summary: false
+    streaming: false
+
 web_collector:
   model: openai/gpt-4.1
   instructions_template: deep_research/web_collector.jinja

@@ -18,6 +18,7 @@ from topix.agents.datatypes.stream import (
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
+from topix.agents.utils.text import post_process_url_citations
 from topix.datatypes.chat.chat import Message
 from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
@@ -75,6 +76,20 @@ class AssistantManager:
                 return [{"role": "user", "content": query}]
         return [{"role": "user", "content": query}]
 
+    async def _postprocess_answer(
+        self,
+        answer: str,
+        context: ReasoningContext,
+    ) -> str:
+        """Post process the final answer from the synthesis agent."""
+        valid_urls = []
+        for tool_call in context.tool_calls:
+            if tool_call.name == AgentToolName.WEB_SEARCH:
+                search_results = tool_call.output.search_results
+                for result in search_results:
+                    valid_urls.append(result.url)
+        return post_process_url_citations(answer, valid_urls)
+
     async def run(
         self,
         context: ReasoningContext,
@@ -114,6 +129,9 @@ class AssistantManager:
             await session.add_items(
                 [{"id": gen_uid(), "role": "assistant", "content": {"markdown": res}}]
             )
+
+        res = await self._postprocess_answer(res, context)
+
         return res
 
     async def run_streamed(  # noqa: C901
@@ -151,13 +169,19 @@ class AssistantManager:
             )
 
         # launch plan:
-        res = AgentRunner.run_streamed(
-            self.plan_agent, input=agent_input, context=context, max_turns=max_turns
-        )
+        try:
+            res = AgentRunner.run_streamed(
+                self.plan_agent, input=agent_input, context=context, max_turns=max_turns
+            )
 
-        async for message in res:
-            if isinstance(message, AgentStreamMessage):
-                yield message
+            async for message in res:
+                if isinstance(message, AgentStreamMessage):
+                    yield message
+        except Exception as e:
+            logger.error(
+                f"Plan agent execution error {e}, may due to Max turns exceeded",
+                exc_info=True,
+            )
 
         # Launch the synthesis agent:
         res = AgentRunner.run_streamed(
@@ -176,6 +200,8 @@ class AssistantManager:
                 ]:
                     final_answer += message.content.text
                 yield message
+
+        final_answer = await self._postprocess_answer(final_answer, context)
 
         if session:
             if not context.tool_calls:

@@ -18,6 +18,7 @@ async def setup(stage: StageEnum):
     os.environ["GEMINI_API_KEY"] = config.run.apis.gemini.api_key
     os.environ["ANTHROPIC_API_KEY"] = config.run.apis.anthropic.api_key
     os.environ["OPENROUTER_API_KEY"] = config.run.apis.openrouter.api_key
+    os.environ["UNSPLASH_ACCESS_KEY"] = config.run.apis.unsplash.access_key
 
     await QdrantStore.from_config().create_collection()
     return config

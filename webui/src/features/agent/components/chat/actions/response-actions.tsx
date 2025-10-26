@@ -22,6 +22,7 @@ export const ResponseActions = ({ message, saveAsIs = false }: { message: string
       <CopyAnswer answer={message} />
       <SaveAsNote message={message} type="notify" saveAsIs={saveAsIs} boardId={attachedBoardId} />
       <SaveAsNote message={message} type="mapify" boardId={attachedBoardId} />
+      <SaveAsNote message={message} type="schemify" boardId={attachedBoardId} />
     </div>
   )
 }

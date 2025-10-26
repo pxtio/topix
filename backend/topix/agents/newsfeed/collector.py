@@ -12,6 +12,7 @@ from topix.agents.datatypes.outputs import NewsfeedOutput
 from topix.agents.newsfeed.config import NewsfeedCollectorConfig, NewsfeedSynthesizerConfig
 from topix.agents.newsfeed.context import NewsfeedContext
 from topix.agents.websearch.handler import WebSearchHandler
+from topix.api.utils.common import iso_to_clear_date
 from topix.datatypes.newsfeed.subscription import Subscription
 
 
@@ -36,7 +37,7 @@ class NewsfeedCollector(BaseAgent):
         name = "Newsfeed Collector"
         instructions = self._render_prompt(
             instructions_template,
-            time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            time=iso_to_clear_date(datetime.now().isoformat()),
         )
 
         if not web_search:
@@ -102,7 +103,7 @@ class NewsfeedSynthesizer(BaseAgent):
         name = "Newsfeed Source Picker"
         instructions = self._render_prompt(
             instructions_template,
-            time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            time=iso_to_clear_date(datetime.now().isoformat()),
         )
 
         super().__init__(
@@ -140,7 +141,7 @@ class NewsfeedSynthesizer(BaseAgent):
         history_str = '\n'.join(f"- {title} ({url})" for url, title in input.history) if input.history else "None"
         return self._render_prompt(
             "newsfeed/synthesizer.user.jinja",
-            time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            time=iso_to_clear_date(datetime.now().isoformat()),
             topic=input.subscription.label.markdown,
             sub_topics=sub_topics_str,
             description=input.subscription.properties.description.text,

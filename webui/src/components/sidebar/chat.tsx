@@ -81,6 +81,9 @@ export function ChatMenuItem({ chatId, label }: { chatId: string, label?: string
 
   const handleDeleteChat = (chatId: string) => {
     deleteChat({ chatId, userId })
+    if (isActive) {
+      navigate({ to: '/chats' })
+    }
   }
 
   const chatLabel = trimText(label || UNTITLED_LABEL, 100)

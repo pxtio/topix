@@ -1,10 +1,13 @@
 """Answer Reformulation Agent."""
 
+from datetime import datetime
+
 from agents import ModelSettings
 
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
+from topix.api.utils.common import iso_to_clear_date
 
 
 class AnswerReformulate(BaseAgent):
@@ -18,7 +21,10 @@ class AnswerReformulate(BaseAgent):
     ):
         """Init method."""
         name = "Answer Reformulate"
-        instructions = self._render_prompt(instructions_template)
+        instructions = self._render_prompt(
+            instructions_template,
+            current_date=iso_to_clear_date(datetime.now().isoformat())
+        )
         if model_settings is None:
             model_settings = ModelSettings(temperature=0.01)
 

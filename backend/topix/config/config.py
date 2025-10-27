@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+import os
+
 from urllib.parse import quote_plus
 
 from pydantic import BaseModel
@@ -10,6 +13,8 @@ from yaml import safe_load
 from topix.config.utils import load_secrets
 from topix.datatypes.stage import StageEnum
 from topix.utils.singleton import SingletonMeta
+
+logger = logging.getLogger(__name__)
 
 
 class QdrantConfig(BaseModel):
@@ -21,6 +26,18 @@ class QdrantConfig(BaseModel):
     https: bool = False
     api_key: str | None = None
 
+    def model_post_init(self, __context):
+        """Post-initialization to set up any derived attributes."""
+        env_host = os.getenv("QDRANT_HOST")
+        if env_host:
+            self.host = env_host
+            logger.info(f"Qdrant host set from environment QDRANT_HOST: {self.host}")
+
+        env_port = os.getenv("QDRANT_PORT")
+        if env_port:
+            self.port = int(env_port)
+            logger.info(f"Qdrant port set from environment QDRANT_PORT: {self.port}")
+
 
 class PostgresConfig(BaseModel):
     """Configuration for PostgreSQL database connection."""
@@ -30,6 +47,18 @@ class PostgresConfig(BaseModel):
     database: str = "topix"
     user: str = "topix"
     password: str | None = None
+
+    def model_post_init(self, __context):
+        """Post-initialization to set up any derived attributes."""
+        env_hostname = os.getenv("POSTGRES_HOST")
+        if env_hostname:
+            self.hostname = env_hostname
+            logger.info(f"Postgres hostname set from environment POSTGRES_HOST: {self.hostname}")
+
+        env_port = os.getenv("POSTGRES_PORT")
+        if env_port:
+            self.port = int(env_port)
+            logger.info(f"Postgres port set from environment POSTGRES_PORT: {self.port}")
 
     def dsn(self) -> str:
         """Return a properly encoded PostgreSQL connection string."""

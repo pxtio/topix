@@ -59,7 +59,7 @@ up-s: ## Start one service (inherits $(PROFILE)); add --no-deps with NODEPS=1
 	$(COMPOSE) up -d $(if $(NODEPS),--no-deps,) $(SERVICE)
 
 .PHONY: build-s
-build-s: ## Build one service: make build-s SERVICE=frontend-dev
+build-s: ## Build one service: make build-s SERVICE=webui-dev
 	@test -n "$(SERVICE)" || (echo "Set SERVICE=..." && exit 1)
 	$(COMPOSE) build $(SERVICE)
 
@@ -78,9 +78,9 @@ exec: ## Exec into service shell: make exec SERVICE=backend-dev [CMD="bash"]
 up-backend: ## Start only backend (no deps): make up-backend SERVICE=backend-dev
 	@$(MAKE) up-s SERVICE=$(if $(SERVICE),$(SERVICE),backend-$(PROFILE)) NODEPS=1
 
-.PHONY: up-frontend
-up-frontend: ## Start only frontend (no deps): make up-frontend SERVICE=frontend-dev
-	@$(MAKE) up-s SERVICE=$(if $(SERVICE),$(SERVICE),frontend-$(PROFILE)) NODEPS=1
+.PHONY: up-webui
+up-webui: ## Start only webui (no deps): make up-webui SERVICE=webui-dev
+	@$(MAKE) up-s SERVICE=$(if $(SERVICE),$(SERVICE),webui-$(PROFILE)) NODEPS=1
 
 .PHONY: up-db
 up-db: ## Start only databases for $(PROFILE)

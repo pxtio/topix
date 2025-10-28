@@ -65,7 +65,12 @@ class MemorySearch(BaseAgent):
             if resource.id in context._memory_cache:
                 continue
             context._memory_cache.add(resource.id)
-            content = resource.content.markdown
+            if resource.content:
+                content = resource.content.markdown
+            elif resource.label:
+                content = resource.label.markdown
+            else:
+                continue
             short_id = resource.id[:4]
             memory = f'<CONTEXT url="/{short_id}/" type="{resource.type}"> \
                 \n{content}\n</CONTEXT>'

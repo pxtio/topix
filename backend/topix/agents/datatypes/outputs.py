@@ -11,7 +11,7 @@ from topix.agents.datatypes.annotations import (
     SearchResult,
 )
 
-type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput | MemorySearchOutput | NotifyOutput | MapifyTheme | TopicTracker | NewsfeedOutput
+type ToolOutput = str | CodeInterpreterOutput | WebSearchOutput | MemorySearchOutput | NotifyOutput | MapifyTheme | TopicTracker | NewsfeedOutput | ImageIllustratorOutput
 
 
 class NewsfeedArticle(BaseModel):
@@ -83,6 +83,13 @@ class WebSearchOutput(BaseModel):
         else:
             """The final output of the Websearch Agent."""
             return self.answer
+
+
+class ImageIllustratorOutput(BaseModel):
+    """Output of the image illustrator agent."""
+    image_url: str
+    image_title: str
+    image_description: str
 
 
 class CodeInterpreterOutput(BaseModel):

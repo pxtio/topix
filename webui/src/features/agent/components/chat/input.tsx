@@ -90,7 +90,9 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSearch()
+      if (!isStreaming) {
+        handleSearch()
+      }
     }
   }
 

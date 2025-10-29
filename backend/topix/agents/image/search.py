@@ -1,14 +1,14 @@
 import asyncio
-import json
-import os
 import logging
+import os
 from typing import Literal, Optional
 import httpx
 
 from topix.agents.websearch.utils import get_from_date
 from topix.datatypes.recurrence import Recurrence
 
-semaphore = asyncio.Semaphore(5)
+MAX_CONCURRENT_IMAGE_SEARCHES = 5
+semaphore = asyncio.Semaphore(MAX_CONCURRENT_IMAGE_SEARCHES)
 
 
 async def search_serper(
@@ -25,11 +25,14 @@ async def search_serper(
         query: The query to search for.
         num_results: The number of results to return.
         recency: The recency of the search.
-        language: The language of the search.
+        location: The location of the web search.
+        client: httpx AsyncClient to use for the search.
+        timeout: httpx Timeout for the search.
 
     Returns:
-        return a list of image urls.
+        list of image urls.
     """
+    logging.info(f"Searching for images from query: {query}")
     url = "https://google.serper.dev/images"
     api_key = os.environ.get("SERPER_API_KEY")
     headers = {
@@ -53,7 +56,6 @@ async def search_serper(
         "tbs": f"qdr:{time_range}",
         "gl": location
     }
-    logging.info(f"Searching for images with query: {query}")
     async with semaphore:
         if client is None:
             async with httpx.AsyncClient() as client:
@@ -65,9 +67,7 @@ async def search_serper(
                 url, headers=headers, json=payload, timeout=timeout
             )
 
-    logging.info(f"Response: {response.json()}")
     json_response = response.json()
-    logging.info(f"Found {len(json_response['images'])} images")
     return [item["imageUrl"] for item in json_response["images"]]
 
 
@@ -84,10 +84,13 @@ async def search_linkup(
         query: The query to search for.
         num_results: The number of results to return.
         recency: The recency of the search.
+        client: httpx AsyncClient to use for the search.
+        timeout: httpx Timeout for the search.
 
     Returns:
         return a list of image urls.
     """
+    logging.info(f"Searching for images from query: {query}")
     url = "https://api.linkup.so/v1/search"
     api_key = os.environ.get("LINKUP_API_KEY")
     headers = {

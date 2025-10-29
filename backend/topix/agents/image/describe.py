@@ -6,7 +6,9 @@ from typing import Literal
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 
-from topix.agents.base import BaseAgent
+from topix.agents.prompt_utils import render_prompt
+
+from backend.topix.agents.datatypes.model_enum import OpenAIModel
 
 
 class TextMessageContent(BaseModel):
@@ -40,10 +42,13 @@ class ImageDescription(BaseModel):
     image_summary: str
 
 
-async def process_message(client: AsyncOpenAI, message: ChatMessage) -> ImageDescription | None:
+async def process_message(
+    client: AsyncOpenAI, message: ChatMessage
+) -> ImageDescription | None:
+    """Process a message with the OpenAI API to get an image description."""
     try:
         response = await client.beta.chat.completions.parse(
-            model="gpt-4o-mini",
+            model=OpenAIModel.GPT_4O_MINI,
             messages=[message.model_dump()],
             response_format=ImageDescription
         )
@@ -54,24 +59,32 @@ async def process_message(client: AsyncOpenAI, message: ChatMessage) -> ImageDes
         return None
 
 
-async def image_descriptor(image_urls: list[str]) -> list[ImageDescription]:
-    """Compute a description of each image."""
+async def image_descriptor(image_urls: list[str]) -> list[ImageDescription | None]:
+    """Compute a description of each image.
+
+    Args:
+        image_urls: list of image urls.
+
+    Returns:
+        list of image descriptions.
+    """
     client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     def input_handler(image_url: str, detail: str = 'low') -> ChatMessage:
         """ Format the input """
-        text = BaseAgent._render_prompt("image_description.jinja")
+        text = render_prompt("image_description.jinja")
         message = ChatMessage(
             content=[
                 TextMessageContent(text=text),
-                ImageMessageContent(image_url=ImageUrl(url=image_url, detail=detail))
+                ImageMessageContent(
+                    image_url=ImageUrl(url=image_url, detail=detail)
+                )
             ]
         )
         return message
 
-    logging.info(f"Processing {len(image_urls)} images")
     message_collection = [input_handler(image_url) for image_url in image_urls]
-    descriptions = await asyncio.gather(*[process_message(client, message) for message in message_collection])
-    logging.info(f"Processed {len(descriptions)} images")
-    logging.info(f"Descriptions: {descriptions}")
+    descriptions = await asyncio.gather(
+        *[process_message(client, message) for message in message_collection]
+    )
     return descriptions

@@ -1,6 +1,4 @@
-import logging
 from typing import Any
-
 
 from topix.agents.datatypes.context import ReasoningContext
 from agents import Agent, Tool, function_tool, ModelSettings, AgentHooks, RunContextWrapper
@@ -91,7 +89,6 @@ class TopicIllustrator(BaseAgent):
                 A list of tuples containing the image url, along with their descriptions.
             """
             if self._image_search_engine == ImageSearchOption.SERPER:
-                logging.info("Searching for images using Serper API")
                 image_urls = await search_serper(
                     query,
                     recency=recency,
@@ -106,9 +103,7 @@ class TopicIllustrator(BaseAgent):
             else:
                 raise ValueError(f"Unsupported image search engine: {self.image_search_engine}")
 
-            logging.info(f"Image URLs: {image_urls}")
             descriptions = await image_descriptor(image_urls)
-            logging.info(f"Descriptions: {descriptions}")
             return [
                 (url, description)
                 for url, description in zip(image_urls, descriptions)

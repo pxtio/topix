@@ -6,9 +6,11 @@ import os
 
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -92,6 +94,11 @@ if __name__ == "__main__":
     )
     args = args.parse_args()
     app, port = asyncio.run(main(args))
+
+    # load .env file
+    envpath = Path(__file__).parent.parent.parent.parent / '.env'
+    logger.info(f"Loading env from: {envpath}")
+    load_dotenv(dotenv_path=envpath)
 
     # override port with env var if env var is set
     env_port = os.getenv("API_PORT")

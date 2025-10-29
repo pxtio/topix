@@ -20,6 +20,8 @@ class AgentToolName(StrEnum):
 
     RAW_MESSAGE = "raw_message"
 
+    TOPIC_ILLUSTRATOR = "topic_illustrator"
+
 
 def to_display_output(tool_name: str) -> bool:
     """Check if the tool is for displaying output."""
@@ -40,4 +42,5 @@ tool_descriptions = {
     AgentToolName.OUTLINE_GENERATOR: "Generate an outline for research",
     AgentToolName.WEB_COLLECTOR: "Collect web content based on the outline",
     AgentToolName.SYNTHESIZER: "Synthesize a report based on collected content",
+    AgentToolName.TOPIC_ILLUSTRATOR: "Illustrate a topic",
 }

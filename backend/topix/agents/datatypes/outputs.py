@@ -21,7 +21,8 @@ type ToolOutput = Union[
     MapifyTheme,
     TopicTracker,
     NewsfeedOutput,
-    SchemaOutput
+    SchemaOutput,
+    TopicIllustratorOutput
 ]
 
 
@@ -72,6 +73,13 @@ class NotifyOutput(BaseModel):
 
     title: str
     content: str
+
+
+class TopicIllustratorOutput(BaseModel):
+    """Output of the topic illustrator agent."""
+    image_url: str
+    image_title: str
+    image_description: str
 
 
 class WebSearchOutput(BaseModel):

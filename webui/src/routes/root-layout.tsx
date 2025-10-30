@@ -2,12 +2,10 @@ import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import { SidebarLabel } from "@/components/sidebar/sidebar-label"
-import { ModeToggle } from "@/components/mode-toggle"
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { StyleDefaultsProvider } from '@/features/board/style-provider'
 
-// 👉 passive bootstrap (fills store from token, no redirects)
 import { useAppStore } from '@/store'
 import { clearTokens } from '@/features/signin/auth-storage'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -49,17 +47,16 @@ export function RootLayout() {
             <SidebarProvider>
               <AppSidebar onLogout={onLogout} />
               <SidebarInset className='overflow-hidden'>
-                <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                <header className="flex h-16 shrink-0 items-center gap-2 p-4 absolute top-0 inset-x-0 z-50">
                   <SidebarTrigger className="-ml-1" />
                   <div><SidebarLabel /></div>
-                  <div className="ml-auto"><ModeToggle /></div>
                 </header>
 
                 <div className="flex flex-1 w-full min-w-0">
                   <div className="relative flex-1 min-w-0">
                     <Outlet />
                   </div>
-                  <Toaster position="top-right" toastOptions={{ style: { borderRadius: 'var(--radius-xl)', top: '3.6rem' } }} />
+                  <Toaster position="top-right" toastOptions={{ style: { borderRadius: 'var(--radius-xl)' } }} />
                 </div>
               </SidebarInset>
             </SidebarProvider>
@@ -72,7 +69,7 @@ export function RootLayout() {
 
               <Toaster
                 position="top-right"
-                toastOptions={{ style: { borderRadius: 'var(--radius-xl)', top: '3.6rem' } }}
+                toastOptions={{ style: { borderRadius: 'var(--radius-xl)' } }}
               />
             </div>
           )}
@@ -82,7 +79,6 @@ export function RootLayout() {
   )
 }
 
-// grainy background for auth pages
 /**
  * Full-screen auth background:
  * - soft "secondary" blobs

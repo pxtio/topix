@@ -270,7 +270,7 @@ export default function GraphEditor() {
 
       {/* Graph-only sidebar (style controls) */}
       {viewMode === 'graph' && !isDragging && !moving && !isResizingNode && !isSelecting && (
-        <div className='absolute top-1 left-1 w-auto max-w-[300px] h-auto z-50'>
+        <div className='absolute top-16 left-1 w-auto max-w-[300px] h-auto z-50'>
           <GraphSidebar />
         </div>
       )}

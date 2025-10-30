@@ -97,7 +97,7 @@ export function ActionPanel({
         p-1 flex gap-1
         right-2 top-1/2 -translate-y-1/2 md:translate-y-0
         flex-col items-stretch
-        md:right-auto md:left-1/2 md:top-4 md:-translate-x-1/2
+        md:right-auto md:left-1/2 md:top-2 md:-translate-x-1/2
         md:flex-row md:items-center
       `}
       role='toolbar'

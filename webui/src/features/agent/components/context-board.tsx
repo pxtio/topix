@@ -1,15 +1,18 @@
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { useListBoards } from "@/features/board/api/list-boards"
-import { UNTITLED_LABEL } from "@/features/board/const"
+import { useUpdateChat } from "@/features/agent/api/update-chat"
 import { useAppStore } from "@/store"
-import { HugeiconsIcon } from '@hugeicons/react'
-import { AiChipIcon } from '@hugeicons/core-free-icons'
+import { useParams } from "@tanstack/react-router"
+import { UNTITLED_LABEL } from "@/features/board/const"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { AiChipIcon, PlusSignIcon } from "@hugeicons/core-free-icons"
 
 
-// Props for the context board selector
 export interface ContextBoardProps {
+  /** optional — if provided, ContextBoard is stateless */
   contextBoardId?: string
-  boardAsContext: (boardId?: string) => void
+  /** callback used when parent controls the update */
+  boardAsContext?: (boardId?: string) => void
 }
 
 
@@ -19,38 +22,49 @@ export interface ContextBoardProps {
 export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardProps) => {
   const { userId } = useAppStore()
   const { data: boards } = useListBoards({ userId })
-
-  const handleSelectBoard = (boardId: string) => {
-    if (boardId === "-1") {
-      boardAsContext(undefined)
-    } else {
-      boardAsContext(boardId)
-    }
-  }
+  const { updateChat } = useUpdateChat()
+  const params = useParams({ from: "/chats/$id", shouldThrow: false })
+  const chatId = params?.id
 
   if (!boards) return null
 
-  const value = contextBoardId ? contextBoardId : "-1"
+  const attachedId = contextBoardId
+  const value = attachedId ?? "-1"
+  const label = attachedId
+    ? boards.find((b) => b.uid === attachedId)?.label || UNTITLED_LABEL
+    : "Add Context"
 
-  const label = contextBoardId ? boards.find(board => board.uid === contextBoardId)?.label || UNTITLED_LABEL : "Select Context"
+  const handleSelectBoard = (boardId: string) => {
+    const finalId = boardId === "-1" ? undefined : boardId
+
+    // If parent provided a handler → use it
+    if (boardAsContext) {
+      boardAsContext(finalId)
+      return
+    }
+
+    // Otherwise, auto-handle for chat route
+    if (chatId && userId) {
+      updateChat({ chatId, userId, chatData: { graphUid: finalId } })
+    }
+  }
+
+  const icon = attachedId ? AiChipIcon : PlusSignIcon
 
   return (
     <Select value={value} onValueChange={handleSelectBoard}>
-      <SelectTrigger className='border border-border rounded-lg bg-card text-xs font-medium backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50'>
-        <HugeiconsIcon
-          icon={AiChipIcon}
-          className='size-4 shrink-0'
-          strokeWidth={2}
-        />
+      <SelectTrigger
+        className="rounded-full border bg-card/60 text-xs font-medium backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 px-2 py-1 gap-2 !h-8 text-secondary shadow-none"
+        size='sm'
+      >
+        <HugeiconsIcon icon={icon} className="size-4 shrink-0 text-secondary my-icon" strokeWidth={2} />
         <span>{label}</span>
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={"-1"}>
-          No Context
-        </SelectItem>
-        {boards.map((board) => (
-          <SelectItem key={board.uid} value={board.uid}>
-            {board.label || UNTITLED_LABEL}
+        <SelectItem value="-1">No Context</SelectItem>
+        {boards.map((b) => (
+          <SelectItem key={b.uid} value={b.uid}>
+            {b.label || UNTITLED_LABEL}
           </SelectItem>
         ))}
       </SelectContent>

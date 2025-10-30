@@ -1,6 +1,5 @@
-// src/components/sidebar/sidebar-label.tsx
 import { useEffect, useMemo, useState } from "react"
-import { useParams, useRouterState } from "@tanstack/react-router"
+import { useParams, useRouterState, useSearch, useNavigate } from "@tanstack/react-router"
 import { useAppStore } from "@/store"
 import { useListChats } from "@/features/agent/api/list-chats"
 import { useListBoards } from "@/features/board/api/list-boards"
@@ -8,20 +7,29 @@ import { useUpdateBoard } from "@/features/board/api/update-board"
 import { useUpdateChat } from "@/features/agent/api/update-chat"
 import { LabelEditor } from "./label-editor"
 import { useListSubscriptions } from "@/features/newsfeed/api/list-subscriptions"
+import { NewChatUrl } from "@/routes"
+import { ContextBoard } from "@/features/agent/components/context-board"
 
 export const SidebarLabel = () => {
   const { userId } = useAppStore()
+  const navigate = useNavigate()
 
-  // IMPORTANT: make sure these `from` strings exactly match your route paths.
-  // If your board route is '/boards/$id/*', change it below to '/boards/$id/*'.
-  const chatParams  = useParams({ from: "/chats/$id",  shouldThrow: false })
-  const boardParams = useParams({ from: "/boards/$id", shouldThrow: false }) // or "/boards/$id/*"
+  // route params
+  const chatParams  = useParams({ from: "/chats/$id", shouldThrow: false })
+  const boardParams = useParams({ from: "/boards/$id", shouldThrow: false })
   const subscriptionParams = useParams({ from: "/subscriptions/$id", shouldThrow: false })
-
   const chatId  = chatParams?.id
   const boardId = boardParams?.id
   const subscriptionId = subscriptionParams?.id
 
+  // new-chat search (?board_id=...)
+  const initialBoardId = useSearch({
+    from: NewChatUrl,
+    select: (s: { board_id?: string }) => s.board_id,
+    shouldThrow: false,
+  })
+
+  // where are we?
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isDashboard = pathname === "/boards"
   const isNewChat = pathname === "/chats"
@@ -34,19 +42,19 @@ export const SidebarLabel = () => {
     if (isNewChat) return { view: "new-chat" as const, id: undefined }
     if (isDashboard) return { view: "dashboard" as const, id: undefined }
     if (isSubscriptions) return { view: "subscriptions" as const, id: undefined }
-
     return { view: "unknown" as const, id: undefined }
   }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptions])
 
+  // data
   const { data: chatList }  = useListChats({ userId })
   const { data: boardList } = useListBoards({ userId })
   const { data: subscriptionList } = useListSubscriptions()
   const { updateBoard } = useUpdateBoard()
   const { updateChat }  = useUpdateChat()
 
+  // title label only (no context local state needed)
   const [label, setLabel] = useState("")
 
-  // sync local label with current active target
   useEffect(() => {
     if (active.view === "board" && active.id) {
       const b = boardList?.find((x) => x.uid === active.id)
@@ -59,7 +67,7 @@ export const SidebarLabel = () => {
       return
     }
     if (active.view === "new-chat") {
-      setLabel("")
+      setLabel("New Chat")
       return
     }
     if (active.view === "subscriptions") {
@@ -74,40 +82,61 @@ export const SidebarLabel = () => {
     setLabel(newLabel)
     if (active.view === "board" && active.id) {
       updateBoard({ boardId: active.id, userId, graphData: { label: newLabel } })
-      return
     }
     if (active.view === "chat" && active.id) {
       updateChat({ chatId: active.id, userId, chatData: { label: newLabel } })
-      return
     }
-    // new-chat or unknown → nothing to persist
   }
 
-  // reset editor when switching targets
-  const editorKey = `${active.view}:${active.id ?? "none"}`
+  // 🔑 Single source of truth for the selected board:
+  // - existing chat: chat.graphUid
+  // - new chat: URL ?board_id
+  const currentChat = chatId ? chatList?.find(c => c.uid === chatId) : undefined
+  const selectedBoardId =
+    active.view === "chat" ? currentChat?.graphUid
+    : active.view === "new-chat" ? initialBoardId
+    : undefined
 
-  if (active.view === "new-chat") {
-    return <div className="text-sm font-medium">New Chat</div>
+  // When user changes context:
+  const handleChangeContext = (nextBoardId?: string) => {
+    if (active.view === "chat" && active.id) {
+      // persist to API for existing chat
+      updateChat({ chatId: active.id, userId, chatData: { graphUid: nextBoardId } })
+    } else if (active.view === "new-chat") {
+      // persist to URL for new chat (no local state)
+      navigate({
+        to: NewChatUrl,
+        // keep any other search keys you might have
+        search: (prev: { board_id?: string; [k: string]: unknown }) =>
+          nextBoardId ? { ...prev, board_id: nextBoardId } : { ...prev, board_id: undefined },
+        replace: true,
+      })
+    }
   }
 
-  if (active.view === "dashboard") {
-    return <div className="text-sm font-medium">Dashboard</div>
-  }
+  const wrapClass =
+    "flex flex-row flex-wrap items-center gap-2 px-2 py-1 text-sm font-medium backdrop-blur-md rounded-md"
 
-  if (active.view === "subscriptions") {
-    return <div className="text-sm font-medium">{label}</div>
-  }
+  if (active.view === "dashboard")     return <div className={wrapClass}>Dashboard</div>
+  if (active.view === "subscriptions") return <div className={wrapClass}>{label}</div>
 
-  if (active.view === "chat" || active.view === "board") {
+  if (["chat", "board", "new-chat"].includes(active.view)) {
     return (
-      <LabelEditor
-        key={editorKey}
-        initialLabel={label}
-        onSave={handleSaveEdit}
-      />
+      <div className={wrapClass}>
+        <LabelEditor
+          key={`${active.view}:${active.id ?? "none"}`}
+          initialLabel={label}
+          onSave={handleSaveEdit}
+        />
+        {(active.view === "chat" || active.view === "new-chat") && (
+          <ContextBoard
+            contextBoardId={selectedBoardId}
+            boardAsContext={handleChangeContext}
+          />
+        )}
+      </div>
     )
   }
 
-  // unknown route → render nothing (or a placeholder)
   return null
 }

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from topix.agents.prompt_utils import render_prompt
 
-from backend.topix.agents.datatypes.model_enum import OpenAIModel
+IMAGE_DESCRIPTION_MODEL = "gpt-4o-mini"
 
 
 class TextMessageContent(BaseModel):
@@ -48,7 +48,7 @@ async def process_message(
     """Process a message with the OpenAI API to get an image description."""
     try:
         response = await client.beta.chat.completions.parse(
-            model=OpenAIModel.GPT_4O_MINI,
+            model=IMAGE_DESCRIPTION_MODEL,
             messages=[message.model_dump()],
             response_format=ImageDescription
         )
@@ -59,7 +59,10 @@ async def process_message(
         return None
 
 
-async def image_descriptor(image_urls: list[str]) -> list[ImageDescription | None]:
+async def image_descriptor(
+    image_urls: list[str],
+    detail: Literal['low', 'high'] = 'low'
+) -> list[ImageDescription | None]:
     """Compute a description of each image.
 
     Args:
@@ -70,7 +73,7 @@ async def image_descriptor(image_urls: list[str]) -> list[ImageDescription | Non
     """
     client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    def input_handler(image_url: str, detail: str = 'low') -> ChatMessage:
+    def input_handler(image_url: str, detail: Literal['low', 'high'] = 'low') -> ChatMessage:
         """ Format the input """
         text = render_prompt("image_description.jinja")
         message = ChatMessage(
@@ -83,7 +86,7 @@ async def image_descriptor(image_urls: list[str]) -> list[ImageDescription | Non
         )
         return message
 
-    message_collection = [input_handler(image_url) for image_url in image_urls]
+    message_collection = [input_handler(image_url, detail) for image_url in image_urls]
     descriptions = await asyncio.gather(
         *[process_message(client, message) for message in message_collection]
     )

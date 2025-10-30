@@ -7,13 +7,13 @@ import { ChatProvider } from "../hooks/chat-context"
 /**
  * Chat view component
  */
-export const Chat = ({ chatId }: { chatId?: string }) => {
+export const Chat = ({ chatId, initialBoardId }: { chatId?: string, initialBoardId?: string }) => {
   const { userId } = useAppStore()
 
   const { data: chatList } = useListChats({ userId })
 
   const chat = chatList?.find(c => c.uid === chatId)
-  const attachedBoardId = chat?.graphUid
+  const attachedBoardId = chat?.graphUid || initialBoardId
 
   return (
     <ChatProvider initialChatId={chatId}>

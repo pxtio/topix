@@ -5,7 +5,7 @@ import { useAppStore } from "@/store"
 import { useParams } from "@tanstack/react-router"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { AiChipIcon } from "@hugeicons/core-free-icons"
+import { AiChipIcon, PlusSignIcon } from "@hugeicons/core-free-icons"
 
 
 export interface ContextBoardProps {
@@ -32,7 +32,7 @@ export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardPro
   const value = attachedId ?? "-1"
   const label = attachedId
     ? boards.find((b) => b.uid === attachedId)?.label || UNTITLED_LABEL
-    : "Select Context"
+    : "Add Context"
 
   const handleSelectBoard = (boardId: string) => {
     const finalId = boardId === "-1" ? undefined : boardId
@@ -49,10 +49,15 @@ export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardPro
     }
   }
 
+  const icon = attachedId ? AiChipIcon : PlusSignIcon
+
   return (
     <Select value={value} onValueChange={handleSelectBoard}>
-      <SelectTrigger className="rounded-full border border-border bg-card/60 text-xs font-medium backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 px-2 py-1 gap-1">
-        <HugeiconsIcon icon={AiChipIcon} className="size-4 shrink-0" strokeWidth={2} />
+      <SelectTrigger
+        className="rounded-full border bg-card/60 text-xs font-medium backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 px-2 py-1 gap-2 !h-8 text-secondary shadow-none"
+        size='sm'
+      >
+        <HugeiconsIcon icon={icon} className="size-4 shrink-0 text-secondary my-icon" strokeWidth={2} />
         <span>{label}</span>
       </SelectTrigger>
       <SelectContent>

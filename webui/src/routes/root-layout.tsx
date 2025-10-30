@@ -6,7 +6,6 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { StyleDefaultsProvider } from '@/features/board/style-provider'
 
-// 👉 passive bootstrap (fills store from token, no redirects)
 import { useAppStore } from '@/store'
 import { clearTokens } from '@/features/signin/auth-storage'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -57,7 +56,7 @@ export function RootLayout() {
                   <div className="relative flex-1 min-w-0">
                     <Outlet />
                   </div>
-                  <Toaster position="top-right" toastOptions={{ style: { borderRadius: 'var(--radius-xl)', top: '3.6rem' } }} />
+                  <Toaster position="top-right" toastOptions={{ style: { borderRadius: 'var(--radius-xl)' } }} />
                 </div>
               </SidebarInset>
             </SidebarProvider>
@@ -70,7 +69,7 @@ export function RootLayout() {
 
               <Toaster
                 position="top-right"
-                toastOptions={{ style: { borderRadius: 'var(--radius-xl)', top: '3.6rem' } }}
+                toastOptions={{ style: { borderRadius: 'var(--radius-xl)' } }}
               />
             </div>
           )}
@@ -80,7 +79,6 @@ export function RootLayout() {
   )
 }
 
-// grainy background for auth pages
 /**
  * Full-screen auth background:
  * - soft "secondary" blobs

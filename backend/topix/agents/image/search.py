@@ -1,11 +1,14 @@
 import asyncio
 import logging
 import os
-from typing import Literal, Optional
+from typing import Optional
 import httpx
 
 from topix.agents.websearch.utils import get_from_date
 from topix.datatypes.recurrence import Recurrence
+from topix.agents.datatypes.image import ImageSearchLocation
+
+logger = logging.getLogger(__name__)
 
 MAX_CONCURRENT_IMAGE_SEARCHES = 5
 semaphore = asyncio.Semaphore(MAX_CONCURRENT_IMAGE_SEARCHES)
@@ -15,7 +18,7 @@ async def search_serper(
     query: str,
     num_results: int = 4,
     recency: Recurrence | None = None,
-    location: Literal["us", "fr"] = "us",
+    location: ImageSearchLocation = ImageSearchLocation.US,
     client: Optional[httpx.AsyncClient] = None,
     timeout: Optional[httpx.Timeout] = None,
 ) -> list[str]:
@@ -32,7 +35,7 @@ async def search_serper(
     Returns:
         list of image urls.
     """
-    logging.info(f"Searching for images from query: {query}")
+    logger.info(f"Searching for images from query: {query}")
     url = "https://google.serper.dev/images"
     api_key = os.environ.get("SERPER_API_KEY")
     headers = {
@@ -90,7 +93,7 @@ async def search_linkup(
     Returns:
         return a list of image urls.
     """
-    logging.info(f"Searching for images from query: {query}")
+    logger.info(f"Searching for images from query: {query}")
     url = "https://api.linkup.so/v1/search"
     api_key = os.environ.get("LINKUP_API_KEY")
     headers = {

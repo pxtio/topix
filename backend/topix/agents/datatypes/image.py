@@ -7,3 +7,10 @@ class ImageSearchOption(StrEnum):
 
     LINKUP = "linkup"
     SERPER = "serper"
+
+
+class ImageSearchLocation(StrEnum):
+    """Enumeration of image search locations."""
+
+    US = "us"
+    FR = "fr"

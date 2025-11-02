@@ -33,7 +33,7 @@ export const SidebarLabel = () => {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isDashboard = pathname === "/boards"
   const isNewChat = pathname === "/chats"
-  const isSubscriptions = pathname === "/subscriptions"
+  const isSubscriptionsRoot = pathname === "/subscriptions"
 
   const active = useMemo(() => {
     if (boardId) return { view: "board" as const, id: boardId }
@@ -41,9 +41,9 @@ export const SidebarLabel = () => {
     if (subscriptionId) return { view: "subscriptions" as const, id: subscriptionId }
     if (isNewChat) return { view: "new-chat" as const, id: undefined }
     if (isDashboard) return { view: "dashboard" as const, id: undefined }
-    if (isSubscriptions) return { view: "subscriptions" as const, id: undefined }
+    if (isSubscriptionsRoot) return { view: "subscriptions" as const, id: undefined }
     return { view: "unknown" as const, id: undefined }
-  }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptions])
+  }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptionsRoot])
 
   // data
   const { data: chatList }  = useListChats({ userId })
@@ -97,6 +97,10 @@ export const SidebarLabel = () => {
     : active.view === "new-chat" ? initialBoardId
     : undefined
 
+  const selectedBoard = selectedBoardId
+    ? boardList?.find(b => b.uid === selectedBoardId)
+    : undefined
+
   // When user changes context:
   const handleChangeContext = (nextBoardId?: string) => {
     if (active.view === "chat" && active.id) {
@@ -114,20 +118,87 @@ export const SidebarLabel = () => {
     }
   }
 
+  // navigation helpers for clickable prefix
+  const goBoard = (id: string) => navigate({ to: "/boards/$id", params: { id } })
+  const goSubscriptionsRoot = () => navigate({ to: "/subscriptions" })
+
+  // UI pieces
   const wrapClass =
-    "flex flex-row flex-wrap items-center gap-2 px-2 py-1 text-sm font-medium backdrop-blur-md rounded-md"
+    "flex flex-row items-center gap-2 px-2 py-1 text-sm font-medium rounded-md"
 
-  if (active.view === "dashboard")     return <div className={wrapClass}>Dashboard</div>
-  if (active.view === "subscriptions") return <div className={wrapClass}>{label}</div>
+  const crumbBtn =
+    "inline-flex items-center max-w-[16rem] truncate text-foreground/80 hover:text-foreground underline-offset-4 hover:underline"
 
-  if (["chat", "board", "new-chat"].includes(active.view)) {
+  const sep = <span className="opacity-50">›</span>
+
+  // DASHBOARD
+  if (active.view === "dashboard")
+    return <div className={wrapClass}>Dashboard</div>
+
+  // SUBSCRIPTIONS
+  if (active.view === "subscriptions") {
+    // /subscriptions            -> Subscriptions
+    // /subscriptions/$id        -> Subscriptions › Subscription Label
     return (
-      <div className={wrapClass}>
+      <div className={`${wrapClass} flex-1 min-w-0`}>
+        <button
+          type="button"
+          onClick={goSubscriptionsRoot}
+          className={`${crumbBtn} font-medium`}
+          title="Subscriptions"
+        >
+          Subscriptions
+        </button>
+        {active.id && (
+          <>
+            {sep}
+            <span className="truncate max-w-[24rem]" title={label}>{label}</span>
+          </>
+        )}
+      </div>
+    )
+  }
+
+  // BOARD
+  if (active.view === "board" && active.id) {
+    return (
+      <div className={`${wrapClass} flex-1 min-w-0`}>
         <LabelEditor
-          key={`${active.view}:${active.id ?? "none"}`}
+          key={`board:${active.id}`}
           initialLabel={label}
           onSave={handleSaveEdit}
         />
+      </div>
+    )
+  }
+
+  // CHAT / NEW CHAT (with optional board prefix)
+  if (active.view === "chat" || active.view === "new-chat") {
+    const hasBoard = !!selectedBoardId
+    return (
+      <div className={`${wrapClass} flex-1 min-w-0`}>
+        {hasBoard && selectedBoardId && (
+          <>
+            <button
+              type="button"
+              onClick={() => goBoard(selectedBoardId)}
+              className={`${crumbBtn}`}
+              title={selectedBoard?.label ?? selectedBoardId}
+            >
+              <span className="truncate">{selectedBoard?.label ?? selectedBoardId}</span>
+            </button>
+            {sep}
+          </>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <LabelEditor
+            key={`${active.view}:${active.id ?? "none"}`}
+            initialLabel={label}
+            onSave={handleSaveEdit}
+          />
+        </div>
+
         {(active.view === "chat" || active.view === "new-chat") && (
           <ContextBoard
             contextBoardId={selectedBoardId}

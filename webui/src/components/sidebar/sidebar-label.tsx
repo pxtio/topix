@@ -72,7 +72,7 @@ export const SidebarLabel = () => {
     }
     if (active.view === "subscriptions") {
       const c = subscriptionList?.find((s) => s.id === active.id)
-      setLabel(c?.label.markdown ?? "Subscriptions")
+      setLabel(c?.label.markdown ?? "Topics")
       return
     }
     setLabel("")
@@ -145,9 +145,9 @@ export const SidebarLabel = () => {
           type="button"
           onClick={goSubscriptionsRoot}
           className={`${crumbBtn} font-medium`}
-          title="Subscriptions"
+          title="Topics"
         >
-          Subscriptions
+          Topics
         </button>
         {active.id && (
           <>

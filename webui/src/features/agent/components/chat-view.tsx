@@ -3,7 +3,7 @@ import { InputBar } from "./chat/input"
 import { useAppStore } from "@/store"
 import { useListChats } from "../api/list-chats"
 import { ChatProvider } from "../hooks/chat-context"
-import { clsx } from "clsx"
+import { cn } from "@/lib/utils"
 
 /**
  * Chat view component
@@ -16,7 +16,7 @@ export const Chat = ({ chatId, initialBoardId, className }: { chatId?: string, i
   const chat = chatList?.find(c => c.uid === chatId)
   const attachedBoardId = chat?.graphUid || initialBoardId
 
-  const chatClassName = clsx(
+  const chatClassName = cn(
     'absolute inset-0 h-full w-full overflow-hidden flex flex-col items-center',
     className
   )

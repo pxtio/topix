@@ -30,7 +30,7 @@ export const Dashboard = ({ className }: { className?: string }) => {
   return (
     <div className={pageClassName}>
       <div className="pt-8 pb-4">
-        <ThemedWelcome name="Dog" message="Atlas - Your boards" />
+        <ThemedWelcome name="Dog" message="Atlas - Your Knowledge Boards" />
       </div>
 
       <div className="mx-auto max-w-5xl p-4">
@@ -43,12 +43,12 @@ export const Dashboard = ({ className }: { className?: string }) => {
           role="list"
           aria-label="Boards"
         >
-          <div className="w-full h-full">
+          <div className="w-full h-full flex justify-center items-center">
             <NewBoardCard />
           </div>
 
           {sorted.map((board: Graph) => (
-            <div key={board.uid} className="w-full h-full">
+            <div key={board.uid} className="w-full h-full flex justify-center items-center">
               <BoardCard board={board} />
             </div>
           ))}

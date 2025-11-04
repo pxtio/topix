@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils'
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 
 const DotLottieReact = lazy(async () => {
@@ -129,13 +130,18 @@ export function WelcomeMessage() {
   )
 }
 
-export function ThemedWelcome({ name, message }: { name: MascotName, message?: string }) {
+export function ThemedWelcome({ name, message, className }: { name: MascotName, message?: string, className?: string }) {
   const mascot = MASCOTS.find(m => m.name === name) ?? MASCOTS[0]
 
   const customMessage = message ?? mascot.message
 
+  const divClass = cn(
+    "relative w-full flex flex-row items-center justify-center gap-2",
+    className
+  )
+
   return (
-    <div className="relative w-full flex flex-row items-center justify-center gap-2">
+    <div className={divClass}>
       <Oc file={mascot.file} />
       <div className="text-xl text-card-foreground">
         <span>{customMessage}</span>

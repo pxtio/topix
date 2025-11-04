@@ -31,6 +31,7 @@ export const SidebarLabel = () => {
 
   // where are we?
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const isHome = pathname === "/"
   const isDashboard = pathname === "/boards"
   const isNewChat = pathname === "/chats"
   const isSubscriptionsRoot = pathname === "/subscriptions"
@@ -39,11 +40,12 @@ export const SidebarLabel = () => {
     if (boardId) return { view: "board" as const, id: boardId }
     if (chatId)  return { view: "chat"  as const, id: chatId }
     if (subscriptionId) return { view: "subscriptions" as const, id: subscriptionId }
+    if (isHome) return { view: "home" as const, id: undefined }
     if (isNewChat) return { view: "new-chat" as const, id: undefined }
     if (isDashboard) return { view: "dashboard" as const, id: undefined }
     if (isSubscriptionsRoot) return { view: "subscriptions" as const, id: undefined }
     return { view: "unknown" as const, id: undefined }
-  }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptionsRoot])
+  }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptionsRoot, isHome])
 
   // data
   const { data: chatList }  = useListChats({ userId })
@@ -130,6 +132,10 @@ export const SidebarLabel = () => {
     "inline-flex items-center max-w-[16rem] truncate text-foreground/80 hover:text-foreground underline-offset-4 hover:underline"
 
   const sep = <span className="opacity-50">›</span>
+
+  // HOME
+  if (active.view === "home")
+    return <div className={wrapClass}>Home</div>
 
   // DASHBOARD
   if (active.view === "dashboard")

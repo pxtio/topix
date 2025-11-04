@@ -131,8 +131,8 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   )
 
   const className = clsx(
-    'transition-all absolute inset-x-0 p-4 pt-10 z-20 flex flex-col justify-center items-center gap-16 bg-transparent',
-    chatId ? 'bottom-0' : 'bottom-1/3'
+    'transition-all absolute inset-x-0 p-4 z-20 flex flex-col justify-center items-center gap-12 bg-transparent',
+    chatId ? 'bottom-0' : 'bottom-1/2 transform translate-y-1/2'
   )
 
   const inboxClass = clsx(

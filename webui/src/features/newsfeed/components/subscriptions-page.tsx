@@ -6,12 +6,19 @@ import { CreateSubscriptionCardTrigger } from '../components/create-subscription
 import { useNavigate } from '@tanstack/react-router'
 import { useDeleteSubscription } from '../api/delete-subscription'
 import type { Subscription } from '../types/subscription'
+import { ThemedWelcome } from '@/features/agent/components/chat/welcome-message'
+import clsx from 'clsx'
 
 
 /**
  * SubscriptionsPage shows all subscriptions in a grid with a create button.
  */
-export default function SubscriptionsPage() {
+export default function SubscriptionsPage({ className }: { className?: string }) {
+  const pageClassName = clsx(
+    'w-full h-full',
+    className
+  )
+
   const subs = useListSubscriptions()
 
   const sorted = useMemo(
@@ -20,9 +27,9 @@ export default function SubscriptionsPage() {
   )
 
   return (
-    <div className='w-full h-full'>
+    <div className={pageClassName}>
       <div className='pt-8 pb-4'>
-        <h1 className='text-center text-xl text-secondary font-semibold'>Your Subscriptions</h1>
+        <ThemedWelcome name={"Shark"} message={"Feeds - Your Topics"} />
       </div>
 
       <div className='mx-auto max-w-5xl p-4'>

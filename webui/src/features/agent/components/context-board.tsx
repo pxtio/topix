@@ -54,7 +54,7 @@ export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardPro
   return (
     <Select value={value} onValueChange={handleSelectBoard}>
       <SelectTrigger
-        className="rounded-full border bg-card/60 text-xs font-medium backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 px-2 py-1 gap-2 !h-8 text-secondary shadow-none"
+        className="rounded-full border bg-card/60 text-xs font-medium backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 px-2 py-1 gap-2 !h-8 text-secondary shadow-sm"
         size='sm'
       >
         <HugeiconsIcon icon={icon} className="size-4 shrink-0 text-secondary my-icon" strokeWidth={2} />

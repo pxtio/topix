@@ -44,7 +44,7 @@ export function RootLayout() {
       <StyleDefaultsProvider>
         <main>
           {showShell ? (
-            <SidebarProvider>
+            <SidebarProvider defaultOpen={false}>
               <AppSidebar onLogout={onLogout} />
               <SidebarInset className='overflow-hidden'>
                 <header className="flex h-16 shrink-0 items-center gap-2 p-4 absolute top-0 inset-x-0 z-50">

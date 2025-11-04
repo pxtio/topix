@@ -135,6 +135,12 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
     chatId ? 'bottom-0' : 'bottom-1/3'
   )
 
+  const inboxClass = clsx(
+    'rounded-2xl relative flex flex-row items-center space-y-1 items-stretch text-card-foreground text-base p-2',
+    chatId ? 'bg-card backdrop-blur-lg supports-[backdrop-filter]:bg-card/70 dark:border dark:border-border/50 shadow-lg' :
+      'bg-accent text-sm shadow-xl',
+  )
+
   return (
     <div className={className}>
       {!chatId && <WelcomeMessage />}
@@ -146,7 +152,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
           </div>
 
           <div
-            className="relative flex flex-row items-center space-y-1 items-stretch bg-card backdrop-blur-lg supports-[backdrop-filter]:bg-card/70 rounded-xl text-card-foreground text-base border border-border p-2"
+            className={inboxClass}
           >
             <div className="flex-1 p-2 flex items-center justify-center">
               <TextareaAutosize
@@ -157,6 +163,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
                 maxRows={15}
                 placeholder="Enter your message..."
                 className="w-full h-full resize-none border-none outline-none bg-transparent text-sm"
+                autoFocus
               />
             </div>
 

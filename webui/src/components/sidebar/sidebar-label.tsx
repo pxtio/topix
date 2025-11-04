@@ -124,7 +124,7 @@ export const SidebarLabel = () => {
 
   // UI pieces
   const wrapClass =
-    "flex flex-row items-center gap-2 px-2 py-1 text-sm font-medium rounded-md"
+    "flex flex-row items-center gap-2 px-2 py-1 text-sm font-medium rounded-md backdrop-blur-md supports-[backdrop-filter]:bg-background/50 bg-transparent"
 
   const crumbBtn =
     "inline-flex items-center max-w-[16rem] truncate text-foreground/80 hover:text-foreground underline-offset-4 hover:underline"
@@ -182,7 +182,7 @@ export const SidebarLabel = () => {
             <button
               type="button"
               onClick={() => goBoard(selectedBoardId)}
-              className={`${crumbBtn}`}
+              className={crumbBtn}
               title={selectedBoard?.label ?? selectedBoardId}
             >
               <span className="truncate">{selectedBoard?.label ?? selectedBoardId}</span>
@@ -192,11 +192,17 @@ export const SidebarLabel = () => {
         )}
 
         <div className="min-w-0 flex-1">
-          <LabelEditor
-            key={`${active.view}:${active.id ?? "none"}`}
-            initialLabel={label}
-            onSave={handleSaveEdit}
-          />
+          {
+            active.view === "chat" ? (
+              <LabelEditor
+                key={`${active.view}:${active.id ?? "none"}`}
+                initialLabel={label}
+                onSave={handleSaveEdit}
+              />
+            ) : (
+              <span className={`${crumbBtn} mr-2`}>{label}</span>
+            )
+          }
         </div>
 
         {(active.view === "chat" || active.view === "new-chat") && (

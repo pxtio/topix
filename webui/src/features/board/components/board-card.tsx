@@ -34,7 +34,7 @@ export const BoardCard = ({
         hover:ring-2 hover:ring-secondary/50
         shadow-md hover:shadow-lg
         cursor-pointer
-        w-60 h-60
+        w-64 h-60
         flex flex-col justify-between
         overflow-hidden
         gap-1
@@ -93,7 +93,7 @@ export const NewBoardCard = () => {
         border-2 border-border hover:border-secondary border-dashed
         shadow-none hover:shadow-sm
         cursor-pointer
-        w-60 h-60
+        w-64 h-60
         flex flex-col
         overflow-hidden
         gap-1

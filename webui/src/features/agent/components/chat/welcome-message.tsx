@@ -103,7 +103,7 @@ export function WelcomeMessage() {
 
   if (!mascot) {
     return (
-      <div className="relative w-full flex flex-row items-center justify-center gap-2">
+      <div className="relative w-full flex flex-col sm:flex-row items-center justify-center text-center">
         <div style={{ width: 100, height: 100 }} />
         <div className="text-xl text-card-foreground">
           <span>Loading your open‑source sidekick…</span>
@@ -113,7 +113,7 @@ export function WelcomeMessage() {
   }
 
   return (
-    <div className="relative w-full flex flex-row items-center justify-center gap-2">
+    <div className="relative w-full flex flex-col sm:flex-row items-center justify-center text-center">
       <Oc file={mascot.file} />
       <div className="text-xl text-card-foreground">
         <span>{mascot.message}</span>
@@ -136,7 +136,7 @@ export function ThemedWelcome({ name, message, className }: { name: MascotName, 
   const customMessage = message ?? mascot.message
 
   const divClass = cn(
-    "relative w-full flex flex-row items-center justify-center gap-2",
+    "relative w-full flex flex-col sm:flex-row items-center justify-center text-center",
     className
   )
 

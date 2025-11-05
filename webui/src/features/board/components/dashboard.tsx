@@ -41,8 +41,8 @@ export const Dashboard = ({ className, hideTitle = false }: { className?: string
         <div
           className="
             grid gap-4
-            [grid-template-columns:repeat(auto-fill,minmax(18rem,1fr))]
-            items-stretch justify-items-stretch
+            grid-cols-1 sm:grid-cols-2 lg:grid-cols-3
+            place-items-center
           "
           role="list"
           aria-label="Boards"

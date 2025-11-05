@@ -16,7 +16,7 @@ export const CreateSubscriptionCardTrigger = React.forwardRef<HTMLButtonElement,
               ref={ref}
               {...props}
               className={cn(
-                'w-56 h-20 md:w-64 rounded-xl border-2 border-dashed border-border',
+                'w-64 h-20 rounded-xl border-2 border-dashed border-border',
                 'hover:border-secondary hover:ring-2 hover:ring-secondary/20 transition-colors cursor-pointer',
                 'flex items-center justify-center bg-background',
                 className

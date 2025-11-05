@@ -10,7 +10,7 @@ const MASCOTS = [
   {
     name: 'Dog',
     file: 'Dog.lottie',
-    message: "Ask me anything — I’ll sniff the repos and fetch the facts!",
+    message: "Ask me anything — I’ll sniff through the web and fetch the best insights!",
   },
   {
     name: 'Cat',
@@ -30,7 +30,7 @@ const MASCOTS = [
   {
     name: 'Panda',
     file: 'Panda.lottie',
-    message: 'Open‑source and bamboo‑strong — let’s de‑bamboo‑zle your docs.',
+    message: 'Open-source and bamboo-strong — calm, focused, and ready to reason things out.',
   },
   {
     name: 'Dolphin',
@@ -50,7 +50,7 @@ const MASCOTS = [
   {
     name: 'Penguin',
     file: 'Penguin.lottie',
-    message: 'Cool under pressure — waddling through datasets like ice.',
+    message: 'Cool under pressure — I glide across data and surface crisp answers.',
   },
   {
     name: 'Toucan',
@@ -60,7 +60,7 @@ const MASCOTS = [
   {
     name: 'Starfish',
     file: 'Starfish.lottie',
-    message: 'Reach for every branch of knowledge — regeneration guaranteed.',
+    message: 'Many arms, one mission — reaching across sources to bring answers together.',
   },
   {
     name: 'Spider',

@@ -32,7 +32,7 @@ export const Dashboard = ({ className, hideTitle = false }: { className?: string
       {
         !hideTitle && (
           <div className="pt-8 pb-4">
-            <ThemedWelcome name="Dog" message="Atlas - Your Knowledge Boards" />
+            <ThemedWelcome name="Dog" message="Boards" />
           </div>
         )
       }

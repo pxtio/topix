@@ -40,7 +40,7 @@ export default function SubscriptionsPage({
     <div className={pageClassName}>
       {!hideTitle && (
         <div className='pt-8 pb-4 flex flex-row items-center justify-center gap-4 px-4 sm:px-6 lg:px-8'>
-          <ThemedWelcome name={'Shark'} message={'Feeds - Your Topics'} className='w-auto' />
+          <ThemedWelcome name={'Shark'} message={'Topics'} className='w-auto' />
         </div>
       )}
 

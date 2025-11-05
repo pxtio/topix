@@ -13,7 +13,7 @@ export const HomePage = () => {
           <h3 className="transition-all text-lg font-medium py-1 px-4 border-b border-border">Topics</h3>
         </div>
         <SubscriptionsPage mode="preview" hideTitle />
-        <Chat className="relative h-[300px]" />
+        <Chat className="relative sm:h-[300px] h-[350px]" />
         <div className='text-center'>
           <h3 className="transition-all text-lg font-medium py-1 px-4 border-b border-border">Boards</h3>
         </div>

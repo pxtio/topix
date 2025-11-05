@@ -16,6 +16,7 @@ import { decodeJwt } from "@/lib/decode-jwt"
 import { SubscriptionsScreen } from "@/features/newsfeed/screens/subscriptions"
 import { NewsfeedsScreen } from "@/features/newsfeed/screens/newsfeeds"
 import { NewsfeedLinearPage } from "@/features/newsfeed/screens/newsfeed-linear-page"
+import { HomePage } from "@/features/home/screens/home"
 export const rootRoute = createRootRoute({ component: RootLayout })
 
 // --- auth guard ---
@@ -34,19 +35,6 @@ const requireAuth = () => {
   }
 }
 
-// Canonicalize to /chats
-const redirectRoot = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/",
-  beforeLoad: () => { throw redirect({ to: "/chats" }) },
-})
-
-const redirectHome = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/home",
-  beforeLoad: () => { throw redirect({ to: "/chats" }) },
-})
-
 // auth pages (unguarded)
 const signinRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -58,6 +46,19 @@ const signupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/signup",
   component: SignupPage,
+})
+
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  beforeLoad: requireAuth,
+  component: HomePage,
+})
+
+const homeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/home",
+  beforeLoad: () => { throw redirect({ to: "/" }) },
 })
 
 // /chats (protected)
@@ -127,10 +128,10 @@ const newsfeedDetailRoute = createRoute({
 })
 
 const routeTree = rootRoute.addChildren([
-  redirectRoot,
-  redirectHome,
   signinRoute,
   signupRoute,
+  indexRoute,
+  homeRoute,
   chatsIndexRoute,
   chatRoute,
   dashboardRoute,

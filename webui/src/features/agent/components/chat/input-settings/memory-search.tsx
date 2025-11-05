@@ -21,7 +21,7 @@ export const MemorySearchChoiceMenu = () => {
   const tooltipText = isEnabled ? "Disable Memory Search" : "Enable Memory Search"
 
   const buttonClass = clsx(
-    "transition-all shrink-0 my-icon p-2 rounded-full hover:bg-accent dark:bg-input/30 dark:hover:bg-accent/50",
+    "transition-all shrink-0 my-icon p-2 rounded-full hover:bg-accent dark:bg-input/30 dark:hover:bg-accent/50 shadow-sm border-input",
     isEnabled ? '!text-secondary' : 'text-muted-foreground'
   )
 

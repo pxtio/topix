@@ -70,7 +70,7 @@ export function CreateSubscriptionDialog({
       <DialogContent className='sm:max-w-xl'>
         <DialogHeader className='w-full flex flex-row items-center justify-center'>
           <DialogTitle>
-            {step === 'editing' && 'Create a new subscription'}
+            {step === 'editing' && 'Create a new Topic subscription'}
             {step === 'creating' && 'Creating subscription'}
           </DialogTitle>
         </DialogHeader>

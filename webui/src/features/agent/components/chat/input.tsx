@@ -131,8 +131,14 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   )
 
   const className = clsx(
-    'transition-all absolute inset-x-0 p-4 pt-10 z-20 flex flex-col justify-center items-center gap-16 bg-transparent',
-    chatId ? 'bottom-0' : 'bottom-1/3'
+    'transition-all absolute inset-x-0 p-4 z-20 flex flex-col justify-center items-center gap-12 bg-transparent',
+    chatId ? 'bottom-0' : 'bottom-1/2 transform translate-y-1/2'
+  )
+
+  const inboxClass = clsx(
+    'rounded-2xl relative flex flex-row items-center space-y-1 items-stretch text-card-foreground text-base p-2',
+    chatId ? 'bg-card backdrop-blur-lg supports-[backdrop-filter]:bg-card/70 dark:border dark:border-border/50 shadow-lg' :
+      'bg-accent text-sm shadow-xl',
   )
 
   return (
@@ -146,7 +152,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
           </div>
 
           <div
-            className="relative flex flex-row items-center space-y-1 items-stretch bg-card backdrop-blur-lg supports-[backdrop-filter]:bg-card/70 rounded-xl text-card-foreground text-base border border-border p-2"
+            className={inboxClass}
           >
             <div className="flex-1 p-2 flex items-center justify-center">
               <TextareaAutosize
@@ -157,6 +163,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
                 maxRows={15}
                 placeholder="Enter your message..."
                 className="w-full h-full resize-none border-none outline-none bg-transparent text-sm"
+                autoFocus
               />
             </div>
 
@@ -190,7 +197,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
               onChange={(e) => setInput(e.target.value)}
               minRows={4}
               maxRows={18}
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm outline-none"
+              className="w-full resize-none rounded-lg border border-border/50 shadow-sm bg-background px-3 py-2 text-sm outline-none"
               placeholder="Refine your prompt here..."
               autoFocus
             />

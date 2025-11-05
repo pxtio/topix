@@ -89,7 +89,7 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
     <SidebarMenuItem>
       <ContextMenu>
         <Collapsible
-          defaultOpen={true}
+          defaultOpen={false}
           className="group/collapsible w-full"
         >
           <ContextMenuTrigger asChild>

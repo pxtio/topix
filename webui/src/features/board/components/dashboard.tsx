@@ -9,7 +9,7 @@ import type { Graph } from "../types/board"
 /**
  * Dashboard component displaying user's boards, styled like SubscriptionsPage.
  */
-export const Dashboard = ({ className }: { className?: string }) => {
+export const Dashboard = ({ className, hideTitle = false }: { className?: string; hideTitle?: boolean }) => {
   const userId = useAppStore((state) => state.userId)
   const { data: boards, isLoading, isError } = useListBoards({ userId })
 
@@ -29,9 +29,13 @@ export const Dashboard = ({ className }: { className?: string }) => {
 
   return (
     <div className={pageClassName}>
-      <div className="pt-8 pb-4">
-        <ThemedWelcome name="Dog" message="Atlas - Your Knowledge Boards" />
-      </div>
+      {
+        !hideTitle && (
+          <div className="pt-8 pb-4">
+            <ThemedWelcome name="Dog" message="Atlas - Your Knowledge Boards" />
+          </div>
+        )
+      }
 
       <div className="mx-auto max-w-5xl p-4">
         <div

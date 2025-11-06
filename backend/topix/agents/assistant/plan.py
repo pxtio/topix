@@ -57,19 +57,22 @@ class Plan(BaseAgent):
         web_search_tool = WebSearchHandler.from_config(config.web_search)
         tools.append(web_search_tool)
         memory_search_agent = MemorySearch.from_config(content_store, config.memory_search)
-        memory_search_tool = memory_search_agent.as_tool(name=AgentToolName.MEMORY_SEARCH, tool_description="Memory Search Tool")
+        memory_search_tool = memory_search_agent.as_tool(
+            tool_name=AgentToolName.MEMORY_SEARCH,
+            tool_description="Memory Search Tool",
+        )
         tools.append(memory_search_tool)
         if config.code_interpreter:
             code_interpreter_agent = CodeInterpreter.from_config(config.code_interpreter)
             code_interpreter_tool = code_interpreter_agent.as_tool(
-                name=AgentToolName.CODE_INTERPRETER,
+                tool_name=AgentToolName.CODE_INTERPRETER,
                 tool_description="Code Interpreter Tool",
             )
             tools.append(code_interpreter_tool)
         if config.navigate:
             navigate_agent = NavigateAgent.from_config(config.navigate)
             navigate_tool = navigate_agent.as_tool(
-                name=AgentToolName.NAVIGATE,
+                tool_name=AgentToolName.NAVIGATE,
                 tool_description="Navigate Tool",
             )
             tools.append(navigate_tool)

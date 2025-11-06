@@ -3,12 +3,12 @@
 import logging
 
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 
 from agents import ModelSettings
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
 from topix.config.services import service_config
@@ -22,30 +22,45 @@ logger = logging.getLogger(__name__)
 class BaseAgentConfig(BaseModel):
     """Base Agent Config class."""
 
+    model_config = ConfigDict(validate_assignment=True)
+
     model: str
     instructions_template: str
     model_settings: ModelSettings | None = None
 
-    @field_validator("model")
+    @model_validator(mode='before')
+    @classmethod
+    def replace_model(cls, data: Any) -> Any:
+        """Replace the model code if current model is not available."""
+        if not isinstance(data, dict):
+            return data
+        valid_model_codes = [service.code for service in service_config.llm]
+        if not valid_model_codes:
+            raise ValueError("No LLM API available. Please add at least one LLM API.")
+        v = data.get('model')
+        if v and v not in valid_model_codes:
+            logger.info(f"Replacing {v} with {valid_model_codes[0]}")
+            data['model'] = valid_model_codes[0]
+        return data
+
+    @field_validator("model", mode="after")
     @classmethod
     def validate_model(cls, v: str) -> str:
         """Check if the model is valid."""
-        if len(service_config.llm) == 0:
-            raise ValueError("No LLM API available. Please add at least one LLM API.")
-
         valid_model_codes = [service.code for service in service_config.llm]
+        if len(valid_model_codes) == 0:
+            raise ValueError("No LLM API available. Please add at least one LLM API.")
 
         if v in valid_model_codes:
             return v
-
-        new_model = service_config.llm[0].code
-        logger.info(f"Model '{v}' is not available, changing to '{new_model}'")
-        return new_model
+        logger.info(f"Model '{v}' is not available, replaced with {valid_model_codes[0]}")
+        return valid_model_codes[0]
 
 
 class WebSearchConfig(BaseAgentConfig):
     """Web Search Agent Config class."""
 
+    search_engine: WebSearchOption
     search_context_size: WebSearchContextSize
     recency: Recurrence | None = None
     max_results: int = 10
@@ -53,12 +68,17 @@ class WebSearchConfig(BaseAgentConfig):
     enable_summary: bool = False
     streamed: bool = False
 
-    @property
-    def search_engine(self) -> WebSearchOption:
-        """Get the search engine."""
-        if len(service_config.search) == 0:
-            raise ValueError("No search API available. Please add at least one API in the config file.")
-        self.search_engine = service_config.search[0].name
+    @field_validator("search_engine")
+    @classmethod
+    def validate_engine(cls, v: str) -> str:
+        """Check if the model is valid."""
+        valid_engines = [service.name for service in service_config.search]
+        if len(valid_engines) == 0:
+            raise ValueError("No Search API available. Please add at least one Search API.")
+        if v in valid_engines:
+            return v
+        logger.info(f"Search choice '{v}' is not available, replaced with {valid_engines[0]}")
+        return valid_engines[0]
 
 
 class PlanConfig(BaseAgentConfig):

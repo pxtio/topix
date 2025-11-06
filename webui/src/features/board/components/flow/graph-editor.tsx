@@ -7,8 +7,6 @@ import {
   type OnConnect,
   useReactFlow,
   SelectionMode,
-  type NodeChange,
-  type EdgeChange,
   useOnViewportChange,
   type ReactFlowInstance,
 } from '@xyflow/react'
@@ -18,7 +16,7 @@ import { useAddNoteNode } from '../../hooks/add-node'
 import { EdgeView } from './edge-view'
 import { CustomConnectionLine } from './connection'
 import { useGraphStore } from '../../store/graph-store'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { LinkEdge, NoteNode } from '../../types/flow'
 import { useRemoveNote } from '../../api/remove-note'
 import { useAppStore } from '@/store'
@@ -36,6 +34,8 @@ import { ActionPanel } from './action-panel'
 import { LinearView } from './linear-view'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
 import { useStyleDefaults } from '../../style-provider'
+import { useNodeChanges } from '../../hooks/node-changes'
+import { useEdgeChanges } from '../../hooks/edge-changes'
 
 const proOptions = { hideAttribution: true }
 
@@ -78,8 +78,6 @@ export default function GraphEditor() {
   const boardId = useGraphStore(state => state.boardId)
   const nodes = useGraphStore(useShallow(state => state.nodes))
   const edges = useGraphStore(useShallow(state => state.edges))
-  const onNodesChange = useGraphStore(state => state.onNodesChange)
-  const onEdgesChange = useGraphStore(state => state.onEdgesChange)
   const onNodesDelete = useGraphStore(state => state.onNodesDelete)
   const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const onConnect = useGraphStore(state => state.onConnect)
@@ -170,33 +168,9 @@ export default function GraphEditor() {
   const handleZoomOut = useCallback(() => zoomOut({ duration: 200 }), [zoomOut])
   const handleFitView = useCallback(() => fitView({ padding: 0.2, duration: 250 }), [fitView])
 
-  const throttledOnNodesChange = useMemo(() => {
-    let raf: number | null = null
-    let queued: NodeChange<NoteNode>[] | null = null
-    return (changes: NodeChange<NoteNode>[]) => {
-      queued = queued ? [...queued, ...changes] : changes
-      if (raf) return
-      raf = requestAnimationFrame(() => {
-        onNodesChange(queued!)
-        raf = null
-        queued = null
-      })
-    }
-  }, [onNodesChange])
+  const throttledOnNodesChange = useNodeChanges()
 
-  const throttledOnEdgesChange = useMemo(() => {
-    let raf: number | null = null
-    let queued: EdgeChange<LinkEdge>[] | null = null
-    return (changes: EdgeChange<LinkEdge>[]) => {
-      queued = queued ? [...queued, ...changes] : changes
-      if (raf) return
-      raf = requestAnimationFrame(() => {
-        onEdgesChange(queued!)
-        raf = null
-        queued = null
-      })
-    }
-  }, [onEdgesChange])
+  const throttledOnEdgesChange = useEdgeChanges()
 
   const handleDragStart = useCallback(() => setIsDragging(true), [])
   const handleDragStop = useCallback(() => setIsDragging(false), [])

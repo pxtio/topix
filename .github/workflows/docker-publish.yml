@@ -1,0 +1,99 @@
+name: Build and Push Docker Images
+
+on:
+  # Manual trigger with tag parameter
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Docker image tags (comma-separated, e.g., "v1.0.0,latest,dev")'
+        required: true
+        default: 'latest'
+        type: string
+
+  # Automatic trigger on releases
+  release:
+    types: [published]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Prepare tags
+        id: prepare-tags
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            # For releases, use the release tag and also tag as latest
+            RELEASE_TAG="${{ github.event.release.tag_name }}"
+            WEBUI_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/topix-webui:${RELEASE_TAG},${{ secrets.DOCKERHUB_USERNAME }}/topix-webui:latest"
+            BACKEND_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/topix-backend:${RELEASE_TAG},${{ secrets.DOCKERHUB_USERNAME }}/topix-backend:latest"
+            echo "summary_tags=${RELEASE_TAG}, latest" >> $GITHUB_OUTPUT
+          else
+            # For manual runs, parse comma-separated tags
+            IFS=',' read -ra TAG_ARRAY <<< "${{ github.event.inputs.tags }}"
+            WEBUI_TAGS=""
+            BACKEND_TAGS=""
+            for tag in "${TAG_ARRAY[@]}"; do
+              # Trim whitespace
+              tag=$(echo "$tag" | xargs)
+              if [ -n "$WEBUI_TAGS" ]; then
+                WEBUI_TAGS="${WEBUI_TAGS},"
+                BACKEND_TAGS="${BACKEND_TAGS},"
+              fi
+              WEBUI_TAGS="${WEBUI_TAGS}${{ secrets.DOCKERHUB_USERNAME }}/topix-webui:${tag}"
+              BACKEND_TAGS="${BACKEND_TAGS}${{ secrets.DOCKERHUB_USERNAME }}/topix-backend:${tag}"
+            done
+            echo "summary_tags=${{ github.event.inputs.tags }}" >> $GITHUB_OUTPUT
+          fi
+          echo "webui_tags=${WEBUI_TAGS}" >> $GITHUB_OUTPUT
+          echo "backend_tags=${BACKEND_TAGS}" >> $GITHUB_OUTPUT
+
+      - name: Build and push webui image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./webui/Dockerfile
+          push: true
+          tags: ${{ steps.prepare-tags.outputs.webui_tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.prepare-tags.outputs.backend_tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Summary
+        run: |
+          echo "### Docker Images Published :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:** \`${{ steps.prepare-tags.outputs.summary_tags }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### WebUI Images:" >> $GITHUB_STEP_SUMMARY
+          IFS=',' read -ra TAGS <<< "${{ steps.prepare-tags.outputs.webui_tags }}"
+          for tag in "${TAGS[@]}"; do
+            echo "- \`${tag}\`" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Backend Images:" >> $GITHUB_STEP_SUMMARY
+          IFS=',' read -ra TAGS <<< "${{ steps.prepare-tags.outputs.backend_tags }}"
+          for tag in "${TAGS[@]}"; do
+            echo "- \`${tag}\`" >> $GITHUB_STEP_SUMMARY
+          done

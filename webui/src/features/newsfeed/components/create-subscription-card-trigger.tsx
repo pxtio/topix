@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { PlusSignIcon } from '@hugeicons/core-free-icons'
 
 type Props = React.ComponentPropsWithoutRef<'button'>
 
@@ -22,7 +23,7 @@ export const CreateSubscriptionCardTrigger = React.forwardRef<HTMLButtonElement,
                 className
               )}
             >
-              <Plus className='w-6 h-6 text-muted-foreground' />
+              <HugeiconsIcon icon={PlusSignIcon} className='w-6 h-6 text-secondary' strokeWidth={2} />
               {children}
             </button>
           </TooltipTrigger>

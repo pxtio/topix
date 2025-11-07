@@ -192,7 +192,7 @@ function SortableNoteCard({ node }: SortableNoteCardProps) {
         {...attributes}
         {...listeners}
         aria-label='Drag to reorder'
-        className='absolute left-1 top-1 z-20 p-1 rounded-md cursor-grab active:cursor-grabbing touch-none text-muted-foreground/30 hover:text-muted-foreground transition'
+        className='absolute left-1 top-1 z-30 p-1 rounded-md cursor-grab active:cursor-grabbing touch-none text-muted-foreground/30 hover:text-muted-foreground transition'
         onClick={e => e.preventDefault()}
       >
         <Grip className='size-4' />

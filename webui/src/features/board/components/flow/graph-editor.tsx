@@ -23,7 +23,6 @@ import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import './graph-styles.css'
 import { GraphSidebar } from '../style-panel/panel'
-import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
 import { saveThumbnail } from '../../api/save-thumbnail'
 import { useShallow } from 'zustand/shallow'
 import { ActionPanel } from './action-panel'
@@ -34,6 +33,7 @@ import { useNodeChanges } from '../../hooks/node-changes'
 import { useEdgeChanges } from '../../hooks/edge-changes'
 import { useDeleteNodes } from '../../hooks/delete-nodes'
 import { useDeleteEdges } from '../../hooks/delete-edges'
+import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
 
 const proOptions = { hideAttribution: true }
 
@@ -135,15 +135,14 @@ export default function GraphEditor() {
     }
   }, [viewportInitialized, fitView, boardId, graphViewports])
 
-  const wrapperRef = useRef<HTMLDivElement | null>(null)
-
-  useSaveThumbnailOnUnmount({
+  const { setContainerRef } = useSaveThumbnailOnUnmount({
     boardId,
-    containerRef: wrapperRef,
-    saveThumbnail: async (boardId, blob) => {
+    userId,
+    saveThumbnail: async ({ userId, boardId, blob }) => {
       await saveThumbnail({ userId, boardId, blob })
     },
-    opts: { width: 360, height: 200, pixelRatio: 1, backgroundColor: 'transparent' },
+    width: 360,
+    height: 200
   })
 
   const handleZoomIn = useCallback(() => zoomIn({ duration: 200 }), [zoomIn])
@@ -210,7 +209,7 @@ export default function GraphEditor() {
   }, [])
 
   return (
-    <div ref={wrapperRef} className='w-full h-full'>
+    <div ref={setContainerRef} className='w-full h-full'>
       <ActionPanel
         onAddNode={handleAddNode}
         enableSelection={enableSelection}

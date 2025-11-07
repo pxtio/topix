@@ -1,8 +1,7 @@
 """Integration tests setup."""
+import asyncpg
 import pytest
 import pytest_asyncio
-
-import asyncpg
 
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum

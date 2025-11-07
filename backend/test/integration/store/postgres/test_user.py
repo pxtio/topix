@@ -1,10 +1,9 @@
 """Integration tests for the user store."""
 from datetime import datetime
 
+import asyncpg
 import pytest
 import pytest_asyncio
-
-import asyncpg
 
 from topix.datatypes.user import User
 from topix.store.postgres.user import (

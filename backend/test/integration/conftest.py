@@ -2,7 +2,7 @@
 import pytest
 import pytest_asyncio
 
-from psycopg import AsyncConnection
+import asyncpg
 
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
@@ -18,7 +18,7 @@ def config() -> Config:
 async def conn(config: Config):
     """Fixture to provide a database connection for tests."""
     # Set up your database URL
-    connection = await AsyncConnection.connect(config.run.databases.postgres.dsn())
+    connection = await asyncpg.connect(config.run.databases.postgres.dsn())
     try:
         yield connection
     finally:

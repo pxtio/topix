@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter
 
 from topix.api.utils.decorators import with_standard_response
+from topix.config.services import service_config
 from topix.utils.images.search import fetch_images, search_iconify_icons
 
 logger = logging.getLogger(__name__)
@@ -34,4 +35,17 @@ async def search_images(query: str, limit: int = 5):
     results = await fetch_images(query, limit)
     return {
         "images": results
+    }
+
+
+@router.get("/services/", include_in_schema=False)
+@router.get("/services")
+@with_standard_response
+async def get_services() -> dict:
+    """Get available services."""
+    return {
+        "llm": [llm.name for llm in service_config.llm],
+        "search": [search.name for search in service_config.search],
+        "navigate": [navigate.name for navigate in service_config.navigate],
+        "code": [code.name for code in service_config.code],
     }

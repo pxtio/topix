@@ -93,12 +93,13 @@ if __name__ == "__main__":
         help="Port to run the application on."
     )
     args = args.parse_args()
-    app, port = asyncio.run(main(args))
 
     # load .env file
     envpath = Path(__file__).parent.parent.parent.parent / '.env'
     logger.info(f"Loading env from: {envpath}")
     load_dotenv(dotenv_path=envpath)
+
+    app, port = asyncio.run(main(args))
 
     # override port with env var if env var is set
     env_port = os.getenv("API_PORT")

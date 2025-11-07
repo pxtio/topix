@@ -2,8 +2,6 @@ import {
   MiniMap,
   ReactFlow,
   MarkerType,
-  type OnNodesDelete,
-  type OnEdgesDelete,
   type OnConnect,
   useReactFlow,
   SelectionMode,
@@ -18,9 +16,7 @@ import { CustomConnectionLine } from './connection'
 import { useGraphStore } from '../../store/graph-store'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { LinkEdge, NoteNode } from '../../types/flow'
-import { useRemoveNote } from '../../api/remove-note'
 import { useAppStore } from '@/store'
-import { useRemoveLink } from '../../api/remove-link'
 import { useAddLinks } from '../../api/add-links'
 import { convertEdgeToLink } from '../../utils/graph'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
@@ -36,6 +32,8 @@ import { useCopyPasteNodes } from '../../hooks/copy-paste'
 import { useStyleDefaults } from '../../style-provider'
 import { useNodeChanges } from '../../hooks/node-changes'
 import { useEdgeChanges } from '../../hooks/edge-changes'
+import { useDeleteNodes } from '../../hooks/delete-nodes'
+import { useDeleteEdges } from '../../hooks/delete-edges'
 
 const proOptions = { hideAttribution: true }
 
@@ -78,16 +76,12 @@ export default function GraphEditor() {
   const boardId = useGraphStore(state => state.boardId)
   const nodes = useGraphStore(useShallow(state => state.nodes))
   const edges = useGraphStore(useShallow(state => state.edges))
-  const onNodesDelete = useGraphStore(state => state.onNodesDelete)
-  const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const onConnect = useGraphStore(state => state.onConnect)
   const mindmaps = useMindMapStore(state => state.mindmaps)
   const isResizingNode = useGraphStore(state => state.isResizingNode)
   const graphViewports = useGraphStore(state => state.graphViewports)
   const setGraphViewport = useGraphStore(state => state.setGraphViewport)
 
-  const { removeNote } = useRemoveNote()
-  const { removeLink } = useRemoveLink()
   const { addLinks } = useAddLinks()
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
 
@@ -98,21 +92,9 @@ export default function GraphEditor() {
     shortcuts: true
   })
 
-  const deleteNodes: OnNodesDelete<NoteNode> = useCallback((nodes) => {
-    if (!boardId || !userId) return
-    onNodesDelete(nodes)
-    nodes.forEach(node => {
-      removeNote({ boardId, userId, noteId: node.id })
-    })
-  }, [onNodesDelete, boardId, userId, removeNote])
+  const deleteNodes = useDeleteNodes()
 
-  const deleteEdges: OnEdgesDelete<LinkEdge> = useCallback((edges) => {
-    if (!boardId || !userId) return
-    onEdgesDelete(edges)
-    edges.forEach(edge => {
-      removeLink({ boardId, userId, linkId: edge.id })
-    })
-  }, [onEdgesDelete, boardId, userId, removeLink])
+  const deleteEdges = useDeleteEdges()
 
   const connectNodes: OnConnect = useCallback((params) => {
     if (!boardId || !userId) return
@@ -168,9 +150,9 @@ export default function GraphEditor() {
   const handleZoomOut = useCallback(() => zoomOut({ duration: 200 }), [zoomOut])
   const handleFitView = useCallback(() => fitView({ padding: 0.2, duration: 250 }), [fitView])
 
-  const throttledOnNodesChange = useNodeChanges()
+  const onNodeChanges = useNodeChanges()
 
-  const throttledOnEdgesChange = useEdgeChanges()
+  const onEdgeChanges = useEdgeChanges()
 
   const handleDragStart = useCallback(() => setIsDragging(true), [])
   const handleDragStop = useCallback(() => setIsDragging(false), [])
@@ -253,8 +235,8 @@ export default function GraphEditor() {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={throttledOnNodesChange}
-          onEdgesChange={throttledOnEdgesChange}
+          onNodesChange={onNodeChanges}
+          onEdgesChange={onEdgeChanges}
           onNodesDelete={deleteNodes}
           onEdgesDelete={deleteEdges}
           proOptions={proOptions}

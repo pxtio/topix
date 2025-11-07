@@ -28,20 +28,6 @@ class BaseAgentConfig(BaseModel):
     instructions_template: str
     model_settings: ModelSettings | None = None
 
-    @model_validator(mode='before')
-    @classmethod
-    def replace_model(cls, data: Any) -> Any:
-        """Replace the model code if current model is not available."""
-        if not isinstance(data, dict):
-            return data
-        valid_model_codes = [service.code for service in service_config.llm]
-        if not valid_model_codes:
-            raise ValueError("No LLM API available. Please add at least one LLM API.")
-        v = data.get('model')
-        if v and v not in valid_model_codes:
-            logger.info(f"Replacing {v} with {valid_model_codes[0]}")
-            data['model'] = valid_model_codes[0]
-        return data
 
     @field_validator("model", mode="after")
     @classmethod

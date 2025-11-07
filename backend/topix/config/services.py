@@ -138,5 +138,8 @@ class ServiceConfig(BaseModel):
                     )
         return res
 
-
+"""
+The global service config, to utilise:
+from topix.config.services import service_config
+"""
 service_config = ServiceConfig.from_yaml()

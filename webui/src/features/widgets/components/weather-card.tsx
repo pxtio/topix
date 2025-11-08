@@ -17,28 +17,8 @@ type WeatherCardProps = {
 export function WeatherCard({ city }: WeatherCardProps) {
   const { data, isPending, error } = useFetchWeather(city)
 
-  if (isPending)
-    return (
-      <div className='flex flex-col items-center justify-center py-10'>
-        <p className='text-muted-foreground animate-pulse'>
-          Loading weather for {city}...
-        </p>
-      </div>
-    )
-
-  if (error)
-    return (
-      <div className='flex flex-col items-center justify-center py-10'>
-        <p className='text-destructive'>Error loading weather for {city}</p>
-      </div>
-    )
-
-  if (!data)
-    return (
-      <div className='flex flex-col items-center justify-center py-10'>
-        <p className='text-muted-foreground'>No weather data available</p>
-      </div>
-    )
+  if (isPending || error || !data)
+    return null
 
   return (
     <div className='w-full flex items-center justify-center'>

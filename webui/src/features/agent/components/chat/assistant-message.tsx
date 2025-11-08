@@ -4,6 +4,7 @@ import type { ChatMessage } from "../../types/chat"
 import { ResponseActions } from "./actions/response-actions"
 import clsx from "clsx"
 import { SourcesView } from "./sources-view"
+import { WeatherCard } from "@/features/widgets/components/weather-card"
 
 
 /**
@@ -39,6 +40,7 @@ export const AssistantMessage = ({
         isStreaming={message.streaming || false}
         estimatedDurationSeconds={isDeepResearch ? 180 : undefined}
       />
+      <WeatherCard city="Paris" />
       {lastStepMessage}
       {!message.streaming && resp && <SourcesView answer={resp} />}
       {!message.streaming && (

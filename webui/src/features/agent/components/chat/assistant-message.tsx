@@ -35,25 +35,24 @@ export const AssistantMessage = ({
     </div>
   ) : null
 
-  const city = useMemo(() => {
+  const cities = useMemo(() => {
     if (!message.streaming && !isDeepResearch) {
-      const weatherStep = resp.steps.find(step => step.name === 'display_weather_widget')
-      console.log('weatherStep', weatherStep)
-      if (weatherStep && typeof weatherStep.output === 'object' && 'city' in weatherStep.output) {
-        return weatherStep.output.city
-      }
+      const cities = resp.steps.filter(step => step.name === 'display_weather_widget').map(
+        step => (typeof step.output === 'object' && 'city' in step.output ? step.output.city : null)
+      )
+      return cities.filter((c): c is string => c !== null)
     }
-    return undefined
+    return []
   }, [message, isDeepResearch, resp.steps])
 
-  const tradingSymbol = useMemo(() => {
+  const tradingSymbols = useMemo(() => {
     if (!message.streaming && !isDeepResearch) {
-      const stockStep = resp.steps.find(step => step.name === 'display_stock_widget')
-      if (stockStep && typeof stockStep.output === 'object' && 'symbol' in stockStep.output) {
-        return stockStep.output.symbol
-      }
+      const stockSymbols = resp.steps.filter(step => step.name === 'display_stock_widget').map(
+        step => (typeof step.output === 'object' && 'symbol' in step.output ? step.output.symbol : null)
+      )
+      return stockSymbols.filter((s): s is string => s !== null)
     }
-    return undefined
+    return []
   }, [message, isDeepResearch, resp.steps])
 
   return (
@@ -63,8 +62,8 @@ export const AssistantMessage = ({
         isStreaming={message.streaming || false}
         estimatedDurationSeconds={isDeepResearch ? 180 : undefined}
       />
-      { city && <WeatherCard city={city} /> }
-      { tradingSymbol && <TradingCard symbol={tradingSymbol} initialRange="1d" /> }
+      { cities.length > 0 && <WeatherCard cities={cities} /> }
+      { tradingSymbols.length > 0 && <TradingCard symbols={tradingSymbols} initialRange="1d" /> }
       {lastStepMessage}
       {!message.streaming && resp && <SourcesView answer={resp} />}
       {!message.streaming && (

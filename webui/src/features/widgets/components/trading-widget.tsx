@@ -86,6 +86,9 @@ export default function TradingWidget({
     <div className='bg-sidebar rounded-xl p-4 md:p-5 shadow-md w-full'>
       <div className='flex items-start justify-between gap-3'>
         <div className='space-y-1'>
+          <div className='text-[11px] md:text-xs uppercase tracking-wide text-accent-foreground font-medium'>
+            {snapshot.ticker}
+          </div>
           <div className='text-2xl md:text-3xl font-semibold tracking-tight font-mono tabular-nums'>
             {formatNumber(snapshot.price)}{' '}
             <span className='text-xs md:text-sm align-middle text-muted-foreground font-sans'>

@@ -161,7 +161,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
                 value={input}
                 minRows={2}
                 maxRows={15}
-                placeholder="Enter your message..."
+                placeholder="Ask anything..."
                 className="w-full h-full resize-none border-none outline-none bg-transparent text-sm"
                 autoFocus
               />

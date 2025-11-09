@@ -185,6 +185,7 @@ export const useSendMessage = () => {
         throw error
       } finally {
         setIsStreaming(false)
+        await queryClient.invalidateQueries({ queryKey: key, exact: true })
       }
     }
   })

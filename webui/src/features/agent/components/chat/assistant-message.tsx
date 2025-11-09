@@ -6,6 +6,7 @@ import clsx from "clsx"
 import { SourcesView } from "./sources-view"
 import { WeatherCard } from "@/features/widgets/components/weather-card"
 import TradingCard from "@/features/widgets/components/trading-card"
+import { useMemo } from "react"
 
 
 /**
@@ -34,6 +35,27 @@ export const AssistantMessage = ({
     </div>
   ) : null
 
+  const city = useMemo(() => {
+    if (!message.streaming && !isDeepResearch) {
+      const weatherStep = resp.steps.find(step => step.name === 'display_weather_widget')
+      console.log('weatherStep', weatherStep)
+      if (weatherStep && typeof weatherStep.output === 'object' && 'city' in weatherStep.output) {
+        return weatherStep.output.city
+      }
+    }
+    return undefined
+  }, [message, isDeepResearch, resp.steps])
+
+  const tradingSymbol = useMemo(() => {
+    if (!message.streaming && !isDeepResearch) {
+      const stockStep = resp.steps.find(step => step.name === 'display_stock_widget')
+      if (stockStep && typeof stockStep.output === 'object' && 'symbol' in stockStep.output) {
+        return stockStep.output.symbol
+      }
+    }
+    return undefined
+  }, [message, isDeepResearch, resp.steps])
+
   return (
     <div className='w-full space-y-4'>
       <ReasoningStepsView
@@ -41,8 +63,8 @@ export const AssistantMessage = ({
         isStreaming={message.streaming || false}
         estimatedDurationSeconds={isDeepResearch ? 180 : undefined}
       />
-      <WeatherCard city="Paris" />
-      <TradingCard symbol="AAPL" initialRange="1d" />
+      { city && <WeatherCard city={city} /> }
+      { tradingSymbol && <TradingCard symbol={tradingSymbol} initialRange="1d" /> }
       {lastStepMessage}
       {!message.streaming && resp && <SourcesView answer={resp} />}
       {!message.streaming && (

@@ -42,7 +42,7 @@ export const AssistantMessage = ({
         estimatedDurationSeconds={isDeepResearch ? 180 : undefined}
       />
       <WeatherCard city="Paris" />
-      <TradingCard symbol="AAPL" rangeLabel="1d" />
+      <TradingCard symbol="AAPL" initialRange="1d" />
       {lastStepMessage}
       {!message.streaming && resp && <SourcesView answer={resp} />}
       {!message.streaming && (

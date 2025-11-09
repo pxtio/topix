@@ -195,7 +195,7 @@ export function WeatherWidget(props: WeatherWidgetProps) {
                 borderRadius: 8,
                 border: '1px solid var(--border)',
                 fontSize: 12,
-                backgroundColor: 'var(--card)',
+                backgroundColor: 'var(--background)',
                 boxShadow: 'var(--shadow-md)',
               }}
               labelFormatter={(l) => formatTimeLabel(l)}

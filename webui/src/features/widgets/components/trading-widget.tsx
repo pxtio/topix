@@ -83,7 +83,7 @@ export default function TradingWidget({
   }
 
   return (
-    <div className='bg-sidebar border rounded-xl p-4 md:p-5 shadow-sm w-full'>
+    <div className='bg-sidebar rounded-xl p-4 md:p-5 shadow-md w-full'>
       <div className='flex items-start justify-between gap-3'>
         <div className='space-y-1'>
           <div className='text-2xl md:text-3xl font-semibold tracking-tight font-mono tabular-nums'>
@@ -135,7 +135,7 @@ export default function TradingWidget({
         </div>
       </div>
 
-      <div className='mt-2 rounded-lg border overflow-hidden'>
+      <div className='mt-2 rounded-lg border border-border overflow-hidden'>
         <div className='h-[190px]'>
           <ResponsiveContainer width='100%' height='100%'>
             <AreaChart data={points} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>

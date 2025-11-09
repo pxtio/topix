@@ -25,7 +25,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-export type HourPoint = { t: string; temp: number }
+export type HourPoint = { t: string | number | Date; temp: number }
 export type DailyForecast = {
   dow: string
   high: number
@@ -75,6 +75,45 @@ function prettyTemp(n: number, unit: 'C' | 'F' = 'C') {
   return `${Math.round(n)}°${unit}`
 }
 
+/** format numeric hour (0–23) to 'h AM/PM' */
+function hourToAmPm(h: number) {
+  const hour = ((Math.floor(h) % 24) + 24) % 24
+  const h12 = hour % 12 || 12
+  const suffix = hour < 12 ? 'AM' : 'PM'
+  return `${h12} ${suffix}`
+}
+
+/**
+ * Robust formatter for X-axis & tooltip labels.
+ * - '9 AM' / '3 pm' → returns as-is (normalized casing)
+ * - 0..23 or '0'..'23' → converts to AM/PM
+ * - ISO/timestamp/Date → formats to AM/PM
+ * - anything else → returns original
+ */
+function formatTimeLabel(v: unknown) {
+  if (v instanceof Date) return v.toLocaleTimeString([], { hour: 'numeric', hour12: true })
+
+  if (typeof v === 'number') {
+    if (v >= 0 && v <= 23) return hourToAmPm(v)
+    const d = new Date(v)
+    return isNaN(d.getTime()) ? String(v) : d.toLocaleTimeString([], { hour: 'numeric', hour12: true })
+  }
+
+  if (typeof v === 'string') {
+    const s = v.trim()
+    // already like "9 AM" / "3 pm"
+    if (/(am|pm)\b/i.test(s)) return s.toUpperCase()
+    // numeric hour string
+    const n = Number(s)
+    if (!Number.isNaN(n) && n >= 0 && n <= 23) return hourToAmPm(n)
+    // try ISO/date string
+    const d = new Date(s)
+    return isNaN(d.getTime()) ? s : d.toLocaleTimeString([], { hour: 'numeric', hour12: true })
+  }
+
+  return String(v ?? '')
+}
+
 export function WeatherWidget(props: WeatherWidgetProps) {
   const { location, asOf, unit = 'C', current, hourly, daily } = props
 
@@ -83,8 +122,8 @@ export function WeatherWidget(props: WeatherWidgetProps) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className='relative rounded-xl p-4 sm:p-5 shadow-sm border border-border
-                 bg-card/60 backdrop-blur-md text-card-foreground
+      className='relative rounded-xl p-4 sm:p-5 shadow-md
+                 bg-sidebar/60 backdrop-blur-md text-card-foreground
                  w-full flex flex-col gap-4 overflow-hidden'
     >
       {/* Subtle dot texture overlay */}
@@ -143,6 +182,7 @@ export function WeatherWidget(props: WeatherWidgetProps) {
           >
             <XAxis
               dataKey='t'
+              tickFormatter={(v) => formatTimeLabel(v)}
               tick={{ fill: 'currentColor', fontSize: 10 }}
               tickLine={false}
               axisLine={false}
@@ -151,9 +191,20 @@ export function WeatherWidget(props: WeatherWidgetProps) {
             />
             <YAxis hide domain={['dataMin - 2', 'dataMax + 2']} />
             <Tooltip
-              contentStyle={{ borderRadius: 8, border: 'none', fontSize: 12 }}
-              labelFormatter={(l) => `${l}`}
+              contentStyle={{
+                borderRadius: 8,
+                border: '1px solid var(--border)',
+                fontSize: 12,
+                backgroundColor: 'var(--card)',
+                boxShadow: 'var(--shadow-md)',
+              }}
+              labelFormatter={(l) => formatTimeLabel(l)}
               formatter={(v: number) => [prettyTemp(v as number, unit), '']}
+              cursor={{
+                stroke: 'currentColor',
+                strokeOpacity: 0.4,
+                strokeDasharray: '3 3',
+              }}
             />
             <Line
               type='monotone'

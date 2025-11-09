@@ -21,6 +21,8 @@ from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.agents.websearch.navigate import NavigateAgent
+from topix.agents.widgets.finance import display_stock_widget_tool
+from topix.agents.widgets.weather import display_weather_widget_tool
 from topix.api.utils.common import iso_to_clear_date
 from topix.store.qdrant.store import ContentStore
 
@@ -97,6 +99,8 @@ class Plan(BaseAgent):
             memory_search.as_tool(AgentToolName.MEMORY_SEARCH, streamed=True),
             code_interpreter.as_tool(AgentToolName.CODE_INTERPRETER, streamed=True),
             navigate.as_tool(AgentToolName.NAVIGATE, streamed=True),
+            display_stock_widget_tool,
+            display_weather_widget_tool,
         ]
         hooks = PlanHooks()
 

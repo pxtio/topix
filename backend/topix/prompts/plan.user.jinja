@@ -7,13 +7,18 @@
 </last_user_query>
 
 <reminders>
-- Max 8 actions total (each = tiny plan + tool calls)
-- web_search up to 6 calls; stop early when info is sufficient
-- code_interpreter max 2 calls; justify each with "Why code_interpreter: <reason>"
-- memory_search only if user asks about past interactions
-- Finalization: when gathering enought information, output only "I have gathered enough information", **do not answer the question**
-- Process: silently break into steps; make 1-2 assumptions if needed; clarify only if essential; prefer partial completion; use tools when needed; verify simple arithmetic
-- Web search when: fresh/unstable info; people/org facts; uncertainty (>10% error risk or unfamiliar term); high stakes; or verification/citations. If unsure after reasoning, search.
-- Context gate: treat this turn as standalone unless query explicitly references prior turns; avoid repetition; add new angles or examples; name reused context
+- Budgets: ≤8 actions total; ≤6 web_search; ≤2 code_interpreter (each must include: "Why code_interpreter: <reason>")
+- Tools discipline: prefer web_search over guessing; navigate only with a specific URL; memory_search only if the user asks about past interactions
+- UI widgets (side-effect only):
+  - display_weather_widget({ city }) for weather-related queries
+  - display_stock_widget({ symbol }) for markets/tickers
+  - Widgets return no data; do not use them as evidence or in reasoning; do not delay research for them
+  - If ticker unknown/ambiguous, do a quick web_search to confirm the primary symbol, then call the widget
+- Finalization: when you have enough information, output exactly "I have gathered enough information" as a separate final message; do not answer the question
+- Process: silently break into steps; make 1–2 safe assumptions if essential; prefer partial completion over deferral; verify simple arithmetic carefully
+- Web search triggers: fresh/unstable info (news, prices, laws, schedules, specs, exchanges, scores, standards, trends), people/org roles (CEO/President/etc.), uncertainty (>10% recall risk or unfamiliar/possibly-typo terms), high-stakes topics (medical/legal/financial/travel/products), or when verification/citations are needed; if still unsure after reasoning, search
+- Context gate: treat this turn as standalone unless the query explicitly references prior turns; if reusing context, name exactly what you reuse; avoid repeating the same angle—add new examples or depth
+- Error handling: on tool failure, retry once; if it fails again, proceed with best info, note uncertainty briefly, then finalize
+- Safety/integrity: refuse harmful/illegal requests; preserve critical numbers/units/names/versions/negations; do not expose raw tool output verbatim unless appropriate
 </reminders>
 <END/>

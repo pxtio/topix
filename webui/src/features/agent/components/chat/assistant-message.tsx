@@ -5,6 +5,7 @@ import { ResponseActions } from "./actions/response-actions"
 import clsx from "clsx"
 import { SourcesView } from "./sources-view"
 import { WeatherCard } from "@/features/widgets/components/weather-card"
+import TradingCard from "@/features/widgets/components/trading-card"
 
 
 /**
@@ -41,6 +42,7 @@ export const AssistantMessage = ({
         estimatedDurationSeconds={isDeepResearch ? 180 : undefined}
       />
       <WeatherCard city="Paris" />
+      <TradingCard symbol="AAPL" rangeLabel="1d" />
       {lastStepMessage}
       {!message.streaming && resp && <SourcesView answer={resp} />}
       {!message.streaming && (

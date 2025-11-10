@@ -30,10 +30,10 @@ class NewsfeedArticle(BaseModel):
 
     title: str
     url: str
-    summary: str
+    summary: str | None = None
     published_at: str
     source_domain: str
-    score: int | None = None
+    # score: int | None = None
     tags: list[str] = []
 
 
@@ -46,7 +46,7 @@ class NewsfeedSection(BaseModel):
 
 class NewsfeedOutput(BaseModel):
     """Newsfeed output data model."""
-
+    title: str
     sections: list[NewsfeedSection]
 
 

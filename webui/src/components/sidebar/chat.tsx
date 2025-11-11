@@ -101,10 +101,15 @@ export function ChatMenuItem({ chatId, label }: { chatId: string, label?: string
           </SidebarMenuSubButton>
         </ContextMenuTrigger>
         <ContextMenuContent className='w-44'>
-          <ContextMenuItem onClick={() => handleDeleteChat(chatId)} variant='destructive'>
+          <ContextMenuItem
+            onClick={() => handleDeleteChat(chatId)}
+            variant='destructive'
+            className='bg-accent text-xs flex flex-row items-center'
+          >
             <HugeiconsIcon
               icon={Delete02Icon}
               className="size-4 mr-2"
+              strokeWidth={2}
             />
             <span>Delete Chat</span>
           </ContextMenuItem>

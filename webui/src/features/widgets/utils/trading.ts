@@ -60,8 +60,6 @@ export async function getTrading(
     snapshot: StockSnapshot
   }
 
-  console.log('Fetched trading data:', data)
-
   return {
     points: data.points ?? [],
     snapshot: data.snapshot

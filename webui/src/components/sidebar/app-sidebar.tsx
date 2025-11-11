@@ -110,17 +110,17 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                           </span>
                         </SidebarMenuButton>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" side="right" className="w-56">
-                        <DropdownMenuItem disabled>
+                      <DropdownMenuContent align="start" side="right" className="w-56 bg-accent">
+                        <DropdownMenuItem disabled className='text-xs'>
                           <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" strokeWidth={2} />
                           <span>Profile</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem disabled>
+                        <DropdownMenuItem disabled className='text-xs'>
                           <HugeiconsIcon icon={Settings01Icon} className="mr-2 h-4 w-4" strokeWidth={2} />
                           <span>Settings</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={onLogout}>
+                        <DropdownMenuItem onClick={onLogout} className='text-xs'>
                           <HugeiconsIcon icon={LogoutSquareIcon} className="mr-2 h-4 w-4" strokeWidth={2} />
                           <span>Logout</span>
                         </DropdownMenuItem>

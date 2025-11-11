@@ -26,7 +26,6 @@ import { GraphSidebar } from '../style-panel/panel'
 import { saveThumbnail } from '../../api/save-thumbnail'
 import { useShallow } from 'zustand/shallow'
 import { ActionPanel } from './action-panel'
-import { LinearView } from './linear-view'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
 import { useStyleDefaults } from '../../style-provider'
 import { useNodeChanges } from '../../hooks/node-changes'
@@ -34,6 +33,7 @@ import { useEdgeChanges } from '../../hooks/edge-changes'
 import { useDeleteNodes } from '../../hooks/delete-nodes'
 import { useDeleteEdges } from '../../hooks/delete-edges'
 import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
+import { DefaultBoardView } from '../default-view'
 
 const proOptions = { hideAttribution: true }
 
@@ -52,10 +52,10 @@ const defaultEdgeOptions = {
 }
 const connectionLineStyle = { stroke: '#a8a29e' }
 
-type ViewMode = 'graph' | 'linear' | 'grid'
+type ViewMode = 'graph' | 'linear'
 
 export default function GraphEditor() {
-  const [viewMode, setViewMode] = useState<ViewMode>('graph')
+  const [viewMode, setViewMode] = useState<ViewMode>('linear')
 
   const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
@@ -277,10 +277,8 @@ export default function GraphEditor() {
             <MiniMap className='!bg-card rounded-lg'/>
           )}
         </ReactFlow>
-      ) : viewMode === 'linear' ? (
-        <LinearView cols={1} />
       ) : (
-        <LinearView cols={3} />
+        <DefaultBoardView />
       )}
     </div>
   )

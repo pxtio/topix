@@ -52,7 +52,7 @@ function CustomLink({ children, href, ...rest }: CustomLinkProps) {
  *  Typed wrappers for common elements
  *  ------------------------------------------------------*/
 function H1(props: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h1 className="mt-7 scroll-m-20 border-b border-muted-foreground/20 pb-2 text-2xl font-heading font-medium tracking-tight first:mt-0" {...props} />
+  return <h1 className="mt-7 scroll-m-20 pb-2 text-2xl font-heading font-medium tracking-tight first:mt-0" {...props} />
 }
 
 function H2(props: React.HTMLAttributes<HTMLHeadingElement>) {

@@ -5,16 +5,60 @@ import { useAppStore } from "@/store"
 import { useListChats } from "@/features/agent/api/list-chats"
 import type { Chat } from "@/features/agent/types/chat"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Message02Icon, Note05Icon } from "@hugeicons/core-free-icons"
+import { Delete02Icon, Message02Icon, Note05Icon } from "@hugeicons/core-free-icons"
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu"
+import { useDeleteChat } from "@/features/agent/api/delete-chat"
+import { formatNewsletterDate } from "@/features/newsfeed/utils/date"
+import { useNavigate } from "@tanstack/react-router"
 
 
 const ChatLine = ({ chat }: { chat: Chat }) => {
+  const userId = useAppStore(state => state.userId)
+
+  const { deleteChat } = useDeleteChat()
+
+  const navigate = useNavigate()
+
+  const date = chat.updatedAt || chat.createdAt
+
+  const handleGoToChat = () => {
+    navigate({ to: '/chats/$id', params: { id: chat.uid } })
+  }
+
   return (
-    <div className="transition rounded-md w-full px-3 py-2 hover:bg-accent/50 hover:shadow-sm transition-colors cursor-pointer">
-      <div className="text-sm font-medium text-foreground truncate">
-        {chat.label || 'Untitled Chat'}
-      </div>
-    </div>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          className="transition rounded-md w-full px-3 py-2 hover:bg-accent/50 hover:shadow-sm transition-colors cursor-pointer"
+          onClick={handleGoToChat}
+        >
+          <div className="text-sm font-medium text-foreground truncate">
+            {chat.label || 'Untitled Chat'}
+          </div>
+          {
+            date && (
+            <div className="text-xs text-muted-foreground">
+              {formatNewsletterDate(date)}
+            </div>
+            )
+          }
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent className="w-44">
+        <ContextMenuItem
+            onClick={() => deleteChat({ chatId: chat.uid, userId })}
+            variant='destructive'
+            className='bg-accent text-xs flex flex-row items-center'
+          >
+            <HugeiconsIcon
+              icon={Delete02Icon}
+              className="size-4 mr-2"
+              strokeWidth={2}
+            />
+            <span>Delete Chat</span>
+          </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }
 

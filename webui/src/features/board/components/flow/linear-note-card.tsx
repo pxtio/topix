@@ -98,61 +98,66 @@ export function LinearNoteCard({ node }: Props) {
   const CardBody = useMemo(() => (
     <div className={cardClass} style={{ backgroundColor: color }}>
       {/* hover toolbar */}
-      <div className='absolute top-0 inset-x-0 px-1.5 py-1 flex items-center justify-end gap-1 bg-background/20 z-20 rounded-t-xl shadow-xs opacity-0 group-hover:opacity-100 backdrop-blur-lg transition-opacity'>
-        <div className='mr-auto ml-6 flex flex-row items-center gap-2'>
-          {timeAgo && fullDate && (
-            <div>
-              <span title={fullDate} className='text-xs text-muted-foreground select-none'>
-                {timeAgo}
-              </span>
-            </div>
-          )}
+      <div
+        className='absolute top-0 inset-x-0  z-20 rounded-t-xl shadow-xs backdrop-blur-lg transition-opacity'
+        style={{ backgroundColor: color}}
+      >
+        <div className='px-1.5 py-1 w-full h-full flex items-center justify-end gap-1 bg-background/20'>
+          <div className='flex flex-row items-center gap-2 px-1'>
+            {timeAgo && fullDate && (
+              <div className=''>
+                <span title={fullDate} className='text-xs text-muted-foreground select-none'>
+                  {timeAgo}
+                </span>
+              </div>
+            )}
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className='p-1 text-foreground/60 hover:text-foreground transition-colors'
+                aria-label='Change background color'
+                title='Change background color'
+                onClick={e => e.stopPropagation()}
+              >
+                <HugeiconsIcon icon={PaintBoardIcon} className='size-4 shrink-0' strokeWidth={2} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align='start' className='w-auto p-2'>
+              <div className='grid grid-cols-6 gap-2'>
+                {TAILWIND_200.map(c => (
+                  <button
+                    key={c.name}
+                    className='h-6 w-6 rounded-md border border-border hover:brightness-95'
+                    style={{ backgroundColor: isDark ? darkModeDisplayHex(c.hex) || c.hex : c.hex }}
+                    title={`${c.name}-100`}
+                    aria-label={`${c.name}-100`}
+                    onClick={() => onPickColor(c.hex)}
+                  />
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <button
+            className='p-1 text-foreground/60 hover:text-foreground transition-colors'
+            onClick={onTogglePin}
+            aria-label='Toggle pin'
+            title='Pin/Unpin'
+          >
+            {isPinned
+              ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={2} />
+              : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={2} />
+            }
+          </button>
+          <button
+            className='p-1 text-foreground/60 hover:text-destructive transition-colors'
+            onClick={onDelete}
+            aria-label='Delete note'
+            title='Delete'
+          >
+            <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4' strokeWidth={2} />
+          </button>
         </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className='p-1 text-foreground/60 hover:text-foreground transition-colors'
-              aria-label='Change background color'
-              title='Change background color'
-              onClick={e => e.stopPropagation()}
-            >
-              <HugeiconsIcon icon={PaintBoardIcon} className='size-4 shrink-0' strokeWidth={2} />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align='start' className='w-auto p-2'>
-            <div className='grid grid-cols-6 gap-2'>
-              {TAILWIND_200.map(c => (
-                <button
-                  key={c.name}
-                  className='h-6 w-6 rounded-md border border-border hover:brightness-95'
-                  style={{ backgroundColor: isDark ? darkModeDisplayHex(c.hex) || c.hex : c.hex }}
-                  title={`${c.name}-100`}
-                  aria-label={`${c.name}-100`}
-                  onClick={() => onPickColor(c.hex)}
-                />
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-        <button
-          className='p-1 text-foreground/60 hover:text-foreground transition-colors'
-          onClick={onTogglePin}
-          aria-label='Toggle pin'
-          title='Pin/Unpin'
-        >
-          {isPinned
-            ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={2} />
-            : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={2} />
-          }
-        </button>
-        <button
-          className='p-1 text-foreground/60 hover:text-destructive transition-colors'
-          onClick={onDelete}
-          aria-label='Delete note'
-          title='Delete'
-        >
-          <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4' strokeWidth={2} />
-        </button>
       </div>
 
       {/* content area */}
@@ -165,7 +170,7 @@ export function LinearNoteCard({ node }: Props) {
             {title}
           </h2>
         )}
-        <div className='prose dark:prose-invert max-w-none min-w-0'>
+        <div className='prose dark:prose-invert max-w-none min-w-0 origin-top-left scale-[0.8] w-[125%]'>
           <MarkdownView content={node.data.content?.markdown || ''} />
         </div>
       </div>

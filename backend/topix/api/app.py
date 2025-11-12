@@ -98,7 +98,7 @@ if __name__ == "__main__":
     # load .env file
     envpath = Path(__file__).parent.parent.parent.parent / '.env'
     logger.info(f"Loading env from: {envpath}")
-    load_dotenv(dotenv_path=envpath)
+    load_dotenv(dotenv_path=envpath, override=True)
 
     app, port = asyncio.run(main(args))
 

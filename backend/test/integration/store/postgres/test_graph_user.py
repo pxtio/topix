@@ -28,7 +28,6 @@ async def user_obj():
         created_at=datetime.now(),
         password_hash="hashed_password"
     )
-    # await create_user(conn, user)
     return user
 
 
@@ -47,7 +46,6 @@ async def graph_obj():
         readonly=False,
         created_at=datetime.now().isoformat(),
     )
-    # await create_graph(conn, graph)
     return graph
 
 

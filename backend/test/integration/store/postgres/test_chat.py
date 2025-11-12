@@ -2,7 +2,6 @@
 from datetime import datetime
 
 import pytest
-import pytest_asyncio
 
 from topix.datatypes.chat.chat import Chat
 from topix.datatypes.user import User

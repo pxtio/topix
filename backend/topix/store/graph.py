@@ -24,11 +24,11 @@ class GraphStore:
     def __init__(self):
         """Initialize the GraphStore."""
         self._content_store = ContentStore.from_config()
-        self._pg_pool = create_pool()
+        self._pg_pool = None
 
     async def open(self):
         """Open the database connection pool."""
-        await self._pg_pool.open()
+        self._pg_pool = await create_pool()
 
     async def add_notes(self, nodes: list[Note]):
         """Add nodes to the graph."""
@@ -68,7 +68,7 @@ class GraphStore:
 
     async def get_graph(self, graph_uid: str) -> Graph | None:
         """Retrieve the entire graph by its UID."""
-        async with self._pg_pool.connection() as conn:
+        async with self._pg_pool.acquire() as conn:
             graph = await get_graph_by_uid(conn, graph_uid)
         if not graph:
             return None
@@ -94,18 +94,18 @@ class GraphStore:
 
     async def add_graph(self, graph: Graph, user_uid: str) -> Graph:
         """Create a new graph."""
-        async with self._pg_pool.connection() as conn:
+        async with self._pg_pool.acquire() as conn:
             await create_graph(conn, graph)
             await add_user_to_graph_by_uid(conn, graph.uid, user_uid, "owner")
 
     async def update_graph(self, graph_uid: str, data: dict):
         """Update an existing graph."""
-        async with self._pg_pool.connection() as conn:
+        async with self._pg_pool.acquire() as conn:
             await update_graph_by_uid(conn, graph_uid, data)
 
     async def delete_graph(self, graph_uid: str, hard_delete: bool = False):
         """Delete a graph by its UID."""
-        async with self._pg_pool.connection() as conn:
+        async with self._pg_pool.acquire() as conn:
             if not hard_delete:
                 await delete_graph_by_uid(conn, graph_uid)
             else:
@@ -118,11 +118,12 @@ class GraphStore:
 
     async def list_graphs(self, user_uid: str) -> list[Graph]:
         """List all graphs' ids and labels for a user."""
-        async with self._pg_pool.connection() as conn:
+        async with self._pg_pool.acquire() as conn:
             graphs = await list_graphs_by_user_uid(conn, user_uid)
         return graphs
 
     async def close(self):
         """Close the database connection pool."""
-        await self._pg_pool.close()
+        if self._pg_pool:
+            await self._pg_pool.close()
         await self._content_store.close()

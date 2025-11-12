@@ -16,8 +16,8 @@ from topix.store.postgres.user import _dangerous_hard_delete_user_by_uid, create
 from topix.utils.common import gen_uid
 
 
-@pytest_asyncio.fixture
-async def user_obj(conn):
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
+async def user_obj():
     """Fixture to create a user for testing graph associations."""
     user_uid = gen_uid()
     user = User(
@@ -28,12 +28,12 @@ async def user_obj(conn):
         created_at=datetime.now(),
         password_hash="hashed_password"
     )
-    await create_user(conn, user)
+    # await create_user(conn, user)
     return user
 
 
-@pytest_asyncio.fixture
-async def graph_obj(conn):
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
+async def graph_obj():
     """Fixture to create a graph for testing user associations."""
     graph_uid = gen_uid()
     graph = Graph(
@@ -47,13 +47,15 @@ async def graph_obj(conn):
         readonly=False,
         created_at=datetime.now().isoformat(),
     )
-    await create_graph(conn, graph)
+    # await create_graph(conn, graph)
     return graph
 
 
 @pytest.mark.asyncio
 async def test_graph_user_assoc_and_listing(conn, user_obj, graph_obj):
     """Test user association with a graph and listing functionalities."""
+    await create_user(conn, user_obj)
+    await create_graph(conn, graph_obj)
     user_uid = user_obj.uid
     graph_uid = graph_obj.uid
 

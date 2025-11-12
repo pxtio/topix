@@ -16,7 +16,7 @@ async def create_user(conn: asyncpg.Connection, user: User) -> User:
         user_id = await conn.fetchval(
             query,
             user.uid, user.email, user.username, user.name,
-            datetime.fromisoformat(user.created_at) if user.created_at else None,
+            user.created_at,
             user.password_hash
         )
         user.id = user_id

@@ -17,8 +17,8 @@ from topix.store.postgres.user import _dangerous_hard_delete_user_by_uid, create
 from topix.utils.common import gen_uid
 
 
-@pytest_asyncio.fixture
-async def chat_uid():
+@pytest.fixture
+def chat_uid():
     """Fixture to generate a unique chat UID for testing."""
     return gen_uid()
 

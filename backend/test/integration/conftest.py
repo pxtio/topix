@@ -13,7 +13,7 @@ def config() -> Config:
     return Config.load(stage=StageEnum.TEST)
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(scope="function", loop_scope="function")
 async def conn(config: Config):
     """Fixture to provide a database connection for tests."""
     # Set up your database URL

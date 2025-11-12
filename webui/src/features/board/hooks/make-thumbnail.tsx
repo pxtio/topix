@@ -1,105 +1,85 @@
-import { useEffect, useRef } from 'react'
+// use-save-thumbnail-on-unmount.ts
+import { useEffect, useRef, useCallback } from 'react'
 import { useReactFlow, getViewportForBounds, type Rect } from '@xyflow/react'
 import { toBlob } from 'html-to-image'
 
-type ThumbOpts = {
-  width?: number
-  height?: number
-  pixelRatio?: number
-  backgroundColor?: string | 'transparent'
-  minZoom?: number
-  maxZoom?: number
-  padding?: number
-}
-
 type Params = {
   boardId?: string
-  containerRef: React.RefObject<HTMLElement | null>
-  saveThumbnail: (boardId: string, blob: Blob) => Promise<void>
-  opts?: ThumbOpts
+  userId?: string
+  saveThumbnail: (args: { userId: string; boardId: string; blob: Blob }) => Promise<void>
+  width?: number
+  height?: number
 }
 
 export function useSaveThumbnailOnUnmount({
   boardId,
-  containerRef,
+  userId,
   saveThumbnail,
-  opts,
+  width = 360,
+  height = 200
 }: Params) {
   const { getNodes, getNodesBounds } = useReactFlow()
-  const busy = useRef(false) // prevent double fire
-  const mounted = useRef(false)
 
-  const {
-    width = 320,
-    height = 180,
-    pixelRatio = 1,
-    backgroundColor = 'transparent',
-    minZoom = 0.1,
-    maxZoom = 1,
-    padding = 0.1,
-  } = opts ?? {}
+  // stable element snapshot managed by the hook
+  const elRef = useRef<HTMLElement | null>(null)
+  const setContainerRef = useCallback((el: HTMLElement | null) => {
+    if (el) elRef.current = el
+  }, [])
 
+  // keep latest changing values without re-subscribing the effect
+  const boardIdRef = useRef(boardId)
+  const userIdRef = useRef(userId)
+  const saveRef = useRef(saveThumbnail)
+  useEffect(() => { boardIdRef.current = boardId }, [boardId])
+  useEffect(() => { userIdRef.current = userId }, [userId])
+  useEffect(() => { saveRef.current = saveThumbnail }, [saveThumbnail])
+
+  const firedRef = useRef(false) // guard Strict Mode double cleanup
+
+  // run cleanup only once on unmount
   useEffect(() => {
-    mounted.current = true
+    return () => {
+      if (firedRef.current) return
+      firedRef.current = true
 
-    // snapshot the DOM node once so cleanup doesn't chase a changing ref
-    const container = containerRef.current
+      ;(async () => {
+        const bId = boardIdRef.current
+        const uId = userIdRef.current
+        if (!bId || !uId) return
 
-    const capture = async () => {
-      if (busy.current) return
-      busy.current = true
-
-      try {
-        if (!mounted.current) return
-        if (!boardId || !container) return
+        const container = elRef.current
+        if (!container) return
 
         const viewportEl = container.querySelector('.react-flow__viewport') as HTMLElement | null
         if (!viewportEl) return
 
         const nodes = getNodes()
-        const bounds: Rect = nodes.length ? getNodesBounds(nodes) : { x: 0, y: 0, width: 1, height: 1 }
-        const { x, y, zoom } = getViewportForBounds(bounds, width, height, minZoom, maxZoom, padding)
+        const bounds: Rect =
+          nodes.length ? getNodesBounds(nodes) : { x: 0, y: 0, width: 1, height: 1 }
 
-        const blob = await toBlob(viewportEl, {
-          backgroundColor,
+        const { x, y, zoom } = getViewportForBounds(bounds, width, height, 0.1, 1, 0.1)
+
+        toBlob(viewportEl, {
+          backgroundColor: 'transparent',
           width,
           height,
-          pixelRatio,
+          pixelRatio: 1,
           style: {
             width: `${width}px`,
             height: `${height}px`,
             transform: `translate(${x}px, ${y}px) scale(${zoom})`,
-            transformOrigin: '0 0',
+            transformOrigin: '0 0'
           },
-          cacheBust: true,
-        })
-        if (blob) await saveThumbnail(boardId, blob)
-      } finally {
-        busy.current = false
-      }
+          cacheBust: true
+        }).then(blob => {
+          if (blob) void saveRef.current({ userId: uId, boardId: bId, blob })
+        }).catch(() => {})
+      })()
     }
-
-    // only fire on *real* page hide (navigating away, closing tab, bfcache, etc.)
-    const onPageHide = () => { capture() }
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') capture()
-    }
-
-    // NB: don't use beforeunload unless you absolutely must, it's more fragile
-    window.addEventListener('pagehide', onPageHide)
-    document.addEventListener('visibilitychange', onVisibilityChange)
-
-    return () => {
-      mounted.current = false
-      // remove listeners *without* doing any capture in cleanup
-      window.removeEventListener('pagehide', onPageHide)
-      document.removeEventListener('visibilitychange', onVisibilityChange)
-      // final safety: if we're unmounting without a pagehide (e.g., internal route change),
-      // trigger one last capture
-      // queue a microtask so removal happens first and we don't block the commit
-      queueMicrotask(() => { capture() })
-    }
-    // empty deps: runs once, no re-subscribe, no re-cleanup on updates
+    // intentionally subscribe once; cleanup only on unmount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // expose the ref callback for your wrapper div
+  return { setContainerRef }
 }

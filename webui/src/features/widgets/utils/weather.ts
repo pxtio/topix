@@ -11,12 +11,12 @@ import type { WeatherWidgetProps } from '../components/weather-widget'
 
 /**
  * Fetch current and forecast weather data for a given city name
- * @param city - City name, e.g. 'Paris' or 'New York'
+ * @param city - City name, e.g. 'Paris, France' or 'Hanoi, Vietnam'
  * @returns WeatherWidgetProps object or null if not found / API error
  */
 export async function fetchWeatherByCity(city: string): Promise<WeatherWidgetProps | null> {
   try {
-    // 1️⃣ Geocode city name → coordinates
+    // Geocode city name → coordinates
     const geoRes = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`
     )
@@ -26,34 +26,68 @@ export async function fetchWeatherByCity(city: string): Promise<WeatherWidgetPro
     const location = geoData.results?.[0]
     if (!location) throw new Error(`City not found: ${city}`)
 
-    const { latitude, longitude, name, country } = location
+    const { latitude, longitude, name, country, timezone } = location
 
-    // 2️⃣ Fetch weather forecast
+    // Fetch weather forecast
     const weatherRes = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=temperature_2m&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto`
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=temperature_2m&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=${encodeURIComponent(
+        timezone ?? 'auto'
+      )}`
     )
     if (!weatherRes.ok) throw new Error('Weather API request failed')
 
     const weatherData = await weatherRes.json()
 
-    // 3️⃣ Normalize hourly and daily data
-    const hourly = (weatherData.hourly?.time || [])
-      .slice(0, 6)
-      .map((t: string, i: number) => ({
-        t: new Date(t).toLocaleTimeString([], { hour: 'numeric' }),
-        temp: weatherData.hourly.temperature_2m[i],
-      }))
+    // Normalize hourly data: first local day, every 3 hours (00, 03, 06, ..., 21)
+    const hourlyTimes: string[] = weatherData.hourly?.time ?? []
+    const hourlyTemps: number[] = weatherData.hourly?.temperature_2m ?? []
 
-    const daily = (weatherData.daily?.time || [])
-      .slice(0, 5)
-      .map((t: string, i: number) => ({
-        dow: new Date(t).toLocaleDateString([], { weekday: 'short' }),
-        high: weatherData.daily.temperature_2m_max[i],
-        low: weatherData.daily.temperature_2m_min[i],
-        icon: mapWeatherCode(weatherData.daily.weathercode[i]),
-      }))
+    const hourly: WeatherWidgetProps['hourly'] = []
 
-    // 4️⃣ Return widget data
+    if (hourlyTimes.length > 0) {
+      const first = new Date(hourlyTimes[0])
+      const firstY = first.getFullYear()
+      const firstM = first.getMonth()
+      const firstD = first.getDate()
+
+      for (let i = 0; i < hourlyTimes.length; i++) {
+        const tStr = hourlyTimes[i]
+        const d = new Date(tStr)
+
+        // stop once we move past the first day
+        if (
+          d.getFullYear() !== firstY ||
+          d.getMonth() !== firstM ||
+          d.getDate() !== firstD
+        ) {
+          break
+        }
+
+        const h = d.getHours()
+        // keep points every 3 hours: 0,3,6,9,12,15,18,21
+        if (h % 3 === 0) {
+          hourly.push({
+            t: tStr, // raw ISO string; widget will format
+            temp: hourlyTemps[i],
+          })
+        }
+      }
+    }
+
+    // Normalize daily data (next 5 days)
+    const dailyTimes: string[] = weatherData.daily?.time ?? []
+    const dailyMax: number[] = weatherData.daily?.temperature_2m_max ?? []
+    const dailyMin: number[] = weatherData.daily?.temperature_2m_min ?? []
+    const dailyCodes: number[] = weatherData.daily?.weathercode ?? []
+
+    const daily = dailyTimes.slice(0, 5).map((t: string, i: number) => ({
+      dow: new Date(t).toLocaleDateString([], { weekday: 'short' }),
+      high: dailyMax[i],
+      low: dailyMin[i],
+      icon: mapWeatherCode(dailyCodes[i]),
+    }))
+
+    // Return widget data
     return {
       location: `${name}, ${country}`,
       asOf: new Date().toLocaleString(),

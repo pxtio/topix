@@ -17,20 +17,23 @@ import type {
 
 type BlockKind = "raw" | "tools" | null
 
+// final steps that should stream output
+const isFinalAnswerStep = (name: ToolName) =>
+  name === "synthesizer" || name === "answer_reformulate"
+
 type StepAccum = {
   id: string
   name: ToolName
-  // fragment buffers (cleared after each flush)
+  // fragment buffers (only used for final answer steps)
   thoughtBuf: string[]
   outputBuf: string[]
-  // canonical accumulated strings (joined incrementally)
+  // canonical accumulated strings (only for final steps)
   thoughtStr: string
   outputStr: string
   state: ToolExecutionState
   eventMessages: string[]
   annotations: Annotation[]
   executedCode?: string
-  // marks that this step has unflushed changes
   dirty?: boolean
 }
 
@@ -38,13 +41,12 @@ type BuildResponseOptions = {
   maxFps?: number
   safetyMaxIntervalMs?: number
   sizeThresholdChars?: number
-  // optional caps (defensive)
   eventMessagesCap?: number
   annotationsCap?: number
 }
 
 /**
- * Build the final tool output for a reasoning step (uses canonical strings).
+ * Build the final tool output for a reasoning step (uses canonical strings only for final steps).
  */
 const makeToolOutput = (acc: StepAccum): ToolOutput => {
   const outputText = acc.outputStr
@@ -66,12 +68,10 @@ const makeToolOutput = (acc: StepAccum): ToolOutput => {
       annotations: files
     }
   }
+
   return outputText
 }
 
-/**
- * Converts a step accumulator into a reasoning step.
- */
 const toReasoningStep = (acc: StepAccum): ReasoningStep => ({
   id: acc.id,
   name: acc.name,
@@ -81,48 +81,38 @@ const toReasoningStep = (acc: StepAccum): ReasoningStep => ({
   eventMessages: acc.eventMessages
 })
 
-/**
- * Push with cap (keeps only most recent N).
- */
 const pushCapped = <T>(arr: T[], item: T, cap: number) => {
   arr.push(item)
   if (cap > 0 && arr.length > cap) arr.splice(0, arr.length - cap)
 }
 
-/**
- * Push many with cap.
- */
 const pushManyCapped = <T>(arr: T[], items: T[], cap: number) => {
   if (!items.length) return
   arr.push(...items)
   if (cap > 0 && arr.length > cap) arr.splice(0, arr.length - cap)
 }
 
-/**
- * Append and clear fragment buffers for a step.
- * This avoids re-joining the whole history each yield.
- */
+// only final steps accumulate text
 const flushStep = (s: StepAccum) => {
+  if (!isFinalAnswerStep(s.name)) return
+
   if (s.thoughtBuf.length) {
     s.thoughtStr += (s.thoughtBuf.length === 1 ? s.thoughtBuf[0] : s.thoughtBuf.join(""))
     s.thoughtBuf.length = 0
   }
+
   if (s.outputBuf.length) {
     s.outputStr += (s.outputBuf.length === 1 ? s.outputBuf[0] : s.outputBuf.join(""))
     s.outputBuf.length = 0
   }
 }
 
-/**
- * Stream agent response with throttling for performance and UX.
- * Uses incremental flush to minimize allocations and GC churn.
- */
 export async function* buildResponse(
   chunks: AsyncGenerator<AgentStreamMessage>,
   opts: BuildResponseOptions = {}
 ): AsyncGenerator<{ response: AgentResponse, isStop: boolean }> {
   const {
-    maxFps = 12,
+    maxFps = 10,
     safetyMaxIntervalMs = 1000,
     sizeThresholdChars = 8000,
     eventMessagesCap = 100,
@@ -139,18 +129,13 @@ export async function* buildResponse(
   let rawBlockIndex = -1
   let shouldBurstYield = false
 
-  /**
-   * Compute a unique key for step identity.
-   */
   const stepKeyFor = (toolId: string, toolName: ToolName) =>
     isMainResponse(toolName) ? `${toolId}::raw:${rawBlockIndex}` : toolId
 
-  /**
-   * Ensure a step exists in the map, create if missing.
-   */
   const ensureStep = (toolId: string, toolName: ToolName) => {
     const key = stepKeyFor(toolId, toolName)
     let step = stepsById.get(key)
+
     if (!step) {
       step = {
         id: key,
@@ -173,9 +158,6 @@ export async function* buildResponse(
     return step
   }
 
-  /**
-   * Mark all steps as completed if not failed.
-   */
   const completeAll = () => {
     for (const id of order) {
       const s = stepsById.get(id)!
@@ -184,9 +166,6 @@ export async function* buildResponse(
     }
   }
 
-  /**
-   * Mark the last raw step as completed if exists.
-   */
   const completeLastRawIfAny = () => {
     for (let i = order.length - 1; i >= 0; i--) {
       const s = stepsById.get(order[i])!
@@ -198,10 +177,6 @@ export async function* buildResponse(
     }
   }
 
-  /**
-   * Yield updates conditionally, throttled by time/size/events.
-   * Flushes only dirty steps to minimize allocations.
-   */
   const maybeYield = async (force = false) => {
     const now = Date.now()
     const dueByTime = now - lastYieldAt >= minIntervalMs
@@ -209,7 +184,6 @@ export async function* buildResponse(
     const hitSize = bufferedChars >= sizeThresholdChars
 
     if (force || shouldBurstYield || hitSize || hitSafety || (dueByTime && bufferedChars > 0)) {
-      // flush only dirty steps
       for (const id of order) {
         const s = stepsById.get(id)!
         if (s.dirty) {
@@ -224,6 +198,7 @@ export async function* buildResponse(
       bufferedChars = 0
       return { response: resp, isStop: false }
     }
+
     return null
   }
 
@@ -232,7 +207,7 @@ export async function* buildResponse(
 
     if (isRaw && chunk.content?.type === "status") continue
 
-    // handle block transitions
+    // block switching
     if (currentBlock === null) {
       currentBlock = isRaw ? "raw" : "tools"
       if (currentBlock === "raw") rawBlockIndex++
@@ -253,26 +228,26 @@ export async function* buildResponse(
     if (chunk.content) {
       const { type, text, annotations } = chunk.content
 
-      if (annotations?.length) {
+      // only final steps keep annotations
+      if (annotations?.length && isFinalAnswerStep(step.name)) {
         pushManyCapped(step.annotations, annotations, annotationsCap)
         step.dirty = true
         shouldBurstYield = true
       }
 
+      // only final steps accumulate text
       if (type === "token") {
-        if (chunk.type === "stream_reasoning_message") {
-          step.thoughtBuf.push(text)
-          bufferedChars += text.length
-          step.dirty = true
-        } else {
+        if (isFinalAnswerStep(step.name)) {
           step.outputBuf.push(text)
           bufferedChars += text.length
           step.dirty = true
         }
       } else if (type === "message") {
-        step.outputBuf.push(text)
-        bufferedChars += text.length
-        step.dirty = true
+        if (isFinalAnswerStep(step.name)) {
+          step.outputBuf.push(text)
+          bufferedChars += text.length
+          step.dirty = true
+        }
       } else if (type === "status" && !isRaw) {
         pushCapped(step.eventMessages, text, eventMessagesCap)
         const t = text.toLowerCase()
@@ -289,11 +264,9 @@ export async function* buildResponse(
     if (maybe) yield maybe
   }
 
-  // finalize at end
   if (currentBlock === "raw") completeLastRawIfAny()
   if (currentBlock === "tools") completeAll()
 
-  // final flush of any remaining fragments
   for (const id of order) {
     const s = stepsById.get(id)!
     flushStep(s)
@@ -310,20 +283,43 @@ export async function* buildResponse(
   yield { response: finalResp, isStop: true }
 }
 
-/**
- * Extracts a human-readable description from a reasoning step.
- */
-export function extractStepDescription(step: ReasoningStep): { reasoning: string, message: string, title: string } {
+
+export function extractInputOrQuery(step: ReasoningStep): string | null {
+  const args = step.arguments
+  if (!args) return null
+
+  const input = args.input
+
+  // Case 1: input is directly a string
+  if (typeof input === "string") return input
+
+  // Case 2: input is an object with a string query field
+  if (
+    typeof input === "object" &&
+    input !== null &&
+    "query" in input &&
+    typeof (input as Record<string, unknown>).query === "string"
+  ) {
+    return (input as { query: string }).query
+  }
+
+  // Case 3: everything else → null
+  return null
+}
+
+
+export function extractStepDescription(step: ReasoningStep): { reasoning: string, message: string, title: string, input?: string } {
   if (step.name !== "raw_message" && step.name !== "outline_generator") {
-    return { reasoning: step.thought || "", message: "", title: ToolNameDescription[step.name] }
+    let input: string | undefined = undefined
+    if (step.name === "web_search" || step.name === "memory_search") {
+      input = extractInputOrQuery(step) || undefined
+    }
+    return { reasoning: step.thought || "", message: "", title: ToolNameDescription[step.name], input }
   }
   const reasoningOutLoud = (step.output as string) || ""
   return { reasoning: step.thought || "", message: reasoningOutLoud, title: ToolNameDescription[step.name] }
 }
 
-/**
- * Returns web search result URLs from a step.
- */
 export function getWebSearchUrls(step: ReasoningStep): UrlAnnotation[] {
   if (step.name === "web_search" && typeof step.output !== "string") {
     const out = step.output as WebSearchOutput

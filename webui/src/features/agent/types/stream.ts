@@ -64,6 +64,7 @@ export interface ReasoningStep {
   output: ToolOutput
   state: ToolExecutionState
   eventMessages: string[]
+  arguments?: { input: unknown }
 }
 
 

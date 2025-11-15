@@ -52,7 +52,7 @@ export const BoardCard = ({
             />
           </div>
         ) : (
-          <div className='w-full h-40 bg-card rounded-md' />
+          <div className='w-full h-40 bg-transparent rounded-md' />
         )
       }
       <div className='p-2 w-full overflow-ellipsis'>

@@ -1,6 +1,7 @@
 """Integration tests for the GraphStore class."""
 
 import pytest
+import pytest_asyncio
 
 from topix.datatypes.graph.graph import Graph
 from topix.datatypes.note.link import Link
@@ -10,7 +11,7 @@ from topix.store.graph import GraphStore
 from topix.store.qdrant.store import ContentStore
 
 
-@pytest.fixture(scope="module")
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def init_collection():
     """Initialize the Qdrant collection for graph tests."""
     await ContentStore.from_config().create_collection(force_recreate=True)

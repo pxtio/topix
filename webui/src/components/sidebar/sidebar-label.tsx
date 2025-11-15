@@ -151,9 +151,9 @@ export const SidebarLabel = () => {
           type="button"
           onClick={goSubscriptionsRoot}
           className={`${crumbBtn} font-medium`}
-          title="Topics"
+          title="Newsfeed"
         >
-          Topics
+          Newsfeed
         </button>
         {active.id && (
           <>

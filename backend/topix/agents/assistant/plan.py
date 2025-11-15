@@ -18,6 +18,8 @@ from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.agents.websearch.navigate import NavigateAgent
+from topix.agents.widgets.finance import display_stock_widget_tool
+from topix.agents.widgets.weather import display_weather_widget_tool
 from topix.api.utils.common import iso_to_clear_date
 from topix.store.qdrant.store import ContentStore
 
@@ -76,6 +78,8 @@ class Plan(BaseAgent):
                 tool_description="Navigate Tool",
             )
             tools.append(navigate_tool)
+
+        tools.extend([display_stock_widget_tool, display_weather_widget_tool])
 
         return cls(
             model=config.model,

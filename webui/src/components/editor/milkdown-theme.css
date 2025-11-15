@@ -140,17 +140,17 @@
 
 /* h1 → text-3xl */
 .milkdown .ProseMirror h1 {
-  margin-top: 2rem !important;
+  margin-top: 1.25rem !important;
   padding-bottom: 0.75rem !important;
   font-size: 1.875rem !important; /* 3xl */
   line-height: 1.45 !important;
-  border-bottom: 1px solid color-mix(in oklab, var(--muted-foreground) 20%, transparent);
+  border-bottom: none;
   font-weight: 700 !important;
 }
 
 /* h2 → text-2xl */
 .milkdown .ProseMirror h2 {
-  margin-top: 1.75rem !important;
+  margin-top: 1rem !important;
   padding-bottom: 0.5rem !important;
   font-size: 1.5rem !important; /* 2xl */
   line-height: 1.4 !important;
@@ -159,7 +159,7 @@
 
 /* h3 → text-xl */
 .milkdown .ProseMirror h3 {
-  margin-top: 1.5rem !important;
+  margin-top: 1rem !important;
   font-size: 1.25rem !important; /* xl */
   line-height: 1.4 !important;
   font-weight: 600 !important;
@@ -167,7 +167,7 @@
 
 /* h4 → text-lg */
 .milkdown .ProseMirror h4 {
-  margin-top: 1.25rem !important;
+  margin-top: 1rem !important;
   font-size: 1.125rem !important; /* lg */
   line-height: 1.5 !important;
   font-weight: 600 !important;
@@ -176,12 +176,7 @@
 /* --------------------------------------------------------------------------
    Paragraphs
    -------------------------------------------------------------------------- */
-.milkdown .ProseMirror p {
-  margin: 1rem 0 0 0;
-}
-.milkdown .ProseMirror p:first-child {
-  margin-top: 0;
-}
+
 
 /* --------------------------------------------------------------------------
    Blockquote
@@ -199,7 +194,6 @@
    -------------------------------------------------------------------------- */
 .milkdown .ProseMirror ul,
 .milkdown .ProseMirror ol {
-  margin: 1.5rem 0;
   padding-left: 1.5rem;
 }
 .milkdown .ProseMirror ul { list-style: disc; }

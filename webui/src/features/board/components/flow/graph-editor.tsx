@@ -2,13 +2,9 @@ import {
   MiniMap,
   ReactFlow,
   MarkerType,
-  type OnNodesDelete,
-  type OnEdgesDelete,
   type OnConnect,
   useReactFlow,
   SelectionMode,
-  type NodeChange,
-  type EdgeChange,
   useOnViewportChange,
   type ReactFlowInstance,
 } from '@xyflow/react'
@@ -18,24 +14,26 @@ import { useAddNoteNode } from '../../hooks/add-node'
 import { EdgeView } from './edge-view'
 import { CustomConnectionLine } from './connection'
 import { useGraphStore } from '../../store/graph-store'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { LinkEdge, NoteNode } from '../../types/flow'
-import { useRemoveNote } from '../../api/remove-note'
 import { useAppStore } from '@/store'
-import { useRemoveLink } from '../../api/remove-link'
 import { useAddLinks } from '../../api/add-links'
 import { convertEdgeToLink } from '../../utils/graph'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import './graph-styles.css'
 import { GraphSidebar } from '../style-panel/panel'
-import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
 import { saveThumbnail } from '../../api/save-thumbnail'
 import { useShallow } from 'zustand/shallow'
 import { ActionPanel } from './action-panel'
-import { LinearView } from './linear-view'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
 import { useStyleDefaults } from '../../style-provider'
+import { useNodeChanges } from '../../hooks/node-changes'
+import { useEdgeChanges } from '../../hooks/edge-changes'
+import { useDeleteNodes } from '../../hooks/delete-nodes'
+import { useDeleteEdges } from '../../hooks/delete-edges'
+import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
+import { DefaultBoardView } from '../default-view'
 
 const proOptions = { hideAttribution: true }
 
@@ -54,10 +52,10 @@ const defaultEdgeOptions = {
 }
 const connectionLineStyle = { stroke: '#a8a29e' }
 
-type ViewMode = 'graph' | 'linear' | 'grid'
+type ViewMode = 'graph' | 'linear'
 
 export default function GraphEditor() {
-  const [viewMode, setViewMode] = useState<ViewMode>('graph')
+  const [viewMode, setViewMode] = useState<ViewMode>('linear')
 
   const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
@@ -78,18 +76,12 @@ export default function GraphEditor() {
   const boardId = useGraphStore(state => state.boardId)
   const nodes = useGraphStore(useShallow(state => state.nodes))
   const edges = useGraphStore(useShallow(state => state.edges))
-  const onNodesChange = useGraphStore(state => state.onNodesChange)
-  const onEdgesChange = useGraphStore(state => state.onEdgesChange)
-  const onNodesDelete = useGraphStore(state => state.onNodesDelete)
-  const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const onConnect = useGraphStore(state => state.onConnect)
   const mindmaps = useMindMapStore(state => state.mindmaps)
   const isResizingNode = useGraphStore(state => state.isResizingNode)
   const graphViewports = useGraphStore(state => state.graphViewports)
   const setGraphViewport = useGraphStore(state => state.setGraphViewport)
 
-  const { removeNote } = useRemoveNote()
-  const { removeLink } = useRemoveLink()
   const { addLinks } = useAddLinks()
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
 
@@ -100,21 +92,9 @@ export default function GraphEditor() {
     shortcuts: true
   })
 
-  const deleteNodes: OnNodesDelete<NoteNode> = useCallback((nodes) => {
-    if (!boardId || !userId) return
-    onNodesDelete(nodes)
-    nodes.forEach(node => {
-      removeNote({ boardId, userId, noteId: node.id })
-    })
-  }, [onNodesDelete, boardId, userId, removeNote])
+  const deleteNodes = useDeleteNodes()
 
-  const deleteEdges: OnEdgesDelete<LinkEdge> = useCallback((edges) => {
-    if (!boardId || !userId) return
-    onEdgesDelete(edges)
-    edges.forEach(edge => {
-      removeLink({ boardId, userId, linkId: edge.id })
-    })
-  }, [onEdgesDelete, boardId, userId, removeLink])
+  const deleteEdges = useDeleteEdges()
 
   const connectNodes: OnConnect = useCallback((params) => {
     if (!boardId || !userId) return
@@ -155,48 +135,23 @@ export default function GraphEditor() {
     }
   }, [viewportInitialized, fitView, boardId, graphViewports])
 
-  const wrapperRef = useRef<HTMLDivElement | null>(null)
-
-  useSaveThumbnailOnUnmount({
+  const { setContainerRef } = useSaveThumbnailOnUnmount({
     boardId,
-    containerRef: wrapperRef,
-    saveThumbnail: async (boardId, blob) => {
+    userId,
+    saveThumbnail: async ({ userId, boardId, blob }) => {
       await saveThumbnail({ userId, boardId, blob })
     },
-    opts: { width: 360, height: 200, pixelRatio: 1, backgroundColor: 'transparent' },
+    width: 360,
+    height: 200
   })
 
   const handleZoomIn = useCallback(() => zoomIn({ duration: 200 }), [zoomIn])
   const handleZoomOut = useCallback(() => zoomOut({ duration: 200 }), [zoomOut])
   const handleFitView = useCallback(() => fitView({ padding: 0.2, duration: 250 }), [fitView])
 
-  const throttledOnNodesChange = useMemo(() => {
-    let raf: number | null = null
-    let queued: NodeChange<NoteNode>[] | null = null
-    return (changes: NodeChange<NoteNode>[]) => {
-      queued = queued ? [...queued, ...changes] : changes
-      if (raf) return
-      raf = requestAnimationFrame(() => {
-        onNodesChange(queued!)
-        raf = null
-        queued = null
-      })
-    }
-  }, [onNodesChange])
+  const onNodeChanges = useNodeChanges()
 
-  const throttledOnEdgesChange = useMemo(() => {
-    let raf: number | null = null
-    let queued: EdgeChange<LinkEdge>[] | null = null
-    return (changes: EdgeChange<LinkEdge>[]) => {
-      queued = queued ? [...queued, ...changes] : changes
-      if (raf) return
-      raf = requestAnimationFrame(() => {
-        onEdgesChange(queued!)
-        raf = null
-        queued = null
-      })
-    }
-  }, [onEdgesChange])
+  const onEdgeChanges = useEdgeChanges()
 
   const handleDragStart = useCallback(() => setIsDragging(true), [])
   const handleDragStop = useCallback(() => setIsDragging(false), [])
@@ -254,7 +209,7 @@ export default function GraphEditor() {
   }, [])
 
   return (
-    <div ref={wrapperRef} className='w-full h-full'>
+    <div ref={setContainerRef} className='w-full h-full'>
       <ActionPanel
         onAddNode={handleAddNode}
         enableSelection={enableSelection}
@@ -279,8 +234,8 @@ export default function GraphEditor() {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={throttledOnNodesChange}
-          onEdgesChange={throttledOnEdgesChange}
+          onNodesChange={onNodeChanges}
+          onEdgesChange={onEdgeChanges}
           onNodesDelete={deleteNodes}
           onEdgesDelete={deleteEdges}
           proOptions={proOptions}
@@ -322,10 +277,8 @@ export default function GraphEditor() {
             <MiniMap className='!bg-card rounded-lg'/>
           )}
         </ReactFlow>
-      ) : viewMode === 'linear' ? (
-        <LinearView cols={1} />
       ) : (
-        <LinearView cols={3} />
+        <DefaultBoardView />
       )}
     </div>
   )

@@ -37,7 +37,7 @@ export const useChatStore = create<ChatStore>((set) => ({
 
   webSearchEngine: "perplexity",
 
-  enabledTools: ["web_search", "memory_search", "code_interpreter", "navigate"],
+  enabledTools: ["web_search", "memory_search", "code_interpreter", "navigate", "display_stock_widget", "display_weather_widget"],
 
   isStreaming: false,
 

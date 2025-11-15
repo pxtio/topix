@@ -1,5 +1,6 @@
 """All services info."""
 
+import logging
 import os
 
 from enum import StrEnum
@@ -9,6 +10,8 @@ from typing import Literal
 import yaml
 
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 LLM_FILEPATH = Path(__file__).parent.parent / "llm_models.yml"
 SERVICES_FILEPATH = Path(__file__).parent.parent / "services.yml"
@@ -85,8 +88,8 @@ class ServiceConfig(BaseModel):
     code: list[CodeService]
 
     @classmethod
-    def from_yaml(cls) -> "ServiceConfig":
-        """Create an instance of ServiceManager from a YAML file."""
+    def _sync(cls) -> dict:
+        """Sync the services config."""
         with open(SERVICES_FILEPATH) as f:
             cf = yaml.safe_load(f)
 
@@ -104,13 +107,28 @@ class ServiceConfig(BaseModel):
         navigate_services = [NavigateService.model_validate(service) for service in services[ServiceEnum.NAVIGATE]]
         code_services = [CodeService.model_validate(service) for service in services[ServiceEnum.CODE]]
 
-        return cls(
-            providers=providers,
-            llm=llm_services,
-            search=search_services,
-            navigate=navigate_services,
-            code=code_services,
-        )
+        return {
+            "providers": providers,
+            "llm": llm_services,
+            "search": search_services,
+            "navigate": navigate_services,
+            "code": code_services,
+        }
+
+    def update(self):
+        """Update the service config."""
+        synced_data = self._sync()
+
+        logger.info("Updating service configuration from environment variables.")
+        for key, value in synced_data.items():
+            setattr(self, key, value)
+
+    @classmethod
+    def from_yaml(cls) -> "ServiceConfig":
+        """Create an instance of ServiceManager from a YAML file."""
+        synced_data = cls._sync()
+
+        return cls(**synced_data)
 
     @classmethod
     def _get_llm_services(

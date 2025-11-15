@@ -7,6 +7,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from topix.config.config import Config
+from topix.config.services import service_config
 from topix.datatypes.stage import StageEnum
 from topix.store.qdrant.base import QdrantStore
 
@@ -22,6 +23,8 @@ async def setup(stage: StageEnum):
 
     config = Config.load(stage=stage)
     logger.info(f"Loaded configuration for stage: {stage}")
+
+    service_config.update()
 
     await QdrantStore.from_config().create_collection()
     return config

@@ -3,12 +3,12 @@
 import logging
 
 from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 import yaml
 
 from agents import ModelSettings
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
 from topix.config.services import service_config
@@ -28,14 +28,14 @@ class BaseAgentConfig(BaseModel):
     instructions_template: str
     model_settings: ModelSettings | None = None
 
-
     @field_validator("model", mode="after")
     @classmethod
     def validate_model(cls, v: str) -> str:
         """Check if the model is valid."""
         valid_model_codes = [service.code for service in service_config.llm]
+
         if len(valid_model_codes) == 0:
-            raise ValueError("No LLM API available. Please add at least one LLM API.")
+            raise ValueError("No LLM API available. Please add at least one LLM API by adding its api key to the config.")
 
         if v in valid_model_codes:
             return v

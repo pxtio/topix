@@ -1,24 +1,27 @@
 """Setup module."""
 
-import os
+import logging
+
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
 from topix.store.qdrant.base import QdrantStore
 
+logger = logging.getLogger(__name__)
+
 
 async def setup(stage: StageEnum):
     """Set up the application configuration and environment variables."""
-    config = Config.load(stage=stage)
+    # load .env file
+    envpath = Path(__file__).parent.parent.parent / '.env'
+    logger.info(f"Loading env from: {envpath}")
+    load_dotenv(dotenv_path=envpath, override=True)
 
-    os.environ['OPENAI_API_KEY'] = config.run.apis.openai.api_key
-    os.environ["TAVILY_API_KEY"] = config.run.apis.tavily.api_key
-    os.environ["LINKUP_API_KEY"] = config.run.apis.linkup.api_key
-    os.environ["PERPLEXITY_API_KEY"] = config.run.apis.perplexity.api_key
-    os.environ["GEMINI_API_KEY"] = config.run.apis.gemini.api_key
-    os.environ["ANTHROPIC_API_KEY"] = config.run.apis.anthropic.api_key
-    os.environ["OPENROUTER_API_KEY"] = config.run.apis.openrouter.api_key
-    os.environ["UNSPLASH_ACCESS_KEY"] = config.run.apis.unsplash.access_key
+    config = Config.load(stage=stage)
+    logger.info(f"Loaded configuration for stage: {stage}")
 
     await QdrantStore.from_config().create_collection()
     return config

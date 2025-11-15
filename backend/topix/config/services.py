@@ -23,6 +23,13 @@ class ServiceEnum(StrEnum):
     CODE = "code"
 
 
+class LLMTier(StrEnum):
+    """LLM Model tiers."""
+
+    PRO = "pro"
+    LITE = "lite"
+
+
 class BaseService(BaseModel):
     """Base Service info."""
 
@@ -36,7 +43,7 @@ class LLMService(BaseService):
 
     type: Literal[ServiceEnum.LLM] = ServiceEnum.LLM
     model: str
-    tier: Literal["pro", "lite"]
+    tier: LLMTier
     openrouter_model: str | None = None
     use_openrouter: bool = False
 
@@ -86,7 +93,8 @@ class ServiceConfig(BaseModel):
         # Get valid providers:
         providers: list[str] = []
         for provider, env_var in cf["providers"].items():
-            if os.getenv(env_var["env_var"]) is not None:
+            # Check if the env var is set and is not empty
+            if os.getenv(env_var["env_var"]):
                 providers.append(provider)
 
         # Get valid services
@@ -130,13 +138,14 @@ class ServiceConfig(BaseModel):
                     res.append(LLMService.model_validate({'name': llm_name, **cf[llm_name]}))
                 elif "openrouter" in providers:
                     res.append(
-                        LLMService.model_validate(
+                        LLMService.model_validate(dict(
                             name=llm_name,
                             **cf[llm_name],
                             use_openrouter=True,
-                        )
+                        ))
                     )
         return res
+
 
 """
 The global service config, to utilise:

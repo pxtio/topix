@@ -3,7 +3,7 @@ import { OpenAI, Gemini, Anthropic, DeepSeek, Mistral, Moonshot } from '@lobehub
 
 export const LlmModels = [
   "openai/gpt-5.1",
-  "openai/gpt-5.1-chat",
+  "openai/gpt-5.1-chat-latest",
   "openai/gpt-4o",
   "openai/gpt-4.1",
   "openai/gpt-5",
@@ -22,7 +22,7 @@ export const LlmModels = [
 export type LlmModel = typeof LlmModels[number]
 
 export const LlmName: Record<LlmModel, string> = {
-  "openai/gpt-5.1-chat": "GPT-5.1 Chat",
+  "openai/gpt-5.1-chat-latest": "GPT-5.1 Chat",
   "openai/gpt-5.1": "GPT-5.1",
   "openai/gpt-4o": "GPT-4o",
   "openai/gpt-4.1": "GPT-4.1",
@@ -41,7 +41,7 @@ export const LlmName: Record<LlmModel, string> = {
 
 export const LlmDescription: Record<LlmModel, string> = {
   "openai/gpt-5.1": "Next-generation model offering advanced reasoning and broader skill coverage",
-  "openai/gpt-5.1-chat": "Latest GPT-5.1 model optimized for chat applications with enhanced capabilities",
+  "openai/gpt-5.1-chat-latest": "Latest GPT-5.1 model optimized for chat applications with enhanced capabilities",
   "openai/gpt-4o": "High-quality, fast, and capable model with strong reasoning and low latency",
   "openai/gpt-4.1": "Enhanced GPT-4 model with balanced performance across reasoning and creativity",
   "openai/gpt-5": "Next-generation model offering advanced reasoning and broader skill coverage",
@@ -59,7 +59,7 @@ export const LlmDescription: Record<LlmModel, string> = {
 
 
 export const LlmBrandIcon: Record<LlmModel, React.ComponentType<{ size?: number | string, color?: string }>> = {
-  "openai/gpt-5.1-chat": OpenAI,
+  "openai/gpt-5.1-chat-latest": OpenAI,
   "openai/gpt-5.1": OpenAI,
   "openai/gpt-4o": OpenAI,
   "openai/gpt-4.1": OpenAI,

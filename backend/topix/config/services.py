@@ -89,7 +89,7 @@ class ServiceConfig(BaseModel):
 
     @classmethod
     def _sync(cls) -> dict:
-        """Sync the services config."""
+        """Sync the services config with environment variables."""
         with open(SERVICES_FILEPATH) as f:
             cf = yaml.safe_load(f)
 
@@ -102,18 +102,23 @@ class ServiceConfig(BaseModel):
 
         # Get valid services
         services = cf["services"]
-        llm_services = cls._get_llm_services(services[ServiceEnum.LLM], providers)
-        search_services = [SearchService.model_validate(service) for service in services[ServiceEnum.SEARCH]]
-        navigate_services = [NavigateService.model_validate(service) for service in services[ServiceEnum.NAVIGATE]]
-        code_services = [CodeService.model_validate(service) for service in services[ServiceEnum.CODE]]
 
-        return {
-            "providers": providers,
-            "llm": llm_services,
-            "search": search_services,
-            "navigate": navigate_services,
-            "code": code_services,
-        }
+        dct = {}
+        dct["providers"] = providers
+        dct["llm"] = cls._get_llm_services(services[ServiceEnum.LLM], providers)
+        dct["search"] = [
+            SearchService.model_validate(service)
+            for service in services[ServiceEnum.SEARCH] if service["provider"] in providers
+        ]
+        dct["navigate"] = [
+            NavigateService.model_validate(service)
+            for service in services[ServiceEnum.NAVIGATE] if service["provider"] in providers
+        ]
+        dct["code"] = [
+            CodeService.model_validate(service)
+            for service in services[ServiceEnum.CODE] if service["provider"] in providers
+        ]
+        return dct
 
     def update(self):
         """Update the service config."""

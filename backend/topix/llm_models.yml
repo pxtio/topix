@@ -1,32 +1,19 @@
+# OpenAI Models
+gpt-5.1:
+  model: gpt-5.1
+  openrouter_model: gpt-5.1
+  provider: openai
+  tier: pro
+
+gpt-5.1-chat:
+  model: gpt-5.1-chat-latest
+  openrouter_model: gpt-5.1-chat
+  provider: openai
+  tier: pro
+
 gpt-4.1:
   model: gpt-4.1
   provider: openai
-  tier: pro
-
-gemini-2.5-pro:
-  model: gemini-2.5-pro
-  provider: gemini
-  tier: pro
-
-gpt-4o:
-  model: gpt-4o
-  provider: openai
-  tier: pro
-
-claude-sonnet-4.5:
-  model: claude-sonnet-4-5-20250929
-  openrouter_model: claude-sonnet-4.5
-  provider: anthropic
-  tier: pro
-
-gpt-5:
-  model: gpt-5
-  provider: openai
-  tier: pro
-
-deepseek-chat-v3.1:
-  model: deepseek-chat-v3.1
-  provider: deepseek
   tier: pro
 
 gpt-4.1-mini:
@@ -34,15 +21,32 @@ gpt-4.1-mini:
   provider: openai
   tier: lite
 
-gemini-2.5-flash:
-  model: gemini-2.5-flash
-  provider: gemini
+gpt-5:
+  model: gpt-5
+  provider: openai
+  tier: pro
+
+gpt-5-mini:
+  model: gpt-5-mini
+  provider: openai
   tier: lite
+
+gpt-4o:
+  model: gpt-4o
+  provider: openai
+  tier: pro
 
 gpt-4o-mini:
   model: gpt-4o-mini
   provider: openai
   tier: lite
+
+# Claude Models
+claude-sonnet-4.5:
+  model: claude-sonnet-4-5-20250929
+  openrouter_model: claude-sonnet-4.5
+  provider: anthropic
+  tier: pro
 
 claude-opus-4.1:
   model: claude-opus-4-20250514
@@ -56,13 +60,32 @@ claude-3.5-haiku:
   provider: anthropic
   tier: lite
 
-gpt-5-mini:
-  model: gpt-5-mini
-  provider: openai
+# Gemini Models
+gemini-2.5-pro:
+  model: gemini-2.5-pro
+  provider: gemini
+  tier: pro
+
+gemini-2.5-flash:
+  model: gemini-2.5-flash
+  provider: gemini
   tier: lite
 
+# Mistral Models
 mistral-medium-3.1:
   model: mistral-medium-latest
   openrouter_model: mistral-medium-3.1
   provider: mistral
   tier: lite
+
+# Deepseek Models
+deepseek-chat-v3.1:
+  model: deepseek-chat-v3.1
+  provider: deepseek
+  tier: pro
+
+# Moonshot Models
+kimi-k2-thinking:
+  model: kimi-k2-thinking
+  provider: moonshotai
+  tier: pro

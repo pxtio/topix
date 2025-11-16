@@ -1,24 +1,29 @@
-import { OpenAI, Gemini, Anthropic, DeepSeek, Mistral } from '@lobehub/icons'
+import { OpenAI, Gemini, Anthropic, DeepSeek, Mistral, Moonshot } from '@lobehub/icons'
 
 
 export const LlmModels = [
+  "openai/gpt-5.1",
+  "openai/gpt-5.1-chat",
   "openai/gpt-4o",
   "openai/gpt-4.1",
   "openai/gpt-5",
   "openai/gpt-5-mini",
   "openai/gpt-5-nano",
-  "gemini/gemini-2.5-flash",
-  "gemini/gemini-2.5-pro",
   "openrouter/anthropic/claude-opus-4.1",
   "openrouter/anthropic/claude-sonnet-4.5",
   "openrouter/anthropic/claude-3.5-haiku",
+  "gemini/gemini-2.5-flash",
+  "gemini/gemini-2.5-pro",
   "openrouter/mistralai/mistral-medium-3.1",
-  "openrouter/deepseek/deepseek-chat-v3.1"
+  "openrouter/deepseek/deepseek-chat-v3.1",
+  "openrouter/moonshotai/kimi-k2-thinking"
 ] as const
 
 export type LlmModel = typeof LlmModels[number]
 
 export const LlmName: Record<LlmModel, string> = {
+  "openai/gpt-5.1-chat": "GPT-5.1 Chat",
+  "openai/gpt-5.1": "GPT-5.1",
   "openai/gpt-4o": "GPT-4o",
   "openai/gpt-4.1": "GPT-4.1",
   "openai/gpt-5": "GPT-5",
@@ -30,10 +35,13 @@ export const LlmName: Record<LlmModel, string> = {
   "openrouter/anthropic/claude-sonnet-4.5": "Claude Sonnet 4",
   "openrouter/anthropic/claude-3.5-haiku": "Claude Haiku",
   "openrouter/mistralai/mistral-medium-3.1": "Mistral Medium",
-  "openrouter/deepseek/deepseek-chat-v3.1": "DeepSeek Chat"
+  "openrouter/deepseek/deepseek-chat-v3.1": "DeepSeek Chat",
+  "openrouter/moonshotai/kimi-k2-thinking": "Kimi K2 Thinking"
 }
 
 export const LlmDescription: Record<LlmModel, string> = {
+  "openai/gpt-5.1": "Next-generation model offering advanced reasoning and broader skill coverage",
+  "openai/gpt-5.1-chat": "Latest GPT-5.1 model optimized for chat applications with enhanced capabilities",
   "openai/gpt-4o": "High-quality, fast, and capable model with strong reasoning and low latency",
   "openai/gpt-4.1": "Enhanced GPT-4 model with balanced performance across reasoning and creativity",
   "openai/gpt-5": "Next-generation model offering advanced reasoning and broader skill coverage",
@@ -45,11 +53,14 @@ export const LlmDescription: Record<LlmModel, string> = {
   "openrouter/anthropic/claude-sonnet-4.5": "Balanced Claude model combining speed with nuanced understanding",
   "openrouter/anthropic/claude-3.5-haiku": "Lightweight and responsive Claude variant suited for everyday tasks",
   "openrouter/mistralai/mistral-medium-3.1": "Efficient Mistral model offering strong multilingual and structured reasoning",
-  "openrouter/deepseek/deepseek-chat-v3.1": "High-performance open-source model with advanced reasoning and adaptability"
+  "openrouter/deepseek/deepseek-chat-v3.1": "High-performance open-source model with advanced reasoning and adaptability",
+  "openrouter/moonshotai/kimi-k2-thinking": "Innovative model focused on creative problem-solving and dynamic thinking"
 }
 
 
 export const LlmBrandIcon: Record<LlmModel, React.ComponentType<{ size?: number | string, color?: string }>> = {
+  "openai/gpt-5.1-chat": OpenAI,
+  "openai/gpt-5.1": OpenAI,
   "openai/gpt-4o": OpenAI,
   "openai/gpt-4.1": OpenAI,
   "openai/gpt-5": OpenAI,
@@ -61,5 +72,6 @@ export const LlmBrandIcon: Record<LlmModel, React.ComponentType<{ size?: number 
   "openrouter/anthropic/claude-sonnet-4.5": Anthropic,
   "openrouter/anthropic/claude-3.5-haiku": Anthropic,
   "openrouter/mistralai/mistral-medium-3.1": Mistral.Color,
-  "openrouter/deepseek/deepseek-chat-v3.1": DeepSeek.Color
+  "openrouter/deepseek/deepseek-chat-v3.1": DeepSeek.Color,
+  "openrouter/moonshotai/kimi-k2-thinking": Moonshot
 }

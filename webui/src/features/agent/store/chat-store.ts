@@ -33,9 +33,9 @@ export interface ChatStore {
  * @returns A Zustand store with methods to add and clear chat streams.
  */
 export const useChatStore = create<ChatStore>((set) => ({
-  llmModel: "openai/gpt-4.1",
+  llmModel: "openai/gpt-5.1",
 
-  webSearchEngine: "perplexity",
+  webSearchEngine: "linkup",
 
   enabledTools: ["web_search", "memory_search", "code_interpreter", "navigate", "display_stock_widget", "display_weather_widget"],
 

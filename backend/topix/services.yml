@@ -21,7 +21,7 @@ providers:
 services:
   llm:
     - gpt-5.1
-    - gpt-5.1-chat
+    - gpt-5.1-chat-latest
     - gpt-4.1
     - gpt-4.1-mini
     - gpt-5

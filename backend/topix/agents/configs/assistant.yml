@@ -12,9 +12,9 @@ plan:
     max_tokens: 8000
 
   web_search:
+    search_engine: linkup
     model: openai/gpt-4.1-mini
     instructions_template: web_search.jinja
-    search_engine: openai
     search_context_size: medium
     model_settings:
       temperature: 0.01

@@ -13,6 +13,8 @@ class OpenAIModel(str, Enum):
     GPT_5 = "openai/gpt-5"
     GPT_5_MINI = "openai/gpt-5-mini"
     GPT_5_NANO = "openai/gpt-5-nano"
+    GPT_5_1_CHAT = "openai/gpt-5.1-chat-latest"
+    GPT_5_1 = "openai/gpt-5.1"
 
 
 class GeminiModel(str, Enum):
@@ -55,7 +57,7 @@ def support_temperature(model: str) -> bool:
     Temperature is possibly not supported in reasoning models due to
     introduced newer parameters like `verbosity` or `reasoning_effort`.
     """
-    if model in [OpenAIModel.GPT_5, OpenAIModel.GPT_5_MINI, OpenAIModel.GPT_5_NANO]:
+    if model in [OpenAIModel.GPT_5, OpenAIModel.GPT_5_MINI, OpenAIModel.GPT_5_NANO, OpenAIModel.GPT_5_1_CHAT]:
         return False
     return True
 
@@ -64,6 +66,8 @@ def support_reasoning(model: str) -> bool:
     """Check if the model supports reasoning."""
     reasoning_models = {
         # OpenAI reasoning-capable
+        OpenAIModel.GPT_5_1,
+        OpenAIModel.GPT_5_1_CHAT,
         OpenAIModel.GPT_5,
         OpenAIModel.GPT_5_MINI,
         OpenAIModel.GPT_5_NANO,
@@ -79,6 +83,16 @@ def support_reasoning(model: str) -> bool:
     return model in reasoning_models
 
 
+def support_reasoning_effort_instant_mode(model: str) -> bool:
+    """Check if the model supports instant reasoning effort."""
+    return model in [OpenAIModel.GPT_5_1_CHAT]
+
+
+def support_reasoning_effort_none(model: str) -> bool:
+    """Check if the model supports 'none' reasoning effort."""
+    return model in [OpenAIModel.GPT_5_1]
+
+
 def support_penalties(model: str) -> bool:
     """Check if the model supports frequency and presence penalty."""
     if model in [
@@ -87,6 +101,7 @@ def support_penalties(model: str) -> bool:
         OpenAIModel.GPT_4_1,
         OpenAIModel.GPT_4_1_MINI,
         OpenAIModel.GPT_4_1_NANO,
+        OpenAIModel.GPT_5_1_CHAT,
         OpenAIModel.GPT_5,
         OpenAIModel.GPT_5_MINI,
         OpenAIModel.GPT_5_NANO,

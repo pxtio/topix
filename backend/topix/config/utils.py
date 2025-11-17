@@ -2,12 +2,19 @@
 
 import logging
 import os
+import secrets
 
 from dopplersdk import DopplerSDK
 
 from topix.datatypes.stage import StageEnum
 
 logger = logging.getLogger(__name__)
+
+
+def generate_jwt_secret() -> str:
+    """Generate a secure random JWT secret key."""
+    logger.info("Generating a new JWT secret.")
+    return secrets.token_urlsafe(64)
 
 
 def load_secrets(

@@ -7,10 +7,11 @@ import os
 
 from urllib.parse import quote_plus
 
-from pydantic import BaseModel
+from http_exceptions.client_exceptions import BadRequestException
+from pydantic import BaseModel, Field, SecretStr
 from yaml import safe_load
 
-from topix.config.utils import load_secrets
+from topix.config.utils import generate_jwt_secret, load_secrets
 from topix.datatypes.stage import StageEnum
 from topix.utils.singleton import SingletonMeta
 
@@ -24,7 +25,7 @@ class QdrantConfig(BaseModel):
     port: int = 6333
     collection: str = "topix"
     https: bool = False
-    api_key: str | None = None
+    api_key: SecretStr | None = None
 
     def model_post_init(self, __context):
         """Post-initialization to set up any derived attributes."""
@@ -46,7 +47,7 @@ class PostgresConfig(BaseModel):
     port: int = 5432
     database: str = "topix"
     user: str = "topix"
-    password: str | None = None
+    password: SecretStr | None = None
 
     def model_post_init(self, __context):
         """Post-initialization to set up any derived attributes."""
@@ -63,7 +64,7 @@ class PostgresConfig(BaseModel):
     def dsn(self) -> str:
         """Return a properly encoded PostgreSQL connection string."""
         user_enc = quote_plus(self.user)
-        pwd_enc = quote_plus(self.password) if self.password else ""
+        pwd_enc = quote_plus(self.password.get_secret_value()) if self.password else ""
         if pwd_enc:
             return f"postgresql://{user_enc}:{pwd_enc}@{self.hostname}:{self.port}/{self.database}"
         else:
@@ -81,82 +82,109 @@ class BaseAPIConfig(BaseModel):
     """Base configuration for APIs used in the application."""
 
     url: str | None = None
-    api_key: str
+    api_key: SecretStr | None = None
+    env_var: str  # Environment variable name to load the API key from must be UPPERCASE
+
+    def model_post_init(self, __context):
+        """Post-initialization to set up any derived attributes."""
+        env_key = os.getenv(self.env_var)
+        if env_key:
+            self.api_key = SecretStr(env_key)
+            logger.info(f"API key set from environment {self.env_var}.")
+
+        else:
+            logger.warning(f"API key not found in environment {self.env_var}.")
+            if self.api_key:
+                logger.info(f"Using API key from config file for {self.env_var}.")
+                os.environ[self.env_var] = self.api_key.get_secret_value()
 
 
 class OpenAIConfig(BaseAPIConfig):
     """Configuration for OpenAI API."""
 
-    pass
+    env_var: str = "OPENAI_API_KEY"
 
 
 class MistralConfig(BaseAPIConfig):
     """Configuration for Mistral API."""
 
-    pass
+    env_var: str = "MISTRAL_API_KEY"
 
 
 class GeminiConfig(BaseAPIConfig):
     """Configuration for Gemini API."""
 
-    pass
+    env_var: str = "GEMINI_API_KEY"
 
 
 class PerplexityConfig(BaseAPIConfig):
     """Configuration for Perplexity API."""
 
-    pass
+    env_var: str = "PERPLEXITY_API_KEY"
 
 
 class TavilyConfig(BaseAPIConfig):
     """Configuration for Tavily API."""
 
-    pass
+    env_var: str = "TAVILY_API_KEY"
 
 
 class LinkUpConfig(BaseAPIConfig):
     """Configuration for LinkUp API."""
 
-    pass
+    env_var: str = "LINKUP_API_KEY"
 
 
 class AnthropicConfig(BaseAPIConfig):
     """Configuration for Anthropic API."""
 
-    pass
+    env_var: str = "ANTHROPIC_API_KEY"
 
 
 class OpenRouterConfig(BaseAPIConfig):
     """Configuration for OpenRouter API."""
 
-    pass
+    env_var: str = "OPENROUTER_API_KEY"
 
 
 class UnsplashConfig(BaseModel):
     """Configuration for Unsplash API."""
 
-    access_key: str
+    access_key: SecretStr | None = None
+
+    def model_post_init(self, __context):
+        """Post-initialization to set up any derived attributes."""
+        env_key = os.getenv("UNSPLASH_ACCESS_KEY")
+        if env_key:
+            self.access_key = SecretStr(env_key)
+            logger.info("Unsplash access key set from environment UNSPLASH_ACCESS_KEY.")
+
+        else:
+            logger.warning("Unsplash access key not found in environment UNSPLASH_ACCESS_KEY.")
+            if self.access_key:
+                logger.info("Using Unsplash access key from config file.")
+                os.environ["UNSPLASH_ACCESS_KEY"] = self.access_key.get_secret_value()
 
 
 class APIsConfig(BaseModel):
     """Configuration for external APIs used in the application."""
 
-    openai: OpenAIConfig
-    mistral: MistralConfig
-    perplexity: PerplexityConfig
-    tavily: TavilyConfig
-    linkup: LinkUpConfig
-    gemini: GeminiConfig
-    anthropic: AnthropicConfig
-    openrouter: OpenRouterConfig
-    unsplash: UnsplashConfig
+    openai: OpenAIConfig = OpenAIConfig()
+    mistral: MistralConfig = MistralConfig()
+    perplexity: PerplexityConfig = PerplexityConfig()
+    tavily: TavilyConfig = TavilyConfig()
+    linkup: LinkUpConfig = LinkUpConfig()
+    gemini: GeminiConfig = GeminiConfig()
+    anthropic: AnthropicConfig = AnthropicConfig()
+    openrouter: OpenRouterConfig = OpenRouterConfig()
+    unsplash: UnsplashConfig = UnsplashConfig()
 
 
 class RunConfig(BaseModel):
     """Configuration for running the application."""
 
     databases: DatabasesConfig = DatabasesConfig()
-    apis: APIsConfig
+    apis: APIsConfig = APIsConfig()
 
 
 class AppSettings(BaseModel):
@@ -164,12 +192,29 @@ class AppSettings(BaseModel):
 
     port: int = 8888
 
+    def model_post_init(self, __context):
+        """Post-initialization to set up any derived attributes."""
+        env_port = os.getenv("API_PORT")
+        if env_port:
+            self.port = int(env_port)
+            logger.info(f"App port set from environment API_PORT: {self.port}")
+
+
+def generate_or_load_jwt_secret_fr_env() -> str:
+    """Generate or load JWT secret from environment variable."""
+    env_secret = os.getenv("JWT_SECRET_KEY")
+    if env_secret:
+        logger.info("Loaded JWT secret from environment variable JWT_SECRET_KEY.")
+        return env_secret
+    else:
+        return generate_jwt_secret()
+
 
 class SecuritySettings(BaseModel):
     """JWT Security settings."""
 
-    secret_key: str
-    algorithm: str
+    secret_key: SecretStr = Field(default_factory=generate_or_load_jwt_secret_fr_env)
+    algorithm: str = "HS256"
 
 
 class AppConfig(BaseModel):
@@ -177,7 +222,7 @@ class AppConfig(BaseModel):
 
     name: str = "TopiX"
     settings: AppSettings = AppSettings()
-    security: SecuritySettings
+    security: SecuritySettings = SecuritySettings()
 
 
 class ConfigMeta(SingletonMeta, type(BaseModel)):
@@ -190,8 +235,8 @@ class Config(BaseModel, metaclass=ConfigMeta):
     """Configuration class for TopiX application."""
 
     stage: StageEnum = StageEnum.LOCAL
-    run: RunConfig
-    app: AppConfig
+    run: RunConfig = RunConfig()
+    app: AppConfig = AppConfig()
 
     @classmethod
     def load(
@@ -199,8 +244,19 @@ class Config(BaseModel, metaclass=ConfigMeta):
         stage: StageEnum = StageEnum.LOCAL
     ) -> Config:
         """Load configuration from Doppler based on the provided stage."""
-        secret = load_secrets(stage)
-        config_data = safe_load(secret)
+        try:
+            secret = load_secrets(stage)
+            config_data = safe_load(secret)
+        except BadRequestException as e:
+            if hasattr(e, 'status_code') and e.status_code == 400:
+                logger.error(
+                    f"Failed to load secrets from Doppler:\n---\n{e}\n---\nWill use default config. "
+                    "Most config values can be precised in .env file.",
+                )
+                config_data = {}
+            else:
+                raise e
+
         return cls(
             stage=stage,
             **config_data

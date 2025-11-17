@@ -1,25 +1,46 @@
 """Agent Config classes."""
 
+import logging
+
 from pathlib import Path
 from typing import Literal
 
 import yaml
 
 from agents import ModelSettings
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from topix.agents.datatypes.web_search import WebSearchContextSize, WebSearchOption
+from topix.config.services import service_config
 from topix.datatypes.recurrence import Recurrence
 
 CONFIG_DIR = Path(__file__).parent / "configs"
+
+logger = logging.getLogger(__name__)
 
 
 class BaseAgentConfig(BaseModel):
     """Base Agent Config class."""
 
+    model_config = ConfigDict(validate_assignment=True)
+
     model: str
     instructions_template: str
     model_settings: ModelSettings | None = None
+
+    @field_validator("model", mode="after")
+    @classmethod
+    def validate_model(cls, v: str) -> str:
+        """Check if the model is valid."""
+        valid_model_codes = [service.code for service in service_config.llm]
+
+        if len(valid_model_codes) == 0:
+            raise ValueError("No LLM API available. Please add at least one LLM API by adding its api key to the config.")
+
+        if v in valid_model_codes:
+            return v
+        logger.info(f"Model '{v}' is not available, replaced with {valid_model_codes[0]}")
+        return valid_model_codes[0]
 
 
 class WebSearchConfig(BaseAgentConfig):
@@ -33,17 +54,26 @@ class WebSearchConfig(BaseAgentConfig):
     enable_summary: bool = False
     streamed: bool = False
 
+    @field_validator("search_engine")
+    @classmethod
+    def validate_engine(cls, v: str) -> str:
+        """Check if the model is valid."""
+        valid_engines = [service.name for service in service_config.search]
+        if len(valid_engines) == 0:
+            raise ValueError("No Search API available. Please add at least one Search API.")
+        if v in valid_engines:
+            return v
+        logger.info(f"Search choice '{v}' is not available, replaced with {valid_engines[0]}")
+        return valid_engines[0]
+
 
 class PlanConfig(BaseAgentConfig):
     """Plan Config class."""
 
     web_search: WebSearchConfig
     memory_search: BaseAgentConfig
-    code_interpreter: BaseAgentConfig
-    navigate: BaseAgentConfig
-
-    # For Tavily and LinkUp
-    enable_web_summarization: bool = True
+    code_interpreter: BaseAgentConfig | None = None
+    navigate: BaseAgentConfig | None = None
 
 
 class AssistantManagerConfig(BaseModel):
@@ -60,24 +90,25 @@ class AssistantManagerConfig(BaseModel):
             filepath = CONFIG_DIR / "assistant.yml"
         with open(filepath) as f:
             cf = yaml.safe_load(f)
+
+        if 'plan' in cf:
+            if len(service_config.navigate) == 0:
+                cf['plan']['navigate'] = None
+
+            if len(service_config.code) == 0:
+                cf['plan']['code_interpreter'] = None
+
         return AssistantManagerConfig.model_validate(cf)
 
-    def set_web_engine(
-        self, engine: WebSearchOption, enable_summarization: bool = False
-    ):
+    def set_web_engine(self, engine: WebSearchOption, enable_summarization: bool = False):
         """Switch the web search engine."""
         self.plan.web_search.search_engine = engine
 
         if engine in [WebSearchOption.OPENAI]:
             self.plan.web_search.instructions_template = "web_search.jinja"
-            self.plan.enable_web_summarization = True
         else:
-            if enable_summarization:
-                # The raw web results will be summarized by LLM model
-                self.plan.web_search.instructions_template = "decoupled_web_search.jinja"
-                self.plan.enable_web_summarization = True
-            else:
-                self.plan.enable_web_summarization = False
+            self.plan.web_search.instructions_template = "decoupled_web_search.jinja"
+            self.plan.web_search.enable_summary = enable_summarization
 
     def set_model(self, model: str):
         """Switch the plan model."""

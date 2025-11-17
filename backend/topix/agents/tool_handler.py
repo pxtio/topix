@@ -258,6 +258,10 @@ class ToolHandler:
         """
         if isinstance(input, BaseModel):
             input = input.model_dump()
+        if isinstance(input, list) and all(
+            isinstance(item, BaseModel) for item in input
+        ):
+            input = [item.model_dump() for item in input]
         await context._message_queue.put(
             AgentStreamMessage(
                 content=Content(

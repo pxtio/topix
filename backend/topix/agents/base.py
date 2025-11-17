@@ -4,6 +4,7 @@ import logging
 
 from dataclasses import dataclass
 from pathlib import Path
+from pydantic import BaseModel
 from typing import Any, AsyncGenerator
 
 import litellm
@@ -164,7 +165,11 @@ class BaseAgent(Agent[Context]):
     async def _input_formatter(
         self, context: Context, input: Any
     ) -> str | list[dict[str, str]]:
-        if isinstance(input, (str, list)):
+        if isinstance(input, list) and all(
+            isinstance(item, BaseModel) for item in input
+        ):
+            return [item.model_dump() for item in input]
+        elif isinstance(input, (str, list)):
             return input
         raise NotImplementedError("_input_formatter method is not implemented")
 

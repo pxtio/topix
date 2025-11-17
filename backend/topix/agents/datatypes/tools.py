@@ -22,6 +22,9 @@ class AgentToolName(StrEnum):
     DISPLAY_STOCK_WIDGET = "display_stock_widget"
     DISPLAY_WEATHER_WIDGET = "display_weather_widget"
 
+    STOCK_COLLECTOR = "stock_collector"
+    STOCK_SYNTHESIZER = "stock_synthesizer"
+
     RAW_MESSAGE = "raw_message"
 
 
@@ -31,6 +34,7 @@ def to_display_output(tool_name: str) -> bool:
         AgentToolName.ANSWER_REFORMULATE,
         AgentToolName.RAW_MESSAGE,
         AgentToolName.SYNTHESIZER,
+        AgentToolName.STOCK_SYNTHESIZER,
     ]
 
 
@@ -44,4 +48,6 @@ tool_descriptions = {
     AgentToolName.OUTLINE_GENERATOR: "Generate an outline for research",
     AgentToolName.WEB_COLLECTOR: "Collect web content based on the outline",
     AgentToolName.SYNTHESIZER: "Synthesize a report based on collected content",
+    AgentToolName.STOCK_COLLECTOR: "Collect stock information from the web",
+    AgentToolName.STOCK_SYNTHESIZER: "Synthesize a stock review based on collected information",
 }

@@ -1,4 +1,3 @@
-// components/sidebar/app-sidebar.tsx
 import {
   Sidebar,
   SidebarContent,
@@ -9,27 +8,29 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-} from "@/components/ui/sidebar"
-import { useListChats } from "@/features/agent/api/list-chats"
-import { useAppStore } from "@/store"
-import { useListBoards } from "@/features/board/api/list-boards"
-import { Collapsible, CollapsibleTrigger } from "../ui/collapsible"
-import { CollapsibleContent } from "@radix-ui/react-collapsible"
-import { ScrollArea } from "../ui/scroll-area"
-import { ChatMenuItem, NewChatItem } from "./chat"
-import { BoardItem, DashboardMenuItem, NewBoardItem } from "./board"
-import { useMemo } from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Clock02Icon, LogoutSquareIcon, MinusSignIcon, PlusSignIcon, Settings01Icon, UserIcon } from "@hugeicons/core-free-icons"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from '@/components/ui/sidebar'
+import { useListChats } from '@/features/agent/api/list-chats'
+import { useAppStore } from '@/store'
+import { useListBoards } from '@/features/board/api/list-boards'
+import { Collapsible, CollapsibleTrigger } from '../ui/collapsible'
+import { CollapsibleContent } from '@radix-ui/react-collapsible'
+import { ScrollArea } from '../ui/scroll-area'
+import { ChatMenuItem, NewChatItem } from './chat'
+import { BoardItem, DashboardMenuItem, NewBoardItem } from './board'
+import { useMemo } from 'react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Clock02Icon, LogoutSquareIcon, MinusSignIcon, PlusSignIcon, Settings01Icon, UserIcon } from '@hugeicons/core-free-icons'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { SubscriptionsMenuItem } from "./subscription"
+} from '@/components/ui/dropdown-menu'
+import { SubscriptionsMenuItem } from './subscription'
+import { ModeToggle } from '@/components/mode-toggle'
+import { HomeMenuItem } from './home'
 
 type AppSidebarProps = {
   onLogout: () => void
@@ -40,8 +41,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const userEmail = useAppStore(s => s.userEmail)
 
   const initials = useMemo(() => {
-    if (!userEmail) return "U"
-    const name = userEmail.split("@")[0] || "user"
+    if (!userEmail) return 'U'
+    const name = userEmail.split('@')[0] || 'user'
     return name.slice(0, 2).toUpperCase()
   }, [userEmail])
 
@@ -92,32 +93,45 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuButton className="flex items-center gap-2 font-medium text-xs">
-                        <Avatar className="h-6 w-6 -ml-1">
-                          <AvatarImage alt={userEmail} />
-                          <AvatarFallback>{initials}</AvatarFallback>
-                        </Avatar>
-                        <span className="truncate">{userEmail}</span>
-                      </SidebarMenuButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" side="right" className="w-56">
-                      <DropdownMenuItem disabled>
-                        <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" strokeWidth={2} />
-                        <span>Profile</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem disabled>
-                        <HugeiconsIcon icon={Settings01Icon} className="mr-2 h-4 w-4" strokeWidth={2} />
-                        <span>Settings</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={onLogout}>
-                        <HugeiconsIcon icon={LogoutSquareIcon} className="mr-2 h-4 w-4" strokeWidth={2} />
-                        <span>Logout</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex items-center gap-2 w-full">
+                    {/* Dropdown trigger: avatar + ellipsized email */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <SidebarMenuButton className="flex items-center gap-2 font-medium text-xs min-w-0">
+                          <Avatar className="h-8 w-8 -ml-2 shrink-0">
+                            <AvatarImage alt={userEmail} />
+                            <AvatarFallback>{initials}</AvatarFallback>
+                          </Avatar>
+                          <span
+                            className="truncate block flex-1 min-w-0"
+                            title={userEmail}
+                          >
+                            {userEmail}
+                          </span>
+                        </SidebarMenuButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" side="right" className="w-56 bg-accent">
+                        <DropdownMenuItem disabled className='text-xs'>
+                          <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" strokeWidth={2} />
+                          <span>Profile</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem disabled className='text-xs'>
+                          <HugeiconsIcon icon={Settings01Icon} className="mr-2 h-4 w-4" strokeWidth={2} />
+                          <span>Settings</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={onLogout} className='text-xs'>
+                          <HugeiconsIcon icon={LogoutSquareIcon} className="mr-2 h-4 w-4" strokeWidth={2} />
+                          <span>Logout</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Theme toggle sits to the right, not part of the trigger */}
+                    <div className="ml-auto shrink-0">
+                      <ModeToggle aria-label="Toggle theme" />
+                    </div>
+                  </div>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
@@ -128,6 +142,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             <SidebarGroupLabel><span>Workspace</span></SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                <HomeMenuItem />
                 <SubscriptionsMenuItem />
                 <DashboardMenuItem />
                 <NewBoardItem />

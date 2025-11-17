@@ -14,11 +14,7 @@ import type { ArrowheadType, LinkStyle } from '../../types/style'
 import { getEdgeParams } from '../../utils/flow'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
-import { useDebouncedCallback } from 'use-debounce'
-import { DEBOUNCE_DELAY } from '../../const'
-import { useAppStore } from '@/store'
-import { useGraphStore } from '../../store/graph-store'
-import { useUpdateLink } from '../../api/update-link'
+
 
 function markerId(edgeId: string, which: 'start' | 'end'): string {
   return `edge-${edgeId}-${which}-marker`
@@ -103,19 +99,6 @@ export const EdgeView = memo(function EdgeView({
     strokeLinejoin: 'round',
     fill: 'none'
   }), [style, displayStroke, strokeWidth])
-
-  // —— Debounced persistence (like NodeView) ——
-  const userId = useAppStore(state => state.userId)
-  const boardId = useGraphStore(state => state.boardId)
-  const { updateLink } = useUpdateLink()
-
-  const persist = useDebouncedCallback(() => {
-    if (boardId && userId && data) {
-      updateLink({ boardId, userId, linkId: id, linkData: data })
-    }
-  }, DEBOUNCE_DELAY)
-
-  useEffect(() => { persist() }, [persist, data])
 
   // —— RoughJS render layer ——
   useEffect(() => {

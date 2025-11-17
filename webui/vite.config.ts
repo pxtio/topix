@@ -33,6 +33,8 @@ export default defineConfig({
             if (id.includes("@milkdown")) return "milkdown"
             if (id.includes("@lezer")) return "lezer"
             if (id.includes("@codemirror")) return "codemirror"
+            if (id.includes("framer-motion")) return "framer-motion"
+            if (id.includes("recharts")) return "recharts"
             if (
               id.includes("/node_modules/prosemirror-") ||
               id.includes("/node_modules/@prosemirror/") ||
@@ -50,5 +52,8 @@ export default defineConfig({
         },
       },
     },
+  },
+  server: {
+    port: Number(process.env.APP_PORT) || 5173,
   },
 })

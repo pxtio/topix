@@ -28,6 +28,7 @@ interface ListMessagesResponse {
             output: ToolOutput
             state: ToolExecutionState
             event_messages: string[]
+            arguments?: { input: unknown }
           }[]
         }
       }

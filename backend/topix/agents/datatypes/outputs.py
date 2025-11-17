@@ -1,7 +1,7 @@
 """Agent Output Data Types."""
 from __future__ import annotations
 
-from typing import Literal, Union
+from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel
 
@@ -21,8 +21,31 @@ type ToolOutput = Union[
     MapifyTheme,
     TopicTracker,
     NewsfeedOutput,
-    SchemaOutput
+    SchemaOutput,
+    DisplayStockWidgetOutput,
+    DisplayWeatherWidgetOutput,
 ]
+
+
+class DisplayWeatherWidgetOutput(BaseModel):
+    """Display Weather Widget Output."""
+
+    type: Literal["display_weather_widget"] = "display_weather_widget"
+    city: Annotated[
+        str,
+        "Free-form place description for geocoding. "
+        "Include country or state to disambiguate when possible. "
+        "Examples: 'Paris, France', 'Austin, TX, USA', 'Bangalore, IN', "
+        "'Shibuya, Tokyo, Japan'. Can also be a neighborhood or landmark "
+        "like 'Manhattan, New York, USA'."
+    ]
+
+
+class DisplayStockWidgetOutput(BaseModel):
+    """Display Stock Widget Output."""
+
+    type: Literal["display_stock_widget"] = "display_stock_widget"
+    symbol: Annotated[str, "The stock ticker symbol, e.g. AAPL for Apple Inc."]
 
 
 class NewsfeedArticle(BaseModel):

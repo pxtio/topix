@@ -34,7 +34,7 @@ export const BoardCard = ({
         hover:ring-2 hover:ring-secondary/50
         shadow-md hover:shadow-lg
         cursor-pointer
-        w-60 h-60
+        w-64 h-60
         flex flex-col justify-between
         overflow-hidden
         gap-1
@@ -52,7 +52,7 @@ export const BoardCard = ({
             />
           </div>
         ) : (
-          <div className='w-full h-40 bg-card rounded-md' />
+          <div className='w-full h-40 bg-transparent rounded-md' />
         )
       }
       <div className='p-2 w-full overflow-ellipsis'>
@@ -93,7 +93,7 @@ export const NewBoardCard = () => {
         border-2 border-border hover:border-secondary border-dashed
         shadow-none hover:shadow-sm
         cursor-pointer
-        w-60 h-60
+        w-64 h-60
         flex flex-col
         overflow-hidden
         gap-1

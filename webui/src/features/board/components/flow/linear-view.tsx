@@ -23,7 +23,6 @@ import { LinearNoteCard } from './linear-note-card'
 import { useUpdateNote } from '../../api/update-note'
 import type { NumberProperty } from '../../types/property'
 import { useAppStore } from '@/store'
-import { ScrollArea } from '@/components/ui/scroll-area'
 
 export type LinearViewProps = {
   cols?: number            // desired columns for >= breakpoint
@@ -140,26 +139,24 @@ export function LinearView({
   }
 
   return (
-    <div className='w-full h-full'>
-      <ScrollArea className='w-full h-full'>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={ids} strategy={rectSortingStrategy}>
-            <div
-              className='grid px-4 pt-20 pb-20 mx-auto'
-              style={{
-                maxWidth: maxWidthPx,
-                columnGap: gapPx,
-                rowGap: gapPx,
-                gridTemplateColumns: `repeat(${effectiveCols}, minmax(0, 1fr))`
-              }}
-            >
-              {sortedNodes.map(n => (
-                <SortableNoteCard key={n.id} node={n} />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-      </ScrollArea>
+    <div className='w-full'>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={ids} strategy={rectSortingStrategy}>
+          <div
+            className='grid p-4 mx-auto'
+            style={{
+              maxWidth: maxWidthPx,
+              columnGap: gapPx,
+              rowGap: gapPx,
+              gridTemplateColumns: `repeat(${effectiveCols}, minmax(0, 1fr))`
+            }}
+          >
+            {sortedNodes.map(n => (
+              <SortableNoteCard key={n.id} node={n} />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }
@@ -192,7 +189,7 @@ function SortableNoteCard({ node }: SortableNoteCardProps) {
         {...attributes}
         {...listeners}
         aria-label='Drag to reorder'
-        className='absolute left-1 top-1 z-20 p-1 rounded-md cursor-grab active:cursor-grabbing touch-none text-muted-foreground/30 hover:text-muted-foreground transition'
+        className='absolute left-1 top-1 z-30 p-1 rounded-md cursor-grab active:cursor-grabbing touch-none text-muted-foreground/30 hover:text-muted-foreground transition'
         onClick={e => e.preventDefault()}
       >
         <Grip className='size-4' />

@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp } from "lucide-react"
 import { ToolNameIcon, type AgentResponse, type ReasoningStep } from "../../types/stream"
 import { extractStepDescription, getWebSearchUrls } from "../../utils/stream/build"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { IdeaIcon, Tick01Icon } from "@hugeicons/core-free-icons"
+import { IdeaIcon, Search01Icon, Tick01Icon } from "@hugeicons/core-free-icons"
 import { ThinkingDots } from "@/components/loading-view"
 import { MiniLinkCard } from "../link-preview"
 import { cn } from "@/lib/utils"
@@ -39,7 +39,7 @@ const ReasoningStepViewImpl = ({
 }: { step: ReasoningStep, isLoading?: boolean }) => {
   const [viewMore, setViewMore] = useState<boolean>(false)
 
-  const { reasoning, message, title } = extractStepDescription(step)
+  const { reasoning, message, title, input } = extractStepDescription(step)
 
   const sources = viewMore ? getWebSearchUrls(step) : []
 
@@ -102,7 +102,21 @@ const ReasoningStepViewImpl = ({
             {
               viewMore && reasoning !== "" && <ReasoningMessage reasoning={reasoning} />
             }
-            { viewMore && message !== "" && <span className={spanMessageClass}>{message}</span>}
+            {
+              viewMore && input && (
+                <span className='text-xs font-mono px-2 py-1 rounded-sm bg-sidebar-accent/50 border border-border flex flex-row items-center justify-start gap-1 w-auto mr-auto'>
+                  <HugeiconsIcon icon={Search01Icon} strokeWidth={2} className='size-3' />
+                  <span>{input}</span>
+                </span>
+              )
+            }
+            {
+              viewMore && message !== "" && (
+                <span className={spanMessageClass}>
+                  {message}
+                </span>
+              )
+            }
             {
               viewMore && sources && sources.length > 0 &&
               <div className='w-full flex flex-row flex-wrap items-start gap-1 mt-2'>

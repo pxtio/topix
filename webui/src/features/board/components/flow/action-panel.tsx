@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ChartRelationshipIcon, CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, GridViewIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, StarIcon, Image02Icon } from '@hugeicons/core-free-icons'
+import { ChartRelationshipIcon, CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, StarIcon, Image02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { NodeType } from '../../types/style'
@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
 
-type ViewMode = 'graph' | 'linear' | 'grid'
+type ViewMode = 'graph' | 'linear'
 
 interface ActionPanelProps {
   onAddNode: ({ nodeType }: { nodeType: NodeType }) => void
@@ -97,7 +97,7 @@ export function ActionPanel({
         p-1 flex gap-1
         right-2 top-1/2 -translate-y-1/2 md:translate-y-0
         flex-col items-stretch
-        md:right-auto md:left-1/2 md:top-4 md:-translate-x-1/2
+        md:right-auto md:left-1/2 md:top-2 md:-translate-x-1/2
         md:flex-row md:items-center
       `}
       role='toolbar'
@@ -110,10 +110,6 @@ export function ActionPanel({
 
       <ModeButton mode='linear' label='Linear'>
         <HugeiconsIcon icon={LeftToRightListBulletIcon} className='size-4 shrink-0' strokeWidth={2} />
-      </ModeButton>
-
-      <ModeButton mode='grid' label='Grid'>
-        <HugeiconsIcon icon={GridViewIcon} className='size-4 shrink-0' strokeWidth={2} />
       </ModeButton>
 
       <Separator orientation="vertical" className='md:!h-6 hidden md:block' />

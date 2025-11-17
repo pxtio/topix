@@ -95,7 +95,7 @@ def strip_query_echo_once(
     prefixes = [query, f"User: {query}", f"Query: {query}"]
     for p in prefixes:
         if inc.startswith(p):
-            dropped = inc[len(p) :]
+            dropped = inc[len(p):]
             while dropped and dropped[0] in ": -–—\n\t":
                 dropped = dropped[1:]
             return dropped.lstrip("\n")

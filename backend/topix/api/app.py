@@ -6,13 +6,15 @@ import os
 
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from topix.api.router import boards, chats, subscriptions, tools, users, utils
+from topix.api.router import boards, chats, finance, subscriptions, tools, users, utils
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
 from topix.setup import setup
@@ -63,6 +65,7 @@ def create_app(stage: StageEnum):
     app.include_router(users.router)
     app.include_router(subscriptions.router)
     app.include_router(utils.router)
+    app.include_router(finance.router)
 
     return app
 
@@ -91,6 +94,12 @@ if __name__ == "__main__":
         help="Port to run the application on."
     )
     args = args.parse_args()
+
+    # load .env file
+    envpath = Path(__file__).parent.parent.parent.parent / '.env'
+    logger.info(f"Loading env from: {envpath}")
+    load_dotenv(dotenv_path=envpath, override=True)
+
     app, port = asyncio.run(main(args))
 
     # override port with env var if env var is set

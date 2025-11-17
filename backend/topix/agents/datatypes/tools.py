@@ -18,6 +18,10 @@ class AgentToolName(StrEnum):
     WEB_COLLECTOR = "web_collector"
     SYNTHESIZER = "synthesizer"
 
+    # widget tools
+    DISPLAY_STOCK_WIDGET = "display_stock_widget"
+    DISPLAY_WEATHER_WIDGET = "display_weather_widget"
+
     RAW_MESSAGE = "raw_message"
 
     IMAGE_DESCRIPTION = "image_description"

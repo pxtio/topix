@@ -3,7 +3,7 @@ import logging
 
 from datetime import datetime
 
-from psycopg import AsyncConnection
+import asyncpg
 
 from topix.datatypes.graph.graph import Graph
 from topix.store.postgres.graph import (
@@ -19,7 +19,7 @@ from topix.utils.common import gen_uid
 logger = logging.getLogger(__name__)
 
 
-async def test_graph_crud(conn: AsyncConnection):
+async def test_graph_crud(conn: asyncpg.Connection):
     """Test the CRUD operations for the Graph model in the Postgres store."""
     # 1. Create a graph
     graph_uid = gen_uid()

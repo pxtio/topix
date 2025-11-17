@@ -83,7 +83,7 @@ services:
       - postgres-local
       - qdrant-local
     ports:
-      - "${API_HOST_PORT:-8081}:${API_PORT:-8081}"
+      - "${API_PORT:-8081}:${API_PORT:-8081}"
 
   # ---- Frontend (LOCAL) ----
   webui-local:
@@ -94,11 +94,11 @@ services:
     profiles: ["local"]
     environment:
       # Used by FE runtime (see Dockerfile entrypoint template) to call API
-      API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_HOST_PORT:-8081}}
+      API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8081}}
     depends_on:
       - backend-local
     ports:
-      - "5173:80"
+      - "${APP_PORT:-3000}:80"
 
   # ---- Backend (DEV) ----
   backend-dev:
@@ -120,7 +120,7 @@ services:
       - postgres-dev
       - qdrant-dev
     ports:
-      - "${API_HOST_PORT:-8081}:${API_PORT:-8081}"
+      - "${API_PORT:-8081}:${API_PORT:-8081}"
 
   # ---- Frontend (DEV) ----
   webui-dev:
@@ -130,11 +130,11 @@ services:
     container_name: webui-dev
     profiles: ["dev"]
     environment:
-      API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_HOST_PORT:-8081}}
+      API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8081}}
     depends_on:
       - backend-dev
     ports:
-      - "5174:80"
+      - "${APP_PORT:-5174}:80"
 
 volumes:
   qdrant_data_local:

@@ -19,6 +19,7 @@ export const UserMessage = ({ message, isLatest }: { message: string, isLatest: 
         className={`
           flex flex-col gap-2
           w-auto max-w-[75%] min-w-0
+          shadow-md
           bg-muted
           text-card-foreground text-base
           text-left

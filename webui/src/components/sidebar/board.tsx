@@ -89,7 +89,7 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
     <SidebarMenuItem>
       <ContextMenu>
         <Collapsible
-          defaultOpen={true}
+          defaultOpen={false}
           className="group/collapsible w-full"
         >
           <ContextMenuTrigger asChild>
@@ -103,7 +103,11 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
             </SidebarMenuButton>
           </ContextMenuTrigger>
           <ContextMenuContent className='w-44'>
-            <ContextMenuItem onClick={handleDelete} variant="destructive">
+            <ContextMenuItem
+              onClick={handleDelete}
+              variant="destructive"
+              className='bg-accent text-xs flex flex-row items-center'
+            >
               <HugeiconsIcon
                 icon={Delete02Icon}
                 className="mr-2 size-4"

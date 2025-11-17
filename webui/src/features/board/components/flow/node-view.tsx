@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import {
   type ControlPosition,
   Handle,
@@ -8,11 +8,7 @@ import {
 } from '@xyflow/react'
 import type { NoteNode } from '../../types/flow'
 import { NodeCard } from './note-card'
-import { useDebouncedCallback } from 'use-debounce'
-import { useUpdateNote } from '../../api/update-note'
-import { useAppStore } from '@/store'
 import { useGraphStore } from '../../store/graph-store'
-import { DEBOUNCE_DELAY } from '../../const'
 import clsx from 'clsx'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
@@ -26,17 +22,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
 
-  const userId = useAppStore(state => state.userId)
-  const boardId = useGraphStore(state => state.boardId)
   const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
-  const { updateNote } = useUpdateNote()
-
-  const debounce = useDebouncedCallback(() => {
-    if (boardId && userId) {
-      updateNote({ boardId, userId, noteId: id, noteData: data })
-    }
-  }, DEBOUNCE_DELAY)
-  useEffect(() => { debounce() }, [debounce, data])
 
   // measure content & drive minHeight
   const { contentRef, computedMinH } = useContentMinHeight(id, 24, 24)

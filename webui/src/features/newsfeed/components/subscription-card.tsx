@@ -71,7 +71,7 @@ export function SubscriptionCard({
       <ContextMenuTrigger asChild>
         <Card
           className={cn(
-            'w-56 h-20 justify-center items-center flex rounded-xl transition bg-accent hover:bg-muted shadow-md hover:shadow-lg border border-transparent hover:border-secondary hover:ring-2 hover:ring-secondary/20 md:w-64 p-0 overflow-hidden cursor-pointer',
+            'w-64 h-20 justify-center items-center flex rounded-xl transition bg-accent hover:bg-muted shadow-md hover:shadow-lg border border-transparent hover:border-secondary hover:ring-2 hover:ring-secondary/20 p-0 overflow-hidden cursor-pointer',
             sub.creating && 'bg-muted'
           )}
         >

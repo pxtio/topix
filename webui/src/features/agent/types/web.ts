@@ -21,7 +21,7 @@ export const WebSearchEngineName: Record<WebSearchEngine, string> = {
   openai: "OpenAI",
   perplexity: "Perplexity",
   tavily: "Tavily",
-  linkup: "LinkUp"
+  linkup: "Linkup"
 }
 
 
@@ -29,5 +29,5 @@ export const WebSearchEngineDescription: Record<WebSearchEngine, string> = {
   openai: "OpenAI's web search",
   perplexity: "Perplexity's web search pipeline",
   tavily: "Tavily's search engine + LLM synthesis",
-  linkup: "LinkUp's search engine + LLM synthesis"
+  linkup: "Linkup's search engine + LLM synthesis"
 }

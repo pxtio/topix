@@ -8,6 +8,7 @@ from topix.agents.datatypes.outputs import NewsfeedArticle, NewsfeedOutput, Topi
 from topix.agents.newsfeed.collector import NewsfeedCollector, NewsfeedCollectorInput, NewsfeedSynthesizer
 from topix.agents.newsfeed.config import NewsfeedPipelineConfig
 from topix.agents.newsfeed.context import NewsfeedContext
+from topix.agents.newsfeed.default_seed_sources import DefaultSeedSources
 from topix.agents.newsfeed.topic_tracker import TopicSetup, TopicSetupInput
 from topix.agents.run import AgentRunner
 from topix.agents.websearch.utils import pretty_date
@@ -49,7 +50,7 @@ class NewsfeedPipeline:
     @staticmethod
     def _convert_topic_to_subscription(label: str, raw_description: str, topic: TopicTracker) -> Subscription:
         """Convert Topic to Subscription."""
-        return Subscription(
+        subscription = Subscription(
             label=RichText(markdown=label),
             properties=SubscriptionProperties(
                 raw_description=TextProperty(text=raw_description),
@@ -59,6 +60,11 @@ class NewsfeedPipeline:
                 seed_sources=MultiTextProperty(texts=topic.seed_sources)
             )
         )
+        if subscription.label.markdown in DefaultSeedSources.model_fields:
+            subscription.properties.seed_sources.texts.extend(
+                DefaultSeedSources.model_fields[subscription.label.markdown].default.seed_sources
+            )
+        return subscription
 
     async def create_subscription(self, topic: str, raw_description: str = "") -> Subscription:
         """Run the newsfeed pipeline."""

@@ -165,10 +165,12 @@ class BaseAgent(Agent[Context]):
     async def _input_formatter(
         self, context: Context, input: Any
     ) -> str | list[dict[str, str]]:
-        if isinstance(input, str):
-            return input
-        if isinstance(input, list) and all(isinstance(item, BaseModel) for item in input):
+        if isinstance(input, list) and all(
+            isinstance(item, BaseModel) for item in input
+        ):
             return [item.model_dump() for item in input]
+        elif isinstance(input, (str, list)):
+            return input
         raise NotImplementedError("_input_formatter method is not implemented")
 
     async def _output_extractor(

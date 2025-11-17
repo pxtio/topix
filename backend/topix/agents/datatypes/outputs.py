@@ -83,7 +83,6 @@ class ImageDescriptionOutput(BaseModel):
     image_summary: str
 
 
-
 class TopicIllustratorOutput(BaseModel):
     """Output of the topic illustrator agent."""
     image_url: str

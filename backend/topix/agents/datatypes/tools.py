@@ -20,6 +20,7 @@ class AgentToolName(StrEnum):
 
     RAW_MESSAGE = "raw_message"
 
+    IMAGE_DESCRIPTION = "image_description"
     TOPIC_ILLUSTRATOR = "topic_illustrator"
 
 
@@ -42,5 +43,6 @@ tool_descriptions = {
     AgentToolName.OUTLINE_GENERATOR: "Generate an outline for research",
     AgentToolName.WEB_COLLECTOR: "Collect web content based on the outline",
     AgentToolName.SYNTHESIZER: "Synthesize a report based on collected content",
+    AgentToolName.IMAGE_DESCRIPTION: "Describe an image",
     AgentToolName.TOPIC_ILLUSTRATOR: "Illustrate a topic",
 }

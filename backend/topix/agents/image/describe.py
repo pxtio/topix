@@ -1,68 +1,59 @@
 import asyncio
 import logging
-import os
+from agents import ModelSettings
 from typing import Literal
 
-from openai import AsyncOpenAI
+from topix.agents.run import AgentRunner
 from pydantic import BaseModel
 
-from topix.agents.prompt_utils import render_prompt
-
-IMAGE_DESCRIPTION_MODEL = "gpt-4o-mini"
-
-
-class TextMessageContent(BaseModel):
-    type: Literal['text'] = 'text'
-    text: str
-
-
-class ImageUrl(BaseModel):
-    url: str
-    detail: Literal['low', 'high'] = 'low'
+from topix.agents.base import BaseAgent
+from topix.agents.datatypes.model_enum import ModelEnum
+from topix.agents.datatypes.context import Context
+from topix.agents.datatypes.outputs import ImageDescriptionOutput
 
 
 class ImageMessageContent(BaseModel):
-    type: Literal['image_url'] = 'image_url'
-    image_url: ImageUrl
+    type: Literal['input_image'] = 'input_image'
+    image_url: str
 
 
-class ChatMessage(BaseModel):
-    """Message model for an LLM chat model"""
+class ImageDescriptionInput(BaseModel):
+    """Message model for the image description agent"""
     role: Literal['user', 'assistant', 'system'] = 'user'
-    content: str | list[TextMessageContent | ImageMessageContent]
+    content: list[ImageMessageContent]
 
     @classmethod
-    def from_str(cls, content: str) -> 'ChatMessage':
-        return cls(content=content)
+    def from_url(cls, image_url: str) -> 'ImageDescriptionInput':
+        return cls(content=[ImageMessageContent(image_url=image_url)])
 
 
-class ImageDescription(BaseModel):
-    image_title: str
-    image_type: str
-    image_summary: str
+class ImageDescriptionAgent(BaseAgent):
+    def __init__(
+        self,
+        model: str = ModelEnum.OpenAI.GPT_4O_MINI,
+        instructions_template: str = "image_description.jinja",
+        model_settings: ModelSettings | None = None,
+    ):
+        """Initialize the Image Description agent."""
+        name = "Image Description"
+        instructions = self._render_prompt(instructions_template)
+        if model_settings is None:
+            model_settings = ModelSettings(temperature=0.01)
 
-
-async def process_message(
-    client: AsyncOpenAI, message: ChatMessage
-) -> ImageDescription | None:
-    """Process a message with the OpenAI API to get an image description."""
-    try:
-        response = await client.beta.chat.completions.parse(
-            model=IMAGE_DESCRIPTION_MODEL,
-            messages=[message.model_dump()],
-            response_format=ImageDescription
+        super().__init__(
+            name=name,
+            model=model,
+            model_settings=model_settings,
+            instructions=instructions,
+            output_type=ImageDescriptionOutput,
         )
-        result = response.choices[0].message.content
-        return result
-    except Exception as e:
-        logging.error(f"Error processing message: {e}", exc_info=True)
-        return None
+
+        super().__post_init__()
 
 
-async def image_descriptor(
+async def describe_images(
     image_urls: list[str],
-    detail: Literal['low', 'high'] = 'low'
-) -> list[ImageDescription | None]:
+) -> list[ImageDescriptionOutput | None]:
     """Compute a description of each image.
 
     Args:
@@ -71,23 +62,20 @@ async def image_descriptor(
     Returns:
         list of image descriptions.
     """
-    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    description_inputs = [[ImageDescriptionInput.from_url(image_url)]
+                          for image_url in image_urls]
 
-    def input_handler(image_url: str, detail: Literal['low', 'high'] = 'low') -> ChatMessage:
-        """ Format the input """
-        text = render_prompt("image_description.jinja")
-        message = ChatMessage(
-            content=[
-                TextMessageContent(text=text),
-                ImageMessageContent(
-                    image_url=ImageUrl(url=image_url, detail=detail)
-                )
-            ]
-        )
-        return message
+    async def run_description(
+        input: list[ImageDescriptionInput]
+    ) -> ImageDescriptionOutput | None:
+        """Wraps the execution of the description agent for a single image input."""
+        try:
+            description = await AgentRunner.run(ImageDescriptionAgent(), input=input, context=Context())
+            return description
+        except Exception as e:
+            logging.warning(f"Error while trying to describe image: {e}", exc_info=True)
+            return None
 
-    message_collection = [input_handler(image_url, detail) for image_url in image_urls]
-    descriptions = await asyncio.gather(
-        *[process_message(client, message) for message in message_collection]
-    )
+    description_tasks = [run_description(input) for input in description_inputs]
+    descriptions = await asyncio.gather(*description_tasks)
     return descriptions

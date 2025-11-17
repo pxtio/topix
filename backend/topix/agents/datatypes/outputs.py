@@ -22,7 +22,8 @@ type ToolOutput = Union[
     TopicTracker,
     NewsfeedOutput,
     SchemaOutput,
-    TopicIllustratorOutput
+    TopicIllustratorOutput,
+    ImageDescriptionOutput
 ]
 
 
@@ -73,6 +74,14 @@ class NotifyOutput(BaseModel):
 
     title: str
     content: str
+
+
+class ImageDescriptionOutput(BaseModel):
+    """Output of the image description agent."""
+    image_title: str
+    image_type: str
+    image_summary: str
+
 
 
 class TopicIllustratorOutput(BaseModel):

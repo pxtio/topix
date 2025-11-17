@@ -4,11 +4,11 @@ from topix.agents.datatypes.context import ReasoningContext
 from agents import Agent, Tool, function_tool, ModelSettings, AgentHooks, RunContextWrapper
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.model_enum import ModelEnum
-from topix.agents.datatypes.outputs import TopicIllustratorOutput
+from topix.agents.datatypes.outputs import ImageDescriptionOutput, TopicIllustratorOutput
+from topix.agents.image.describe import describe_images
 from topix.datatypes.recurrence import Recurrence
 
 from topix.agents.datatypes.image import ImageSearchOption
-from topix.agents.image.describe import ImageDescription, image_descriptor
 from topix.agents.image.search import search_linkup, search_serper
 
 
@@ -78,7 +78,7 @@ class TopicIllustrator(BaseAgent):
         async def image_search(
             query: str,
             recency: Recurrence | None = None,
-        ) -> list[tuple[str, ImageDescription]]:
+        ) -> list[tuple[str, ImageDescriptionOutput]]:
             """Search for images that are relevant to the query
 
             Args:
@@ -103,7 +103,7 @@ class TopicIllustrator(BaseAgent):
             else:
                 raise ValueError(f"Unsupported image search engine: {self.image_search_engine}")
 
-            descriptions = await image_descriptor(image_urls)
+            descriptions = await describe_images(image_urls)
             return [
                 (url, description)
                 for url, description in zip(image_urls, descriptions)

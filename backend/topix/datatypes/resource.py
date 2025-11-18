@@ -81,3 +81,12 @@ class Resource(BaseModel):
         }
         all_values["id"] = id
         return cls.model_construct(**all_values)
+
+    def to_embeddable(self) -> dict[str, str]:
+        """Convert the resource to a string that can be embedded in a vector database."""
+        embeddable = {}
+        if self.label and self.label.markdown and self.label.searchable:
+            embeddable["label"] = self.label.markdown
+        if self.content and self.content.markdown and self.content.searchable:
+            embeddable["content"] = self.content.markdown
+        return embeddable

@@ -63,7 +63,7 @@ export const SearchEngineChoiceMenu = () => {
       <Tooltip delayDuration={400}>
         <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50">
           <TooltipTrigger asChild>
-            <SelectTrigger className="w-auto rounded-full text-xs p-2 shadow-none border-none hover:bg-accent [&>svg:not(.my-icon)]:hidden" size="sm">
+            <SelectTrigger className="w-auto rounded-full text-xs p-2 shadow-none border-none hover:bg-accent [&>svg:not(.my-icon)]:hidden shadow-sm border-input" size="sm">
               <HugeiconsIcon icon={InternetIcon} className={iconClass} strokeWidth={2} />
             </SelectTrigger>
           </TooltipTrigger>

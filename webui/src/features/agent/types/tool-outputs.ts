@@ -46,4 +46,14 @@ export interface CodeInterpreterOutput {
   annotations: FileAnnotation[]
 }
 
-export type ToolOutput = WebSearchOutput | MemorySearchOutput | CodeInterpreterOutput | string
+export interface WeatherWidgetOutput {
+  type: "display_weather_widget"
+  city: string
+}
+
+export interface StockWidgetOutput {
+  type: "display_stock_widget"
+  symbol: string
+}
+
+export type ToolOutput = WebSearchOutput | MemorySearchOutput | CodeInterpreterOutput | WeatherWidgetOutput | StockWidgetOutput | string

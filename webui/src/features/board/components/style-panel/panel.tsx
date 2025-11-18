@@ -150,7 +150,7 @@ export function StylePanel<T extends StyleLike>({
   }
 
   return (
-    <Card className={cn('w-full bg-sidebar backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 shadow-md border border-border', className)}>
+    <Card className={cn('w-full bg-sidebar backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 shadow-md border border-border rounded-lg', className)}>
       <CardContent className='p-0 h-[600px]'>
         <ScrollArea className='h-full p-3'>
           <div className='flex flex-col items-start gap-4 p-1'>

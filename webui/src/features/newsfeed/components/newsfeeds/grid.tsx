@@ -17,7 +17,7 @@ export function NewsfeedGrid({ annotations, viewMode = "grid" }: { annotations: 
   )
   const previewCardClass = cn(
     "w-full p-3",
-    viewMode === "grid" && "border border-border"
+    viewMode === "grid" && "shadow-md dark:border dark:border-border/50"
   )
 
   const sortedAnnotations = useMemo(() => {

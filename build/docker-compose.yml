@@ -9,7 +9,7 @@ x-postgres: &postgres-base
     POSTGRES_HOST_AUTH_METHOD: trust
 
 services:
-  # -------- LOCAL PROFILE --------
+  # -------- LOCAL PROFILE (DBs) --------
   qdrant-local:
     <<: *qdrant-base
     container_name: qdrant-local
@@ -28,8 +28,13 @@ services:
     volumes:
       - pg_data_local:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "topix"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
 
-  # -------- DEV PROFILE --------
+  # -------- DEV PROFILE (DBs) --------
   qdrant-dev:
     <<: *qdrant-base
     container_name: qdrant-dev
@@ -48,6 +53,88 @@ services:
     volumes:
       - pg_data_dev:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "topix"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  # ===========================
+  #       APP SERVICES
+  # ===========================
+
+  # ---- Backend (LOCAL) ----
+  backend-local:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: backend-local
+    profiles: ["local"]
+    environment:
+      DOPPLER_TOKEN: ${DOPPLER_TOKEN}
+      API_HOST: 0.0.0.0
+      API_PORT: ${API_PORT:-8081}
+      QDRANT_HOST: ${QDRANT_HOST:-qdrant-local}
+      QDRANT_PORT: ${QDRANT_PORT:-6333}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres-local}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    command: ["python","-m","topix.api.app","--stage","local"]
+    depends_on:
+      - postgres-local
+      - qdrant-local
+    ports:
+      - "${API_PORT:-8081}:${API_PORT:-8081}"
+
+  # ---- Frontend (LOCAL) ----
+  webui-local:
+    build:
+      context: ..
+      dockerfile: webui/Dockerfile
+    container_name: webui-local
+    profiles: ["local"]
+    environment:
+      # Used by FE runtime (see Dockerfile entrypoint template) to call API
+      API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8081}}
+    depends_on:
+      - backend-local
+    ports:
+      - "${APP_PORT:-3000}:80"
+
+  # ---- Backend (DEV) ----
+  backend-dev:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: backend-dev
+    profiles: ["dev"]
+    environment:
+      DOPPLER_TOKEN: ${DOPPLER_TOKEN}
+      API_HOST: 0.0.0.0
+      API_PORT: ${API_PORT:-8081}
+      QDRANT_HOST: ${QDRANT_HOST:-qdrant-dev}
+      QDRANT_PORT: ${QDRANT_PORT:-6333}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres-dev}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+    command: ["python","-m","topix.api.app","--stage","dev"]
+    depends_on:
+      - postgres-dev
+      - qdrant-dev
+    ports:
+      - "${API_PORT:-8081}:${API_PORT:-8081}"
+
+  # ---- Frontend (DEV) ----
+  webui-dev:
+    build:
+      context: ..
+      dockerfile: webui/Dockerfile
+    container_name: webui-dev
+    profiles: ["dev"]
+    environment:
+      API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8081}}
+    depends_on:
+      - backend-dev
+    ports:
+      - "${APP_PORT:-5174}:80"
 
 volumes:
   qdrant_data_local:

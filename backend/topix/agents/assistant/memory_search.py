@@ -1,7 +1,5 @@
 """Memory Search Agent."""
 
-import re
-
 from agents import ModelSettings, RunResult
 
 from topix.agents.base import BaseAgent
@@ -65,24 +63,21 @@ class MemorySearch(BaseAgent):
             if resource.id in context._memory_cache:
                 continue
             context._memory_cache.add(resource.id)
-            content = resource.content.markdown
-            short_id = resource.id[:4]
-            memory = f'<CONTEXT url="/{short_id}/" type="{resource.type}"> \
-                \n{content}\n</CONTEXT>'
-            memories.append(memory)
+            content = ""
+            if resource.label:
+                content += f"**{resource.label.markdown}**\n"
+            if resource.content:
+                content += f"{resource.content.markdown}\n"
+            if content:
+                short_id = resource.id[:4]
+                memory = f'<CONTEXT url="/{short_id}/" type="{resource.type}"> \
+                    \n{content}\n</CONTEXT>'
+                memories.append(memory)
 
         if not memories:
             return ""
-
-        return f"""
-        <user_query>
-        {input}
-        </user_query>
-
-        <documents>
-        {"\n\n".join(memories)}
-        </documents>
-        """
+        total_memory = "\n\n".join(memories)
+        return f"<user_query>{input}</user_query>\n\n<documents>{total_memory}</documents>"
 
     async def _as_tool_hook(
         self, context: ReasoningContext, input: str, tool_id: str
@@ -99,20 +94,15 @@ class MemorySearch(BaseAgent):
     ) -> MemorySearchOutput:
         final_output: str = output.final_output
 
-        # Extract the cited url in format [type](/url/)
-        pattern = r'\[([^\]]+)\]\(/([a-zA-Z0-9]{4})/\)'
-        matches = re.findall(pattern, final_output)
-
-        if not matches:
-            # No relevant information found
-            return MemorySearchOutput(answer=NOT_FOUND)
-
         id_map = {idx[:4]: idx for idx in context._memory_cache}
         ref_ids = []
 
-        for _, short_id in matches:
-            long_id = id_map.get(short_id, None)
-            if long_id:
+        for short_id in id_map:
+            if short_id in final_output:
+                long_id = id_map.get(short_id)
                 ref_ids.append(RefAnnotation(ref_id=long_id))
+
+        if not ref_ids:
+            return MemorySearchOutput(answer=NOT_FOUND)
 
         return MemorySearchOutput(answer=final_output, references=ref_ids)

@@ -1,16 +1,20 @@
 """FastAPI application setup."""
 
 import asyncio
+import logging
+import os
 
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from topix.api.router import boards, chats, subscriptions, tools, users, utils
+from topix.api.router import boards, chats, finance, subscriptions, tools, users, utils
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
 from topix.setup import setup
@@ -21,6 +25,7 @@ from topix.store.user import UserStore
 from topix.utils.logging import logging_config
 
 logging_config()
+logger = logging.getLogger(__name__)
 
 
 def create_app(stage: StageEnum):
@@ -60,16 +65,17 @@ def create_app(stage: StageEnum):
     app.include_router(users.router)
     app.include_router(subscriptions.router)
     app.include_router(utils.router)
+    app.include_router(finance.router)
 
     return app
 
 
-async def main(args):
+async def main(args) -> tuple[FastAPI, int]:
     """Run the application entry point."""
     await setup(stage=args.stage)
     app = create_app(stage=args.stage)
 
-    config = Config.instance()
+    config: Config = Config.instance()
     return app, args.port or config.app.settings.port
 
 
@@ -88,5 +94,21 @@ if __name__ == "__main__":
         help="Port to run the application on."
     )
     args = args.parse_args()
+
+    # load .env file
+    envpath = Path(__file__).parent.parent.parent.parent / '.env'
+    logger.info(f"Loading env from: {envpath}")
+    load_dotenv(dotenv_path=envpath, override=True)
+
     app, port = asyncio.run(main(args))
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
+
+    # override port with env var if env var is set
+    env_port = os.getenv("API_PORT")
+    if env_port:
+        port = int(env_port)
+        logger.info(f"Using API_PORT from env: {port}")
+
+    host = os.getenv("API_HOST", "0.0.0.0")
+    logger.info(f"Starting Topix API on {host}:{port}...")
+
+    uvicorn.run(app, host=host, port=port, log_level="info")

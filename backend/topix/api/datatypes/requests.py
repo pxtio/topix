@@ -39,6 +39,8 @@ class SendMessageRequest(BaseModel):
         AgentToolName.MEMORY_SEARCH,
         AgentToolName.CODE_INTERPRETER,
         AgentToolName.NAVIGATE,
+        AgentToolName.DISPLAY_STOCK_WIDGET,
+        AgentToolName.DISPLAY_WEATHER_WIDGET,
     ]
     reasoning_effort: Literal["low", "medium", "high"] | None = None
     use_deep_research: bool = False

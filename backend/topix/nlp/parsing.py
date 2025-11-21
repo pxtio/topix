@@ -1,167 +1,89 @@
-# Take a path (loacal first) and parse it, return a list of markdown blocks / json
+# Take a path (loacal first) and parse it, return a json with the markdown and the page number
 """This module contains the MistralOCRParser class used to parse a PDF document using the Mistral OCR API."""
 
-import base64
-import io
-import json
 import logging
 import os
-from enum import Enum
-
-import pymupdf
+import base64
+from pypdf import PdfReader
 from mistralai import Mistral
-from mistralai.extra import response_format_from_pydantic_model
-from pydantic import BaseModel, Field
 
-from intextellia.common import gen_uid
-from intextellia.datatypes.mime_types import MimeTypeEnum
-from intextellia.nlp.llm.document_processing.table_of_content import Toc
-from intextellia.parsing.handlers.base import DocumentParser
-from intextellia.parsing.handlers.pdf.correct_headers import align_markdown_headers_with_toc
-from intextellia.parsing.handlers.pdf.utils import get_pdf_num_pages
-from intextellia.parsing.handlers.ppt.utils import get_pptx_num_pages
-from intextellia.utils.s3 import S3Handler
-from intextellia.utils.stage.stage_utils import AppConfig
+from topix.datatypes.mime import MimeTypeEnum
 
 logger = logging.getLogger(__name__)
 
 
-class ImageType(str, Enum):
-    """Enum representing the type of image extracted from a document.
-    """
-
-    GRAPH = "graph"
-    TEXT = "text"
-    TABLE = "table"
-    IMAGE = "image"
-
-
-class Image(BaseModel):
-    """Represents an image extracted from a document.
-    """
-
-    image_type: ImageType = Field(
-        ...,
-        description="The type of the image. Must be one of 'graph', 'text', 'table' or 'image'.",
-    )
-    description: str = Field(..., description="A detailed description of the image.")
-
-
-class MistralOCRParser():
-    """A class used to parse a PDF/PPTX document using the Mistral OCR API.
+class MistralParser():
+    """A class used to parse a PDF document using the Mistral OCR API.
     """
 
     def __init__(self, api_key: str):
         self.client = Mistral(api_key=api_key)
 
-    def run_ocr(self):
-        return self.client.ocr.process(
-            model="mistral-ocr-latest",
-            document={
-                "type": "document_url",
-                "document_url": doc_url,
-                "document_name": name,
-            },
-            include_image_base64=True,
-            image_limit=min(image_limit_per_page * numpages, 1000),
-            image_min_size=image_min_size,
-            bbox_annotation_format=response_format_from_pydantic_model(Image)
-            if annotate_images
-            else None,
-        )
+    def get_pdf_num_pages(self, fname: str) -> int:
+        """Get the number of pages in a PDF file.
 
+        Args:
+            fname (str): The path to the PDF file.
 
+        Returns:
+            int: The number of pages in the PDF file. If an error occurs, -1 is returned.
+        """
+        try:
+            with open(fname, 'rb') as f:
+                # Create a PdfReader object
+                reader = PdfReader(f)
 
-    def detect_mime_type(self) -> MimeTypeEnum:
+                # Get the number of pages
+                number_of_pages = len(reader.pages)
+
+            return number_of_pages
+        except Exception as e:
+            logger.error(f"Error while getting the number of pages in the PDF file: {e}")
+            return -1
+
+    def detect_mime_type(self, filepath: str) -> MimeTypeEnum:
         """Detect the MIME type of the document.
 
         Returns:
             MimeTypeEnum: MIME type of the document
 
         """
-        if self.filepath.endswith(".pdf"):
+        suffix = os.path.splitext(filepath)[1]
+        if suffix.lower() == ".pdf":
             return MimeTypeEnum.PDF
-        elif self.filepath.endswith(".pptx"):
-            return MimeTypeEnum.PPTX
         raise ValueError("Unsupported file format")
 
-    def handle_image(self, page_md: str, img_data) -> str:
-        """Upload the image to S3 and replace the image URL in the page markdown.
-
-        Args:
-            page_md (str): page markdown
-            img_data : image data which contains image id and image base64
-
-        Returns:
-            str: page markdown with the image URL replaced
-
-        """
-        img_id = img_data.id
-        img_url = img_data.image_base64
-        if img_data.image_annotation:
-            annotation: dict[str, str] = json.loads(img_data.image_annotation)
-        else:
-            annotation = {}
-        if "description" not in annotation or "image_type" not in annotation:
-            description = ""
-        else:
-            description = f"\n\n(Image Caption: {annotation.get('image_type', '').upper()}: {annotation.get('description', '')})"
-        _, base64_data = img_url.split(",", 1)
-        image_bytes = base64.b64decode(base64_data)
-        file_obj = io.BytesIO(image_bytes)
-        url = self.s3.upload(
-            file_content=file_obj, mime_type="image/jpeg", key=gen_uid() + ".jpg"
-        )
-        logger.info(f"Uploading the image with id {img_id} to S3: {url}")
-        page_md = page_md.replace(
-            f"![{img_id}]({img_id})", f"![{img_id}]({url}){description}"
-        )
-        return page_md
-
-    def post_process_page(self, page) -> str:
+    def post_process_page(self, page) -> dict[str, int | str]:
         """Post-process the page data returned by the Mistral OCR API and return a markdown string.
 
         Args:
             page : page data returned by the Mistral OCR API
 
         Returns:
-            str: page in markdown format
+            dict[str, int | str]: page in markdown format and page number
 
         """
-        page_md = page.markdown
-        for img_data in page.images:
-            page_md = self.handle_image(page_md, img_data)
-        return page_md
+        return {
+            'markdown': page.markdown,
+            'page': page.page_number,
+        }
 
-    def get_num_pages(self) -> int:
-        """Get the number of pages in the PDF document.
+    def encode_pdf(self, pdf_path: str) -> str:
+        """Encode the PDF file to base64.
+
+        Args:
+            pdf_path (str): The path to the PDF file.
 
         Returns:
-            int: number of pages in the PDF document
-
+            str: The base64 encoded PDF file.
         """
-        if self.detect_mime_type() == MimeTypeEnum.PDF:
-            return get_pdf_num_pages(self.filepath)
-        return get_pptx_num_pages(self.filepath)
-
-    def process_toc(self) -> str | None:
-        """Use gemini parser to extract the table of contents from the PDF file."""
-        pdf_doc = pymupdf.open(self.filepath)
-        toc = pdf_doc.get_toc()
-        if not toc:
-            logger.info("No table of contents found in the PDF file. Using Gemini parser.")
-            toc = self.gemini_toc.process(self.filepath)
-            return toc
-        return None
+        with open(pdf_path, "rb") as pdf_file:
+            return base64.b64encode(pdf_file.read()).decode('utf-8')
 
     def parse(
         self,
         filepath: str,
-        image_limit_per_page: int = 5,
-        image_min_size: int = 0,
-        adjust_headers_by_toc: bool = True,
-        annotate_images: bool = False,
-    ) -> list[str]:
+    ) -> dict[str, int | str]:
         """Parse the PDF document using the Mistral OCR API.
 
         Args:
@@ -178,15 +100,18 @@ class MistralOCRParser():
             list[str]: pages in markdown format
 
         """
-        numpages = self.get_num_pages()
-        logger.info(f"Number of pages in the PDF file: {numpages}")
+        assert self.detect_mime_type(filepath) == MimeTypeEnum.PDF, "Unsupported file format"
 
-        name = os.path.basename(self.filepath)
+        res = self.client.ocr.process(
+            model="mistral-ocr-latest",
+            document={
+                "type": "document_url",
+                "document_url": f"data:application/pdf;base64,{self.encode_pdf(filepath)}"
+            },
+            include_image_base64=False,
+        )
 
-        doc_url, s3_key = self.upload_to_s3()
-        logger.info(f"Uploading the PDF file to S3: {doc_url}")
-
-        res = self.run_ocr(filepath=filepath)
+        logger.info(f"Number of pages in the PDF file: {len(res.pages)}")
 
         pages = []
         for page in res.pages:

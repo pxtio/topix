@@ -7,14 +7,17 @@ import os
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Annotated
 
+import redis
 import uvicorn
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from topix.api.router import boards, chats, finance, subscriptions, tools, users, utils
+from topix.api.utils import rate_limit
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
 from topix.setup import setup
@@ -41,11 +44,17 @@ def create_app(stage: StageEnum):
         await app.chat_store.open()
         app.subscription_store = SubscriptionStore()
         await app.subscription_store.open()
+        app.state.redis = redis.from_url(
+            "redis://localhost:6379",
+            encoding="utf-8",
+            decode_responses=True,
+        )
         yield
         await app.graph_store.close()
         await app.user_store.close()
         await app.chat_store.close()
         await app.subscription_store.close()
+        await app.state.redis.close()
 
     app = FastAPI(lifespan=lifespan)
 
@@ -66,6 +75,15 @@ def create_app(stage: StageEnum):
     app.include_router(subscriptions.router)
     app.include_router(utils.router)
     app.include_router(finance.router)
+
+
+    @app.get("/hello")
+    async def hello_world():
+        return {"message": "Hello World"}
+
+    @app.get("/protected-hello", dependencies=[Depends(rate_limit)])
+    async def hello_world(user_id: str = "guest"):
+        return {"message": "Hello World"}
 
     return app
 

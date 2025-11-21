@@ -32,7 +32,8 @@ dependencies = [
     "readchar>=4.2.1",
     "rich>=13.7.1",
     "selectolax>=0.3.34",
-    "httpx>=0.28.1"
+    "httpx>=0.28.1",
+    "redis>=7.0.1",
 ]
 
 [project.optional-dependencies]

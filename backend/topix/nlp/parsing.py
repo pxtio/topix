@@ -80,9 +80,10 @@ class MistralParser():
         with open(pdf_path, "rb") as pdf_file:
             return base64.b64encode(pdf_file.read()).decode('utf-8')
 
-    def parse(
+    async def parse(
         self,
         filepath: str,
+        max_pages: int = 200,
     ) -> dict[str, int | str]:
         """Parse the PDF document using the Mistral OCR API.
 
@@ -101,8 +102,9 @@ class MistralParser():
 
         """
         assert self.detect_mime_type(filepath) == MimeTypeEnum.PDF, "Unsupported file format"
+        assert self.get_pdf_num_pages(filepath) <= max_pages, f"PDF file exceeds the maximum number of pages: {max_pages}"
 
-        res = self.client.ocr.process(
+        res = await self.client.ocr.process_async(
             model="mistral-ocr-latest",
             document={
                 "type": "document_url",

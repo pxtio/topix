@@ -227,10 +227,10 @@ class ContentStore:
         # Create a list of embeddings with the same length as entries
         embeddings = [None] * len(entries)
         for idx, i in enumerate(indices):
-            # if embeddings[i] is None:
-            #     embeddings[i] = []
-            # embeddings[i].append(embeds[idx])
-            embeddings[i] = embeds[idx]
+            if embeddings[i] is None:
+                embeddings[i] = []
+            embeddings[i].append(embeds[idx])
+            # embeddings[i] = embeds[idx]
 
         # Fill in None embeddings with zero vectors
         for i, emb in enumerate(embeddings):

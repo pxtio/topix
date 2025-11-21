@@ -58,7 +58,7 @@ class Chunker:
                     text=line,
                     token_size=token_size,
                     is_title=is_title,
-                    page=page
+                    page=str(page)
                 )
                 markdown_lines.append(markdown_line)
 

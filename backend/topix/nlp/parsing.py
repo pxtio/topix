@@ -19,7 +19,7 @@ class MistralParser():
     def __init__(self, api_key: str):
         self.client = Mistral(api_key=api_key)
 
-    def get_pdf_num_pages(self, fname: str) -> int:
+    def get_num_pages(self, fname: str) -> int:
         """Get the number of pages in a PDF file.
 
         Args:
@@ -65,7 +65,7 @@ class MistralParser():
         """
         return {
             'markdown': page.markdown,
-            'page': page.page_number,
+            'page': page.index,
         }
 
     def encode_pdf(self, pdf_path: str) -> str:
@@ -102,7 +102,7 @@ class MistralParser():
 
         """
         assert self.detect_mime_type(filepath) == MimeTypeEnum.PDF, "Unsupported file format"
-        assert self.get_pdf_num_pages(filepath) <= max_pages, f"PDF file exceeds the maximum number of pages: {max_pages}"
+        assert self.get_num_pages(filepath) <= max_pages, f"PDF file exceeds the maximum number of pages: {max_pages}"
 
         res = await self.client.ocr.process_async(
             model="mistral-ocr-latest",

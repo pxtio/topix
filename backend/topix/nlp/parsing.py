@@ -47,17 +47,30 @@ class Image(BaseModel):
     description: str = Field(..., description="A detailed description of the image.")
 
 
-class MistralOCRParser(DocumentParser):
+class MistralOCRParser():
     """A class used to parse a PDF/PPTX document using the Mistral OCR API.
     """
 
-    def __init__(self, filepath: str):
-        self.filepath = filepath
-        self.s3 = S3Handler()
-        config = AppConfig()
-        api_key = config.get_global_config().external_apis.mistral.api_key
+    def __init__(self, api_key: str):
         self.client = Mistral(api_key=api_key)
-        self.gemini_toc = Toc()
+
+    def run_ocr(self):
+        return self.client.ocr.process(
+            model="mistral-ocr-latest",
+            document={
+                "type": "document_url",
+                "document_url": doc_url,
+                "document_name": name,
+            },
+            include_image_base64=True,
+            image_limit=min(image_limit_per_page * numpages, 1000),
+            image_min_size=image_min_size,
+            bbox_annotation_format=response_format_from_pydantic_model(Image)
+            if annotate_images
+            else None,
+        )
+
+
 
     def detect_mime_type(self) -> MimeTypeEnum:
         """Detect the MIME type of the document.
@@ -71,37 +84,6 @@ class MistralOCRParser(DocumentParser):
         elif self.filepath.endswith(".pptx"):
             return MimeTypeEnum.PPTX
         raise ValueError("Unsupported file format")
-
-    def upload_to_s3(self) -> tuple[str, str]:
-        """Uploads the PDF file to S3.
-
-        Returns:
-            str: public url of the uploaded file
-
-        """
-        s3_key = gen_uid()
-        url = self.s3.upload(
-            filepath=self.filepath,
-            bucket="bob-static-content",
-            prefix="static/assets",
-            mime_type=self.detect_mime_type(),
-            key=s3_key,
-        )
-        return url, s3_key
-
-    def delete_from_s3(self, s3_key: str) -> bool:
-        """Delete the PDF file from S3.
-
-        Args:
-            s3_key (str): S3 key of the file to delete
-
-        Returns:
-            bool: True if the file was deleted successfully, False otherwise
-
-        """
-        return self.s3.delete(
-            bucket="bob-static-content", prefix="static/assets", key=s3_key
-        )
 
     def handle_image(self, page_md: str, img_data) -> str:
         """Upload the image to S3 and replace the image URL in the page markdown.
@@ -174,6 +156,7 @@ class MistralOCRParser(DocumentParser):
 
     def parse(
         self,
+        filepath: str,
         image_limit_per_page: int = 5,
         image_min_size: int = 0,
         adjust_headers_by_toc: bool = True,
@@ -203,24 +186,7 @@ class MistralOCRParser(DocumentParser):
         doc_url, s3_key = self.upload_to_s3()
         logger.info(f"Uploading the PDF file to S3: {doc_url}")
 
-        # Using multithreading to speed up the process for ocr and gemini
-        def run_ocr():
-            return self.client.ocr.process(
-                model="mistral-ocr-latest",
-                document={
-                    "type": "document_url",
-                    "document_url": doc_url,
-                    "document_name": name,
-                },
-                include_image_base64=True,
-                image_limit=min(image_limit_per_page * numpages, 1000),
-                image_min_size=image_min_size,
-                bbox_annotation_format=response_format_from_pydantic_model(Image)
-                if annotate_images
-                else None,
-            )
-
-        res = run_ocr()
+        res = self.run_ocr(filepath=filepath)
 
         pages = []
         for page in res.pages:

@@ -23,12 +23,7 @@ const SearchEngineCard: React.FC<{ searchEngine: WebSearchEngine | "-1", availab
   return (
     <HoverCard openDelay={200}>
       <HoverCardTrigger className={clss}>
-        <span>{name}</span>
-        {
-          !available && (
-            <HugeiconsIcon icon={SquareLock01Icon} className='size-4 ml-auto' strokeWidth={2} />
-          )
-        }
+        {name}
       </HoverCardTrigger>
       <HoverCardContent className='w-48 rounded-xl border border-border bg-popover text-popover-foreground shadow text-sm' side="left" sideOffset={15}>
         <div className=''>
@@ -92,12 +87,17 @@ export const SearchEngineChoiceMenu = () => {
           {
             availableWebSearchServices.map((engine) => {
               const clName = clsx(
-                "w-full text-xs flex flex-row items-center gap-2",
+                "relative w-full text-xs flex flex-row items-center gap-2",
                 engine.available === false ? 'text-muted-foreground cursor-not-allowed pointer-events-none' : '',
               )
               return (
-                <SelectItem key={engine.name} value={engine.name} className={clName}>
+                <SelectItem key={engine.name} value={engine.name} className={clName} disabled={!engine.available}>
                   <SearchEngineCard searchEngine={engine.name as WebSearchEngine} available={engine.available} />
+                  {
+                    !engine.available && (
+                      <HugeiconsIcon icon={SquareLock01Icon} className='size-4 absolute right-2 top-1/2 -translate-y-1/2' strokeWidth={2} />
+                    )
+                  }
                 </SelectItem>
               )
             })

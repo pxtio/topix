@@ -56,10 +56,10 @@ export const defaultServices: () => Services = () => ({
     { name: "openrouter/moonshotai/kimi-k2-thinking", available: false, provider: "openrouter" },
   ],
   search: [
-    { name: "openai", available: false, provider: "openai" },
     { name: "linkup", available: false, provider: "linkup" },
-    { name: "tavily", available: false, provider: "tavily" },
     { name: "perplexity", available: false, provider: "perplexity" },
+    { name: "tavily", available: false, provider: "tavily" },
+    { name: "openai", available: false, provider: "openai" },
   ],
   navigate: [
     { name: "tavily", available: false, provider: "tavily" },

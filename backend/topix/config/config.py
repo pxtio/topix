@@ -7,7 +7,7 @@ import os
 
 from urllib.parse import quote_plus
 
-from http_exceptions.client_exceptions import BadRequestException
+from http_exceptions.client_exceptions import BadRequestException, UnauthorizedException
 from pydantic import BaseModel, Field, SecretStr
 from yaml import safe_load
 
@@ -74,8 +74,8 @@ class PostgresConfig(BaseModel):
 class DatabasesConfig(BaseModel):
     """Configuration for databases used in the application."""
 
-    qdrant: QdrantConfig = QdrantConfig()
-    postgres: PostgresConfig = PostgresConfig()
+    qdrant: QdrantConfig = Field(default_factory=QdrantConfig)
+    postgres: PostgresConfig = Field(default_factory=PostgresConfig)
 
 
 class BaseAPIConfig(BaseModel):
@@ -169,22 +169,22 @@ class UnsplashConfig(BaseModel):
 class APIsConfig(BaseModel):
     """Configuration for external APIs used in the application."""
 
-    openai: OpenAIConfig = OpenAIConfig()
-    mistral: MistralConfig = MistralConfig()
-    perplexity: PerplexityConfig = PerplexityConfig()
-    tavily: TavilyConfig = TavilyConfig()
-    linkup: LinkUpConfig = LinkUpConfig()
-    gemini: GeminiConfig = GeminiConfig()
-    anthropic: AnthropicConfig = AnthropicConfig()
-    openrouter: OpenRouterConfig = OpenRouterConfig()
-    unsplash: UnsplashConfig = UnsplashConfig()
+    openai: OpenAIConfig = Field(default_factory=OpenAIConfig)
+    mistral: MistralConfig = Field(default_factory=MistralConfig)
+    perplexity: PerplexityConfig = Field(default_factory=PerplexityConfig)
+    tavily: TavilyConfig = Field(default_factory=TavilyConfig)
+    linkup: LinkUpConfig = Field(default_factory=LinkUpConfig)
+    gemini: GeminiConfig = Field(default_factory=GeminiConfig)
+    anthropic: AnthropicConfig = Field(default_factory=AnthropicConfig)
+    openrouter: OpenRouterConfig = Field(default_factory=OpenRouterConfig)
+    unsplash: UnsplashConfig = Field(default_factory=UnsplashConfig)
 
 
 class RunConfig(BaseModel):
     """Configuration for running the application."""
 
-    databases: DatabasesConfig = DatabasesConfig()
-    apis: APIsConfig = APIsConfig()
+    databases: DatabasesConfig = Field(default_factory=DatabasesConfig)
+    apis: APIsConfig = Field(default_factory=APIsConfig)
 
 
 class AppSettings(BaseModel):
@@ -200,14 +200,14 @@ class AppSettings(BaseModel):
             logger.info(f"App port set from environment API_PORT: {self.port}")
 
 
-def generate_or_load_jwt_secret_fr_env() -> str:
+def generate_or_load_jwt_secret_fr_env() -> SecretStr:
     """Generate or load JWT secret from environment variable."""
     env_secret = os.getenv("JWT_SECRET_KEY")
     if env_secret:
         logger.info("Loaded JWT secret from environment variable JWT_SECRET_KEY.")
-        return env_secret
+        return SecretStr(env_secret)
     else:
-        return generate_jwt_secret()
+        return SecretStr(generate_jwt_secret())
 
 
 class SecuritySettings(BaseModel):
@@ -221,8 +221,8 @@ class AppConfig(BaseModel):
     """Application configuration settings."""
 
     name: str = "TopiX"
-    settings: AppSettings = AppSettings()
-    security: SecuritySettings = SecuritySettings()
+    settings: AppSettings = Field(default_factory=AppSettings)
+    security: SecuritySettings = Field(default_factory=SecuritySettings)
 
 
 class ConfigMeta(SingletonMeta, type(BaseModel)):
@@ -235,8 +235,8 @@ class Config(BaseModel, metaclass=ConfigMeta):
     """Configuration class for TopiX application."""
 
     stage: StageEnum = StageEnum.LOCAL
-    run: RunConfig = RunConfig()
-    app: AppConfig = AppConfig()
+    run: RunConfig = Field(default_factory=RunConfig)
+    app: AppConfig = Field(default_factory=AppConfig)
 
     @classmethod
     def load(
@@ -256,7 +256,15 @@ class Config(BaseModel, metaclass=ConfigMeta):
                 config_data = {}
             else:
                 raise e
-
+        except UnauthorizedException as e:
+            if hasattr(e, 'status_code') and e.status_code == 401:
+                logger.error(
+                    f"Unauthorized to load secrets from Doppler:\n---\n{e}\n---\n"
+                    "Will use default config. Most config values can be precised in .env file.",
+                )
+                config_data = {}
+            else:
+                raise e
         return cls(
             stage=stage,
             **config_data

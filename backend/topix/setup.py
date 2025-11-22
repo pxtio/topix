@@ -19,7 +19,7 @@ async def setup(stage: StageEnum):
     # load .env file
     envpath = Path(__file__).parent.parent.parent / '.env'
     logger.info(f"Loading env from: {envpath}")
-    load_dotenv(dotenv_path=envpath, override=True)
+    load_dotenv(dotenv_path=envpath, override=True, verbose=True)
 
     config = Config.load(stage=stage)
     logger.info(f"Loaded configuration for stage: {stage}")

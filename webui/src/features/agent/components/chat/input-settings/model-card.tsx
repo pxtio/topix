@@ -16,7 +16,7 @@ import { useShallow } from "zustand/shallow"
  */
 const ModelCard: React.FC<{ model: LlmModel, available?: boolean }> = ({ model, available }) => {
   const clss = clsx(
-    "flex-1 flex flex-row items-center gap-2 justify-between",
+    "flex-1 flex flex-row items-center gap-2 justify-between truncate",
     available === false ? 'text-muted-foreground cursor-not-allowed pointer-events-none': '',
   )
   return (
@@ -69,7 +69,7 @@ export const ModelChoiceMenu = () => {
             availableModels.map((model) => {
               const Icon = LlmBrandIcon[model.name]
               const clName = clsx(
-                "w-full text-xs flex flex-row items-center gap-2",
+                "relative w-full text-xs flex flex-row items-center gap-2",
                 !model.available ? 'text-muted-foreground cursor-not-allowed pointer-events-none' : '',
               )
               return (
@@ -78,7 +78,7 @@ export const ModelChoiceMenu = () => {
                   <ModelCard model={model.name} available={model.available} />
                   {
                     !model.available && (
-                      <HugeiconsIcon icon={SquareLock01Icon} className='size-4 ml-auto' strokeWidth={2} />
+                      <HugeiconsIcon icon={SquareLock01Icon} className='size-4 absolute right-2 top-1/2 -translate-y-1/2' strokeWidth={2} />
                     )
                   }
                 </SelectItem>

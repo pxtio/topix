@@ -106,11 +106,12 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
             <ContextMenuItem
               onClick={handleDelete}
               variant="destructive"
-              className='bg-accent text-xs flex flex-row items-center'
+              className='text-xs flex flex-row items-center'
             >
               <HugeiconsIcon
                 icon={Delete02Icon}
                 className="mr-2 size-4"
+                strokeWidth={2}
               />
               <span>Delete Board</span>
             </ContextMenuItem>

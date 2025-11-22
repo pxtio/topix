@@ -56,7 +56,7 @@ export const AssistantMessage = ({
   }, [message, isDeepResearch, resp.steps])
 
   return (
-    <div className='w-full space-y-4'>
+    <div className='w-full'>
       <ReasoningStepsView
         response={resp}
         isStreaming={message.streaming || false}

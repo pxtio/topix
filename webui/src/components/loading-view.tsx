@@ -19,7 +19,13 @@ export const ThinkingDots = ({ message, isStopped = false }: { message: string, 
           strokeWidth={2}
         />
       }
-      <ShinyText text={message} disabled={isStopped} speed={1} className='font-medium text-foreground/50' />
+      {
+        !isStopped ? (
+          <ShinyText text={message} disabled={isStopped} speed={1} className='font-normal text-sm text-foreground/50' />
+        ) : (
+          <span className='font-normal text-sm text-foreground/50'>{message}</span>
+        )
+      }
     </div>
   )
 }

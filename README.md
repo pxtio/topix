@@ -42,9 +42,9 @@ TAVILY_API_KEY= # set this for web search and web navigation functionalities
 PERPLEXITY_API_KEY=
 UNSPLASH_ACCESS_KEY=
 
-POSTGRES_HOST= # set if the postgres database is not hosted locally (localhost)
+POSTGRES_HOST=postgres-dev # set same value as in docker-compose
 POSTGRES_PORT=5432 # please set the correct port you have set for Postgres
-QDRANT_HOST= # set if the qdrant database is not hosted locally (localhost)
+QDRANT_HOST=qdrant-dev # set same value as in docker-compose
 QDRANT_PORT=6333 # please set the correct port you have set for Qdrant
 
 JWT_SECRET_KEY= # required for JWT authentication; if not set, a random key will be generated at startup

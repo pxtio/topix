@@ -56,8 +56,8 @@ class LLMService(BaseService):
         if not self.use_openrouter:
             return f"{self.provider}/{self.model}"
         else:
-            model_name = self.openrouter_model or self.model
-            return f"openrouter/{self.provider}/{model_name}"
+            model_name = self.openrouter_model or f"{self.provider}/{self.model}"
+            return f"openrouter/{model_name}"
 
 
 class SearchService(BaseService):

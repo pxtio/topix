@@ -48,8 +48,6 @@ services:
       provider: tavily
 
   navigate:
-    - name: linkup
-      provider: linkup
     - name: tavily
       provider: tavily
 

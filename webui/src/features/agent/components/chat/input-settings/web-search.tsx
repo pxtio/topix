@@ -2,23 +2,33 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useChatStore } from "@/features/agent/store/chat-store"
-import { WebSearchEngineDescription, WebSearchEngineName, WebSearchEngines, type WebSearchEngine } from "@/features/agent/types/web"
-import { InternetIcon } from "@hugeicons/core-free-icons"
+import { WebSearchEngineDescription, WebSearchEngineName, type WebSearchEngine } from "@/features/agent/types/web"
+import { InternetIcon, SquareLock01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { clsx } from "clsx"
+import { useShallow } from "zustand/shallow"
 
 
 /**
  * Component that displays information about a web search engine.
  */
-const SearchEngineCard: React.FC<{ searchEngine: WebSearchEngine | "-1" }> = ({ searchEngine }) => {
+const SearchEngineCard: React.FC<{ searchEngine: WebSearchEngine | "-1", available?: boolean }> = ({ searchEngine, available }) => {
   const name = searchEngine === "-1" ? "Disable Web Search" : WebSearchEngineName[searchEngine]
   const description = searchEngine === "-1" ? "Disable the web search tool." : WebSearchEngineDescription[searchEngine]
+  const clss = clsx(
+    "flex flex-row items-center gap-2",
+    !available ? 'text-muted-foreground' : '',
+  )
 
   return (
     <HoverCard openDelay={200}>
-      <HoverCardTrigger className='flex flex-row items-center gap-2'>
+      <HoverCardTrigger className={clss}>
         <span>{name}</span>
+        {
+          !available && (
+            <HugeiconsIcon icon={SquareLock01Icon} className='size-4 ml-auto' strokeWidth={2} />
+          )
+        }
       </HoverCardTrigger>
       <HoverCardContent className='w-48 rounded-xl border border-border bg-popover text-popover-foreground shadow text-sm' side="left" sideOffset={15}>
         <div className=''>
@@ -38,12 +48,16 @@ export const SearchEngineChoiceMenu = () => {
   const setWebSearchEngine = useChatStore((state) => state.setWebSearchEngine)
   const enabledTools = useChatStore((state) => state.enabledTools)
   const setEnabledTools = useChatStore((state) => state.setEnabledTools)
+  const availableWebSearchServices = useChatStore(useShallow((state) => state.services.search))
 
   const handleEngineChange = (engine: WebSearchEngine | "-1") => {
     if (engine === "-1") {
       setEnabledTools(enabledTools.filter(tool => tool !== "web_search"))
       setWebSearchEngine("openai")
     } else {
+      if (!availableWebSearchServices.find((s) => s.name === engine)?.available) {
+        return
+      }
       if (!enabledTools.includes("web_search")) {
         setEnabledTools([...enabledTools, "web_search"])
       }
@@ -76,12 +90,21 @@ export const SearchEngineChoiceMenu = () => {
         <SelectGroup className='max-h-[300px]'>
           <SelectLabel>Select Web Search Engine</SelectLabel>
           {
-            [...WebSearchEngines, "-1"].map((engine) => (
-              <SelectItem key={engine} value={engine} className='text-xs'>
-                <SearchEngineCard searchEngine={engine as (WebSearchEngine | "-1")} />
-              </SelectItem>
-            ))
+            availableWebSearchServices.map((engine) => {
+              const clName = clsx(
+                "w-full text-xs flex flex-row items-center gap-2",
+                engine.available === false ? 'text-muted-foreground cursor-not-allowed pointer-events-none' : '',
+              )
+              return (
+                <SelectItem key={engine.name} value={engine.name} className={clName}>
+                  <SearchEngineCard searchEngine={engine.name as WebSearchEngine} available={engine.available} />
+                </SelectItem>
+              )
+            })
           }
+          <SelectItem key="-1" value="-1" className='text-xs'>
+            <SearchEngineCard searchEngine="-1" available={true} />
+          </SelectItem>
         </SelectGroup>
       </SelectContent>
     </Select>

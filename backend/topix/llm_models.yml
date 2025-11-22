@@ -1,13 +1,13 @@
 # OpenAI Models
 gpt-5.1:
   model: gpt-5.1
-  openrouter_model: gpt-5.1
+  openrouter_model: openai/gpt-5.1
   provider: openai
   tier: pro
 
 gpt-5.1-chat-latest:
   model: gpt-5.1-chat-latest
-  openrouter_model: gpt-5.1-chat
+  openrouter_model: openai/gpt-5.1-chat
   provider: openai
   tier: pro
 
@@ -44,37 +44,39 @@ gpt-4o-mini:
 # Claude Models
 claude-sonnet-4.5:
   model: claude-sonnet-4-5-20250929
-  openrouter_model: claude-sonnet-4.5
+  openrouter_model: anthropic/claude-sonnet-4.5
   provider: anthropic
   tier: pro
 
 claude-opus-4.1:
   model: claude-opus-4-20250514
-  openrouter_model: claude-opus-4.1
+  openrouter_model: anthropic/claude-opus-4.1
   provider: anthropic
   tier: lite
 
 claude-3.5-haiku:
   model: claude-3-5-haiku-20241022
-  openrouter_model: claude-3.5-haiku
+  openrouter_model: anthropic/claude-3.5-haiku
   provider: anthropic
   tier: lite
 
 # Gemini Models
 gemini-2.5-pro:
   model: gemini-2.5-pro
+  openrouter_model: google/gemini-2.5-pro
   provider: gemini
   tier: pro
 
 gemini-2.5-flash:
   model: gemini-2.5-flash
+  openrouter_model: google/gemini-2.5-flash
   provider: gemini
   tier: lite
 
 # Mistral Models
 mistral-medium-3.1:
   model: mistral-medium-latest
-  openrouter_model: mistral-medium-3.1
+  openrouter_model: mistralai/mistral-medium-3.1
   provider: mistral
   tier: lite
 

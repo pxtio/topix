@@ -28,7 +28,7 @@ class BaseAgentConfig(BaseModel):
     instructions_template: str
     model_settings: ModelSettings | None = None
 
-    @field_validator("model", mode="after")
+    @field_validator("model")
     @classmethod
     def validate_model(cls, v: str) -> str:
         """Check if the model is valid."""
@@ -67,13 +67,43 @@ class WebSearchConfig(BaseAgentConfig):
         return valid_engines[0]
 
 
+class WebNavigatorConfig(BaseAgentConfig):
+    """Web Navigator Config class."""
+
+    search_engine: Literal[WebSearchOption.TAVILY] = WebSearchOption.TAVILY
+
+    @field_validator("search_engine")
+    @classmethod
+    def validate_engine(cls, v: str) -> str:
+        """Check if the model is valid."""
+        # Only Tavily is supported for now.
+        if len(service_config.navigate) == 0:
+            raise ValueError("No Navigate API available. Please add Tavily key.")
+        return v
+
+
+class CodeInterpreterConfig(BaseAgentConfig):
+    """Code Interpreter Config class."""
+
+    runtime_provider: Literal["openai"] = "openai"
+
+    @field_validator("runtime_provider")
+    @classmethod
+    def validate_provider(cls, v: str) -> str:
+        """Check if the runtime provider is valid."""
+        # Only OpenAI is supported for now.
+        if len(service_config.code) == 0:
+            raise ValueError("No Code Runtime API available. Please add at least one Code Runtime API.")
+        return v
+
+
 class PlanConfig(BaseAgentConfig):
     """Plan Config class."""
 
     web_search: WebSearchConfig
     memory_search: BaseAgentConfig
-    code_interpreter: BaseAgentConfig | None = None
-    navigate: BaseAgentConfig | None = None
+    code_interpreter: CodeInterpreterConfig | None = None
+    navigate: WebNavigatorConfig | None = None
 
 
 class AssistantManagerConfig(BaseModel):

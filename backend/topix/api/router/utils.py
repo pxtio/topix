@@ -44,7 +44,7 @@ async def search_images(query: str, limit: int = 5):
 async def get_services() -> dict:
     """Get available services."""
     return {
-        "llm": [llm.name for llm in service_config.llm],
+        "llm": [llm.code for llm in service_config.llm],
         "search": [search.name for search in service_config.search],
         "navigate": [navigate.name for navigate in service_config.navigate],
         "code": [code.name for code in service_config.code],

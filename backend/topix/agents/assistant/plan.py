@@ -15,7 +15,7 @@ from topix.agents.base import BaseAgent
 from topix.agents.config import PlanConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
-from topix.agents.datatypes.tools import AgentToolName
+from topix.agents.datatypes.tools import AgentToolName, tool_descriptions
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.agents.websearch.navigate import NavigateAgent
 from topix.agents.widgets.finance import display_stock_widget_tool
@@ -55,31 +55,31 @@ class Plan(BaseAgent):
     @classmethod
     def from_config(cls, content_store: ContentStore, config: PlanConfig) -> Plan:
         """Create an instance of Plan from configuration."""
-        tools = []
-        web_search_tool = WebSearchHandler.from_config(config.web_search)
-        tools.append(web_search_tool)
-        memory_search_agent = MemorySearch.from_config(content_store, config.memory_search)
-        memory_search_tool = memory_search_agent.as_tool(
-            tool_name=AgentToolName.MEMORY_SEARCH,
-            tool_description="Memory Search Tool",
-        )
-        tools.append(memory_search_tool)
-        if config.code_interpreter:
-            code_interpreter_agent = CodeInterpreter.from_config(config.code_interpreter)
-            code_interpreter_tool = code_interpreter_agent.as_tool(
-                tool_name=AgentToolName.CODE_INTERPRETER,
-                tool_description="Code Interpreter Tool",
-            )
-            tools.append(code_interpreter_tool)
-        if config.navigate:
-            navigate_agent = NavigateAgent.from_config(config.navigate)
-            navigate_tool = navigate_agent.as_tool(
-                tool_name=AgentToolName.NAVIGATE,
-                tool_description="Navigate Tool",
-            )
-            tools.append(navigate_tool)
+        tools = [
+            display_stock_widget_tool,
+            display_weather_widget_tool,
+            WebSearchHandler.from_config(config.web_search),
+            MemorySearch.from_config(content_store, config.memory_search).as_tool(
+                tool_name=AgentToolName.MEMORY_SEARCH,
+                tool_description=tool_descriptions.get(AgentToolName.MEMORY_SEARCH),
+            ),
+        ]
 
-        tools.extend([display_stock_widget_tool, display_weather_widget_tool])
+        if config.code_interpreter:
+            tools.append(
+                CodeInterpreter.from_config(config.code_interpreter).as_tool(
+                    tool_name=AgentToolName.CODE_INTERPRETER,
+                    tool_description=tool_descriptions.get(AgentToolName.CODE_INTERPRETER),
+                )
+            )
+
+        if config.navigate:
+            tools.append(
+                NavigateAgent.from_config(config.navigate).as_tool(
+                    tool_name=AgentToolName.NAVIGATE,
+                    tool_description=tool_descriptions.get(AgentToolName.NAVIGATE),
+                )
+            )
 
         return cls(
             model=config.model,

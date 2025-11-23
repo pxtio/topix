@@ -15,15 +15,15 @@ export const ThinkingDots = ({ message, isStopped = false }: { message: string, 
         !isStopped ?
         <Orbit animate animation="path-loop" loop speed={2} className='size-4 text-foreground/50' strokeWidth={2} /> :
         <ListTree
-          className='size-4 text-foreground/50'
+          className='size-4 text-accent-foreground'
           strokeWidth={2}
         />
       }
       {
         !isStopped ? (
-          <ShinyText text={message} disabled={isStopped} speed={1} className='font-normal text-sm text-foreground/50' />
+          <ShinyText text={message} disabled={isStopped} speed={1} className='font-medium text-sm text-foreground/50' />
         ) : (
-          <span className='font-normal text-sm text-foreground/50'>{message}</span>
+          <span className='font-medium text-sm text-accent-foreground'>{message}</span>
         )
       }
     </div>

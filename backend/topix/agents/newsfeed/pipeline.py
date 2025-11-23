@@ -61,9 +61,11 @@ class NewsfeedPipeline:
             )
         )
         if subscription.label.markdown in DefaultSeedSources.model_fields:
-            subscription.properties.seed_sources.texts.extend(
-                DefaultSeedSources.model_fields[subscription.label.markdown].default.seed_sources
-            )
+            default_seed_sources = DefaultSeedSources.model_fields[subscription.label.markdown].default.seed_sources
+            for dsource in default_seed_sources:
+                # If the default seed source is not in the subscription's seed sources, add it
+                if not any(sub_source in dsource or dsource in sub_source for sub_source in subscription.properties.seed_sources.texts):
+                    subscription.properties.seed_sources.texts.append(dsource)
         return subscription
 
     async def create_subscription(self, topic: str, raw_description: str = "") -> Subscription:

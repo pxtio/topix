@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { ExternalLink } from 'lucide-react'
 
-
 type Props = {
   images: string[] // array of image URLs
   /** fixed row height for the preview strip (px) */
@@ -12,7 +11,6 @@ type Props = {
   /** optional title above the dialog grid */
   title?: string
 }
-
 
 export default function ImageSearchStrip({
   images,
@@ -24,6 +22,16 @@ export default function ImageSearchStrip({
   const [open, setOpen] = useState(false)
   const [ratios, setRatios] = useState<Map<string, number>>(new Map()) // url -> aspect ratio (w/h)
   const [brokenUrls, setBrokenUrls] = useState<Set<string>>(new Set())
+
+  // helper: mark an URL as broken (used by preload + <img onError>)
+  const markBroken = (url: string) => {
+    setBrokenUrls(prev => {
+      if (prev.has(url)) return prev
+      const next = new Set(prev)
+      next.add(url)
+      return next
+    })
+  }
 
   // filter out broken ones everywhere
   const safePhotos = useMemo(
@@ -54,12 +62,7 @@ export default function ImageSearchStrip({
         }
         img.onerror = () => {
           if (!cancelled) {
-            // mark this url as broken so we never render it
-            setBrokenUrls(prev => {
-              const next = new Set(prev)
-              next.add(url)
-              return next
-            })
+            markBroken(url)
           }
           resolve()
         }
@@ -68,7 +71,7 @@ export default function ImageSearchStrip({
       })
 
     ;(async () => {
-      for (const p of toLoad) await loadOne(p)
+      for (const url of toLoad) await loadOne(url)
     })()
 
     return () => {
@@ -83,6 +86,9 @@ export default function ImageSearchStrip({
     const hiddenCount = Math.max(0, safePhotos.length - visible.length)
     return { visible, hiddenCount }
   }, [safePhotos])
+
+  // if no valid images, render nothing
+  if (safePhotos.length === 0) return null
 
   const openNewTab = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer')
@@ -123,6 +129,7 @@ export default function ImageSearchStrip({
                   alt={'web photo'}
                   referrerPolicy='no-referrer'
                   className='h-full w-full object-cover'
+                  onError={() => markBroken(url)} // <-- strip-level safeguard
                 />
                 {/* external icon on hover */}
                 <div className='pointer-events-none absolute right-1.5 top-1.5 opacity-0 group-hover:opacity-100 transition-opacity'>

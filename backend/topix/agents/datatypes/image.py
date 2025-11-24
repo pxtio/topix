@@ -1,4 +1,4 @@
-"""Web Search Settings Data Types."""
+"""Image Web Search Settings Data Types."""
 from enum import StrEnum
 
 

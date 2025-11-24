@@ -101,6 +101,7 @@ class NotifyOutput(BaseModel):
 
 class ImageDescriptionOutput(BaseModel):
     """Output of the image description agent."""
+
     image_title: str
     image_type: str
     image_summary: str
@@ -108,6 +109,7 @@ class ImageDescriptionOutput(BaseModel):
 
 class TopicIllustratorOutput(BaseModel):
     """Output of the topic illustrator agent."""
+
     image_url: str
     image_title: str
     image_description: str

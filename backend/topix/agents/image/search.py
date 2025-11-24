@@ -1,12 +1,15 @@
+"""Search for images using various APIs."""
 import asyncio
 import logging
 import os
+
 from typing import Optional
+
 import httpx
 
+from topix.agents.datatypes.image import ImageSearchLocation
 from topix.agents.websearch.utils import get_from_date
 from topix.datatypes.recurrence import Recurrence
-from topix.agents.datatypes.image import ImageSearchLocation
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +37,7 @@ async def search_serper(
 
     Returns:
         list of image urls.
+
     """
     logger.info(f"Searching for images from query: {query}")
     url = "https://google.serper.dev/images"
@@ -92,6 +96,7 @@ async def search_linkup(
 
     Returns:
         return a list of image urls.
+
     """
     logger.info(f"Searching for images from query: {query}")
     url = "https://api.linkup.so/v1/search"

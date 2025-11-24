@@ -1,37 +1,50 @@
+"""Image Description Agent to describe images given their URLs."""
+from __future__ import annotations
+
 import asyncio
 import logging
-from agents import ModelSettings
+
 from typing import Literal
 
-from topix.agents.run import AgentRunner
+from agents import ModelSettings
 from pydantic import BaseModel
 
 from topix.agents.base import BaseAgent
-from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.context import Context
+from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.outputs import ImageDescriptionOutput
+from topix.agents.run import AgentRunner
 
 
 class ImageMessageContent(BaseModel):
+    """Content model for image messages.
+
+    TODO: Merge with Message class in agents.datatypes.message
+    """
+
     type: Literal['input_image'] = 'input_image'
     image_url: str
 
 
 class ImageDescriptionInput(BaseModel):
-    """Message model for the image description agent"""
+    """Message model for the image description agent."""
+
     role: Literal['user', 'assistant', 'system'] = 'user'
     content: list[ImageMessageContent]
 
     @classmethod
-    def from_url(cls, image_url: str) -> 'ImageDescriptionInput':
+    def from_url(cls, image_url: str) -> ImageDescriptionInput:
+        """Create an ImageDescriptionInput from an image URL."""
         return cls(content=[ImageMessageContent(image_url=image_url)])
 
 
 class ImageDescriptionAgent(BaseAgent):
+    """Agent to describe images given their URLs."""
+
     def __init__(
         self,
         model: str = ModelEnum.OpenAI.GPT_4O_MINI,
-        instructions_template: str = "image_description.jinja",
+        instructions_template: str = "image/image_description.jinja",
         model_settings: ModelSettings | None = None,
     ):
         """Initialize the Image Description agent."""
@@ -61,14 +74,17 @@ async def describe_images(
 
     Returns:
         list of image descriptions.
+
     """
-    description_inputs = [[ImageDescriptionInput.from_url(image_url)]
-                          for image_url in image_urls]
+    description_inputs = [
+        [ImageDescriptionInput.from_url(image_url)]
+        for image_url in image_urls
+    ]
 
     async def run_description(
         input: list[ImageDescriptionInput]
     ) -> ImageDescriptionOutput | None:
-        """Wraps the execution of the description agent for a single image input."""
+        """Wrap the execution of the description agent for a single image input."""
         try:
             description = await AgentRunner.run(ImageDescriptionAgent(), input=input, context=Context())
             return description

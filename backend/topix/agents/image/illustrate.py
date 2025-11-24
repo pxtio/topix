@@ -1,48 +1,22 @@
-from typing import Any
+"""Topic Illustrator Agent to find and describe images for a given topic."""
+from agents import ModelSettings, Tool, function_tool
 
-from topix.agents.datatypes.context import ReasoningContext
-from agents import Agent, Tool, function_tool, ModelSettings, AgentHooks, RunContextWrapper
 from topix.agents.base import BaseAgent
+from topix.agents.datatypes.image import ImageSearchOption
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.outputs import ImageDescriptionOutput, TopicIllustratorOutput
 from topix.agents.image.describe import describe_images
-from topix.datatypes.recurrence import Recurrence
-
-from topix.agents.datatypes.image import ImageSearchOption
 from topix.agents.image.search import search_linkup, search_serper
-
-
-class TopicIllustratorAgentHook(AgentHooks):
-    """Custom hook to handle the context and results of the image search agent."""
-
-    async def on_end(
-        self,
-        context: RunContextWrapper[ReasoningContext],
-        agent: Agent[ReasoningContext],
-        output: Any,
-    ):
-        """Initialize the context for the image search agent."""
-        # Initialize the context if not already done
-        for tool in agent.tools:
-            tool.is_enabled = True
-
-    async def on_tool_end(
-        self,
-        context: RunContextWrapper[ReasoningContext],
-        agent: Agent[ReasoningContext],
-        tool: Tool,
-        result: str,
-    ):
-        """Handle tool calls and update the context with the results."""
-        tool.is_enabled = False
+from topix.datatypes.recurrence import Recurrence
 
 
 class TopicIllustrator(BaseAgent):
+    """Agent to illustrate topics with relevant images."""
 
     def __init__(
         self,
         model: str = ModelEnum.OpenAI.GPT_4O_MINI,
-        instructions_template: str = "topic_illustrator.jinja",
+        instructions_template: str = "image/topic_illustrator.jinja",
         model_settings: ModelSettings | None = None,
         image_search_engine: ImageSearchOption = ImageSearchOption.SERPER,
         image_search_num_results: int = 4
@@ -65,7 +39,6 @@ class TopicIllustrator(BaseAgent):
             instructions=instructions,
             tools=tools,
             output_type=TopicIllustratorOutput,
-            hooks=TopicIllustratorAgentHook(),
         )
 
         super().__post_init__()
@@ -79,7 +52,7 @@ class TopicIllustrator(BaseAgent):
             query: str,
             recency: Recurrence | None = None,
         ) -> list[tuple[str, ImageDescriptionOutput]]:
-            """Search for images that are relevant to the query
+            """Search for images that are relevant to the query.
 
             Args:
                 query: The string topic input.
@@ -87,6 +60,7 @@ class TopicIllustrator(BaseAgent):
 
             Returns:
                 A list of tuples containing the image url, along with their descriptions.
+
             """
             if self._image_search_engine == ImageSearchOption.SERPER:
                 image_urls = await search_serper(

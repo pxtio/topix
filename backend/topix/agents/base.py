@@ -4,7 +4,6 @@ import logging
 
 from dataclasses import dataclass
 from pathlib import Path
-from pydantic import BaseModel
 from typing import Any, AsyncGenerator
 
 import litellm
@@ -22,6 +21,7 @@ from openai.types.responses import (
     ResponseReasoningSummaryTextDeltaEvent,
     ResponseTextDeltaEvent,
 )
+from pydantic import BaseModel
 
 from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.context import Context

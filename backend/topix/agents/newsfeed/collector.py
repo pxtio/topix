@@ -14,6 +14,7 @@ from topix.agents.newsfeed.context import NewsfeedContext
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.api.utils.common import iso_to_clear_date
 from topix.datatypes.newsfeed.subscription import Subscription
+from topix.datatypes.lang import LANGCODEMAPPING, LangEnum
 
 
 class NewsfeedCollectorInput(BaseModel):
@@ -76,17 +77,21 @@ class NewsfeedCollector(BaseAgent):
             if input.subscription.properties.keywords.texts else "None"
         seed_sources_str = '\n'.join(f"- {ss}" for ss in input.subscription.properties.seed_sources.texts) \
             if input.subscription.properties.seed_sources.texts else "None"
-
+        lang_str = LANGCODEMAPPING[input.subscription.properties.lang] if input.subscription.properties.lang else LangEnum.ENGLISH
+        frequency_str = input.subscription.properties.recurrence.text if input.subscription.properties.recurrence else "month"
         history_str = '\n'.join(f"- {title} ({url})" for url, title in input.history) if input.history else "None"
 
         return self._render_prompt(
             "newsfeed/collector.user.jinja",
+            time=iso_to_clear_date(datetime.now().isoformat()),
             topic=input.subscription.label.markdown,
             sub_topics=sub_topics_str,
             description=input.subscription.properties.description.text,
             keywords=keywords_str,
             seed_sources=seed_sources_str,
-            history=history_str
+            lang=lang_str,
+            frequency=frequency_str,
+            history=history_str,
         )
 
 
@@ -137,6 +142,8 @@ class NewsfeedSynthesizer(BaseAgent):
             if input.subscription.properties.keywords.texts else "None"
         seed_sources_str = '\n'.join(f"- {ss}" for ss in input.subscription.properties.seed_sources.texts) \
             if input.subscription.properties.seed_sources.texts else "None"
+        lang_str = LANGCODEMAPPING[input.subscription.properties.lang] if input.subscription.properties.lang else LangEnum.ENGLISH
+        frequency_str = input.subscription.properties.recurrence.text if input.subscription.properties.recurrence else "month"
 
         history_str = '\n'.join(f"- {title} ({url})" for url, title in input.history) if input.history else "None"
         return self._render_prompt(
@@ -147,6 +154,8 @@ class NewsfeedSynthesizer(BaseAgent):
             description=input.subscription.properties.description.text,
             keywords=keywords_str,
             seed_sources=seed_sources_str,
+            lang=lang_str,
+            frequency=frequency_str,
             items='\n\n---\n\n'.join([
                 str(tool_call.output) for tool_call in context.tool_calls
             ]),

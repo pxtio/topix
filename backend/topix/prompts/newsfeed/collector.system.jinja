@@ -38,8 +38,8 @@ Avoid SEO farms, scraped aggregators, rumor sites. Prefer **canonical blog/newsr
 
 # HARD LIMITS
 - **MAX_SEARCH_CALLS = 30** total
-- **BATCH_SIZE = 3–5** per turn (default 5)
-- **MAX_TURNS = 10** total
+- **BATCH_SIZE = 5-10** per turn (default 10)
+- **MAX_TURNS = 5** total
 On each turn, run `min(BATCH_SIZE, MAX_SEARCH_CALLS − used_calls)` queries.
 
 # OPERATOR TOOLKIT

@@ -22,7 +22,7 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-from topix.config.config import Config
+from topix.config.config import Config, QdrantConfig
 from topix.datatypes.property import TextProperty
 from topix.datatypes.resource import Resource
 from topix.nlp.embed import DIMENSIONS, OpenAIEmbedder
@@ -73,14 +73,14 @@ class ContentStore:
     def from_config(cls):
         """Create an instance of QdrantStore from configuration."""
         config: Config = Config.instance()
-        qdrant_config = config.run.databases.qdrant
+        qdrant_config: QdrantConfig = config.run.databases.qdrant
         collection = qdrant_config.collection
 
         qdrant_client = AsyncQdrantClient(
             host=qdrant_config.host,
             port=qdrant_config.port,
             https=qdrant_config.https,
-            api_key=qdrant_config.api_key,
+            api_key=qdrant_config.api_key.get_secret_value() if qdrant_config.api_key else None,
         )
         embedder = OpenAIEmbedder.from_config()
 

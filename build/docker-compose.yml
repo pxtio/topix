@@ -68,6 +68,8 @@ services:
     build:
       context: ..
       dockerfile: backend/Dockerfile
+      args:
+        ENVFILE: ${ENVFILE:-.env}
     container_name: backend-local
     profiles: ["local"]
     environment:
@@ -105,6 +107,8 @@ services:
     build:
       context: ..
       dockerfile: backend/Dockerfile
+      args:
+        ENVFILE: ${ENVFILE:-.env}
     container_name: backend-dev
     profiles: ["dev"]
     environment:

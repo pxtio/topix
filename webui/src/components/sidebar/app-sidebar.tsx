@@ -110,7 +110,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                           </span>
                         </SidebarMenuButton>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" side="right" className="w-56 bg-accent">
+                      <DropdownMenuContent align="start" side="right" className="w-56">
                         <DropdownMenuItem disabled className='text-xs'>
                           <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" strokeWidth={2} />
                           <span>Profile</span>

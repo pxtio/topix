@@ -26,6 +26,8 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
+            if (id.includes("@hugeicons")) return "hugeicons"
+            if (id.includes("lucide-react")) return "lucide"
             if (id.includes("@tanstack")) return "tanstack"
             if (id.includes("@dagrejs")) return "dagre"
             if (id.includes("@radix-ui")) return "radix"

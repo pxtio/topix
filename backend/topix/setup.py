@@ -1,25 +1,56 @@
 """Setup module."""
 
+import logging
 import os
 
+from pathlib import Path
+
+from dotenv import load_dotenv
+
 from topix.config.config import Config
+from topix.config.services import service_config
 from topix.datatypes.stage import StageEnum
 from topix.store.qdrant.base import QdrantStore
+from topix.utils.common import running_in_docker
+
+logger = logging.getLogger(__name__)
 
 
-async def setup(stage: StageEnum):
+def load_env_file(stage: StageEnum):
+    """Load environment variables from a .env file."""
+    envpath = Path(__file__).parent.parent.parent / '.env'
+    logger.info(f"Loading env from: {envpath}")
+    load_dotenv(dotenv_path=envpath, override=True, verbose=True)
+
+    # override db config based on whether running in docker or not
+    # and the stage
+    if running_in_docker():
+        logger.info("Detected running inside Docker.")
+        if os.environ.get("POSTGRES_HOST") in ("", "localhost"):
+            logger.info(
+                "Detected POSTGRES_HOST is empty or localhost. "
+                f"Overriding POSTGRES_HOST and POSTGRES_PORT for docker environment to `postgres-{str(stage)}` and `5432` respectively."
+            )
+            os.environ["POSTGRES_HOST"] = f"postgres-{str(stage)}"
+            os.environ["POSTGRES_PORT"] = "5432"
+        if os.environ.get("QDRANT_HOST") in ("", "localhost"):
+            logger.info(
+                "Detected QDRANT_HOST is empty or localhost. "
+                f"Overriding QDRANT_HOST and QDRANT_PORT for docker environment to `qdrant-{str(stage)}` and `6333` respectively."
+            )
+            os.environ["QDRANT_HOST"] = f"qdrant-{str(stage)}"
+            os.environ["QDRANT_PORT"] = "6333"
+
+
+async def setup(stage: StageEnum) -> Config:
     """Set up the application configuration and environment variables."""
-    config = Config.load(stage=stage)
+    # load .env file
+    load_env_file(stage)
 
-    os.environ['OPENAI_API_KEY'] = config.run.apis.openai.api_key
-    os.environ["TAVILY_API_KEY"] = config.run.apis.tavily.api_key
-    os.environ["LINKUP_API_KEY"] = config.run.apis.linkup.api_key
-    os.environ["PERPLEXITY_API_KEY"] = config.run.apis.perplexity.api_key
-    os.environ["SERPER_API_KEY"] = config.run.apis.serper.api_key
-    os.environ["GEMINI_API_KEY"] = config.run.apis.gemini.api_key
-    os.environ["ANTHROPIC_API_KEY"] = config.run.apis.anthropic.api_key
-    os.environ["OPENROUTER_API_KEY"] = config.run.apis.openrouter.api_key
-    os.environ["UNSPLASH_ACCESS_KEY"] = config.run.apis.unsplash.access_key
+    config = Config.load(stage=stage)
+    logger.info(f"Loaded configuration for stage: {stage}")
+
+    service_config.update()
 
     await QdrantStore.from_config().create_collection()
     return config

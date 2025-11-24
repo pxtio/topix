@@ -7,7 +7,7 @@ from agents import function_tool
 from pydantic import BaseModel, Field
 
 from topix.agents.base import BaseAgent
-from topix.agents.config import BaseAgentConfig
+from topix.agents.config import WebNavigatorConfig
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.websearch.tools import fetch_content
 from topix.api.utils.common import iso_to_clear_date
@@ -77,7 +77,7 @@ class NavigateAgent(BaseAgent):
         self._input_type = NavigateAgentInput
 
     @classmethod
-    def from_config(cls, config: BaseAgentConfig) -> NavigateAgent:
+    def from_config(cls, config: WebNavigatorConfig) -> NavigateAgent:
         """Create an instance of NavigateAgent from configuration."""
         return cls(
             model=config.model,

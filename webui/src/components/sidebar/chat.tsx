@@ -104,7 +104,7 @@ export function ChatMenuItem({ chatId, label }: { chatId: string, label?: string
           <ContextMenuItem
             onClick={() => handleDeleteChat(chatId)}
             variant='destructive'
-            className='bg-accent text-xs flex flex-row items-center'
+            className='text-xs flex flex-row items-center'
           >
             <HugeiconsIcon
               icon={Delete02Icon}

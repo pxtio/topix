@@ -31,10 +31,33 @@ APP_PORT=5175
 
 API_ORIGIN=http://localhost:${API_PORT}
 VITE_TOPIX_URL=${API_ORIGIN}
+
+OPENAI_API_KEY= # make sure you set this value
+GEMINI_API_KEY=
+ANTHROPIC_API_KEY=
+MISTRAL_API_KEY=
+OPENROUTER_API_KEY= # set this to activate non-OpenAI models, but you still need OPENAI_API_KEY for some functionalities
+LINKUP_API_KEY= # set this for minimum web search functionality
+TAVILY_API_KEY= # set this for web search and web navigation functionalities
+PERPLEXITY_API_KEY=
+UNSPLASH_ACCESS_KEY=
+
+POSTGRES_HOST=
+POSTGRES_PORT=5432 # please set the correct port you have set for Postgres
+QDRANT_HOST=
+QDRANT_PORT=6333 # please set the correct port you have set for Qdrant
+
+JWT_SECRET_KEY= # required for JWT authentication; if not set, a random key will be generated at startup
+
+OPENAI_AGENTS_DISABLE_TRACING=
+OPENAI_AGENTS_DONT_LOG_MODEL_DATA=
+OPENAI_AGENTS_DONT_LOG_TOOL_DATA=
 ```
 
 > Only variables prefixed with `VITE_` are exposed to the **frontend**.
 > Both backend and frontend read the **root** `.env` automatically.
+> To have a minimal working app, please set at least `OPENAI_API_KEY` (to enable OpenAI LLMs and text embedding model), `LINKUP_API_KEY` or `TAVILY_API_KEY` for web search, and `JWT_SECRET_KEY` for jwt authentication.
+> In production you can set the `OPENAI_AGENTS_DISABLE_TRACING`, `OPENAI_AGENTS_DONT_LOG_MODEL_DATA`, `OPENAI_AGENTS_DONT_LOG_TOOL_DATA`, this will reduce loggings and disable tracing.
 
 ---
 

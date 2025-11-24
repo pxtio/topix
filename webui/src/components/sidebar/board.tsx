@@ -12,6 +12,8 @@ import type { Chat } from "@/features/agent/types/chat"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible"
 import { Minus, Plus } from "lucide-react"
 import { ChatMenuItem, NewChatItem } from "./chat"
+import { ConfirmDeleteBoardAlert } from "./confirm-delete-board"
+import { useState } from "react"
 
 /**
  * Dashboard menu item component
@@ -70,19 +72,32 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
   const { userId } = useAppStore()
   const { deleteBoard } = useDeleteBoard()
   const navigate = useNavigate()
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const pathname = useRouterState({ select: s => s.location.pathname })
 
-  const isActive = pathname === `/boards/${boardId}` || pathname.startsWith(`/boards/${boardId}/`)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+
+  const isActive =
+    pathname === `/boards/${boardId}` ||
+    pathname.startsWith(`/boards/${boardId}/`)
 
   const handleClick = () => {
-    navigate({ to: '/boards/$id', params: { id: boardId } })
+    navigate({ to: "/boards/$id", params: { id: boardId } })
   }
 
   const handleDelete = () => {
     deleteBoard({ boardId, userId })
     if (isActive) {
-      navigate({ to: '/boards' })
+      navigate({ to: "/boards" })
     }
+  }
+
+  // called when user clicks "Delete Board" in the context menu
+  const handleRequestDelete = () => {
+    // let the ContextMenu close first (and release its pointer-events stuff),
+    // then open the AlertDialog on the next tick
+    window.setTimeout(() => {
+      setIsConfirmOpen(true)
+    }, 0)
   }
 
   return (
@@ -102,36 +117,52 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
               <span>{trimText(label || UNTITLED_LABEL, 20)}</span>
             </SidebarMenuButton>
           </ContextMenuTrigger>
-          <ContextMenuContent className='w-44'>
+
+          <ContextMenuContent className="w-44">
             <ContextMenuItem
-              onClick={handleDelete}
+              // let Radix close the menu naturally
+              onSelect={() => handleRequestDelete()}
               variant="destructive"
-              className='bg-accent text-xs flex flex-row items-center'
+              className="text-xs flex flex-row items-center"
             >
               <HugeiconsIcon
                 icon={Delete02Icon}
                 className="mr-2 size-4"
+                strokeWidth={2}
               />
               <span>Delete Board</span>
             </ContextMenuItem>
           </ContextMenuContent>
 
           <CollapsibleTrigger asChild>
-            <SidebarMenuAction className='right-1.5'>
+            <SidebarMenuAction className="right-1.5">
               <Plus className="group-data-[state=open]/collapsible:hidden" strokeWidth={2} />
               <Minus className="group-data-[state=closed]/collapsible:hidden" strokeWidth={2} />
             </SidebarMenuAction>
           </CollapsibleTrigger>
+
           <CollapsibleContent>
             <SidebarMenuSub>
               {
-                chats?.map((chat) => <ChatMenuItem key={chat.uid} chatId={chat.uid} label={chat.label} />) || []
+                chats?.map(chat => (
+                  <ChatMenuItem key={chat.uid} chatId={chat.uid} label={chat.label} />
+                )) || []
               }
               <NewChatItem initialBoardId={boardId} isSubMenuItem />
             </SidebarMenuSub>
           </CollapsibleContent>
         </Collapsible>
       </ContextMenu>
+
+      {/* Alert lives OUTSIDE the ContextMenu, controlled by state */}
+      <ConfirmDeleteBoardAlert
+        open={isConfirmOpen}
+        onOpenChange={setIsConfirmOpen}
+        onConfirm={() => {
+          handleDelete()
+          setIsConfirmOpen(false)
+        }}
+      />
     </SidebarMenuItem>
   )
 }

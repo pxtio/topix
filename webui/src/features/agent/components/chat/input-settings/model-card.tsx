@@ -2,7 +2,11 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useChatStore } from "@/features/agent/store/chat-store"
-import { LlmBrandIcon, LlmDescription, LlmModels, LlmName, type LlmModel } from "@/features/agent/types/llm"
+import { LlmBrandIcon, LlmDescription, LlmName, type LlmModel } from "@/features/agent/types/llm"
+import { SquareLock01Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { clsx } from "clsx"
+import { useShallow } from "zustand/shallow"
 
 
 /**
@@ -10,10 +14,16 @@ import { LlmBrandIcon, LlmDescription, LlmModels, LlmName, type LlmModel } from 
  * in a hover card format. It is used within the ModelChoiceMenu to provide
  * additional information about each model.
  */
-const ModelCard: React.FC<{ model: LlmModel }> = ({ model }) => {
+const ModelCard: React.FC<{ model: LlmModel, available?: boolean }> = ({ model, available }) => {
+  const clss = clsx(
+    "flex-1 flex flex-row items-center gap-2 justify-between truncate",
+    available === false ? 'text-muted-foreground cursor-not-allowed pointer-events-none': '',
+  )
   return (
     <HoverCard openDelay={200}>
-      <HoverCardTrigger className=''>{LlmName[model]}</HoverCardTrigger>
+      <HoverCardTrigger className={clss}>
+        <span>{LlmName[model]}</span>
+      </HoverCardTrigger>
       <HoverCardContent className='w-48 rounded-xl border border-border bg-popover text-popover-foreground shadow text-sm' side="left" sideOffset={15}>
         <div className=''>
           {LlmDescription[model]}
@@ -31,6 +41,8 @@ const ModelCard: React.FC<{ model: LlmModel }> = ({ model }) => {
  */
 export const ModelChoiceMenu = () => {
   const { llmModel, setLlmModel } = useChatStore()
+
+  const availableModels = useChatStore(useShallow((state) => state.services.llm))
 
   const handleModelChange = (model: LlmModel) => {
     setLlmModel(model)
@@ -54,12 +66,21 @@ export const ModelChoiceMenu = () => {
         <SelectGroup className='max-h-[300px]'>
           <SelectLabel>Models</SelectLabel>
           {
-            LlmModels.map((model) => {
-              const Icon = LlmBrandIcon[model]
+            availableModels.map((model) => {
+              const Icon = LlmBrandIcon[model.name]
+              const clName = clsx(
+                "relative w-full text-xs flex flex-row items-center gap-2",
+                !model.available ? 'text-muted-foreground cursor-not-allowed pointer-events-none' : '',
+              )
               return (
-                <SelectItem key={model} value={model} className='text-xs flex flex-row items-center gap-2'>
+                <SelectItem key={model.name} value={model.name} className={clName} disabled={!model.available}>
                   <Icon size={4} />
-                  <ModelCard model={model} />
+                  <ModelCard model={model.name} available={model.available} />
+                  {
+                    !model.available && (
+                      <HugeiconsIcon icon={SquareLock01Icon} className='size-4 absolute right-2 top-1/2 -translate-y-1/2' strokeWidth={2} />
+                    )
+                  }
                 </SelectItem>
               )
             })

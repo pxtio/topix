@@ -57,11 +57,11 @@ export const AssistantMessage = ({
   }, [message, isDeepResearch, resp.steps])
 
   // retrieve first image search query from reasoning steps
-  const imageQuery = useMemo(() => {
+  const imageUrls = useMemo(() => {
     if (!message.streaming && !isDeepResearch) {
       const imgStep = resp.steps.find(step => step.name === 'display_image_search_widget')
-      if (imgStep && typeof imgStep.output === 'object' && 'query' in imgStep.output) {
-        return String(imgStep.output.query)
+      if (imgStep && typeof imgStep.output === 'object' && 'images' in imgStep.output) {
+        return imgStep.output.images as string[]
       }
     }
     return null
@@ -74,7 +74,7 @@ export const AssistantMessage = ({
         isStreaming={message.streaming || false}
         estimatedDurationSeconds={isDeepResearch ? 180 : undefined}
       />
-      { imageQuery && <ImageSearchStrip query={imageQuery} /> }
+      { imageUrls && <ImageSearchStrip images={imageUrls} /> }
       { cities.length > 0 && <WeatherCard cities={cities} /> }
       { tradingSymbols.length > 0 && <TradingCard symbols={tradingSymbols} initialRange="1d" /> }
       {lastStepMessage}

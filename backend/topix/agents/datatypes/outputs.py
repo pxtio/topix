@@ -59,6 +59,10 @@ class DisplayImageSearchWidgetOutput(BaseModel):
         str,
         "The search query for finding relevant images to display in the widget."
     ]
+    images: Annotated[
+        list[str],
+        "List of image URLs returned from the image search. Should be left empty. This will be populated by the frontend."
+    ] = []
 
 
 class NewsfeedArticle(BaseModel):

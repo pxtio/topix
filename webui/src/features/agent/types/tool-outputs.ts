@@ -59,6 +59,7 @@ export interface StockWidgetOutput {
 export interface ImageSearchWidgetOutput {
   type: "display_image_search_widget"
   query: string
+  images: string[]
 }
 
 export type ToolOutput =

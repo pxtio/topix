@@ -26,6 +26,7 @@ type ToolOutput = Union[
     ImageDescriptionOutput,
     DisplayStockWidgetOutput,
     DisplayWeatherWidgetOutput,
+    DisplayImageSearchWidgetOutput,
 ]
 
 
@@ -48,6 +49,16 @@ class DisplayStockWidgetOutput(BaseModel):
 
     type: Literal["display_stock_widget"] = "display_stock_widget"
     symbol: Annotated[str, "The stock ticker symbol, e.g. AAPL for Apple Inc."]
+
+
+class DisplayImageSearchWidgetOutput(BaseModel):
+    """Display Image Search Widget Output."""
+
+    type: Literal["display_image_search_widget"] = "display_image_search_widget"
+    query: Annotated[
+        str,
+        "The search query for finding relevant images to display in the widget."
+    ]
 
 
 class NewsfeedArticle(BaseModel):

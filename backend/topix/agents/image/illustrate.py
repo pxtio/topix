@@ -6,8 +6,8 @@ from topix.agents.datatypes.image import ImageSearchOption
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.outputs import ImageDescriptionOutput, TopicIllustratorOutput
 from topix.agents.image.describe import describe_images
-from topix.agents.image.search import search_linkup, search_serper
 from topix.datatypes.recurrence import Recurrence
+from topix.utils.images.web import search_linkup, search_serper
 
 
 class TopicIllustrator(BaseAgent):

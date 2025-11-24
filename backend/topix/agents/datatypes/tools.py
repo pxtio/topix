@@ -21,6 +21,7 @@ class AgentToolName(StrEnum):
     # widget tools
     DISPLAY_STOCK_WIDGET = "display_stock_widget"
     DISPLAY_WEATHER_WIDGET = "display_weather_widget"
+    DISPLAY_IMAGE_SEARCH_WIDGET = "display_image_search_widget"
 
     RAW_MESSAGE = "raw_message"
 

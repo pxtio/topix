@@ -50,4 +50,7 @@ tool_descriptions = {
     AgentToolName.SYNTHESIZER: "Synthesize a report based on collected content",
     AgentToolName.IMAGE_DESCRIPTION: "Describe an image",
     AgentToolName.TOPIC_ILLUSTRATOR: "Illustrate a topic",
+    AgentToolName.DISPLAY_STOCK_WIDGET: "Display a stock widget",
+    AgentToolName.DISPLAY_WEATHER_WIDGET: "Display a weather widget",
+    AgentToolName.DISPLAY_IMAGE_SEARCH_WIDGET: "Display an image search widget",
 }

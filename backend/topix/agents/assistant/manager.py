@@ -24,7 +24,6 @@ from topix.datatypes.property import ReasoningProperty
 from topix.datatypes.resource import RichText
 from topix.store.qdrant.store import ContentStore
 from topix.utils.common import gen_uid
-from topix.utils.images.web import search_serper
 
 logger = logging.getLogger(__name__)
 
@@ -77,20 +76,6 @@ class AssistantManager:
                 return [{"role": "user", "content": query}]
         return [{"role": "user", "content": query}]
 
-    async def _add_image_search_results(
-        self,
-        context: ReasoningContext,
-    ) -> None:
-        """Add image search results to the context.
-
-        This function detects if an image search was performed during planning and
-        adds the relevant image URLs to the context for further processing.
-        """
-        for tool_call in context.tool_calls:
-            if tool_call.name == AgentToolName.DISPLAY_IMAGE_SEARCH_WIDGET:
-                results = await search_serper(tool_call.output.query, num_results=5)
-                tool_call.output.images = results
-
     async def _postprocess_answer(
         self,
         answer: str,
@@ -104,18 +89,6 @@ class AssistantManager:
                 for result in search_results:
                     valid_urls.append(result.url)
         return post_process_url_citations(answer, valid_urls)
-
-    async def _postprocess(
-        self,
-        context: ReasoningContext,
-        answer: str
-    ) -> str:
-        """Post process the context after planning.
-
-        This includes adding image search results to the context.
-        """
-        await self._add_image_search_results(context)
-        return await self._postprocess_answer(answer, context)
 
     async def run(
         self,
@@ -157,7 +130,7 @@ class AssistantManager:
                 [{"id": gen_uid(), "role": "assistant", "content": {"markdown": res}}]
             )
 
-        res = await self._postprocess(context, res)
+        res = await self._postprocess_answer(res, context)
 
         return res
 
@@ -228,7 +201,7 @@ class AssistantManager:
                     final_answer += message.content.text
                 yield message
 
-        final_answer = await self._postprocess(context, final_answer)
+        final_answer = await self._postprocess_answer(final_answer, context)
 
         if session:
             if not context.tool_calls:

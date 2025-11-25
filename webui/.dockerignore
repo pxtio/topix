@@ -1,0 +1,9 @@
+node_modules
+webui/node_modules
+npm-debug.log
+Dockerfile
+.dockerignore
+.git
+.gitignore
+package-lock.json
+dist

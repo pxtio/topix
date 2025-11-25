@@ -13,7 +13,7 @@ from topix.agents.datatypes.web_search import WebSearchContextSize
 from topix.agents.websearch.utils import get_from_date
 from topix.datatypes.recurrence import Recurrence
 
-semaphore = asyncio.Semaphore(8)
+semaphore = asyncio.Semaphore(100)
 
 
 def _get_env_or_raise(key: str) -> str:

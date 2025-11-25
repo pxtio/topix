@@ -13,7 +13,7 @@ from topix.datatypes.recurrence import Recurrence
 
 logger = logging.getLogger(__name__)
 
-MAX_CONCURRENT_IMAGE_SEARCHES = 10
+MAX_CONCURRENT_IMAGE_SEARCHES = 100
 semaphore = asyncio.Semaphore(MAX_CONCURRENT_IMAGE_SEARCHES)
 
 

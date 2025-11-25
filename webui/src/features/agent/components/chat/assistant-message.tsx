@@ -7,6 +7,7 @@ import { SourcesView } from "./sources-view"
 import { WeatherCard } from "@/features/widgets/components/weather-card"
 import TradingCard from "@/features/widgets/components/trading-card"
 import { useMemo } from "react"
+import ImageSearchStrip from "@/features/widgets/components/image-card"
 
 
 /**
@@ -55,6 +56,17 @@ export const AssistantMessage = ({
     return []
   }, [message, isDeepResearch, resp.steps])
 
+  // retrieve first image search query from reasoning steps
+  const imageUrls = useMemo(() => {
+    if (!message.streaming && !isDeepResearch) {
+      const imgStep = resp.steps.find(step => step.name === 'display_image_search_widget')
+      if (imgStep && typeof imgStep.output === 'object' && 'images' in imgStep.output) {
+        return imgStep.output.images as string[]
+      }
+    }
+    return null
+  }, [message, isDeepResearch, resp.steps])
+
   return (
     <div className='w-full space-y-2'>
       <ReasoningStepsView
@@ -62,6 +74,7 @@ export const AssistantMessage = ({
         isStreaming={message.streaming || false}
         estimatedDurationSeconds={isDeepResearch ? 180 : undefined}
       />
+      { imageUrls && <ImageSearchStrip images={imageUrls} /> }
       { cities.length > 0 && <WeatherCard cities={cities} /> }
       { tradingSymbols.length > 0 && <TradingCard symbols={tradingSymbols} initialRange="1d" /> }
       {lastStepMessage}

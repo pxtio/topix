@@ -40,7 +40,7 @@ export const useChatStore = create<ChatStore>((set) => ({
 
   webSearchEngine: "linkup",
 
-  enabledTools: ["web_search", "memory_search", "code_interpreter", "navigate", "display_stock_widget", "display_weather_widget"],
+  enabledTools: ["web_search", "memory_search", "code_interpreter", "navigate", "display_stock_widget", "display_weather_widget", "display_image_search_widget"],
 
   isStreaming: false,
 
@@ -68,8 +68,8 @@ export const useChatStore = create<ChatStore>((set) => ({
     if (firstAvailableSearch) {
       set({ webSearchEngine: firstAvailableSearch.name as WebSearchEngine })
     }
-
-    const enabledTools: ToolName[] = ["memory_search", "display_stock_widget", "display_weather_widget"]
+    // init with default available tools
+    const enabledTools: ToolName[] = ["memory_search", "display_stock_widget", "display_weather_widget", "display_image_search_widget"]
     if (services.code.filter((service) => service.available).length > 0) {
       enabledTools.push("code_interpreter")
     }

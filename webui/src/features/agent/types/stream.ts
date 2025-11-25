@@ -1,6 +1,6 @@
 import type { IconSvgElement } from "@hugeicons/react"
 import type { Annotation, ToolOutput } from "./tool-outputs"
-import { AiBrowserIcon, ChipIcon, DashboardBrowsingIcon, GlobalSearchIcon, Search01Icon, SourceCodeIcon, TextAlignLeftIcon, ThermometerWarmIcon } from "@hugeicons/core-free-icons"
+import { AiBrowserIcon, Album02Icon, ChipIcon, DashboardBrowsingIcon, GlobalSearchIcon, Search01Icon, SourceCodeIcon, TextAlignLeftIcon, ThermometerWarmIcon } from "@hugeicons/core-free-icons"
 
 /**
  * Represents the type of streaming message in the agent response.
@@ -93,6 +93,7 @@ export type ToolName =
   | "synthesizer"
   | "display_weather_widget"
   | "display_stock_widget"
+  | "display_image_search_widget"
 
 
 export const ToolNameDescription: Record<ToolName, string> = {
@@ -107,6 +108,7 @@ export const ToolNameDescription: Record<ToolName, string> = {
   "synthesizer": "Synthesize information from multiple sources",
   "display_weather_widget": "Display weather information",
   "display_stock_widget": "Display stock information",
+  "display_image_search_widget": "Search for images from the web",
 }
 
 export const ToolNameIcon: Record<string, IconSvgElement> = {
@@ -118,6 +120,7 @@ export const ToolNameIcon: Record<string, IconSvgElement> = {
   "web_collector": GlobalSearchIcon,
   "display_weather_widget": ThermometerWarmIcon,
   "display_stock_widget": DashboardBrowsingIcon,
+  "display_image_search_widget": Album02Icon,
 }
 
 // The RAW_MESSAGE tool name is used to indicate raw messages in the stream.

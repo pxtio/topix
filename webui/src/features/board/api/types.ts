@@ -4,7 +4,7 @@ export interface IconifyIcon {
 }
 
 
-export interface UnsplashPhoto {
+export interface WebPhoto {
   url: string
-  description: string
+  description?: string
 }

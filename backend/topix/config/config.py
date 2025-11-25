@@ -147,6 +147,12 @@ class OpenRouterConfig(BaseAPIConfig):
     env_var: str = "OPENROUTER_API_KEY"
 
 
+class SerperConfig(BaseAPIConfig):
+    """Configuration for Serper API."""
+
+    env_var: str = "SERPER_API_KEY"
+
+
 class UnsplashConfig(BaseModel):
     """Configuration for Unsplash API."""
 
@@ -177,6 +183,7 @@ class APIsConfig(BaseModel):
     gemini: GeminiConfig = Field(default_factory=GeminiConfig)
     anthropic: AnthropicConfig = Field(default_factory=AnthropicConfig)
     openrouter: OpenRouterConfig = Field(default_factory=OpenRouterConfig)
+    serper: SerperConfig = Field(default_factory=SerperConfig)
     unsplash: UnsplashConfig = Field(default_factory=UnsplashConfig)
 
 

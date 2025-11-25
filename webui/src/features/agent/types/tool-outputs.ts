@@ -56,4 +56,17 @@ export interface StockWidgetOutput {
   symbol: string
 }
 
-export type ToolOutput = WebSearchOutput | MemorySearchOutput | CodeInterpreterOutput | WeatherWidgetOutput | StockWidgetOutput | string
+export interface ImageSearchWidgetOutput {
+  type: "display_image_search_widget"
+  query: string
+  images: string[]
+}
+
+export type ToolOutput =
+  | WebSearchOutput
+  | MemorySearchOutput
+  | CodeInterpreterOutput
+  | WeatherWidgetOutput
+  | StockWidgetOutput
+  | ImageSearchWidgetOutput
+  | string

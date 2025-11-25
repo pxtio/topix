@@ -19,6 +19,7 @@ from topix.agents.datatypes.tools import AgentToolName, tool_descriptions
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.agents.websearch.navigate import NavigateAgent
 from topix.agents.widgets.finance import display_stock_widget_tool
+from topix.agents.widgets.image import display_image_search_widget_tool
 from topix.agents.widgets.weather import display_weather_widget_tool
 from topix.api.utils.common import iso_to_clear_date
 from topix.store.qdrant.store import ContentStore
@@ -58,6 +59,7 @@ class Plan(BaseAgent):
         tools = [
             display_stock_widget_tool,
             display_weather_widget_tool,
+            display_image_search_widget_tool,
             WebSearchHandler.from_config(config.web_search),
             MemorySearch.from_config(content_store, config.memory_search).as_tool(
                 tool_name=AgentToolName.MEMORY_SEARCH,

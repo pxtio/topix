@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM node:25-alpine
+FROM --platform=linux/amd64 node:25
 
 WORKDIR /app
 

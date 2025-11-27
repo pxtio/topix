@@ -60,6 +60,7 @@ export const defaultServices: () => Services = () => ({
     { name: "perplexity", available: false, provider: "perplexity" },
     { name: "tavily", available: false, provider: "tavily" },
     { name: "openai", available: false, provider: "openai" },
+    { name: "exa", available: false, provider: "exa" },
   ],
   navigate: [
     { name: "tavily", available: false, provider: "tavily" },

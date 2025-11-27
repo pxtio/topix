@@ -9,6 +9,7 @@ class WebSearchOption(StrEnum):
     TAVILY = "tavily"
     PERPLEXITY = "perplexity"
     LINKUP = "linkup"
+    EXA = "exa"
 
 
 class WebSearchContextSize(StrEnum):

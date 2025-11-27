@@ -17,6 +17,8 @@ providers:
     env_var: MISTRALAI_API_KEY
   perplexity:
     env_var: PERPLEXITY_API_KEY
+  exa:
+    env_var: EXA_API_KEY
 
 services:
   llm:
@@ -46,6 +48,8 @@ services:
       provider: openai
     - name: tavily
       provider: tavily
+    - name: exa
+      provider: exa
 
   navigate:
     - name: tavily

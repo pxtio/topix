@@ -6,6 +6,10 @@ import {
   SelectionMode,
   useOnViewportChange,
   type ReactFlowInstance,
+  type OnNodesChange,
+  type OnEdgesChange,
+  type OnNodesDelete,
+  type OnEdgesDelete,
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -24,12 +28,11 @@ import type { LinkEdge, NoteNode } from '../../types/flow'
 import { useAddNoteNode } from '../../hooks/add-node'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
-// import { saveThumbnail } from '../../api/save-thumbnail'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
 import { useStyleDefaults } from '../../style-provider'
-// import { useSaveThumbnail } from '../../hooks/make-thumbnail'
 
 import './graph-styles.css'
+import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
 
 const proOptions = { hideAttribution: true }
 
@@ -50,8 +53,95 @@ const connectionLineStyle = { stroke: '#a8a29e' }
 
 type ViewMode = 'graph' | 'linear'
 
+type GraphViewProps = {
+  nodes: NoteNode[]
+  edges: LinkEdge[]
+  onNodesChange: OnNodesChange<NoteNode>
+  onEdgesChange: OnEdgesChange<LinkEdge>
+  onNodesDelete: OnNodesDelete<NoteNode>
+  onEdgesDelete: OnEdgesDelete<LinkEdge>
+  onConnect: OnConnect
+  enableSelection: boolean
+  isLocked: boolean
+  onNodeDragStart: () => void
+  onNodeDragStop: () => void
+  onSelectionStart: () => void
+  onSelectionEnd: () => void
+  onSelectionDragStart: () => void
+  onSelectionDragStop: () => void
+  onInit: (instance: ReactFlowInstance<NoteNode, LinkEdge>) => void
+}
+
+/**
+ * Pure graph view (React Flow)
+ */
+function GraphView({
+  nodes,
+  edges,
+  onNodesChange,
+  onEdgesChange,
+  onNodesDelete,
+  onEdgesDelete,
+  onConnect,
+  enableSelection,
+  isLocked,
+  onNodeDragStart,
+  onNodeDragStop,
+  onSelectionStart,
+  onSelectionEnd,
+  onSelectionDragStart,
+  onSelectionDragStop,
+  onInit,
+}: GraphViewProps) {
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onNodesDelete={onNodesDelete}
+      onEdgesDelete={onEdgesDelete}
+      proOptions={proOptions}
+      nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
+      onConnect={onConnect}
+      defaultEdgeOptions={defaultEdgeOptions}
+      connectionLineComponent={CustomConnectionLine}
+      connectionLineStyle={connectionLineStyle}
+      selectionOnDrag={enableSelection}
+      selectionMode={SelectionMode.Partial}
+      panOnDrag={!isLocked && !enableSelection}
+      selectionKeyCode={null}
+      onNodeDragStart={onNodeDragStart}
+      onNodeDragStop={onNodeDragStop}
+      onSelectionStart={onSelectionStart}
+      onSelectionEnd={onSelectionEnd}
+      onSelectionDragStart={onSelectionDragStart}
+      onSelectionDragStop={onSelectionDragStop}
+      nodesDraggable={!isLocked}
+      nodesConnectable={!isLocked}
+      elementsSelectable={!isLocked}
+      zoomOnScroll={!isLocked}
+      zoomOnPinch={!isLocked}
+      panOnScroll={!isLocked}
+      onlyRenderVisibleElements
+      onInit={onInit}
+    />
+  )
+}
+
+/**
+ * Linear view (your existing default board)
+ */
+function LinearView() {
+  return <DefaultBoardView />
+}
+
+/**
+ * Main editor: always shows ActionPanel and switches between GraphView / LinearView
+ */
 export default function GraphEditor() {
-  const [viewMode, setViewMode] = useState<ViewMode>('linear')
+  const [viewMode, setViewMode] = useState<ViewMode>('graph')
 
   const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
@@ -97,7 +187,7 @@ export default function GraphEditor() {
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
 
-  // Mindmap integration (unchanged)
+  // Mindmap integration
   useEffect(() => {
     const integrateMindmap = async () => {
       if (boardId && mindmaps.has(boardId)) {
@@ -131,7 +221,7 @@ export default function GraphEditor() {
 
   // Connect using store (store handles addLink + persistence)
   const connectNodes: OnConnect = useCallback(
-    (params) => {
+    params => {
       if (!boardId) return
       const style = applyDefaultLinkStyle()
       storeOnConnect(params, style)
@@ -148,7 +238,7 @@ export default function GraphEditor() {
 
   useOnViewportChange({
     onChange: () => setMoving(true),
-    onEnd: (vp) => {
+    onEnd: vp => {
       if (boardId) {
         setGraphViewport(boardId, vp)
       }
@@ -157,18 +247,17 @@ export default function GraphEditor() {
   })
 
   // --- frontend-only expiration for data.isNew ---
-
   const newTimersRef = useRef<Map<string, number>>(new Map())
 
   useEffect(() => {
     // schedule timers for nodes that are marked isNew and don't already have one
-    nodes.forEach((n) => {
+    nodes.forEach(n => {
       const isNew = !!n.data?.isNew
       const hasTimer = newTimersRef.current.has(n.id)
       if (isNew && !hasTimer) {
         const t = window.setTimeout(() => {
-          setNodes((ns) =>
-            ns.map((m) =>
+          setNodes(ns =>
+            ns.map(m =>
               m.id === n.id ? { ...m, data: { ...m.data, isNew: false } } : m,
             ),
           )
@@ -180,7 +269,7 @@ export default function GraphEditor() {
 
     // clear timers for nodes no longer needing them (removed or isNew flipped)
     for (const [id, t] of newTimersRef.current) {
-      const stillNew = nodes.some((n) => n.id === id && n.data?.isNew)
+      const stillNew = nodes.some(n => n.id === id && n.data?.isNew)
       if (!stillNew) {
         clearTimeout(t)
         newTimersRef.current.delete(id)
@@ -197,8 +286,22 @@ export default function GraphEditor() {
     }
   }, [])
 
+  // capture thumbnail of current graph view on unmount
+  useSaveThumbnailOnUnmount(boardId || '')
+
+  const handleInit = (instance: ReactFlowInstance<NoteNode, LinkEdge>) => {
+    rfInstanceRef.current = instance
+    if (boardId) {
+      const saved = graphViewports[boardId]
+      if (saved) {
+        // restore immediately, no animation
+        instance.setViewport(saved, { duration: 0 })
+      }
+    }
+  }
+
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full relative">
       <ActionPanel
         onAddNode={handleAddNode}
         enableSelection={enableSelection}
@@ -207,7 +310,7 @@ export default function GraphEditor() {
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
         isLocked={isLocked}
-        toggleLock={() => setIsLocked((v) => !v)}
+        toggleLock={() => setIsLocked(v => !v)}
         viewMode={viewMode}
         setViewMode={setViewMode}
       />
@@ -223,52 +326,30 @@ export default function GraphEditor() {
           </div>
         )}
 
-      {viewMode === 'graph' ? (
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodesDelete={onNodesDelete}
-          onEdgesDelete={onEdgesDelete}
-          proOptions={proOptions}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onConnect={connectNodes}
-          defaultEdgeOptions={defaultEdgeOptions}
-          connectionLineComponent={CustomConnectionLine}
-          connectionLineStyle={connectionLineStyle}
-          selectionOnDrag={enableSelection}
-          selectionMode={SelectionMode.Partial}
-          panOnDrag={!isLocked && !enableSelection}
-          selectionKeyCode={null}
-          onNodeDragStart={handleDragStart}
-          onNodeDragStop={handleDragStop}
-          onSelectionStart={handleSelectionStart}
-          onSelectionEnd={handleSelectionEnd}
-          onSelectionDragStart={handleSelectionDragStart}
-          onSelectionDragStop={handleSelectionDragStop}
-          nodesDraggable={!isLocked}
-          nodesConnectable={!isLocked}
-          elementsSelectable={!isLocked}
-          zoomOnScroll={!isLocked}
-          zoomOnPinch={!isLocked}
-          panOnScroll={!isLocked}
-          onlyRenderVisibleElements
-          onInit={(instance) => {
-            rfInstanceRef.current = instance
-            if (boardId) {
-              const saved = graphViewports[boardId]
-              if (saved) {
-                // restore immediately, no animation
-                instance.setViewport(saved, { duration: 0 })
-              }
-            }
-          }}
-        />
-      ) : (
-        <DefaultBoardView />
-      )}
+      <div className="w-full h-full">
+        {viewMode === 'graph' ? (
+          <GraphView
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onNodesDelete={onNodesDelete}
+            onEdgesDelete={onEdgesDelete}
+            onConnect={connectNodes}
+            enableSelection={enableSelection}
+            isLocked={isLocked}
+            onNodeDragStart={handleDragStart}
+            onNodeDragStop={handleDragStop}
+            onSelectionStart={handleSelectionStart}
+            onSelectionEnd={handleSelectionEnd}
+            onSelectionDragStart={handleSelectionDragStart}
+            onSelectionDragStop={handleSelectionDragStop}
+            onInit={handleInit}
+          />
+        ) : (
+          <LinearView />
+        )}
+      </div>
     </div>
   )
 }

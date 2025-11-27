@@ -1,5 +1,5 @@
 import { BoardUrl } from "@/routes"
-import { GraphView } from "../components/graph-view"
+import { BoardView } from "../components/board-view"
 import { useParams } from "@tanstack/react-router"
 import { useGraphStore } from "../store/graph-store"
 import { useEffect } from "react"
@@ -17,7 +17,7 @@ export const BoardScreen = () => {
 
   return (
     <>
-      <GraphView />
+      <BoardView />
     </>
   )
 }

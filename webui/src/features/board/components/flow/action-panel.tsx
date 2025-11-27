@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { ChartRelationshipIcon, CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, StarIcon, Image02Icon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, StarIcon, Image02Icon, ChartBubbleIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { NodeType } from '../../types/style'
@@ -53,30 +53,34 @@ export function ActionPanel({
     hover:bg-sidebar-primary hover:text-sidebar-primary-foreground
     p-4
     rounded-lg
+    flex flex-row items-center justify-center gap-2
   `
 
   const activeButtonClass = clsx(
     normalButtonClass,
-    'bg-sidebar-primary text-sidebar-primary-foreground',
+    'bg-sidebar-primary text-secondary',
   )
 
   const selectionModeButtonClass = enableSelection ? activeButtonClass : normalButtonClass
   const dragModeButtonClass = enableSelection ? normalButtonClass : activeButtonClass
 
-  const ModeButton = ({
-    mode,
-    label,
-    children
-  }: {
-    mode: ViewMode
-    label: string
-    children: React.ReactNode
-  }) => {
+  const ModeButton = ({ mode, label, children }: { mode: ViewMode; label: string; children: React.ReactNode }) => {
     const active = viewMode === mode
+    const [small, setSmall] = useState(false)
+
+    useEffect(() => {
+      const check = () => setSmall(window.innerWidth < 640)
+      check()
+      window.addEventListener('resize', check)
+      return () => window.removeEventListener('resize', check)
+    }, [])
+
+    const size = small ? 'icon' : 'default'
+
     return (
       <Button
         variant={null}
-        size='icon'
+        size={size}
         onClick={() => setViewMode(mode)}
         className={active ? activeButtonClass : normalButtonClass}
         title={`${label} view`}
@@ -88,12 +92,13 @@ export function ActionPanel({
     )
   }
 
+
   return (
     <div
       className={`
         absolute z-50 border border-border shadow-md
-        backdrop-blur-md supports-[backdrop-filter]:bg-card/80 backdrop-saturate-150
-        bg-card text-card-foreground rounded-xl
+        backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/80 backdrop-saturate-150
+        bg-sidebar text-sidebar-foreground rounded-xl
         p-1 flex gap-1
         right-2 top-1/2 -translate-y-1/2 md:translate-y-0
         flex-col items-stretch
@@ -105,11 +110,13 @@ export function ActionPanel({
     >
       {/* View mode toggle */}
       <ModeButton mode='graph' label='Graph'>
-        <HugeiconsIcon icon={ChartRelationshipIcon} className='size-4 shrink-0' strokeWidth={2} />
+        <HugeiconsIcon icon={ChartBubbleIcon} className='size-4 shrink-0' strokeWidth={2} />
+        <span className='text-xs font-normal sr-only sm:not-sr-only'>Graph</span>
       </ModeButton>
 
       <ModeButton mode='linear' label='Linear'>
         <HugeiconsIcon icon={LeftToRightListBulletIcon} className='size-4 shrink-0' strokeWidth={2} />
+        <span className='text-xs font-normal sr-only sm:not-sr-only'>List</span>
       </ModeButton>
 
       <Separator orientation="vertical" className='md:!h-6 hidden md:block' />

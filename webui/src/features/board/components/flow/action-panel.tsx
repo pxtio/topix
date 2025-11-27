@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, StarIcon, Image02Icon, ChartBubbleIcon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, StarIcon, Image02Icon, ChartBubble02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { NodeType } from '../../types/style'
@@ -110,7 +110,7 @@ export function ActionPanel({
     >
       {/* View mode toggle */}
       <ModeButton mode='graph' label='Graph'>
-        <HugeiconsIcon icon={ChartBubbleIcon} className='size-4 shrink-0' strokeWidth={2} />
+        <HugeiconsIcon icon={ChartBubble02Icon} className='size-4 shrink-0' strokeWidth={2} />
         <span className='text-xs font-normal sr-only sm:not-sr-only'>Graph</span>
       </ModeButton>
 

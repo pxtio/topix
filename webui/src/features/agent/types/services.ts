@@ -57,10 +57,10 @@ export const defaultServices: () => Services = () => ({
   ],
   search: [
     { name: "linkup", available: false, provider: "linkup" },
+    { name: "exa", available: false, provider: "exa" },
     { name: "perplexity", available: false, provider: "perplexity" },
     { name: "tavily", available: false, provider: "tavily" },
     { name: "openai", available: false, provider: "openai" },
-    { name: "exa", available: false, provider: "exa" },
   ],
   navigate: [
     { name: "tavily", available: false, provider: "tavily" },

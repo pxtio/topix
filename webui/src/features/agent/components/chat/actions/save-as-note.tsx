@@ -10,7 +10,6 @@ import { useConvertToMindMap } from "@/features/board/api/convert-to-mindmap"
 import { useCreateBoard } from "@/features/board/api/create-board"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { UNTITLED_LABEL } from "@/features/board/const"
-import { useAppStore } from "@/store"
 import { CancelIcon, ChartBubbleIcon, CheckmarkCircle03Icon, GitForkIcon, NotebookIcon, ReloadIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useNavigate } from "@tanstack/react-router"
@@ -51,10 +50,8 @@ export interface SaveAsNoteProps {
 export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsNoteProps) => {
   const [processing, setProcessing] = useState<boolean>(false)
 
-  const userId = useAppStore(state => state.userId)
-
   const { convertToMindMapAsync } = useConvertToMindMap()
-  const { data: boardList } = useListBoards({ userId })
+  const { data: boardList } = useListBoards()
   const { createBoardAsync } = useCreateBoard()
 
   const navigate = useNavigate()
@@ -121,7 +118,7 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
       }
     )
     try {
-      const boardId = await createBoardAsync({ userId })
+      const boardId = await createBoardAsync()
       await convertToMindMapAsync({ boardId, answer: message, toolType: type, saveAsIs })
       toast.success(
         "Notes updated.",

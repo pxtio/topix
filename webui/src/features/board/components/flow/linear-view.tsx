@@ -131,7 +131,7 @@ export function LinearView({
           }
         }
       }
-      updateNote({ boardId, userId, noteId: n.id, noteData: newNode.data })
+      updateNote({ boardId, noteId: n.id, noteData: newNode.data })
       return newNode
     })
 

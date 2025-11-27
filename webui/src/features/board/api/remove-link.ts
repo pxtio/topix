@@ -14,13 +14,11 @@ import { apiFetch } from "@/api"
  */
 export async function removeLink(
   boardId: string,
-  userId: string,
   linkId: string
 ): Promise<void> {
   await apiFetch({
     path: `/boards/${boardId}/links/${linkId}`,
-    method: "DELETE",
-    params: { user_id: userId }
+    method: "DELETE"
   })
 }
 
@@ -34,15 +32,13 @@ export const useRemoveLink = () => {
   const mutation = useMutation({
     mutationFn: async ({
       boardId,
-      userId,
       linkId
     }: {
       boardId: string
-      userId: string
       linkId: string
     }) => {
       await sleep(DEBOUNCE_DELAY)
-      await removeLink(boardId, userId, linkId)
+      await removeLink(boardId, linkId)
     }
   })
 

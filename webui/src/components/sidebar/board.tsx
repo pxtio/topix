@@ -1,5 +1,4 @@
 import { useCreateBoard } from "@/features/board/api/create-board"
-import { useAppStore } from "@/store"
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub } from "../ui/sidebar"
 import { useDeleteBoard } from "@/features/board/api/delete-board"
 import { trimText } from "@/lib/common"
@@ -46,12 +45,11 @@ export function DashboardMenuItem() {
  * New board item component
  */
 export function NewBoardItem() {
-  const { userId } = useAppStore()
   const { createBoardAsync } = useCreateBoard()
   const navigate = useNavigate()
 
   const handleClick = async () => {
-    const newId = await createBoardAsync({ userId })
+    const newId = await createBoardAsync()
     // Go to /boards/:id (no page refresh)
     navigate({ to: '/boards/$id', params: { id: newId } })
   }
@@ -69,7 +67,6 @@ export function NewBoardItem() {
 
 /** Existing board item */
 export function BoardItem({ boardId, label, chats }: { boardId: string, label?: string, chats?: Chat[] }) {
-  const { userId } = useAppStore()
   const { deleteBoard } = useDeleteBoard()
   const navigate = useNavigate()
   const pathname = useRouterState({ select: s => s.location.pathname })
@@ -85,7 +82,7 @@ export function BoardItem({ boardId, label, chats }: { boardId: string, label?: 
   }
 
   const handleDelete = () => {
-    deleteBoard({ boardId, userId })
+    deleteBoard({ boardId })
     if (isActive) {
       navigate({ to: "/boards" })
     }

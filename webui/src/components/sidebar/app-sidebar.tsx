@@ -47,7 +47,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   }, [userEmail])
 
   const { data: chats = [] } = useListChats({ userId })
-  const { data: boards = [] } = useListBoards({ userId })
+  const { data: boards = [] } = useListBoards()
 
   const { chatHistoryItems, chatsByBoard } = useMemo(() => {
     const map = new Map<string, typeof chats>()

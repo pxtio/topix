@@ -2,7 +2,6 @@ import type { Link } from "../types/link"
 import { createDefaultNote, type Note } from "../types/note"
 import camelcaseKeys from "camelcase-keys"
 import { useMutation } from "@tanstack/react-query"
-import { useAppStore } from "@/store"
 import { convertLinkToEdge, convertNoteToNode } from "../utils/graph"
 import { autoLayout } from "../lib/graph/auto-layout"
 import { defaultLayoutOptions } from "../lib/graph/settings"
@@ -19,14 +18,12 @@ import type { LinkEdge, NoteNode } from "../types/flow"
  * Convert a text answer to a mind map format.
  */
 export async function convertToMindMap(
-  userId: string,
   answer: string,
   toolType: "notify" | "mapify" | "schemify"
 ): Promise<{ notes: Note[], links: Link[] }> {
   const res = await apiFetch<{ data: Record<string, unknown> }>({
     path: `/tools/mindmaps:${toolType}`,
     method: "POST",
-    params: { user_id: userId },
     body: { answer }
   })
 
@@ -38,8 +35,6 @@ export async function convertToMindMap(
  * Hook to convert a text answer to a mind map and store it in the mind map store.
  */
 export const useConvertToMindMap = () => {
-  const { userId } = useAppStore()
-
   const setMindMap = useMindMapStore(state => state.setMindMap)
 
   const mutation = useMutation({
@@ -62,7 +57,7 @@ export const useConvertToMindMap = () => {
         return { status: "success" }
       }
 
-      const { notes, links } = await convertToMindMap(userId, answer, toolType)
+      const { notes, links } = await convertToMindMap(answer, toolType)
       notes.forEach(note => {
         if (note.content?.markdown) {
           note.content.markdown = escapeNonMathDollars(note.content.markdown)

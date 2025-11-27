@@ -1,6 +1,5 @@
 // components/flow/node-label.tsx
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useReactFlow } from '@xyflow/react'
 import type { Note, NoteProperties } from '../../types/note'
 import type { NoteNode } from '../../types/flow'
 import { MilkdownProvider } from '@milkdown/react'
@@ -16,6 +15,7 @@ import { StickyNote } from '../notes/sticky-note'
 import { TAILWIND_200 } from '../../lib/colors/tailwind'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from '../../types/style'
+import { useGraphStore } from '../../store/graph-store'
 
 type NoteWithPin = Note & { pinned?: boolean }
 
@@ -41,7 +41,8 @@ export const NodeCard = ({
   const [internalOpen, setInternalOpen] = useState(false)
   const dialogOpen = typeof open === 'boolean' ? open : internalOpen
 
-  const { setNodes, setEdges } = useReactFlow()
+  const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const [labelEditing, setLabelEditing] = useState(false)
@@ -141,7 +142,7 @@ export const NodeCard = ({
     setLabelDraft(next)
 
     // 2) also update the graph so other parts of the app see changes live
-    setNodes(nds =>
+    setNodesPersist(nds =>
       nds.map(n => {
         if (n.id !== note.id) return n
         const data = n.data as NoteNode['data']
@@ -151,20 +152,20 @@ export const NodeCard = ({
         }
       })
     )
-  }, [note.id, setNodes])
+  }, [note.id, setNodesPersist])
 
   const handleNoteChange = useCallback((markdown: string) => {
-    setNodes(nds =>
+    setNodesPersist(nds =>
       nds.map(n => {
         if (n.id !== note.id) return n
         const data = n.data as NoteNode['data']
         return { ...n, data: { ...data, content: { markdown } } }
       })
     )
-  }, [note.id, setNodes])
+  }, [note.id, setNodesPersist])
 
   const updateStyle = useCallback((next: Partial<Note['style']>) => {
-    setNodes(nds =>
+    setNodesPersist(nds =>
       nds.map(n => {
         if (n.id !== note.id) return n
         const data = n.data as NoteNode['data']
@@ -172,7 +173,7 @@ export const NodeCard = ({
         return { ...n, data: { ...data, style: { ...prevStyle, ...next } } }
       })
     )
-  }, [note.id, setNodes])
+  }, [note.id, setNodesPersist])
 
   const stopDragging = useCallback((e: React.PointerEvent) => {
     if (labelEditing) e.stopPropagation()
@@ -189,7 +190,7 @@ export const NodeCard = ({
 
   const onTogglePin = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
-    setNodes(nds =>
+    setNodesPersist(nds =>
       nds.map(n => {
         if (n.id !== note.id) return n
         const data = n.data as NoteNode['data']
@@ -204,13 +205,13 @@ export const NodeCard = ({
         }
       })
     )
-  }, [isPinned, note.id, setNodes])
+  }, [isPinned, note.id, setNodesPersist])
 
   const onDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
-    setNodes(nds => nds.filter(n => n.id !== note.id))
-    setEdges?.(eds => eds.filter(edge => edge.source !== note.id && edge.target !== note.id))
-  }, [note.id, setNodes, setEdges])
+    setNodesPersist(nds => nds.filter(n => n.id !== note.id))
+    setEdgesPersist?.(eds => eds.filter(edge => edge.source !== note.id && edge.target !== note.id))
+  }, [note.id, setNodesPersist, setEdgesPersist])
 
   const onPickPalette = useCallback((hex: string) => {
     updateStyle({ backgroundColor: hex })

@@ -12,10 +12,6 @@ import { Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/co
 import clsx from 'clsx'
 import { TAILWIND_200 } from '../../lib/colors/tailwind'
 import { DialogDescription } from '@radix-ui/react-dialog'
-import { useRemoveNote } from '../../api/remove-note'
-import { useRemoveLink } from '../../api/remove-link'
-import { useUpdateNote } from '../../api/update-note'
-import { useAppStore } from '@/store'
 import { formatDistanceToNow } from '../../utils/date'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
@@ -26,13 +22,10 @@ type Props = { node: NoteNode }
 export function LinearNoteCard({ node }: Props) {
   const [open, setOpen] = useState(false)
 
-  const setStore = useGraphStore.setState
-  const userId = useAppStore(state => state.userId)
   const boardId = useGraphStore(state => state.boardId)
 
-  const { updateNote } = useUpdateNote()
-  const { removeNote } = useRemoveNote()
-  const { removeLink } = useRemoveLink()
+  const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
 
   // dark mode support
   const { resolvedTheme } = useTheme()
@@ -49,9 +42,10 @@ export function LinearNoteCard({ node }: Props) {
       ...node,
       data: { ...node.data, style: { ...node.data.style, backgroundColor: hex } }
     } as NoteNode
-    setStore(state => ({ ...state, nodes: state.nodes.map(n => n.id === node.id ? newNode : n) }))
-    updateNote({ boardId, userId, noteId: node.data.id, noteData: newNode.data })
-  }, [boardId, node, setStore, updateNote, userId])
+    setNodesPersist(nds =>
+      nds.map(n => n.id === node.id ? newNode : n)
+    )
+  }, [boardId, node, setNodesPersist])
 
   const onSaveContent = useCallback((markdown: string) => {
     if (!boardId) return
@@ -59,34 +53,27 @@ export function LinearNoteCard({ node }: Props) {
       ...node,
       data: { ...node.data, content: { markdown }, updatedAt: new Date().toISOString() }
     } as NoteNode
-    setStore(state => ({ ...state, nodes: state.nodes.map(n => n.id === node.id ? newNode : n) }))
-    updateNote({ boardId, userId, noteId: node.data.id, noteData: newNode.data })
-  }, [boardId, node, setStore, updateNote, userId])
+    setNodesPersist(nds =>
+      nds.map(n => n.id === node.id ? newNode : n)
+    )
+  }, [boardId, node, setNodesPersist])
 
   const onTogglePin = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     if (!boardId) return
     const noteProperties = { ...node.data.properties, pinned: { type: "boolean", boolean: !isPinned } }
     const newNode = { ...node, data: { ...node.data, properties: noteProperties } } as NoteNode
-    setStore(state => ({ ...state, nodes: state.nodes.map(n => n.id === node.id ? newNode : n) }))
-    updateNote({ boardId, userId, noteId: node.data.id, noteData: newNode.data })
-  }, [boardId, isPinned, node, setStore, updateNote, userId])
+    setNodesPersist(nds =>
+      nds.map(n => n.id === node.id ? newNode : n)
+    )
+  }, [boardId, isPinned, node, setNodesPersist])
 
   const onDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!boardId || !userId) return
-    setStore(state => {
-      const nodes = state.nodes.filter(n => n.id !== node.id)
-      const edges = state.edges.filter(e => e.source !== node.id && e.target !== node.id)
-      const toDeleteNodeId = node.data.id
-      const toDeleteEdgeIds = edges
-        .filter(e => e.source === toDeleteNodeId || e.target === toDeleteNodeId)
-        .map(e => e.id)
-      removeNote({ boardId, userId, noteId: toDeleteNodeId })
-      toDeleteEdgeIds.forEach(edgeId => removeLink({ boardId, userId, linkId: edgeId }))
-      return { ...state, nodes, edges }
-    })
-  }, [boardId, node.data.id, node.id, removeLink, removeNote, setStore, userId])
+    if (!boardId) return
+    setNodesPersist(nodes => nodes.filter(n => n.id !== node.id))
+    setEdgesPersist(edges => edges.filter(e => e.source !== node.id && e.target !== node.id))
+  }, [boardId, node.id, setNodesPersist, setEdgesPersist])
 
   const cardClass = clsx(
     'transition rounded-xl relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group shadow-md',

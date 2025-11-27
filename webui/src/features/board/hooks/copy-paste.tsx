@@ -1,30 +1,12 @@
-/**
- * useCopyPasteNodes
- *
- * A React hook for copy–pasting selected React Flow note-nodes while preserving their relative layout.
- * When multiple nodes are pasted in one operation, a single shared jitter offset (dx, dy) is applied to
- * every cloned node so the pasted group keeps its internal structure intact.
- *
- * Features
- * - Copy currently selected nodes (with optional filter)
- * - Paste clones into the graph with a single shared jitter offset
- * - Optional global keyboard shortcuts: ⌘/Ctrl+C to copy, ⌘/Ctrl+V (and ⌘/Ctrl+B) to paste
- * - Clipboard paste gesture support: any paste event triggers a clone paste (does not read clipboard data)
- *
- * Notes
- * - Uses crypto.randomUUID() to generate new IDs for cloned notes
- * - Only operates when focus is not in an editable element (inputs, textareas, contentEditable)
- */
-
 import { useCallback, useEffect, useRef } from 'react'
-import { useReactFlow } from '@xyflow/react'
 import { useGraphStore } from '../store/graph-store'
 import { convertNoteToNode } from '../utils/graph'
-import { useAddNotes } from '../api/add-notes'
 import { useAppStore } from '@/store'
 import type { Note } from '../types/note'
-import type { NoteNode } from '../types/flow'
+import type { NoteNode, LinkEdge } from '../types/flow'
+import type { Link } from '../types/link'
 import { generateUuid } from '@/lib/common'
+import { useShallow } from 'zustand/shallow'
 
 type CopyPasteOptions = {
   /**
@@ -52,11 +34,16 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
   const { jitterMax = 30, shortcuts = true, isCopyableNode } = opts
 
   const userId = useAppStore(state => state.userId)
-  const { boardId, nodes } = useGraphStore()
-  const { setNodes } = useReactFlow()
-  const { addNotes } = useAddNotes()
 
-  const copiedRef = useRef<Note[] | null>(null)
+  const boardId = useGraphStore(state => state.boardId)
+  const nodes = useGraphStore(useShallow(state => state.nodes))
+  const edges = useGraphStore(useShallow(state => state.edges))
+  const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
+
+  // clipboard: notes + edges that connect those notes
+  const copiedNotesRef = useRef<Note[] | null>(null)
+  const copiedEdgesRef = useRef<LinkEdge[] | null>(null)
 
   const randJitter = useCallback(() => {
     const r = Math.random() * 2 - 1
@@ -69,27 +56,36 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
   }, [nodes, isCopyableNode])
 
   /**
-   * Copies currently selected note nodes into an in-memory buffer
+   * Copies currently selected note nodes + connecting edges into an in-memory buffer
    */
   const copySelected = useCallback(() => {
-    const selected = getSelectedNoteNodes()
-    if (!selected.length) {
-      copiedRef.current = null
+    const selectedNodes = getSelectedNoteNodes()
+    if (!selectedNodes.length) {
+      copiedNotesRef.current = null
+      copiedEdgesRef.current = null
       return
     }
 
-    // support either node.data.note or node.data holding the Note
-    const notes = selected
+    const notes = selectedNodes
       .map(n => (n.data?.note ?? n.data) as Note | undefined)
       .filter((v): v is Note => !!v)
 
     if (!notes.length) {
-      copiedRef.current = null
+      copiedNotesRef.current = null
+      copiedEdgesRef.current = null
       return
     }
 
-    copiedRef.current = notes
-  }, [getSelectedNoteNodes])
+    const selectedIds = new Set(selectedNodes.map(n => n.id))
+
+    // copy edges whose source & target are both in the selected node set
+    const connectingEdges = edges.filter(
+      e => selectedIds.has(e.source) && selectedIds.has(e.target),
+    )
+
+    copiedNotesRef.current = notes
+    copiedEdgesRef.current = connectingEdges
+  }, [getSelectedNoteNodes, edges])
 
   /**
    * Returns a cloned note with a shared jitter offset applied
@@ -108,35 +104,103 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
         nodePosition: {
           ...(note.properties?.nodePosition ?? { type: 'position' }),
           type: 'position',
-          position: { x: nx, y: ny }
-        }
-      }
+          position: { x: nx, y: ny },
+        },
+      },
     }
 
     return cloned
   }, [])
 
   /**
-   * Pastes the copied notes as new nodes, applying a single shared jitter for the whole batch
+   * Pastes the copied notes + edges as new nodes/edges,
+   * applying a single shared jitter for the whole batch.
    */
   const pasteCopied = useCallback(async () => {
     if (!boardId || !userId) return
-    const copied = copiedRef.current
-    if (!copied || !copied.length) return
+    const copiedNotes = copiedNotesRef.current
+    const copiedEdges = copiedEdgesRef.current
+
+    if (!copiedNotes || !copiedNotes.length) return
 
     // one shared jitter per paste to preserve the internal structure
     const jitter = { dx: randJitter(), dy: randJitter() }
 
-    const clones = copied.map(note => cloneNoteWithJitter(note, jitter))
-    const newNodes = clones.map(convertNoteToNode).map(n => ({ ...n, selected: true }))
+    // clone notes with jitter
+    const clonedNotes = copiedNotes.map(note => cloneNoteWithJitter(note, jitter))
 
-    setNodes(curr => {
+    // build node id mapping: original note id -> cloned note id
+    const idMap = new Map<string, string>()
+    copiedNotes.forEach((orig, idx) => {
+      const clone = clonedNotes[idx]
+      idMap.set(orig.id, clone.id)
+    })
+
+    // convert cloned notes to nodes
+    const newNodes = clonedNotes
+      .map(convertNoteToNode)
+      .map(n => ({ ...n, selected: true }))
+
+    // clone edges if we have any
+    let newEdges: LinkEdge[] = []
+    if (copiedEdges && copiedEdges.length > 0) {
+      newEdges = copiedEdges
+        .map(edge => {
+          const newSource = idMap.get(edge.source)
+          const newTarget = idMap.get(edge.target)
+          if (!newSource || !newTarget) return null
+
+          const newId = generateUuid()
+          const oldLink = edge.data as Link | undefined
+
+          const newLink: Link | undefined = oldLink
+            ? {
+                ...oldLink,
+                id: newId,
+                source: newSource,
+                target: newTarget,
+                graphUid: boardId,
+                createdAt: new Date().toISOString(),
+                updatedAt: undefined,
+                deletedAt: undefined,
+              }
+            : undefined
+
+          const clonedEdge: LinkEdge = {
+            ...edge,
+            id: newId,
+            source: newSource,
+            target: newTarget,
+            selected: true,
+            data: newLink ?? edge.data,
+          }
+
+          return clonedEdge
+        })
+        .filter((e): e is LinkEdge => !!e)
+    }
+
+    // update nodes (persisted): clear selection then append new nodes
+    setNodesPersist(curr => {
       const cleared = curr.map(n => ({ ...n, selected: false }))
       return [...cleared, ...newNodes]
     })
 
-    await addNotes({ boardId, userId, notes: clones })
-  }, [boardId, userId, randJitter, cloneNoteWithJitter, setNodes, addNotes])
+    // update edges (persisted): clear selection then append new edges
+    if (newEdges.length > 0) {
+      setEdgesPersist(curr => {
+        const cleared = curr.map(e => ({ ...e, selected: false }))
+        return [...cleared, ...newEdges]
+      })
+    }
+  }, [
+    boardId,
+    userId,
+    randJitter,
+    cloneNoteWithJitter,
+    setNodesPersist,
+    setEdgesPersist,
+  ])
 
   useEffect(() => {
     if (!shortcuts) return
@@ -185,16 +249,17 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
 
   return {
     /**
-     * Copies the currently selected, copyable nodes into the buffer
+     * Copies the currently selected, copyable nodes (and connecting edges) into the buffer
      */
     copySelected,
     /**
-     * Pastes buffered nodes as new nodes, applying a shared jitter per paste
+     * Pastes buffered nodes + edges as new elements, applying a shared jitter per paste
      */
     pasteCopied,
     /**
      * Returns true if there is anything in the copy buffer
      */
-    hasCopied: () => !!copiedRef.current?.length
+    hasCopied: () =>
+      !!copiedNotesRef.current?.length || !!copiedEdgesRef.current?.length,
   }
 }

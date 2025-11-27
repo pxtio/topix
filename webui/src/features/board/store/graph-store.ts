@@ -257,6 +257,9 @@ export interface GraphStore {
   setNodes: (nodes: Updater<NoteNode[]>) => void
   setEdges: (edges: Updater<LinkEdge[]>) => void
 
+  setNodesPersist: (nodes: Updater<NoteNode[]>) => void
+  setEdgesPersist: (edges: Updater<LinkEdge[]>) => void
+
   onNodesChange: (changes: NodeChange<NoteNode>[]) => void
   onEdgesChange: (changes: EdgeChange<LinkEdge>[]) => void
   onNodesDelete: (nodes: NoteNode[]) => void
@@ -306,6 +309,141 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     set((state) => ({
       edges: resolveUpdater<LinkEdge[]>(edgesOrUpdater, state.edges),
     })),
+
+  setNodesPersist: (nodesOrUpdater) => {
+    const boardId = get().boardId
+    const prevNodes = get().nodes
+    const prevIds = new Set(prevNodes.map(n => n.id))
+
+    // 1) compute next nodes from updater or value
+    const nextNodes =
+      typeof nodesOrUpdater === 'function'
+        ? (nodesOrUpdater as (prev: NoteNode[]) => NoteNode[])(prevNodes)
+        : nodesOrUpdater
+
+    const nextIds = new Set(nextNodes.map(n => n.id))
+
+    // 2) build maps and diff
+    const prevById = new Map(prevNodes.map(n => [n.id, n]))
+
+    const addedIds = new Set<string>()
+    const removedIds = new Set<string>()
+    const updatedIds = new Set<string>()
+
+    // additions + updates
+    for (const node of nextNodes) {
+      const id = node.id
+      if (!prevIds.has(id)) {
+        addedIds.add(id)
+        continue
+      }
+
+      const prev = prevById.get(id)
+      if (!prev) continue
+
+      if (prev !== node) {
+        updatedIds.add(id)
+      }
+    }
+
+    // removals
+    for (const id of prevIds) {
+      if (!nextIds.has(id)) {
+        removedIds.add(id)
+      }
+    }
+
+    // 3) persist removals immediately (fire-and-forget)
+    if (boardId && removedIds.size > 0) {
+      removedIds.forEach(id => {
+        pendingNewNodes.delete(id)
+        pendingUpdatedNodes.delete(id)
+        void removeNote(boardId, id)
+      })
+    }
+
+    // 4) first update the store so get().nodes is the latest snapshot
+    set({ nodes: nextNodes })
+
+    // 5) queue adds + updates for debounced addNotes / updateNote
+    if (addedIds.size > 0 || updatedIds.size > 0) {
+      queueNodesForPersistence(
+        () => ({
+          boardId: get().boardId,
+          nodes: get().nodes, // ✅ now this is nextNodes
+        }),
+        addedIds,
+        updatedIds,
+      )
+    }
+  },
+
+  setEdgesPersist: (edgesOrUpdater) => {
+    const boardId = get().boardId
+    const prevEdges = get().edges
+    const prevIds = new Set(prevEdges.map(e => e.id))
+
+    // 1) compute next edges
+    const nextEdges =
+      typeof edgesOrUpdater === 'function'
+        ? (edgesOrUpdater as (prev: LinkEdge[]) => LinkEdge[])(prevEdges)
+        : edgesOrUpdater
+
+    const nextIds = new Set(nextEdges.map(e => e.id))
+
+    const prevById = new Map(prevEdges.map(e => [e.id, e]))
+
+    const addedIds = new Set<string>()
+    const removedIds = new Set<string>()
+    const updatedIds = new Set<string>()
+
+    // additions + updates
+    for (const edge of nextEdges) {
+      const id = edge.id
+      if (!prevIds.has(id)) {
+        addedIds.add(id)
+        continue
+      }
+
+      const prev = prevById.get(id)
+      if (!prev) continue
+
+      if (prev !== edge) {
+        updatedIds.add(id)
+      }
+    }
+
+    // removals
+    for (const id of prevIds) {
+      if (!nextIds.has(id)) {
+        removedIds.add(id)
+      }
+    }
+
+    // 3) persist removals
+    if (boardId && removedIds.size > 0) {
+      removedIds.forEach(id => {
+        pendingNewEdges.delete(id)
+        pendingUpdatedEdges.delete(id)
+        void removeLink(boardId, id)
+      })
+    }
+
+    // 4) update store first
+    set({ edges: nextEdges })
+
+    // 5) queue adds + updates
+    if (addedIds.size > 0 || updatedIds.size > 0) {
+      queueEdgesForPersistence(
+        () => ({
+          boardId: get().boardId,
+          edges: get().edges, // ✅ now nextEdges
+        }),
+        addedIds,
+        updatedIds,
+      )
+    }
+  },
 
   // --- main graph logic with persistence ---
 

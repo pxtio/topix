@@ -1,85 +1,90 @@
-// use-save-thumbnail-on-unmount.ts
+// use-save-thumbnail-interval.ts (or keep the same filename if you prefer)
 import { useEffect, useRef, useCallback } from 'react'
 import { useReactFlow, getViewportForBounds, type Rect } from '@xyflow/react'
 import { toBlob } from 'html-to-image'
 
 type Params = {
   boardId?: string
-  userId?: string
-  saveThumbnail: (args: { userId: string; boardId: string; blob: Blob }) => Promise<void>
+  saveThumbnail: (args: { boardId: string, blob: Blob }) => Promise<void>
   width?: number
   height?: number
+  intervalMs?: number // default: 10s
 }
 
-export function useSaveThumbnailOnUnmount({
+export function useSaveThumbnail({
   boardId,
-  userId,
   saveThumbnail,
-  width = 360,
-  height = 200
+  width = 600,
+  height = 400,
+  intervalMs = 10_000,
 }: Params) {
   const { getNodes, getNodesBounds } = useReactFlow()
 
   // stable element snapshot managed by the hook
   const elRef = useRef<HTMLElement | null>(null)
   const setContainerRef = useCallback((el: HTMLElement | null) => {
-    if (el) elRef.current = el
+    elRef.current = el
   }, [])
 
-  // keep latest changing values without re-subscribing the effect
+  // keep latest changing values without recreating the interval
   const boardIdRef = useRef(boardId)
-  const userIdRef = useRef(userId)
   const saveRef = useRef(saveThumbnail)
-  useEffect(() => { boardIdRef.current = boardId }, [boardId])
-  useEffect(() => { userIdRef.current = userId }, [userId])
-  useEffect(() => { saveRef.current = saveThumbnail }, [saveThumbnail])
 
-  const firedRef = useRef(false) // guard Strict Mode double cleanup
-
-  // run cleanup only once on unmount
   useEffect(() => {
-    return () => {
-      if (firedRef.current) return
-      firedRef.current = true
+    boardIdRef.current = boardId
+  }, [boardId])
 
-      ;(async () => {
-        const bId = boardIdRef.current
-        const uId = userIdRef.current
-        if (!bId || !uId) return
+  useEffect(() => {
+    saveRef.current = saveThumbnail
+  }, [saveThumbnail])
 
-        const container = elRef.current
-        if (!container) return
+  const captureThumbnail = useCallback(async () => {
+    const bId = boardIdRef.current
+    if (!bId) return
+    const container = elRef.current
+    if (!container) return
+    const viewportEl = container.querySelector('.react-flow__viewport') as HTMLElement | null
+    if (!viewportEl) return
+    const nodes = getNodes()
+    const bounds: Rect =
+      nodes.length ? getNodesBounds(nodes) : { x: 0, y: 0, width: 1, height: 1 }
 
-        const viewportEl = container.querySelector('.react-flow__viewport') as HTMLElement | null
-        if (!viewportEl) return
+    const { x, y, zoom } = getViewportForBounds(bounds, width, height, 0.1, 1, 0.1)
 
-        const nodes = getNodes()
-        const bounds: Rect =
-          nodes.length ? getNodesBounds(nodes) : { x: 0, y: 0, width: 1, height: 1 }
+    try {
+      const blob = await toBlob(viewportEl, {
+        backgroundColor: 'transparent',
+        width,
+        height,
+        pixelRatio: 1,
+        style: {
+          width: `${width}px`,
+          height: `${height}px`,
+          transform: `translate(${x}px, ${y}px) scale(${zoom})`,
+          transformOrigin: '0 0',
+        },
+        cacheBust: true,
+      })
 
-        const { x, y, zoom } = getViewportForBounds(bounds, width, height, 0.1, 1, 0.1)
-
-        toBlob(viewportEl, {
-          backgroundColor: 'transparent',
-          width,
-          height,
-          pixelRatio: 1,
-          style: {
-            width: `${width}px`,
-            height: `${height}px`,
-            transform: `translate(${x}px, ${y}px) scale(${zoom})`,
-            transformOrigin: '0 0'
-          },
-          cacheBust: true
-        }).then(blob => {
-          if (blob) void saveRef.current({ userId: uId, boardId: bId, blob })
-        }).catch(() => {})
-      })()
+      if (blob) {
+        await saveRef.current({ boardId: bId, blob })
+      }
+    } catch (e) {
+      // swallow errors; thumbnail generation is best-effort
+      console.error('Failed to capture thumbnail', e)
     }
-    // intentionally subscribe once; cleanup only on unmount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [getNodes, getNodesBounds, width, height])
 
-  // expose the ref callback for your wrapper div
+  // periodic autosave every intervalMs
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      void captureThumbnail()
+    }, intervalMs)
+
+    return () => {
+      window.clearInterval(id)
+    }
+  }, [captureThumbnail, intervalMs])
+
   return { setContainerRef }
 }

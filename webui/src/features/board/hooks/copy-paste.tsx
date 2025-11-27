@@ -17,14 +17,13 @@
  */
 
 import { useCallback, useEffect, useRef } from 'react'
-import { useReactFlow } from '@xyflow/react'
 import { useGraphStore } from '../store/graph-store'
 import { convertNoteToNode } from '../utils/graph'
-import { useAddNotes } from '../api/add-notes'
 import { useAppStore } from '@/store'
 import type { Note } from '../types/note'
 import type { NoteNode } from '../types/flow'
 import { generateUuid } from '@/lib/common'
+import { useShallow } from 'zustand/shallow'
 
 type CopyPasteOptions = {
   /**
@@ -52,9 +51,10 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
   const { jitterMax = 30, shortcuts = true, isCopyableNode } = opts
 
   const userId = useAppStore(state => state.userId)
-  const { boardId, nodes } = useGraphStore()
-  const { setNodes } = useReactFlow()
-  const { addNotes } = useAddNotes()
+
+  const boardId = useGraphStore(state => state.boardId)
+  const nodes = useGraphStore(useShallow(state => state.nodes))
+  const setNodesPersist = useGraphStore(state => state.setNodesPersist)
 
   const copiedRef = useRef<Note[] | null>(null)
 
@@ -130,13 +130,12 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     const clones = copied.map(note => cloneNoteWithJitter(note, jitter))
     const newNodes = clones.map(convertNoteToNode).map(n => ({ ...n, selected: true }))
 
-    setNodes(curr => {
+    setNodesPersist(curr => {
       const cleared = curr.map(n => ({ ...n, selected: false }))
       return [...cleared, ...newNodes]
     })
 
-    await addNotes({ boardId, notes: clones })
-  }, [boardId, userId, randJitter, cloneNoteWithJitter, setNodes, addNotes])
+  }, [boardId, userId, randJitter, cloneNoteWithJitter, setNodesPersist])
 
   useEffect(() => {
     if (!shortcuts) return

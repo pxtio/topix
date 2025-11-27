@@ -27,7 +27,7 @@ import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
 import { saveThumbnail } from '../../api/save-thumbnail'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
 import { useStyleDefaults } from '../../style-provider'
-import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
+import { useSaveThumbnail } from '../../hooks/make-thumbnail'
 
 import './graph-styles.css'
 
@@ -123,7 +123,7 @@ export default function GraphEditor() {
   }, [viewportInitialized, fitView, boardId, graphViewports])
 
   // Thumbnail on unmount
-  const { setContainerRef } = useSaveThumbnailOnUnmount({
+  const { setContainerRef } = useSaveThumbnail({
     boardId,
     saveThumbnail: async ({ boardId, blob }) => {
       await saveThumbnail({ boardId, blob })

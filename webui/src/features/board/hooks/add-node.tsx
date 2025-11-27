@@ -5,6 +5,7 @@ import { useGraphStore } from "../store/graph-store"
 import { convertNoteToNode } from "../utils/graph"
 import type { NodeType } from "../types/style"
 import { useStyleDefaults } from "../style-provider"
+import { useShallow } from "zustand/react/shallow"
 
 
 /**
@@ -13,7 +14,9 @@ import { useStyleDefaults } from "../style-provider"
 export function useAddNoteNode() {
   const { getViewport } = useReactFlow()
 
-  const { boardId, nodes, setNodes } = useGraphStore()
+  const boardId = useGraphStore(state => state.boardId)
+  const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const nodes = useGraphStore(useShallow(state => state.nodes))
 
   const { applyDefaultNodeStyle } = useStyleDefaults()
 
@@ -58,6 +61,6 @@ export function useAddNoteNode() {
     const node = convertNoteToNode(newNote)
     const newNodes = nodes.map(n => ({ ...n, selected: false }))
     node.selected = true
-    setNodes([...newNodes, node])
-  }, [boardId, getViewport, setNodes, nodes, applyDefaultNodeStyle])
+    setNodesPersist([...newNodes, node])
+  }, [boardId, getViewport, setNodesPersist, nodes, applyDefaultNodeStyle])
 }

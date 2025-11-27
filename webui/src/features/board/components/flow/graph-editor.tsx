@@ -10,6 +10,7 @@ import {
   type OnEdgesChange,
   type OnNodesDelete,
   type OnEdgesDelete,
+  MiniMap,
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -70,6 +71,7 @@ type GraphViewProps = {
   onSelectionDragStart: () => void
   onSelectionDragStop: () => void
   onInit: (instance: ReactFlowInstance<NoteNode, LinkEdge>) => void
+  children?: React.ReactNode
 }
 
 /**
@@ -92,6 +94,7 @@ function GraphView({
   onSelectionDragStart,
   onSelectionDragStop,
   onInit,
+  children,
 }: GraphViewProps) {
   return (
     <ReactFlow
@@ -126,7 +129,9 @@ function GraphView({
       panOnScroll={!isLocked}
       onlyRenderVisibleElements
       onInit={onInit}
-    />
+    >
+      {children}
+    </ReactFlow>
   )
 }
 
@@ -345,7 +350,11 @@ export default function GraphEditor() {
             onSelectionDragStart={handleSelectionDragStart}
             onSelectionDragStop={handleSelectionDragStop}
             onInit={handleInit}
-          />
+          >
+            {!moving && !isDragging && !isResizingNode && !isSelecting && (
+              <MiniMap className='!bg-sidebar rounded-lg'/>
+            )}
+          </GraphView>
         ) : (
           <LinearView />
         )}

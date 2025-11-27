@@ -30,11 +30,7 @@ import { removeNote } from "../api/remove-note"
 type Updater<T> = T | ((prev: T) => T)
 
 const resolveUpdater = <T>(updater: Updater<T>, prev: T): T =>
-  typeof updater === "function"
-    ? (updater as (p: T) => T)(prev)
-    : updater
-
-// --- persist conditions ---
+  typeof updater === "function" ? (updater as (p: T) => T)(prev) : updater
 
 function shouldPersistNodeChange(
   ch: NodeChange<NoteNode>,
@@ -44,13 +40,10 @@ function shouldPersistNodeChange(
     case "select":
       return false
     case "remove":
-      // handled as delete
       return false
     case "position":
-      // persist only when drag ends
       return ch.dragging === false
     case "dimensions":
-      // avoid spam while resizing
       return !isResizing
     default:
       return true
@@ -79,9 +72,9 @@ const pendingNewEdges = new Map<string, LinkEdge>()
 const pendingUpdatedEdges = new Map<string, LinkEdge>()
 let edgePersistTimeout: ReturnType<typeof setTimeout> | null = null
 
-// --- node persistence helpers ---
+// --- debounced flushes (conversion happens here, not on hot path) ---
 
-function scheduleNodeFlush(get: () => { boardId?: string }) {
+function scheduleNodeFlush(get: () => { boardId?: string; nodes: NoteNode[] }) {
   if (nodePersistTimeout !== null) {
     clearTimeout(nodePersistTimeout)
   }
@@ -104,10 +97,9 @@ function scheduleNodeFlush(get: () => { boardId?: string }) {
 
     try {
       if (newNodes.length > 0) {
-        // addNotes expects Note[]
         await addNotes(
           boardId,
-          newNodes.map((n) => n.data as Note),
+          newNodes.map((n) => convertNodeToNote(boardId, n)),
         )
       }
 
@@ -117,7 +109,7 @@ function scheduleNodeFlush(get: () => { boardId?: string }) {
             updateNote(
               boardId,
               n.id,
-              n.data as Partial<Note>,
+              convertNodeToNote(boardId, n) as Partial<Note>,
             ),
           ),
         )
@@ -139,7 +131,6 @@ function queueNodesForPersistence(
 
   const byId = new Map(nodes.map((n) => [n.id, n]))
 
-  // New nodes: go into pendingNewNodes, and are NOT put in updated queue
   for (const id of addedIds) {
     const node = byId.get(id)
     if (!node) continue
@@ -147,7 +138,6 @@ function queueNodesForPersistence(
     pendingUpdatedNodes.delete(id)
   }
 
-  // Updated nodes: only if not already considered "new"
   for (const id of updatedIds) {
     if (pendingNewNodes.has(id)) continue
     const node = byId.get(id)
@@ -155,12 +145,10 @@ function queueNodesForPersistence(
     pendingUpdatedNodes.set(id, node)
   }
 
-  scheduleNodeFlush(() => ({ boardId }))
+  scheduleNodeFlush(get)
 }
 
-// --- edge persistence helpers ---
-
-function scheduleEdgeFlush(get: () => { boardId?: string }) {
+function scheduleEdgeFlush(get: () => { boardId?: string; edges: LinkEdge[] }) {
   if (edgePersistTimeout !== null) {
     clearTimeout(edgePersistTimeout)
   }
@@ -183,10 +171,9 @@ function scheduleEdgeFlush(get: () => { boardId?: string }) {
 
     try {
       if (newEdges.length > 0) {
-        // addLinks expects Link[]
         await addLinks(
           boardId,
-          newEdges.map((e) => e.data as Link),
+          newEdges.map((e) => convertEdgeToLink(boardId, e)),
         )
       }
 
@@ -196,7 +183,7 @@ function scheduleEdgeFlush(get: () => { boardId?: string }) {
             updateLink(
               boardId,
               e.id,
-              e.data as Partial<Link>,
+              convertEdgeToLink(boardId, e) as Partial<Link>,
             ),
           ),
         )
@@ -218,7 +205,6 @@ function queueEdgesForPersistence(
 
   const byId = new Map(edges.map((e) => [e.id, e]))
 
-  // New edges
   for (const id of addedIds) {
     const edge = byId.get(id)
     if (!edge) continue
@@ -226,7 +212,6 @@ function queueEdgesForPersistence(
     pendingUpdatedEdges.delete(id)
   }
 
-  // Updated edges
   for (const id of updatedIds) {
     if (pendingNewEdges.has(id)) continue
     const edge = byId.get(id)
@@ -234,7 +219,326 @@ function queueEdgesForPersistence(
     pendingUpdatedEdges.set(id, edge)
   }
 
-  scheduleEdgeFlush(() => ({ boardId }))
+  scheduleEdgeFlush(get)
+}
+
+// --- background helpers (diff + persist) ---
+
+function scheduleNodePersistFromDiff(
+  prevNodes: NoteNode[],
+  nextNodes: NoteNode[],
+  boardIdAtTime: string | undefined,
+  get: () => { boardId?: string; nodes: NoteNode[] },
+) {
+  if (!boardIdAtTime) return
+
+  setTimeout(() => {
+    const { boardId, nodes } = get()
+    if (!boardId || boardId !== boardIdAtTime) return
+
+    const prevIds = new Set(prevNodes.map((n) => n.id))
+    const nextIds = new Set(nextNodes.map((n) => n.id))
+    const prevById = new Map(prevNodes.map((n) => [n.id, n]))
+
+    const addedIds = new Set<string>()
+    const removedIds = new Set<string>()
+    const updatedIds = new Set<string>()
+
+    for (const node of nextNodes) {
+      const id = node.id
+      if (!prevIds.has(id)) {
+        addedIds.add(id)
+        continue
+      }
+      const prev = prevById.get(id)
+      if (!prev) continue
+      if (prev !== node) {
+        updatedIds.add(id)
+      }
+    }
+
+    for (const id of prevIds) {
+      if (!nextIds.has(id)) {
+        removedIds.add(id)
+      }
+    }
+
+    if (removedIds.size > 0) {
+      removedIds.forEach((id) => {
+        pendingNewNodes.delete(id)
+        pendingUpdatedNodes.delete(id)
+        void removeNote(boardId, id)
+      })
+    }
+
+    if (addedIds.size > 0 || updatedIds.size > 0) {
+      queueNodesForPersistence(
+        () => ({
+          boardId: get().boardId,
+          nodes,
+        }),
+        addedIds,
+        updatedIds,
+      )
+    }
+  }, 0)
+}
+
+function scheduleEdgePersistFromDiff(
+  prevEdges: LinkEdge[],
+  nextEdges: LinkEdge[],
+  boardIdAtTime: string | undefined,
+  get: () => { boardId?: string; edges: LinkEdge[] },
+) {
+  if (!boardIdAtTime) return
+
+  setTimeout(() => {
+    const { boardId, edges } = get()
+    if (!boardId || boardId !== boardIdAtTime) return
+
+    const prevIds = new Set(prevEdges.map((e) => e.id))
+    const nextIds = new Set(nextEdges.map((e) => e.id))
+    const prevById = new Map(prevEdges.map((e) => [e.id, e]))
+
+    const addedIds = new Set<string>()
+    const removedIds = new Set<string>()
+    const updatedIds = new Set<string>()
+
+    for (const edge of nextEdges) {
+      const id = edge.id
+      if (!prevIds.has(id)) {
+        addedIds.add(id)
+        continue
+      }
+      const prev = prevById.get(id)
+      if (!prev) continue
+      if (prev !== edge) {
+        updatedIds.add(id)
+      }
+    }
+
+    for (const id of prevIds) {
+      if (!nextIds.has(id)) {
+        removedIds.add(id)
+      }
+    }
+
+    if (removedIds.size > 0) {
+      removedIds.forEach((id) => {
+        pendingNewEdges.delete(id)
+        pendingUpdatedEdges.delete(id)
+        void removeLink(boardId, id)
+      })
+    }
+
+    if (addedIds.size > 0 || updatedIds.size > 0) {
+      queueEdgesForPersistence(
+        () => ({
+          boardId: get().boardId,
+          edges,
+        }),
+        addedIds,
+        updatedIds,
+      )
+    }
+  }, 0)
+}
+
+// background helper specifically for ReactFlow node changes
+function scheduleNodePersistFromChanges(
+  prevNodes: NoteNode[],
+  nextNodes: NoteNode[],
+  boardIdAtTime: string | undefined,
+  changes: NodeChange<NoteNode>[],
+  isResizingAtTime: boolean,
+  get: () => { boardId?: string; nodes: NoteNode[]; deletedNodes: NoteNode[] },
+  set: (
+    partial:
+      | Partial<GraphStore>
+      | ((state: GraphStore) => Partial<GraphStore>),
+  ) => void,
+) {
+  if (!boardIdAtTime) return
+
+  setTimeout(() => {
+    const state = get()
+    const boardId = state.boardId
+    if (!boardId || boardId !== boardIdAtTime) return
+
+    const { nodes } = state
+
+    const prevIds = new Set(prevNodes.map((n) => n.id))
+    const nextById = new Map(nextNodes.map((n) => [n.id, n]))
+
+    const explicitRemovedIds = new Set<string>(
+      changes
+        .filter((ch) => ch.type === "remove")
+        .map((ch) => ch.id)
+        .filter((id): id is string => !!id),
+    )
+
+    const diffRemovedIds = new Set<string>()
+    for (const id of prevIds) {
+      if (!nextById.has(id)) diffRemovedIds.add(id)
+    }
+
+    const removedIds = new Set<string>([
+      ...explicitRemovedIds,
+      ...diffRemovedIds,
+    ])
+
+    if (removedIds.size > 0) {
+      const deletedNow = prevNodes
+        .filter((n) => removedIds.has(n.id))
+        .map((n) => ({
+          ...n,
+          data: { ...n.data, deletedAt: new Date().toISOString() },
+        }))
+
+      set((s) => ({
+        deletedNodes: [...s.deletedNodes, ...deletedNow],
+      }))
+
+      removedIds.forEach((id) => {
+        pendingNewNodes.delete(id)
+        pendingUpdatedNodes.delete(id)
+        void removeNote(boardId, id)
+      })
+    }
+
+    const addedIds = new Set<string>(
+      changes
+        .filter((ch) => ch.type === "add")
+        .map((ch) => ch.item.id),
+    )
+
+    const candidateUpdateIds = new Set<string>()
+    for (const ch of changes) {
+      const id = ch.type === "add" ? ch.item.id : ch.id
+      if (!id) continue
+      if (removedIds.has(id)) continue
+      if (shouldPersistNodeChange(ch, isResizingAtTime)) {
+        candidateUpdateIds.add(id)
+      }
+    }
+
+    const updatedIds = new Set<string>()
+    for (const id of candidateUpdateIds) {
+      if (!addedIds.has(id)) {
+        updatedIds.add(id)
+      }
+    }
+
+    if (addedIds.size > 0 || updatedIds.size > 0) {
+      queueNodesForPersistence(
+        () => ({
+          boardId: get().boardId,
+          nodes,
+        }),
+        addedIds,
+        updatedIds,
+      )
+    }
+  }, 0)
+}
+
+function scheduleEdgePersistFromChanges(
+  prevEdges: LinkEdge[],
+  nextEdges: LinkEdge[],
+  boardIdAtTime: string | undefined,
+  changes: EdgeChange<LinkEdge>[],
+  get: () => { boardId?: string; edges: LinkEdge[]; deletedEdges: LinkEdge[] },
+  set: (
+    partial:
+      | Partial<GraphStore>
+      | ((state: GraphStore) => Partial<GraphStore>),
+  ) => void,
+) {
+  if (!boardIdAtTime) return
+
+  setTimeout(() => {
+    const state = get()
+    const boardId = state.boardId
+    if (!boardId || boardId !== boardIdAtTime) return
+
+    const { edges } = state
+
+    const prevIds = new Set(prevEdges.map((e) => e.id))
+    const nextById = new Map(nextEdges.map((e) => [e.id, e]))
+
+    const explicitRemovedIds = new Set<string>(
+      changes
+        .filter((ch) => ch.type === "remove")
+        .map((ch) => ch.id)
+        .filter((id): id is string => !!id),
+    )
+
+    const diffRemovedIds = new Set<string>()
+    for (const id of prevIds) {
+      if (!nextById.has(id)) diffRemovedIds.add(id)
+    }
+
+    const removedIds = new Set<string>([
+      ...explicitRemovedIds,
+      ...diffRemovedIds,
+    ])
+
+    if (removedIds.size > 0) {
+      const deletedNow = prevEdges
+        .filter((e) => removedIds.has(e.id))
+        .map((e) => ({
+          ...e,
+          data: {
+            ...(e.data as Link),
+            deletedAt: new Date().toISOString(),
+          },
+        }))
+
+      set((s) => ({
+        deletedEdges: [...s.deletedEdges, ...deletedNow],
+      }))
+
+      removedIds.forEach((id) => {
+        pendingNewEdges.delete(id)
+        pendingUpdatedEdges.delete(id)
+        void removeLink(boardId, id)
+      })
+    }
+
+    const addedIds = new Set<string>(
+      changes
+        .filter((ch) => ch.type === "add")
+        .map((ch) => ch.item.id),
+    )
+
+    const candidateUpdateIds = new Set<string>()
+    for (const ch of changes) {
+      const id = ch.type === "add" ? ch.item.id : ch.id
+      if (!id) continue
+      if (removedIds.has(id)) continue
+      if (shouldPersistEdgeChange(ch)) {
+        candidateUpdateIds.add(id)
+      }
+    }
+
+    const updatedIds = new Set<string>()
+    for (const id of candidateUpdateIds) {
+      if (!addedIds.has(id)) {
+        updatedIds.add(id)
+      }
+    }
+
+    if (addedIds.size > 0 || updatedIds.size > 0) {
+      queueEdgesForPersistence(
+        () => ({
+          boardId: get().boardId,
+          edges,
+        }),
+        addedIds,
+        updatedIds,
+      )
+    }
+  }, 0)
 }
 
 // --- store ---
@@ -310,258 +614,77 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       edges: resolveUpdater<LinkEdge[]>(edgesOrUpdater, state.edges),
     })),
 
+  // --- set + background diff + debounced persist ---
+
   setNodesPersist: (nodesOrUpdater) => {
     const boardId = get().boardId
     const prevNodes = get().nodes
-    const prevIds = new Set(prevNodes.map(n => n.id))
 
-    // 1) compute next nodes from updater or value
     const nextNodes =
-      typeof nodesOrUpdater === 'function'
+      typeof nodesOrUpdater === "function"
         ? (nodesOrUpdater as (prev: NoteNode[]) => NoteNode[])(prevNodes)
         : nodesOrUpdater
 
-    const nextIds = new Set(nextNodes.map(n => n.id))
-
-    // 2) build maps and diff
-    const prevById = new Map(prevNodes.map(n => [n.id, n]))
-
-    const addedIds = new Set<string>()
-    const removedIds = new Set<string>()
-    const updatedIds = new Set<string>()
-
-    // additions + updates
-    for (const node of nextNodes) {
-      const id = node.id
-      if (!prevIds.has(id)) {
-        addedIds.add(id)
-        continue
-      }
-
-      const prev = prevById.get(id)
-      if (!prev) continue
-
-      if (prev !== node) {
-        updatedIds.add(id)
-      }
-    }
-
-    // removals
-    for (const id of prevIds) {
-      if (!nextIds.has(id)) {
-        removedIds.add(id)
-      }
-    }
-
-    // 3) persist removals immediately (fire-and-forget)
-    if (boardId && removedIds.size > 0) {
-      removedIds.forEach(id => {
-        pendingNewNodes.delete(id)
-        pendingUpdatedNodes.delete(id)
-        void removeNote(boardId, id)
-      })
-    }
-
-    // 4) first update the store so get().nodes is the latest snapshot
     set({ nodes: nextNodes })
 
-    // 5) queue adds + updates for debounced addNotes / updateNote
-    if (addedIds.size > 0 || updatedIds.size > 0) {
-      queueNodesForPersistence(
-        () => ({
-          boardId: get().boardId,
-          nodes: get().nodes, // ✅ now this is nextNodes
-        }),
-        addedIds,
-        updatedIds,
-      )
-    }
+    scheduleNodePersistFromDiff(prevNodes, nextNodes, boardId, () => ({
+      boardId: get().boardId,
+      nodes: get().nodes,
+    }))
   },
 
   setEdgesPersist: (edgesOrUpdater) => {
     const boardId = get().boardId
     const prevEdges = get().edges
-    const prevIds = new Set(prevEdges.map(e => e.id))
 
-    // 1) compute next edges
     const nextEdges =
-      typeof edgesOrUpdater === 'function'
+      typeof edgesOrUpdater === "function"
         ? (edgesOrUpdater as (prev: LinkEdge[]) => LinkEdge[])(prevEdges)
         : edgesOrUpdater
 
-    const nextIds = new Set(nextEdges.map(e => e.id))
-
-    const prevById = new Map(prevEdges.map(e => [e.id, e]))
-
-    const addedIds = new Set<string>()
-    const removedIds = new Set<string>()
-    const updatedIds = new Set<string>()
-
-    // additions + updates
-    for (const edge of nextEdges) {
-      const id = edge.id
-      if (!prevIds.has(id)) {
-        addedIds.add(id)
-        continue
-      }
-
-      const prev = prevById.get(id)
-      if (!prev) continue
-
-      if (prev !== edge) {
-        updatedIds.add(id)
-      }
-    }
-
-    // removals
-    for (const id of prevIds) {
-      if (!nextIds.has(id)) {
-        removedIds.add(id)
-      }
-    }
-
-    // 3) persist removals
-    if (boardId && removedIds.size > 0) {
-      removedIds.forEach(id => {
-        pendingNewEdges.delete(id)
-        pendingUpdatedEdges.delete(id)
-        void removeLink(boardId, id)
-      })
-    }
-
-    // 4) update store first
     set({ edges: nextEdges })
 
-    // 5) queue adds + updates
-    if (addedIds.size > 0 || updatedIds.size > 0) {
-      queueEdgesForPersistence(
-        () => ({
-          boardId: get().boardId,
-          edges: get().edges, // ✅ now nextEdges
-        }),
-        addedIds,
-        updatedIds,
-      )
-    }
+    scheduleEdgePersistFromDiff(prevEdges, nextEdges, boardId, () => ({
+      boardId: get().boardId,
+      edges: get().edges,
+    }))
   },
 
-  // --- main graph logic with persistence ---
+  // --- ReactFlow-driven changes (background diff + persist) ---
 
   onNodesChange: (changes) => {
     const boardId = get().boardId
     if (!boardId) return
 
     const prevNodes = get().nodes
-    const prevIds = new Set(prevNodes.map((n) => n.id))
 
-    // 1) apply to local state
+    // fast path: only selection + intermediate drag (no persistence at all)
+    const onlyTransient = changes.every((ch) => {
+      if (ch.type === "select") return true
+      if (ch.type === "position" && ch.dragging) return true
+      return false
+    })
+
     const updatedNodes = applyNodeChanges(changes, prevNodes)
-    const changeIdMap = new Map<string, string>()
-
-    changes.forEach((change) => {
-      if (change.type === "add") {
-        changeIdMap.set(change.item.id, change.type)
-      } else {
-        changeIdMap.set(change.id, change.type)
-      }
-    })
-
-    updatedNodes.forEach((node) => {
-      if (changeIdMap.has(node.id)) {
-        const note = convertNodeToNote(boardId, node)
-        const op = changeIdMap.get(node.id)
-
-        switch (op) {
-          case "add": {
-            node.data = { ...note, createdAt: new Date().toISOString() }
-            return node
-          }
-          case "remove": {
-            node.data = { ...note, deletedAt: new Date().toISOString() }
-            set({ deletedNodes: [...get().deletedNodes, node] })
-            return node
-          }
-          default: {
-            node.data = { ...note, updatedAt: new Date().toISOString() }
-            return node
-          }
-        }
-      }
-    })
-
     set({ nodes: updatedNodes })
 
-    const nextNodes = updatedNodes
-    const nextById = new Map(nextNodes.map((n) => [n.id, n]))
+    if (onlyTransient) return
 
-    // 2) compute explicit + implicit deletes
-    const explicitRemovedIds = new Set<string>(
-      changes
-        .filter((ch) => ch.type === "remove")
-        .map((ch) => ch.id)
-        .filter((id): id is string => !!id),
+    const isResizingAtTime = get().isResizingNode
+
+    scheduleNodePersistFromChanges(
+      prevNodes,
+      updatedNodes,
+      boardId,
+      changes,
+      isResizingAtTime,
+      () => ({
+        boardId: get().boardId,
+        nodes: get().nodes,
+        deletedNodes: get().deletedNodes,
+      }),
+      set,
     )
-
-    const diffRemovedIds = new Set<string>()
-    for (const id of prevIds) {
-      if (!nextById.has(id)) diffRemovedIds.add(id)
-    }
-
-    const removedIds = new Set<string>([
-      ...explicitRemovedIds,
-      ...diffRemovedIds,
-    ])
-
-    // Clean removed ones from queues (never persist something we removed)
-    removedIds.forEach((id) => {
-      pendingNewNodes.delete(id)
-      pendingUpdatedNodes.delete(id)
-    })
-
-    // 3) persist deletions immediately (fire-and-forget)
-    if (removedIds.size > 0) {
-      removedIds.forEach((id) => {
-        void removeNote(boardId, id)
-      })
-    }
-
-    // 4) collect added + updated ids for debounced add/update
-    const isResizingNode = get().isResizingNode
-
-    const addedIds = new Set<string>(
-      changes
-        .filter((ch) => ch.type === "add")
-        .map((ch) => ch.item.id),
-    )
-
-    const candidateUpdateIds = new Set<string>()
-    for (const ch of changes) {
-      const id = ch.type === "add" ? ch.item.id : ch.id
-      if (!id) continue
-      if (removedIds.has(id)) continue
-      if (shouldPersistNodeChange(ch, isResizingNode)) {
-        candidateUpdateIds.add(id)
-      }
-    }
-
-    // updates = those that should be persisted but are not "new"
-    const updatedIds = new Set<string>()
-    for (const id of candidateUpdateIds) {
-      if (!addedIds.has(id)) {
-        updatedIds.add(id)
-      }
-    }
-
-    if (addedIds.size > 0 || updatedIds.size > 0) {
-      queueNodesForPersistence(
-        () => ({
-          boardId: get().boardId,
-          nodes: get().nodes,
-        }),
-        addedIds,
-        updatedIds,
-      )
-    }
   },
 
   onEdgesChange: (changes) => {
@@ -569,113 +692,27 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     if (!boardId) return
 
     const prevEdges = get().edges
-    const prevIds = new Set(prevEdges.map((e) => e.id))
 
-    // 1) apply locally
+    // fast path: selection-only
+    const onlySelect = changes.every((ch) => ch.type === "select")
+
     const updatedEdges = applyEdgeChanges(changes, prevEdges)
-    const changeIdMap = new Map<string, string>()
-
-    changes.forEach((change) => {
-      if (change.type === "add") {
-        changeIdMap.set(change.item.id, change.type)
-      } else {
-        changeIdMap.set(change.id, change.type)
-      }
-    })
-
-    updatedEdges.forEach((edge) => {
-      if (changeIdMap.has(edge.id)) {
-        const link = convertEdgeToLink(boardId, edge)
-        const op = changeIdMap.get(edge.id)
-
-        switch (op) {
-          case "add": {
-            edge.data = { ...link, createdAt: new Date().toISOString() }
-            return edge
-          }
-          case "remove": {
-            edge.data = { ...link, deletedAt: new Date().toISOString() }
-            set({ deletedEdges: [...get().deletedEdges, edge] })
-            return edge
-          }
-          default: {
-            edge.data = { ...link, updatedAt: new Date().toISOString() }
-            return edge
-          }
-        }
-      }
-    })
-
     set({ edges: updatedEdges })
 
-    const nextEdges = updatedEdges
-    const nextById = new Map(nextEdges.map((e) => [e.id, e]))
+    if (onlySelect) return
 
-    // 2) deletes (explicit + diff)
-    const explicitRemovedIds = new Set<string>(
-      changes
-        .filter((ch) => ch.type === "remove")
-        .map((ch) => ch.id)
-        .filter((id): id is string => !!id),
+    scheduleEdgePersistFromChanges(
+      prevEdges,
+      updatedEdges,
+      boardId,
+      changes,
+      () => ({
+        boardId: get().boardId,
+        edges: get().edges,
+        deletedEdges: get().deletedEdges,
+      }),
+      set,
     )
-
-    const diffRemovedIds = new Set<string>()
-    for (const id of prevIds) {
-      if (!nextById.has(id)) diffRemovedIds.add(id)
-    }
-
-    const removedIds = new Set<string>([
-      ...explicitRemovedIds,
-      ...diffRemovedIds,
-    ])
-
-    // Clean them from queues
-    removedIds.forEach((id) => {
-      pendingNewEdges.delete(id)
-      pendingUpdatedEdges.delete(id)
-    })
-
-    // 3) persist deletions immediately
-    if (removedIds.size > 0) {
-      removedIds.forEach((id) => {
-        void removeLink(boardId, id)
-      })
-    }
-
-    // 4) collect added + updated ids for add/update
-    const addedIds = new Set<string>(
-      changes
-        .filter((ch) => ch.type === "add")
-        .map((ch) => ch.item.id),
-    )
-
-    const candidateUpdateIds = new Set<string>()
-    for (const ch of changes) {
-      const id = ch.type === "add" ? ch.item.id : ch.id
-      if (!id) continue
-      if (removedIds.has(id)) continue
-      if (shouldPersistEdgeChange(ch)) {
-        candidateUpdateIds.add(id)
-      }
-    }
-
-    const updatedIds = new Set<string>()
-    for (const id of candidateUpdateIds) {
-      if (!addedIds.has(id)) {
-        updatedIds.add(id)
-      }
-    }
-
-    if (addedIds.size > 0 || updatedIds.size > 0) {
-      queueEdgesForPersistence(
-        () => ({
-          boardId: get().boardId,
-          edges: get().edges,
-        }),
-        addedIds,
-        updatedIds,
-      )
-    }
   },
 
   onNodesDelete: (nodes) => {
@@ -687,7 +724,6 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       data: { ...node.data, deletedAt: new Date().toISOString() },
     }))
 
-    // Clean from queues just in case
     nodes.forEach((n) => {
       pendingNewNodes.delete(n.id)
       pendingUpdatedNodes.delete(n.id)
@@ -697,7 +733,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       nodes: updatedNodes,
       deletedNodes: [...get().deletedNodes, ...deletedNodes],
     })
-    // DB delete already covered via onNodesChange diff/remove
+    // DB delete is covered via onNodesChange's background diff
   },
 
   onEdgesDelete: (edges) => {
@@ -705,9 +741,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       (edge) => !edges.some((e) => e.id === edge.id),
     )
     const deletedEdges = edges.map((edge) => {
-      const boardId = get().boardId
-      if (!boardId) return edge
-      const link = convertEdgeToLink(boardId, edge)
+      const link = edge.data as Link
       return {
         ...edge,
         data: { ...link, deletedAt: new Date().toISOString() },
@@ -723,7 +757,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       edges: updatedEdges,
       deletedEdges: [...get().deletedEdges, ...deletedEdges],
     })
-    // DB delete already covered via onEdgesChange
+    // DB delete is covered via onEdgesChange's background diff
   },
 
   onConnect: (params, style) => {
@@ -747,20 +781,17 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       graphUid: boardId,
     } as Link
 
-    const newEdges = rfAddEdge(newEdge, get().edges)
+    const prevEdges = get().edges
+    const newEdges = rfAddEdge(newEdge, prevEdges)
 
-    if (newEdges.length > get().edges.length) {
+    if (newEdges.length > prevEdges.length) {
       set({ edges: newEdges })
 
-      // Consider this a "new" link for persistence
-      queueEdgesForPersistence(
-        () => ({
-          boardId: get().boardId,
-          edges: get().edges,
-        }),
-        new Set([edgeId]),
-        new Set(),
-      )
+      // treat as "new" edge for persistence
+      scheduleEdgePersistFromDiff(prevEdges, newEdges, boardId, () => ({
+        boardId: get().boardId,
+        edges: get().edges,
+      }))
 
       return newEdge
     }

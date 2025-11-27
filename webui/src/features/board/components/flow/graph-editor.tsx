@@ -24,10 +24,10 @@ import type { LinkEdge, NoteNode } from '../../types/flow'
 import { useAddNoteNode } from '../../hooks/add-node'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
-import { saveThumbnail } from '../../api/save-thumbnail'
+// import { saveThumbnail } from '../../api/save-thumbnail'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
 import { useStyleDefaults } from '../../style-provider'
-import { useSaveThumbnail } from '../../hooks/make-thumbnail'
+// import { useSaveThumbnail } from '../../hooks/make-thumbnail'
 
 import './graph-styles.css'
 
@@ -122,16 +122,6 @@ export default function GraphEditor() {
     }
   }, [viewportInitialized, fitView, boardId, graphViewports])
 
-  // Thumbnail on unmount
-  const { setContainerRef } = useSaveThumbnail({
-    boardId,
-    saveThumbnail: async ({ boardId, blob }) => {
-      await saveThumbnail({ boardId, blob })
-    },
-    width: 600,
-    height: 400,
-  })
-
   const handleZoomIn = useCallback(() => zoomIn({ duration: 200 }), [zoomIn])
   const handleZoomOut = useCallback(() => zoomOut({ duration: 200 }), [zoomOut])
   const handleFitView = useCallback(
@@ -208,7 +198,7 @@ export default function GraphEditor() {
   }, [])
 
   return (
-    <div ref={setContainerRef} className="w-full h-full">
+    <div className="w-full h-full">
       <ActionPanel
         onAddNode={handleAddNode}
         enableSelection={enableSelection}

@@ -12,6 +12,7 @@ from topix.agents.datatypes.outputs import WebSearchOutput
 from topix.agents.datatypes.web_search import WebSearchContextSize
 from topix.agents.websearch.utils import get_from_date
 from topix.datatypes.recurrence import Recurrence
+from topix.utils.retry import async_retry
 
 semaphore = asyncio.Semaphore(10)
 
@@ -26,6 +27,7 @@ def _get_env_or_raise(key: str) -> str:
     return value
 
 
+@async_retry(retries=3, delay_ms=1000, exceptions=(httpx.HTTPError,))
 async def search_perplexity(
     query: str,
     max_results: int = 10,
@@ -108,6 +110,7 @@ async def search_perplexity(
     )
 
 
+@async_retry(retries=3, delay_ms=1000, exceptions=(httpx.HTTPError,))
 async def search_tavily(
     query: str,
     max_results: int = 10,
@@ -178,6 +181,7 @@ async def search_tavily(
     )
 
 
+@async_retry(retries=3, delay_ms=1000, exceptions=(httpx.HTTPError,))
 async def search_linkup(
     query: str,
     max_results: int = 10,
@@ -245,6 +249,7 @@ async def search_linkup(
     )
 
 
+@async_retry(retries=3, delay_ms=1000, exceptions=(httpx.HTTPError,))
 async def search_exa(
     query: str,
     max_results: int = 10,
@@ -324,7 +329,7 @@ async def search_exa(
             or result.get("summary")
             or ""
         )
-        print(result)
+
         search_results.append(
             SearchResult(
                 url=result["url"],
@@ -339,6 +344,7 @@ async def search_exa(
     return WebSearchOutput(search_results=search_results)
 
 
+@async_retry(retries=3, delay_ms=1000, exceptions=(httpx.HTTPError,))
 async def fetch_content(
     web_url: str,
     extract_depth: Literal["basic", "advanced"] = "basic",

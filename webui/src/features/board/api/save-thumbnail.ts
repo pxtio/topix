@@ -1,11 +1,9 @@
 import { apiFetch } from "@/api"
 
 export async function saveThumbnail({
-  userId,
   boardId,
   blob
 }: {
-  userId: string
   boardId: string
   blob: Blob
 }) {
@@ -18,7 +16,6 @@ export async function saveThumbnail({
     method: "POST",
     body: form,
     headers: {
-      "X-User-Id": userId,
       Accept: "application/json",
     }
   })

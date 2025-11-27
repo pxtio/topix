@@ -1,7 +1,6 @@
 import { useCallback } from "react"
 import { useRemoveNote } from "../api/remove-note"
 import { useGraphStore } from "../store/graph-store"
-import { useAppStore } from "@/store"
 import type { OnNodesDelete } from "@xyflow/react"
 import type { NoteNode } from "../types/flow"
 
@@ -13,17 +12,16 @@ import type { NoteNode } from "../types/flow"
 export const useDeleteNodes = () => {
   const onNodesDelete = useGraphStore(s => s.onNodesDelete)
   const boardId = useGraphStore(s => s.boardId)
-  const userId = useAppStore(s => s.userId)
 
   const { removeNote } = useRemoveNote()
 
   const handleDeleteNodes: OnNodesDelete<NoteNode> = useCallback((nodes) => {
-    if (!boardId || !userId) return
+    if (!boardId) return
     onNodesDelete(nodes)
     nodes.forEach(node => {
-      removeNote({ boardId, userId, noteId: node.id })
+      removeNote({ boardId, noteId: node.id })
     })
-  }, [onNodesDelete, boardId, userId, removeNote])
+  }, [onNodesDelete, boardId, removeNote])
 
   return handleDeleteNodes
 }

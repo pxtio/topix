@@ -63,12 +63,10 @@ export const useAddMindMapToBoard = () => {
       // backend persistence
       await addNotes(
         boardId,
-        userId,
         addedNotes
       )
       await addLinks(
         boardId,
-        userId,
         addedLinks
       )
 

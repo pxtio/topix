@@ -135,7 +135,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
       return [...cleared, ...newNodes]
     })
 
-    await addNotes({ boardId, userId, notes: clones })
+    await addNotes({ boardId, notes: clones })
   }, [boardId, userId, randJitter, cloneNoteWithJitter, setNodes, addNotes])
 
   useEffect(() => {

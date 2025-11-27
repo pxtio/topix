@@ -6,16 +6,11 @@ import { apiFetch } from "@/api"
 
 /**
  * Create a new board for the user.
- *
- * @param userId - The ID of the user for whom the board is being created.
  */
-export async function createBoard(
-  userId: string
-): Promise<string> {
+export async function createBoard(): Promise<string> {
   const res = await apiFetch<{ data: { graph_id: string } }>({
     path: "/boards",
-    method: "PUT",
-    params: { user_id: userId }
+    method: "PUT"
   })
   return res.data.graph_id
 }
@@ -32,9 +27,9 @@ export const useCreateBoard = () => {
   const { setBoardId, setNodes, setEdges } = useGraphStore()
 
   const mutation = useMutation({
-    mutationFn: async ({ userId }: { userId: string }) => {
-      const boardId = await createBoard(userId)
-      queryClient.setQueryData(["listBoards", userId], (oldBoards: Graph[] | undefined) => {
+    mutationFn: async () => {
+      const boardId = await createBoard()
+      queryClient.setQueryData(["listBoards"], (oldBoards: Graph[] | undefined) => {
         const newBoard = { uid: boardId } as Graph // Temporary ID until the server responds
         return [newBoard, ...(oldBoards || [])] // Prepend the new board to the list
       })

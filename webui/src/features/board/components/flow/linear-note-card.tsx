@@ -15,7 +15,6 @@ import { DialogDescription } from '@radix-ui/react-dialog'
 import { useRemoveNote } from '../../api/remove-note'
 import { useRemoveLink } from '../../api/remove-link'
 import { useUpdateNote } from '../../api/update-note'
-import { useAppStore } from '@/store'
 import { formatDistanceToNow } from '../../utils/date'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
@@ -27,7 +26,6 @@ export function LinearNoteCard({ node }: Props) {
   const [open, setOpen] = useState(false)
 
   const setStore = useGraphStore.setState
-  const userId = useAppStore(state => state.userId)
   const boardId = useGraphStore(state => state.boardId)
 
   const { updateNote } = useUpdateNote()
@@ -50,8 +48,8 @@ export function LinearNoteCard({ node }: Props) {
       data: { ...node.data, style: { ...node.data.style, backgroundColor: hex } }
     } as NoteNode
     setStore(state => ({ ...state, nodes: state.nodes.map(n => n.id === node.id ? newNode : n) }))
-    updateNote({ boardId, userId, noteId: node.data.id, noteData: newNode.data })
-  }, [boardId, node, setStore, updateNote, userId])
+    updateNote({ boardId, noteId: node.data.id, noteData: newNode.data })
+  }, [boardId, node, setStore, updateNote])
 
   const onSaveContent = useCallback((markdown: string) => {
     if (!boardId) return
@@ -60,8 +58,8 @@ export function LinearNoteCard({ node }: Props) {
       data: { ...node.data, content: { markdown }, updatedAt: new Date().toISOString() }
     } as NoteNode
     setStore(state => ({ ...state, nodes: state.nodes.map(n => n.id === node.id ? newNode : n) }))
-    updateNote({ boardId, userId, noteId: node.data.id, noteData: newNode.data })
-  }, [boardId, node, setStore, updateNote, userId])
+    updateNote({ boardId, noteId: node.data.id, noteData: newNode.data })
+  }, [boardId, node, setStore, updateNote])
 
   const onTogglePin = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -69,12 +67,12 @@ export function LinearNoteCard({ node }: Props) {
     const noteProperties = { ...node.data.properties, pinned: { type: "boolean", boolean: !isPinned } }
     const newNode = { ...node, data: { ...node.data, properties: noteProperties } } as NoteNode
     setStore(state => ({ ...state, nodes: state.nodes.map(n => n.id === node.id ? newNode : n) }))
-    updateNote({ boardId, userId, noteId: node.data.id, noteData: newNode.data })
-  }, [boardId, isPinned, node, setStore, updateNote, userId])
+    updateNote({ boardId, noteId: node.data.id, noteData: newNode.data })
+  }, [boardId, isPinned, node, setStore, updateNote])
 
   const onDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!boardId || !userId) return
+    if (!boardId) return
     setStore(state => {
       const nodes = state.nodes.filter(n => n.id !== node.id)
       const edges = state.edges.filter(e => e.source !== node.id && e.target !== node.id)
@@ -82,11 +80,11 @@ export function LinearNoteCard({ node }: Props) {
       const toDeleteEdgeIds = edges
         .filter(e => e.source === toDeleteNodeId || e.target === toDeleteNodeId)
         .map(e => e.id)
-      removeNote({ boardId, userId, noteId: toDeleteNodeId })
-      toDeleteEdgeIds.forEach(edgeId => removeLink({ boardId, userId, linkId: edgeId }))
+      removeNote({ boardId, noteId: toDeleteNodeId })
+      toDeleteEdgeIds.forEach(edgeId => removeLink({ boardId, linkId: edgeId }))
       return { ...state, nodes, edges }
     })
-  }, [boardId, node.data.id, node.id, removeLink, removeNote, setStore, userId])
+  }, [boardId, node.data.id, node.id, removeLink, removeNote, setStore])
 
   const cardClass = clsx(
     'transition rounded-xl relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group shadow-md',

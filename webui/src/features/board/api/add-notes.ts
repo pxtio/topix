@@ -16,13 +16,11 @@ import { apiFetch } from "@/api"
  */
 export async function addNotes(
   boardId: string,
-  userId: string,
   notes: Note[]
 ): Promise<void> {
   await apiFetch({
     path: `/boards/${boardId}/notes`,
     method: "POST",
-    params: { user_id: userId },
     body: { notes: snakecaseKeys(notes, { deep: true }) }
   })
 }
@@ -37,15 +35,13 @@ export const useAddNotes = () => {
   const mutation = useMutation({
     mutationFn: async ({
       boardId,
-      userId,
       notes
     }: {
       boardId: string
-      userId: string
       notes: Note[]
     }) => {
       await sleep(DEBOUNCE_DELAY)
-      await addNotes(boardId, userId, notes)
+      await addNotes(boardId, notes)
     }
   })
 

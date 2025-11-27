@@ -1,6 +1,5 @@
 // components/flow/node-label.tsx
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useReactFlow } from '@xyflow/react'
 import type { Note, NoteProperties } from '../../types/note'
 import type { NoteNode } from '../../types/flow'
 import { MilkdownProvider } from '@milkdown/react'
@@ -16,6 +15,7 @@ import { StickyNote } from '../notes/sticky-note'
 import { TAILWIND_200 } from '../../lib/colors/tailwind'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from '../../types/style'
+import { useGraphStore } from '../../store/graph-store'
 
 type NoteWithPin = Note & { pinned?: boolean }
 
@@ -41,7 +41,8 @@ export const NodeCard = ({
   const [internalOpen, setInternalOpen] = useState(false)
   const dialogOpen = typeof open === 'boolean' ? open : internalOpen
 
-  const { setNodes, setEdges } = useReactFlow()
+  const setNodes = useGraphStore(state => state.setNodes)
+  const setEdges = useGraphStore(state => state.setEdges)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const [labelEditing, setLabelEditing] = useState(false)

@@ -52,7 +52,7 @@ export function useEdgeChanges() {
 
     for (const edge of entries) {
       if (edge.data) {
-        updateLink({ boardId: b, userId: u, linkId: edge.id, linkData: edge.data })
+        updateLink({ boardId: b, linkId: edge.id, linkData: edge.data })
       }
     }
   }, [updateLink])

@@ -50,7 +50,7 @@ export const SidebarLabel = () => {
 
   // data
   const { data: chatList }  = useListChats({ userId })
-  const { data: boardList } = useListBoards({ userId })
+  const { data: boardList } = useListBoards()
   const { data: subscriptionList } = useListSubscriptions()
   const { updateBoard } = useUpdateBoard()
   const { updateChat }  = useUpdateChat()
@@ -84,7 +84,7 @@ export const SidebarLabel = () => {
   const handleSaveEdit = (newLabel: string) => {
     setLabel(newLabel)
     if (active.view === "board" && active.id) {
-      updateBoard({ boardId: active.id, userId, graphData: { label: newLabel } })
+      updateBoard({ boardId: active.id, graphData: { label: newLabel } })
     }
     if (active.view === "chat" && active.id) {
       updateChat({ chatId: active.id, userId, chatData: { label: newLabel } })

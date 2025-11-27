@@ -1,4 +1,3 @@
-import { useAppStore } from "@/store"
 import { useGraphStore } from "../store/graph-store"
 import { useRemoveLink } from "../api/remove-link"
 import { useCallback } from "react"
@@ -13,17 +12,16 @@ import type { LinkEdge } from "../types/flow"
 export const useDeleteEdges = () => {
   const onEdgesDelete = useGraphStore(s => s.onEdgesDelete)
   const boardId = useGraphStore(s => s.boardId)
-  const userId = useAppStore(s => s.userId)
 
   const { removeLink } = useRemoveLink()
 
   const handleDeleteEdges: OnEdgesDelete<LinkEdge> = useCallback((edges) => {
-    if (!boardId || !userId) return
+    if (!boardId) return
     onEdgesDelete(edges)
     edges.forEach(edge => {
-      removeLink({ boardId, userId, linkId: edge.id })
+      removeLink({ boardId, linkId: edge.id })
     })
-  }, [onEdgesDelete, boardId, userId, removeLink])
+  }, [onEdgesDelete, boardId, removeLink])
 
   return handleDeleteEdges
 }

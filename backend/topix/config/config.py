@@ -135,6 +135,12 @@ class LinkUpConfig(BaseAPIConfig):
     env_var: str = "LINKUP_API_KEY"
 
 
+class ExaConfig(BaseAPIConfig):
+    """Configuration for Exa API."""
+
+    env_var: str = "EXA_API_KEY"
+
+
 class AnthropicConfig(BaseAPIConfig):
     """Configuration for Anthropic API."""
 
@@ -183,6 +189,7 @@ class APIsConfig(BaseModel):
     gemini: GeminiConfig = Field(default_factory=GeminiConfig)
     anthropic: AnthropicConfig = Field(default_factory=AnthropicConfig)
     openrouter: OpenRouterConfig = Field(default_factory=OpenRouterConfig)
+    exa: ExaConfig = Field(default_factory=ExaConfig)
     serper: SerperConfig = Field(default_factory=SerperConfig)
     unsplash: UnsplashConfig = Field(default_factory=UnsplashConfig)
 

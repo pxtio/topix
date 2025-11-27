@@ -2,7 +2,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useChatStore } from "@/features/agent/store/chat-store"
-import { WebSearchEngineDescription, WebSearchEngineName, type WebSearchEngine } from "@/features/agent/types/web"
+import { WebSearchEngineDescription, WebSearchEngineIcons, WebSearchEngineName, type WebSearchEngine } from "@/features/agent/types/web"
 import { InternetIcon, SquareLock01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { clsx } from "clsx"
@@ -18,14 +18,26 @@ const SearchEngineCard: React.FC<{ searchEngine: WebSearchEngine | "-1", availab
   const clss = clsx(
     "flex flex-row items-center gap-2",
     !available ? 'text-muted-foreground' : '',
+    searchEngine === "-1" ? 'text-muted-foreground' : '',
   )
+
+  const contentClass = clsx(
+    "w-48 rounded-xl border border-border bg-popover shadow text-sm",
+  )
+
+  const Icon = searchEngine !== "-1" ? WebSearchEngineIcons[searchEngine] : null
 
   return (
     <HoverCard openDelay={200}>
       <HoverCardTrigger className={clss}>
-        {name}
+        {
+          searchEngine !== "-1" && Icon && (
+            <Icon size={12} />
+          )
+        }
+        <span>{name}</span>
       </HoverCardTrigger>
-      <HoverCardContent className='w-48 rounded-xl border border-border bg-popover text-popover-foreground shadow text-sm' side="left" sideOffset={15}>
+      <HoverCardContent className={contentClass} side="left" sideOffset={15}>
         <div className=''>
           {description}
         </div>
@@ -102,7 +114,7 @@ export const SearchEngineChoiceMenu = () => {
               )
             })
           }
-          <SelectItem key="-1" value="-1" className='text-xs'>
+          <SelectItem key="-1" value="-1" className='text-xs text-muted-foreground'>
             <SearchEngineCard searchEngine="-1" available={true} />
           </SelectItem>
         </SelectGroup>

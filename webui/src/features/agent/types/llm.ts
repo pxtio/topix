@@ -78,3 +78,67 @@ export const LlmBrandIcon: Record<LlmModel, React.ComponentType<{ size?: number 
   "openrouter/deepseek/deepseek-chat-v3.1": DeepSeek.Color,
   "openrouter/moonshotai/kimi-k2-thinking": Moonshot
 }
+
+
+export const LlmTiers = ["Rapid", "Balanced", "Elite"] as const
+export type LlmTier = typeof LlmTiers[number]
+
+
+export const LlmBadge: Record<LlmModel, LlmTier> = {
+  "openai/gpt-5.1-chat-latest": "Elite",
+  "openai/gpt-5.1": "Elite",
+  "openai/gpt-4o": "Balanced",
+  "openai/gpt-4.1": "Balanced",
+  "openai/gpt-5": "Elite",
+  "openai/gpt-5-mini": "Rapid",
+  "openai/gpt-5-nano": "Rapid",
+  "openrouter/google/gemini-3-pro-preview": "Elite",
+  "openrouter/google/gemini-2.5-pro": "Elite",
+  "openrouter/google/gemini-2.5-flash": "Rapid",
+  "openrouter/anthropic/claude-opus-4.1": "Elite",
+  "openrouter/anthropic/claude-sonnet-4.5": "Balanced",
+  "openrouter/anthropic/claude-haiku-4.5": "Rapid",
+  "openrouter/mistralai/mistral-medium-3.1": "Balanced",
+  "openrouter/deepseek/deepseek-chat-v3.1": "Balanced",
+  "openrouter/moonshotai/kimi-k2-thinking": "Balanced"
+}
+
+export const LlmFamilies = [
+  "openai",
+  "google",
+  "anthropic",
+  "mistralai",
+  "deepseek",
+  "moonshotai"
+]
+
+export type LlmFamily = typeof LlmFamilies[number]
+
+export const LlmFamilyMap: Record<LlmModel, LlmFamily> = {
+  "openai/gpt-5.1-chat-latest": "openai",
+  "openai/gpt-5.1": "openai",
+  "openai/gpt-4o": "openai",
+  "openai/gpt-4.1": "openai",
+  "openai/gpt-5": "openai",
+  "openai/gpt-5-mini": "openai",
+  "openai/gpt-5-nano": "openai",
+  "openrouter/google/gemini-3-pro-preview": "google",
+  "openrouter/google/gemini-2.5-pro": "google",
+  "openrouter/google/gemini-2.5-flash": "google",
+  "openrouter/anthropic/claude-opus-4.1": "anthropic",
+  "openrouter/anthropic/claude-sonnet-4.5": "anthropic",
+  "openrouter/anthropic/claude-haiku-4.5": "anthropic",
+  "openrouter/mistralai/mistral-medium-3.1": "mistralai",
+  "openrouter/deepseek/deepseek-chat-v3.1": "deepseek",
+  "openrouter/moonshotai/kimi-k2-thinking": "moonshotai"
+}
+
+
+export const LlmFamilyIcon: Record<LlmFamily, React.ComponentType<{ size?: number | string, color?: string }>> = {
+  openai: OpenAI,
+  google: Gemini.Color,
+  anthropic: Anthropic,
+  mistralai: Mistral.Color,
+  deepseek: DeepSeek.Color,
+  moonshotai: Moonshot
+}

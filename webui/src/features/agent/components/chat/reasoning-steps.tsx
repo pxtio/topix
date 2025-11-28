@@ -13,17 +13,13 @@ import { ProgressBar } from "@/components/progress-bar"
 const ReasoningMessage = ({
   reasoning
 }: { reasoning: string }) => {
-  const [viewReasoning, setViewReasoning] = useState<boolean>(false)
-
-  const handleClick = () => setViewReasoning(!viewReasoning)
-
   return (
-    <div className='text-muted-foreground bg-background p-2 rounded-lg space-y-1'>
-      <div className='flex items-center gap-2 font-medium text-foreground cursor-pointer' onClick={handleClick}>
+    <div className='text-muted-foreground p-0 space-y-1 italic'>
+      <div className='flex items-center gap-2 font-medium cursor-pointer'>
         <HugeiconsIcon icon={IdeaIcon} className='size-4' strokeWidth={2} />
-        <span>Reasoning</span>
+        <span>Thought</span>
       </div>
-      {viewReasoning && <span>{reasoning}</span>}
+      <span>{reasoning}</span>
     </div>
   )
 }
@@ -85,7 +81,7 @@ const ReasoningStepViewImpl = ({
       </div>
       <div className='relative flex-1 flex flex-col items-start rounded-lg text-xs'>
         <div className={messageClass}>
-           <div className='flex flex-col gap-1'>
+           <div className='flex flex-col gap-2'>
             <div>
               <h4 className='text-xs font-medium inline'>{title}</h4>
               {

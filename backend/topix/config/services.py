@@ -24,6 +24,7 @@ class ServiceEnum(StrEnum):
     SEARCH = "search"
     NAVIGATE = "navigate"
     CODE = "code"
+    IMAGE_GENERATION = "image_generation"
 
 
 class LLMTier(StrEnum):
@@ -78,6 +79,12 @@ class CodeService(BaseService):
     type: Literal[ServiceEnum.CODE] = ServiceEnum.CODE
 
 
+class ImageGenerationService(BaseService):
+    """Image Generation Service info."""
+
+    type: Literal[ServiceEnum.IMAGE_GENERATION] = ServiceEnum.IMAGE_GENERATION
+
+
 class ServiceConfig(BaseModel):
     """Valid Services info."""
 
@@ -86,6 +93,7 @@ class ServiceConfig(BaseModel):
     search: list[SearchService]
     navigate: list[NavigateService]
     code: list[CodeService]
+    image_generation: list[ImageGenerationService]
 
     @classmethod
     def _sync(cls) -> dict:
@@ -117,6 +125,10 @@ class ServiceConfig(BaseModel):
         dct["code"] = [
             CodeService.model_validate(service)
             for service in services[ServiceEnum.CODE] if service["provider"] in providers
+        ]
+        dct["image_generation"] = [
+            ImageGenerationService.model_validate(service)
+            for service in services[ServiceEnum.IMAGE_GENERATION] if service["provider"] in providers
         ]
         return dct
 

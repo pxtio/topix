@@ -60,26 +60,6 @@ export const LlmDescription: Record<LlmModel, string> = {
 }
 
 
-export const LlmBrandIcon: Record<LlmModel, React.ComponentType<{ size?: number | string, color?: string }>> = {
-  "openai/gpt-5.1-chat-latest": OpenAI,
-  "openai/gpt-5.1": OpenAI,
-  "openai/gpt-4o": OpenAI,
-  "openai/gpt-4.1": OpenAI,
-  "openai/gpt-5": OpenAI,
-  "openai/gpt-5-mini": OpenAI,
-  "openai/gpt-5-nano": OpenAI,
-  "openrouter/google/gemini-3-pro-preview": Gemini.Color,
-  "openrouter/google/gemini-2.5-pro": Gemini.Color,
-  "openrouter/google/gemini-2.5-flash": Gemini.Color,
-  "openrouter/anthropic/claude-opus-4.1": Anthropic,
-  "openrouter/anthropic/claude-sonnet-4.5": Anthropic,
-  "openrouter/anthropic/claude-haiku-4.5": Anthropic,
-  "openrouter/mistralai/mistral-medium-3.1": Mistral.Color,
-  "openrouter/deepseek/deepseek-chat-v3.1": DeepSeek.Color,
-  "openrouter/moonshotai/kimi-k2-thinking": Moonshot
-}
-
-
 export const LlmTiers = ["Rapid", "Balanced", "Elite"] as const
 export type LlmTier = typeof LlmTiers[number]
 

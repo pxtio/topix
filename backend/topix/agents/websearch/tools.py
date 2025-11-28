@@ -14,7 +14,7 @@ from topix.agents.websearch.utils import get_from_date
 from topix.datatypes.recurrence import Recurrence
 from topix.utils.retry import async_retry
 
-semaphore = asyncio.Semaphore(10)
+semaphore = asyncio.Semaphore(100)  # limit concurrent requests to 100
 
 
 def _get_env_or_raise(key: str) -> str:
@@ -300,9 +300,8 @@ async def search_exa(
         "type": exa_type,
         "numResults": num_results,
         "contents": {
-            "text": True,
-            "context": True,
-        },
+            "context": True
+        }
     }
 
     # Optional recency filter -> Exa startPublishedDate (ISO 8601)
@@ -341,7 +340,7 @@ async def search_exa(
             )
         )
 
-    return WebSearchOutput(search_results=search_results)
+    return WebSearchOutput(search_results=search_results, answer=json_response.get("context", ""))
 
 
 @async_retry(retries=3, delay_ms=1000, exceptions=(httpx.HTTPError,))

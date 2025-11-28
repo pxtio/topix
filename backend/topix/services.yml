@@ -58,3 +58,7 @@ services:
   code:
     - name: openai
       provider: openai
+
+  image_generation:
+    - name: openrouter
+      provider: openrouter

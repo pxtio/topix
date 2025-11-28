@@ -7,6 +7,7 @@ import base64
 from pypdf import PdfReader
 from mistralai import Mistral
 
+from topix.config.config import Config, MistralConfig
 from topix.datatypes.mime import MimeTypeEnum
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,14 @@ class MistralParser():
 
     def __init__(self, api_key: str):
         self.client = Mistral(api_key=api_key)
+
+    @classmethod
+    def from_config(cls):
+        """Create an instance of QdrantStore from configuration."""
+        config: Config = Config.instance()
+        mistral_config: MistralConfig = config.run.apis.mistral
+
+        return cls(api_key=mistral_config.api_key)
 
     def get_num_pages(self, fname: str) -> int:
         """Get the number of pages in a PDF file.

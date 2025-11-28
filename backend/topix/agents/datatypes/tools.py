@@ -28,6 +28,8 @@ class AgentToolName(StrEnum):
     IMAGE_DESCRIPTION = "image_description"
     TOPIC_ILLUSTRATOR = "topic_illustrator"
 
+    IMAGE_GENERATION = "image_generation"
+
 
 def to_display_output(tool_name: str) -> bool:
     """Check if the tool is for displaying output."""
@@ -53,4 +55,5 @@ tool_descriptions = {
     AgentToolName.DISPLAY_STOCK_WIDGET: "Display a stock widget",
     AgentToolName.DISPLAY_WEATHER_WIDGET: "Display a weather widget",
     AgentToolName.DISPLAY_IMAGE_SEARCH_WIDGET: "Display an image search widget",
+    AgentToolName.IMAGE_GENERATION: "Generate images based on text prompts",
 }

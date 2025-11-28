@@ -83,7 +83,7 @@ async def get_graph(
         raise HTTPException(status_code=404, detail="Graph not found")
 
     if graph.thumbnail and graph.thumbnail.startswith("file://"):
-        graph.thumbnail = load_png_as_data_url(graph.thumbnail[len("file://"):])
+        graph.thumbnail = load_png_as_data_url(graph.thumbnail)
 
     return {"graph": graph.model_dump(exclude_none=True)}
 
@@ -104,7 +104,7 @@ async def list_graphs(
     # Convert file:// URLs to data URLs
     for graph in graphs:
         if graph.thumbnail and graph.thumbnail.startswith("file://"):
-            graph.thumbnail = load_png_as_data_url(graph.thumbnail[len("file://"):])
+            graph.thumbnail = load_png_as_data_url(graph.thumbnail)
 
     return {"graphs": [graph.model_dump(exclude_none=True) for graph in graphs]}
 

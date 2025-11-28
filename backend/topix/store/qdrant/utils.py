@@ -9,6 +9,8 @@ from topix.datatypes.newsfeed.subscription import Subscription
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.datatypes.resource import Resource
+from topix.datatypes.file.document import Document
+from topix.datatypes.file.chunk import Chunk
 
 
 def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str]:
@@ -62,6 +64,10 @@ def convert_point(
                 resource = Subscription.partial(**point.payload)
             case "newsfeed":
                 resource = Newsfeed.partial(**point.payload)
+            case "document":
+                resource = Document.partial(**point.payload)
+            case "chunk":
+                resource = Chunk.partial(**point.payload)
             case _:
                 raise ValueError(f"Unknown type: {type_}")
 

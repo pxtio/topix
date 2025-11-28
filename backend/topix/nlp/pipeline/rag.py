@@ -2,7 +2,7 @@
 
 import os
 
-from pydantic import BaseModel
+# from pydantic import BaseModel
 
 from topix.datatypes.property import URLProperty, NumberProperty, TextProperty
 from topix.datatypes.resource import RichText
@@ -12,16 +12,16 @@ from topix.store.qdrant.store import ContentStore
 from topix.datatypes.file.document import Document, DocumentProperties
 
 
-class ParsingConfig(BaseModel):
+class ParsingConfig():
     """RAG configuration."""
-    ocr_parser: MistralParser = MistralParser.from_config()
+    ocr_parser: MistralParser = MistralParser.from_config()  # TODO: fix the mistral api key
     chunker: Chunker = Chunker()
     vector_store: ContentStore = ContentStore.from_config()
 
 
 class ParsingPipeline:
     """Parsing pipeline."""
-    def __init__(self, config: ParsingConfig):
+    def __init__(self, config: ParsingConfig = ParsingConfig()):
         self.config = config
 
     async def process_file(self, filepath: str) -> list[str]:
@@ -33,7 +33,7 @@ class ParsingPipeline:
         document = Document(
             label=RichText(markdown=document_name),
             properties=DocumentProperties(
-                url=URLProperty(url=filepath),
+                url=URLProperty(url=URLProperty.URL(url=filepath)),  # TODO: simplifier le url property, 3 niveaux!
                 number_of_pages=NumberProperty(number=len(parsed_file))
             )
         )

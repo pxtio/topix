@@ -1,5 +1,4 @@
 import { useMemo } from "react"
-import { useAppStore } from "@/store"
 import { useListBoards } from "../api/list-boards"
 import { BoardCard, NewBoardCard } from "./board-card"
 import { ThemedWelcome } from "@/features/agent/components/chat/welcome-message"
@@ -10,8 +9,7 @@ import type { Graph } from "../types/board"
  * Dashboard component displaying user's boards, styled like SubscriptionsPage.
  */
 export const Dashboard = ({ className, hideTitle = false }: { className?: string; hideTitle?: boolean }) => {
-  const userId = useAppStore((state) => state.userId)
-  const { data: boards, isLoading, isError } = useListBoards({ userId })
+  const { data: boards, isLoading, isError } = useListBoards()
 
   const pageClassName = clsx("w-full h-full", className)
 

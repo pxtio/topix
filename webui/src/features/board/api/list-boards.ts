@@ -22,16 +22,12 @@ interface ListBoardsResponse {
 /**
  * List all boards for the user.
  *
- * @param userId - The ID of the user whose boards are being listed.
  * @returns A promise that resolves to an array of board objects, each containing an id and label.
  */
-export async function listBoards(
-  userId: string
-): Promise<Graph[]> {
+export async function listBoards(): Promise<Graph[]> {
   const res = await apiFetch<ListBoardsResponse>({
     path: "/boards",
-    method: "GET",
-    params: { user_id: userId },
+    method: "GET"
   })
   return res.data.graphs.map((board) => camelcaseKeys(board, { deep: true })) as Graph[]
 }
@@ -44,15 +40,10 @@ export async function listBoards(
  *
  * @returns A query object containing the list of boards.
  */
-export const useListBoards = ({
-  userId
-}: {
-  userId: string
-}) => {
+export const useListBoards = () => {
   return useQuery<Graph[]>({
-    queryKey: ["listBoards", userId],
-    queryFn: () => listBoards(userId),
-    enabled: !!userId,
+    queryKey: ["listBoards"],
+    queryFn: () => listBoards(),
     staleTime: 1000 * 60 * 5 // 5 minutes
   })
 }

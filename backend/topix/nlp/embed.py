@@ -21,7 +21,7 @@ class OpenAIEmbedder:
     @classmethod
     def from_config(cls):
         """Create an instance of OpenAIEmbedder from configuration."""
-        return cls(api_key=Config.instance().run.apis.openai.api_key)
+        return cls(api_key=Config.instance().run.apis.openai.api_key.get_secret_value())
 
     @async_timeit
     async def _embed_batch(self, texts: list[str]) -> list[list[float]]:

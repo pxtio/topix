@@ -35,7 +35,7 @@ export default function TradingCard({
   if (isPending || isError || !data) return null
 
   return (
-    <div className='w-full space-y-4'>
+    <div className='w-full space-y-2'>
       {/* Symbol selector */}
       <div className='w-full flex flex-row items-center justify-center gap-4'>
         {symbols.map((sym, idx) => {

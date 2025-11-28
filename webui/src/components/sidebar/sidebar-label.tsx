@@ -9,6 +9,7 @@ import { LabelEditor } from "./label-editor"
 import { useListSubscriptions } from "@/features/newsfeed/api/list-subscriptions"
 import { NewChatUrl } from "@/routes"
 import { ContextBoard } from "@/features/agent/components/context-board"
+import { UNTITLED_LABEL } from "@/features/board/const"
 
 export const SidebarLabel = () => {
   const { userId } = useAppStore()
@@ -49,7 +50,7 @@ export const SidebarLabel = () => {
 
   // data
   const { data: chatList }  = useListChats({ userId })
-  const { data: boardList } = useListBoards({ userId })
+  const { data: boardList } = useListBoards()
   const { data: subscriptionList } = useListSubscriptions()
   const { updateBoard } = useUpdateBoard()
   const { updateChat }  = useUpdateChat()
@@ -83,7 +84,7 @@ export const SidebarLabel = () => {
   const handleSaveEdit = (newLabel: string) => {
     setLabel(newLabel)
     if (active.view === "board" && active.id) {
-      updateBoard({ boardId: active.id, userId, graphData: { label: newLabel } })
+      updateBoard({ boardId: active.id, graphData: { label: newLabel } })
     }
     if (active.view === "chat" && active.id) {
       updateChat({ chatId: active.id, userId, chatData: { label: newLabel } })
@@ -189,9 +190,9 @@ export const SidebarLabel = () => {
               type="button"
               onClick={() => goBoard(selectedBoardId)}
               className={crumbBtn}
-              title={selectedBoard?.label ?? selectedBoardId}
+              title={selectedBoard?.label ?? UNTITLED_LABEL}
             >
-              <span className="truncate">{selectedBoard?.label ?? selectedBoardId}</span>
+              <span className="truncate">{selectedBoard?.label ?? UNTITLED_LABEL}</span>
             </button>
             {sep}
           </>

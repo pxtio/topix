@@ -65,7 +65,7 @@ def _encode_jwt(claims: dict, *, minutes: int | None = None, days: int | None = 
         timedelta(minutes=minutes) if minutes is not None else timedelta(days=days or 0)
     )
     to_encode = {**claims, "exp": exp}
-    return jwt.encode(to_encode, config.app.security.secret_key, algorithm=config.app.security.algorithm)
+    return jwt.encode(to_encode, config.app.security.secret_key.get_secret_value(), algorithm=config.app.security.algorithm)
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
@@ -99,7 +99,7 @@ def decode_and_validate_token(token: str, expected_type: str) -> dict:
     """
     config: Config = Config.instance()
     try:
-        payload = jwt.decode(token, config.app.security.secret_key, algorithms=[config.app.security.algorithm])
+        payload = jwt.decode(token, config.app.security.secret_key.get_secret_value(), algorithms=[config.app.security.algorithm])
         t = payload.get("type")
         if t != expected_type:
             raise HTTPException(

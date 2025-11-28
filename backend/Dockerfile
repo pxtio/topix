@@ -17,8 +17,11 @@ COPY backend/pyproject.toml /app/
 # install project + deps into system site-packages
 RUN uv pip install --system .
 
+ARG ENVFILE=.env
+
 # copy the rest of the backend source
 COPY backend/ /app/
+COPY ${ENVFILE} /.env
 
 # expose typical ports (compose will map the actual one via env)
 EXPOSE 8000 8080 8081 80

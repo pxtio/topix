@@ -21,7 +21,7 @@ export interface ContextBoardProps {
  */
 export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardProps) => {
   const { userId } = useAppStore()
-  const { data: boards } = useListBoards({ userId })
+  const { data: boards } = useListBoards()
   const { updateChat } = useUpdateChat()
   const params = useParams({ from: "/chats/$id", shouldThrow: false })
   const chatId = params?.id

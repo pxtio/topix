@@ -8,21 +8,18 @@ import { apiFetch } from "@/api"
  * Update a note on a board for the user.
  *
  * @param boardId - The ID of the board containing the note.
- * @param userId - The ID of the user who owns the board.
  * @param noteId - The ID of the note to be updated.
  * @param updatedNote - The updated note data.
  * @returns A promise that resolves when the note has been successfully updated.
  */
 export async function updateNote(
   boardId: string,
-  userId: string,
   noteId: string,
   noteData: Partial<Note>
 ): Promise<void> {
   await apiFetch({
     path: `/boards/${boardId}/notes/${noteId}`,
     method: "PATCH",
-    params: { user_id: userId },
     body: { data: snakecaseKeys(noteData, { deep: true }) }
   })
 }
@@ -37,16 +34,14 @@ export const useUpdateNote = () => {
   const mutation = useMutation({
     mutationFn: async ({
       boardId,
-      userId,
       noteId,
       noteData
     }: {
       boardId: string
-      userId: string
       noteId: string
       noteData: Partial<Note>
     }) => {
-      await updateNote(boardId, userId, noteId, noteData)
+      await updateNote(boardId, noteId, noteData)
     }
   })
 

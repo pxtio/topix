@@ -3,15 +3,21 @@ import { useChatStore } from "@/features/agent/store/chat-store"
 import { CodeIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import clsx from "clsx"
+import { useShallow } from "zustand/shallow"
 
 
 /**
  * Button component to toggle the Code Interpreter tool in the chat interface.
  */
 export const CodeInterpreterChoiceMenu = () => {
-  const { enabledTools, setEnabledTools } = useChatStore()
+  const codeService = useChatStore(useShallow((state) => state.services.code.find((s) => s.name === "openai")))
+  const enabledTools = useChatStore(useShallow((state) => state.enabledTools))
+  const setEnabledTools = useChatStore((state) => state.setEnabledTools)
 
   const isEnabled = enabledTools.includes("code_interpreter")
+  const isAvailable = codeService?.available || false
+
+  const message = isAvailable ? (isEnabled ? "Disable Code Interpreter" : "Enable Code Interpreter") : "Code Interpreter Unavailable"
 
   const toggleCodeInterpreter = () => {
     if (isEnabled) {
@@ -41,7 +47,7 @@ export const CodeInterpreterChoiceMenu = () => {
         </TooltipTrigger>
       </div>
       <TooltipContent>
-        {isEnabled ? "Disable Code Interpreter" : "Enable Code Interpreter"}
+        {message}
       </TooltipContent>
     </Tooltip>
   )

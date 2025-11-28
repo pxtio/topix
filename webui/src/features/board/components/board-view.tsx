@@ -13,7 +13,7 @@ import { useGetBoard } from "../api/get-board"
  * when the boardId changes, fires a single fetch, and relies on React Query's
  * status combined with the graph store's isLoading to avoid local race conditions.
  */
-export const GraphView: React.FC = () => {
+export const BoardView: React.FC = () => {
   const { boardId, isLoading: storeLoading } = useGraphStore()
   const { getBoardAsync, isPending, isSuccess, reset } = useGetBoard()
 

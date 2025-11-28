@@ -173,6 +173,7 @@ async def send_message(
         run_streamed = assistant.run_streamed
 
     try:
+        logger.info("Sending LLM request in chat %s", chat_id)
         async for data in run_streamed(
             query=body.query,
             context=ReasoningContext(),

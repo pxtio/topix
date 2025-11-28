@@ -22,8 +22,11 @@ type ToolOutput = Union[
     TopicTracker,
     NewsfeedOutput,
     SchemaOutput,
+    TopicIllustratorOutput,
+    ImageDescriptionOutput,
     DisplayStockWidgetOutput,
     DisplayWeatherWidgetOutput,
+    DisplayImageSearchWidgetOutput,
 ]
 
 
@@ -46,6 +49,20 @@ class DisplayStockWidgetOutput(BaseModel):
 
     type: Literal["display_stock_widget"] = "display_stock_widget"
     symbol: Annotated[str, "The stock ticker symbol, e.g. AAPL for Apple Inc."]
+
+
+class DisplayImageSearchWidgetOutput(BaseModel):
+    """Display Image Search Widget Output."""
+
+    type: Literal["display_image_search_widget"] = "display_image_search_widget"
+    query: Annotated[
+        str,
+        "The search query for finding relevant images to display in the widget."
+    ]
+    images: Annotated[
+        list[str],
+        "List of image URLs returned from the image search. Should be left empty. This will be populated by the frontend."
+    ] = []
 
 
 class NewsfeedArticle(BaseModel):
@@ -95,6 +112,22 @@ class NotifyOutput(BaseModel):
 
     title: str
     content: str
+
+
+class ImageDescriptionOutput(BaseModel):
+    """Output of the image description agent."""
+
+    image_title: str
+    image_type: str
+    image_summary: str
+
+
+class TopicIllustratorOutput(BaseModel):
+    """Output of the topic illustrator agent."""
+
+    image_url: str
+    image_title: str
+    image_description: str
 
 
 class WebSearchOutput(BaseModel):

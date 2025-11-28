@@ -1,0 +1,60 @@
+providers:
+  openai:
+    env_var: OPENAI_API_KEY
+  gemini:
+    env_var: GEMINI_API_KEY
+  anthropic:
+    env_var: ANTHROPIC_API_KEY
+  deepseek:
+    env_var: DEEPSEEK_API_KEY
+  openrouter:
+    env_var: OPENROUTER_API_KEY
+  linkup:
+    env_var: LINKUP_API_KEY
+  tavily:
+    env_var: TAVILY_API_KEY
+  mistralai:
+    env_var: MISTRALAI_API_KEY
+  perplexity:
+    env_var: PERPLEXITY_API_KEY
+  exa:
+    env_var: EXA_API_KEY
+
+services:
+  llm:
+    - gpt-5.1
+    - gpt-5.1-chat-latest
+    - gpt-4.1
+    - gpt-4.1-mini
+    - gpt-5
+    - gpt-5-mini
+    - gpt-4o
+    - gpt-4o-mini
+    - claude-sonnet-4.5
+    - claude-opus-4.1
+    - claude-3.5-haiku
+    - gemini-2.5-pro
+    - gemini-2.5-flash
+    - mistral-medium-3.1
+    - deepseek-chat-v3.1
+    - kimi-k2-thinking
+
+  search:
+    - name: linkup
+      provider: linkup
+    - name: perplexity
+      provider: perplexity
+    - name: openai
+      provider: openai
+    - name: tavily
+      provider: tavily
+    - name: exa
+      provider: exa
+
+  navigate:
+    - name: tavily
+      provider: tavily
+
+  code:
+    - name: openai
+      provider: openai

@@ -1,85 +1,42 @@
-// use-save-thumbnail-on-unmount.ts
-import { useEffect, useRef, useCallback } from 'react'
-import { useReactFlow, getViewportForBounds, type Rect } from '@xyflow/react'
-import { toBlob } from 'html-to-image'
+import { useEffect } from "react"
+import * as htmlToImage from "html-to-image"
+import { saveThumbnail } from "../api/save-thumbnail";
 
-type Params = {
-  boardId?: string
-  userId?: string
-  saveThumbnail: (args: { userId: string; boardId: string; blob: Blob }) => Promise<void>
-  width?: number
-  height?: number
-}
 
-export function useSaveThumbnailOnUnmount({
-  boardId,
-  userId,
-  saveThumbnail,
-  width = 360,
-  height = 200
-}: Params) {
-  const { getNodes, getNodesBounds } = useReactFlow()
-
-  // stable element snapshot managed by the hook
-  const elRef = useRef<HTMLElement | null>(null)
-  const setContainerRef = useCallback((el: HTMLElement | null) => {
-    if (el) elRef.current = el
-  }, [])
-
-  // keep latest changing values without re-subscribing the effect
-  const boardIdRef = useRef(boardId)
-  const userIdRef = useRef(userId)
-  const saveRef = useRef(saveThumbnail)
-  useEffect(() => { boardIdRef.current = boardId }, [boardId])
-  useEffect(() => { userIdRef.current = userId }, [userId])
-  useEffect(() => { saveRef.current = saveThumbnail }, [saveThumbnail])
-
-  const firedRef = useRef(false) // guard Strict Mode double cleanup
-
-  // run cleanup only once on unmount
+export function useSaveThumbnailOnUnmount(boardId: string) {
   useEffect(() => {
-    return () => {
-      if (firedRef.current) return
-      firedRef.current = true
+    if (!boardId) return
 
-      ;(async () => {
-        const bId = boardIdRef.current
-        const uId = userIdRef.current
-        if (!bId || !uId) return
+    let hasRun = false
 
-        const container = elRef.current
-        if (!container) return
+    const generateAndSave = async () => {
+      if (hasRun) return
+      hasRun = true
+      const el = document.querySelector(
+        ".react-flow__renderer"
+      ) as HTMLElement | null
 
-        const viewportEl = container.querySelector('.react-flow__viewport') as HTMLElement | null
-        if (!viewportEl) return
+      if (!el) return
 
-        const nodes = getNodes()
-        const bounds: Rect =
-          nodes.length ? getNodesBounds(nodes) : { x: 0, y: 0, width: 1, height: 1 }
+      try {
+        // current view only, no fitView, cheap capture
+        const dataUrl = await htmlToImage.toPng(el, {
+          cacheBust: true,
+          pixelRatio: 1, // fine for thumbnails
+        })
 
-        const { x, y, zoom } = getViewportForBounds(bounds, width, height, 0.1, 1, 0.1)
+        const res = await fetch(dataUrl)
+        const blob = await res.blob()
 
-        toBlob(viewportEl, {
-          backgroundColor: 'transparent',
-          width,
-          height,
-          pixelRatio: 1,
-          style: {
-            width: `${width}px`,
-            height: `${height}px`,
-            transform: `translate(${x}px, ${y}px) scale(${zoom})`,
-            transformOrigin: '0 0'
-          },
-          cacheBust: true
-        }).then(blob => {
-          if (blob) void saveRef.current({ userId: uId, boardId: bId, blob })
-        }).catch(() => {})
-      })()
+        await saveThumbnail({ boardId, blob })
+      } catch (err) {
+        console.error("[useSaveThumbnailOnUnmount] failed", err)
+      }
     }
-    // intentionally subscribe once; cleanup only on unmount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
-  // expose the ref callback for your wrapper div
-  return { setContainerRef }
+    return () => {
+      // fire once on unmount
+      void generateAndSave()
+    }
+  }, [boardId])
 }

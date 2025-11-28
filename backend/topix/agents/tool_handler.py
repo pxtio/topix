@@ -1,5 +1,6 @@
 """Convert agent/function as FunctionTool object."""
 
+import asyncio
 import functools
 import inspect
 import json
@@ -258,6 +259,10 @@ class ToolHandler:
         """
         if isinstance(input, BaseModel):
             input = input.model_dump()
+        if isinstance(input, list) and all(
+            isinstance(item, BaseModel) for item in input
+        ):
+            input = [item.model_dump() for item in input]
         await context._message_queue.put(
             AgentStreamMessage(
                 content=Content(
@@ -328,22 +333,30 @@ class ToolHandler:
         if isinstance(output, WebSearchOutput):
             # Fetch favicons and cover images for the search results
             search_results = output.search_results
-            meta_images = await fetch_meta_images_batch(
-                [result.url for result in search_results]
-            )
+
+            # run fetch meta info in background
+            async def _fetch_links_meta():
+                meta_images = await fetch_meta_images_batch(
+                    [result.url for result in search_results]
+                )
+
+                for result in search_results:
+                    if result.url in meta_images:
+                        result.favicon = (
+                            str(meta_images[result.url].favicon)
+                            if meta_images[result.url].favicon
+                            else None
+                        )
+                        result.cover_image = (
+                            str(meta_images[result.url].cover_image)
+                            if meta_images[result.url].cover_image
+                            else None
+                        )
+
+            asyncio.create_task(_fetch_links_meta())
+
             new_results = []
             for result in search_results:
-                if result.url in meta_images:
-                    result.favicon = (
-                        str(meta_images[result.url].favicon)
-                        if meta_images[result.url].favicon
-                        else None
-                    )
-                    result.cover_image = (
-                        str(meta_images[result.url].cover_image)
-                        if meta_images[result.url].cover_image
-                        else None
-                    )
                 new_result = result.model_copy()
                 new_result.content = new_result.content[:500] if new_result.content else None
                 new_results.append(new_result)

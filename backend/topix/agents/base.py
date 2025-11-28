@@ -21,12 +21,15 @@ from openai.types.responses import (
     ResponseReasoningSummaryTextDeltaEvent,
     ResponseTextDeltaEvent,
 )
+from pydantic import BaseModel
 
 from topix.agents.config import BaseAgentConfig
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import (
     support_penalties,
     support_reasoning,
+    support_reasoning_effort_instant_mode,
+    support_reasoning_effort_none,
     support_temperature,
 )
 from topix.agents.datatypes.outputs import ToolOutput
@@ -73,7 +76,7 @@ class BaseAgent(Agent[Context]):
             # It provides type annotation for the input parameter of the agent and also the converted tool function
             self._input_type = None
 
-    def _adjust_model_settings(
+    def _adjust_model_settings(  # noqa: C901
         self,
         model: str | LitellmModel,
         model_settings: ModelSettings | None
@@ -85,7 +88,12 @@ class BaseAgent(Agent[Context]):
 
         if support_reasoning(model):
             if not model_settings.reasoning:
-                model_settings.reasoning = {"effort": "low", "summary": "auto"}
+                if support_reasoning_effort_instant_mode(model):
+                    model_settings.reasoning = {"effort": None, "summary": "auto"}
+                elif support_reasoning_effort_none(model):
+                    model_settings.reasoning = {"effort": "none", "summary": "auto"}
+                else:
+                    model_settings.reasoning = {"effort": "minimal", "summary": "auto"}
         else:
             model_settings.reasoning = None
 
@@ -164,7 +172,11 @@ class BaseAgent(Agent[Context]):
     async def _input_formatter(
         self, context: Context, input: Any
     ) -> str | list[dict[str, str]]:
-        if isinstance(input, (str, list)):
+        if isinstance(input, list) and all(
+            isinstance(item, BaseModel) for item in input
+        ):
+            return [item.model_dump() for item in input]
+        elif isinstance(input, (str, list)):
             return input
         raise NotImplementedError("_input_formatter method is not implemented")
 

@@ -16,9 +16,6 @@ from topix.utils.file import save_base64_image_url
 logger = logging.getLogger(__name__)
 
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-API_KEY = os.getenv("OPENROUTER_API_KEY")
-
-aspect_ratio = "1:1"  # 1:1 => 1024 x 1024, 4:3 => 1024 x 768, 16:9 => 1024 x 576
 
 
 async def generate_image(
@@ -35,11 +32,14 @@ async def generate_image(
         ImageGenerationOutput: The output object containing generated image URLs.
 
     """
-    if not API_KEY:
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    aspect_ratio = "1:1"  # 1:1 => 1024 x 1024, 4:3 => 1024 x 768, 16:9 => 1024 x 576
+
+    if not api_key:
         raise RuntimeError("OPENROUTER_API_KEY is not set")
 
     headers = {
-        "Authorization": f"Bearer {API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
 
@@ -86,7 +86,7 @@ async def generate_image(
     return output
 
 
-generate_image_tool = ToolHandler.convert_function_to_tool(
+generate_image_tool = ToolHandler.convert_func_to_tool(
     func=generate_image,
     tool_name=AgentToolName.IMAGE_GENERATION,
     tool_description=tool_descriptions.get(AgentToolName.IMAGE_GENERATION, ""),

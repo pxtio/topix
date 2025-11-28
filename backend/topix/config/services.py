@@ -126,6 +126,10 @@ class ServiceConfig(BaseModel):
             CodeService.model_validate(service)
             for service in services[ServiceEnum.CODE] if service["provider"] in providers
         ]
+        dct["image_generation"] = [
+            ImageGenerationService.model_validate(service)
+            for service in services[ServiceEnum.IMAGE_GENERATION] if service["provider"] in providers
+        ]
         return dct
 
     def update(self):

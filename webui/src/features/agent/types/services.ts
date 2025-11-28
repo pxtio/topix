@@ -22,10 +22,11 @@ export interface Services {
   search: ServiceOption[]
   navigate: ServiceOption[]
   code: ServiceOption[]
+  imageGeneration: ServiceOption[]
 }
 
 // Constant array of service category names
-export const SERVICE_NAMES = ["llm", "search", "navigate", "code"] as const
+export const SERVICE_NAMES = ["llm", "search", "navigate", "code", "imageGeneration"] as const
 
 // Type representing the names of the service categories
 export type ServiceName = typeof SERVICE_NAMES[number]
@@ -67,6 +68,9 @@ export const defaultServices: () => Services = () => ({
   ],
   code: [
     { name: "openai", available: false, provider: "openai" },
+  ],
+  imageGeneration: [
+    { name: "openrouter", available: false, provider: "openrouter" },
   ],
 })
 

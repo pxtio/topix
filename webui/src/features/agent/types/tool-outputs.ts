@@ -62,6 +62,11 @@ export interface ImageSearchWidgetOutput {
   images: string[]
 }
 
+export interface ImageGenerationOutput {
+  type: "image_generation"
+  imageUrls: string[]
+}
+
 export type ToolOutput =
   | WebSearchOutput
   | MemorySearchOutput
@@ -69,4 +74,5 @@ export type ToolOutput =
   | WeatherWidgetOutput
   | StockWidgetOutput
   | ImageSearchWidgetOutput
+  | ImageGenerationOutput
   | string

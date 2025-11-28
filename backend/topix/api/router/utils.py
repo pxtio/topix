@@ -66,4 +66,5 @@ async def get_services() -> dict:
         "search": [search.name for search in service_config.search],
         "navigate": [navigate.name for navigate in service_config.navigate],
         "code": [code.name for code in service_config.code],
+        "image_generation": [img_gen.name for img_gen in service_config.image_generation],
     }

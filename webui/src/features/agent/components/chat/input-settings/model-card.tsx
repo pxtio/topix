@@ -43,7 +43,7 @@ const ModelCard: React.FC<{ model: LlmModel; available?: boolean }> = ({ model, 
   const badge = LlmBadge[model]
 
   const badgeClass = clsx(
-    "text-[10px] font-mono font-normal px-1.5 py-0.5 rounded-full border text-muted-foreground bg-transparent border-muted-foreground/20",
+    "text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-full border text-muted-foreground bg-transparent border-muted-foreground/20",
   )
 
   return (

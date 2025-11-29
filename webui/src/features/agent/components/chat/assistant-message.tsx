@@ -8,6 +8,7 @@ import { WeatherCard } from "@/features/widgets/components/weather-card"
 import TradingCard from "@/features/widgets/components/trading-card"
 import { useMemo } from "react"
 import ImageSearchStrip from "@/features/widgets/components/image-card"
+import { ImageGenView } from "./image-gen-view"
 
 
 /**
@@ -67,6 +68,18 @@ export const AssistantMessage = ({
     return null
   }, [message, isDeepResearch, resp.steps])
 
+  const { includeImageGeneration, filename } = useMemo(() => {
+    if (resp.steps.filter(step => step.name === 'image_generation').length > 0) {
+      const includeImageGeneration = true
+      const lastImageGenStep = resp.steps.filter(step => step.name === 'image_generation').slice(-1)[0]
+      const filename = typeof lastImageGenStep.output === 'object' && 'imageUrls' in lastImageGenStep.output && lastImageGenStep.output.imageUrls.length > 0
+        ? (lastImageGenStep.output.imageUrls[0] as string)
+        : undefined
+      return { includeImageGeneration, filename }
+    }
+    return { includeImageGeneration: false, filename: undefined }
+  }, [resp.steps])
+
   return (
     <div className='w-full space-y-2'>
       <ReasoningStepsView
@@ -74,6 +87,13 @@ export const AssistantMessage = ({
         isStreaming={message.streaming || false}
         estimatedDurationSeconds={isDeepResearch ? 180 : undefined}
       />
+      {
+        includeImageGeneration && (
+          <div>
+            <ImageGenView filename={filename} />
+          </div>
+        )
+      }
       { imageUrls && <ImageSearchStrip images={imageUrls} /> }
       { cities.length > 0 && <WeatherCard cities={cities} /> }
       { tradingSymbols.length > 0 && <TradingCard symbols={tradingSymbols} initialRange="1d" /> }

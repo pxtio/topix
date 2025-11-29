@@ -16,6 +16,7 @@ from topix.agents.config import PlanConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName, tool_descriptions
+from topix.agents.image.gen import generate_image_tool
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.agents.websearch.navigate import NavigateAgent
 from topix.agents.widgets.finance import display_stock_widget_tool
@@ -82,6 +83,9 @@ class Plan(BaseAgent):
                     tool_description=tool_descriptions.get(AgentToolName.NAVIGATE),
                 )
             )
+
+        if config.image_generation:
+            tools.append(generate_image_tool)
 
         return cls(
             model=config.model,

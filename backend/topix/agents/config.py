@@ -19,8 +19,14 @@ CONFIG_DIR = Path(__file__).parent / "configs"
 logger = logging.getLogger(__name__)
 
 
-class BaseAgentConfig(BaseModel):
-    """Base Agent Config class."""
+class BaseConfig(BaseModel):
+    """Base Config class for Agent/Tool."""
+
+    model: str | None = None
+
+
+class BaseAgentConfig(BaseConfig):
+    """Base Agent/Tool Config class."""
 
     model_config = ConfigDict(validate_assignment=True)
 
@@ -97,6 +103,21 @@ class CodeInterpreterConfig(BaseAgentConfig):
         return v
 
 
+class ImageGenerationConfig(BaseConfig):
+    """Image Generation Config class."""
+
+    generation_provider: Literal["openrouter"] = "openrouter"
+
+    @field_validator("generation_provider")
+    @classmethod
+    def validate_provider(cls, v: str) -> str:
+        """Check if the generation provider is valid."""
+        # Only OpenRouter is supported for now.
+        if len(service_config.image_generation) == 0:
+            raise ValueError("No Image Generation API available. Please add at least one Image Generation API.")
+        return v
+
+
 class PlanConfig(BaseAgentConfig):
     """Plan Config class."""
 
@@ -104,6 +125,7 @@ class PlanConfig(BaseAgentConfig):
     memory_search: BaseAgentConfig
     code_interpreter: CodeInterpreterConfig | None = None
     navigate: WebNavigatorConfig | None = None
+    image_generation: ImageGenerationConfig | None = None
 
 
 class AssistantManagerConfig(BaseModel):
@@ -127,6 +149,9 @@ class AssistantManagerConfig(BaseModel):
 
             if len(service_config.code) == 0:
                 cf['plan']['code_interpreter'] = None
+
+            if len(service_config.image_generation) == 0:
+                cf['plan']['image_generation'] = None
 
         return AssistantManagerConfig.model_validate(cf)
 

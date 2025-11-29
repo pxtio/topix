@@ -37,6 +37,9 @@ plan:
     model_settings:
       temperature: 0.01
 
+  image_generation:
+    model: ~
+
 synthesis:
   model: openai/gpt-4.1
   instructions_template: answer_reformulation.system.jinja

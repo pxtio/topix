@@ -4,6 +4,7 @@ import { DeepResearchChoiceMenu } from "./deep-research"
 import { MemorySearchChoiceMenu } from "./memory-search"
 import { ModelChoiceMenu } from "./model-card"
 import { SearchEngineChoiceMenu } from "./web-search"
+import { ImageGenMenu } from "./image-gen"
 
 
 /**
@@ -18,6 +19,7 @@ export const InputSettings = () => {
       <SearchEngineChoiceMenu />
       <MemorySearchChoiceMenu />
       <CodeInterpreterChoiceMenu />
+      <ImageGenMenu />
       <DeepResearchChoiceMenu />
     </>
   )

@@ -27,6 +27,7 @@ type ToolOutput = Union[
     DisplayStockWidgetOutput,
     DisplayWeatherWidgetOutput,
     DisplayImageSearchWidgetOutput,
+    ImageGenerationOutput,
 ]
 
 
@@ -143,9 +144,14 @@ class WebSearchOutput(BaseModel):
             # raw search results
             formatted = "Search Results:\n\n"
             for result in self.search_results:
-                formatted += f"""<document url=/{result.url}/ title="{result.title}">
-                {result.content}
-                </document>\n\n"""
+                formatted += (
+                    "\n<Source"
+                    f"\n  url=\"{result.url}\""
+                    f"\n  title=\"{result.title}\""
+                    "\n>"
+                    f"\n{result.content}\n"
+                    "\n</Source>\n"
+                )
             return formatted
         else:
             """The final output of the Websearch Agent."""
@@ -183,3 +189,10 @@ class MemorySearchOutput(BaseModel):
     def __str__(self) -> str:
         """To string method."""
         return self.answer
+
+
+class ImageGenerationOutput(BaseModel):
+    """Output from image generation tool."""
+
+    type: Literal["image_generation"] = "image_generation"
+    image_urls: list[str] = []

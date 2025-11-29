@@ -13,6 +13,7 @@ export interface ListAvailableServicesResponse {
   search: string[]
   navigate: string[]
   code: string[]
+  image_generation: string[]
 }
 
 
@@ -44,6 +45,10 @@ const updateDefaultServices = ({
   services.code = services.code.map((service) => ({
     ...service,
     available: availableServices.code.includes(service.name),
+  }))
+  services.imageGeneration = services.imageGeneration.map((service) => ({
+    ...service,
+    available: availableServices.image_generation.includes(service.name),
   }))
 
   return services

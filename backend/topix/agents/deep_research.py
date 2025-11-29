@@ -82,6 +82,15 @@ class Synthesizer(BaseAgent):
         model_settings: ModelSettings | None = None,
     ):
         """Init method."""
+        # TODO: GPT-5.1-chat-latest is not compatible with deep research long detailed report synthesis, to
+        # replace it with GPT-5.1 for now. But need better configuration management later.
+        if model == ModelEnum.OpenAI.GPT_5_1_CHAT:
+            logger.warning(
+                "gpt-5.1-chat-latest is not compatible with deep research long detailed report synthesis "
+                "due to verbosity/formatting restrictions in hidden system prompt. Falling back to gpt-5.1."
+            )
+            model = ModelEnum.OpenAI.GPT_5_1
+
         name = "Synthesizer"
         instructions = self._render_prompt(instructions_template)
 

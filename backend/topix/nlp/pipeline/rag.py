@@ -14,9 +14,9 @@ from topix.datatypes.file.document import Document, DocumentProperties
 
 class ParsingConfig():
     """RAG configuration."""
-    ocr_parser: MistralParser = MistralParser.from_config()  # TODO: fix the mistral api key
+    ocr_parser: MistralParser = MistralParser(api_key=os.getenv("MISTRAL_API_KEY"))  # TODO: fix the mistral api key
     chunker: Chunker = Chunker()
-    vector_store: ContentStore = ContentStore.from_config()
+    vector_store: ContentStore   # = ContentStore.from_config()  TODO: fix the from_config
 
 
 class ParsingPipeline:

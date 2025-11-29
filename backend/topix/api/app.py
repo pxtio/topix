@@ -14,12 +14,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from topix.api.router import boards, chats, files, finance, subscriptions, tools, users, utils
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
+from topix.nlp.pipeline.rag import ParsingPipeline
 from topix.setup import setup
 from topix.store.chat import ChatStore
 from topix.store.graph import GraphStore
 from topix.store.subscription import SubscriptionStore
 from topix.store.user import UserStore
 from topix.utils.logging import logging_config
+from topix.nlp.pipeline.rag import ParsingConfig
+from topix.store.qdrant.store import ContentStore
 
 logging_config()
 logger = logging.getLogger(__name__)
@@ -38,6 +41,9 @@ def create_app(stage: StageEnum):
         await app.chat_store.open()
         app.subscription_store = SubscriptionStore()
         await app.subscription_store.open()
+        config = ParsingConfig()
+        config.vector_store = ContentStore.from_config()  # TODO: delete when from_config is fixed
+        app.parser_pipeline = ParsingPipeline(config=config)
         yield
         await app.graph_store.close()
         await app.user_store.close()
@@ -71,9 +77,11 @@ def create_app(stage: StageEnum):
 async def main(args) -> tuple[FastAPI, int]:
     """Run the application entry point."""
     await setup(stage=args.stage)
-    app = create_app(stage=args.stage)
 
     config: Config = Config.instance()
+
+    app = create_app(stage=args.stage)
+
     return app, args.port or config.app.settings.port
 
 

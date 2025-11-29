@@ -9,7 +9,6 @@ from topix.api.utils.decorators import with_standard_response
 from topix.api.utils.security import get_current_user_uid
 from topix.utils.common import gen_uid
 from topix.utils.file import convert_to_base64_url, detect_mime_type, get_file_path, save_file
-from topix.nlp.pipeline.rag import ParsingPipeline
 
 
 router = APIRouter(
@@ -82,7 +81,7 @@ async def parse_file(
 
     true_path = get_file_path(saved_path)
 
-    pipeline = ParsingPipeline()
+    pipeline = request.app.parser_pipeline
 
     background_tasks.add_task(pipeline.process_file, true_path)
 

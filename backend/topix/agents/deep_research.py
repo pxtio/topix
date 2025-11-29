@@ -199,7 +199,7 @@ class DeepResearch:
                 f"Web collection failed: {e}, mainly due to attend max turn limit."
             )
 
-        # Synthesize learning module:
+        # Synthesize final answer
         messages = AgentRunner.run_streamed(
             starting_agent=self.synthesizer,
             input=outline,

@@ -190,16 +190,27 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
     <>
       {
         (!isOpen || isStreaming) ? (
-          <div className='w-full p-4 text-left flex flex-row items-center gap-2'>
-            <ThinkingDots message={titleMessage} isStopped={!isStreaming} />
+          <div className='w-full flex flex-col items-center gap-2'>
+            <div className='w-full p-4 text-left flex flex-row items-center gap-2'>
+              <ThinkingDots message={titleMessage} isStopped={!isStreaming} />
+              {
+                !isStreaming && (
+                  <span
+                    className='transition-all text-xs text-accent-foreground hover:text-card-foreground'
+                    onClick={() => setIsOpen(!isOpen)}
+                  >
+                    <ChevronDown className='w-4 h-4 flex-shrink-0' />
+                  </span>
+                )
+              }
+            </div>
             {
-              !isStreaming && (
-                <span
-                  className='transition-all text-xs text-accent-foreground hover:text-card-foreground'
-                  onClick={() => setIsOpen(!isOpen)}
-                >
-                  <ChevronDown className='w-4 h-4 flex-shrink-0' />
-                </span>
+              estimatedDurationSeconds && isStreaming && (
+                <div className='w-full flex flex-col items-start'>
+                  <div className='w-full max-w-[300px] border border-border shadow-sm rounded-lg bg-background px-2 py-4'>
+                    <ProgressBar estimatedTime={estimatedDurationSeconds} isStop={!isStreaming} startedAt={response.sentAt} />
+                  </div>
+                </div>
               )
             }
           </div>
@@ -224,11 +235,7 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
                 <ChevronUp className='w-4 h-4 flex-shrink-0' />
               </span>
             </div>
-            {
-              estimatedDurationSeconds && (
-                <ProgressBar estimatedTime={estimatedDurationSeconds} isStop={!isStreaming} startedAt={response.sentAt} />
-              )
-            }
+
             <div
               className={`
                 flex flex-col items-start

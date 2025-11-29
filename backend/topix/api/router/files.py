@@ -2,13 +2,15 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, UploadFile, HTTPException
 from fastapi.params import File, Query
 
 from topix.api.utils.decorators import with_standard_response
 from topix.api.utils.security import get_current_user_uid
 from topix.utils.common import gen_uid
 from topix.utils.file import convert_to_base64_url, detect_mime_type, get_file_path, save_file
+from topix.nlp.pipeline.rag import ParsingPipeline
+
 
 router = APIRouter(
     prefix="/files",
@@ -53,5 +55,40 @@ async def upload_file(
     return {
         "file": {
             "url": saved_path
+        }
+    }
+
+
+@router.post("/parse/", include_in_schema=False)
+@router.post("/parse")
+@with_standard_response
+async def parse_file(
+    response: Response,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(..., description="File to parse"),
+):
+    """Parse a file."""
+    file_bytes = await file.read()
+    mime_type = detect_mime_type(file.filename)
+    if mime_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Image files are not supported for parsing.")
+    elif mime_type.startswith("application/pdf"):
+        cat = "files"
+        new_filename = f"{gen_uid()}_{file.filename}"
+        saved_path = save_file(filename=new_filename, file_bytes=file_bytes, cat=cat)
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported file type for parsing.")
+
+    true_path = get_file_path(saved_path)
+
+    pipeline = ParsingPipeline()
+
+    background_tasks.add_task(pipeline.process_file, true_path)
+
+    return {
+        "status": "success",
+        "data": {
+            "message": "File parsing started in background"
         }
     }

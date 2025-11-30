@@ -10,7 +10,6 @@ import { createDefaultLinkStyle, createDefaultStyle } from "../types/style"
 import { colorTree } from "../utils/bfs"
 import { pickRandomColorOfShade } from "../lib/colors/tailwind"
 import { apiFetch } from "@/api"
-import { escapeNonMathDollars } from "@/lib/common"
 import type { LinkEdge, NoteNode } from "../types/flow"
 
 
@@ -52,17 +51,12 @@ export const useConvertToMindMap = () => {
       // if saveAsIs and notify, just create a single note with the exact content
       if (saveAsIs && toolType === "notify") {
         const note = createDefaultNote({ boardId, nodeType: "sheet"})
-        note.content = { markdown: escapeNonMathDollars(answer) }
+        note.content = { markdown: answer }
         setMindMap(boardId, [convertNoteToNode(note)], [])
         return { status: "success" }
       }
 
       const { notes, links } = await convertToMindMap(answer, toolType)
-      notes.forEach(note => {
-        if (note.content?.markdown) {
-          note.content.markdown = escapeNonMathDollars(note.content.markdown)
-        }
-      })
 
       notes.forEach(note => {
         note.graphUid = boardId

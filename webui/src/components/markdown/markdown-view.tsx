@@ -4,10 +4,13 @@ import "katex/dist/katex.min.css"
 import { cn } from "@/lib/utils"
 import { CustomTable } from "./custom-table"
 import { Pre } from "./custom-pre"
-import type { Schema } from "hast-util-sanitize"
+import { Streamdown } from "streamdown"
+
+import remarkMath from "remark-math"
+import rehypeKatex from "rehype-katex"
 
 /** -------------------------------------------------------
- *  one-time transparent scrollbar styles (for tables)
+ *  transparent scrollbars
  *  ------------------------------------------------------*/
 let __mkScrollbarInjected = false
 function ensureScrollbarStyleInjected() {
@@ -15,9 +18,7 @@ function ensureScrollbarStyleInjected() {
   const style = document.createElement("style")
   style.setAttribute("data-mk-scrollbars", "true")
   style.innerHTML = `
-    /* firefox */
     .mk-scroll { scrollbar-width: thin; scrollbar-color: rgba(120,120,130,.5) transparent; }
-    /* webkit */
     .mk-scroll::-webkit-scrollbar { height: 10px; width: 10px; }
     .mk-scroll::-webkit-scrollbar-track { background: transparent; }
     .mk-scroll::-webkit-scrollbar-thumb { background: rgba(120,120,130,.5); border-radius: 9999px; }
@@ -28,282 +29,169 @@ function ensureScrollbarStyleInjected() {
 }
 
 /** -------------------------------------------------------
- *  CustomLink — stable and lightweight (typed)
+ *  Custom components (unchanged)
  *  ------------------------------------------------------*/
-type CustomLinkProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
-  children?: React.ReactNode
-}
-
-function CustomLink({ children, href, ...rest }: CustomLinkProps) {
+function CustomLink({ children, href, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const content = Array.isArray(children) ? children[0] : children
   const label = typeof content === "string" ? content.replace(/^[[]|[\]]$/g, "") : "KB"
 
-  const aClass =
-    "transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-mono font-medium border border-border bg-card hover:bg-accent rounded-lg"
-
   return (
-    <a href={href} className={aClass} target="_blank" rel="noreferrer" {...rest}>
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-mono font-medium border border-border bg-card hover:bg-accent rounded-lg"
+      {...rest}
+    >
       {label}
     </a>
   )
 }
 
-/** -------------------------------------------------------
- *  Typed wrappers for common elements
- *  ------------------------------------------------------*/
-function H1(props: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h1 className="mt-7 scroll-m-20 pb-2 text-2xl font-heading font-medium tracking-tight first:mt-0" {...props} />
-}
-
-function H2(props: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className="mt-6 scroll-m-20 text-xl font-heading font-medium tracking-tight" {...props} />
-}
-
-function H3(props: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className="mt-5 scroll-m-20 text-lg font-heading font-medium tracking-tight" {...props} />
-}
-
-function H4(props: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h4 className="mt-4 scroll-m-20 text-base font-heading font-medium tracking-tight" {...props} />
-}
-
-function P(props: React.HTMLAttributes<HTMLParagraphElement>) {
-  return (
-    <p
-      className="
-        leading-7 text-base [&:not(:first-child)]:mt-4
-        break-words whitespace-normal
-        min-w-0
-      "
-      {...props}
-    />
-  )
-}
-
-function Blockquote(props: React.BlockquoteHTMLAttributes<HTMLElement>) {
-  return <blockquote className="mt-4 border-l-2 pl-6 italic text-base" {...props} />
-}
-
-function Ul(props: React.HTMLAttributes<HTMLUListElement>) {
-  return (
-    <ul
-      className="
-        my-6 ml-6 list-disc [&>li]:mt-2
-        break-words whitespace-normal
-        min-w-0
-      "
-      {...props}
-    />
-  )
-}
-
-function Ol(props: React.HTMLAttributes<HTMLOListElement>) {
-  return (
-    <ol
-      className="
-        my-6 ml-6 list-decimal [&>li]:mt-2
-        break-words whitespace-normal
-        min-w-0
-      "
-      {...props}
-    />
-  )
-}
-
-function Li(props: React.LiHTMLAttributes<HTMLLIElement>) {
-  return <li className="break-words min-w-0" {...props} />
-}
-
-function Img(props: React.ImgHTMLAttributes<HTMLImageElement>) {
-  return (
-    <img
-      {...props}
-      className={cn("max-w-full h-auto rounded-lg my-4", props.className)}
-      style={{ ...(props.style || {}), height: "auto", maxWidth: "100%" }}
-      alt={props.alt || ""}
-    />
-  )
-}
-
-function Tr(props: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className="m-0 border-t p-0 even:bg-muted" {...props} />
-}
-
-function Th(props: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return (
-    <th
-      className="
-        border-b px-4 py-2 text-left font-bold
-        [&[align=center]]:text-center [&[align=right]]:text-right
-        whitespace-nowrap
-      "
-      {...props}
-    />
-  )
-}
-
-function Td(props: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return (
-    <td
-      className="
-        px-4 py-2 text-left
-        [&[align=center]]:text-center [&[align=right]]:text-right
-        align-top
-        break-words
-      "
-      {...props}
-    />
-  )
-}
-
-function Hr(props: React.HTMLAttributes<HTMLHRElement>) {
-  return <hr className="my-6 border-muted-foreground/20" {...props} />
-}
-
-/** components map — fully typed and safe */
 const components = {
-  h1: H1,
-  h2: H2,
-  h3: H3,
-  h4: H4,
-  p: P,
-  blockquote: Blockquote,
-  ul: Ul,
-  ol: Ol,
-  li: Li,
+  h1: (p) => <h1 className="mt-7 scroll-m-20 pb-2 text-2xl font-heading font-medium tracking-tight first:mt-0" {...p} />,
+  h2: (p) => <h2 className="mt-6 scroll-m-20 text-xl font-heading font-medium tracking-tight" {...p} />,
+  h3: (p) => <h3 className="mt-5 scroll-m-20 text-lg font-heading font-medium tracking-tight" {...p} />,
+  h4: (p) => <h4 className="mt-4 scroll-m-20 text-base font-heading font-medium tracking-tight" {...p} />,
+  p: (p) => (
+    <p
+      className="leading-7 text-base [&:not(:first-child)]:mt-4 break-words whitespace-normal min-w-0"
+      {...p}
+    />
+  ),
+  blockquote: (p) => <blockquote className="mt-4 border-l-2 pl-6 italic text-base" {...p} />,
+  ul: (p) => (
+    <ul
+      className="my-6 ml-6 list-disc [&>li]:mt-2 break-words whitespace-normal min-w-0"
+      {...p}
+    />
+  ),
+  ol: (p) => (
+    <ol
+      className="my-6 ml-6 list-decimal [&>li]:mt-2 break-words whitespace-normal min-w-0"
+      {...p}
+    />
+  ),
+  li: (p) => <li className="break-words min-w-0" {...p} />,
   a: CustomLink,
-  img: Img,
-  table: CustomTable, // ensure CustomTable is typed as React.FC<React.TableHTMLAttributes<HTMLTableElement>>
-  tr: Tr,
-  th: Th,
-  td: Td,
-  hr: Hr,
-  b: (props: React.HTMLAttributes<HTMLElement>) => <b className="font-semibold" {...props} />,
-  strong: (props: React.HTMLAttributes<HTMLElement>) => <strong className="font-semibold" {...props} />,
-  em: (props: React.HTMLAttributes<HTMLElement>) => <em className="italic" {...props} />,
-  del: (props: React.HTMLAttributes<HTMLElement>) => <del className="line-through" {...props} />,
-  pre: Pre
+  img: (p) => (
+    <img
+      {...p}
+      className={cn("max-w-full h-auto rounded-lg my-4", p.className)}
+      style={{ ...(p.style || {}), height: "auto", maxWidth: "100%" }}
+      alt={p.alt || ""}
+    />
+  ),
+  table: CustomTable,
+  tr: (p) => <tr className="m-0 border-t p-0 even:bg-muted" {...p} />,
+  th: (p) => (
+    <th
+      className="border-b px-4 py-2 text-left font-bold [&[align=center]]:text-center [&[align=right]]:text-right whitespace-nowrap"
+      {...p}
+    />
+  ),
+  td: (p) => (
+    <td
+      className="px-4 py-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right align-top break-words"
+      {...p}
+    />
+  ),
+  hr: (p) => <hr className="my-6 border-muted-foreground/20" {...p} />,
+  b: (p) => <b className="font-semibold" {...p} />,
+  strong: (p) => <strong className="font-semibold" {...p} />,
+  em: (p) => <em className="italic" {...p} />,
+  del: (p) => <del className="line-through" {...p} />,
+  pre: Pre,
 } satisfies Components
-
 
 const HAS_MERMAID = /```(?:mermaid)[\s\S]*?```/i
 
-/* -------------------------------------------
-   Lazy renderer: loads Streamdown + plugins,
-   and conditionally loads mermaid + cytoscape
-------------------------------------------- */
-const LazyRenderer = React.lazy(async () => {
-  const [
-    streamdownMod,
-    remarkGfmMod,
-    rehypeRawMod,
-    rehypeSanitizeMod,
-  ] = await Promise.all([
-    import("streamdown"),
-    import("remark-gfm"),
-    import("rehype-raw"),
-    import("rehype-sanitize"),
-    import("katex/dist/katex.min.css"),
-  ])
+/** -------------------------------------------------------
+ * Renderer: math override + mermaid
+ * ------------------------------------------------------*/
+const Renderer = ({ content }: { content: string }) => {
+  const rootRef = React.useRef<HTMLDivElement>(null)
 
-  const { Streamdown } = streamdownMod
-  const remarkGfm = remarkGfmMod.default
-  const rehypeRaw = rehypeRawMod.default
-  const rehypeSanitize = rehypeSanitizeMod.default
-  const defaultSchema = rehypeSanitizeMod.defaultSchema as Schema
+  React.useEffect(() => {
+    if (!HAS_MERMAID.test(content)) return
 
-  const brOnlySchema: Schema = {
-    ...defaultSchema,
-    tagNames: [...(defaultSchema.tagNames ?? []), "br"],
-  }
+    let cancelled = false
+    ;(async () => {
+      const [{ default: mermaid }] = await Promise.all([
+        import("mermaid"),
+        import("cytoscape"),
+      ])
 
-  const Renderer: React.FC<{ content: string }> = ({ content }) => {
-    const rootRef = React.useRef<HTMLDivElement>(null)
+      if (cancelled) return
 
-    // Only when mermaid code fences exist, pull mermaid + cytoscape
-    React.useEffect(() => {
-      if (!HAS_MERMAID.test(content)) return
-      let cancelled = false
+      mermaid.initialize({ startOnLoad: false })
 
-      ;(async () => {
-        // Load mermaid + (heavy) cytoscape on demand
-        const [{ default: mermaid }] = await Promise.all([
-          import("mermaid"),
-          import("cytoscape"), // side-effect: used by mermaid for certain layouts/plugins
-        ])
+      const container = rootRef.current
+      if (!container) return
 
-        if (cancelled) return
+      const codeBlocks = container.querySelectorAll("pre > code.language-mermaid")
+      let idx = 0
 
-        mermaid.initialize({ startOnLoad: false })
-        const container = rootRef.current
-        if (!container) return
+      for (const code of codeBlocks) {
+        const parentPre =
+          code.parentElement?.tagName === "PRE"
+            ? (code.parentElement as HTMLElement)
+            : (code as HTMLElement)
 
-        // Find ```mermaid blocks rendered by Streamdown -> <pre><code class="language-mermaid">...</code></pre>
-        const codeBlocks = container.querySelectorAll<HTMLPreElement>("pre > code.language-mermaid")
-        let idx = 0
-        for (const code of codeBlocks) {
-          const parentPre = code.parentElement?.tagName === "PRE" ? code.parentElement as HTMLElement : code as HTMLElement
-          const source = code.textContent || ""
-          const id = `m_${Date.now()}_${idx++}`
+        const src = code.textContent || ""
+        const id = `m_${Date.now()}_${idx++}`
 
-          try {
-            const { svg } = await mermaid.render(id, source)
-            const wrapper = document.createElement("div")
-            wrapper.className = "my-4"
-            wrapper.innerHTML = svg
-            parentPre.replaceWith(wrapper)
-          } catch {
-            // If render fails, keep the original code block
-            // (optionally log or show a small error badge)
-            // console.error(e)
-          }
+        try {
+          const { svg } = await mermaid.render(id, src)
+          const wrapper = document.createElement("div")
+          wrapper.className = "my-4"
+          wrapper.innerHTML = svg
+          parentPre.replaceWith(wrapper)
+        } catch {
+          // empty
         }
-      })()
+      }
+    })()
 
-      return () => { cancelled = true }
-    }, [content])
+    return () => {
+      cancelled = true
+    }
+  }, [content])
 
-    return (
-      <div ref={rootRef}>
-        <Streamdown
-          shikiTheme={["rose-pine-dawn", "rose-pine-moon"]}
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw, [rehypeSanitize, brOnlySchema]]}
-          components={components}
-        >
-          {content}
-        </Streamdown>
-      </div>
-    )
-  }
-
-  return { default: Renderer }
-})
-
+  return (
+    <div ref={rootRef}>
+      <Streamdown
+        components={components}
+        shikiTheme={["rose-pine-dawn", "rose-pine-moon"]}
+        remarkPlugins={[ [remarkMath, { singleDollarTextMath: true }] ]}
+        rehypePlugins={[ rehypeKatex ]}
+      >
+        {content}
+      </Streamdown>
+    </div>
+  )
+}
 
 /** -------------------------------------------------------
- *  Props
- *  ------------------------------------------------------*/
+ * MarkdownView wrapper
+ * ------------------------------------------------------*/
 export interface MarkdownViewProps {
   content: string
   isStreaming?: boolean
 }
 
-
-/** -------------------------------------------
- * MarkdownView
- * ------------------------------------------*/
-export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
-  ({ content }) => {
-    React.useEffect(() => { ensureScrollbarStyleInjected() }, [])
+export const MarkdownView = React.memo(
+  ({ content }: MarkdownViewProps) => {
+    React.useEffect(() => {
+      ensureScrollbarStyleInjected()
+    }, [])
 
     return (
       <div className="w-full min-w-0">
-        <React.Suspense fallback={<div></div>}>
-          <LazyRenderer content={content} />
-        </React.Suspense>
+        <Renderer content={content} />
       </div>
     )
   },
-  (prev, next) => prev.content === next.content && prev.isStreaming === next.isStreaming
+  (prev, next) =>
+    prev.content === next.content && prev.isStreaming === next.isStreaming
 )

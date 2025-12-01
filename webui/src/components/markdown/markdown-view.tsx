@@ -6,6 +6,7 @@ import { CustomTable } from "./custom-table"
 import { Pre } from "./custom-pre"
 import { Streamdown } from "streamdown"
 
+import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import rehypeKatex from "rehype-katex"
 
@@ -15,6 +16,8 @@ import rehypeKatex from "rehype-katex"
 let __mkScrollbarInjected = false
 function ensureScrollbarStyleInjected() {
   if (__mkScrollbarInjected) return
+  if (typeof document === "undefined") return
+
   const style = document.createElement("style")
   style.setAttribute("data-mk-scrollbars", "true")
   style.innerHTML = `
@@ -29,9 +32,13 @@ function ensureScrollbarStyleInjected() {
 }
 
 /** -------------------------------------------------------
- *  Custom components (unchanged)
+ *  CustomLink — typed + small
  *  ------------------------------------------------------*/
-function CustomLink({ children, href, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+type CustomLinkProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+  children?: React.ReactNode
+}
+
+function CustomLink({ children, href, ...rest }: CustomLinkProps) {
   const content = Array.isArray(children) ? children[0] : children
   const label = typeof content === "string" ? content.replace(/^[[]|[\]]$/g, "") : "KB"
 
@@ -48,74 +55,157 @@ function CustomLink({ children, href, ...rest }: React.AnchorHTMLAttributes<HTML
   )
 }
 
-const components = {
-  h1: (p) => <h1 className="mt-7 scroll-m-20 pb-2 text-2xl font-heading font-medium tracking-tight first:mt-0" {...p} />,
-  h2: (p) => <h2 className="mt-6 scroll-m-20 text-xl font-heading font-medium tracking-tight" {...p} />,
-  h3: (p) => <h3 className="mt-5 scroll-m-20 text-lg font-heading font-medium tracking-tight" {...p} />,
-  h4: (p) => <h4 className="mt-4 scroll-m-20 text-base font-heading font-medium tracking-tight" {...p} />,
-  p: (p) => (
+/** -------------------------------------------------------
+ *  Typed wrappers for common elements
+ *  ------------------------------------------------------*/
+function H1(props: React.HTMLAttributes<HTMLHeadingElement>) {
+  return <h1 className="mt-7 scroll-m-20 pb-2 text-2xl font-heading font-medium tracking-tight first:mt-0" {...props} />
+}
+
+function H2(props: React.HTMLAttributes<HTMLHeadingElement>) {
+  return <h2 className="mt-6 scroll-m-20 text-xl font-heading font-medium tracking-tight" {...props} />
+}
+
+function H3(props: React.HTMLAttributes<HTMLHeadingElement>) {
+  return <h3 className="mt-5 scroll-m-20 text-lg font-heading font-medium tracking-tight" {...props} />
+}
+
+function H4(props: React.HTMLAttributes<HTMLHeadingElement>) {
+  return <h4 className="mt-4 scroll-m-20 text-base font-heading font-medium tracking-tight" {...props} />
+}
+
+function P(props: React.HTMLAttributes<HTMLParagraphElement>) {
+  return (
     <p
-      className="leading-7 text-base [&:not(:first-child)]:mt-4 break-words whitespace-normal min-w-0"
-      {...p}
+      className="
+        leading-7 text-base [&:not(:first-child)]:mt-4
+        break-words whitespace-normal
+        min-w-0
+      "
+      {...props}
     />
-  ),
-  blockquote: (p) => <blockquote className="mt-4 border-l-2 pl-6 italic text-base" {...p} />,
-  ul: (p) => (
+  )
+}
+
+function Blockquote(props: React.BlockquoteHTMLAttributes<HTMLElement>) {
+  return <blockquote className="mt-4 border-l-2 pl-6 italic text-base" {...props} />
+}
+
+function Ul(props: React.HTMLAttributes<HTMLUListElement>) {
+  return (
     <ul
-      className="my-6 ml-6 list-disc [&>li]:mt-2 break-words whitespace-normal min-w-0"
-      {...p}
+      className="
+        my-6 ml-6 list-disc [&>li]:mt-2
+        break-words whitespace-normal
+        min-w-0
+      "
+      {...props}
     />
-  ),
-  ol: (p) => (
+  )
+}
+
+function Ol(props: React.HTMLAttributes<HTMLOListElement>) {
+  return (
     <ol
-      className="my-6 ml-6 list-decimal [&>li]:mt-2 break-words whitespace-normal min-w-0"
-      {...p}
+      className="
+        my-6 ml-6 list-decimal [&>li]:mt-2
+        break-words whitespace-normal
+        min-w-0
+      "
+      {...props}
     />
-  ),
-  li: (p) => <li className="break-words min-w-0" {...p} />,
-  a: CustomLink,
-  img: (p) => (
+  )
+}
+
+function Li(props: React.LiHTMLAttributes<HTMLLIElement>) {
+  return <li className="break-words min-w-0" {...props} />
+}
+
+function Img(props: React.ImgHTMLAttributes<HTMLImageElement>) {
+  return (
     <img
-      {...p}
-      className={cn("max-w-full h-auto rounded-lg my-4", p.className)}
-      style={{ ...(p.style || {}), height: "auto", maxWidth: "100%" }}
-      alt={p.alt || ""}
+      {...props}
+      className={cn("max-w-full h-auto rounded-lg my-4", props.className)}
+      style={{ ...(props.style || {}), height: "auto", maxWidth: "100%" }}
+      alt={props.alt || ""}
     />
-  ),
-  table: CustomTable,
-  tr: (p) => <tr className="m-0 border-t p-0 even:bg-muted" {...p} />,
-  th: (p) => (
+  )
+}
+
+function Tr(props: React.HTMLAttributes<HTMLTableRowElement>) {
+  return <tr className="m-0 border-t p-0 even:bg-muted" {...props} />
+}
+
+function Th(props: React.ThHTMLAttributes<HTMLTableCellElement>) {
+  return (
     <th
-      className="border-b px-4 py-2 text-left font-bold [&[align=center]]:text-center [&[align=right]]:text-right whitespace-nowrap"
-      {...p}
+      className="
+        border-b px-4 py-2 text-left font-bold
+        [&[align=center]]:text-center [&[align=right]]:text-right
+        whitespace-nowrap
+      "
+      {...props}
     />
-  ),
-  td: (p) => (
+  )
+}
+
+function Td(props: React.TdHTMLAttributes<HTMLTableCellElement>) {
+  return (
     <td
-      className="px-4 py-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right align-top break-words"
-      {...p}
+      className="
+        px-4 py-2 text-left
+        [&[align=center]]:text-center [&[align=right]]:text-right
+        align-top
+        break-words
+      "
+      {...props}
     />
-  ),
-  hr: (p) => <hr className="my-6 border-muted-foreground/20" {...p} />,
-  b: (p) => <b className="font-semibold" {...p} />,
-  strong: (p) => <strong className="font-semibold" {...p} />,
-  em: (p) => <em className="italic" {...p} />,
-  del: (p) => <del className="line-through" {...p} />,
+  )
+}
+
+function Hr(props: React.HTMLAttributes<HTMLHRElement>) {
+  return <hr className="my-6 border-muted-foreground/20" {...props} />
+}
+
+/** components map — fully typed and safe */
+const components = {
+  h1: H1,
+  h2: H2,
+  h3: H3,
+  h4: H4,
+  p: P,
+  blockquote: Blockquote,
+  ul: Ul,
+  ol: Ol,
+  li: Li,
+  a: CustomLink,
+  img: Img,
+  table: CustomTable,
+  tr: Tr,
+  th: Th,
+  td: Td,
+  hr: Hr,
+  b: (props: React.HTMLAttributes<HTMLElement>) => <b className="font-semibold" {...props} />,
+  strong: (props: React.HTMLAttributes<HTMLElement>) => <strong className="font-semibold" {...props} />,
+  em: (props: React.HTMLAttributes<HTMLElement>) => <em className="italic" {...props} />,
+  del: (props: React.HTMLAttributes<HTMLElement>) => <del className="line-through" {...props} />,
   pre: Pre,
 } satisfies Components
 
 const HAS_MERMAID = /```(?:mermaid)[\s\S]*?```/i
 
 /** -------------------------------------------------------
- * Renderer: math override + mermaid
+ * Renderer: GFM + math override + mermaid
  * ------------------------------------------------------*/
-const Renderer = ({ content }: { content: string }) => {
+const Renderer: React.FC<{ content: string }> = ({ content }) => {
   const rootRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     if (!HAS_MERMAID.test(content)) return
+    if (typeof document === "undefined") return
 
     let cancelled = false
+
     ;(async () => {
       const [{ default: mermaid }] = await Promise.all([
         import("mermaid"),
@@ -148,7 +238,7 @@ const Renderer = ({ content }: { content: string }) => {
           wrapper.innerHTML = svg
           parentPre.replaceWith(wrapper)
         } catch {
-          // empty
+          // keep original block on error
         }
       }
     })()
@@ -163,8 +253,13 @@ const Renderer = ({ content }: { content: string }) => {
       <Streamdown
         components={components}
         shikiTheme={["rose-pine-dawn", "rose-pine-moon"]}
-        remarkPlugins={[ [remarkMath, { singleDollarTextMath: true }] ]}
-        rehypePlugins={[ rehypeKatex ]}
+        remarkPlugins={[
+          remarkGfm, // <- restores GFM (tables, task lists, etc.)
+          [remarkMath, { singleDollarTextMath: true }], // <- $...$ + $$...$$
+        ]}
+        rehypePlugins={[
+          rehypeKatex, // <- render math with KaTeX
+        ]}
       >
         {content}
       </Streamdown>
@@ -180,8 +275,8 @@ export interface MarkdownViewProps {
   isStreaming?: boolean
 }
 
-export const MarkdownView = React.memo(
-  ({ content }: MarkdownViewProps) => {
+export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
+  ({ content }) => {
     React.useEffect(() => {
       ensureScrollbarStyleInjected()
     }, [])

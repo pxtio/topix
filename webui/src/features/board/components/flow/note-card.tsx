@@ -235,7 +235,7 @@ export const NodeCard = ({
         style={{ color: textColor || 'inherit' }}
       >
         {isSheet && (
-          <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 shadow-xs justify-end bg-background/20'>
+          <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end bg-background/20'>
             <Popover>
               <PopoverTrigger asChild>
                 <button

@@ -41,7 +41,7 @@ export function ShapeChrome({
   if (type === 'sheet') {
     return (
       <div
-        className={clsx('shadow-lg rounded-md border border-border', frameClass)}
+        className={clsx('rounded-md border border-border', frameClass)}
         style={{ backgroundColor, color: textColor, minHeight, borderColor: strokeColor }}
       >
         {children}

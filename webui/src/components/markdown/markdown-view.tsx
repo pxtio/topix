@@ -4,20 +4,24 @@ import "katex/dist/katex.min.css"
 import { cn } from "@/lib/utils"
 import { CustomTable } from "./custom-table"
 import { Pre } from "./custom-pre"
-import type { Schema } from "hast-util-sanitize"
+import { Streamdown } from "streamdown"
+
+import remarkGfm from "remark-gfm"
+import remarkMath from "remark-math"
+import rehypeKatex from "rehype-katex"
 
 /** -------------------------------------------------------
- *  one-time transparent scrollbar styles (for tables)
+ *  transparent scrollbars
  *  ------------------------------------------------------*/
 let __mkScrollbarInjected = false
 function ensureScrollbarStyleInjected() {
   if (__mkScrollbarInjected) return
+  if (typeof document === "undefined") return
+
   const style = document.createElement("style")
   style.setAttribute("data-mk-scrollbars", "true")
   style.innerHTML = `
-    /* firefox */
     .mk-scroll { scrollbar-width: thin; scrollbar-color: rgba(120,120,130,.5) transparent; }
-    /* webkit */
     .mk-scroll::-webkit-scrollbar { height: 10px; width: 10px; }
     .mk-scroll::-webkit-scrollbar-track { background: transparent; }
     .mk-scroll::-webkit-scrollbar-thumb { background: rgba(120,120,130,.5); border-radius: 9999px; }
@@ -28,7 +32,7 @@ function ensureScrollbarStyleInjected() {
 }
 
 /** -------------------------------------------------------
- *  CustomLink — stable and lightweight (typed)
+ *  CustomLink — typed + small
  *  ------------------------------------------------------*/
 type CustomLinkProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
   children?: React.ReactNode
@@ -38,11 +42,14 @@ function CustomLink({ children, href, ...rest }: CustomLinkProps) {
   const content = Array.isArray(children) ? children[0] : children
   const label = typeof content === "string" ? content.replace(/^[[]|[\]]$/g, "") : "KB"
 
-  const aClass =
-    "transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-mono font-medium border border-border bg-card hover:bg-accent rounded-lg"
-
   return (
-    <a href={href} className={aClass} target="_blank" rel="noreferrer" {...rest}>
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-mono font-medium border border-border bg-card hover:bg-accent rounded-lg"
+      {...rest}
+    >
       {label}
     </a>
   )
@@ -173,7 +180,7 @@ const components = {
   li: Li,
   a: CustomLink,
   img: Img,
-  table: CustomTable, // ensure CustomTable is typed as React.FC<React.TableHTMLAttributes<HTMLTableElement>>
+  table: CustomTable,
   tr: Tr,
   th: Th,
   td: Td,
@@ -182,128 +189,104 @@ const components = {
   strong: (props: React.HTMLAttributes<HTMLElement>) => <strong className="font-semibold" {...props} />,
   em: (props: React.HTMLAttributes<HTMLElement>) => <em className="italic" {...props} />,
   del: (props: React.HTMLAttributes<HTMLElement>) => <del className="line-through" {...props} />,
-  pre: Pre
+  pre: Pre,
 } satisfies Components
-
 
 const HAS_MERMAID = /```(?:mermaid)[\s\S]*?```/i
 
-/* -------------------------------------------
-   Lazy renderer: loads Streamdown + plugins,
-   and conditionally loads mermaid + cytoscape
-------------------------------------------- */
-const LazyRenderer = React.lazy(async () => {
-  const [
-    streamdownMod,
-    remarkGfmMod,
-    rehypeRawMod,
-    rehypeSanitizeMod,
-  ] = await Promise.all([
-    import("streamdown"),
-    import("remark-gfm"),
-    import("rehype-raw"),
-    import("rehype-sanitize"),
-    import("katex/dist/katex.min.css"),
-  ])
+/** -------------------------------------------------------
+ * Renderer: GFM + math override + mermaid
+ * ------------------------------------------------------*/
+const Renderer: React.FC<{ content: string }> = ({ content }) => {
+  const rootRef = React.useRef<HTMLDivElement>(null)
 
-  const { Streamdown } = streamdownMod
-  const remarkGfm = remarkGfmMod.default
-  const rehypeRaw = rehypeRawMod.default
-  const rehypeSanitize = rehypeSanitizeMod.default
-  const defaultSchema = rehypeSanitizeMod.defaultSchema as Schema
+  React.useEffect(() => {
+    if (!HAS_MERMAID.test(content)) return
+    if (typeof document === "undefined") return
 
-  const brOnlySchema: Schema = {
-    ...defaultSchema,
-    tagNames: [...(defaultSchema.tagNames ?? []), "br"],
-  }
+    let cancelled = false
 
-  const Renderer: React.FC<{ content: string }> = ({ content }) => {
-    const rootRef = React.useRef<HTMLDivElement>(null)
+    ;(async () => {
+      const [{ default: mermaid }] = await Promise.all([
+        import("mermaid"),
+        import("cytoscape"),
+      ])
 
-    // Only when mermaid code fences exist, pull mermaid + cytoscape
-    React.useEffect(() => {
-      if (!HAS_MERMAID.test(content)) return
-      let cancelled = false
+      if (cancelled) return
 
-      ;(async () => {
-        // Load mermaid + (heavy) cytoscape on demand
-        const [{ default: mermaid }] = await Promise.all([
-          import("mermaid"),
-          import("cytoscape"), // side-effect: used by mermaid for certain layouts/plugins
-        ])
+      mermaid.initialize({ startOnLoad: false })
 
-        if (cancelled) return
+      const container = rootRef.current
+      if (!container) return
 
-        mermaid.initialize({ startOnLoad: false })
-        const container = rootRef.current
-        if (!container) return
+      const codeBlocks = container.querySelectorAll("pre > code.language-mermaid")
+      let idx = 0
 
-        // Find ```mermaid blocks rendered by Streamdown -> <pre><code class="language-mermaid">...</code></pre>
-        const codeBlocks = container.querySelectorAll<HTMLPreElement>("pre > code.language-mermaid")
-        let idx = 0
-        for (const code of codeBlocks) {
-          const parentPre = code.parentElement?.tagName === "PRE" ? code.parentElement as HTMLElement : code as HTMLElement
-          const source = code.textContent || ""
-          const id = `m_${Date.now()}_${idx++}`
+      for (const code of codeBlocks) {
+        const parentPre =
+          code.parentElement?.tagName === "PRE"
+            ? (code.parentElement as HTMLElement)
+            : (code as HTMLElement)
 
-          try {
-            const { svg } = await mermaid.render(id, source)
-            const wrapper = document.createElement("div")
-            wrapper.className = "my-4"
-            wrapper.innerHTML = svg
-            parentPre.replaceWith(wrapper)
-          } catch {
-            // If render fails, keep the original code block
-            // (optionally log or show a small error badge)
-            // console.error(e)
-          }
+        const src = code.textContent || ""
+        const id = `m_${Date.now()}_${idx++}`
+
+        try {
+          const { svg } = await mermaid.render(id, src)
+          const wrapper = document.createElement("div")
+          wrapper.className = "my-4"
+          wrapper.innerHTML = svg
+          parentPre.replaceWith(wrapper)
+        } catch {
+          // keep original block on error
         }
-      })()
+      }
+    })()
 
-      return () => { cancelled = true }
-    }, [content])
+    return () => {
+      cancelled = true
+    }
+  }, [content])
 
-    return (
-      <div ref={rootRef}>
-        <Streamdown
-          shikiTheme={["rose-pine-dawn", "rose-pine-moon"]}
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw, [rehypeSanitize, brOnlySchema]]}
-          components={components}
-        >
-          {content}
-        </Streamdown>
-      </div>
-    )
-  }
-
-  return { default: Renderer }
-})
-
+  return (
+    <div ref={rootRef}>
+      <Streamdown
+        components={components}
+        shikiTheme={["rose-pine-dawn", "rose-pine-moon"]}
+        remarkPlugins={[
+          remarkGfm, // <- restores GFM (tables, task lists, etc.)
+          [remarkMath, { singleDollarTextMath: true }], // <- $...$ + $$...$$
+        ]}
+        rehypePlugins={[
+          rehypeKatex, // <- render math with KaTeX
+        ]}
+      >
+        {content}
+      </Streamdown>
+    </div>
+  )
+}
 
 /** -------------------------------------------------------
- *  Props
- *  ------------------------------------------------------*/
+ * MarkdownView wrapper
+ * ------------------------------------------------------*/
 export interface MarkdownViewProps {
   content: string
   isStreaming?: boolean
 }
 
-
-/** -------------------------------------------
- * MarkdownView
- * ------------------------------------------*/
 export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
   ({ content }) => {
-    React.useEffect(() => { ensureScrollbarStyleInjected() }, [])
+    React.useEffect(() => {
+      ensureScrollbarStyleInjected()
+    }, [])
 
     return (
       <div className="w-full min-w-0">
-        <React.Suspense fallback={<div></div>}>
-          <LazyRenderer content={content} />
-        </React.Suspense>
+        <Renderer content={content} />
       </div>
     )
   },
-  (prev, next) => prev.content === next.content && prev.isStreaming === next.isStreaming
+  (prev, next) =>
+    prev.content === next.content && prev.isStreaming === next.isStreaming
 )

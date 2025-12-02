@@ -9,11 +9,11 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  type TooltipProps
+  type TooltipContentProps,
 } from 'recharts'
 import type { TradingData, Point, TimeRange } from '../utils/trading'
 
-const ranges: TimeRange[] = ['1d','5d','1mo','6mo','ytd','1y','5y','max']
+const ranges: TimeRange[] = ['1d', '5d', '1mo', '6mo', 'ytd', '1y', '5y', 'max']
 
 const formatNumber = (n: number) =>
   new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(n)
@@ -32,24 +32,30 @@ const formatDelta = (n: number, pct: number) => {
 const formatTick = (t: number, rangeLabel: string) => {
   const d = new Date(t * 1000)
   if (rangeLabel === '1d') return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  if (rangeLabel === '5d' || rangeLabel === '1mo') return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
-  if (rangeLabel === '6mo' || rangeLabel === 'ytd' || rangeLabel === '1y') return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+  if (rangeLabel === '5d' || rangeLabel === '1mo')
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+  if (rangeLabel === '6mo' || rangeLabel === 'ytd' || rangeLabel === '1y')
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
   return d.toLocaleDateString([], { month: 'short', year: '2-digit' })
 }
 
-type RechartsPayload = { payload: Point }
-type RechartsTooltipProps = TooltipProps<number, string> & { payload?: RechartsPayload[] }
+// Correct type for Tooltip `content` in Recharts v3
+type CustomTooltipProps = TooltipContentProps<number, string>
 
 const makeCustomTooltip =
   (rangeLabel: string) =>
-  ({ active, payload }: RechartsTooltipProps) => {
+  ({ active, payload }: CustomTooltipProps) => {
     if (!active || !payload || payload.length === 0) return null
-    const p = payload[0].payload
+
+    // Original data point is stored on .payload
+    const p = payload[0].payload as Point
     const d = new Date(p.t * 1000)
+
     const label =
       rangeLabel === '1d'
         ? d.toLocaleString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
         : d.toLocaleString()
+
     return (
       <div className='rounded-lg border bg-background/95 px-3 py-2 shadow-sm text-xs'>
         <div className='text-muted-foreground'>Price • {p.v.toFixed(2)}</div>
@@ -61,7 +67,7 @@ const makeCustomTooltip =
 export default function TradingWidget({
   data,
   rangeLabel = '1d',
-  onRangeChange
+  onRangeChange,
 }: {
   data: TradingData
   rangeLabel?: TimeRange
@@ -72,7 +78,7 @@ export default function TradingWidget({
   const [internalRange, setInternalRange] = useState<TimeRange>(rangeLabel)
   const currentRange = useMemo<TimeRange>(
     () => (onRangeChange ? rangeLabel : internalRange),
-    [onRangeChange, rangeLabel, internalRange]
+    [onRangeChange, rangeLabel, internalRange],
   )
 
   const { points, snapshot } = data
@@ -123,14 +129,16 @@ export default function TradingWidget({
 
         {/* Range selector (compact, same vibe) */}
         <div className='flex flex-wrap gap-1.5 self-start'>
-          {ranges.map(r => (
+          {ranges.map((r) => (
             <button
               key={r}
               onClick={() => handlePick(r)}
               className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium border transition
-                ${r === currentRange
-                  ? 'bg-primary/10 text-primary border-primary/30'
-                  : 'text-muted-foreground hover:text-foreground border-transparent hover:border-border'}`}
+                ${
+                  r === currentRange
+                    ? 'bg-primary/10 text-primary border-primary/30'
+                    : 'text-muted-foreground hover:text-foreground border-transparent hover:border-border'
+                }`}
             >
               {r.toUpperCase()}
             </button>
@@ -148,14 +156,23 @@ export default function TradingWidget({
                   <stop offset='100%' stopColor='currentColor' stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <CartesianGrid vertical={false} strokeDasharray='3 3' stroke='var(--border)' opacity={0.35} />
+              <CartesianGrid
+                vertical={false}
+                strokeDasharray='3 3'
+                stroke='var(--border)'
+                opacity={0.35}
+              />
               <XAxis
                 dataKey='t'
                 tickFormatter={(t) => formatTick(t as number, currentRange)}
                 minTickGap={28}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 10, fontFamily: 'var(--font-sans)', fill: 'var(--muted-foreground)' }}
+                tick={{
+                  fontSize: 10,
+                  fontFamily: 'var(--font-sans)',
+                  fill: 'var(--muted-foreground)',
+                }}
               />
               <YAxis dataKey='v' hide domain={['dataMin', 'dataMax']} />
               <Tooltip
@@ -169,7 +186,13 @@ export default function TradingWidget({
                 strokeDasharray='4 4'
                 ifOverflow='extendDomain'
               />
-              <Area type='monotone' dataKey='v' stroke='currentColor' strokeWidth={2} fill='url(#areaFill)' />
+              <Area
+                type='monotone'
+                dataKey='v'
+                stroke='currentColor'
+                strokeWidth={2}
+                fill='url(#areaFill)'
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>

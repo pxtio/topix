@@ -1,25 +1,23 @@
 import { useReactFlow } from "@xyflow/react"
-import { createDefaultNote, createDefaultNoteProperties, type Note } from "../types/note"
+import { createDefaultNote, createDefaultNoteProperties } from "../types/note"
 import { useCallback } from "react"
 import { useGraphStore } from "../store/graph-store"
 import { convertNoteToNode } from "../utils/graph"
-import { useAddNotes } from "../api/add-notes"
-import { useAppStore } from "@/store"
 import type { NodeType } from "../types/style"
 import { useStyleDefaults } from "../style-provider"
+import { useShallow } from "zustand/react/shallow"
 
 
 /**
  * Custom hook to add a new note node to the graph.
  */
 export function useAddNoteNode() {
-  const userId = useAppStore((state) => state.userId)
-
   const { getViewport } = useReactFlow()
 
-  const { boardId, nodes, setNodes } = useGraphStore()
+  const boardId = useGraphStore(state => state.boardId)
+  const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const nodes = useGraphStore(useShallow(state => state.nodes))
 
-  const { addNotes } = useAddNotes()
   const { applyDefaultNodeStyle } = useStyleDefaults()
 
   return useCallback(({
@@ -63,8 +61,6 @@ export function useAddNoteNode() {
     const node = convertNoteToNode(newNote)
     const newNodes = nodes.map(n => ({ ...n, selected: false }))
     node.selected = true
-    setNodes([...newNodes, node])
-    const notes: Note[] = [newNote]
-    addNotes({ boardId, userId, notes })
-  }, [boardId, getViewport, setNodes, nodes, addNotes, userId, applyDefaultNodeStyle])
+    setNodesPersist([...newNodes, node])
+  }, [boardId, getViewport, setNodesPersist, nodes, applyDefaultNodeStyle])
 }

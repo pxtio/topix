@@ -2,7 +2,6 @@ import { useNavigate } from "@tanstack/react-router"
 import { UNTITLED_LABEL } from "../const"
 import type { Graph } from "../types/board"
 import { useCreateBoard } from "../api/create-board"
-import { useAppStore } from "@/store"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { PlusSignIcon } from "@hugeicons/core-free-icons"
 import { formatDateForUI } from "../utils/datetime"
@@ -72,12 +71,11 @@ export const BoardCard = ({
 
 // New board card component
 export const NewBoardCard = () => {
-  const { userId } = useAppStore()
   const { createBoardAsync } = useCreateBoard()
   const navigate = useNavigate()
 
   const handleClick = async () => {
-    const newId = await createBoardAsync({ userId })
+    const newId = await createBoardAsync()
     // Go to /boards/:id (no page refresh)
     navigate({ to: '/boards/$id', params: { id: newId } })
   }

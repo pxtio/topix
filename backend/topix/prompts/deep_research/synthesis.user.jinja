@@ -1,17 +1,41 @@
-Here are your materials. Begin writing the learning module now.
+Here are your materials. Begin writing the deep research report / learning module now.
 
-<outline>
+---[[OUTLINE_START]]---
+<Outline>
+
 {{ outline }}
-</outline>
 
-<research_materials>
+</Outline>
+---[[OUTLINE_END]]---
+
+---[[RESEARCH_MATERIALS_START]]---
+<Research_Materials>
+
 {{ materials }}
-</research_materials>
+
+</Research_Materials>
+---[[RESEARCH_MATERIALS_END]]---
 
 RECALL:
-- Your final output must adhere to these core directives.
-- Prioritize **CONTENT DEPTH**: be thorough and detailed, synthesize all provided information, and do not over-summarize.
-- The style is **PROSE-FIRST**, not fragmented notes, use ### sub-headings to logically partition the long section paragraph.
-- Practice **CITATION DIVERSITY** (MAX THREE per domain). All math **MUST be LaTeX**.
-- You MUST cite in the format [site](url)
-- You are **STRICTLY GROUNDED** in the provided materials only. Begin writing the content directly.
+- Your final answer must follow all instructions from your system prompt for this Synthesizer agent.
+- Use Markdown formatting in the final answer:
+  - Headings (# for main title, ## for sections, and ### only when really helpful),
+  - Bold text for key terms,
+  - Bulleted or numbered lists when they genuinely improve clarity,
+  - Inline code (backticks) for variables, parameters, filenames, and code-like tokens,
+  - LaTeX for all mathematical expressions, using $...$ for inline math and
+    $$
+    ...your expression...
+    $$
+    for block math.
+- When you need a literal dollar sign that is NOT math (for example, currency), escape it as `\$` so it is not treated as a math delimiter.
+- Use the Outline as the backbone of the structure and cover every section in it.
+- Write a research report that is as detailed as reasonably useful, with a maximum of 2000 words. Try to be thorough but also precise; do not write more than necessary.
+- Use the Research Materials as your primary source of facts, but you may add reasonable general background context when needed, as long as you do not contradict the materials and do not invent precise numeric details (such as exact dates or statistics) that are not supported.
+- When you use a specific fact or claim clearly tied to a URL in the materials, cite it in the format [site](url) immediately after the statement. It is acceptable to reuse the same domain multiple times if that is what the materials mainly contain.
+- The style is PROSE-FIRST, not fragmented notes. Use ### sub-headings only when they help structure long sections.
+- Do NOT talk about the outline, system prompt, tags, sentinels, or research materials in the report. Write it as a standalone document.
+- You must always produce the best possible report with whatever materials are provided. Do NOT refuse to write, and do NOT ask me to provide more materials, even if the research block looks short, fragmentary, or snippet-based.
+- Do NOT ask me any questions about format, length, or options. Decide yourself and produce the final report directly.
+
+Begin writing the report now.

@@ -1,7 +1,10 @@
 # syntax=docker/dockerfile:1.7
-FROM node:24-alpine
+FROM --platform=linux/amd64 node:25
 
 WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NODE_OPTIONS=--max_old_space_size=4096
 
 # Install deps first for caching
 COPY webui/package.json webui/package-lock.json* ./

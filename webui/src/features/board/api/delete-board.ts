@@ -11,12 +11,10 @@ import { apiFetch } from "@/api"
  */
 export async function deleteBoard(
   boardId: string,
-  userId: string
 ): Promise<void> {
   await apiFetch({
     path: `/boards/${boardId}`,
-    method: "DELETE",
-    params: { user_id: userId }
+    method: "DELETE"
   })
 }
 
@@ -25,13 +23,13 @@ export const useDeleteBoard = () => {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: async ({ boardId, userId }: { boardId: string, userId: string }) => {
+    mutationFn: async ({ boardId }: { boardId: string }) => {
       // Optimistically update the list of boards in the cache
-      queryClient.setQueryData(["listBoards", userId], (oldBoards: Graph[] | undefined) => {
+      queryClient.setQueryData(["listBoards"], (oldBoards: Graph[] | undefined) => {
         return oldBoards?.filter(board => board.uid !== boardId)
       })
 
-      await deleteBoard(boardId, userId)
+      await deleteBoard(boardId)
     },
   })
 

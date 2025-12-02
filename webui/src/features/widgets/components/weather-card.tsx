@@ -32,7 +32,7 @@ export function WeatherCard({ cities }: WeatherCardProps) {
   if (isPending || error || !data) return null
 
   return (
-    <div className='w-full space-y-4'>
+    <div className='w-full space-y-2'>
       {/* City selector */}
       <div className='w-full flex flex-row items-center justify-center gap-4'>
         {cities.map((city, idx) => {

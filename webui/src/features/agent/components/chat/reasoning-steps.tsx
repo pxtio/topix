@@ -1,4 +1,4 @@
-import { memo, useState } from "react"
+import { memo, useMemo, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { ToolNameIcon, type AgentResponse, type ReasoningStep } from "../../types/stream"
 import { extractStepDescription, getWebSearchUrls } from "../../utils/stream/build"
@@ -13,17 +13,13 @@ import { ProgressBar } from "@/components/progress-bar"
 const ReasoningMessage = ({
   reasoning
 }: { reasoning: string }) => {
-  const [viewReasoning, setViewReasoning] = useState<boolean>(false)
-
-  const handleClick = () => setViewReasoning(!viewReasoning)
-
   return (
-    <div className='text-muted-foreground bg-background p-2 rounded-lg space-y-1'>
-      <div className='flex items-center gap-2 font-medium text-foreground cursor-pointer' onClick={handleClick}>
+    <div className='text-muted-foreground p-0 space-y-1 italic'>
+      <div className='flex items-center gap-2 font-medium cursor-pointer'>
         <HugeiconsIcon icon={IdeaIcon} className='size-4' strokeWidth={2} />
-        <span>Reasoning</span>
+        <span>Thought</span>
       </div>
-      {viewReasoning && <span>{reasoning}</span>}
+      <span>{reasoning}</span>
     </div>
   )
 }
@@ -85,11 +81,11 @@ const ReasoningStepViewImpl = ({
       </div>
       <div className='relative flex-1 flex flex-col items-start rounded-lg text-xs'>
         <div className={messageClass}>
-           <div className='flex flex-col gap-1'>
+           <div className='flex flex-col gap-2'>
             <div>
               <h4 className='text-xs font-medium inline'>{title}</h4>
               {
-                !viewMore && (
+                !viewMore && !isLoading && (
                   <button
                     className='text-xs text-secondary font-sans hover:underline ml-2'
                     onClick={handleClick}
@@ -177,73 +173,92 @@ export interface ReasoningStepsViewProps {
 export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSeconds }: ReasoningStepsViewProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
 
-  if (!response || response.steps.length === 0) {
-    return (
-      <div className='w-full p-4 text-left'>
-        <ThinkingDots message={"Thinking"} />
-      </div>
-    )
+  const lastStepMessage = useMemo(() => {
+    if (!response || response.steps.length === 0) return "Thinking"
+    const lastStep = response.steps[response.steps.length - 1]
+    const { title } = extractStepDescription(lastStep)
+    return title
+  }, [response])
+
+  const titleMessage = isStreaming ? lastStepMessage : "Steps"
+
+  if (!response) {
+    return null
   }
 
   return (
-    <div
-      className={`
-        relative
-        w-full
-        p-3
-        bg-sidebar
-        text-muted-foreground
-        rounded-xl
-        shadow-md
-      `}
-    >
-      <div className='font-medium text-base p-1 flex flex-row items-center justify-center'>
-        <ThinkingDots message={"Thinking"} isStopped={!isStreaming} />
-      </div>
+    <>
       {
-        estimatedDurationSeconds && (
-          <ProgressBar estimatedTime={estimatedDurationSeconds} isStop={!isStreaming} startedAt={response.sentAt} />
+        (!isOpen || isStreaming) ? (
+          <div className='w-full flex flex-col items-center gap-2'>
+            <div className='w-full p-4 text-left flex flex-row items-center gap-2'>
+              <ThinkingDots message={titleMessage} isStopped={!isStreaming} />
+              {
+                !isStreaming && (
+                  <span
+                    className='transition-all text-xs text-accent-foreground hover:text-card-foreground'
+                    onClick={() => setIsOpen(!isOpen)}
+                  >
+                    <ChevronDown className='w-4 h-4 flex-shrink-0' />
+                  </span>
+                )
+              }
+            </div>
+            {
+              estimatedDurationSeconds && isStreaming && (
+                <div className='w-full flex flex-col items-start'>
+                  <div className='w-full max-w-[300px] border border-border shadow-sm rounded-lg bg-background px-2 py-4'>
+                    <ProgressBar estimatedTime={estimatedDurationSeconds} isStop={!isStreaming} startedAt={response.sentAt} />
+                  </div>
+                </div>
+              )
+            }
+          </div>
+        ): (
+          <div
+            className={`
+              relative
+              w-full
+              p-3
+              bg-sidebar
+              text-muted-foreground
+              rounded-xl
+              shadow-md
+            `}
+          >
+            <div className='font-medium text-base p-1 flex flex-row items-center justify-center gap-2'>
+              <ThinkingDots message={titleMessage} isStopped={!isStreaming} />
+              <span
+                className='transition-all text-xs text-accent-foreground hover:text-card-foreground'
+                onClick={() => setIsOpen(!isOpen)}
+              >
+                <ChevronUp className='w-4 h-4 flex-shrink-0' />
+              </span>
+            </div>
+
+            <div
+              className={`
+                flex flex-col items-start
+                font-sans
+                text-sm
+                relative
+              `}
+            >
+              {
+                isOpen &&
+                response.steps.map((step, index) => <ReasoningStepView
+                  key={index}
+                  step={step}
+                  isLoading={step.state === "started"}
+                />)
+              }
+              <div
+                className='absolute left-[0.975rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
+              />
+            </div>
+          </div>
         )
       }
-      <div
-        className={`
-          flex flex-col items-start
-          font-sans
-          text-sm
-          relative
-        `}
-      >
-        {
-          !isOpen &&
-          <ReasoningStepView
-            step={response.steps[response.steps.length - 1]}
-            isLoading={response.steps[response.steps.length - 1].state === "started"}
-          />
-        }
-        {
-          isOpen &&
-          response.steps.map((step, index) => <ReasoningStepView
-            key={index}
-            step={step}
-            isLoading={step.state === "started"}
-          />)
-        }
-        <div
-          className='absolute left-[0.975rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
-        />
-      </div>
-      <button
-        className='absolute bottom-1 right-1/2 transform translate-x-1/2'
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span className='transition-all text-xs text-accent-foreground hover:text-card-foreground'>
-          {
-            isOpen ?
-            <ChevronUp className='w-4 h-4 flex-shrink-0' /> :
-            <ChevronDown className='w-4 h-4 flex-shrink-0' />
-          }
-        </span>
-      </button>
-    </div>
+    </>
   )
 }

@@ -12,8 +12,9 @@ from topix.agents.datatypes.outputs import WebSearchOutput
 from topix.agents.datatypes.web_search import WebSearchContextSize
 from topix.agents.websearch.utils import get_from_date
 from topix.datatypes.recurrence import Recurrence
+from topix.utils.retry import async_retry
 
-semaphore = asyncio.Semaphore(8)
+semaphore = asyncio.Semaphore(100)  # limit concurrent requests to 100
 
 
 def _get_env_or_raise(key: str) -> str:
@@ -26,6 +27,7 @@ def _get_env_or_raise(key: str) -> str:
     return value
 
 
+@async_retry(retries=3, delay_ms=1000, exceptions=(httpx.HTTPError,))
 async def search_perplexity(
     query: str,
     max_results: int = 10,
@@ -108,6 +110,7 @@ async def search_perplexity(
     )
 
 
+@async_retry(retries=3, delay_ms=1000, exceptions=(httpx.HTTPError,))
 async def search_tavily(
     query: str,
     max_results: int = 10,
@@ -178,6 +181,7 @@ async def search_tavily(
     )
 
 
+@async_retry(retries=3, delay_ms=1000, exceptions=(httpx.HTTPError,))
 async def search_linkup(
     query: str,
     max_results: int = 10,
@@ -245,6 +249,101 @@ async def search_linkup(
     )
 
 
+@async_retry(retries=3, delay_ms=1000, exceptions=(httpx.HTTPError,))
+async def search_exa(
+    query: str,
+    max_results: int = 10,
+    search_context_size: WebSearchContextSize = WebSearchContextSize.MEDIUM,
+    recency: Recurrence | None = None,
+    *,
+    client: Optional[httpx.AsyncClient] = None,
+    timeout: Optional[httpx.Timeout] = None,
+) -> WebSearchOutput:
+    """Search for a query using the Exa API (async).
+
+    Args:
+        query: The query to search for.
+        max_results: Maximum number of results to return (capped at Exa's limit of 100).
+        search_context_size: Size of the search context. HIGH maps to Exa "deep" search,
+            everything else uses "auto" (fast + neural combo).
+        recency: Optional Recurrence filter. Returns results from the last 'daily',
+            'weekly', 'monthly', or 'yearly'. If not specified, no date filtering.
+        client: Optional shared httpx.AsyncClient to reuse.
+        timeout: Optional httpx timeout (per-request).
+
+    Returns:
+        WebSearchOutput
+
+    """
+    url = "https://api.exa.ai/search"
+    api_key = _get_env_or_raise("EXA_API_KEY")
+
+    # Exa supports x-api-key or Authorization: Bearer
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": api_key,
+    }
+
+    # Map your context size to Exa search type
+    # HIGH -> "deep" (more comprehensive)
+    # others -> "auto" (sensible default: neural + other methods)
+    if search_context_size == WebSearchContextSize.HIGH:
+        exa_type = "deep"
+    else:
+        exa_type = "fast"
+
+    # Respect Exa's max 100 results limit
+    num_results = min(max_results, 100)
+
+    data: dict = {
+        "query": query,
+        "type": exa_type,
+        "numResults": num_results,
+        "contents": {
+            "context": True
+        }
+    }
+
+    # Optional recency filter -> Exa startPublishedDate (ISO 8601)
+    if recency:
+        from_date = get_from_date(recency).isoformat()
+        data["startPublishedDate"] = from_date
+
+    async with semaphore:
+        if client is None:
+            async with httpx.AsyncClient() as ac:
+                resp = await ac.post(url, headers=headers, json=data, timeout=timeout)
+        else:
+            resp = await client.post(url, headers=headers, json=data, timeout=timeout)
+
+    resp.raise_for_status()
+    json_response = resp.json()
+    results = json_response.get("results", []) or []
+
+    # Exa returns fields like: title, url, text, summary, etc.
+    search_results: list[SearchResult] = []
+    for result in results[:max_results]:
+        content = (
+            result.get("text")
+            or result.get("summary")
+            or ""
+        )
+
+        search_results.append(
+            SearchResult(
+                url=result["url"],
+                title=result.get("title", ""),
+                content=content,
+                favicon=result.get("favicon"),
+                published_at=result.get("publishedDate"),
+                cover_image=result.get("image") or None
+            )
+        )
+
+    return WebSearchOutput(search_results=search_results, answer=json_response.get("context", ""))
+
+
+@async_retry(retries=3, delay_ms=1000, exceptions=(httpx.HTTPError,))
 async def fetch_content(
     web_url: str,
     extract_depth: Literal["basic", "advanced"] = "basic",

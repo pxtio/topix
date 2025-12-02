@@ -7,6 +7,8 @@ import { SourcesView } from "./sources-view"
 import { WeatherCard } from "@/features/widgets/components/weather-card"
 import TradingCard from "@/features/widgets/components/trading-card"
 import { useMemo } from "react"
+import ImageSearchStrip from "@/features/widgets/components/image-card"
+import { ImageGenView } from "./image-gen-view"
 
 
 /**
@@ -24,7 +26,7 @@ export const AssistantMessage = ({
   const resp = { steps: message.properties?.reasoning?.reasoning || [], isDeepResearch, sentAt: message.sentAt }
 
   const messageClass = clsx(
-    "w-full p-4 space-y-2 min-w-0",
+    "w-full p-2 space-y-2 min-w-0",
     isSynthesis && "rounded-xl border border-border/50 shadow-sm p-6",
     isSynthesis && !message.streaming && "overflow-y-auto scrollbar-thin max-h-[800px]"
   )
@@ -55,13 +57,44 @@ export const AssistantMessage = ({
     return []
   }, [message, isDeepResearch, resp.steps])
 
+  // retrieve first image search query from reasoning steps
+  const imageUrls = useMemo(() => {
+    if (!message.streaming && !isDeepResearch) {
+      const imgStep = resp.steps.find(step => step.name === 'display_image_search_widget')
+      if (imgStep && typeof imgStep.output === 'object' && 'images' in imgStep.output) {
+        return imgStep.output.images as string[]
+      }
+    }
+    return null
+  }, [message, isDeepResearch, resp.steps])
+
+  const { includeImageGeneration, filename } = useMemo(() => {
+    if (resp.steps.filter(step => step.name === 'image_generation').length > 0) {
+      const includeImageGeneration = true
+      const lastImageGenStep = resp.steps.filter(step => step.name === 'image_generation').slice(-1)[0]
+      const filename = typeof lastImageGenStep.output === 'object' && 'imageUrls' in lastImageGenStep.output && lastImageGenStep.output.imageUrls.length > 0
+        ? (lastImageGenStep.output.imageUrls[0] as string)
+        : undefined
+      return { includeImageGeneration, filename }
+    }
+    return { includeImageGeneration: false, filename: undefined }
+  }, [resp.steps])
+
   return (
-    <div className='w-full space-y-4'>
+    <div className='w-full space-y-2'>
       <ReasoningStepsView
         response={resp}
         isStreaming={message.streaming || false}
         estimatedDurationSeconds={isDeepResearch ? 180 : undefined}
       />
+      {
+        includeImageGeneration && (
+          <div>
+            <ImageGenView filename={filename} />
+          </div>
+        )
+      }
+      { imageUrls && <ImageSearchStrip images={imageUrls} /> }
       { cities.length > 0 && <WeatherCard cities={cities} /> }
       { tradingSymbols.length > 0 && <TradingCard symbols={tradingSymbols} initialRange="1d" /> }
       {lastStepMessage}

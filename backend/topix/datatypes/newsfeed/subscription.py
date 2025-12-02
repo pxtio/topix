@@ -1,9 +1,9 @@
 """Subscription datatype."""
 from pydantic import Field
 
+from topix.datatypes.lang import LangCodeEnum
 from topix.datatypes.property import BooleanProperty, DataProperty, IconProperty, MultiTextProperty, TextProperty
 from topix.datatypes.resource import Resource, ResourceProperties, RichText
-from topix.datatypes.lang import LangCodeEnum
 
 
 class SubscriptionProperties(ResourceProperties):

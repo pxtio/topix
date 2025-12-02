@@ -13,8 +13,8 @@ from topix.agents.newsfeed.config import NewsfeedCollectorConfig, NewsfeedSynthe
 from topix.agents.newsfeed.context import NewsfeedContext
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.api.utils.common import iso_to_clear_date
-from topix.datatypes.newsfeed.subscription import Subscription
 from topix.datatypes.lang import LANGCODEMAPPING, LangEnum
+from topix.datatypes.newsfeed.subscription import Subscription
 
 
 class NewsfeedCollectorInput(BaseModel):
@@ -71,14 +71,13 @@ class NewsfeedCollector(BaseAgent):
         input: NewsfeedCollectorInput,
     ):
         """Format input for the agent."""
-        sub_topics_str = '\n'.join(f"- {st}" for st in input.subscription.properties.sub_topics.texts) \
-            if input.subscription.properties.sub_topics.texts else "None"
-        keywords_str = ', '.join(kw for kw in input.subscription.properties.keywords.texts) \
-            if input.subscription.properties.keywords.texts else "None"
-        seed_sources_str = '\n'.join(f"- {ss}" for ss in input.subscription.properties.seed_sources.texts) \
-            if input.subscription.properties.seed_sources.texts else "None"
-        lang_str = LANGCODEMAPPING[input.subscription.properties.lang] if input.subscription.properties.lang else LangEnum.ENGLISH
+        sub_topics_str = '\n'.join(f"- {st}" for st in input.subscription.properties.sub_topics.texts)
+        keywords_str = ', '.join(kw for kw in input.subscription.properties.keywords.texts)
+        seed_sources_str = '\n'.join(f"- {ss}" for ss in input.subscription.properties.seed_sources.texts)
+
+        lang_str = LANGCODEMAPPING.get(input.subscription.properties.lang, LangEnum.ENGLISH)
         frequency_str = input.subscription.properties.recurrence.text if input.subscription.properties.recurrence else "month"
+
         history_str = '\n'.join(f"- {title} ({url})" for url, title in input.history) if input.history else "None"
 
         return self._render_prompt(
@@ -136,16 +135,15 @@ class NewsfeedSynthesizer(BaseAgent):
         input: NewsfeedCollectorInput
     ):
         """Format input for the agent."""
-        sub_topics_str = '\n'.join(f"- {st}" for st in input.subscription.properties.sub_topics.texts) \
-            if input.subscription.properties.sub_topics.texts else "None"
-        keywords_str = ', '.join(kw for kw in input.subscription.properties.keywords.texts) \
-            if input.subscription.properties.keywords.texts else "None"
-        seed_sources_str = '\n'.join(f"- {ss}" for ss in input.subscription.properties.seed_sources.texts) \
-            if input.subscription.properties.seed_sources.texts else "None"
-        lang_str = LANGCODEMAPPING[input.subscription.properties.lang] if input.subscription.properties.lang else LangEnum.ENGLISH
+        sub_topics_str = '\n'.join(f"- {st}" for st in input.subscription.properties.sub_topics.texts)
+        keywords_str = ', '.join(kw for kw in input.subscription.properties.keywords.texts)
+        seed_sources_str = '\n'.join(f"- {ss}" for ss in input.subscription.properties.seed_sources.texts)
+
+        lang_str = LANGCODEMAPPING.get(input.subscription.properties.lang, LangEnum.ENGLISH)
         frequency_str = input.subscription.properties.recurrence.text if input.subscription.properties.recurrence else "month"
 
         history_str = '\n'.join(f"- {title} ({url})" for url, title in input.history) if input.history else "None"
+
         return self._render_prompt(
             "newsfeed/synthesizer.user.jinja",
             time=iso_to_clear_date(datetime.now().isoformat()),

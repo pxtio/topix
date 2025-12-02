@@ -17,6 +17,7 @@ from topix.datatypes.newsfeed.subscription import Subscription, SubscriptionProp
 from topix.datatypes.property import MultiSourceProperty, MultiTextProperty, TextProperty
 from topix.datatypes.resource import RichText
 from topix.store.qdrant.store import ContentStore
+from topix.utils.web.common import get_domain
 from topix.utils.web.favicon import fetch_meta_images_batch
 
 COLLECTOR_MAX_TURNS = 50
@@ -60,12 +61,16 @@ class NewsfeedPipeline:
                 seed_sources=MultiTextProperty(texts=topic.seed_sources)
             )
         )
-        if subscription.label.markdown in DefaultSeedSources.model_fields:
-            default_seed_sources = DefaultSeedSources.model_fields[subscription.label.markdown].default.seed_sources
+        default_seed_sources = DefaultSeedSources.model_fields.get(subscription.label.markdown)
+        if default_seed_sources:
             for dsource in default_seed_sources:
-                # If the default seed source is not in the subscription's seed sources, add it
-                if not any(sub_source in dsource or dsource in sub_source for sub_source in subscription.properties.seed_sources.texts):
+                # get domain name
+                domain = get_domain(dsource)
+
+                # only add if not already present
+                if not any(domain in sub_source for sub_source in subscription.properties.seed_sources.texts):
                     subscription.properties.seed_sources.texts.append(dsource)
+
         return subscription
 
     async def create_subscription(self, topic: str, raw_description: str = "") -> Subscription:
@@ -109,7 +114,6 @@ class NewsfeedPipeline:
             published_at=article.published_at,
             source_domain=article.source_domain,
             tags=article.tags,
-            # score=article.score
         )
 
     async def _add_articles_annotations(self, hits: list[SearchResult]) -> list[SearchResult]:

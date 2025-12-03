@@ -237,3 +237,14 @@ project-root/
 * **Frontend can’t reach API:** check `VITE_TOPIX_URL` in `.env` and browser console.
 * **Ports already in use:** change `API_PORT` / `APP_PORT` in `.env` or stop conflicting processes.
 * **Env not applied:** ensure you edited the **root** `.env` and restarted services; try `make config` to confirm env expansion.
+
+---
+
+## 📄 Ongoing updates on new features and integrations
+
+We are actively adding new features to the project. Stay tuned here for the latest updates:
+* 🔜 Coming soon - Integrate your documents to your projects, and query the agent on them.
+* 🔜 Coming soon - Modify your graphs with an build-in AI agent
+* 🔜 Work in progress - Improve Newsfeed, choose the tone and the recency of articles inside the agents.
+* 🔜 Work in progress - Personnal finance tools in your dashboard.
+* 🔜 TODO - Integrate olama, to self host the models.

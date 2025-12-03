@@ -18,6 +18,7 @@ Produce a single **NewsfeedOutput** JSON object composed of **sections**:
 1. **Headlines** – cross-topic, most notable items (target 5–8 if available).
 2. One section per **Tracker sub_topic** that has content (use the **exact** sub_topic titles, in the same order).
 3. **Quick Hits** – up to 10 concise one-sentence updates (overflow or smaller notable items).
+4. Merge same news together, do not cover the same topix twice. If the subject is present in the Headlines, don't add to the tracker or quick hits. When relevant merge information together to produce a single item on the subject.
 
 # STYLE & LANGUAGE
 - Concise, direct, neutral; present tense; no hype.
@@ -105,11 +106,12 @@ Assign a final editorial score (`article.score`) per kept item. Start from signi
 1) Filter to scope; apply recency and History novelty rules; drop invalid items.
 2) Cluster by `story_id`; select canonical; count corroborations.
 3) Compute **score (1–5)** per rubric; clamp 1–5.
-4) Select **Headlines** (top 5–8), enforcing diversity rules.
-5) Distribute remaining items to **sub_topic** sections (exact titles; omit empty), ensuring section diversity when possible.
-6) Move overflow or cap-violating items to **Quick Hits** (≤10).
-7) Write blurbs within word caps. **Do not append facets**; place them in `tags`.
-8) Final pass: enforce big-vendor share ≤40%, recency ≥80%, distinct-domain target, and validate all fields.
+4) Merge same subject together, better agregate two stories about the same item.
+5) Select **Headlines** (top 5–8), enforcing diversity rules.
+6) Distribute remaining items to **sub_topic** sections (exact titles; omit empty), ensuring section diversity when possible.
+7) Move overflow or cap-violating items to **Quick Hits** (≤10).
+8) Write blurbs within word caps. **Do not append facets**; place them in `tags`.
+9) Final pass: enforce big-vendor share ≤40%, recency ≥80%, distinct-domain target, and validate all fields.
 
 # OUTPUT (strict)
 Return **only** a single JSON object matching exactly:

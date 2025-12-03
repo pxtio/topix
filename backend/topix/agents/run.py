@@ -2,11 +2,12 @@
 
 
 import asyncio
+import logging
 
 from collections.abc import AsyncGenerator
 from typing import Any
 
-from agents import TResponseInputItem
+from agents import MaxTurnsExceeded, TResponseInputItem
 from pydantic import BaseModel
 
 from topix.agents.base import BaseAgent
@@ -15,6 +16,8 @@ from topix.agents.datatypes.stream import AgentStreamMessage
 from topix.agents.datatypes.tool_call import ToolCall
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.tool_handler import ToolHandler
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_MAX_TURNS = 8
 
@@ -112,7 +115,16 @@ class AgentRunner:
             streamed=True,
             is_subagent=False,
         )
-        asyncio.create_task(run_agent(context, input))
+
+        async def _agent_wrapper():
+            try:
+                await run_agent(context, input)
+            except MaxTurnsExceeded as e:
+                logger.error("Agent exceeded max turns: %s", e)
+            except Exception as e:
+                raise e
+
+        asyncio.create_task(_agent_wrapper())
 
         while True:
             message: AgentStreamMessage | ToolCall = await context._message_queue.get()

@@ -65,7 +65,17 @@ class AgentRunner:
             streamed=False,
             is_subagent=False,
         )
-        output = await run_agent(context, input)
+
+        async def _agent_wrapper():
+            try:
+                return await run_agent(context, input)
+            except MaxTurnsExceeded as e:
+                logger.error("Agent exceeded max turns: %s", e)
+                raise e
+            except Exception as e:
+                raise e
+
+        output = await _agent_wrapper()
 
         # Empty the queue
         context._message_queue = asyncio.Queue()

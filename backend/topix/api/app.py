@@ -8,10 +8,14 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 
-from fastapi import FastAPI
+from typing import Annotated
+
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from redis.asyncio import Redis
 
 from topix.api.router import boards, chats, files, finance, subscriptions, tools, users, utils
+from topix.api.utils.security import get_current_user_uid, rate_limiter
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
 from topix.setup import setup
@@ -30,6 +34,7 @@ def create_app(stage: StageEnum):
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         """Application lifespan context manager."""
+        # Initialize stores
         app.graph_store = GraphStore()
         await app.graph_store.open()
         app.user_store = UserStore()
@@ -38,11 +43,30 @@ def create_app(stage: StageEnum):
         await app.chat_store.open()
         app.subscription_store = SubscriptionStore()
         await app.subscription_store.open()
+
+        # Initialize Redis
+        config: Config = Config.instance()
+        redis_config = config.run.databases.redis
+        app.redis = Redis(
+            host=redis_config.host,
+            port=redis_config.port,
+            db=redis_config.db,
+            password=redis_config.password.get_secret_value() if redis_config.password else None,
+            decode_responses=True,
+        )
+        logger.info(f"Redis connected at {redis_config.host}:{redis_config.port}")
+
         yield
+
+        # Close stores
         await app.graph_store.close()
         await app.user_store.close()
         await app.chat_store.close()
         await app.subscription_store.close()
+
+        # Close Redis
+        await app.redis.aclose()
+        logger.info("Redis connection closed")
 
     app = FastAPI(lifespan=lifespan)
 
@@ -64,6 +88,19 @@ def create_app(stage: StageEnum):
     app.include_router(utils.router)
     app.include_router(finance.router)
     app.include_router(files.router)
+
+    @app.get("/hello")
+    async def hello_world(user_id: Annotated[str, Depends(get_current_user_uid)]):
+        """Hello world endpoint without rate limiting."""
+        return {"message": "Hello World!", "user_id": user_id}
+
+    @app.get("/hello-limited")
+    async def hello_world_limited(
+        user_id: Annotated[str, Depends(get_current_user_uid)],
+        _: Annotated[None, Depends(rate_limiter)]
+    ):
+        """Hello world endpoint with rate limiting (5 requests per minute)."""
+        return {"message": "Hello World! (Rate Limited)", "user_id": user_id}
 
     return app
 

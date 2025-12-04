@@ -71,11 +71,38 @@ class PostgresConfig(BaseModel):
             return f"postgresql://{user_enc}@{self.hostname}:{self.port}/{self.database}"
 
 
+class RedisConfig(BaseModel):
+    """Configuration for Redis connection."""
+
+    host: str = "localhost"
+    port: int = 6379
+    db: int = 0
+    password: SecretStr | None = None
+
+    def model_post_init(self, __context):
+        """Post-initialization to set up any derived attributes."""
+        env_host = os.getenv("REDIS_HOST")
+        if env_host:
+            self.host = env_host
+            logger.info(f"Redis host set from environment REDIS_HOST: {self.host}")
+
+        env_port = os.getenv("REDIS_PORT")
+        if env_port:
+            self.port = int(env_port)
+            logger.info(f"Redis port set from environment REDIS_PORT: {self.port}")
+
+        env_password = os.getenv("REDIS_PASSWORD")
+        if env_password:
+            self.password = SecretStr(env_password)
+            logger.info("Redis password set from environment REDIS_PASSWORD.")
+
+
 class DatabasesConfig(BaseModel):
     """Configuration for databases used in the application."""
 
     qdrant: QdrantConfig = Field(default_factory=QdrantConfig)
     postgres: PostgresConfig = Field(default_factory=PostgresConfig)
+    redis: RedisConfig = Field(default_factory=RedisConfig)
 
 
 class BaseAPIConfig(BaseModel):

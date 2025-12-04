@@ -30,6 +30,7 @@ dependencies = [
     "qdrant-client>=1.14.3",
     "questionary>=1.7.0",
     "readchar>=4.2.1",
+    "redis>=5.2.1",
     "rich>=13.7.1",
     "selectolax>=0.3.34",
     "httpx>=0.28.1"

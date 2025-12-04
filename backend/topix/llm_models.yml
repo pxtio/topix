@@ -42,21 +42,27 @@ gpt-4o-mini:
   tier: lite
 
 # Claude Models
+claude-opus-4.5:
+  model: claude-opus-4-5
+  openrouter_model: anthropic/claude-opus-4.5
+  provider: anthropic
+  tier: pro
+
 claude-sonnet-4.5:
-  model: claude-sonnet-4-5-20250929
+  model: claude-sonnet-4-5
   openrouter_model: anthropic/claude-sonnet-4.5
+  provider: anthropic
+  tier: pro
+
+claude-haiku-4.5:
+  model: claude-haiku-4-5
+  openrouter_model: anthropic/claude-haiku-4.5
   provider: anthropic
   tier: pro
 
 claude-opus-4.1:
   model: claude-opus-4-20250514
   openrouter_model: anthropic/claude-opus-4.1
-  provider: anthropic
-  tier: lite
-
-claude-3.5-haiku:
-  model: claude-3-5-haiku-20241022
-  openrouter_model: anthropic/claude-3.5-haiku
   provider: anthropic
   tier: lite
 
@@ -74,6 +80,12 @@ gemini-2.5-flash:
   tier: lite
 
 # Mistral Models
+mistral-large-3:
+  model: mistral-large-latest
+  openrouter_model: mistralai/mistral-large-2512
+  provider: mistral
+  tier: pro
+
 mistral-medium-3.1:
   model: mistral-medium-latest
   openrouter_model: mistralai/mistral-medium-3.1
@@ -81,6 +93,11 @@ mistral-medium-3.1:
   tier: lite
 
 # Deepseek Models
+deepseek-v3.2:
+  model: deepseek-v3.2
+  provider: deepseek
+  tier: pro
+
 deepseek-chat-v3.1:
   model: deepseek-chat-v3.1
   provider: deepseek

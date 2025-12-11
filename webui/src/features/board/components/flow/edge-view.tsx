@@ -2,6 +2,8 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   getSimpleBezierPath,
+  getStraightPath,
+  getSmoothStepPath,
   useInternalNode,
   type EdgeProps
 } from '@xyflow/react'
@@ -15,7 +17,6 @@ import { getEdgeParams } from '../../utils/flow'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 
-
 function markerId(edgeId: string, which: 'start' | 'end'): string {
   return `edge-${edgeId}-${which}-marker`
 }
@@ -25,7 +26,10 @@ function markerOrient(which: 'start' | 'end'): 'auto-start-reverse' | 'auto' {
 }
 
 function markerPath(kind: Exclude<ArrowheadType, 'none'>, size: number): string {
-  if (kind === 'barb') return `M 0 0 L ${size} ${size / 2} L 0 ${size}`
+  // open V for "arrow" / "barb", closed triangle for "arrow-filled"
+  if (kind === 'barb' || kind === 'arrow') {
+    return `M 0 0 L ${size} ${size / 2} L 0 ${size}`
+  }
   return `M 0 0 L ${size} ${size / 2} L 0 ${size} Z`
 }
 
@@ -66,17 +70,33 @@ export const EdgeView = memo(function EdgeView({
 
   const geom = useMemo(() => {
     if (!sourceNode || !targetNode) return null
+
     const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(sourceNode, targetNode)
-    const [edgePath, labelX, labelY] = getSimpleBezierPath({
+    const common = {
       sourceX: sx,
       sourceY: sy,
       sourcePosition: sourcePos,
       targetX: tx,
       targetY: ty,
       targetPosition: targetPos
-    })
+    }
+
+    const pathKind = linkStyle?.pathStyle ?? 'bezier'
+
+    let edgePath: string
+    let labelX: number
+    let labelY: number
+
+    if (pathKind === 'straight') {
+      ;[edgePath, labelX, labelY] = getStraightPath(common)
+    } else if (pathKind === 'polyline') {
+      ;[edgePath, labelX, labelY] = getSmoothStepPath(common)
+    } else {
+      ;[edgePath, labelX, labelY] = getSimpleBezierPath(common)
+    }
+
     return { sx, sy, tx, ty, edgePath, labelX, labelY }
-  }, [sourceNode, targetNode])
+  }, [sourceNode, targetNode, linkStyle?.pathStyle])
 
   const baseStroke = linkStyle?.strokeColor ?? '#333333'
   const displayStroke = useMemo(() => {
@@ -91,19 +111,23 @@ export const EdgeView = memo(function EdgeView({
   const startMarkerId = startKind !== 'none' ? markerId(id, 'start') : undefined
   const endMarkerId = endKind !== 'none' ? markerId(id, 'end') : undefined
 
-  const edgeStrokeStyle: CSSProperties = useMemo((): CSSProperties => ({
-    ...(style as CSSProperties),
-    stroke: displayStroke,
-    strokeWidth,
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
-    fill: 'none'
-  }), [style, displayStroke, strokeWidth])
+  const edgeStrokeStyle: CSSProperties = useMemo(
+    (): CSSProperties => ({
+      ...(style as CSSProperties),
+      stroke: displayStroke,
+      strokeWidth,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      fill: 'none'
+    }),
+    [style, displayStroke, strokeWidth]
+  )
 
   // —— RoughJS render layer ——
   useEffect(() => {
     const g = roughGroupRef.current
     if (!g) return
+
     while (g.firstChild) g.removeChild(g.firstChild)
     if (!geom || !linkStyle || !shouldUseRough(linkStyle)) return
 
@@ -113,18 +137,30 @@ export const EdgeView = memo(function EdgeView({
     const rc = new RoughSVG(svgEl)
     const opts = linkStyleToRoughOptions(linkStyle, displayStroke)
     const node = rc.path(geom.edgePath, opts)
+
+    // make rough path nicely rounded too
+    node.setAttribute('stroke-linecap', 'round')
+    node.setAttribute('stroke-linejoin', 'round')
+
     if (startMarkerId) node.setAttribute('marker-start', `url(#${startMarkerId})`)
     if (endMarkerId) node.setAttribute('marker-end', `url(#${endMarkerId})`)
+
     g.appendChild(node)
   }, [geom, linkStyle, startMarkerId, endMarkerId, displayStroke])
 
-  if (!geom) return null
+  // arrowhead geometry:
+  // length independent from strokeWidth (markerUnits='userSpaceOnUse'),
+  // but stroke of outline matches the main line
+  const baseHeadSize = 10
+  const headSize = baseHeadSize
+  const filledHeadSize = headSize * 0.85
+  const headStrokeWidth = Math.max(1, strokeWidth)
 
-  const headSize = 10
-  const headStrokeWidth = Math.max(1, strokeWidth * 0.9)
+  if (!geom) return null
 
   return (
     <>
+      {/* marker defs */}
       <svg width='0' height='0' style={{ position: 'absolute' }}>
         <defs>
           {startMarkerId && startKind !== 'none' && (
@@ -135,11 +171,15 @@ export const EdgeView = memo(function EdgeView({
               refY={`${headSize / 2}`}
               markerWidth={headSize}
               markerHeight={headSize}
-              markerUnits='strokeWidth'
+              markerUnits='userSpaceOnUse'
               orient={markerOrient('start')}
             >
               {startKind === 'arrow-filled' ? (
-                <path d={markerPath('arrow-filled', headSize)} fill={displayStroke} stroke='none' />
+                <path
+                  d={markerPath('arrow-filled', filledHeadSize)}
+                  fill={displayStroke}
+                  stroke='none'
+                />
               ) : startKind === 'arrow' ? (
                 <path
                   d={markerPath('arrow', headSize)}
@@ -170,11 +210,15 @@ export const EdgeView = memo(function EdgeView({
               refY={`${headSize / 2}`}
               markerWidth={headSize}
               markerHeight={headSize}
-              markerUnits='strokeWidth'
+              markerUnits='userSpaceOnUse'
               orient={markerOrient('end')}
             >
               {endKind === 'arrow-filled' ? (
-                <path d={markerPath('arrow-filled', headSize)} fill={displayStroke} stroke='none' />
+                <path
+                  d={markerPath('arrow-filled', filledHeadSize)}
+                  fill={displayStroke}
+                  stroke='none'
+                />
               ) : endKind === 'arrow' ? (
                 <path
                   d={markerPath('arrow', headSize)}
@@ -205,6 +249,7 @@ export const EdgeView = memo(function EdgeView({
         path={geom.edgePath}
         style={{
           ...edgeStrokeStyle,
+          // keep SVG edge barely visible when rough overlay is used (for hit-testing)
           strokeOpacity: shouldUseRough(linkStyle) ? 0.01 : 1
         }}
         markerStart={!shouldUseRough(linkStyle) && startMarkerId ? `url(#${startMarkerId})` : undefined}
@@ -213,8 +258,18 @@ export const EdgeView = memo(function EdgeView({
 
       {selected && (
         <>
-          <circle cx={geom.sx} cy={geom.sy} r={6} className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent' />
-          <circle cx={geom.tx} cy={geom.ty} r={6} className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent' />
+          <circle
+            cx={geom.sx}
+            cy={geom.sy}
+            r={6}
+            className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
+          />
+          <circle
+            cx={geom.tx}
+            cy={geom.ty}
+            r={6}
+            className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
+          />
         </>
       )}
 
@@ -222,7 +277,9 @@ export const EdgeView = memo(function EdgeView({
         <EdgeLabelRenderer>
           <div
             className='nodrag nopan absolute origin-center pointer-events-auto'
-            style={{ transform: `translate(-50%, -50%) translate(${geom.labelX}px, ${geom.labelY}px)` }}
+            style={{
+              transform: `translate(-50%, -50%) translate(${geom.labelX}px, ${geom.labelY}px)`
+            }}
           >
             {data.label}
           </div>

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { apiFetch } from "@/api"
 import type { ToolExecutionState, ToolName } from "../types/stream"
 import type { ToolOutput } from "../types/tool-outputs"
+import { trimReasoningSteps } from "../utils/annotations"
 
 
 interface ListMessagesResponse {
@@ -52,7 +53,10 @@ export async function listMessages(
     method: "GET",
     params: { user_id: userId },
   })
-  return res.data.messages.map((message) => camelcaseKeys(message, { deep: true })) as ChatMessage[]
+  return res.data.messages.map((message) => {
+    const normalized = camelcaseKeys(message, { deep: true }) as ChatMessage
+    return trimMessageAnnotations(normalized)
+  })
 }
 
 
@@ -81,4 +85,24 @@ export const useListMessages = ({
     placeholderData: (prev) => prev,
     staleTime: 1000 * 60 * 5 // 5 minutes
   })
+}
+
+const trimMessageAnnotations = (message: ChatMessage): ChatMessage => {
+  const properties = message.properties
+  const reasoningWrapper = properties?.reasoning
+  const reasoning = reasoningWrapper?.reasoning
+  if (!properties || !reasoningWrapper || !reasoning) {
+    return message
+  }
+
+  return {
+    ...message,
+    properties: {
+      ...properties,
+      reasoning: {
+        ...reasoningWrapper,
+        reasoning: trimReasoningSteps(reasoning)
+      }
+    }
+  }
 }

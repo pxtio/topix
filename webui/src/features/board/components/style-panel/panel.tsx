@@ -138,10 +138,10 @@ const ArrowheadGlyph = ({ kind }: { kind: ArrowheadType }): ReactElement => {
         </g>
       )}
 
-      {/* open V, no bottom */}
+      {/* Triangle with bottom (outline arrow) */}
       {kind === 'arrow' && (
         <path
-          d='M 8 6 L 18 12 L 8 18'
+          d='M 8 6 L 18 12 L 8 18 L 8 6'
           fill='none'
           stroke='currentColor'
           strokeWidth='2'
@@ -150,7 +150,7 @@ const ArrowheadGlyph = ({ kind }: { kind: ArrowheadType }): ReactElement => {
         />
       )}
 
-      {/* slightly different V if you want a “barb” look */}
+      {/* slightly different V for a barb look */}
       {kind === 'barb' && (
         <path
           d='M 10 6 L 18 12 L 10 18'

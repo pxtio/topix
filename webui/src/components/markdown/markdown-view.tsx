@@ -192,64 +192,12 @@ const components = {
   pre: Pre,
 } satisfies Components
 
-const HAS_MERMAID = /```(?:mermaid)[\s\S]*?```/i
-
 /** -------------------------------------------------------
  * Renderer: GFM + math override + mermaid
  * ------------------------------------------------------*/
 const Renderer: React.FC<{ content: string }> = ({ content }) => {
-  const rootRef = React.useRef<HTMLDivElement>(null)
-
-  React.useEffect(() => {
-    if (!HAS_MERMAID.test(content)) return
-    if (typeof document === "undefined") return
-
-    let cancelled = false
-
-    ;(async () => {
-      const [{ default: mermaid }] = await Promise.all([
-        import("mermaid"),
-        import("cytoscape"),
-      ])
-
-      if (cancelled) return
-
-      mermaid.initialize({ startOnLoad: false })
-
-      const container = rootRef.current
-      if (!container) return
-
-      const codeBlocks = container.querySelectorAll("pre > code.language-mermaid")
-      let idx = 0
-
-      for (const code of codeBlocks) {
-        const parentPre =
-          code.parentElement?.tagName === "PRE"
-            ? (code.parentElement as HTMLElement)
-            : (code as HTMLElement)
-
-        const src = code.textContent || ""
-        const id = `m_${Date.now()}_${idx++}`
-
-        try {
-          const { svg } = await mermaid.render(id, src)
-          const wrapper = document.createElement("div")
-          wrapper.className = "my-4"
-          wrapper.innerHTML = svg
-          parentPre.replaceWith(wrapper)
-        } catch {
-          // keep original block on error
-        }
-      }
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [content])
-
   return (
-    <div ref={rootRef}>
+    <div>
       <Streamdown
         components={components}
         shikiTheme={["rose-pine-dawn", "rose-pine-moon"]}

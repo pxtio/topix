@@ -14,10 +14,12 @@ const MessageView = ({
 }: { chatMessage: ChatMessage, isLatestUserMessage: boolean }) => {
   switch (chatMessage.role) {
     case "user":
-      return <UserMessage
-        message={chatMessage.content.markdown}
-        isLatest={isLatestUserMessage}
-      />
+      return (
+        <UserMessage
+          message={chatMessage}
+          isLatest={isLatestUserMessage}
+        />
+      )
     case "assistant":
       return <AssistantMessage
         message={chatMessage}

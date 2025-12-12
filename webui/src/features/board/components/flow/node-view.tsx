@@ -15,6 +15,8 @@ import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { useContentMinHeight } from '../../hooks/content-min-height'
 import { ShapeChrome } from './shape-chrome'
 
+const CONNECTOR_GAP = 10
+
 /**
  * Node view component for rendering a note node in the graph.
  */
@@ -25,9 +27,14 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
 
   // measure content & drive minHeight
-  const { contentRef, computedMinH } = useContentMinHeight(id, 24, 24)
+  const { contentRef, computedMinH } = useContentMinHeight(
+    id,
+    24 + CONNECTOR_GAP * 2,
+    24 + CONNECTOR_GAP * 2,
+  )
 
-  const minH = data.style.type === 'image' || data.style.type === 'icon' ? 50 : computedMinH
+  const baseMinH = data.style.type === 'image' || data.style.type === 'icon' ? 50 : computedMinH
+  const innerMinH = Math.max(30, baseMinH - CONNECTOR_GAP * 2)
 
   const resizeHandles = useMemo(() => ([
     { pos: 'top-left', class: 'top-0 left-0 cursor-nwse-resize' },
@@ -38,8 +45,10 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
   const isPinned = data.properties.pinned.boolean
 
-  const handleClassRight = 'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none -translate-x-[calc(50%-10px)] border-none'
-  const handleClassLeft = 'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none translate-x-1/2 border-none'
+  const handleClassRight =
+    'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none -translate-x-[calc(50%-10px)] border-none'
+  const handleClassLeft =
+    'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none translate-x-1/2 border-none'
 
   const nodeClass = 'w-full h-full relative font-handwriting drag-handle pointer-events-auto bg-transparent'
   const rounded = data.style.roundness > 0 ? 'rounded-2xl' : 'none'
@@ -68,31 +77,42 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
   const isVisualNode = nodeType === 'image' || nodeType === 'icon'
   const resizeMinWidth = isVisualNode ? 80 : 200
-  const resizeMinHeight = isVisualNode ? 80 : minH
+  const resizeMinHeight = isVisualNode ? 80 : innerMinH
 
   return (
     <div className='border-none relative bg-transparent overflow-visible w-full h-full'>
-      <div className='absolute inset-0 w-full h-full overflow-visible'>
+      <div className='absolute inset-0 w-full h-full overflow-visible z-20 pointer-events-none'>
         <Handle className={handleClassRight} position={Position.Right} type='source' />
         <Handle className={handleClassLeft} position={Position.Left} type='target' isConnectableStart={false} />
       </div>
 
-      <ShapeChrome
-        type={nodeType}
-        minHeight={computedMinH}
-        rounded={rounded}
-        frameClass={frameClass}
-        textColor={textColor}
-        backgroundColor={backgroundColor}
-        strokeColor={strokeColor}
-        roughness={data.style.roughness}
-        fillStyle={data.style.fillStyle}
-        strokeStyle={data.style.strokeStyle}
-        strokeWidth={data.style.strokeWidth}
-        seed={data.roughSeed}
+      <div
+        className='absolute inset-0'
+        style={{
+          top: CONNECTOR_GAP,
+          right: CONNECTOR_GAP,
+          bottom: CONNECTOR_GAP,
+          left: CONNECTOR_GAP,
+        }}
       >
-        {content}
-      </ShapeChrome>
+        <ShapeChrome
+          type={nodeType}
+          minHeight={innerMinH}
+          rounded={rounded}
+          frameClass={frameClass}
+          textColor={textColor}
+          backgroundColor={backgroundColor}
+          strokeColor={strokeColor}
+          roughness={data.style.roughness}
+          fillStyle={data.style.fillStyle}
+          strokeStyle={data.style.strokeStyle}
+          strokeWidth={data.style.strokeWidth}
+          seed={data.roughSeed}
+          className='w-full h-full'
+        >
+          {content}
+        </ShapeChrome>
+      </div>
 
       {nodeType !== 'sheet' && selected && resizeHandles.map(({ pos, class: posClass }) => (
         <NodeResizeControl

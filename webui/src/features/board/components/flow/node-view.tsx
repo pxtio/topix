@@ -66,8 +66,12 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const handleResizeStart = () => setIsResizingNode(true)
   const handleResizeEnd = () => setIsResizingNode(false)
 
+  const isVisualNode = nodeType === 'image' || nodeType === 'icon'
+  const resizeMinWidth = isVisualNode ? 80 : 200
+  const resizeMinHeight = isVisualNode ? 80 : minH
+
   return (
-    <div className='border-none relative p-2 bg-transparent overflow-visible w-full h-full'>
+    <div className='border-none relative bg-transparent overflow-visible w-full h-full'>
       <div className='absolute inset-0 w-full h-full overflow-visible'>
         <Handle className={handleClassRight} position={Position.Right} type='source' />
         <Handle className={handleClassLeft} position={Position.Left} type='target' isConnectableStart={false} />
@@ -96,9 +100,9 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
           position={pos as ControlPosition}
           onResizeStart={handleResizeStart}
           onResizeEnd={handleResizeEnd}
-          minHeight={minH}
-          minWidth={200}
-          keepAspectRatio={nodeType === 'image'}
+          minHeight={resizeMinHeight}
+          minWidth={resizeMinWidth}
+          keepAspectRatio={isVisualNode}
         >
           <div
             className={`absolute w-3 h-3 bg-transparent border border-secondary rounded-full ${posClass} z-20`}

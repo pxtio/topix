@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, StarIcon, Image02Icon, ChartBubble02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
-import type { NodeType } from '../../types/style'
+import type { AddNoteNodeOptions } from '../../hooks/add-node'
 import { Separator } from '@/components/ui/separator'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
@@ -11,7 +11,7 @@ import { IconSearchDialog } from './utils/icon-search'
 type ViewMode = 'graph' | 'linear'
 
 interface ActionPanelProps {
-  onAddNode: ({ nodeType }: { nodeType: NodeType }) => void
+  onAddNode: (options: AddNoteNodeOptions) => void
   enableSelection: boolean
   setEnableSelection: (mode: boolean) => void
 

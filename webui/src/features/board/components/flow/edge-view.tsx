@@ -22,6 +22,7 @@ const HEAD_SCALE = 1.5
 const TIP_FACTOR = 0.95           // tip at 95% of viewBox width → no clipping
 const BASE_X_FACTOR = 0.25        // base is at 25% of width (where shaft meets head)
 const BASE_THICKNESS_BOOST = 1.1  // bottom side slightly thicker
+const ARROW_CLEARANCE_FACTOR = 1 // pull heads farther from node surface
 
 function markerId(edgeId: string, which: 'start' | 'end'): string {
   return `edge-${edgeId}-${which}-marker`
@@ -122,8 +123,8 @@ export const EdgeView = memo(function EdgeView({
   // visual arrow length in px (tip to base)
   const headSize = BASE_HEAD_SIZE * HEAD_SCALE
   const arrowLength = headSize * (TIP_FACTOR - BASE_X_FACTOR)
-  // pull endpoints back by ~40% of arrow length so head sits slightly off the node
-  const arrowOffset = arrowLength * 0.4
+  // pull endpoints back so head sits off the node (scaled with head length)
+  const arrowOffset = arrowLength * ARROW_CLEARANCE_FACTOR
 
   const geom = useMemo(() => {
     if (!sourceNode || !targetNode) return null

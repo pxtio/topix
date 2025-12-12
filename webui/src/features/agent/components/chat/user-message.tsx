@@ -35,7 +35,7 @@ export const UserMessage = ({ message, isLatest }: { message: ChatMessage, isLat
         </span>
         <CopyUserMessageButton
           text={text}
-          className="absolute -bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute -bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
         />
         <div
           className={`

@@ -11,6 +11,17 @@ import { useShallow } from "zustand/react/shallow"
 /**
  * Custom hook to add a new note node to the graph.
  */
+export type CanvasPoint = { x: number; y: number }
+export type CanvasSize = { width: number; height: number }
+
+export type AddNoteNodeOptions = {
+  nodeType?: NodeType
+  imageUrl?: string
+  icon?: string
+  position?: CanvasPoint
+  size?: CanvasSize
+}
+
 export function useAddNoteNode() {
   const { getViewport } = useReactFlow()
 
@@ -23,12 +34,10 @@ export function useAddNoteNode() {
   return useCallback(({
     nodeType = 'rectangle',
     imageUrl,
-    icon
-  }: {
-    nodeType?: NodeType
-    imageUrl?: string
-    icon?: string
-  }) => {
+    icon,
+    position,
+    size
+  }: AddNoteNodeOptions) => {
     if (!boardId) return
 
     const newNote = createDefaultNote({ boardId, nodeType })
@@ -57,7 +66,13 @@ export function useAddNoteNode() {
     if (!newNote.properties) {
       newNote.properties = createDefaultNoteProperties({ type: nodeType })
     }
-    newNote.properties.nodePosition = { position: { x: graphX, y: graphY }, type: 'position' }
+
+    const finalPosition = position ?? { x: graphX, y: graphY }
+    newNote.properties.nodePosition = { position: finalPosition, type: 'position' }
+
+    if (size) {
+      newNote.properties.nodeSize = { size, type: 'size' }
+    }
     const node = convertNoteToNode(newNote)
     const newNodes = nodes.map(n => ({ ...n, selected: false }))
     node.selected = true

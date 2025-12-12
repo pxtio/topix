@@ -22,11 +22,13 @@ import { CustomConnectionLine } from './connection'
 import { GraphSidebar } from '../style-panel/panel'
 import { ActionPanel } from './action-panel'
 import { DefaultBoardView } from '../default-view'
+import { NodePlacementOverlay } from './node-placement-overlay'
 
 import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
+import type { NodeType } from '../../types/style'
 
-import { useAddNoteNode } from '../../hooks/add-node'
+import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/add-node'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
@@ -51,6 +53,9 @@ const defaultEdgeOptions = {
   },
 }
 const connectionLineStyle = { stroke: '#a8a29e' }
+
+const isDrawableNodeType = (nodeType: NodeType) =>
+  nodeType !== 'sheet' && nodeType !== 'image' && nodeType !== 'icon'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -154,13 +159,15 @@ export default function GraphEditor() {
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [moving, setMoving] = useState<boolean>(false)
   const [isSelecting, setIsSelecting] = useState<boolean>(false)
+  const [pendingPlacement, setPendingPlacement] = useState<AddNoteNodeOptions | null>(null)
 
   const {
     zoomIn,
     zoomOut,
     fitView,
     viewportInitialized,
-  } = useReactFlow()
+    screenToFlowPosition,
+  } = useReactFlow<NoteNode, LinkEdge>()
 
   const boardId = useGraphStore(state => state.boardId)
 
@@ -188,7 +195,46 @@ export default function GraphEditor() {
     shortcuts: true,
   })
 
-  const handleAddNode = useAddNoteNode()
+  const addNoteNode = useAddNoteNode()
+
+  const beginPlacement = useCallback((options: AddNoteNodeOptions) => {
+    if (!options.nodeType) return
+    setPendingPlacement({
+      ...options,
+      position: undefined,
+      size: undefined,
+    })
+  }, [])
+
+  const cancelPlacement = useCallback(() => {
+    setPendingPlacement(null)
+  }, [])
+
+  const handlePlacementComplete = useCallback(
+    (options: AddNoteNodeOptions) => {
+      addNoteNode(options)
+      setPendingPlacement(null)
+    },
+    [addNoteNode],
+  )
+
+  useEffect(() => {
+    if (viewMode !== 'graph' && pendingPlacement) {
+      cancelPlacement()
+    }
+  }, [viewMode, pendingPlacement, cancelPlacement])
+
+  const handlePanelAddNode = useCallback(
+    (options: AddNoteNodeOptions) => {
+      const nodeType = options.nodeType ?? 'rectangle'
+      if (isDrawableNodeType(nodeType) && !options.imageUrl && !options.icon) {
+        beginPlacement({ ...options, nodeType })
+        return
+      }
+      addNoteNode(options)
+    },
+    [addNoteNode, beginPlacement],
+  )
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
 
@@ -308,7 +354,7 @@ export default function GraphEditor() {
   return (
     <div className="w-full h-full relative">
       <ActionPanel
-        onAddNode={handleAddNode}
+        onAddNode={handlePanelAddNode}
         enableSelection={enableSelection}
         setEnableSelection={setEnableSelection}
         onZoomIn={handleZoomIn}
@@ -331,30 +377,39 @@ export default function GraphEditor() {
           </div>
         )}
 
-      <div className="w-full h-full">
+      <div className="relative w-full h-full">
         {viewMode === 'graph' ? (
-          <GraphView
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onNodesDelete={onNodesDelete}
-            onEdgesDelete={onEdgesDelete}
-            onConnect={connectNodes}
-            enableSelection={enableSelection}
-            isLocked={isLocked}
-            onNodeDragStart={handleDragStart}
-            onNodeDragStop={handleDragStop}
-            onSelectionStart={handleSelectionStart}
-            onSelectionEnd={handleSelectionEnd}
-            onSelectionDragStart={handleSelectionDragStart}
-            onSelectionDragStop={handleSelectionDragStop}
-            onInit={handleInit}
-          >
-            {!moving && !isDragging && !isResizingNode && !isSelecting && (
-              <MiniMap className='!bg-sidebar rounded-lg'/>
-            )}
-          </GraphView>
+          <>
+            <GraphView
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onNodesDelete={onNodesDelete}
+              onEdgesDelete={onEdgesDelete}
+              onConnect={connectNodes}
+              enableSelection={enableSelection}
+              isLocked={isLocked}
+              onNodeDragStart={handleDragStart}
+              onNodeDragStop={handleDragStop}
+              onSelectionStart={handleSelectionStart}
+              onSelectionEnd={handleSelectionEnd}
+              onSelectionDragStart={handleSelectionDragStart}
+              onSelectionDragStop={handleSelectionDragStop}
+              onInit={handleInit}
+            >
+              {!moving && !isDragging && !isResizingNode && !isSelecting && (
+                <MiniMap className='!bg-sidebar rounded-lg' />
+              )}
+            </GraphView>
+
+            <NodePlacementOverlay
+              pendingPlacement={pendingPlacement}
+              onPlace={handlePlacementComplete}
+              onCancel={cancelPlacement}
+              screenToFlowPosition={screenToFlowPosition}
+            />
+          </>
         ) : (
           <LinearView />
         )}

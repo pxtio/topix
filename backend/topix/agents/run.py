@@ -131,6 +131,7 @@ class AgentRunner:
                 await run_agent(context, input)
             except MaxTurnsExceeded as e:
                 logger.error("Agent exceeded max turns: %s", e)
+                raise e
             except Exception as e:
                 raise e
 
@@ -139,6 +140,9 @@ class AgentRunner:
         while True:
             message: AgentStreamMessage | ToolCall = await context._message_queue.get()
             yield message
-            if message.type != "tool_call" and message.is_stop:
-                if message.tool_name == name:
-                    break
+            if message.type != "tool_call" and message.is_stop and message.tool_name == name:
+                if message.is_stop == 'error':
+                    logger.error("AgentRunner encountered an error for tool: %s:\n%s", name, message.content.text)
+                else:
+                    logger.info("AgentRunner completed for tool: %s", name)
+                break

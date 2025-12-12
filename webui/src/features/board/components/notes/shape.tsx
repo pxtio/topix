@@ -48,9 +48,45 @@ export const Shape = memo(function Shape({
     ${textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'}
   `
 
-  const placeHolder = nodeType === 'text' ? 'Add text...' : ''
+  const isImageNode = nodeType === 'image'
+  const placeHolder = nodeType === 'text' ? 'Add text...' : isImageNode ? 'Add caption...' : ''
 
   const notEditingSpanClass = value.trim() ? '' : 'text-muted-foreground/50'
+
+  if (isImageNode) {
+    const hasLabel = value.trim().length > 0
+
+    return (
+      <div className='relative w-full h-full rounded-md'>
+        <div className='absolute inset-0 flex items-center justify-center'>
+          {imageUrl ? (
+            <ImageShape imageUrl={imageUrl} className="w-full h-full" />
+          ) : (
+            <div className='w-full h-full flex items-center justify-center text-sm text-muted-foreground/60'>
+              No image selected
+            </div>
+          )}
+        </div>
+
+        <div className={`absolute left-3 right-3 -bottom-4 transform translate-y-1/2 flex justify-center z-10 ${labelEditing ? '' : 'pointer-events-none'}`}>
+          {labelEditing ? (
+            <TextareaAutosize
+              className='nodrag nopan nowheel w-full border border-border rounded-md bg-background/90 text-sm text-center shadow-sm px-3 py-2'
+              value={value}
+              onChange={onChange}
+              placeholder={placeHolder}
+              ref={textareaRef}
+              minRows={1}
+            />
+          ) : (
+            <div className={`px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm ${hasLabel ? 'text-card-foreground' : 'text-muted-foreground/70'}`}>
+              {hasLabel ? value : placeHolder}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className='w-full h-full flex items-center justify-center'>

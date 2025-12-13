@@ -112,23 +112,6 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
         >
           {content}
         </ShapeChrome>
-
-        {selected && resizeHandles.map(({ pos, class: posClass }) => (
-          <NodeResizeControl
-            key={pos}
-            position={pos as ControlPosition}
-            onResizeStart={handleResizeStart}
-            onResizeEnd={handleResizeEnd}
-            minHeight={computedMinH}
-            minWidth={200}
-            keepAspectRatio={false}
-          >
-            <div
-              className={`absolute w-3 h-3 bg-transparent border border-secondary rounded-full ${posClass} z-20`}
-              style={{ transform: `translate(${pos.includes('right') ? '50%' : '-50%'}, ${pos.includes('bottom') ? '50%' : '-50%'})` }}
-            />
-          </NodeResizeControl>
-        ))}
       </div>
     )
   }

@@ -51,8 +51,6 @@ const updateDefaultServices = ({
     available: availableServices.image_generation.includes(service.name),
   }))
 
-  console.log("Updated services with availability:", services)
-
   return services
 }
 

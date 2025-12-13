@@ -55,7 +55,7 @@ const defaultEdgeOptions = {
 const connectionLineStyle = { stroke: '#a8a29e' }
 
 const isDrawableNodeType = (nodeType: NodeType) =>
-  nodeType !== 'sheet' && nodeType !== 'image' && nodeType !== 'icon'
+  nodeType === 'rectangle' || nodeType === 'ellipse' || nodeType === 'diamond'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -131,6 +131,7 @@ function GraphView({
       elementsSelectable={!isLocked}
       zoomOnScroll={!isLocked}
       zoomOnPinch={!isLocked}
+      zoomOnDoubleClick={false}
       panOnScroll={!isLocked}
       onlyRenderVisibleElements
       onInit={onInit}
@@ -223,6 +224,18 @@ export default function GraphEditor() {
       cancelPlacement()
     }
   }, [viewMode, pendingPlacement, cancelPlacement])
+
+  const handlePaneDoubleClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (viewMode !== 'graph') return
+      if (!screenToFlowPosition) return
+      if ((event.target as HTMLElement | null)?.closest('.react-flow__node')) return
+      if ((event.target as HTMLElement | null)?.closest('.react-flow__edge')) return
+      const flowPoint = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      addNoteNode({ nodeType: 'text', position: flowPoint })
+    },
+    [viewMode, screenToFlowPosition, addNoteNode],
+  )
 
   const handlePanelAddNode = useCallback(
     (options: AddNoteNodeOptions) => {
@@ -377,7 +390,7 @@ export default function GraphEditor() {
           </div>
         )}
 
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full" onDoubleClick={handlePaneDoubleClick}>
         {viewMode === 'graph' ? (
           <>
             <GraphView

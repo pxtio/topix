@@ -5,6 +5,7 @@ import {
   type NodeProps,
   NodeResizeControl,
   Position,
+  useStore,
 } from '@xyflow/react'
 import type { NoteNode } from '../../types/flow'
 import { NodeCard } from './note-card'
@@ -66,6 +67,9 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   )
 
   const nodeType = data.style.type
+  const isConnectModeActive = useStore(
+    state => state.connection.inProgress || !!state.connectionClickStartHandle,
+  )
 
   const handleResizeStart = () => setIsResizingNode(true)
   const handleResizeEnd = () => setIsResizingNode(false)
@@ -80,9 +84,14 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     'w-full h-full !bg-transparent !absolute -inset-[12px] rounded-none translate-x-[calc(50%-12px)] border-none cursor-crosshair'
 
   if (nodeType === 'sheet') {
+    const sheetHandleDivClass = clsx(
+      'absolute inset-0 w-full h-full overflow-visible pointer-events-none',
+      isConnectModeActive ? 'z-20' : 'z-0'
+    )
+
     return (
       <div className='border-none relative p-6 bg-transparent overflow-visible w-full h-full'>
-        <div className='absolute inset-0 w-full h-full overflow-visible z-0 pointer-events-none'>
+        <div className={sheetHandleDivClass}>
           <Handle className={handleClassRight} position={Position.Right} type='source' />
           <Handle className={handleClassLeft} position={Position.Left} type='target' isConnectableStart={false} />
         </div>
@@ -124,9 +133,11 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     )
   }
 
+  const handleDivClass = clsx('absolute inset-0', isConnectModeActive ? 'z-20' : 'z-0')
+
   return (
     <div className='border-none relative bg-transparent overflow-visible w-full h-full p-4'>
-      <div className='absolute inset-0 z-0'>
+      <div className={handleDivClass}>
         <Handle
           className='w-full h-full !bg-transparent !absolute -inset-[12px] rounded-none -translate-x-[calc(50%-12px)] border-none cursor-crosshair'
           position={Position.Right}

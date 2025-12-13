@@ -55,7 +55,7 @@ const defaultEdgeOptions = {
 const connectionLineStyle = { stroke: '#a8a29e' }
 
 const isDrawableNodeType = (nodeType: NodeType) =>
-  nodeType !== 'sheet' && nodeType !== 'image' && nodeType !== 'icon' && nodeType !== 'text'
+  nodeType === 'rectangle' || nodeType === 'ellipse' || nodeType === 'diamond'
 
 type ViewMode = 'graph' | 'linear'
 

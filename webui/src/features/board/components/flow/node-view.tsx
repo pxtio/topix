@@ -6,7 +6,6 @@ import {
   NodeResizeControl,
   Position,
 } from '@xyflow/react'
-import type { CSSProperties } from 'react'
 import type { NoteNode } from '../../types/flow'
 import { NodeCard } from './note-card'
 import { useGraphStore } from '../../store/graph-store'
@@ -16,7 +15,7 @@ import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { useContentMinHeight } from '../../hooks/content-min-height'
 import { ShapeChrome } from './shape-chrome'
 
-const CONNECTOR_GAP = 10
+const CONNECTOR_GAP = 12
 
 /**
  * Node view component for rendering a note node in the graph.
@@ -43,79 +42,6 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     { pos: 'bottom-left', class: 'bottom-0 left-0 cursor-nesw-resize' },
     { pos: 'bottom-right', class: 'bottom-0 right-0 cursor-nwse-resize' },
   ]), [])
-
-  const handleSegments = useMemo(() => {
-    const connector = CONNECTOR_GAP
-    const shared = {
-      className: 'bg-transparent border-none',
-    }
-    return [
-      {
-        key: 'top',
-        position: Position.Top,
-        type: 'target' as const,
-        isConnectableStart: false,
-        style: {
-          left: connector,
-          right: connector,
-          height: connector,
-          top: 0,
-          transform: 'translateY(-50%)',
-          cursor: 'crosshair',
-          opacity: 0,
-        } as CSSProperties,
-        ...shared,
-      },
-      {
-        key: 'bottom',
-        position: Position.Bottom,
-        type: 'source' as const,
-        isConnectableStart: true,
-        style: {
-          left: connector,
-          right: connector,
-          height: connector,
-          bottom: 0,
-          transform: 'translateY(50%)',
-          cursor: 'crosshair',
-          opacity: 0,
-        } as CSSProperties,
-        ...shared,
-      },
-      {
-        key: 'left',
-        position: Position.Left,
-        type: 'target' as const,
-        isConnectableStart: false,
-        style: {
-          top: connector,
-          bottom: connector,
-          width: connector,
-          left: 0,
-          transform: 'translateX(-50%)',
-          cursor: 'crosshair',
-          opacity: 0,
-        } as CSSProperties,
-        ...shared,
-      },
-      {
-        key: 'right',
-        position: Position.Right,
-        type: 'source' as const,
-        isConnectableStart: true,
-        style: {
-          top: connector,
-          bottom: connector,
-          width: connector,
-          right: 0,
-          transform: 'translateX(50%)',
-          cursor: 'crosshair',
-          opacity: 0,
-        } as CSSProperties,
-        ...shared,
-      },
-    ]
-  }, [])
 
   const isPinned = data.properties.pinned.boolean
 
@@ -148,18 +74,71 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const resizeMinWidth = isVisualNode ? 80 : 200
   const resizeMinHeight = isVisualNode ? 80 : innerMinH
 
+  const handleClassRight =
+    'w-full h-full !bg-transparent !absolute -inset-[12px] rounded-none -translate-x-[calc(50%-12px)] border-none cursor-crosshair'
+  const handleClassLeft =
+    'w-full h-full !bg-transparent !absolute -inset-[12px] rounded-none translate-x-[calc(50%-12px)] border-none cursor-crosshair'
+
+  if (nodeType === 'sheet') {
+    return (
+      <div className='border-none relative p-6 bg-transparent overflow-visible w-full h-full'>
+        <div className='absolute inset-0 w-full h-full overflow-visible z-0 pointer-events-none'>
+          <Handle className={handleClassRight} position={Position.Right} type='source' />
+          <Handle className={handleClassLeft} position={Position.Left} type='target' isConnectableStart={false} />
+        </div>
+
+        <ShapeChrome
+          type={nodeType}
+          minHeight={computedMinH}
+          rounded={rounded}
+          frameClass={frameClass}
+          textColor={textColor}
+          backgroundColor={backgroundColor}
+          strokeColor={strokeColor}
+          roughness={data.style.roughness}
+          fillStyle={data.style.fillStyle}
+          strokeStyle={data.style.strokeStyle}
+          strokeWidth={data.style.strokeWidth}
+          seed={data.roughSeed}
+        >
+          {content}
+        </ShapeChrome>
+
+        {selected && resizeHandles.map(({ pos, class: posClass }) => (
+          <NodeResizeControl
+            key={pos}
+            position={pos as ControlPosition}
+            onResizeStart={handleResizeStart}
+            onResizeEnd={handleResizeEnd}
+            minHeight={computedMinH}
+            minWidth={200}
+            keepAspectRatio={false}
+          >
+            <div
+              className={`absolute w-3 h-3 bg-transparent border border-secondary rounded-full ${posClass} z-20`}
+              style={{ transform: `translate(${pos.includes('right') ? '50%' : '-50%'}, ${pos.includes('bottom') ? '50%' : '-50%'})` }}
+            />
+          </NodeResizeControl>
+        ))}
+      </div>
+    )
+  }
+
   return (
-    <div className='border-none relative bg-transparent overflow-visible w-full h-full'>
-      {handleSegments.map(seg => (
+    <div className='border-none relative bg-transparent overflow-visible w-full h-full p-4'>
+      <div className='absolute inset-0 z-0'>
         <Handle
-          key={seg.key}
-          className={seg.className}
-          position={seg.position}
-          type={seg.type}
-          style={seg.style}
-          isConnectableStart={seg.isConnectableStart}
+          className='w-full h-full !bg-transparent !absolute -inset-[12px] rounded-none -translate-x-[calc(50%-12px)] border-none cursor-crosshair'
+          position={Position.Right}
+          type='source'
         />
-      ))}
+        <Handle
+          className='w-full h-full !bg-transparent !absolute -inset-[12px] rounded-none translate-x-[calc(50%-12px)] border-none cursor-crosshair'
+          position={Position.Left}
+          type='target'
+          isConnectableStart={false}
+        />
+      </div>
 
       <div
         className='absolute inset-0'
@@ -189,22 +168,27 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
         </ShapeChrome>
       </div>
 
-      {nodeType !== 'sheet' && selected && resizeHandles.map(({ pos, class: posClass }) => (
-        <NodeResizeControl
-          key={pos}
-          position={pos as ControlPosition}
-          onResizeStart={handleResizeStart}
-          onResizeEnd={handleResizeEnd}
-          minHeight={resizeMinHeight}
-          minWidth={resizeMinWidth}
-          keepAspectRatio={isVisualNode}
-        >
-          <div
-            className={`absolute w-3 h-3 bg-transparent border border-secondary rounded-full ${posClass} z-20`}
-            style={{ transform: `translate(${pos.includes('right') ? '50%' : '-50%'}, ${pos.includes('bottom') ? '50%' : '-50%'})` }}
-          />
-        </NodeResizeControl>
-      ))}
+      {
+        selected &&
+        resizeHandles.map(
+          ({ pos, class: posClass }) => (
+            <NodeResizeControl
+              key={pos}
+              position={pos as ControlPosition}
+              onResizeStart={handleResizeStart}
+              onResizeEnd={handleResizeEnd}
+              minHeight={resizeMinHeight}
+              minWidth={resizeMinWidth}
+              keepAspectRatio={isVisualNode}
+            >
+              <div
+                className={`absolute w-3 h-3 bg-transparent border border-secondary rounded-full ${posClass} z-20`}
+                style={{ transform: `translate(${pos.includes('right') ? '50%' : '-50%'}, ${pos.includes('bottom') ? '50%' : '-50%'})` }}
+              />
+            </NodeResizeControl>
+          )
+        )
+      }
     </div>
   )
 }

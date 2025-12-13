@@ -249,7 +249,7 @@ export const NodeCard = ({
               </PopoverTrigger>
               <PopoverContent align='end' className='w-auto p-2'>
                 <div className='grid grid-cols-6 gap-2'>
-                  {TAILWIND_200.map(c => (
+                  {[{ name: 'white', hex: '#ffffff' }, ...TAILWIND_200].map(c => (
                     <button
                       key={c.name}
                       className='h-6 w-6 rounded-full border border-border hover:brightness-95'

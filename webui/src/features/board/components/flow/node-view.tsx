@@ -6,6 +6,7 @@ import {
   NodeResizeControl,
   Position,
 } from '@xyflow/react'
+import type { CSSProperties } from 'react'
 import type { NoteNode } from '../../types/flow'
 import { NodeCard } from './note-card'
 import { useGraphStore } from '../../store/graph-store'
@@ -43,12 +44,80 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     { pos: 'bottom-right', class: 'bottom-0 right-0 cursor-nwse-resize' },
   ]), [])
 
-  const isPinned = data.properties.pinned.boolean
+  const handleSegments = useMemo(() => {
+    const connector = CONNECTOR_GAP
+    const shared = {
+      className: 'bg-transparent border-none',
+    }
+    return [
+      {
+        key: 'top',
+        position: Position.Top,
+        type: 'target' as const,
+        isConnectableStart: false,
+        style: {
+          left: connector,
+          right: connector,
+          height: connector,
+          top: 0,
+          transform: 'translateY(-50%)',
+          cursor: 'crosshair',
+          opacity: 0,
+        } as CSSProperties,
+        ...shared,
+      },
+      {
+        key: 'bottom',
+        position: Position.Bottom,
+        type: 'source' as const,
+        isConnectableStart: true,
+        style: {
+          left: connector,
+          right: connector,
+          height: connector,
+          bottom: 0,
+          transform: 'translateY(50%)',
+          cursor: 'crosshair',
+          opacity: 0,
+        } as CSSProperties,
+        ...shared,
+      },
+      {
+        key: 'left',
+        position: Position.Left,
+        type: 'target' as const,
+        isConnectableStart: false,
+        style: {
+          top: connector,
+          bottom: connector,
+          width: connector,
+          left: 0,
+          transform: 'translateX(-50%)',
+          cursor: 'crosshair',
+          opacity: 0,
+        } as CSSProperties,
+        ...shared,
+      },
+      {
+        key: 'right',
+        position: Position.Right,
+        type: 'source' as const,
+        isConnectableStart: true,
+        style: {
+          top: connector,
+          bottom: connector,
+          width: connector,
+          right: 0,
+          transform: 'translateX(50%)',
+          cursor: 'crosshair',
+          opacity: 0,
+        } as CSSProperties,
+        ...shared,
+      },
+    ]
+  }, [])
 
-  const handleClassRight =
-    'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none -translate-x-[calc(50%-10px)] border-none'
-  const handleClassLeft =
-    'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none translate-x-1/2 border-none'
+  const isPinned = data.properties.pinned.boolean
 
   const nodeClass = 'w-full h-full relative font-handwriting drag-handle pointer-events-auto bg-transparent'
   const rounded = data.style.roundness > 0 ? 'rounded-2xl' : 'none'
@@ -81,10 +150,16 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
 
   return (
     <div className='border-none relative bg-transparent overflow-visible w-full h-full'>
-      <div className='absolute inset-0 w-full h-full overflow-visible z-20 pointer-events-none'>
-        <Handle className={handleClassRight} position={Position.Right} type='source' />
-        <Handle className={handleClassLeft} position={Position.Left} type='target' isConnectableStart={false} />
-      </div>
+      {handleSegments.map(seg => (
+        <Handle
+          key={seg.key}
+          className={seg.className}
+          position={seg.position}
+          type={seg.type}
+          style={seg.style}
+          isConnectableStart={seg.isConnectableStart}
+        />
+      ))}
 
       <div
         className='absolute inset-0'

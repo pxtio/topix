@@ -59,6 +59,9 @@ export interface Note extends Record<string, unknown> {
 export const DEFAULT_NOTE_WIDTH = 50
 export const DEFAULT_NOTE_HEIGHT = 50
 
+export const DEFAULT_TEXT_NOTE_WIDTH = 150
+export const DEFAULT_TEXT_NOTE_HEIGHT = 50
+
 export const DEFAULT_STICKY_NOTE_WIDTH = 300
 export const DEFAULT_STICKY_NOTE_HEIGHT = 300
 
@@ -70,7 +73,10 @@ export const DEFAULT_STICKY_NOTE_HEIGHT = 300
 export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: NodeType }): NoteProperties => {
   const defaultSize = type === 'sheet' ?
     { width: DEFAULT_STICKY_NOTE_WIDTH, height: DEFAULT_STICKY_NOTE_HEIGHT }
+    : type === 'text' ?
+    { width: DEFAULT_TEXT_NOTE_WIDTH, height: DEFAULT_TEXT_NOTE_HEIGHT }
     : { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT }
+
   return {
     nodePosition: {
       position: { x: 0, y: 0 },

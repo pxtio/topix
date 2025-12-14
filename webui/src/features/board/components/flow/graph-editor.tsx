@@ -10,6 +10,7 @@ import {
   type OnEdgesChange,
   type OnNodesDelete,
   type OnEdgesDelete,
+  type ReactFlowProps,
   MiniMap,
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
@@ -23,6 +24,7 @@ import { GraphSidebar } from '../style-panel/panel'
 import { ActionPanel } from './action-panel'
 import { DefaultBoardView } from '../default-view'
 import { NodePlacementOverlay } from './node-placement-overlay'
+import { GraphContextMenu } from './graph-context-menu'
 
 import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
@@ -86,6 +88,8 @@ type GraphViewProps = {
   onSelectionDragStart: () => void
   onSelectionDragStop: () => void
   onInit: (instance: ReactFlowInstance<NoteNode, LinkEdge>) => void
+  onPaneContextMenu?: ReactFlowProps<NoteNode, LinkEdge>['onPaneContextMenu']
+  onNodeContextMenu?: ReactFlowProps<NoteNode, LinkEdge>['onNodeContextMenu']
   children?: React.ReactNode
 }
 
@@ -109,6 +113,8 @@ function GraphView({
   onSelectionDragStart,
   onSelectionDragStop,
   onInit,
+  onPaneContextMenu,
+  onNodeContextMenu,
   children,
 }: GraphViewProps) {
   return (
@@ -136,6 +142,8 @@ function GraphView({
       onSelectionEnd={onSelectionEnd}
       onSelectionDragStart={onSelectionDragStart}
       onSelectionDragStop={onSelectionDragStop}
+      onPaneContextMenu={onPaneContextMenu}
+      onNodeContextMenu={onNodeContextMenu}
       nodesDraggable={!isLocked}
       nodesConnectable={!isLocked}
       elementsSelectable={!isLocked}
@@ -191,6 +199,7 @@ export default function GraphEditor() {
   const onNodesDelete = useGraphStore(state => state.onNodesDelete)
   const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const storeOnConnect = useGraphStore(state => state.onConnect)
+  const setNodesPersist = useGraphStore(state => state.setNodesPersist)
 
   const isResizingNode = useGraphStore(state => state.isResizingNode)
   const graphViewports = useGraphStore(state => state.graphViewports)
@@ -402,37 +411,43 @@ export default function GraphEditor() {
 
       <div className="relative w-full h-full" onDoubleClick={handlePaneDoubleClick}>
         {viewMode === 'graph' ? (
-          <>
-            <GraphView
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onNodesDelete={onNodesDelete}
-              onEdgesDelete={onEdgesDelete}
-              onConnect={connectNodes}
-              enableSelection={enableSelection}
-              isLocked={isLocked}
-              onNodeDragStart={handleDragStart}
-              onNodeDragStop={handleDragStop}
-              onSelectionStart={handleSelectionStart}
-              onSelectionEnd={handleSelectionEnd}
-              onSelectionDragStart={handleSelectionDragStart}
-              onSelectionDragStop={handleSelectionDragStop}
-              onInit={handleInit}
-            >
-              {!moving && !isDragging && !isResizingNode && !isSelecting && (
-                <MiniMap className='!bg-sidebar rounded-lg' />
-              )}
-            </GraphView>
+          <GraphContextMenu nodes={nodes} setNodesPersist={setNodesPersist}>
+            {({ onPaneContextMenu, onNodeContextMenu }) => (
+              <>
+                <GraphView
+                  nodes={nodes}
+                  edges={edges}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  onNodesDelete={onNodesDelete}
+                  onEdgesDelete={onEdgesDelete}
+                  onConnect={connectNodes}
+                  enableSelection={enableSelection}
+                  isLocked={isLocked}
+                  onNodeDragStart={handleDragStart}
+                  onNodeDragStop={handleDragStop}
+                  onSelectionStart={handleSelectionStart}
+                  onSelectionEnd={handleSelectionEnd}
+                  onSelectionDragStart={handleSelectionDragStart}
+                  onSelectionDragStop={handleSelectionDragStop}
+                  onInit={handleInit}
+                  onPaneContextMenu={onPaneContextMenu}
+                  onNodeContextMenu={onNodeContextMenu}
+                >
+                  {!moving && !isDragging && !isResizingNode && !isSelecting && (
+                    <MiniMap className='!bg-sidebar rounded-lg' />
+                  )}
+                </GraphView>
 
-            <NodePlacementOverlay
-              pendingPlacement={pendingPlacement}
-              onPlace={handlePlacementComplete}
-              onCancel={cancelPlacement}
-              screenToFlowPosition={screenToFlowPosition}
-            />
-          </>
+                <NodePlacementOverlay
+                  pendingPlacement={pendingPlacement}
+                  onPlace={handlePlacementComplete}
+                  onCancel={cancelPlacement}
+                  screenToFlowPosition={screenToFlowPosition}
+                />
+              </>
+            )}
+          </GraphContextMenu>
         ) : (
           <LinearView />
         )}

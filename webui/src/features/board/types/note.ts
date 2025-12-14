@@ -9,6 +9,7 @@ import type { BooleanProperty, IconProperty, ImageProperty, NumberProperty, Posi
 export interface NoteProperties {
   nodePosition: PositionProperty
   nodeSize: SizeProperty
+  nodeZIndex: NumberProperty
   emoji: IconProperty
   pinned: BooleanProperty
   listOrder: NumberProperty
@@ -78,6 +79,10 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     nodeSize: {
       size: defaultSize,
       type: "size",
+    },
+    nodeZIndex: {
+      number: 0,
+      type: "number",
     },
     emoji: {
       type: "icon",

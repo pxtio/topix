@@ -42,6 +42,7 @@ export function StyleDefaultsProvider({ children }: { children: ReactNode }): JS
 
     if (targetType === 'sheet') {
       overlay.backgroundColor = base.backgroundColor
+      overlay.strokeColor = base.strokeColor
     }
 
     return { ...base, ...overlay, type: targetType }

@@ -64,7 +64,7 @@ export const NodeCard = memo(({
       clsx(
         'relative bg-transparent overflow-visible flex items-center justify-center',
         isSheet
-          ? `w-[400px] h-[400px] ${fontFamilyToTwClass(fontFamily)} p-2 pt-8`
+          ? `w-[300px] h-[300px] ${fontFamilyToTwClass(fontFamily)} p-2 pt-8`
           : 'w-full h-full p-2'
       ),
     [isSheet, fontFamily]
@@ -235,7 +235,7 @@ export const NodeCard = memo(({
         style={{ color: textColor || 'inherit' }}
       >
         {isSheet && (
-          <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end bg-background/20'>
+          <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end'>
             <Popover>
               <PopoverTrigger asChild>
                 <button

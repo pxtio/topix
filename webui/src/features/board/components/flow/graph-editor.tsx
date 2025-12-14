@@ -44,15 +44,25 @@ const edgeTypes = { default: EdgeView }
 
 const defaultEdgeOptions = {
   type: 'default',
-  style: { stroke: '#78716c', strokeWidth: 2 },
+  style: {
+    stroke: 'var(--secondary)',
+    strokeWidth: 2,
+    strokeDasharray: '8 6',
+    strokeLinecap: 'round',
+  },
   markerEnd: {
-    type: MarkerType.Arrow,
-    color: '#78716c',
-    width: 20,
-    height: 20,
+    type: MarkerType.ArrowClosed,
+    color: 'var(--secondary)',
+    width: 22,
+    height: 22,
   },
 }
-const connectionLineStyle = { stroke: '#a8a29e' }
+const connectionLineStyle = {
+  stroke: 'var(--secondary)',
+  strokeWidth: 2,
+  strokeDasharray: '8 6',
+  strokeLinecap: 'round' as const,
+}
 
 const isDrawableNodeType = (nodeType: NodeType) =>
   nodeType === 'rectangle' || nodeType === 'ellipse' || nodeType === 'diamond'

@@ -48,7 +48,7 @@ const defaultEdgeOptions = {
     stroke: 'var(--secondary)',
     strokeWidth: 2,
     strokeDasharray: '8 6',
-    strokeLinecap: 'round',
+    strokeLinecap: 'round' as const,
   },
   markerEnd: {
     type: MarkerType.ArrowClosed,

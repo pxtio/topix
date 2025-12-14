@@ -30,7 +30,7 @@ export function CustomConnectionLine({
     stroke: strokeColor,
     strokeWidth: 2,
     strokeDasharray: '8 6',
-    strokeLinecap: 'round',
+    strokeLinecap: 'round' as const,
     fill: 'none',
     ...(connectionLineStyle || {}),
   }

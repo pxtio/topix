@@ -104,6 +104,8 @@ export const EdgeView = memo(function EdgeView({
   const sourceNode = useInternalNode(source)
   const targetNode = useInternalNode(target)
   const roughGroupRef = useRef<SVGGElement | null>(null)
+  const roughInstanceRef = useRef<{ svg: SVGSVGElement, instance: RoughSVG } | null>(null)
+  const lastRoughConfig = useRef<{ path: string, stroke: string, optsKey: string } | null>(null)
 
   const linkStyle = (data?.style ?? undefined) as LinkStyle | undefined
 
@@ -202,16 +204,34 @@ export const EdgeView = memo(function EdgeView({
     const g = roughGroupRef.current
     if (!g) return
 
-    while (g.firstChild) g.removeChild(g.firstChild)
-    if (!geom || !linkStyle || !shouldUseRough(linkStyle)) return
+    const useRough = geom && linkStyle && shouldUseRough(linkStyle)
+    if (!useRough) {
+      if (g.firstChild) {
+        g.replaceChildren()
+      }
+      lastRoughConfig.current = null
+      return
+    }
+
+    if (!geom) return
 
     const svgEl = g.ownerSVGElement
     if (!svgEl) return
 
-    const rc = new RoughSVG(svgEl)
-    const opts = linkStyleToRoughOptions(linkStyle, displayStroke)
-    const node = rc.path(geom.edgePath, opts)
+    if (!roughInstanceRef.current || roughInstanceRef.current.svg !== svgEl) {
+      roughInstanceRef.current = { svg: svgEl, instance: new RoughSVG(svgEl) }
+    }
 
+    const opts = linkStyleToRoughOptions(linkStyle!, displayStroke)
+    const optsKey = JSON.stringify(opts)
+    const prev = lastRoughConfig.current
+    if (prev && prev.path === geom.edgePath && prev.stroke === displayStroke && prev.optsKey === optsKey) {
+      return
+    }
+
+    while (g.firstChild) g.removeChild(g.firstChild)
+
+    const node = roughInstanceRef.current.instance.path(geom.edgePath, opts)
     node.setAttribute('stroke-linecap', 'round')
     node.setAttribute('stroke-linejoin', 'round')
 
@@ -219,6 +239,7 @@ export const EdgeView = memo(function EdgeView({
     if (endMarkerId) node.setAttribute('marker-end', `url(#${endMarkerId})`)
 
     g.appendChild(node)
+    lastRoughConfig.current = { path: geom.edgePath, stroke: displayStroke, optsKey }
   }, [geom, linkStyle, startMarkerId, endMarkerId, displayStroke])
 
   if (!geom) return null
@@ -226,174 +247,119 @@ export const EdgeView = memo(function EdgeView({
   const filledHeadSize = headSize * 0.95
   const headStrokeWidth = Math.max(1, strokeWidth)
 
+  const renderMarker = (markerId: string | undefined, kind: ArrowheadType, orient: 'start' | 'end') => {
+    if (!markerId || kind === 'none') return null
+
+    const viewBox = `0 0 ${headSize} ${headSize}`
+    const refProps = {
+      refX: `${headSize * BASE_X_FACTOR}`,
+      refY: `${headSize / 2}`,
+      markerWidth: headSize,
+      markerHeight: headSize,
+      markerUnits: 'userSpaceOnUse' as const,
+      orient: markerOrient(orient)
+    }
+
+    const commonGroupProps = {
+      fill: 'none' as const,
+      stroke: displayStroke,
+      strokeLinecap: 'round' as const,
+      strokeLinejoin: 'round' as const
+    }
+
+    if (kind === 'arrow-filled') {
+      const { d } = trianglePath(filledHeadSize)
+      return (
+        <marker id={markerId} viewBox={viewBox} {...refProps}>
+          <path
+            d={d}
+            fill={displayStroke}
+            stroke={displayStroke}
+            strokeWidth={headStrokeWidth}
+            strokeLinecap='round'
+            strokeLinejoin='round'
+          />
+        </marker>
+      )
+    }
+
+    if (kind === 'arrow') {
+      const { d, baseX } = trianglePath(headSize)
+      const topY = headSize * 0.1
+      const bottomY = headSize * 0.9
+      return (
+        <marker id={markerId} viewBox={viewBox} {...refProps}>
+          <g {...commonGroupProps}>
+            <path d={d} strokeWidth={headStrokeWidth} fill='none' />
+            <path
+              d={`M ${baseX} ${bottomY} L ${baseX} ${topY}`}
+              strokeWidth={headStrokeWidth * BASE_THICKNESS_BOOST}
+            />
+          </g>
+        </marker>
+      )
+    }
+
+    const { p1, p2 } = barbPaths(headSize)
+    return (
+      <marker id={markerId} viewBox={viewBox} {...refProps}>
+        <g {...commonGroupProps} strokeWidth={headStrokeWidth}>
+          <path d={p1} />
+          <path d={p2} />
+        </g>
+      </marker>
+    )
+  }
+
+  const selectionHandles = selected ? (
+    <>
+      <circle
+        cx={geom.sx}
+        cy={geom.sy}
+        r={6}
+        className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
+      />
+      <circle
+        cx={geom.tx}
+        cy={geom.ty}
+        r={6}
+        className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
+      />
+    </>
+  ) : null
+
+  const roughActive = shouldUseRough(linkStyle)
+
   return (
     <>
-      {/* marker defs */}
       <svg width='0' height='0' style={{ position: 'absolute' }}>
         <defs>
-          {startMarkerId && startKind !== 'none' && (
-            <marker
-              id={startMarkerId}
-              viewBox={`0 0 ${headSize} ${headSize}`}
-              // line end = center of base
-              refX={`${headSize * BASE_X_FACTOR}`}
-              refY={`${headSize / 2}`}
-              markerWidth={headSize}
-              markerHeight={headSize}
-              markerUnits='userSpaceOnUse'
-              orient={markerOrient('start')}
-            >
-              {startKind === 'arrow-filled' ? (
-                (() => {
-                  const { d } = trianglePath(filledHeadSize)
-                  return (
-                    <path
-                      d={d}
-                      fill={displayStroke}
-                      stroke={displayStroke}
-                      strokeWidth={headStrokeWidth}
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                    />
-                  )
-                })()
-              ) : startKind === 'arrow' ? (
-                (() => {
-                  const { d, baseX } = trianglePath(headSize)
-                  const topY = headSize * 0.1
-                  const bottomY = headSize * 0.9
-                  return (
-                    <g
-                      fill='none'
-                      stroke={displayStroke}
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                    >
-                      {/* sides */}
-                      <path d={d} strokeWidth={headStrokeWidth} fill='none' />
-                      {/* base slightly thicker */}
-                      <path
-                        d={`M ${baseX} ${bottomY} L ${baseX} ${topY}`}
-                        strokeWidth={headStrokeWidth * BASE_THICKNESS_BOOST}
-                      />
-                    </g>
-                  )
-                })()
-              ) : (
-                (() => {
-                  const { p1, p2 } = barbPaths(headSize)
-                  return (
-                    <g
-                      fill='none'
-                      stroke={displayStroke}
-                      strokeWidth={headStrokeWidth}
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                    >
-                      <path d={p1} />
-                      <path d={p2} />
-                    </g>
-                  )
-                })()
-              )}
-            </marker>
-          )}
-
-          {endMarkerId && endKind !== 'none' && (
-            <marker
-              id={endMarkerId}
-              viewBox={`0 0 ${headSize} ${headSize}`}
-              refX={`${headSize * BASE_X_FACTOR}`}
-              refY={`${headSize / 2}`}
-              markerWidth={headSize}
-              markerHeight={headSize}
-              markerUnits='userSpaceOnUse'
-              orient={markerOrient('end')}
-            >
-              {endKind === 'arrow-filled' ? (
-                (() => {
-                  const { d } = trianglePath(filledHeadSize)
-                  return (
-                    <path
-                      d={d}
-                      fill={displayStroke}
-                      stroke={displayStroke}
-                      strokeWidth={headStrokeWidth}
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                    />
-                  )
-                })()
-              ) : endKind === 'arrow' ? (
-                (() => {
-                  const { d, baseX } = trianglePath(headSize)
-                  const topY = headSize * 0.1
-                  const bottomY = headSize * 0.9
-                  return (
-                    <g
-                      fill='none'
-                      stroke={displayStroke}
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                    >
-                      <path d={d} strokeWidth={headStrokeWidth} fill='none' />
-                      <path
-                        d={`M ${baseX} ${bottomY} L ${baseX} ${topY}`}
-                        strokeWidth={headStrokeWidth * BASE_THICKNESS_BOOST}
-                      />
-                    </g>
-                  )
-                })()
-              ) : (
-                (() => {
-                  const { p1, p2 } = barbPaths(headSize)
-                  return (
-                    <g
-                      fill='none'
-                      stroke={displayStroke}
-                      strokeWidth={headStrokeWidth}
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                    >
-                      <path d={p1} />
-                      <path d={p2} />
-                    </g>
-                  )
-                })()
-              )}
-            </marker>
-          )}
+          {renderMarker(startMarkerId, startKind, 'start')}
+          {renderMarker(endMarkerId, endKind, 'end')}
         </defs>
       </svg>
 
-      {shouldUseRough(linkStyle) && <g ref={roughGroupRef} />}
+      {roughActive && <g ref={roughGroupRef} />}
 
-      <BaseEdge
-        path={geom.edgePath}
-        style={{
-          ...edgeStrokeStyle,
-          strokeOpacity: shouldUseRough(linkStyle) ? 0.01 : 1
-        }}
-        markerStart={!shouldUseRough(linkStyle) && startMarkerId ? `url(#${startMarkerId})` : undefined}
-        markerEnd={!shouldUseRough(linkStyle) && endMarkerId ? `url(#${endMarkerId})` : undefined}
-      />
-
-      {selected && (
-        <>
-          <circle
-            cx={geom.sx}
-            cy={geom.sy}
-            r={6}
-            className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
-          />
-          <circle
-            cx={geom.tx}
-            cy={geom.ty}
-            r={6}
-            className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
-          />
-        </>
+      {!roughActive && (
+        <BaseEdge
+          path={geom.edgePath}
+          style={edgeStrokeStyle}
+          markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
+          markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
+        />
       )}
+
+      {roughActive && (
+        <BaseEdge
+          path={geom.edgePath}
+          style={{ ...edgeStrokeStyle, strokeOpacity: 0.01 }}
+          markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
+          markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
+        />
+      )}
+
+      {selectionHandles}
 
       {data?.label && (
         <EdgeLabelRenderer>

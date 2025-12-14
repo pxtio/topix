@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import clsx from 'clsx'
 import { RoughRect } from '@/components/rough/rect'
 import { RoughCircle } from '@/components/rough/circ'
@@ -22,7 +22,7 @@ type ShapeChromeProps = {
   children: React.ReactNode
 }
 
-export function ShapeChrome({
+export const ShapeChrome = memo(({
   type,
   minHeight,
   rounded = 'none',
@@ -37,7 +37,7 @@ export function ShapeChrome({
   seed,
   className,
   children,
-}: ShapeChromeProps) {
+}: ShapeChromeProps) => {
   if (type === 'sheet') {
     return (
       <div
@@ -86,4 +86,4 @@ export function ShapeChrome({
 
   // default rect
   return <RoughRect {...commonProps} rounded={rounded} />
-}
+})

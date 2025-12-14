@@ -1,5 +1,5 @@
 // components/flow/node-label.tsx
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Note, NoteProperties } from '../../types/note'
 import type { NoteNode } from '../../types/flow'
 import { MilkdownProvider } from '@milkdown/react'
@@ -28,7 +28,7 @@ type NodeCardProps = {
   contentRef: React.RefObject<HTMLDivElement | null>
 }
 
-export const NodeCard = ({
+export const NodeCard = memo(({
   note,
   selected,
   open,
@@ -342,4 +342,4 @@ export const NodeCard = ({
       </DialogContent>
     </Dialog>
   )
-}
+})

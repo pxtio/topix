@@ -66,13 +66,13 @@ function mapStrokeStyle(
   switch (strokeStyle) {
     case 'dashed':
       return {
-        strokeLineDash: [4 * sw, 2.5 * sw],
-        lineCap: 'butt'
+        strokeLineDash: [5.5 * sw, 4 * sw],
+        lineCap: 'round'
       }
     case 'dotted':
       // Round caps + [0, gap] yields pleasant dots
       return {
-        strokeLineDash: [0, 2.2 * sw],
+        strokeLineDash: [0, 3 * sw],
         lineCap: 'round'
       }
     case 'solid':
@@ -197,12 +197,15 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       dashOffset: 8,
       dashGap: 16,
       hachureGap: 5,
-      disableMultiStrokeFill: true
+      disableMultiStroke: true,
+      disableMultiStrokeFill: true,
+      preserveVertices: true,
     })
 
     // Apply desired lineCap directly on the canvas context (RoughJS Options lacks this key)
     ctx.save()
     if (lineCap) ctx.lineCap = lineCap
+    ctx.lineJoin = 'round'
     rc.draw(drawable)
     ctx.restore()
 

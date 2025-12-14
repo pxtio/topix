@@ -13,6 +13,7 @@ import { createDefaultLinkStyle } from "../types/style"
 export const convertNoteToNode = (note: Note): NoteNode => {
   const position = note.properties?.nodePosition?.position || { x: 0, y: 0 }
   const size = note.properties?.nodeSize?.size || { width: 300, height: 100 }
+  const zIndex = note.properties?.nodeZIndex?.number || 0
 
   const type = note.style.type
   const isSheet = type === 'sheet'
@@ -31,7 +32,8 @@ export const convertNoteToNode = (note: Note): NoteNode => {
     draggable: true,
     height: height,
     width: width,
-    measured: { width: width, height: height }
+    measured: { width: width, height: height },
+    zIndex: zIndex
   }
 }
 
@@ -59,21 +61,32 @@ export const convertLinkToEdge = (link: Link): LinkEdge => {
  */
 export const convertNodeToNote = (graphId: string, node: NoteNode): Note => {
   const note = { ...node.data }
+
   note.id = node.id
   note.graphUid = graphId
   note.properties = note.properties || createDefaultNoteProperties({ type: note.style.type })
+
   if (node.position) {
     note.properties.nodePosition = {
       position: node.position,
       type: "position"
     }
   }
+
   if (node.measured) {
     note.properties.nodeSize = {
       size: { width: node.measured.width || 100, height: node.measured.height || 100 },
       type: "size",
     }
   }
+
+  if (node.zIndex !== undefined) {
+    note.properties.nodeZIndex = {
+      number: node.zIndex,
+      type: "number",
+    }
+  }
+
   return note
 }
 

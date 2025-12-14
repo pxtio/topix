@@ -9,6 +9,7 @@ import type { BooleanProperty, IconProperty, ImageProperty, NumberProperty, Posi
 export interface NoteProperties {
   nodePosition: PositionProperty
   nodeSize: SizeProperty
+  nodeZIndex: NumberProperty
   emoji: IconProperty
   pinned: BooleanProperty
   listOrder: NumberProperty
@@ -55,8 +56,11 @@ export interface Note extends Record<string, unknown> {
 }
 
 
-export const DEFAULT_NOTE_WIDTH = 200
+export const DEFAULT_NOTE_WIDTH = 50
 export const DEFAULT_NOTE_HEIGHT = 50
+
+export const DEFAULT_TEXT_NOTE_WIDTH = 150
+export const DEFAULT_TEXT_NOTE_HEIGHT = 50
 
 export const DEFAULT_STICKY_NOTE_WIDTH = 300
 export const DEFAULT_STICKY_NOTE_HEIGHT = 300
@@ -69,7 +73,10 @@ export const DEFAULT_STICKY_NOTE_HEIGHT = 300
 export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: NodeType }): NoteProperties => {
   const defaultSize = type === 'sheet' ?
     { width: DEFAULT_STICKY_NOTE_WIDTH, height: DEFAULT_STICKY_NOTE_HEIGHT }
+    : type === 'text' ?
+    { width: DEFAULT_TEXT_NOTE_WIDTH, height: DEFAULT_TEXT_NOTE_HEIGHT }
     : { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT }
+
   return {
     nodePosition: {
       position: { x: 0, y: 0 },
@@ -78,6 +85,10 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     nodeSize: {
       size: defaultSize,
       type: "size",
+    },
+    nodeZIndex: {
+      number: 0,
+      type: "number",
     },
     emoji: {
       type: "icon",

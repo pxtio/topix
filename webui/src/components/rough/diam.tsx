@@ -23,6 +23,39 @@ type RoughDiamondProps = RoughShapeProps & {
   rounded?: RoundedClass
 }
 
+type DrawConfig = {
+  cssW: number
+  cssH: number
+  zoom: number
+  rounded: RoundedClass
+  roughness: number
+  stroke: string
+  strokeStyle: StrokeStyle
+  strokeWidth: number
+  fill?: string
+  fillStyle?: RoughOptions['fillStyle']
+  seed: number
+  dpr: number
+}
+
+const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
+  if (!a) return false
+  return (
+    a.cssW === b.cssW &&
+    a.cssH === b.cssH &&
+    a.zoom === b.zoom &&
+    a.rounded === b.rounded &&
+    a.roughness === b.roughness &&
+    a.stroke === b.stroke &&
+    a.strokeStyle === b.strokeStyle &&
+    a.strokeWidth === b.strokeWidth &&
+    a.fill === b.fill &&
+    a.fillStyle === b.fillStyle &&
+    a.seed === b.seed &&
+    a.dpr === b.dpr
+  )
+}
+
 /** Map logical stroke style to dash pattern + desired canvas lineCap (set on ctx). */
 function mapStrokeStyle(
   strokeStyle: StrokeStyle | undefined,
@@ -149,6 +182,9 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const roughRef = useRef<{ canvas: HTMLCanvasElement, instance: RoughCanvas } | null>(null)
+  const lastConfigRef = useRef<DrawConfig | null>(null)
+  const rafRef = useRef<number | null>(null)
   const { zoom = 1 } = useViewport()
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
@@ -171,6 +207,25 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     canvas.style.width = cssW + 'px'
     canvas.style.height = cssH + 'px'
 
+    const config: DrawConfig = {
+      cssW,
+      cssH,
+      zoom,
+      rounded,
+      roughness,
+      stroke,
+      strokeStyle,
+      strokeWidth,
+      fill,
+      fillStyle,
+      seed,
+      dpr
+    }
+
+    if (drawConfigEqual(lastConfigRef.current, config)) {
+      return
+    }
+
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
@@ -182,7 +237,10 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     ctx.setTransform(dpr * oversample, 0, 0, dpr * oversample, 0, 0)
     ctx.translate(bleed, bleed)
 
-    const rc = new RoughCanvas(canvas)
+    if (!roughRef.current || roughRef.current.canvas !== canvas) {
+      roughRef.current = { canvas, instance: new RoughCanvas(canvas) }
+    }
+    const rc = roughRef.current.instance
     const visibleStroke = stroke === 'transparent' && !fill ? '#222' : stroke
 
     // hairline crispness without eating tiny shapes
@@ -224,26 +282,41 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     if (lineCap) ctx.lineCap = lineCap
     rc.draw(drawable)
     ctx.restore()
+
+    lastConfigRef.current = config
   }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, zoom, seed, strokeStyle])
+
+  const scheduleRedraw = useCallback(() => {
+    if (rafRef.current !== null) return
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null
+      const wrapper = wrapperRef.current
+      const canvas = canvasRef.current
+      if (wrapper && canvas) {
+        draw(wrapper, canvas)
+      }
+    })
+  }, [draw])
 
   useEffect(() => {
     const wrapper = wrapperRef.current
     const canvas = canvasRef.current
     if (!wrapper || !canvas) return
 
-    const redraw = () => draw(wrapper, canvas)
-
-    const ro = new ResizeObserver(redraw)
+    const handleResize = () => scheduleRedraw()
+    const ro = new ResizeObserver(handleResize)
     ro.observe(wrapper)
-    window.addEventListener('resize', redraw)
 
-    redraw()
+    scheduleRedraw()
 
     return () => {
       ro.disconnect()
-      window.removeEventListener('resize', redraw)
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
     }
-  }, [draw])
+  }, [scheduleRedraw])
 
   return (
     <div ref={wrapperRef} className={clsx('relative', className || '')}>

@@ -31,7 +31,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const { contentRef, computedMinH } = useContentMinHeight(
     id,
     24 + CONNECTOR_GAP * 2,
-    24 + CONNECTOR_GAP * 2,
+    50,
   )
 
   const baseMinH = data.style.type === 'image' || data.style.type === 'icon' ? 50 : computedMinH

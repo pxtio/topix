@@ -56,7 +56,7 @@ export interface Note extends Record<string, unknown> {
 }
 
 
-export const DEFAULT_NOTE_WIDTH = 200
+export const DEFAULT_NOTE_WIDTH = 50
 export const DEFAULT_NOTE_HEIGHT = 50
 
 export const DEFAULT_STICKY_NOTE_WIDTH = 300

@@ -56,9 +56,9 @@ function mapStrokeStyle(
   const sw = Math.max(0.5, strokeWidth ?? 1)
   switch (strokeStyle) {
     case 'dashed':
-      return { strokeLineDash: [4 * sw, 2.5 * sw], lineCap: 'butt' }
+      return { strokeLineDash: [5.5 * sw, 4 * sw], lineCap: 'round' }
     case 'dotted':
-      return { strokeLineDash: [0, 2.2 * sw], lineCap: 'round' }
+      return { strokeLineDash: [0, 3 * sw], lineCap: 'round' }
     case 'solid':
     default:
       return { strokeLineDash: undefined, lineCap: 'butt' }
@@ -167,11 +167,14 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
       dashOffset: 8,
       dashGap: 16,
       hachureGap: 5,
-      disableMultiStrokeFill: true
+      disableMultiStroke: true,
+      disableMultiStrokeFill: true,
+      preserveVertices: true,
     })
 
     ctx.save()
     if (lineCap) ctx.lineCap = lineCap
+    ctx.lineJoin = 'round'
     rc.draw(drawable)
     ctx.restore()
 

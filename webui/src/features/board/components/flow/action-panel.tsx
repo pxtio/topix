@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { AddNoteNodeOptions } from '../../hooks/add-node'
@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { BadgeCheck, ChevronDown, Cloud, Layers } from 'lucide-react'
+import { ChevronDown, Cloud, Layers } from 'lucide-react'
 import type { NodeType } from '../../types/style'
 
 type ViewMode = 'graph' | 'linear'
@@ -57,7 +57,7 @@ export function ActionPanel({
     { nodeType: 'ellipse', label: 'Ellipse', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} /> },
     { nodeType: 'diamond', label: 'Diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} /> },
     { nodeType: 'thought-cloud', label: 'Cloud', icon: <Cloud className='w-4 h-4 shrink-0' /> },
-    { nodeType: 'capsule', label: 'Capsule', icon: <BadgeCheck className='w-4 h-4 shrink-0' /> },
+    { nodeType: 'capsule', label: 'Capsule', icon: <HugeiconsIcon icon={Tag01Icon} className='size-4 shrink-0' strokeWidth={2} /> },
   ]
 
   const normalButtonClass = `

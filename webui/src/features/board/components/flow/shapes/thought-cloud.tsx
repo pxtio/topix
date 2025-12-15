@@ -64,10 +64,10 @@ export const ThoughtCloud = memo(({
       <div
         className='absolute pointer-events-none z-20'
         style={{
-          left: circleLeft,
+          left: circleLeft + accentSize * 0.1,
           top: circleTop + accentSize * 0.35,
-          width: accentSize * 1,
-          height: accentSize * 0.9,
+          width: accentSize * 0.8,
+          height: accentSize * 0.2,
           borderRadius: accentSize,
           backgroundColor: backgroundColor ?? '#fff',
         }}

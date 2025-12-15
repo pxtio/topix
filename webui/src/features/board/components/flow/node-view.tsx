@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react'
+import { memo, useMemo, type CSSProperties } from 'react'
 import {
   type ControlPosition,
   Handle,
@@ -67,8 +67,14 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   )
 
   const nodeType = data.style.type
-  const isConnectModeActive = useStore(
-    state => state.connection.inProgress || !!state.connectionClickStartHandle,
+  const connectionState = useStore(state => state.connection)
+  const connectionClickStartHandle = useStore(state => state.connectionClickStartHandle)
+  const isConnectModeActive = connectionState.inProgress || !!connectionClickStartHandle
+
+  const shouldHighlightHandles = Boolean(
+    (connectionState.inProgress && connectionState.fromNode?.id === id) ||
+    (connectionState.inProgress && connectionState.toNode?.id === id) ||
+    (!connectionState.inProgress && connectionClickStartHandle?.nodeId === id)
   )
 
   const handleResizeStart = () => setIsResizingNode(true)
@@ -78,10 +84,28 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const resizeMinWidth = isVisualNode ? 80 : 200
   const resizeMinHeight = isVisualNode ? 80 : innerMinH
 
-  const handleClassRight =
-    'w-full h-full !bg-transparent !absolute -inset-[8px] rounded-none -translate-x-[calc(50%-8px)] border-none cursor-crosshair'
-  const handleClassLeft =
-    'w-full h-full !bg-transparent !absolute -inset-[8px] rounded-none translate-x-[calc(50%-8px)] border-none cursor-crosshair'
+  const handleOverlayStyles: CSSProperties = {
+    top: -CONNECTOR_GAP,
+    right: -CONNECTOR_GAP,
+    bottom: -CONNECTOR_GAP,
+    left: -CONNECTOR_GAP,
+  }
+
+  const renderHandleOverlay = () => {
+    if (!shouldHighlightHandles) return null
+    return (
+      <div
+        className='absolute rounded-2xl bg-secondary/20 pointer-events-none transition-colors duration-150'
+        style={handleOverlayStyles}
+      />
+    )
+  }
+
+  const handleClassBase =
+    'w-full h-full !absolute -inset-[8px] rounded-none border-none cursor-crosshair'
+  const handleBgClass = shouldHighlightHandles ? '!bg-secondary/5' : '!bg-transparent'
+  const handleClassRight = clsx(handleClassBase, '-translate-x-[calc(50%-8px)]', handleBgClass)
+  const handleClassLeft = clsx(handleClassBase, 'translate-x-[calc(50%-8px)]', handleBgClass)
 
   if (nodeType === 'sheet') {
     const sheetHandleDivClass = clsx(
@@ -92,6 +116,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     return (
       <div className='border-none relative p-3 bg-transparent overflow-visible w-full h-full'>
         <div className={sheetHandleDivClass}>
+          {renderHandleOverlay()}
           <Handle className={handleClassRight} position={Position.Right} type='source' />
           <Handle className={handleClassLeft} position={Position.Left} type='target' isConnectableStart={false} />
         </div>
@@ -121,13 +146,14 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   return (
     <div className='border-none relative bg-transparent overflow-visible w-full h-full p-0'>
       <div className={handleDivClass}>
+        {renderHandleOverlay()}
         <Handle
-          className='w-full h-full !bg-transparent !absolute -inset-[8px] rounded-none -translate-x-[calc(50%-8px)] border-none cursor-crosshair'
+          className={handleClassRight}
           position={Position.Right}
           type='source'
         />
         <Handle
-          className='w-full h-full !bg-transparent !absolute -inset-[8px] rounded-none translate-x-[calc(50%)] border-none cursor-crosshair'
+          className={handleClassLeft}
           position={Position.Left}
           type='target'
           isConnectableStart={false}

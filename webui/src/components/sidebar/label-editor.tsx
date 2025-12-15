@@ -5,6 +5,7 @@ import { useClickOutside } from "@/hooks/use-click-outside"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { PencilEditIcon, Tick01Icon } from "@hugeicons/core-free-icons"
+import { cn } from "@/lib/utils"
 
 
 /**
@@ -13,13 +14,14 @@ import { PencilEditIcon, Tick01Icon } from "@hugeicons/core-free-icons"
 export interface LabelEditorProps {
   initialLabel: string
   onSave: (newLabel: string) => void
+  className?: string
 }
 
 
 /**
  * Label Editor component for sidebar
  */
-export const LabelEditor = ({ initialLabel, onSave }: LabelEditorProps) => {
+export const LabelEditor = ({ initialLabel, onSave, className }: LabelEditorProps) => {
   const [label, setLabel] = useState<string>(initialLabel)
   const [editMode, setEditMode] = useState<boolean>(false)
 
@@ -54,18 +56,24 @@ export const LabelEditor = ({ initialLabel, onSave }: LabelEditorProps) => {
   }, [initialLabel])
 
   return (
-    <div ref={ref} className='flex flex-row items-center gap-2 text-sm font-medium'>
+    <div
+      ref={ref}
+      className={cn('flex flex-row items-center gap-2 text-sm font-medium min-w-0 w-full', className)}
+    >
       {editMode ? (
         <Input
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           onKeyDown={handleKeyDown}
+          className='flex-1 min-w-0'
           autoFocus
         />
       ) : (
-        <span>{label.trim() || UNTITLED_LABEL}</span>
+        <span className='flex-1 min-w-0 truncate sm:max-w-[24rem] max-w-[12.5rem]' title={label.trim() || UNTITLED_LABEL}>
+          {label.trim() || UNTITLED_LABEL}
+        </span>
       )}
-      <Button variant="ghost" onClick={handleClick} size='icon'>
+      <Button variant="ghost" onClick={handleClick} size='icon' className='shrink-0'>
         {editMode ? (
           <HugeiconsIcon icon={Tick01Icon} className='size-4 shrink-0' strokeWidth={2} />
         ) : (

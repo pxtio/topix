@@ -34,7 +34,7 @@ export const ThoughtCloud = memo(({
   children
 }: ThoughtCloudProps) => {
   const baseHeight = Math.max(minHeight, 50)
-  const accentSize = Math.max(40, baseHeight * 0.7)
+  const accentSize = Math.min(80, Math.max(45, baseHeight * 0.7))
   const circleLeft = accentSize * 0.18
   const circleTop = -accentSize * 0.4
 
@@ -66,7 +66,7 @@ export const ThoughtCloud = memo(({
         style={{
           left: circleLeft,
           top: circleTop + accentSize * 0.35,
-          width: accentSize * 0.9,
+          width: accentSize * 1,
           height: accentSize * 0.9,
           borderRadius: accentSize,
           backgroundColor: backgroundColor ?? '#fff',

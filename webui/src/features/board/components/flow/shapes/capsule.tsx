@@ -32,8 +32,8 @@ export const CapsuleShape = memo(({
   children
 }: CapsuleProps) => {
   const baseHeight = Math.max(minHeight, 50)
-  const accentSize = Math.max(40, baseHeight * 0.7)
-  const overlap = accentSize * 0.4
+  const accentSize = Math.min(80, Math.max(45, baseHeight * 0.7))
+  const overlap = accentSize * 0.1
 
   const circleProps = {
     roughness,
@@ -55,7 +55,7 @@ export const CapsuleShape = memo(({
           <RoughCircle {...circleProps} className='w-full h-full' />
         </div>
       </div>
-      <div className='relative flex-1 h-full' style={{ marginLeft: -overlap }}>
+      <div className='relative flex-1 h-full' style={{ marginLeft: overlap }}>
         <RoughRect {...circleProps} className='w-full h-full' rounded='rounded-2xl'>
           {children}
         </RoughRect>

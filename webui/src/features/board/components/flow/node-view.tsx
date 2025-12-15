@@ -16,7 +16,7 @@ import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { useContentMinHeight } from '../../hooks/content-min-height'
 import { ShapeChrome } from './shape-chrome'
 
-const CONNECTOR_GAP = 12
+const CONNECTOR_GAP = 8
 
 /**
  * Node view component for rendering a note node in the graph.
@@ -79,9 +79,9 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const resizeMinHeight = isVisualNode ? 80 : innerMinH
 
   const handleClassRight =
-    'w-full h-full !bg-transparent !absolute -inset-[12px] rounded-none -translate-x-[calc(50%-12px)] border-none cursor-crosshair'
+    'w-full h-full !bg-transparent !absolute -inset-[8px] rounded-none -translate-x-[calc(50%-8px)] border-none cursor-crosshair'
   const handleClassLeft =
-    'w-full h-full !bg-transparent !absolute -inset-[12px] rounded-none translate-x-[calc(50%-12px)] border-none cursor-crosshair'
+    'w-full h-full !bg-transparent !absolute -inset-[8px] rounded-none translate-x-[calc(50%-8px)] border-none cursor-crosshair'
 
   if (nodeType === 'sheet') {
     const sheetHandleDivClass = clsx(
@@ -119,15 +119,15 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const handleDivClass = clsx('absolute inset-0', isConnectModeActive ? 'z-20' : 'z-0')
 
   return (
-    <div className='border-none relative bg-transparent overflow-visible w-full h-full p-2'>
+    <div className='border-none relative bg-transparent overflow-visible w-full h-full p-0'>
       <div className={handleDivClass}>
         <Handle
-          className='w-full h-full !bg-transparent !absolute -inset-[12px] rounded-none -translate-x-[calc(50%-12px)] border-none cursor-crosshair'
+          className='w-full h-full !bg-transparent !absolute -inset-[8px] rounded-none -translate-x-[calc(50%-8px)] border-none cursor-crosshair'
           position={Position.Right}
           type='source'
         />
         <Handle
-          className='w-full h-full !bg-transparent !absolute -inset-[12px] rounded-none translate-x-[calc(50%-12px)] border-none cursor-crosshair'
+          className='w-full h-full !bg-transparent !absolute -inset-[8px] rounded-none translate-x-[calc(50%)] border-none cursor-crosshair'
           position={Position.Left}
           type='target'
           isConnectableStart={false}

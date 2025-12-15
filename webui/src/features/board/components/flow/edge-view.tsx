@@ -15,6 +15,7 @@ import { getEdgeParams } from '../../utils/flow'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { LiteMarkdown } from '@/components/markdown/lite-markdown'
+import TextareaAutosize from 'react-textarea-autosize'
 
 const BASE_HEAD_SIZE = 10
 const HEAD_SCALE = 1.5
@@ -348,7 +349,7 @@ export const EdgeView = memo(function EdgeView({
             onPointerDown={event => event.stopPropagation()}
           >
             {isLabelEditing ? (
-              <textarea
+              <TextareaAutosize
                 ref={labelInputRef}
                 value={labelDraft}
                 onChange={event => edgeExtras.onLabelChange?.(event.target.value)}
@@ -356,7 +357,8 @@ export const EdgeView = memo(function EdgeView({
                 onKeyDown={handleLabelKeyDown}
                 placeholder='Add label...'
                 className='text-center text-base px-2 py-1 bg-background focus:outline-none min-w-[160px] resize-none max-w-[240px] font-handwriting'
-                rows={1}
+                minRows={1}
+                maxRows={4}
               />
             ) : (
               <div className='px-2 py-1 bg-background text-base text-card-foreground max-w-[240px] font-handwriting'>

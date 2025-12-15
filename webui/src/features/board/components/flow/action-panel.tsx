@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { memo, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -34,7 +34,7 @@ interface ActionPanelProps {
 /**
  * Action panel component for graph controls and node additions.
  */
-export function ActionPanel({
+export const ActionPanel = memo(function ActionPanel({
   onAddNode,
   enableSelection,
   setEnableSelection,
@@ -312,4 +312,4 @@ export function ActionPanel({
       <IconSearchDialog openIconSearch={openIconSearch} setOpenIconSearch={setOpenIconSearch} />
     </div>
   )
-}
+})

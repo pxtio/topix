@@ -309,6 +309,9 @@ export default function GraphEditor() {
     () => fitView({ padding: 0.2, duration: 250 }),
     [fitView],
   )
+  const handleToggleLock = useCallback(() => {
+    setIsLocked(value => !value)
+  }, [setIsLocked])
 
   // Connect using store (store handles addLink + persistence)
   const connectNodes: OnConnect = useCallback(
@@ -401,7 +404,7 @@ export default function GraphEditor() {
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
         isLocked={isLocked}
-        toggleLock={() => setIsLocked(v => !v)}
+        toggleLock={handleToggleLock}
         viewMode={viewMode}
         setViewMode={setViewMode}
       />

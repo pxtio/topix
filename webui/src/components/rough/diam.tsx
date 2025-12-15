@@ -4,6 +4,7 @@ import type { Options as RoughOptions } from 'roughjs/bin/core'
 import { useViewport } from '@xyflow/react'
 import clsx from 'clsx'
 import type { StrokeStyle } from '@/features/board/types/style'
+import { getCachedCanvas, serializeCacheKey } from './cache'
 
 type RoundedClass = 'none' | 'rounded-2xl'
 
@@ -36,6 +37,7 @@ type DrawConfig = {
   fillStyle?: RoughOptions['fillStyle']
   seed: number
   dpr: number
+  renderScale: number
 }
 
 const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
@@ -52,8 +54,30 @@ const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
     a.fill === b.fill &&
     a.fillStyle === b.fillStyle &&
     a.seed === b.seed &&
-    a.dpr === b.dpr
+    a.dpr === b.dpr &&
+    a.renderScale === b.renderScale
   )
+}
+
+const quantizeZoom = (value: number): number => {
+  if (!Number.isFinite(value)) return 1
+  return Math.max(0.1, Math.round(value * 10) / 10)
+}
+
+const clampOversample = (value: number): number => Math.min(Math.max(1, value), 1.5)
+const MAX_RENDER_WIDTH = 1920
+const MAX_RENDER_HEIGHT = 1080
+
+type DetailSettings = {
+  curveStepCount: number
+  maxRandomnessOffset: number
+  hachureGap: number
+}
+
+const detailForSize = (maxSide: number): DetailSettings => {
+  if (maxSide >= 800) return { curveStepCount: 5, maxRandomnessOffset: 1, hachureGap: 8 }
+  if (maxSide >= 400) return { curveStepCount: 7, maxRandomnessOffset: 1.2, hachureGap: 6 }
+  return { curveStepCount: 9, maxRandomnessOffset: 1.4, hachureGap: 5 }
 }
 
 /** Map logical stroke style to dash pattern + desired canvas lineCap (set on ctx). */
@@ -182,10 +206,10 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const roughRef = useRef<{ canvas: HTMLCanvasElement, instance: RoughCanvas } | null>(null)
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
-  const { zoom = 1 } = useViewport()
+  const { zoom: viewportZoom = 1 } = useViewport()
+  const effectiveZoom = quantizeZoom(viewportZoom)
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     const rect = wrapper.getBoundingClientRect()
@@ -194,13 +218,23 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     if (cssW === 0 || cssH === 0) return
 
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
-    const oversample = Math.max(1, zoom)
+    const oversample = clampOversample(effectiveZoom)
 
     // bleed for stroke + jitter
     const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 2)
 
-    const pixelW = Math.floor((cssW + bleed * 2) * dpr * oversample)
-    const pixelH = Math.floor((cssH + bleed * 2) * dpr * oversample)
+    const paddedWidth = cssW + bleed * 2
+    const paddedHeight = cssH + bleed * 2
+    const baseScale = dpr * oversample
+    const limiter = Math.min(
+      1,
+      MAX_RENDER_WIDTH / (paddedWidth * baseScale),
+      MAX_RENDER_HEIGHT / (paddedHeight * baseScale)
+    )
+    const renderScale = baseScale * limiter
+
+    const pixelW = Math.floor(paddedWidth * renderScale)
+    const pixelH = Math.floor(paddedHeight * renderScale)
     if (canvas.width !== pixelW) canvas.width = pixelW
     if (canvas.height !== pixelH) canvas.height = pixelH
 
@@ -210,7 +244,7 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     const config: DrawConfig = {
       cssW,
       cssH,
-      zoom,
+      zoom: effectiveZoom,
       rounded,
       roughness,
       stroke,
@@ -219,38 +253,22 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
       fill,
       fillStyle,
       seed,
-      dpr
+      dpr,
+      renderScale
     }
 
     if (drawConfigEqual(lastConfigRef.current, config)) {
       return
     }
 
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    // clear in device pixels
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // draw in CSS units
-    ctx.setTransform(dpr * oversample, 0, 0, dpr * oversample, 0, 0)
-    ctx.translate(bleed, bleed)
-
-    if (!roughRef.current || roughRef.current.canvas !== canvas) {
-      roughRef.current = { canvas, instance: new RoughCanvas(canvas) }
-    }
-    const rc = roughRef.current.instance
     const visibleStroke = stroke === 'transparent' && !fill ? '#222' : stroke
 
-    // hairline crispness without eating tiny shapes
     const inset = (strokeWidth ?? 1) <= 1.5 ? Math.min(0.5, cssW / 4, cssH / 4) : 0
     const x0 = inset
     const y0 = inset
     const x1 = inset + Math.max(0, cssW - inset * 2)
     const y1 = inset + Math.max(0, cssH - inset * 2)
 
-    // radius choice (similar to rect): 16px "2xl", clamped by geometry
     const baseRadius = rounded === 'rounded-2xl' ? 16 : 0
     const pathData =
       baseRadius > 0
@@ -258,36 +276,77 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
         : sharpDiamondPath(x0, y0, x1, y1)
 
     const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+    const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(Math.max(cssW, cssH))
 
-    const drawable = rc.generator.path(pathData, {
+    const cacheKey = serializeCacheKey([
+      'diamond',
+      rounded,
       roughness,
-      stroke: visibleStroke,
-      strokeWidth: strokeWidth ?? 1,
-      fill,
-      fillStyle,
-      fillWeight: 1,
-      bowing: 2,
-      curveStepCount: 9,
-      maxRandomnessOffset: 1.5,
-      seed: seed || 1337,
-      strokeLineDash,
-      strokeLineDashOffset: 0,
-      dashOffset: 8,
-      dashGap: 16,
-      hachureGap: 5,
-      disableMultiStroke: true,
-      disableMultiStrokeFill: true,
-      preserveVertices: true,
+      visibleStroke,
+      strokeStyle,
+      strokeWidth,
+      fill || '',
+      fillStyle || '',
+      seed,
+      effectiveZoom,
+      renderScale,
+      cssW,
+      cssH,
+    ])
+
+    const offscreen = getCachedCanvas(cacheKey, pixelW, pixelH, target => {
+      const offCtx = target.getContext('2d')
+      if (!offCtx) return
+
+      offCtx.setTransform(1, 0, 0, 1, 0, 0)
+      offCtx.clearRect(0, 0, target.width, target.height)
+      offCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0)
+      offCtx.translate(bleed, bleed)
+
+      const rc = new RoughCanvas(target)
+      const drawable = rc.generator.path(pathData, {
+        roughness,
+        stroke: visibleStroke,
+        strokeWidth: strokeWidth ?? 1,
+        fill,
+        fillStyle,
+        fillWeight: 1,
+        bowing: 2,
+        curveStepCount,
+        maxRandomnessOffset,
+        seed: seed || 1337,
+        strokeLineDash,
+        strokeLineDashOffset: 0,
+        dashOffset: 8,
+        dashGap: 16,
+        hachureGap,
+        disableMultiStroke: true,
+        disableMultiStrokeFill: true,
+        preserveVertices: true,
+      })
+
+      offCtx.save()
+      if (lineCap) offCtx.lineCap = lineCap
+      offCtx.lineJoin = 'round'
+      rc.draw(drawable)
+      offCtx.restore()
     })
 
-    ctx.save()
-    if (lineCap) ctx.lineCap = lineCap
-    ctx.lineJoin = 'round'
-    rc.draw(drawable)
-    ctx.restore()
+    if (canvas.width !== offscreen.width) canvas.width = offscreen.width
+    if (canvas.height !== offscreen.height) canvas.height = offscreen.height
+
+    canvas.style.width = cssW + 'px'
+    canvas.style.height = cssH + 'px'
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(offscreen, 0, 0)
 
     lastConfigRef.current = config
-  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, zoom, seed, strokeStyle])
+  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle])
 
   const scheduleRedraw = useCallback(() => {
     if (rafRef.current !== null) return

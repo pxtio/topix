@@ -4,6 +4,7 @@ import type { RefObject } from 'react'
 import type { NodeType } from '../../types/style'
 import { IconShape } from './icon-shape'
 import { ImageShape } from './image-shape'
+import { LiteMarkdown } from '@/components/markdown/lite-markdown'
 
 type TextAlign = 'left' | 'center' | 'right'
 
@@ -78,9 +79,14 @@ export const Shape = memo(function Shape({
               ref={textareaRef}
               minRows={1}
             />
+          ) : hasLabel ? (
+            <LiteMarkdown
+              text={value}
+              className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
+            />
           ) : (
-            <div className={`px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm ${hasLabel ? 'text-card-foreground' : 'text-muted-foreground/70'}`}>
-              {hasLabel ? value : placeHolder}
+            <div className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-muted-foreground/70'>
+              {placeHolder}
             </div>
           )}
         </div>
@@ -104,7 +110,11 @@ export const Shape = memo(function Shape({
           />
         ) : (
           <div className={`${base} whitespace-pre-wrap`}>
-            <span className={notEditingSpanClass}>{value || placeHolder}</span>
+            {value.trim() ? (
+              <LiteMarkdown text={value} className='block' />
+            ) : (
+              <span className={notEditingSpanClass}>{placeHolder}</span>
+            )}
           </div>
         )}
       </div>

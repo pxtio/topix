@@ -34,6 +34,7 @@ type DrawConfig = {
   fillStyle?: RoughOptions['fillStyle']
   seed: number
   dpr: number
+  renderScale: number
 }
 
 const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
@@ -50,7 +51,8 @@ const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
     a.fill === b.fill &&
     a.fillStyle === b.fillStyle &&
     a.seed === b.seed &&
-    a.dpr === b.dpr
+    a.dpr === b.dpr &&
+    a.renderScale === b.renderScale
   )
 }
 
@@ -60,6 +62,8 @@ const quantizeZoom = (value: number): number => {
 }
 
 const clampOversample = (value: number): number => Math.min(Math.max(1, value), 1.5)
+const MAX_RENDER_WIDTH = 1920
+const MAX_RENDER_HEIGHT = 1080
 
 type DetailSettings = {
   curveStepCount: number
@@ -140,8 +144,18 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     // add a bleed in CSS units (display px), enough for stroke + jitter
     const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 2)
 
-    const pixelW = Math.floor((cssW + bleed * 2) * dpr * oversample)
-    const pixelH = Math.floor((cssH + bleed * 2) * dpr * oversample)
+    const paddedWidth = cssW + bleed * 2
+    const paddedHeight = cssH + bleed * 2
+    const baseScale = dpr * oversample
+    const limiter = Math.min(
+      1,
+      MAX_RENDER_WIDTH / (paddedWidth * baseScale),
+      MAX_RENDER_HEIGHT / (paddedHeight * baseScale)
+    )
+    const renderScale = baseScale * limiter
+
+    const pixelW = Math.floor(paddedWidth * renderScale)
+    const pixelH = Math.floor(paddedHeight * renderScale)
     if (canvas.width !== pixelW) canvas.width = pixelW
     if (canvas.height !== pixelH) canvas.height = pixelH
 
@@ -160,7 +174,8 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       fill,
       fillStyle,
       seed,
-      dpr
+      dpr,
+      renderScale
     }
 
     if (drawConfigEqual(lastConfigRef.current, config)) {
@@ -195,7 +210,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       fillStyle || '',
       seed,
       effectiveZoom,
-      dpr,
+      renderScale,
       cssW,
       cssH,
     ])
@@ -206,7 +221,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
 
       offCtx.setTransform(1, 0, 0, 1, 0, 0)
       offCtx.clearRect(0, 0, target.width, target.height)
-      offCtx.setTransform(dpr * oversample, 0, 0, dpr * oversample, 0, 0)
+      offCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0)
       offCtx.translate(bleed, bleed)
 
       const rc = new RoughCanvas(target)

@@ -14,7 +14,7 @@ type Token =
   | { type: 'math-block'; content: string }
 
 const INLINE_PATTERN =
-  /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|\_[^_]+\_)/g
+  /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|_[^_]+_)/g
 
 function tokenize(input: string): Token[] {
   if (!input) return []
@@ -35,8 +35,6 @@ function tokenize(input: string): Token[] {
       tokens.push({ type: 'bold', content: match.slice(2, -2) })
     } else if ((match.startsWith('*') && match.endsWith('*'))) {
       tokens.push({ type: 'italic', content: match.slice(1, -1) })
-    } else if (match.startsWith('__') && match.endsWith('__')) {
-      tokens.push({ type: 'underline', content: match.slice(2, -2) })
     } else if (match.startsWith('~~') && match.endsWith('~~')) {
       tokens.push({ type: 'strike', content: match.slice(2, -2) })
     } else if (match.startsWith('_') && match.endsWith('_')) {
@@ -100,7 +98,7 @@ export function LiteMarkdown({ text, className }: LiteMarkdownProps) {
 
         if (token.type === 'code') {
           return (
-            <code key={index} className='px-1 rounded bg-muted text-xs font-mono'>
+            <code key={index} className='px-1 rounded bg-muted font-mono'>
               {token.content}
             </code>
           )

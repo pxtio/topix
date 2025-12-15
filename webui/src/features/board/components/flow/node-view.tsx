@@ -90,7 +90,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     )
 
     return (
-      <div className='border-none relative p-4 bg-transparent overflow-visible w-full h-full'>
+      <div className='border-none relative p-3 bg-transparent overflow-visible w-full h-full'>
         <div className={sheetHandleDivClass}>
           <Handle className={handleClassRight} position={Position.Right} type='source' />
           <Handle className={handleClassLeft} position={Position.Left} type='target' isConnectableStart={false} />

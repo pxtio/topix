@@ -87,7 +87,15 @@ function linkStyleToRoughOptions(style: LinkStyle, strokeOverride: string): Roug
 
 function shouldUseRough(style?: LinkStyle): boolean {
   if (!style) return false
-  return (style.roughness ?? 0) > 0 || style.strokeStyle !== 'solid'
+  return (style.roughness ?? 0) > 0
+}
+
+function cssDashArray(style: LinkStyle | undefined, strokeWidth: number, roughActive: boolean): string | undefined {
+  if (!style || roughActive) return undefined
+  const sw = Math.max(0.5, strokeWidth)
+  if (style.strokeStyle === 'dashed') return `${5.5 * sw} ${4 * sw}`
+  if (style.strokeStyle === 'dotted') return `0 ${3 * sw}`
+  return undefined
 }
 
 export const EdgeView = memo(function EdgeView({
@@ -116,6 +124,7 @@ export const EdgeView = memo(function EdgeView({
   }, [isDark, baseStroke])
 
   const strokeWidth = linkStyle?.strokeWidth ?? 1.5
+  const roughActive = useMemo(() => shouldUseRough(linkStyle), [linkStyle])
 
   const startKind = (linkStyle?.sourceArrowhead ?? 'none') as ArrowheadType
   const endKind = (linkStyle?.targetArrowhead ?? 'none') as ArrowheadType
@@ -187,6 +196,11 @@ export const EdgeView = memo(function EdgeView({
     return { sx: sxAdj, sy: syAdj, tx: txAdj, ty: tyAdj, edgePath, labelX, labelY }
   }, [sourceNode, targetNode, linkStyle?.pathStyle, startKind, endKind, arrowOffset])
 
+  const dashArray = useMemo(
+    () => cssDashArray(linkStyle, strokeWidth, roughActive),
+    [linkStyle, strokeWidth, roughActive]
+  )
+
   const edgeStrokeStyle: CSSProperties = useMemo(
     (): CSSProperties => ({
       ...(style as CSSProperties),
@@ -194,12 +208,13 @@ export const EdgeView = memo(function EdgeView({
       strokeWidth,
       strokeLinecap: 'round',
       strokeLinejoin: 'round',
-      fill: 'none'
+      fill: 'none',
+      strokeDasharray: dashArray
     }),
-    [style, displayStroke, strokeWidth]
+    [style, displayStroke, strokeWidth, dashArray]
   )
 
-  // —— RoughJS render layer ——
+  // -- RoughJS render layer --
   useEffect(() => {
     const g = roughGroupRef.current
     if (!g) return
@@ -327,8 +342,6 @@ export const EdgeView = memo(function EdgeView({
       />
     </>
   ) : null
-
-  const roughActive = shouldUseRough(linkStyle)
 
   return (
     <>

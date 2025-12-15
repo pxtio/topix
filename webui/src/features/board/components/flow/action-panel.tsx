@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, StarIcon, Image02Icon, ChartBubble02Icon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { AddNoteNodeOptions } from '../../hooks/add-node'
 import { Separator } from '@/components/ui/separator'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { BadgeCheck, ChevronDown, Cloud, Layers } from 'lucide-react'
+import type { NodeType } from '../../types/style'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -46,6 +49,16 @@ export function ActionPanel({
   const [openImageSearch, setOpenImageSearch] = useState(false)
 
   const [openIconSearch, setOpenIconSearch] = useState(false)
+  const handleAddShape = (nodeType: NodeType) => onAddNode({ nodeType })
+
+  const shapeOptions: { nodeType: NodeType, label: string, icon: ReactNode }[] = [
+    { nodeType: 'rectangle', label: 'Rectangle', icon: <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'layered-rectangle', label: 'Layered card', icon: <Layers className='w-4 h-4 shrink-0' /> },
+    { nodeType: 'ellipse', label: 'Ellipse', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'diamond', label: 'Diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'thought-cloud', label: 'Cloud', icon: <Cloud className='w-4 h-4 shrink-0' /> },
+    { nodeType: 'capsule', label: 'Capsule', icon: <BadgeCheck className='w-4 h-4 shrink-0' /> },
+  ]
 
   const normalButtonClass = `
     transition-colors
@@ -209,41 +222,35 @@ export function ActionPanel({
             <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
-          {/* Add rectangle */}
-          <Button
-            variant={null}
-            className={normalButtonClass}
-            size='icon'
-            onClick={() => onAddNode({ nodeType: 'rectangle' })}
-            title='Add Rectangle'
-            aria-label='Add Rectangle'
-          >
-            <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />
-          </Button>
-
-          {/* Add circle */}
-          <Button
-            variant={null}
-            className={normalButtonClass}
-            size='icon'
-            onClick={() => onAddNode({ nodeType: 'ellipse' })}
-            title='Add Ellipse'
-            aria-label='Add Ellipse'
-          >
-            <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} />
-          </Button>
-
-          {/* Add diamond */}
-          <Button
-            variant={null}
-            className={normalButtonClass}
-            size='icon'
-            onClick={() => onAddNode({ nodeType: 'diamond' })}
-            title='Add Diamond'
-            aria-label='Add Diamond'
-          >
-            <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} />
-          </Button>
+          {/* Shape picker */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                title='Add shape'
+                aria-label='Add shape'
+              >
+                <div className='flex flex-col items-center gap-0.5 relative'>
+                  <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ChevronDown className='absolute inset-x-0 -bottom-3.5 w-3 h-3 text-muted-foreground' />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='center' side='bottom' sideOffset={8} className='min-w-[180px]'>
+              {shapeOptions.map(option => (
+                <DropdownMenuItem
+                  key={option.nodeType}
+                  onSelect={() => handleAddShape(option.nodeType)}
+                  className='gap-2 text-sm'
+                >
+                  {option.icon}
+                  <span>{option.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Add text */}
           <Button
@@ -266,7 +273,7 @@ export function ActionPanel({
             title='Search icons'
             aria-label='Search icons'
           >
-            <HugeiconsIcon icon={StarIcon} className='size-4 shrink-0' strokeWidth={2} />
+            <HugeiconsIcon icon={GeometricShapes01Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Image search */}
@@ -283,7 +290,7 @@ export function ActionPanel({
         </>
       )}
 
-      {/* ——— LINEAR MODE CONTROLS ——— */}
+      {/* -- LINEAR MODE CONTROLS -- */}
       {viewMode !== "graph" && (
         <>
           {/* Keep it simple in linear: only Add sheet */}

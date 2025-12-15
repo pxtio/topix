@@ -361,7 +361,7 @@ export const EdgeView = memo(function EdgeView({
                 maxRows={4}
               />
             ) : (
-              <div className='px-2 py-1 bg-background text-base text-card-foreground max-w-[240px] font-handwriting'>
+              <div className='text-center px-2 py-1 bg-background text-base text-card-foreground max-w-[240px] font-handwriting'>
                 <LiteMarkdown text={labelText} />
               </div>
             )}

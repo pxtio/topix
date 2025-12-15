@@ -5,7 +5,17 @@
 /**
  * Type of node in the board.
  */
-export type NodeType = "rectangle" | "text" | "sheet" | "ellipse" | "diamond" | "image" | "icon"
+export type NodeType =
+  | "rectangle"
+  | "text"
+  | "sheet"
+  | "ellipse"
+  | "diamond"
+  | "image"
+  | "icon"
+  | "layered-rectangle"
+  | "thought-cloud"
+  | "capsule"
 
 /**
  * Stroke style for the node.
@@ -35,9 +45,9 @@ export function fontSizeToTwClass(size?: FontSize): string {
     case "M":
       return "text-base"
     case "L":
-      return "text-xl"
-    case "XL":
       return "text-2xl"
+    case "XL":
+      return "text-4xl"
     default:
       return "text-base"
   }
@@ -173,6 +183,7 @@ export const createDefaultStyle = ({
 
   switch (type) {
     case "rectangle":
+    case "layered-rectangle":
       return {
         ...defaultOptions,
         roughness: 0.5,
@@ -181,6 +192,26 @@ export const createDefaultStyle = ({
         fontSize: "M",
         textAlign: "center",
         backgroundColor: "#dbeafe",
+      } as Style
+    case "thought-cloud":
+      return {
+        ...defaultOptions,
+        roughness: 0.5,
+        roundness: 2,
+        fontFamily: "handwriting",
+        fontSize: "M",
+        textAlign: "center",
+        backgroundColor: "#e7e5e4"
+      } as Style
+    case "capsule":
+      return {
+        ...defaultOptions,
+        roughness: 0.5,
+        roundness: 2,
+        fontFamily: "handwriting",
+        fontSize: "M",
+        textAlign: "center",
+        backgroundColor: "#99f6e4"
       } as Style
     case "ellipse":
       return {
@@ -253,7 +284,7 @@ export const createDefaultLinkStyle = (): LinkStyle => ({
   type: "arrow",
   angle: 0.0,
   strokeColor: "#292524",
-  strokeWidth: 1.5,
+  strokeWidth: 1,
   strokeStyle: "solid",
   backgroundColor: "#00000000",
   fillStyle: "solid",

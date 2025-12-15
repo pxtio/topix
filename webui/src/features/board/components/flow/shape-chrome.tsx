@@ -3,6 +3,9 @@ import clsx from 'clsx'
 import { RoughRect } from '@/components/rough/rect'
 import { RoughCircle } from '@/components/rough/circ'
 import { RoughDiamond } from '@/components/rough/diam'
+import { LayeredRectangle } from './shapes/layered-rectangle'
+import { ThoughtCloud } from './shapes/thought-cloud'
+import { CapsuleShape } from './shapes/capsule'
 import type { FillStyle, NodeType, StrokeStyle, StrokeWidth } from '../../types/style'
 
 type ShapeChromeProps = {
@@ -38,11 +41,13 @@ export const ShapeChrome = memo(({
   className,
   children,
 }: ShapeChromeProps) => {
+  const wrapperStyle = { minHeight }
+
   if (type === 'sheet') {
     return (
       <div
-        className={clsx('rounded-xl border border-border', frameClass)}
-        style={{ backgroundColor, color: textColor, minHeight, borderColor: strokeColor }}
+        className={clsx('rounded-xl border border-border', frameClass, className)}
+        style={{ backgroundColor, color: textColor, borderColor: strokeColor, ...wrapperStyle }}
       >
         {children}
       </div>
@@ -52,8 +57,8 @@ export const ShapeChrome = memo(({
   if (type === "image" || type === "icon") {
     return (
       <div
-        className={clsx('w-full h-full transparent', frameClass)}
-        style={{ color: textColor, minHeight }}
+        className={clsx('w-full h-full transparent', frameClass, className)}
+        style={{ color: textColor, ...wrapperStyle }}
       >
         {children}
       </div>
@@ -62,28 +67,90 @@ export const ShapeChrome = memo(({
 
   if (type === 'text') {
     return (
-      <div className={clsx('bg-transparent w-full h-full', className)} style={{ color: textColor }}>
+      <div className={clsx('bg-transparent w-full h-full', className)} style={{ color: textColor, ...wrapperStyle }}>
         {children}
       </div>
     )
   }
 
-  const commonProps = {
+  const baseWrapperClass = clsx('relative w-full h-full', frameClass, className)
+  const shapeProps = {
     roughness,
     fill: backgroundColor,
     fillStyle,
     stroke: strokeColor,
     strokeStyle,
     strokeWidth,
-    seed,
-    className: clsx('w-full h-full', className),
-    style: { minHeight },
-    children,
+    seed
   }
 
-  if (type === 'ellipse') return <RoughCircle {...commonProps} />
-  if (type === 'diamond') return <RoughDiamond {...commonProps} rounded={rounded} />
+  if (type === 'layered-rectangle') {
+    return (
+      <LayeredRectangle
+        minHeight={minHeight}
+        rounded={rounded}
+        wrapperClass={baseWrapperClass}
+        wrapperStyle={wrapperStyle}
+        {...shapeProps}
+      >
+        {children}
+      </LayeredRectangle>
+    )
+  }
+
+  if (type === 'thought-cloud') {
+    return (
+      <ThoughtCloud
+        minHeight={minHeight}
+        wrapperClass={baseWrapperClass}
+        wrapperStyle={wrapperStyle}
+        backgroundColor={backgroundColor}
+        {...shapeProps}
+      >
+        {children}
+      </ThoughtCloud>
+    )
+  }
+
+  if (type === 'capsule') {
+    return (
+      <CapsuleShape
+        minHeight={minHeight}
+        wrapperClass={baseWrapperClass}
+        wrapperStyle={wrapperStyle}
+        {...shapeProps}
+      >
+        {children}
+      </CapsuleShape>
+    )
+  }
+
+  if (type === 'ellipse') {
+    return (
+      <div className={baseWrapperClass} style={wrapperStyle}>
+        <RoughCircle {...shapeProps} className='w-full h-full'>
+          {children}
+        </RoughCircle>
+      </div>
+    )
+  }
+
+  if (type === 'diamond') {
+    return (
+      <div className={baseWrapperClass} style={wrapperStyle}>
+        <RoughDiamond {...shapeProps} className='w-full h-full' rounded={rounded}>
+          {children}
+        </RoughDiamond>
+      </div>
+    )
+  }
 
   // default rect
-  return <RoughRect {...commonProps} rounded={rounded} />
+  return (
+    <div className={baseWrapperClass} style={wrapperStyle}>
+      <RoughRect {...shapeProps} className='w-full h-full' rounded={rounded}>
+        {children}
+      </RoughRect>
+    </div>
+  )
 })

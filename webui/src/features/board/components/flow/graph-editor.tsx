@@ -66,8 +66,16 @@ const connectionLineStyle = {
   strokeLinecap: 'round' as const,
 }
 
-const isDrawableNodeType = (nodeType: NodeType) =>
-  nodeType === 'rectangle' || nodeType === 'ellipse' || nodeType === 'diamond'
+const drawableNodeTypes: NodeType[] = [
+  'rectangle',
+  'ellipse',
+  'diamond',
+  'layered-rectangle',
+  'thought-cloud',
+  'capsule',
+]
+
+const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(nodeType)
 
 type ViewMode = 'graph' | 'linear'
 

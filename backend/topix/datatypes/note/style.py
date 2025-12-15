@@ -16,6 +16,9 @@ class NodeType(StrEnum):
     TEXT = "text"
     IMAGE = "image"
     ICON = "icon"
+    LAYERED_RECTANGLE = "layered-rectangle"
+    THOUGHT_CLOUD = "thought-cloud"
+    CAPSULE = "capsule"
 
 
 class StrokeStyle(StrEnum):

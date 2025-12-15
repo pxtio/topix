@@ -90,7 +90,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
     )
 
     return (
-      <div className='border-none relative p-6 bg-transparent overflow-visible w-full h-full'>
+      <div className='border-none relative p-4 bg-transparent overflow-visible w-full h-full'>
         <div className={sheetHandleDivClass}>
           <Handle className={handleClassRight} position={Position.Right} type='source' />
           <Handle className={handleClassLeft} position={Position.Left} type='target' isConnectableStart={false} />
@@ -119,7 +119,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const handleDivClass = clsx('absolute inset-0', isConnectModeActive ? 'z-20' : 'z-0')
 
   return (
-    <div className='border-none relative bg-transparent overflow-visible w-full h-full p-4'>
+    <div className='border-none relative bg-transparent overflow-visible w-full h-full p-2'>
       <div className={handleDivClass}>
         <Handle
           className='w-full h-full !bg-transparent !absolute -inset-[12px] rounded-none -translate-x-[calc(50%-12px)] border-none cursor-crosshair'

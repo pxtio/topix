@@ -647,7 +647,7 @@ export function StylePanel<T extends StyleLike>({
   )
 }
 
-/** ———————————————————————————————— Graph Sidebar ———————————————————————————————— **/
+/** -- Graph Sidebar -- **/
 
 export function GraphSidebar(): ReactElement | null {
   const { recordNodeStyleChange, recordLinkStyleChange } = useStyleDefaults()

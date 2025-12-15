@@ -35,9 +35,9 @@ export function fontSizeToTwClass(size?: FontSize): string {
     case "M":
       return "text-base"
     case "L":
-      return "text-xl"
-    case "XL":
       return "text-2xl"
+    case "XL":
+      return "text-4xl"
     default:
       return "text-base"
   }
@@ -253,7 +253,7 @@ export const createDefaultLinkStyle = (): LinkStyle => ({
   type: "arrow",
   angle: 0.0,
   strokeColor: "#292524",
-  strokeWidth: 1.5,
+  strokeWidth: 1,
   strokeStyle: "solid",
   backgroundColor: "#00000000",
   fillStyle: "solid",

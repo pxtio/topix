@@ -7,12 +7,14 @@ type Token =
   | { type: 'text'; content: string }
   | { type: 'bold'; content: string }
   | { type: 'italic'; content: string }
+  | { type: 'underline'; content: string }
+  | { type: 'strike'; content: string }
   | { type: 'code'; content: string }
   | { type: 'math-inline'; content: string }
   | { type: 'math-block'; content: string }
 
 const INLINE_PATTERN =
-  /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\*[^*]+\*|_[^_]+_)/g
+  /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|\_[^_]+\_)/g
 
 function tokenize(input: string): Token[] {
   if (!input) return []
@@ -31,8 +33,14 @@ function tokenize(input: string): Token[] {
       tokens.push({ type: 'math-inline', content: match.slice(1, -1).trim() })
     } else if ((match.startsWith('**') && match.endsWith('**')) || (match.startsWith('__') && match.endsWith('__'))) {
       tokens.push({ type: 'bold', content: match.slice(2, -2) })
-    } else if ((match.startsWith('*') && match.endsWith('*')) || (match.startsWith('_') && match.endsWith('_'))) {
+    } else if ((match.startsWith('*') && match.endsWith('*'))) {
       tokens.push({ type: 'italic', content: match.slice(1, -1) })
+    } else if (match.startsWith('__') && match.endsWith('__')) {
+      tokens.push({ type: 'underline', content: match.slice(2, -2) })
+    } else if (match.startsWith('~~') && match.endsWith('~~')) {
+      tokens.push({ type: 'strike', content: match.slice(2, -2) })
+    } else if (match.startsWith('_') && match.endsWith('_')) {
+      tokens.push({ type: 'underline', content: match.slice(1, -1) })
     } else if (match.startsWith('`') && match.endsWith('`')) {
       tokens.push({ type: 'code', content: match.slice(1, -1) })
     } else {
@@ -95,6 +103,22 @@ export function LiteMarkdown({ text, className }: LiteMarkdownProps) {
             <code key={index} className='px-1 rounded bg-muted text-xs font-mono'>
               {token.content}
             </code>
+          )
+        }
+
+        if (token.type === 'underline') {
+          return (
+            <span key={index} className='underline'>
+              {token.content}
+            </span>
+          )
+        }
+
+        if (token.type === 'strike') {
+          return (
+            <span key={index} className='line-through'>
+              {token.content}
+            </span>
           )
         }
 

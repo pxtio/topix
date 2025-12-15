@@ -1,5 +1,6 @@
 import { generateUuid } from "@/lib/common"
 import { createDefaultLinkStyle, type LinkStyle } from "./style"
+import type { RichText } from "./note"
 
 
 /**
@@ -12,7 +13,7 @@ export interface Link extends Record<string, unknown> {
 
   source: string
   target: string
-  label?: string
+  label?: RichText
   style: LinkStyle
 
   createdAt: string

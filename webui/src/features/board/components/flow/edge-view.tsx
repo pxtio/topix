@@ -8,12 +8,13 @@ import {
   type EdgeProps
 } from '@xyflow/react'
 import type { CSSProperties, ReactElement } from 'react'
-import { memo, useMemo } from 'react'
+import { memo, useEffect, useMemo, useRef } from 'react'
 import type { LinkEdge } from '../../types/flow'
 import type { ArrowheadType, LinkStyle } from '../../types/style'
 import { getEdgeParams } from '../../utils/flow'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
+import { LiteMarkdown } from '@/components/markdown/lite-markdown'
 
 const BASE_HEAD_SIZE = 10
 const HEAD_SCALE = 1.5
@@ -76,6 +77,14 @@ function cssDashArray(style: LinkStyle | undefined, strokeWidth: number): string
   if (style.strokeStyle === 'dashed') return `${5.5 * sw} ${4 * sw}`
   if (style.strokeStyle === 'dotted') return `0 ${3 * sw}`
   return undefined
+}
+
+type EdgeLabelEditingData = {
+  labelEditing?: boolean
+  labelDraft?: string
+  onLabelChange?: (value: string) => void
+  onLabelSave?: () => void
+  onLabelCancel?: () => void
 }
 
 export const EdgeView = memo(function EdgeView({
@@ -187,10 +196,48 @@ export const EdgeView = memo(function EdgeView({
     [style, displayStroke, strokeWidth, dashArray]
   )
 
-  if (!geom) return null
-
   const filledHeadSize = headSize * 0.95
   const headStrokeWidth = Math.max(1, strokeWidth)
+
+  const edgeExtras = (data ?? {}) as LinkEdge['data'] & EdgeLabelEditingData
+  const labelText = edgeExtras?.label?.markdown ?? ''
+  const isLabelEditing = Boolean(edgeExtras?.labelEditing)
+  const labelDraft = isLabelEditing ? edgeExtras?.labelDraft ?? '' : labelText
+  const labelInputRef = useRef<HTMLTextAreaElement | null>(null)
+  const skipSaveRef = useRef(false)
+
+  useEffect(() => {
+    if (!isLabelEditing) {
+      skipSaveRef.current = false
+      return
+    }
+    const raf = requestAnimationFrame(() => {
+      labelInputRef.current?.focus()
+      labelInputRef.current?.select()
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [isLabelEditing])
+
+  const handleLabelBlur = () => {
+    if (skipSaveRef.current) {
+      skipSaveRef.current = false
+      return
+    }
+    edgeExtras.onLabelSave?.()
+  }
+
+  if (!geom) return null
+
+  const handleLabelKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      edgeExtras.onLabelSave?.()
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      skipSaveRef.current = true
+      edgeExtras.onLabelCancel?.()
+    }
+  }
 
   const renderMarker = (markerId: string | undefined, kind: ArrowheadType, orient: 'start' | 'end') => {
     if (!markerId || kind === 'none') return null
@@ -291,15 +338,31 @@ export const EdgeView = memo(function EdgeView({
 
       {selectionHandles}
 
-      {data?.label && (
+      {(isLabelEditing || !!labelText) && (
         <EdgeLabelRenderer>
           <div
             className='nodrag nopan absolute origin-center pointer-events-auto'
             style={{
               transform: `translate(-50%, -50%) translate(${geom.labelX}px, ${geom.labelY}px)`
             }}
+            onPointerDown={event => event.stopPropagation()}
           >
-            {data.label}
+            {isLabelEditing ? (
+              <textarea
+                ref={labelInputRef}
+                value={labelDraft}
+                onChange={event => edgeExtras.onLabelChange?.(event.target.value)}
+                onBlur={handleLabelBlur}
+                onKeyDown={handleLabelKeyDown}
+                placeholder='Add label...'
+                className='text-center text-base px-2 py-1 bg-background focus:outline-none min-w-[160px] resize-none max-w-[240px] font-handwriting'
+                rows={1}
+              />
+            ) : (
+              <div className='px-2 py-1 bg-background text-base text-card-foreground max-w-[240px] font-handwriting'>
+                <LiteMarkdown text={labelText} />
+              </div>
+            )}
           </div>
         </EdgeLabelRenderer>
       )}

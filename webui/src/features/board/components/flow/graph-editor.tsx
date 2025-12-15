@@ -14,7 +14,7 @@ import {
   MiniMap,
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/shallow'
 
 import NodeView from './node-view'
@@ -29,6 +29,8 @@ import { GraphContextMenu } from './graph-context-menu'
 import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
 import type { NodeType } from '../../types/style'
+import type { Link } from '../../types/link'
+import { createDefaultLinkStyle } from '../../types/style'
 
 import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/add-node'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
@@ -77,6 +79,19 @@ const drawableNodeTypes: NodeType[] = [
 
 const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(nodeType)
 
+const ensureLinkData = (edge: LinkEdge): Link => {
+  if (edge.data) return edge.data as Link
+  return {
+    id: edge.id,
+    type: 'link',
+    version: 1,
+    source: edge.source,
+    target: edge.target,
+    style: createDefaultLinkStyle(),
+    createdAt: new Date().toISOString(),
+  }
+}
+
 type ViewMode = 'graph' | 'linear'
 
 type GraphViewProps = {
@@ -98,6 +113,7 @@ type GraphViewProps = {
   onInit: (instance: ReactFlowInstance<NoteNode, LinkEdge>) => void
   onPaneContextMenu?: ReactFlowProps<NoteNode, LinkEdge>['onPaneContextMenu']
   onNodeContextMenu?: ReactFlowProps<NoteNode, LinkEdge>['onNodeContextMenu']
+  onEdgeDoubleClick?: ReactFlowProps<NoteNode, LinkEdge>['onEdgeDoubleClick']
   children?: React.ReactNode
 }
 
@@ -123,6 +139,7 @@ function GraphView({
   onInit,
   onPaneContextMenu,
   onNodeContextMenu,
+  onEdgeDoubleClick,
   children,
 }: GraphViewProps) {
   return (
@@ -152,6 +169,7 @@ function GraphView({
       onSelectionDragStop={onSelectionDragStop}
       onPaneContextMenu={onPaneContextMenu}
       onNodeContextMenu={onNodeContextMenu}
+      onEdgeDoubleClick={onEdgeDoubleClick}
       nodesDraggable={!isLocked}
       nodesConnectable={!isLocked}
       elementsSelectable={!isLocked}
@@ -187,6 +205,8 @@ export default function GraphEditor() {
   const [moving, setMoving] = useState<boolean>(false)
   const [isSelecting, setIsSelecting] = useState<boolean>(false)
   const [pendingPlacement, setPendingPlacement] = useState<AddNoteNodeOptions | null>(null)
+  const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null)
+  const [edgeLabelDraft, setEdgeLabelDraft] = useState<string>('')
 
   const {
     zoomIn,
@@ -208,6 +228,7 @@ export default function GraphEditor() {
   const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const storeOnConnect = useGraphStore(state => state.onConnect)
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
 
   const isResizingNode = useGraphStore(state => state.isResizingNode)
   const graphViewports = useGraphStore(state => state.graphViewports)
@@ -250,7 +271,20 @@ export default function GraphEditor() {
     if (viewMode !== 'graph' && pendingPlacement) {
       cancelPlacement()
     }
-  }, [viewMode, pendingPlacement, cancelPlacement])
+    if (viewMode !== 'graph' && editingEdgeId) {
+      setEditingEdgeId(null)
+      setEdgeLabelDraft('')
+    }
+  }, [viewMode, pendingPlacement, cancelPlacement, editingEdgeId])
+
+  useEffect(() => {
+    if (!editingEdgeId) return
+    const stillExists = edges.some(edge => edge.id === editingEdgeId)
+    if (!stillExists) {
+      setEditingEdgeId(null)
+      setEdgeLabelDraft('')
+    }
+  }, [edges, editingEdgeId])
 
   const handlePaneDoubleClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -275,6 +309,64 @@ export default function GraphEditor() {
     },
     [addNoteNode, beginPlacement],
   )
+
+  const handleEdgeDoubleClick = useCallback<NonNullable<ReactFlowProps<NoteNode, LinkEdge>['onEdgeDoubleClick']>>(
+    (event, edge) => {
+      event.preventDefault()
+      event.stopPropagation()
+      setEditingEdgeId(edge.id)
+      setEdgeLabelDraft(edge.data?.label?.markdown ?? '')
+    },
+    [],
+  )
+
+  const handleEdgeLabelChange = useCallback((value: string) => {
+    setEdgeLabelDraft(value)
+  }, [])
+
+  const handleEdgeLabelCancel = useCallback(() => {
+    setEditingEdgeId(null)
+    setEdgeLabelDraft('')
+  }, [])
+
+  const handleEdgeLabelSave = useCallback(() => {
+    if (!editingEdgeId) return
+    setEdgesPersist(prev =>
+      prev.map(edge =>
+        edge.id === editingEdgeId
+          ? {
+              ...edge,
+              data: {
+                ...ensureLinkData(edge),
+                label: edgeLabelDraft.trim()
+                  ? { markdown: edgeLabelDraft }
+                  : undefined,
+              } as Link,
+            }
+          : edge,
+      ),
+    )
+    setEditingEdgeId(null)
+    setEdgeLabelDraft('')
+  }, [editingEdgeId, edgeLabelDraft, setEdgesPersist])
+
+  const edgesForRender = useMemo(() => {
+    if (!editingEdgeId) return edges
+    return edges.map(edge => {
+      if (edge.id !== editingEdgeId) return edge
+      return {
+        ...edge,
+        data: {
+          ...ensureLinkData(edge),
+          labelEditing: true,
+          labelDraft: edgeLabelDraft,
+          onLabelChange: handleEdgeLabelChange,
+          onLabelSave: handleEdgeLabelSave,
+          onLabelCancel: handleEdgeLabelCancel,
+        } as Link,
+      }
+    })
+  }, [edges, edgeLabelDraft, editingEdgeId, handleEdgeLabelCancel, handleEdgeLabelChange, handleEdgeLabelSave])
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
 
@@ -427,7 +519,7 @@ export default function GraphEditor() {
               <>
                 <GraphView
                   nodes={nodes}
-                  edges={edges}
+                  edges={edgesForRender}
                   onNodesChange={onNodesChange}
                   onEdgesChange={onEdgesChange}
                   onNodesDelete={onNodesDelete}
@@ -444,6 +536,7 @@ export default function GraphEditor() {
                   onInit={handleInit}
                   onPaneContextMenu={onPaneContextMenu}
                   onNodeContextMenu={onNodeContextMenu}
+                  onEdgeDoubleClick={handleEdgeDoubleClick}
                 >
                   {!moving && !isDragging && !isResizingNode && !isSelecting && (
                     <MiniMap className='!bg-sidebar rounded-lg' />

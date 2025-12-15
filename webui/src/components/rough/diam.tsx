@@ -56,6 +56,25 @@ const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
   )
 }
 
+const quantizeZoom = (value: number): number => {
+  if (!Number.isFinite(value)) return 1
+  return Math.max(0.1, Math.round(value * 10) / 10)
+}
+
+const clampOversample = (value: number): number => Math.min(Math.max(1, value), 1.5)
+
+type DetailSettings = {
+  curveStepCount: number
+  maxRandomnessOffset: number
+  hachureGap: number
+}
+
+const detailForSize = (maxSide: number): DetailSettings => {
+  if (maxSide >= 800) return { curveStepCount: 5, maxRandomnessOffset: 1, hachureGap: 8 }
+  if (maxSide >= 400) return { curveStepCount: 7, maxRandomnessOffset: 1.2, hachureGap: 6 }
+  return { curveStepCount: 9, maxRandomnessOffset: 1.4, hachureGap: 5 }
+}
+
 /** Map logical stroke style to dash pattern + desired canvas lineCap (set on ctx). */
 function mapStrokeStyle(
   strokeStyle: StrokeStyle | undefined,
@@ -185,7 +204,8 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
   const roughRef = useRef<{ canvas: HTMLCanvasElement, instance: RoughCanvas } | null>(null)
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
-  const { zoom = 1 } = useViewport()
+  const { zoom: viewportZoom = 1 } = useViewport()
+  const effectiveZoom = quantizeZoom(viewportZoom)
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     const rect = wrapper.getBoundingClientRect()
@@ -194,7 +214,7 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     if (cssW === 0 || cssH === 0) return
 
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
-    const oversample = Math.max(1, zoom)
+    const oversample = clampOversample(effectiveZoom)
 
     // bleed for stroke + jitter
     const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 2)
@@ -210,7 +230,7 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     const config: DrawConfig = {
       cssW,
       cssH,
-      zoom,
+      zoom: effectiveZoom,
       rounded,
       roughness,
       stroke,
@@ -258,6 +278,7 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
         : sharpDiamondPath(x0, y0, x1, y1)
 
     const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+    const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(Math.max(cssW, cssH))
 
     const drawable = rc.generator.path(pathData, {
       roughness,
@@ -267,14 +288,14 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
       fillStyle,
       fillWeight: 1,
       bowing: 2,
-      curveStepCount: 9,
-      maxRandomnessOffset: 1.5,
+      curveStepCount,
+      maxRandomnessOffset,
       seed: seed || 1337,
       strokeLineDash,
       strokeLineDashOffset: 0,
       dashOffset: 8,
       dashGap: 16,
-      hachureGap: 5,
+      hachureGap,
       disableMultiStroke: true,
       disableMultiStrokeFill: true,
       preserveVertices: true,
@@ -287,7 +308,7 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     ctx.restore()
 
     lastConfigRef.current = config
-  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, zoom, seed, strokeStyle])
+  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle])
 
   const scheduleRedraw = useCallback(() => {
     if (rafRef.current !== null) return

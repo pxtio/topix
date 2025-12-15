@@ -8,9 +8,7 @@ import {
   type EdgeProps
 } from '@xyflow/react'
 import type { CSSProperties, ReactElement } from 'react'
-import { memo, useEffect, useMemo, useRef } from 'react'
-import { RoughSVG } from 'roughjs/bin/svg'
-import type { Options as RoughOptions } from 'roughjs/bin/core'
+import { memo, useMemo } from 'react'
 import type { LinkEdge } from '../../types/flow'
 import type { ArrowheadType, LinkStyle } from '../../types/style'
 import { getEdgeParams } from '../../utils/flow'
@@ -72,26 +70,8 @@ function barbPaths(size: number): { p1: string, p2: string } {
   return { p1, p2 }
 }
 
-function linkStyleToRoughOptions(style: LinkStyle, strokeOverride: string): RoughOptions {
-  const base: RoughOptions = {
-    roughness: style.roughness ?? 0,
-    stroke: strokeOverride,
-    strokeWidth: style.strokeWidth ?? 1.5,
-    bowing: 1.2,
-    preserveVertices: true
-  }
-  if (style.strokeStyle === 'dashed') return { ...base, strokeLineDash: [6, 6] }
-  if (style.strokeStyle === 'dotted') return { ...base, strokeLineDash: [2, 6] }
-  return base
-}
-
-function shouldUseRough(style?: LinkStyle): boolean {
-  if (!style) return false
-  return (style.roughness ?? 0) > 0
-}
-
-function cssDashArray(style: LinkStyle | undefined, strokeWidth: number, roughActive: boolean): string | undefined {
-  if (!style || roughActive) return undefined
+function cssDashArray(style: LinkStyle | undefined, strokeWidth: number): string | undefined {
+  if (!style) return undefined
   const sw = Math.max(0.5, strokeWidth)
   if (style.strokeStyle === 'dashed') return `${5.5 * sw} ${4 * sw}`
   if (style.strokeStyle === 'dotted') return `0 ${3 * sw}`
@@ -111,9 +91,6 @@ export const EdgeView = memo(function EdgeView({
 
   const sourceNode = useInternalNode(source)
   const targetNode = useInternalNode(target)
-  const roughGroupRef = useRef<SVGGElement | null>(null)
-  const roughInstanceRef = useRef<{ svg: SVGSVGElement, instance: RoughSVG } | null>(null)
-  const lastRoughConfig = useRef<{ path: string, stroke: string, optsKey: string } | null>(null)
 
   const linkStyle = (data?.style ?? undefined) as LinkStyle | undefined
 
@@ -124,7 +101,6 @@ export const EdgeView = memo(function EdgeView({
   }, [isDark, baseStroke])
 
   const strokeWidth = linkStyle?.strokeWidth ?? 1.5
-  const roughActive = useMemo(() => shouldUseRough(linkStyle), [linkStyle])
 
   const startKind = (linkStyle?.sourceArrowhead ?? 'none') as ArrowheadType
   const endKind = (linkStyle?.targetArrowhead ?? 'none') as ArrowheadType
@@ -196,10 +172,7 @@ export const EdgeView = memo(function EdgeView({
     return { sx: sxAdj, sy: syAdj, tx: txAdj, ty: tyAdj, edgePath, labelX, labelY }
   }, [sourceNode, targetNode, linkStyle?.pathStyle, startKind, endKind, arrowOffset])
 
-  const dashArray = useMemo(
-    () => cssDashArray(linkStyle, strokeWidth, roughActive),
-    [linkStyle, strokeWidth, roughActive]
-  )
+  const dashArray = useMemo(() => cssDashArray(linkStyle, strokeWidth), [linkStyle, strokeWidth])
 
   const edgeStrokeStyle: CSSProperties = useMemo(
     (): CSSProperties => ({
@@ -213,49 +186,6 @@ export const EdgeView = memo(function EdgeView({
     }),
     [style, displayStroke, strokeWidth, dashArray]
   )
-
-  // -- RoughJS render layer --
-  useEffect(() => {
-    const g = roughGroupRef.current
-    if (!g) return
-
-    const useRough = geom && linkStyle && shouldUseRough(linkStyle)
-    if (!useRough) {
-      if (g.firstChild) {
-        g.replaceChildren()
-      }
-      lastRoughConfig.current = null
-      return
-    }
-
-    if (!geom) return
-
-    const svgEl = g.ownerSVGElement
-    if (!svgEl) return
-
-    if (!roughInstanceRef.current || roughInstanceRef.current.svg !== svgEl) {
-      roughInstanceRef.current = { svg: svgEl, instance: new RoughSVG(svgEl) }
-    }
-
-    const opts = linkStyleToRoughOptions(linkStyle!, displayStroke)
-    const optsKey = JSON.stringify(opts)
-    const prev = lastRoughConfig.current
-    if (prev && prev.path === geom.edgePath && prev.stroke === displayStroke && prev.optsKey === optsKey) {
-      return
-    }
-
-    while (g.firstChild) g.removeChild(g.firstChild)
-
-    const node = roughInstanceRef.current.instance.path(geom.edgePath, opts)
-    node.setAttribute('stroke-linecap', 'round')
-    node.setAttribute('stroke-linejoin', 'round')
-
-    if (startMarkerId) node.setAttribute('marker-start', `url(#${startMarkerId})`)
-    if (endMarkerId) node.setAttribute('marker-end', `url(#${endMarkerId})`)
-
-    g.appendChild(node)
-    lastRoughConfig.current = { path: geom.edgePath, stroke: displayStroke, optsKey }
-  }, [geom, linkStyle, startMarkerId, endMarkerId, displayStroke])
 
   if (!geom) return null
 
@@ -352,25 +282,12 @@ export const EdgeView = memo(function EdgeView({
         </defs>
       </svg>
 
-      {roughActive && <g ref={roughGroupRef} />}
-
-      {!roughActive && (
-        <BaseEdge
-          path={geom.edgePath}
-          style={edgeStrokeStyle}
-          markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
-          markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
-        />
-      )}
-
-      {roughActive && (
-        <BaseEdge
-          path={geom.edgePath}
-          style={{ ...edgeStrokeStyle, strokeOpacity: 0.01 }}
-          markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
-          markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
-        />
-      )}
+      <BaseEdge
+        path={geom.edgePath}
+        style={edgeStrokeStyle}
+        markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
+        markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
+      />
 
       {selectionHandles}
 

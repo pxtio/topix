@@ -48,6 +48,25 @@ const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
   )
 }
 
+const quantizeZoom = (value: number): number => {
+  if (!Number.isFinite(value)) return 1
+  return Math.max(0.1, Math.round(value * 10) / 10)
+}
+
+const clampOversample = (value: number): number => Math.min(Math.max(1, value), 1.5)
+
+type DetailSettings = {
+  curveStepCount: number
+  maxRandomnessOffset: number
+  hachureGap: number
+}
+
+const detailForSize = (maxSide: number): DetailSettings => {
+  if (maxSide >= 800) return { curveStepCount: 5, maxRandomnessOffset: 1, hachureGap: 8 }
+  if (maxSide >= 400) return { curveStepCount: 7, maxRandomnessOffset: 1.2, hachureGap: 6 }
+  return { curveStepCount: 9, maxRandomnessOffset: 1.4, hachureGap: 5 }
+}
+
 /** Same helper you already use elsewhere */
 function mapStrokeStyle(
   strokeStyle: StrokeStyle | undefined,
@@ -84,7 +103,8 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   const roughRef = useRef<{ canvas: HTMLCanvasElement, instance: RoughCanvas } | null>(null)
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
-  const { zoom = 1 } = useViewport()
+  const { zoom: viewportZoom = 1 } = useViewport()
+  const effectiveZoom = quantizeZoom(viewportZoom)
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     const rect = wrapper.getBoundingClientRect()
@@ -93,7 +113,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     if (cssW === 0 || cssH === 0) return
 
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
-    const oversample = Math.max(1, zoom)
+    const oversample = clampOversample(effectiveZoom)
 
     // bleed so jitter/stroke won't clip
     const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 2)
@@ -109,7 +129,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     const config: DrawConfig = {
       cssW,
       cssH,
-      zoom,
+      zoom: effectiveZoom,
       roughness,
       stroke,
       strokeStyle,
@@ -150,6 +170,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     const ellipseH = innerH      // diameter vertically
 
     const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+    const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(Math.max(cssW, cssH))
 
     const drawable = rc.generator.ellipse(cx, cy, ellipseW, ellipseH, {
       roughness,
@@ -159,14 +180,14 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
       fillStyle,
       fillWeight: 1,
       bowing: 2,
-      curveStepCount: 9,
-      maxRandomnessOffset: 1.5,
+      curveStepCount,
+      maxRandomnessOffset,
       seed: seed || 1337,
       strokeLineDash,
       strokeLineDashOffset: 0,
       dashOffset: 8,
       dashGap: 16,
-      hachureGap: 5,
+      hachureGap,
       disableMultiStroke: true,
       disableMultiStrokeFill: true,
       preserveVertices: true,
@@ -179,7 +200,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     ctx.restore()
 
     lastConfigRef.current = config
-  }, [roughness, stroke, strokeWidth, fill, fillStyle, zoom, seed, strokeStyle])
+  }, [roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle])
 
   const scheduleRedraw = useCallback(() => {
     if (rafRef.current !== null) return

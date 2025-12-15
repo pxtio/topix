@@ -4,6 +4,7 @@ import type { Options as RoughOptions } from 'roughjs/bin/core'
 import { useViewport } from '@xyflow/react'
 import clsx from 'clsx'
 import type { StrokeStyle } from '@/features/board/types/style'
+import { getCachedCanvas, serializeCacheKey } from './cache'
 
 type RoundedClass = 'none' | 'rounded-2xl'
 
@@ -201,7 +202,6 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const roughRef = useRef<{ canvas: HTMLCanvasElement, instance: RoughCanvas } | null>(null)
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
   const { zoom: viewportZoom = 1 } = useViewport()
@@ -246,31 +246,14 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
       return
     }
 
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    // clear in device pixels
-    ctx.setTransform(1, 0, 0, 1, 0, 0)
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // draw in CSS units
-    ctx.setTransform(dpr * oversample, 0, 0, dpr * oversample, 0, 0)
-    ctx.translate(bleed, bleed)
-
-    if (!roughRef.current || roughRef.current.canvas !== canvas) {
-      roughRef.current = { canvas, instance: new RoughCanvas(canvas) }
-    }
-    const rc = roughRef.current.instance
     const visibleStroke = stroke === 'transparent' && !fill ? '#222' : stroke
 
-    // hairline crispness without eating tiny shapes
     const inset = (strokeWidth ?? 1) <= 1.5 ? Math.min(0.5, cssW / 4, cssH / 4) : 0
     const x0 = inset
     const y0 = inset
     const x1 = inset + Math.max(0, cssW - inset * 2)
     const y1 = inset + Math.max(0, cssH - inset * 2)
 
-    // radius choice (similar to rect): 16px "2xl", clamped by geometry
     const baseRadius = rounded === 'rounded-2xl' ? 16 : 0
     const pathData =
       baseRadius > 0
@@ -280,32 +263,72 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
     const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(Math.max(cssW, cssH))
 
-    const drawable = rc.generator.path(pathData, {
+    const cacheKey = serializeCacheKey([
+      'diamond',
+      rounded,
       roughness,
-      stroke: visibleStroke,
-      strokeWidth: strokeWidth ?? 1,
-      fill,
-      fillStyle,
-      fillWeight: 1,
-      bowing: 2,
-      curveStepCount,
-      maxRandomnessOffset,
-      seed: seed || 1337,
-      strokeLineDash,
-      strokeLineDashOffset: 0,
-      dashOffset: 8,
-      dashGap: 16,
-      hachureGap,
-      disableMultiStroke: true,
-      disableMultiStrokeFill: true,
-      preserveVertices: true,
+      visibleStroke,
+      strokeStyle,
+      strokeWidth,
+      fill || '',
+      fillStyle || '',
+      seed,
+      effectiveZoom,
+      dpr,
+      cssW,
+      cssH,
+    ])
+
+    const offscreen = getCachedCanvas(cacheKey, pixelW, pixelH, target => {
+      const offCtx = target.getContext('2d')
+      if (!offCtx) return
+
+      offCtx.setTransform(1, 0, 0, 1, 0, 0)
+      offCtx.clearRect(0, 0, target.width, target.height)
+      offCtx.setTransform(dpr * oversample, 0, 0, dpr * oversample, 0, 0)
+      offCtx.translate(bleed, bleed)
+
+      const rc = new RoughCanvas(target)
+      const drawable = rc.generator.path(pathData, {
+        roughness,
+        stroke: visibleStroke,
+        strokeWidth: strokeWidth ?? 1,
+        fill,
+        fillStyle,
+        fillWeight: 1,
+        bowing: 2,
+        curveStepCount,
+        maxRandomnessOffset,
+        seed: seed || 1337,
+        strokeLineDash,
+        strokeLineDashOffset: 0,
+        dashOffset: 8,
+        dashGap: 16,
+        hachureGap,
+        disableMultiStroke: true,
+        disableMultiStrokeFill: true,
+        preserveVertices: true,
+      })
+
+      offCtx.save()
+      if (lineCap) offCtx.lineCap = lineCap
+      offCtx.lineJoin = 'round'
+      rc.draw(drawable)
+      offCtx.restore()
     })
 
-    ctx.save()
-    if (lineCap) ctx.lineCap = lineCap
-    ctx.lineJoin = 'round'
-    rc.draw(drawable)
-    ctx.restore()
+    if (canvas.width !== offscreen.width) canvas.width = offscreen.width
+    if (canvas.height !== offscreen.height) canvas.height = offscreen.height
+
+    canvas.style.width = cssW + 'px'
+    canvas.style.height = cssH + 'px'
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(offscreen, 0, 0)
 
     lastConfigRef.current = config
   }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle])

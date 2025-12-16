@@ -81,6 +81,8 @@ const drawableNodeTypes: NodeType[] = [
 ]
 
 const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(nodeType)
+const PAN_EPS = 0.01
+const ZOOM_EPS = 0.0001
 
 const ensureLinkData = (edge: LinkEdge): Link => {
   if (edge.data) {
@@ -211,9 +213,7 @@ export default function GraphEditor() {
 
   const [enableSelection, setEnableSelection] = useState<boolean>(false)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
-  const [isDragging, setIsDragging] = useState<boolean>(false)
   const [isLocked, setIsLocked] = useState<boolean>(false)
-  const [moving, setMoving] = useState<boolean>(false)
   const [isSelecting, setIsSelecting] = useState<boolean>(false)
   const [pendingPlacement, setPendingPlacement] = useState<AddNoteNodeOptions | null>(null)
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null)
@@ -244,6 +244,12 @@ export default function GraphEditor() {
   const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
 
   const isResizingNode = useGraphStore(state => state.isResizingNode)
+  const isDragging = useGraphStore(state => state.isDragging)
+  const setIsDragging = useGraphStore(state => state.setIsDragging)
+  const isPanning = useGraphStore(state => state.isPanning)
+  const setIsPanning = useGraphStore(state => state.setIsPanning)
+  const isZooming = useGraphStore(state => state.isZooming)
+  const setIsZooming = useGraphStore(state => state.setIsZooming)
   const graphViewports = useGraphStore(state => state.graphViewports)
   const setGraphViewport = useGraphStore(state => state.setGraphViewport)
 
@@ -472,23 +478,44 @@ export default function GraphEditor() {
     [boardId, storeOnConnect, applyDefaultLinkStyle],
   )
 
-  const handleDragStart = useCallback(() => setIsDragging(true), [])
-  const handleDragStop = useCallback(() => setIsDragging(false), [])
+  const handleDragStart = useCallback(() => setIsDragging(true), [setIsDragging])
+  const handleDragStop = useCallback(() => setIsDragging(false), [setIsDragging])
   const handleSelectionStart = useCallback(() => setIsSelecting(true), [])
   const handleSelectionDragStart = useCallback(() => setIsSelecting(true), [])
   const handleSelectionEnd = useCallback(() => setIsSelecting(false), [])
   const handleSelectionDragStop = useCallback(() => setIsSelecting(false), [])
 
+  const lastViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null)
+
   useOnViewportChange({
-    onChange: () => setMoving(true),
+    onStart: vp => {
+      lastViewportRef.current = vp
+    },
+    onChange: vp => {
+      const prev = lastViewportRef.current
+      if (prev) {
+        const panChanged = Math.abs(prev.x - vp.x) > PAN_EPS || Math.abs(prev.y - vp.y) > PAN_EPS
+        const zoomChanged = Math.abs(prev.zoom - vp.zoom) > ZOOM_EPS
+        if (panChanged) {
+          setIsPanning(true)
+        }
+        if (zoomChanged) {
+          setIsZooming(true)
+        }
+      }
+      lastViewportRef.current = vp
+    },
     onEnd: vp => {
       if (boardId) {
         setGraphViewport(boardId, vp)
       }
-      setMoving(false)
+      setIsPanning(false)
+      setIsZooming(false)
+      lastViewportRef.current = vp
     },
   })
 
+  const moving = isPanning || isZooming
   const shouldHideFloatingUi = viewMode !== 'graph' || moving || isDragging || isResizingNode || isSelecting
   const miniMapTimeoutRef = useRef<number | null>(null)
   const stylePanelTimeoutRef = useRef<number | null>(null)

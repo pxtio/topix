@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import type { MouseEvent } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -7,14 +8,15 @@ import { StickyNote } from '../notes/sticky-note'
 import { TAILWIND_200 } from '../../lib/colors/tailwind'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import type { NoteWithPin } from './note-card'
+import { useGraphStore } from '../../store/graph-store'
 
 type SheetNodeViewProps = {
   note: NoteWithPin
   isDark: boolean
   isPinned: boolean
   onPickPalette: (hex: string) => void
-  onTogglePin: (e: React.MouseEvent<HTMLButtonElement>) => void
-  onDelete: (e: React.MouseEvent<HTMLButtonElement>) => void
+  onTogglePin: (e: MouseEvent<HTMLButtonElement>) => void
+  onDelete: (e: MouseEvent<HTMLButtonElement>) => void
   onOpenSticky: () => void
 }
 
@@ -27,6 +29,10 @@ export const SheetNodeView = memo(function SheetNodeView({
   onDelete,
   onOpenSticky
 }: SheetNodeViewProps) {
+  const suspendContent = useGraphStore(
+    state => state.isDragging || state.isPanning || state.isZooming
+  )
+
   return (
     <>
       <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end'>
@@ -79,7 +85,11 @@ export const SheetNodeView = memo(function SheetNodeView({
         </button>
       </div>
 
-      <StickyNote content={note.content?.markdown || ''} onOpen={onOpenSticky} />
+      {suspendContent ? (
+        <div className='w-full h-full' aria-hidden='true' />
+      ) : (
+        <StickyNote content={note.content?.markdown || ''} onOpen={onOpenSticky} />
+      )}
     </>
   )
 })

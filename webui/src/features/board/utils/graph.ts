@@ -1,6 +1,6 @@
 import { uuidToNumber } from "@/lib/common"
 import type { LinkEdge, NoteNode } from "../types/flow"
-import type { Link } from "../types/link"
+import { createDefaultLinkProperties, type Link } from "../types/link"
 import { createDefaultNoteProperties, type Note } from "../types/note"
 import { createDefaultLinkStyle } from "../types/style"
 
@@ -49,7 +49,10 @@ export const convertLinkToEdge = (link: Link): LinkEdge => {
     type: 'default',
     source: link.source,
     target: link.target,
-    data: link,
+    data: {
+      ...link,
+      properties: link.properties ?? createDefaultLinkProperties(),
+    },
     selected: false,
     animated: false,
   }
@@ -101,6 +104,7 @@ export const convertEdgeToLink = (graphId: string, edge: LinkEdge): Link => {
     target: edge.target,
     type: 'link',
     version: 1,
+    properties: edge.data?.properties ?? createDefaultLinkProperties(),
     createdAt: edge.data?.createdAt || new Date().toISOString(),
     updatedAt: edge.data?.updatedAt,
     deletedAt: edge.data?.deletedAt,

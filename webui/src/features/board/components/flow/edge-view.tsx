@@ -5,11 +5,13 @@ import {
   getStraightPath,
   getSmoothStepPath,
   useInternalNode,
+  useReactFlow,
   type EdgeProps
 } from '@xyflow/react'
 import type { CSSProperties, ReactElement } from 'react'
-import { memo, useEffect, useMemo, useRef } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { LinkEdge } from '../../types/flow'
+import type { Link } from '../../types/link'
 import type { ArrowheadType, LinkStyle } from '../../types/style'
 import { getEdgeParams } from '../../utils/flow'
 import { useTheme } from '@/components/theme-provider'
@@ -23,6 +25,12 @@ const TIP_FACTOR = 0.95           // tip at 95% of viewBox width → no clipping
 const BASE_X_FACTOR = 0.25        // base is at 25% of width (where shaft meets head)
 const BASE_THICKNESS_BOOST = 1.1  // bottom side slightly thicker
 const ARROW_CLEARANCE_FACTOR = 1 // pull heads farther from node surface
+
+type Point = { x: number, y: number }
+
+type EdgeControlPointHandlers = {
+  onControlPointChange?: (point: Point) => void
+}
 
 function markerId(edgeId: string, which: 'start' | 'end'): string {
   return `edge-${edgeId}-${which}-marker`
@@ -80,6 +88,20 @@ function cssDashArray(style: LinkStyle | undefined, strokeWidth: number): string
   return undefined
 }
 
+function quadraticPath(p0: Point, cp: Point, p1: Point): { path: string, labelX: number, labelY: number } {
+  const path = `M ${p0.x} ${p0.y} Q ${cp.x} ${cp.y} ${p1.x} ${p1.y}`
+  const midX = (p0.x + 2 * cp.x + p1.x) / 4
+  const midY = (p0.y + 2 * cp.y + p1.y) / 4
+  return { path, labelX: midX, labelY: midY }
+}
+
+function bendToControlPoint(bend: Point, start: Point, end: Point): Point {
+  return {
+    x: 2 * bend.x - 0.5 * (start.x + end.x),
+    y: 2 * bend.y - 0.5 * (start.y + end.y),
+  }
+}
+
 type EdgeLabelEditingData = {
   labelEditing?: boolean
   labelDraft?: string
@@ -87,6 +109,8 @@ type EdgeLabelEditingData = {
   onLabelSave?: () => void
   onLabelCancel?: () => void
 }
+
+type EdgeRenderData = Link & EdgeLabelEditingData & EdgeControlPointHandlers
 
 export const EdgeView = memo(function EdgeView({
   id,
@@ -98,9 +122,12 @@ export const EdgeView = memo(function EdgeView({
 }: EdgeProps<LinkEdge>): ReactElement | null {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
+  const { screenToFlowPosition } = useReactFlow()
 
   const sourceNode = useInternalNode(source)
   const targetNode = useInternalNode(target)
+  const [bendPointDrag, setBendPointDrag] = useState<Point | null>(null)
+  const bendPointDragRef = useRef<Point | null>(null)
 
   const linkStyle = (data?.style ?? undefined) as LinkStyle | undefined
 
@@ -200,8 +227,9 @@ export const EdgeView = memo(function EdgeView({
   const filledHeadSize = headSize * 0.95
   const headStrokeWidth = Math.max(1, strokeWidth)
 
-  const edgeExtras = (data ?? {}) as LinkEdge['data'] & EdgeLabelEditingData
+  const edgeExtras = (data ?? {}) as EdgeRenderData
   const labelText = edgeExtras?.label?.markdown ?? ''
+  const hasLabel = Boolean(labelText)
   const isLabelEditing = Boolean(edgeExtras?.labelEditing)
   const labelDraft = isLabelEditing ? edgeExtras?.labelDraft ?? '' : labelText
   const labelInputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -229,6 +257,22 @@ export const EdgeView = memo(function EdgeView({
 
   if (!geom) return null
 
+  const storedBendPoint = edgeExtras.properties?.edgeControlPoint?.position
+  const defaultBendPoint: Point = {
+    x: (geom.sx + geom.tx) / 2,
+    y: (geom.sy + geom.ty) / 2
+  }
+  const resolvedBendPoint = bendPointDrag ?? storedBendPoint ?? defaultBendPoint
+  const pathStyle = linkStyle?.pathStyle ?? 'bezier'
+  const shouldUseControlPoint = pathStyle === 'bezier'
+  const pathData = shouldUseControlPoint
+    ? quadraticPath(
+        { x: geom.sx, y: geom.sy },
+        bendToControlPoint(resolvedBendPoint, { x: geom.sx, y: geom.sy }, { x: geom.tx, y: geom.ty }),
+        { x: geom.tx, y: geom.ty }
+      )
+    : { path: geom.edgePath, labelX: geom.labelX, labelY: geom.labelY }
+
   const handleLabelKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault()
@@ -238,6 +282,42 @@ export const EdgeView = memo(function EdgeView({
       skipSaveRef.current = true
       edgeExtras.onLabelCancel?.()
     }
+  }
+
+  const updateBendPoint = (point: Point | null) => {
+    setBendPointDrag(point)
+    bendPointDragRef.current = point
+  }
+
+  const handleControlPointPointerDown = (event: React.PointerEvent<SVGCircleElement>) => {
+    if (!edgeExtras.onControlPointChange) return
+    event.stopPropagation()
+    event.preventDefault()
+
+    const updateFromEvent = (clientX: number, clientY: number) => {
+      const projected = screenToFlowPosition({ x: clientX, y: clientY })
+      updateBendPoint(projected)
+    }
+
+    const handleMove = (moveEvent: PointerEvent) => {
+      updateFromEvent(moveEvent.clientX, moveEvent.clientY)
+    }
+
+    const handleUp = () => {
+      window.removeEventListener('pointermove', handleMove)
+      window.removeEventListener('pointerup', handleUp)
+      window.removeEventListener('pointercancel', handleUp)
+      const finalPoint = bendPointDragRef.current
+      if (finalPoint) {
+        edgeExtras.onControlPointChange?.(finalPoint)
+      }
+      updateBendPoint(null)
+    }
+
+    updateFromEvent(event.clientX, event.clientY)
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', handleUp)
+    window.addEventListener('pointercancel', handleUp)
   }
 
   const renderMarker = (markerId: string | undefined, kind: ArrowheadType, orient: 'start' | 'end') => {
@@ -321,6 +401,12 @@ export const EdgeView = memo(function EdgeView({
     </>
   ) : null
 
+  const showControlPoint =
+    shouldUseControlPoint &&
+    !!edgeExtras.onControlPointChange &&
+    selected &&
+    !isLabelEditing
+
   return (
     <>
       <svg width='0' height='0' style={{ position: 'absolute' }}>
@@ -331,7 +417,7 @@ export const EdgeView = memo(function EdgeView({
       </svg>
 
       <BaseEdge
-        path={geom.edgePath}
+        path={pathData.path}
         style={edgeStrokeStyle}
         markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
         markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
@@ -339,12 +425,12 @@ export const EdgeView = memo(function EdgeView({
 
       {selectionHandles}
 
-      {(isLabelEditing || !!labelText) && (
+      {(isLabelEditing || hasLabel) && (
         <EdgeLabelRenderer>
           <div
             className='nodrag nopan absolute origin-center pointer-events-auto'
             style={{
-              transform: `translate(-50%, -50%) translate(${geom.labelX}px, ${geom.labelY}px)`
+              transform: `translate(-50%, -50%) translate(${pathData.labelX}px, ${pathData.labelY}px)`
             }}
             onPointerDown={event => event.stopPropagation()}
           >
@@ -367,6 +453,25 @@ export const EdgeView = memo(function EdgeView({
             )}
           </div>
         </EdgeLabelRenderer>
+      )}
+
+      {showControlPoint && (
+        <>
+          <circle
+            cx={resolvedBendPoint.x}
+            cy={resolvedBendPoint.y}
+            r={6}
+            className='cursor-move fill-transparent'
+            onPointerDown={handleControlPointPointerDown}
+          />
+          <circle
+            cx={resolvedBendPoint.x}
+            cy={resolvedBendPoint.y}
+            r={4}
+            className='cursor-move fill-background stroke-secondary stroke-6'
+            onPointerDown={handleControlPointPointerDown}
+          />
+        </>
       )}
     </>
   )

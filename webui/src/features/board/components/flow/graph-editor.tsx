@@ -30,6 +30,7 @@ import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
 import type { NodeType } from '../../types/style'
 import type { Link } from '../../types/link'
+import { createDefaultLinkProperties } from '../../types/link'
 import { createDefaultLinkStyle } from '../../types/style'
 
 import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/add-node'
@@ -68,6 +69,8 @@ const connectionLineStyle = {
   strokeLinecap: 'round' as const,
 }
 
+const FLOATING_UI_REAPPEAR_DELAY = 400
+
 const drawableNodeTypes: NodeType[] = [
   'rectangle',
   'ellipse',
@@ -80,7 +83,14 @@ const drawableNodeTypes: NodeType[] = [
 const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(nodeType)
 
 const ensureLinkData = (edge: LinkEdge): Link => {
-  if (edge.data) return edge.data as Link
+  if (edge.data) {
+    const existing = edge.data as Link
+    return {
+      ...existing,
+      properties: existing.properties ?? createDefaultLinkProperties(),
+    }
+  }
+
   return {
     id: edge.id,
     type: 'link',
@@ -89,6 +99,7 @@ const ensureLinkData = (edge: LinkEdge): Link => {
     target: edge.target,
     style: createDefaultLinkStyle(),
     createdAt: new Date().toISOString(),
+    properties: createDefaultLinkProperties(),
   }
 }
 
@@ -207,6 +218,8 @@ export default function GraphEditor() {
   const [pendingPlacement, setPendingPlacement] = useState<AddNoteNodeOptions | null>(null)
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null)
   const [edgeLabelDraft, setEdgeLabelDraft] = useState<string>('')
+  const [showMiniMap, setShowMiniMap] = useState<boolean>(true)
+  const [showStylePanel, setShowStylePanel] = useState<boolean>(true)
 
   const {
     zoomIn,
@@ -329,6 +342,29 @@ export default function GraphEditor() {
     setEdgeLabelDraft('')
   }, [])
 
+  const handleEdgeControlPointChange = useCallback(
+    (edgeId: string, position: { x: number; y: number }) => {
+      setEdgesPersist(prev =>
+        prev.map(edge => {
+          if (edge.id !== edgeId) return edge
+          const linkData = ensureLinkData(edge)
+          const nextLink: Link = {
+            ...linkData,
+            properties: {
+              ...linkData.properties,
+              edgeControlPoint: { type: 'position', position },
+            },
+          }
+          return {
+            ...edge,
+            data: nextLink,
+          }
+        }),
+      )
+    },
+    [setEdgesPersist],
+  )
+
   const handleEdgeLabelSave = useCallback(() => {
     if (!editingEdgeId) return
     setEdgesPersist(prev =>
@@ -351,22 +387,43 @@ export default function GraphEditor() {
   }, [editingEdgeId, edgeLabelDraft, setEdgesPersist])
 
   const edgesForRender = useMemo(() => {
-    if (!editingEdgeId) return edges
     return edges.map(edge => {
-      if (edge.id !== editingEdgeId) return edge
+      const isEditing = edge.id === editingEdgeId
+      const baseLink = ensureLinkData(edge)
+      const baseData: Link & {
+        labelEditing?: boolean
+        labelDraft?: string
+        onLabelChange?: (value: string) => void
+        onLabelSave?: () => void
+        onLabelCancel?: () => void
+        onControlPointChange?: (point: { x: number, y: number }) => void
+      } = {
+        ...baseLink,
+        onControlPointChange: position => handleEdgeControlPointChange(edge.id, position),
+      }
+
+      if (isEditing) {
+        baseData.labelEditing = true
+        baseData.labelDraft = edgeLabelDraft
+        baseData.onLabelChange = handleEdgeLabelChange
+        baseData.onLabelSave = handleEdgeLabelSave
+        baseData.onLabelCancel = handleEdgeLabelCancel
+      }
+
       return {
         ...edge,
-        data: {
-          ...ensureLinkData(edge),
-          labelEditing: true,
-          labelDraft: edgeLabelDraft,
-          onLabelChange: handleEdgeLabelChange,
-          onLabelSave: handleEdgeLabelSave,
-          onLabelCancel: handleEdgeLabelCancel,
-        } as Link,
+        data: baseData as Link,
       }
     })
-  }, [edges, edgeLabelDraft, editingEdgeId, handleEdgeLabelCancel, handleEdgeLabelChange, handleEdgeLabelSave])
+  }, [
+    edges,
+    editingEdgeId,
+    edgeLabelDraft,
+    handleEdgeControlPointChange,
+    handleEdgeLabelCancel,
+    handleEdgeLabelChange,
+    handleEdgeLabelSave,
+  ])
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
 
@@ -431,6 +488,44 @@ export default function GraphEditor() {
       setMoving(false)
     },
   })
+
+  const shouldHideFloatingUi = viewMode !== 'graph' || moving || isDragging || isResizingNode || isSelecting
+  const miniMapTimeoutRef = useRef<number | null>(null)
+  const stylePanelTimeoutRef = useRef<number | null>(null)
+
+  const clearDeferredUiTimeouts = useCallback(() => {
+    if (miniMapTimeoutRef.current) {
+      clearTimeout(miniMapTimeoutRef.current)
+      miniMapTimeoutRef.current = null
+    }
+    if (stylePanelTimeoutRef.current) {
+      clearTimeout(stylePanelTimeoutRef.current)
+      stylePanelTimeoutRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (shouldHideFloatingUi) {
+      clearDeferredUiTimeouts()
+      setShowMiniMap(false)
+      setShowStylePanel(false)
+      return
+    }
+
+    miniMapTimeoutRef.current = window.setTimeout(() => {
+      setShowMiniMap(true)
+      miniMapTimeoutRef.current = null
+    }, FLOATING_UI_REAPPEAR_DELAY)
+
+    stylePanelTimeoutRef.current = window.setTimeout(() => {
+      setShowStylePanel(true)
+      stylePanelTimeoutRef.current = null
+    }, FLOATING_UI_REAPPEAR_DELAY)
+
+    return () => {
+      clearDeferredUiTimeouts()
+    }
+  }, [shouldHideFloatingUi, clearDeferredUiTimeouts])
 
   // --- frontend-only expiration for data.isNew ---
   const newTimersRef = useRef<Map<string, number>>(new Map())
@@ -503,6 +598,7 @@ export default function GraphEditor() {
 
       {/* Graph-only sidebar (style controls) */}
       {viewMode === 'graph' &&
+        showStylePanel &&
         !isDragging &&
         !moving &&
         !isResizingNode &&
@@ -538,7 +634,7 @@ export default function GraphEditor() {
                   onNodeContextMenu={onNodeContextMenu}
                   onEdgeDoubleClick={handleEdgeDoubleClick}
                 >
-                  {!moving && !isDragging && !isResizingNode && !isSelecting && (
+                  {showMiniMap && !moving && !isDragging && !isResizingNode && !isSelecting && (
                     <MiniMap className='!bg-sidebar rounded-lg' />
                   )}
                 </GraphView>

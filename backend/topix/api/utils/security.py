@@ -1,6 +1,5 @@
 """Security utils for authentication and authorization."""
 import logging
-import time
 
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
@@ -11,7 +10,6 @@ import jwt
 from fastapi import Depends, HTTPException, Path, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
-from redis.asyncio import Redis
 
 from topix.config.config import Config
 from topix.datatypes.user import User
@@ -24,9 +22,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 # refresh token lifetime (example: 7 days)
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
-# Rate limiting configuration
-RATE_LIMIT_REQUESTS = 5  # Number of requests allowed
-RATE_LIMIT_WINDOW = 60  # Time window in seconds (1 minute)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/signin")
 
@@ -160,54 +155,3 @@ async def verify_chat_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found")
     if chat.user_uid != user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permission error")
-
-
-async def rate_limiter(
-    request: Request,
-    user_id: Annotated[str, Depends(get_current_user_uid)],
-) -> None:
-    """Rate limit requests based on user_id using Redis sliding window.
-
-    Allows RATE_LIMIT_REQUESTS requests per RATE_LIMIT_WINDOW seconds (5 requests per minute by default).
-
-    Args:
-        request: FastAPI request object containing the Redis client
-        user_id: The user ID extracted from the JWT token
-
-    Raises:
-        HTTPException: 429 Too Many Requests if rate limit is exceeded
-    """
-    redis: Redis = request.app.redis
-    current_time = time.time()
-    window_start = current_time - RATE_LIMIT_WINDOW
-
-    # Redis key for this user's rate limit
-    key = f"rate_limit:{user_id}"
-
-    # Use Redis pipeline for atomic operations
-    pipe = redis.pipeline()
-
-    # Remove requests older than the window
-    pipe.zremrangebyscore(key, 0, window_start)
-
-    # Count requests in the current window
-    pipe.zcard(key)
-
-    # Add current request timestamp
-    pipe.zadd(key, {str(current_time): current_time})
-
-    # Set expiration to clean up old keys
-    pipe.expire(key, RATE_LIMIT_WINDOW)
-
-    # Execute pipeline
-    results = await pipe.execute()
-
-    # Get the count before adding the current request
-    request_count = results[1]
-
-    if request_count >= RATE_LIMIT_REQUESTS:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Rate limit exceeded. Maximum {RATE_LIMIT_REQUESTS} requests per {RATE_LIMIT_WINDOW} seconds allowed.",
-            headers={"Retry-After": str(RATE_LIMIT_WINDOW)}
-        )

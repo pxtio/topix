@@ -45,7 +45,7 @@ def load_env_file(stage: StageEnum):
 async def setup(stage: StageEnum) -> Config:
     """Set up the application configuration and environment variables."""
     # load .env file
-    # load_env_file(stage)
+    load_env_file(stage)
 
     config = Config.load(stage=stage)
     logger.info(f"Loaded configuration for stage: {stage}")

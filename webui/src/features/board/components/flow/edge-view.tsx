@@ -5,11 +5,13 @@ import {
   getStraightPath,
   getSmoothStepPath,
   useInternalNode,
+  useReactFlow,
   type EdgeProps
 } from '@xyflow/react'
 import type { CSSProperties, ReactElement } from 'react'
-import { memo, useEffect, useMemo, useRef } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { LinkEdge } from '../../types/flow'
+import type { Link } from '../../types/link'
 import type { ArrowheadType, LinkStyle } from '../../types/style'
 import { getEdgeParams } from '../../utils/flow'
 import { useTheme } from '@/components/theme-provider'
@@ -23,6 +25,12 @@ const TIP_FACTOR = 0.95           // tip at 95% of viewBox width → no clipping
 const BASE_X_FACTOR = 0.25        // base is at 25% of width (where shaft meets head)
 const BASE_THICKNESS_BOOST = 1.1  // bottom side slightly thicker
 const ARROW_CLEARANCE_FACTOR = 1 // pull heads farther from node surface
+
+type Point = { x: number, y: number }
+
+type EdgeControlPointHandlers = {
+  onControlPointChange?: (point: Point) => void
+}
 
 function markerId(edgeId: string, which: 'start' | 'end'): string {
   return `edge-${edgeId}-${which}-marker`
@@ -80,6 +88,13 @@ function cssDashArray(style: LinkStyle | undefined, strokeWidth: number): string
   return undefined
 }
 
+function quadraticPath(p0: Point, cp: Point, p1: Point): { path: string, labelX: number, labelY: number } {
+  const path = `M ${p0.x} ${p0.y} Q ${cp.x} ${cp.y} ${p1.x} ${p1.y}`
+  const midX = (p0.x + 2 * cp.x + p1.x) / 4
+  const midY = (p0.y + 2 * cp.y + p1.y) / 4
+  return { path, labelX: midX, labelY: midY }
+}
+
 type EdgeLabelEditingData = {
   labelEditing?: boolean
   labelDraft?: string
@@ -87,6 +102,8 @@ type EdgeLabelEditingData = {
   onLabelSave?: () => void
   onLabelCancel?: () => void
 }
+
+type EdgeRenderData = Link & EdgeLabelEditingData & EdgeControlPointHandlers
 
 export const EdgeView = memo(function EdgeView({
   id,
@@ -98,9 +115,11 @@ export const EdgeView = memo(function EdgeView({
 }: EdgeProps<LinkEdge>): ReactElement | null {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
+  const { screenToFlowPosition } = useReactFlow()
 
   const sourceNode = useInternalNode(source)
   const targetNode = useInternalNode(target)
+  const [controlPointDrag, setControlPointDrag] = useState<Point | null>(null)
 
   const linkStyle = (data?.style ?? undefined) as LinkStyle | undefined
 
@@ -200,7 +219,7 @@ export const EdgeView = memo(function EdgeView({
   const filledHeadSize = headSize * 0.95
   const headStrokeWidth = Math.max(1, strokeWidth)
 
-  const edgeExtras = (data ?? {}) as LinkEdge['data'] & EdgeLabelEditingData
+  const edgeExtras = (data ?? {}) as EdgeRenderData
   const labelText = edgeExtras?.label?.markdown ?? ''
   const isLabelEditing = Boolean(edgeExtras?.labelEditing)
   const labelDraft = isLabelEditing ? edgeExtras?.labelDraft ?? '' : labelText
@@ -229,6 +248,18 @@ export const EdgeView = memo(function EdgeView({
 
   if (!geom) return null
 
+  const storedControlPoint = edgeExtras.properties?.edgeControlPoint?.position
+  const defaultControlPoint: Point = {
+    x: (geom.sx + geom.tx) / 2,
+    y: (geom.sy + geom.ty) / 2
+  }
+  const resolvedControlPoint = controlPointDrag ?? storedControlPoint ?? defaultControlPoint
+  const pathStyle = linkStyle?.pathStyle ?? 'bezier'
+  const shouldUseControlPoint = pathStyle === 'bezier'
+  const pathData = shouldUseControlPoint
+    ? quadraticPath({ x: geom.sx, y: geom.sy }, resolvedControlPoint, { x: geom.tx, y: geom.ty })
+    : { path: geom.edgePath, labelX: geom.labelX, labelY: geom.labelY }
+
   const handleLabelKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault()
@@ -238,6 +269,34 @@ export const EdgeView = memo(function EdgeView({
       skipSaveRef.current = true
       edgeExtras.onLabelCancel?.()
     }
+  }
+
+  const handleControlPointPointerDown = (event: React.PointerEvent<SVGCircleElement>) => {
+    if (!edgeExtras.onControlPointChange) return
+    event.stopPropagation()
+    event.preventDefault()
+
+    const updateFromEvent = (clientX: number, clientY: number) => {
+      const projected = screenToFlowPosition({ x: clientX, y: clientY })
+      setControlPointDrag(projected)
+      edgeExtras.onControlPointChange?.(projected)
+    }
+
+    const handleMove = (moveEvent: PointerEvent) => {
+      updateFromEvent(moveEvent.clientX, moveEvent.clientY)
+    }
+
+    const handleUp = () => {
+      window.removeEventListener('pointermove', handleMove)
+      window.removeEventListener('pointerup', handleUp)
+      window.removeEventListener('pointercancel', handleUp)
+      setControlPointDrag(null)
+    }
+
+    updateFromEvent(event.clientX, event.clientY)
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', handleUp)
+    window.addEventListener('pointercancel', handleUp)
   }
 
   const renderMarker = (markerId: string | undefined, kind: ArrowheadType, orient: 'start' | 'end') => {
@@ -331,11 +390,21 @@ export const EdgeView = memo(function EdgeView({
       </svg>
 
       <BaseEdge
-        path={geom.edgePath}
+        path={pathData.path}
         style={edgeStrokeStyle}
         markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
         markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
       />
+
+      {shouldUseControlPoint && edgeExtras.onControlPointChange && (
+        <circle
+          cx={resolvedControlPoint.x}
+          cy={resolvedControlPoint.y}
+          r={6}
+          className='cursor-move fill-background stroke-secondary stroke-2'
+          onPointerDown={handleControlPointPointerDown}
+        />
+      )}
 
       {selectionHandles}
 
@@ -344,7 +413,7 @@ export const EdgeView = memo(function EdgeView({
           <div
             className='nodrag nopan absolute origin-center pointer-events-auto'
             style={{
-              transform: `translate(-50%, -50%) translate(${geom.labelX}px, ${geom.labelY}px)`
+              transform: `translate(-50%, -50%) translate(${pathData.labelX}px, ${pathData.labelY}px)`
             }}
             onPointerDown={event => event.stopPropagation()}
           >

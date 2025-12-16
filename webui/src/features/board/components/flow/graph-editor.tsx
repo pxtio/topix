@@ -342,6 +342,29 @@ export default function GraphEditor() {
     setEdgeLabelDraft('')
   }, [])
 
+  const handleEdgeControlPointChange = useCallback(
+    (edgeId: string, position: { x: number; y: number }) => {
+      setEdgesPersist(prev =>
+        prev.map(edge => {
+          if (edge.id !== edgeId) return edge
+          const linkData = ensureLinkData(edge)
+          const nextLink: Link = {
+            ...linkData,
+            properties: {
+              ...linkData.properties,
+              edgeControlPoint: { type: 'position', position },
+            },
+          }
+          return {
+            ...edge,
+            data: nextLink,
+          }
+        }),
+      )
+    },
+    [setEdgesPersist],
+  )
+
   const handleEdgeLabelSave = useCallback(() => {
     if (!editingEdgeId) return
     setEdgesPersist(prev =>
@@ -364,22 +387,43 @@ export default function GraphEditor() {
   }, [editingEdgeId, edgeLabelDraft, setEdgesPersist])
 
   const edgesForRender = useMemo(() => {
-    if (!editingEdgeId) return edges
     return edges.map(edge => {
-      if (edge.id !== editingEdgeId) return edge
+      const isEditing = edge.id === editingEdgeId
+      const baseLink = ensureLinkData(edge)
+      const baseData: Link & {
+        labelEditing?: boolean
+        labelDraft?: string
+        onLabelChange?: (value: string) => void
+        onLabelSave?: () => void
+        onLabelCancel?: () => void
+        onControlPointChange?: (point: { x: number, y: number }) => void
+      } = {
+        ...baseLink,
+        onControlPointChange: position => handleEdgeControlPointChange(edge.id, position),
+      }
+
+      if (isEditing) {
+        baseData.labelEditing = true
+        baseData.labelDraft = edgeLabelDraft
+        baseData.onLabelChange = handleEdgeLabelChange
+        baseData.onLabelSave = handleEdgeLabelSave
+        baseData.onLabelCancel = handleEdgeLabelCancel
+      }
+
       return {
         ...edge,
-        data: {
-          ...ensureLinkData(edge),
-          labelEditing: true,
-          labelDraft: edgeLabelDraft,
-          onLabelChange: handleEdgeLabelChange,
-          onLabelSave: handleEdgeLabelSave,
-          onLabelCancel: handleEdgeLabelCancel,
-        } as Link,
+        data: baseData as Link,
       }
     })
-  }, [edges, edgeLabelDraft, editingEdgeId, handleEdgeLabelCancel, handleEdgeLabelChange, handleEdgeLabelSave])
+  }, [
+    edges,
+    editingEdgeId,
+    edgeLabelDraft,
+    handleEdgeControlPointChange,
+    handleEdgeLabelCancel,
+    handleEdgeLabelChange,
+    handleEdgeLabelSave,
+  ])
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
 

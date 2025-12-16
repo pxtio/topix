@@ -463,6 +463,7 @@ export const EdgeView = memo(function EdgeView({
             cy={displayBendPoint.y}
             r={12}
             className='cursor-move fill-transparent'
+            pointerEvents='all'
             onPointerDown={handleControlPointPointerDown}
           />
           <circle
@@ -470,6 +471,7 @@ export const EdgeView = memo(function EdgeView({
             cy={displayBendPoint.y}
             r={6}
             className='cursor-move fill-background stroke-secondary stroke-6'
+            pointerEvents='all'
             onPointerDown={handleControlPointPointerDown}
           />
         </>

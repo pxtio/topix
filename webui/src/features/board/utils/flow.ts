@@ -22,7 +22,7 @@ function nodeRect(n: InternalNode<Node>): Rect {
   return { x: pos.x, y: pos.y, w, h }
 }
 
-function nodeCenter(n: InternalNode<Node>): Point {
+export function nodeCenter(n: InternalNode<Node>): Point {
   const r = nodeRect(n)
   return { x: r.x + r.w / 2, y: r.y + r.h / 2 }
 }
@@ -30,7 +30,7 @@ function nodeCenter(n: InternalNode<Node>): Point {
 /**
  * Point-in-node for rectangle, ellipse, diamond.
  */
-function pointInNode(p: Point, node: InternalNode<Node>): boolean {
+export function pointInNode(p: Point, node: InternalNode<Node>): boolean {
   const { x, y, w, h } = nodeRect(node)
   const cx = x + w / 2
   const cy = y + h / 2

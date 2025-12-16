@@ -13,7 +13,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { LinkEdge } from '../../types/flow'
 import type { Link } from '../../types/link'
 import type { ArrowheadType, LinkStyle } from '../../types/style'
-import { getEdgeParams } from '../../utils/flow'
+import { getEdgeParams, nodeCenter, pointInNode } from '../../utils/flow'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { LiteMarkdown } from '@/components/markdown/lite-markdown'
@@ -100,6 +100,72 @@ function bendToControlPoint(bend: Point, start: Point, end: Point): Point {
     x: 2 * bend.x - 0.5 * (start.x + end.x),
     y: 2 * bend.y - 0.5 * (start.y + end.y),
   }
+}
+
+function lerpPoint(a: Point, b: Point, t: number): Point {
+  return {
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+  }
+}
+
+function pointOnQuadratic(p0: Point, p1: Point, p2: Point, t: number): Point {
+  const u = 1 - t
+  return {
+    x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
+    y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
+  }
+}
+
+function subdivideQuadratic(p0: Point, p1: Point, p2: Point, t: number): {
+  first: [Point, Point, Point]
+  second: [Point, Point, Point]
+} {
+  const p01 = lerpPoint(p0, p1, t)
+  const p12 = lerpPoint(p1, p2, t)
+  const p012 = lerpPoint(p01, p12, t)
+  return {
+    first: [p0, p01, p012],
+    second: [p012, p12, p2],
+  }
+}
+
+function extractQuadraticSegment(p0: Point, p1: Point, p2: Point, t0: number, t1: number): {
+  p0: Point
+  p1: Point
+  p2: Point
+} {
+  if (t0 <= 0 && t1 >= 1) {
+    return { p0, p1, p2 }
+  }
+
+  const clampedT0 = Math.max(0, Math.min(1, t0))
+  const clampedT1 = Math.max(clampedT0 + 1e-4, Math.min(1, t1))
+
+  const { second } = subdivideQuadratic(p0, p1, p2, clampedT0)
+  const localT = (clampedT1 - clampedT0) / (1 - clampedT0)
+  const { first } = subdivideQuadratic(second[0], second[1], second[2], localT)
+  return { p0: first[0], p1: first[1], p2: first[2] }
+}
+
+function findExitParam(
+  node: ReturnType<typeof useInternalNode>,
+  getter: (t: number) => Point,
+  iterations = 20
+): number {
+  if (!node) return 0
+  let low = 0
+  let high = 1
+  for (let i = 0; i < iterations; i++) {
+    const mid = (low + high) / 2
+    const point = getter(mid)
+    if (pointInNode(point, node)) {
+      low = mid
+    } else {
+      high = mid
+    }
+  }
+  return high
 }
 
 type EdgeLabelEditingData = {
@@ -258,21 +324,35 @@ export const EdgeView = memo(function EdgeView({
   if (!geom) return null
 
   const storedBendPoint = edgeExtras.properties?.edgeControlPoint?.position
+  const sourceCenter = sourceNode ? nodeCenter(sourceNode) : { x: geom.sx, y: geom.sy }
+  const targetCenter = targetNode ? nodeCenter(targetNode) : { x: geom.tx, y: geom.ty }
   const fallbackBendPoint: Point = {
-    x: geom.labelX,
-    y: geom.labelY,
+    x: (sourceCenter.x + targetCenter.x) / 2,
+    y: (sourceCenter.y + targetCenter.y) / 2,
   }
   const displayBendPoint = bendPointDrag ?? storedBendPoint ?? fallbackBendPoint
   const pathStyle = linkStyle?.pathStyle ?? 'bezier'
   const shouldUseControlPoint = pathStyle === 'bezier'
   const useCustomCurve = shouldUseControlPoint && (bendPointDrag !== null || storedBendPoint)
-  const pathData = useCustomCurve
-    ? quadraticPath(
-        { x: geom.sx, y: geom.sy },
-        bendToControlPoint(displayBendPoint, { x: geom.sx, y: geom.sy }, { x: geom.tx, y: geom.ty }),
-        { x: geom.tx, y: geom.ty }
-      )
-    : { path: geom.edgePath, labelX: geom.labelX, labelY: geom.labelY }
+
+  let pathData: { path: string, labelX: number, labelY: number } = {
+    path: geom.edgePath,
+    labelX: geom.labelX,
+    labelY: geom.labelY,
+  }
+  let renderedStart: Point = { x: geom.sx, y: geom.sy }
+  let renderedEnd: Point = { x: geom.tx, y: geom.ty }
+
+  if (useCustomCurve) {
+    const centerControl = bendToControlPoint(displayBendPoint, sourceCenter, targetCenter)
+    const pointGetter = (t: number) => pointOnQuadratic(sourceCenter, centerControl, targetCenter, t)
+    const startExit = findExitParam(sourceNode, pointGetter)
+    const endExit = 1 - findExitParam(targetNode, (t: number) => pointGetter(1 - t))
+    const trimmed = extractQuadraticSegment(sourceCenter, centerControl, targetCenter, startExit, endExit)
+    renderedStart = trimmed.p0
+    renderedEnd = trimmed.p2
+    pathData = quadraticPath(trimmed.p0, trimmed.p1, trimmed.p2)
+  }
 
   const handleLabelKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -388,14 +468,14 @@ export const EdgeView = memo(function EdgeView({
   const selectionHandles = selected ? (
     <>
       <circle
-        cx={geom.sx}
-        cy={geom.sy}
+        cx={renderedStart.x}
+        cy={renderedStart.y}
         r={6}
         className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
       />
       <circle
-        cx={geom.tx}
-        cy={geom.ty}
+        cx={renderedEnd.x}
+        cy={renderedEnd.y}
         r={6}
         className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
       />
@@ -470,7 +550,7 @@ export const EdgeView = memo(function EdgeView({
             cx={displayBendPoint.x}
             cy={displayBendPoint.y}
             r={6}
-            className='cursor-move fill-background stroke-secondary stroke-6'
+            className='cursor-move fill-background stroke-secondary stroke-2'
             pointerEvents='all'
             onPointerDown={handleControlPointPointerDown}
           />

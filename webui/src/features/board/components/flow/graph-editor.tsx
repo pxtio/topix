@@ -68,6 +68,8 @@ const connectionLineStyle = {
   strokeLinecap: 'round' as const,
 }
 
+const FLOATING_UI_REAPPEAR_DELAY = 400
+
 const drawableNodeTypes: NodeType[] = [
   'rectangle',
   'ellipse',
@@ -207,6 +209,8 @@ export default function GraphEditor() {
   const [pendingPlacement, setPendingPlacement] = useState<AddNoteNodeOptions | null>(null)
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null)
   const [edgeLabelDraft, setEdgeLabelDraft] = useState<string>('')
+  const [showMiniMap, setShowMiniMap] = useState<boolean>(true)
+  const [showStylePanel, setShowStylePanel] = useState<boolean>(true)
 
   const {
     zoomIn,
@@ -432,6 +436,44 @@ export default function GraphEditor() {
     },
   })
 
+  const shouldHideFloatingUi = viewMode !== 'graph' || moving || isDragging || isResizingNode || isSelecting
+  const miniMapTimeoutRef = useRef<number | null>(null)
+  const stylePanelTimeoutRef = useRef<number | null>(null)
+
+  const clearDeferredUiTimeouts = useCallback(() => {
+    if (miniMapTimeoutRef.current) {
+      clearTimeout(miniMapTimeoutRef.current)
+      miniMapTimeoutRef.current = null
+    }
+    if (stylePanelTimeoutRef.current) {
+      clearTimeout(stylePanelTimeoutRef.current)
+      stylePanelTimeoutRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (shouldHideFloatingUi) {
+      clearDeferredUiTimeouts()
+      setShowMiniMap(false)
+      setShowStylePanel(false)
+      return
+    }
+
+    miniMapTimeoutRef.current = window.setTimeout(() => {
+      setShowMiniMap(true)
+      miniMapTimeoutRef.current = null
+    }, FLOATING_UI_REAPPEAR_DELAY)
+
+    stylePanelTimeoutRef.current = window.setTimeout(() => {
+      setShowStylePanel(true)
+      stylePanelTimeoutRef.current = null
+    }, FLOATING_UI_REAPPEAR_DELAY)
+
+    return () => {
+      clearDeferredUiTimeouts()
+    }
+  }, [shouldHideFloatingUi, clearDeferredUiTimeouts])
+
   // --- frontend-only expiration for data.isNew ---
   const newTimersRef = useRef<Map<string, number>>(new Map())
 
@@ -503,6 +545,7 @@ export default function GraphEditor() {
 
       {/* Graph-only sidebar (style controls) */}
       {viewMode === 'graph' &&
+        showStylePanel &&
         !isDragging &&
         !moving &&
         !isResizingNode &&
@@ -538,7 +581,7 @@ export default function GraphEditor() {
                   onNodeContextMenu={onNodeContextMenu}
                   onEdgeDoubleClick={handleEdgeDoubleClick}
                 >
-                  {!moving && !isDragging && !isResizingNode && !isSelecting && (
+                  {showMiniMap && !moving && !isDragging && !isResizingNode && !isSelecting && (
                     <MiniMap className='!bg-sidebar rounded-lg' />
                   )}
                 </GraphView>

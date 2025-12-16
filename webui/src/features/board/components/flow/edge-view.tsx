@@ -168,6 +168,17 @@ function findExitParam(
   return high
 }
 
+function shiftPointAlong(a: Point, b: Point, distance: number): Point {
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  const len = Math.hypot(dx, dy) || 1
+  const scale = distance / len
+  return {
+    x: a.x + dx * scale,
+    y: a.y + dy * scale,
+  }
+}
+
 type EdgeLabelEditingData = {
   labelEditing?: boolean
   labelDraft?: string
@@ -351,7 +362,19 @@ export const EdgeView = memo(function EdgeView({
     const trimmed = extractQuadraticSegment(sourceCenter, centerControl, targetCenter, startExit, endExit)
     renderedStart = trimmed.p0
     renderedEnd = trimmed.p2
-    pathData = quadraticPath(trimmed.p0, trimmed.p1, trimmed.p2)
+    let adjustedStart = trimmed.p0
+    let adjustedEnd = trimmed.p2
+
+    if (startKind !== 'none') {
+      adjustedStart = shiftPointAlong(trimmed.p0, trimmed.p1, arrowOffset)
+    }
+    if (endKind !== 'none') {
+      adjustedEnd = shiftPointAlong(trimmed.p2, trimmed.p1, arrowOffset)
+    }
+
+    renderedStart = adjustedStart
+    renderedEnd = adjustedEnd
+    pathData = quadraticPath(adjustedStart, trimmed.p1, adjustedEnd)
   }
 
   const handleLabelKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {

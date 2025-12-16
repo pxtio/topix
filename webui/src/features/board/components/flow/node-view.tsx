@@ -16,7 +16,7 @@ import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { useContentMinHeight } from '../../hooks/content-min-height'
 import { ShapeChrome } from './shape-chrome'
 
-const CONNECTOR_GAP = 8
+const CONNECTOR_GAP = 4
 
 /**
  * Node view component for rendering a note node in the graph.

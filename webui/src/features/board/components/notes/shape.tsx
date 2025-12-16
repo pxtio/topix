@@ -41,7 +41,7 @@ export const Shape = memo(function Shape({
   icon,
   imageUrl
 }: ShapeProps) {
-  const paddingClass = nodeType === 'text' ? 'p-1' : 'p-2'
+  const paddingClass = nodeType === 'text' ? 'p-0' : 'p-2'
   const base = `
     w-full ${paddingClass} border-none resize-none
     focus:outline-none focus:ring-0 focus:border-none

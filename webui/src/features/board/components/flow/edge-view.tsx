@@ -405,8 +405,7 @@ export const EdgeView = memo(function EdgeView({
     shouldUseControlPoint &&
     !!edgeExtras.onControlPointChange &&
     selected &&
-    !isLabelEditing &&
-    !hasLabel
+    !isLabelEditing
 
   return (
     <>

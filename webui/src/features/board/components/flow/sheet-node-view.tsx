@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
@@ -9,6 +9,8 @@ import { TAILWIND_200 } from '../../lib/colors/tailwind'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import type { NoteWithPin } from './note-card'
 import { useGraphStore } from '../../store/graph-store'
+
+const RESUME_DELAY = 180
 
 type SheetNodeViewProps = {
   note: NoteWithPin
@@ -32,6 +34,30 @@ export const SheetNodeView = memo(function SheetNodeView({
   const suspendContent = useGraphStore(
     state => state.isDragging || state.isPanning || state.isZooming
   )
+  const [hidden, setHidden] = useState(false)
+  const resumeTimeoutRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (suspendContent) {
+      if (resumeTimeoutRef.current) {
+        clearTimeout(resumeTimeoutRef.current)
+        resumeTimeoutRef.current = null
+      }
+      setHidden(true)
+      return
+    }
+    resumeTimeoutRef.current = window.setTimeout(() => {
+      setHidden(false)
+      resumeTimeoutRef.current = null
+    }, RESUME_DELAY)
+
+    return () => {
+      if (resumeTimeoutRef.current) {
+        clearTimeout(resumeTimeoutRef.current)
+        resumeTimeoutRef.current = null
+      }
+    }
+  }, [suspendContent])
 
   return (
     <>
@@ -85,7 +111,7 @@ export const SheetNodeView = memo(function SheetNodeView({
         </button>
       </div>
 
-      {suspendContent ? (
+      {hidden ? (
         <div className='w-full h-full' aria-hidden='true' />
       ) : (
         <StickyNote content={note.content?.markdown || ''} onOpen={onOpenSticky} />

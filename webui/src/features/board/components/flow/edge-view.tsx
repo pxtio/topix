@@ -13,7 +13,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { LinkEdge } from '../../types/flow'
 import type { Link } from '../../types/link'
 import type { ArrowheadType, LinkStyle } from '../../types/style'
-import { getEdgeParams } from '../../utils/flow'
+import { getEdgeParams, nodeCenter, pointInNode } from '../../utils/flow'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { LiteMarkdown } from '@/components/markdown/lite-markdown'
@@ -99,6 +99,83 @@ function bendToControlPoint(bend: Point, start: Point, end: Point): Point {
   return {
     x: 2 * bend.x - 0.5 * (start.x + end.x),
     y: 2 * bend.y - 0.5 * (start.y + end.y),
+  }
+}
+
+function lerpPoint(a: Point, b: Point, t: number): Point {
+  return {
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+  }
+}
+
+function pointOnQuadratic(p0: Point, p1: Point, p2: Point, t: number): Point {
+  const u = 1 - t
+  return {
+    x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x,
+    y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y,
+  }
+}
+
+function subdivideQuadratic(p0: Point, p1: Point, p2: Point, t: number): {
+  first: [Point, Point, Point]
+  second: [Point, Point, Point]
+} {
+  const p01 = lerpPoint(p0, p1, t)
+  const p12 = lerpPoint(p1, p2, t)
+  const p012 = lerpPoint(p01, p12, t)
+  return {
+    first: [p0, p01, p012],
+    second: [p012, p12, p2],
+  }
+}
+
+function extractQuadraticSegment(p0: Point, p1: Point, p2: Point, t0: number, t1: number): {
+  p0: Point
+  p1: Point
+  p2: Point
+} {
+  if (t0 <= 0 && t1 >= 1) {
+    return { p0, p1, p2 }
+  }
+
+  const clampedT0 = Math.max(0, Math.min(1, t0))
+  const clampedT1 = Math.max(clampedT0 + 1e-4, Math.min(1, t1))
+
+  const { second } = subdivideQuadratic(p0, p1, p2, clampedT0)
+  const localT = (clampedT1 - clampedT0) / (1 - clampedT0)
+  const { first } = subdivideQuadratic(second[0], second[1], second[2], localT)
+  return { p0: first[0], p1: first[1], p2: first[2] }
+}
+
+function findExitParam(
+  node: ReturnType<typeof useInternalNode>,
+  getter: (t: number) => Point,
+  iterations = 20
+): number {
+  if (!node) return 0
+  let low = 0
+  let high = 1
+  for (let i = 0; i < iterations; i++) {
+    const mid = (low + high) / 2
+    const point = getter(mid)
+    if (pointInNode(point, node)) {
+      low = mid
+    } else {
+      high = mid
+    }
+  }
+  return high
+}
+
+function shiftPointAlong(a: Point, b: Point, distance: number): Point {
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  const len = Math.hypot(dx, dy) || 1
+  const scale = distance / len
+  return {
+    x: a.x + dx * scale,
+    y: a.y + dy * scale,
   }
 }
 
@@ -255,24 +332,76 @@ export const EdgeView = memo(function EdgeView({
     edgeExtras.onLabelSave?.()
   }
 
-  if (!geom) return null
+  const pathStyle = linkStyle?.pathStyle ?? 'bezier'
+  const isBezierPath = pathStyle === 'bezier'
 
   const storedBendPoint = edgeExtras.properties?.edgeControlPoint?.position
-  const fallbackBendPoint: Point = {
-    x: geom.labelX,
-    y: geom.labelY,
+  const sourceCenter = useMemo(() => {
+    if (sourceNode) return nodeCenter(sourceNode)
+    if (!geom) return null
+    return { x: geom.sx, y: geom.sy }
+  }, [sourceNode, geom])
+  const targetCenter = useMemo(() => {
+    if (targetNode) return nodeCenter(targetNode)
+    if (!geom) return null
+    return { x: geom.tx, y: geom.ty }
+  }, [targetNode, geom])
+  const fallbackBendPoint: Point | null = useMemo(() => {
+    if (!isBezierPath) return null
+    if (!sourceCenter || !targetCenter) return null
+    const midX = (sourceCenter.x + targetCenter.x) / 2
+    const midY = (sourceCenter.y + targetCenter.y) / 2
+    const dx = targetCenter.x - sourceCenter.x
+    const dy = targetCenter.y - sourceCenter.y
+    const len = Math.hypot(dx, dy) || 1
+    const normalX = -dy / len
+    const normalY = dx / len
+    const offset = Math.min(240, Math.max(16, len * 0.16))
+    return {
+      x: midX + normalX * offset,
+      y: midY + normalY * offset
+    }
+  }, [isBezierPath, sourceCenter, targetCenter])
+
+  if (!geom) return null
+  const ensuredSource = sourceCenter
+  const ensuredTarget = targetCenter
+  const ensuredFallback = fallbackBendPoint
+
+  let pathData: { path: string, labelX: number, labelY: number }
+  let renderedStart: Point
+  let renderedEnd: Point
+  let displayBendPoint: Point | null = null
+
+  if (isBezierPath) {
+    if (!ensuredSource || !ensuredTarget || !ensuredFallback) {
+      return null
+    }
+    displayBendPoint = bendPointDrag ?? storedBendPoint ?? ensuredFallback
+    const shouldUseControlPoint = Boolean(bendPointDrag || storedBendPoint)
+    const activeBend = shouldUseControlPoint ? displayBendPoint ?? ensuredFallback : ensuredFallback
+    const centerControl = bendToControlPoint(activeBend, ensuredSource, ensuredTarget)
+    const pointGetter = (t: number) => pointOnQuadratic(ensuredSource, centerControl, ensuredTarget, t)
+    const startExit = findExitParam(sourceNode, pointGetter)
+    const endExit = 1 - findExitParam(targetNode, (t: number) => pointGetter(1 - t))
+    const trimmed = extractQuadraticSegment(ensuredSource, centerControl, ensuredTarget, startExit, endExit)
+
+    renderedStart = trimmed.p0
+    renderedEnd = trimmed.p2
+
+    if (startKind !== 'none') {
+      renderedStart = shiftPointAlong(trimmed.p0, trimmed.p1, arrowOffset)
+    }
+    if (endKind !== 'none') {
+      renderedEnd = shiftPointAlong(trimmed.p2, trimmed.p1, arrowOffset)
+    }
+
+    pathData = quadraticPath(renderedStart, trimmed.p1, renderedEnd)
+  } else {
+    renderedStart = { x: geom.sx, y: geom.sy }
+    renderedEnd = { x: geom.tx, y: geom.ty }
+    pathData = { path: geom.edgePath, labelX: geom.labelX, labelY: geom.labelY }
   }
-  const displayBendPoint = bendPointDrag ?? storedBendPoint ?? fallbackBendPoint
-  const pathStyle = linkStyle?.pathStyle ?? 'bezier'
-  const shouldUseControlPoint = pathStyle === 'bezier'
-  const useCustomCurve = shouldUseControlPoint && (bendPointDrag !== null || storedBendPoint)
-  const pathData = useCustomCurve
-    ? quadraticPath(
-        { x: geom.sx, y: geom.sy },
-        bendToControlPoint(displayBendPoint, { x: geom.sx, y: geom.sy }, { x: geom.tx, y: geom.ty }),
-        { x: geom.tx, y: geom.ty }
-      )
-    : { path: geom.edgePath, labelX: geom.labelX, labelY: geom.labelY }
 
   const handleLabelKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -388,14 +517,14 @@ export const EdgeView = memo(function EdgeView({
   const selectionHandles = selected ? (
     <>
       <circle
-        cx={geom.sx}
-        cy={geom.sy}
+        cx={renderedStart.x}
+        cy={renderedStart.y}
         r={6}
         className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
       />
       <circle
-        cx={geom.tx}
-        cy={geom.ty}
+        cx={renderedEnd.x}
+        cy={renderedEnd.y}
         r={6}
         className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
       />
@@ -403,7 +532,8 @@ export const EdgeView = memo(function EdgeView({
   ) : null
 
   const showControlPoint =
-    shouldUseControlPoint &&
+    isBezierPath &&
+    !!displayBendPoint &&
     !!edgeExtras.onControlPointChange &&
     selected &&
     !isLabelEditing
@@ -459,18 +589,18 @@ export const EdgeView = memo(function EdgeView({
       {showControlPoint && (
         <>
           <circle
-            cx={displayBendPoint.x}
-            cy={displayBendPoint.y}
+            cx={displayBendPoint!.x}
+            cy={displayBendPoint!.y}
             r={12}
             className='cursor-move fill-transparent'
             pointerEvents='all'
             onPointerDown={handleControlPointPointerDown}
           />
           <circle
-            cx={displayBendPoint.x}
-            cy={displayBendPoint.y}
+            cx={displayBendPoint!.x}
+            cy={displayBendPoint!.y}
             r={6}
-            className='cursor-move fill-background stroke-secondary stroke-6'
+            className='cursor-move fill-background stroke-secondary stroke-2'
             pointerEvents='all'
             onPointerDown={handleControlPointPointerDown}
           />

@@ -61,7 +61,13 @@ const quantizeZoom = (value: number): number => {
   return Math.max(0.1, Math.round(value * 10) / 10)
 }
 
-const clampOversample = (value: number): number => Math.min(Math.max(1, value), 1.5)
+const oversampleForZoom = (value: number): number => {
+  if (!Number.isFinite(value)) return 1
+  if (value >= 1) {
+    return Math.min(1.5, 1 + (value - 1) * 0.5)
+  }
+  return Math.max(0.5, value)
+}
 const MAX_RENDER_WIDTH = 1920
 const MAX_RENDER_HEIGHT = 1080
 
@@ -139,7 +145,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
 
     // oversample backing store for zoom-in, clamped to avoid runaway buffers
-    const oversample = clampOversample(effectiveZoom)
+    const oversample = oversampleForZoom(effectiveZoom)
 
     // add a bleed in CSS units (display px), enough for stroke + jitter
     const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 2)
@@ -197,7 +203,8 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       : rectPath(inset, inset, w, h)
 
     const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
-    const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(Math.max(cssW, cssH))
+    const apparentSize = Math.max(cssW, cssH) * Math.min(1, effectiveZoom)
+    const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(apparentSize)
 
     const cacheKey = serializeCacheKey([
       'rect',

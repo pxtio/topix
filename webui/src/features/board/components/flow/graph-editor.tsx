@@ -30,6 +30,7 @@ import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
 import type { NodeType } from '../../types/style'
 import type { Link } from '../../types/link'
+import { createDefaultLinkProperties } from '../../types/link'
 import { createDefaultLinkStyle } from '../../types/style'
 
 import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/add-node'
@@ -82,7 +83,14 @@ const drawableNodeTypes: NodeType[] = [
 const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(nodeType)
 
 const ensureLinkData = (edge: LinkEdge): Link => {
-  if (edge.data) return edge.data as Link
+  if (edge.data) {
+    const existing = edge.data as Link
+    return {
+      ...existing,
+      properties: existing.properties ?? createDefaultLinkProperties(),
+    }
+  }
+
   return {
     id: edge.id,
     type: 'link',
@@ -91,6 +99,7 @@ const ensureLinkData = (edge: LinkEdge): Link => {
     target: edge.target,
     style: createDefaultLinkStyle(),
     createdAt: new Date().toISOString(),
+    properties: createDefaultLinkProperties(),
   }
 }
 

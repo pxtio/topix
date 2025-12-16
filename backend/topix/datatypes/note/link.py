@@ -4,7 +4,18 @@ from pydantic import Field
 from typing_extensions import Literal
 
 from topix.datatypes.note.style import LinkStyle
-from topix.datatypes.resource import Resource
+from topix.datatypes.property import DataProperty, PositionProperty
+from topix.datatypes.resource import Resource, ResourceProperties
+
+
+class LinkProperties(ResourceProperties):
+    """Link properties."""
+
+    __pydantic_extra__: dict[str, DataProperty] = Field(init=False)
+
+    edge_control_point: PositionProperty = Field(
+        default_factory=lambda: PositionProperty()
+    )
 
 
 class Link(Resource):

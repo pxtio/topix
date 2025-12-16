@@ -332,6 +332,9 @@ export const EdgeView = memo(function EdgeView({
     edgeExtras.onLabelSave?.()
   }
 
+  const pathStyle = linkStyle?.pathStyle ?? 'bezier'
+  const isBezierPath = pathStyle === 'bezier'
+
   const storedBendPoint = edgeExtras.properties?.edgeControlPoint?.position
   const sourceCenter = useMemo(() => {
     if (sourceNode) return nodeCenter(sourceNode)
@@ -344,6 +347,7 @@ export const EdgeView = memo(function EdgeView({
     return { x: geom.tx, y: geom.ty }
   }, [targetNode, geom])
   const fallbackBendPoint: Point | null = useMemo(() => {
+    if (!isBezierPath) return null
     if (!sourceCenter || !targetCenter) return null
     const midX = (sourceCenter.x + targetCenter.x) / 2
     const midY = (sourceCenter.y + targetCenter.y) / 2
@@ -352,38 +356,52 @@ export const EdgeView = memo(function EdgeView({
     const len = Math.hypot(dx, dy) || 1
     const normalX = -dy / len
     const normalY = dx / len
-    const offset = Math.min(320, Math.max(24, len * 0.22))
+    const offset = Math.min(240, Math.max(16, len * 0.16))
     return {
       x: midX + normalX * offset,
       y: midY + normalY * offset
     }
-  }, [sourceCenter, targetCenter])
+  }, [isBezierPath, sourceCenter, targetCenter])
 
-  if (!geom || !sourceCenter || !targetCenter || !fallbackBendPoint) return null
-  const displayBendPoint = bendPointDrag ?? storedBendPoint ?? fallbackBendPoint
-  const pathStyle = linkStyle?.pathStyle ?? 'bezier'
-  const shouldUseControlPoint = pathStyle === 'bezier'
-  const activeBend = shouldUseControlPoint && (bendPointDrag || storedBendPoint) ? displayBendPoint : fallbackBendPoint
-  const centerControl = shouldUseControlPoint
-    ? bendToControlPoint(activeBend, sourceCenter, targetCenter)
-    : { x: (sourceCenter.x + targetCenter.x) / 2, y: (sourceCenter.y + targetCenter.y) / 2 }
+  if (!geom) return null
+  const ensuredSource = sourceCenter
+  const ensuredTarget = targetCenter
+  const ensuredFallback = fallbackBendPoint
 
-  const pointGetter = (t: number) => pointOnQuadratic(sourceCenter, centerControl, targetCenter, t)
-  const startExit = findExitParam(sourceNode, pointGetter)
-  const endExit = 1 - findExitParam(targetNode, (t: number) => pointGetter(1 - t))
-  const trimmed = extractQuadraticSegment(sourceCenter, centerControl, targetCenter, startExit, endExit)
+  let pathData: { path: string, labelX: number, labelY: number }
+  let renderedStart: Point
+  let renderedEnd: Point
+  let displayBendPoint: Point | null = null
 
-  let renderedStart: Point = trimmed.p0
-  let renderedEnd: Point = trimmed.p2
+  if (isBezierPath) {
+    if (!ensuredSource || !ensuredTarget || !ensuredFallback) {
+      return null
+    }
+    displayBendPoint = bendPointDrag ?? storedBendPoint ?? ensuredFallback
+    const shouldUseControlPoint = Boolean(bendPointDrag || storedBendPoint)
+    const activeBend = shouldUseControlPoint ? displayBendPoint ?? ensuredFallback : ensuredFallback
+    const centerControl = bendToControlPoint(activeBend, ensuredSource, ensuredTarget)
+    const pointGetter = (t: number) => pointOnQuadratic(ensuredSource, centerControl, ensuredTarget, t)
+    const startExit = findExitParam(sourceNode, pointGetter)
+    const endExit = 1 - findExitParam(targetNode, (t: number) => pointGetter(1 - t))
+    const trimmed = extractQuadraticSegment(ensuredSource, centerControl, ensuredTarget, startExit, endExit)
 
-  if (startKind !== 'none') {
-    renderedStart = shiftPointAlong(trimmed.p0, trimmed.p1, arrowOffset)
+    renderedStart = trimmed.p0
+    renderedEnd = trimmed.p2
+
+    if (startKind !== 'none') {
+      renderedStart = shiftPointAlong(trimmed.p0, trimmed.p1, arrowOffset)
+    }
+    if (endKind !== 'none') {
+      renderedEnd = shiftPointAlong(trimmed.p2, trimmed.p1, arrowOffset)
+    }
+
+    pathData = quadraticPath(renderedStart, trimmed.p1, renderedEnd)
+  } else {
+    renderedStart = { x: geom.sx, y: geom.sy }
+    renderedEnd = { x: geom.tx, y: geom.ty }
+    pathData = { path: geom.edgePath, labelX: geom.labelX, labelY: geom.labelY }
   }
-  if (endKind !== 'none') {
-    renderedEnd = shiftPointAlong(trimmed.p2, trimmed.p1, arrowOffset)
-  }
-
-  const pathData = quadraticPath(renderedStart, trimmed.p1, renderedEnd)
 
   const handleLabelKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -514,7 +532,8 @@ export const EdgeView = memo(function EdgeView({
   ) : null
 
   const showControlPoint =
-    shouldUseControlPoint &&
+    isBezierPath &&
+    !!displayBendPoint &&
     !!edgeExtras.onControlPointChange &&
     selected &&
     !isLabelEditing
@@ -570,16 +589,16 @@ export const EdgeView = memo(function EdgeView({
       {showControlPoint && (
         <>
           <circle
-            cx={displayBendPoint.x}
-            cy={displayBendPoint.y}
+            cx={displayBendPoint!.x}
+            cy={displayBendPoint!.y}
             r={12}
             className='cursor-move fill-transparent'
             pointerEvents='all'
             onPointerDown={handleControlPointPointerDown}
           />
           <circle
-            cx={displayBendPoint.x}
-            cy={displayBendPoint.y}
+            cx={displayBendPoint!.x}
+            cy={displayBendPoint!.y}
             r={6}
             className='cursor-move fill-background stroke-secondary stroke-2'
             pointerEvents='all'

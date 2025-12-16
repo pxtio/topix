@@ -332,50 +332,58 @@ export const EdgeView = memo(function EdgeView({
     edgeExtras.onLabelSave?.()
   }
 
-  if (!geom) return null
-
   const storedBendPoint = edgeExtras.properties?.edgeControlPoint?.position
-  const sourceCenter = sourceNode ? nodeCenter(sourceNode) : { x: geom.sx, y: geom.sy }
-  const targetCenter = targetNode ? nodeCenter(targetNode) : { x: geom.tx, y: geom.ty }
-  const fallbackBendPoint: Point = {
-    x: (sourceCenter.x + targetCenter.x) / 2,
-    y: (sourceCenter.y + targetCenter.y) / 2,
-  }
+  const sourceCenter = useMemo(() => {
+    if (sourceNode) return nodeCenter(sourceNode)
+    if (!geom) return null
+    return { x: geom.sx, y: geom.sy }
+  }, [sourceNode, geom])
+  const targetCenter = useMemo(() => {
+    if (targetNode) return nodeCenter(targetNode)
+    if (!geom) return null
+    return { x: geom.tx, y: geom.ty }
+  }, [targetNode, geom])
+  const fallbackBendPoint: Point | null = useMemo(() => {
+    if (!sourceCenter || !targetCenter) return null
+    const midX = (sourceCenter.x + targetCenter.x) / 2
+    const midY = (sourceCenter.y + targetCenter.y) / 2
+    const dx = targetCenter.x - sourceCenter.x
+    const dy = targetCenter.y - sourceCenter.y
+    const len = Math.hypot(dx, dy) || 1
+    const normalX = -dy / len
+    const normalY = dx / len
+    const offset = Math.min(320, Math.max(24, len * 0.22))
+    return {
+      x: midX + normalX * offset,
+      y: midY + normalY * offset
+    }
+  }, [sourceCenter, targetCenter])
+
+  if (!geom || !sourceCenter || !targetCenter || !fallbackBendPoint) return null
   const displayBendPoint = bendPointDrag ?? storedBendPoint ?? fallbackBendPoint
   const pathStyle = linkStyle?.pathStyle ?? 'bezier'
   const shouldUseControlPoint = pathStyle === 'bezier'
-  const useCustomCurve = shouldUseControlPoint && (bendPointDrag !== null || storedBendPoint)
+  const activeBend = shouldUseControlPoint && (bendPointDrag || storedBendPoint) ? displayBendPoint : fallbackBendPoint
+  const centerControl = shouldUseControlPoint
+    ? bendToControlPoint(activeBend, sourceCenter, targetCenter)
+    : { x: (sourceCenter.x + targetCenter.x) / 2, y: (sourceCenter.y + targetCenter.y) / 2 }
 
-  let pathData: { path: string, labelX: number, labelY: number } = {
-    path: geom.edgePath,
-    labelX: geom.labelX,
-    labelY: geom.labelY,
+  const pointGetter = (t: number) => pointOnQuadratic(sourceCenter, centerControl, targetCenter, t)
+  const startExit = findExitParam(sourceNode, pointGetter)
+  const endExit = 1 - findExitParam(targetNode, (t: number) => pointGetter(1 - t))
+  const trimmed = extractQuadraticSegment(sourceCenter, centerControl, targetCenter, startExit, endExit)
+
+  let renderedStart: Point = trimmed.p0
+  let renderedEnd: Point = trimmed.p2
+
+  if (startKind !== 'none') {
+    renderedStart = shiftPointAlong(trimmed.p0, trimmed.p1, arrowOffset)
   }
-  let renderedStart: Point = { x: geom.sx, y: geom.sy }
-  let renderedEnd: Point = { x: geom.tx, y: geom.ty }
-
-  if (useCustomCurve) {
-    const centerControl = bendToControlPoint(displayBendPoint, sourceCenter, targetCenter)
-    const pointGetter = (t: number) => pointOnQuadratic(sourceCenter, centerControl, targetCenter, t)
-    const startExit = findExitParam(sourceNode, pointGetter)
-    const endExit = 1 - findExitParam(targetNode, (t: number) => pointGetter(1 - t))
-    const trimmed = extractQuadraticSegment(sourceCenter, centerControl, targetCenter, startExit, endExit)
-    renderedStart = trimmed.p0
-    renderedEnd = trimmed.p2
-    let adjustedStart = trimmed.p0
-    let adjustedEnd = trimmed.p2
-
-    if (startKind !== 'none') {
-      adjustedStart = shiftPointAlong(trimmed.p0, trimmed.p1, arrowOffset)
-    }
-    if (endKind !== 'none') {
-      adjustedEnd = shiftPointAlong(trimmed.p2, trimmed.p1, arrowOffset)
-    }
-
-    renderedStart = adjustedStart
-    renderedEnd = adjustedEnd
-    pathData = quadraticPath(adjustedStart, trimmed.p1, adjustedEnd)
+  if (endKind !== 'none') {
+    renderedEnd = shiftPointAlong(trimmed.p2, trimmed.p1, arrowOffset)
   }
+
+  const pathData = quadraticPath(renderedStart, trimmed.p1, renderedEnd)
 
   const handleLabelKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {

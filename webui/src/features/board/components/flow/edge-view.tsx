@@ -258,17 +258,18 @@ export const EdgeView = memo(function EdgeView({
   if (!geom) return null
 
   const storedBendPoint = edgeExtras.properties?.edgeControlPoint?.position
-  const defaultBendPoint: Point = {
-    x: (geom.sx + geom.tx) / 2,
-    y: (geom.sy + geom.ty) / 2
+  const fallbackBendPoint: Point = {
+    x: geom.labelX,
+    y: geom.labelY,
   }
-  const resolvedBendPoint = bendPointDrag ?? storedBendPoint ?? defaultBendPoint
+  const displayBendPoint = bendPointDrag ?? storedBendPoint ?? fallbackBendPoint
   const pathStyle = linkStyle?.pathStyle ?? 'bezier'
   const shouldUseControlPoint = pathStyle === 'bezier'
-  const pathData = shouldUseControlPoint
+  const useCustomCurve = shouldUseControlPoint && (bendPointDrag !== null || storedBendPoint)
+  const pathData = useCustomCurve
     ? quadraticPath(
         { x: geom.sx, y: geom.sy },
-        bendToControlPoint(resolvedBendPoint, { x: geom.sx, y: geom.sy }, { x: geom.tx, y: geom.ty }),
+        bendToControlPoint(displayBendPoint, { x: geom.sx, y: geom.sy }, { x: geom.tx, y: geom.ty }),
         { x: geom.tx, y: geom.ty }
       )
     : { path: geom.edgePath, labelX: geom.labelX, labelY: geom.labelY }
@@ -458,17 +459,19 @@ export const EdgeView = memo(function EdgeView({
       {showControlPoint && (
         <>
           <circle
-            cx={resolvedBendPoint.x}
-            cy={resolvedBendPoint.y}
-            r={6}
+            cx={displayBendPoint.x}
+            cy={displayBendPoint.y}
+            r={12}
             className='cursor-move fill-transparent'
+            pointerEvents='all'
             onPointerDown={handleControlPointPointerDown}
           />
           <circle
-            cx={resolvedBendPoint.x}
-            cy={resolvedBendPoint.y}
-            r={4}
+            cx={displayBendPoint.x}
+            cy={displayBendPoint.y}
+            r={6}
             className='cursor-move fill-background stroke-secondary stroke-6'
+            pointerEvents='all'
             onPointerDown={handleControlPointPointerDown}
           />
         </>

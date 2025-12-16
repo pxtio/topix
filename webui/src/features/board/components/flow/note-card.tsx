@@ -5,19 +5,15 @@ import type { NoteNode } from '../../types/flow'
 import { MilkdownProvider } from '@milkdown/react'
 import { MdEditor } from '@/components/editor/milkdown'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { clsx } from 'clsx'
 
 import { Shape } from '../notes/shape'
-import { StickyNote } from '../notes/sticky-note'
-import { TAILWIND_200 } from '../../lib/colors/tailwind'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from '../../types/style'
 import { useGraphStore } from '../../store/graph-store'
+import { SheetNodeView } from './sheet-node-view'
 
-type NoteWithPin = Note & { pinned?: boolean }
+export type NoteWithPin = Note & { pinned?: boolean }
 
 type NodeCardProps = {
   note: NoteWithPin
@@ -64,7 +60,7 @@ export const NodeCard = memo(({
       clsx(
         'relative bg-transparent overflow-visible flex items-center justify-center',
         isSheet
-          ? `w-[300px] h-[300px] ${fontFamilyToTwClass(fontFamily)} p-2 pt-8`
+          ? `w-[300px] ${fontFamilyToTwClass(fontFamily)} p-2 pt-8`
           : 'w-full h-full p-2'
       ),
     [isSheet, fontFamily]
@@ -234,61 +230,16 @@ export const NodeCard = memo(({
         onPointerDown={stopDragging}
         style={{ color: textColor || 'inherit' }}
       >
-        {isSheet && (
-          <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end'>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  className='p-1 text-foreground/60 hover:text-foreground transition-colors'
-                  onClick={e => e.stopPropagation()}
-                  aria-label='Background color'
-                  title='Background color'
-                >
-                  <HugeiconsIcon icon={PaintBoardIcon} className='size-4 shrink-0' strokeWidth={2} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align='end' className='w-auto p-2'>
-                <div className='grid grid-cols-6 gap-2'>
-                  {[{ name: 'white', hex: '#ffffff' }, ...TAILWIND_200].map(c => (
-                    <button
-                      key={c.name}
-                      className='h-6 w-6 rounded-full border border-border hover:brightness-95'
-                      style={{ backgroundColor: isDark ? darkModeDisplayHex(c.hex) || c.hex : c.hex }}
-                      title={`${c.name}-200`}
-                      aria-label={`${c.name}-200`}
-                      onClick={() => onPickPalette(c.hex)}
-                    />
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            <button
-              className='p-1 text-foreground/60 hover:text-foreground transition-colors'
-              onClick={onTogglePin}
-              aria-label='Toggle pin'
-              title='Pin/Unpin'
-            >
-              {isPinned
-                ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={2} />
-                : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={2} />
-              }
-            </button>
-
-            <button
-              className='p-1 text-foreground/60 hover:text-destructive transition-colors'
-              onClick={onDelete}
-              aria-label='Delete note'
-              title='Delete'
-            >
-              <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4' strokeWidth={2} />
-            </button>
-          </div>
-        )}
-
-        {/* PREVIEW AREA */}
         {isSheet ? (
-          <StickyNote content={note.content?.markdown || ''} onOpen={openDialogFromSticky} />
+          <SheetNodeView
+            note={note}
+            isDark={isDark}
+            isPinned={isPinned}
+            onPickPalette={onPickPalette}
+            onTogglePin={onTogglePin}
+            onDelete={onDelete}
+            onOpenSticky={openDialogFromSticky}
+          />
         ) : (
           <Shape
             nodeType={note.style.type}

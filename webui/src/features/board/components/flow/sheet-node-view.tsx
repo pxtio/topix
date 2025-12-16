@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
@@ -11,6 +11,8 @@ import type { NoteWithPin } from './note-card'
 import { useGraphStore } from '../../store/graph-store'
 
 const RESUME_DELAY = 180
+const MIN_HEIGHT = 160
+const MAX_HEIGHT = 400
 
 type SheetNodeViewProps = {
   note: NoteWithPin
@@ -32,10 +34,37 @@ export const SheetNodeView = memo(function SheetNodeView({
   onOpenSticky
 }: SheetNodeViewProps) {
   const suspendContent = useGraphStore(
-    state => state.isDragging || state.isPanning || state.isZooming
+    state => state.isPanning || state.isZooming
   )
   const [hidden, setHidden] = useState(false)
   const resumeTimeoutRef = useRef<number | null>(null)
+  const [measuredHeight, setMeasuredHeight] = useState<number>(MIN_HEIGHT)
+  const contentRef = useRef<HTMLDivElement | null>(null)
+  const observerRef = useRef<ResizeObserver | null>(null)
+
+  const targetHeight = useMemo(
+    () => Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, measuredHeight)),
+    [measuredHeight]
+  )
+
+  useEffect(() => {
+    const el = contentRef.current
+    if (!el) return
+    const observer = new ResizeObserver(entries => {
+      if (!entries.length) return
+      const height = entries[0].contentRect.height
+      setMeasuredHeight(prev => {
+        const next = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, height))
+        return prev === next ? prev : next
+      })
+    })
+    observer.observe(el)
+    observerRef.current = observer
+    return () => {
+      observer.disconnect()
+      observerRef.current = null
+    }
+  }, [note.content?.markdown])
 
   useEffect(() => {
     if (suspendContent) {
@@ -111,11 +140,18 @@ export const SheetNodeView = memo(function SheetNodeView({
         </button>
       </div>
 
-      {hidden ? (
-        <div className='w-full h-full' aria-hidden='true' />
-      ) : (
-        <StickyNote content={note.content?.markdown || ''} onOpen={onOpenSticky} />
-      )}
+      <div
+        className='w-full overflow-y-auto scrollbar-thin'
+        style={{ minHeight: MIN_HEIGHT, maxHeight: MAX_HEIGHT, height: targetHeight }}
+      >
+        {hidden ? (
+          <div className='w-full h-full' aria-hidden='true' />
+        ) : (
+          <div ref={contentRef}>
+            <StickyNote content={note.content?.markdown || ''} onOpen={onOpenSticky} />
+          </div>
+        )}
+      </div>
     </>
   )
 })

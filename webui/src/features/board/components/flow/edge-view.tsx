@@ -559,7 +559,7 @@ export const EdgeView = memo(function EdgeView({
       {(isLabelEditing || hasLabel) && (
         <EdgeLabelRenderer>
           <div
-            className='nodrag nopan absolute origin-center pointer-events-auto'
+            className={`nodrag nopan absolute origin-center ${isLabelEditing ? 'pointer-events-auto' : 'pointer-events-none'}`}
             style={{
               transform: `translate(-50%, -50%) translate(${pathData.labelX}px, ${pathData.labelY}px)`
             }}

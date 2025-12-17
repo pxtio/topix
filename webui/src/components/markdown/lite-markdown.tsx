@@ -10,21 +10,22 @@ type Token =
   | { type: 'underline'; content: string }
   | { type: 'strike'; content: string }
   | { type: 'code'; content: string }
+  | { type: 'code-block'; content: string; language?: string }
   | { type: 'math-inline'; content: string }
   | { type: 'math-block'; content: string }
 
 const INLINE_PATTERN =
   /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|_[^_]+_)/g
 
-function tokenize(input: string): Token[] {
-  if (!input) return []
+function tokenizeInline(segment: string): Token[] {
+  if (!segment) return []
   const tokens: Token[] = []
   let lastIndex = 0
 
-  input.replace(INLINE_PATTERN, (match, _group, offset) => {
+  segment.replace(INLINE_PATTERN, (match, _group, offset) => {
     const idx = offset as number
     if (idx > lastIndex) {
-      tokens.push({ type: 'text', content: input.slice(lastIndex, idx) })
+      tokens.push({ type: 'text', content: segment.slice(lastIndex, idx) })
     }
 
     if (match.startsWith('$$') && match.endsWith('$$')) {
@@ -49,8 +50,52 @@ function tokenize(input: string): Token[] {
     return match
   })
 
-  if (lastIndex < input.length) {
-    tokens.push({ type: 'text', content: input.slice(lastIndex) })
+  if (lastIndex < segment.length) {
+    tokens.push({ type: 'text', content: segment.slice(lastIndex) })
+  }
+
+  return tokens
+}
+
+function tokenize(input: string): Token[] {
+  if (!input) return []
+  const tokens: Token[] = []
+  let cursor = 0
+
+  while (cursor < input.length) {
+    const fenceStart = input.indexOf('```', cursor)
+    if (fenceStart === -1) {
+      tokens.push(...tokenizeInline(input.slice(cursor)))
+      break
+    }
+
+    if (fenceStart > cursor) {
+      tokens.push(...tokenizeInline(input.slice(cursor, fenceStart)))
+    }
+
+    const fenceEnd = input.indexOf('```', fenceStart + 3)
+    if (fenceEnd === -1) {
+      tokens.push(...tokenizeInline(input.slice(fenceStart)))
+      break
+    }
+
+    const fenceContent = input.slice(fenceStart + 3, fenceEnd)
+    const delimiterIndex = fenceContent.search(/[\r\n]/)
+    let language = ''
+    let codeContent = fenceContent
+
+    if (delimiterIndex >= 0) {
+      language = fenceContent.slice(0, delimiterIndex).trim()
+      codeContent = fenceContent.slice(delimiterIndex).replace(/^\r?\n/, '')
+    }
+
+    tokens.push({
+      type: 'code-block',
+      content: codeContent,
+      language: language || undefined
+    })
+
+    cursor = fenceEnd + 3
   }
 
   return tokens
@@ -101,6 +146,16 @@ export function LiteMarkdown({ text, className }: LiteMarkdownProps) {
             <code key={index} className='px-1 rounded bg-muted font-mono'>
               {token.content}
             </code>
+          )
+        }
+
+        if (token.type === 'code-block') {
+          return (
+            <pre key={index} className='my-2 rounded bg-transparent px-3 py-2 overflow-x-auto'>
+              <code className='font-mono text-sm whitespace-pre-wrap'>
+                {token.content}
+              </code>
+            </pre>
           )
         }
 

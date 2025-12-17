@@ -141,14 +141,15 @@ export const SheetNodeView = memo(function SheetNodeView({
       </div>
 
       <div
-        className='w-full overflow-y-auto scrollbar-thin'
+        className='w-full overflow-y-auto scrollbar-thin cursor-pointer'
         style={{ minHeight: MIN_HEIGHT, maxHeight: MAX_HEIGHT, height: targetHeight }}
+        onClick={onOpenSticky}
       >
         {hidden ? (
           <div className='w-full h-full' aria-hidden='true' />
         ) : (
           <div ref={contentRef}>
-            <StickyNote content={note.content?.markdown || ''} onOpen={onOpenSticky} />
+            <StickyNote content={note.content?.markdown || ''} />
           </div>
         )}
       </div>

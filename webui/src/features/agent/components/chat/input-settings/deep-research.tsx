@@ -29,7 +29,7 @@ export const DeepResearchChoiceMenu = () => {
             onClick={handleToggle}
           >
             <HugeiconsIcon icon={MicroscopeIcon} className='size-4 shrink-0' strokeWidth={2} />
-            <span>Deep Research</span>
+            <span className='sm:not-sr-only sr-only'>Deep Research</span>
           </button>
         </TooltipTrigger>
       </div>

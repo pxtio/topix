@@ -1,9 +1,10 @@
 import TextareaAutosize from 'react-textarea-autosize'
-import { memo } from 'react'
-import type { RefObject } from 'react'
+import { memo, useCallback } from 'react'
+import type { RefObject, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { NodeType } from '../../types/style'
 import { IconShape } from './icon-shape'
 import { ImageShape } from './image-shape'
+import { LiteMarkdown } from '@/components/markdown/lite-markdown'
 
 type TextAlign = 'left' | 'center' | 'right'
 
@@ -40,17 +41,72 @@ export const Shape = memo(function Shape({
   icon,
   imageUrl
 }: ShapeProps) {
+  const paddingClass = nodeType === 'text' ? 'p-0' : 'p-2'
   const base = `
-    w-full p-2 border-none resize-none
+    w-full ${paddingClass} border-none resize-none
     focus:outline-none focus:ring-0 focus:border-none
     overflow-hidden whitespace-normal break-words
     ${styleHelpers.text} ${styleHelpers.font} ${styleHelpers.size}
     ${textAlign === 'center' ? 'text-center' : textAlign === 'right' ? 'text-right' : 'text-left'}
   `
 
-  const placeHolder = nodeType === 'text' ? 'Add text...' : ''
+  const isImageNode = nodeType === 'image'
+  const placeHolder = nodeType === 'text' ? 'Add text...' : isImageNode ? 'Add caption...' : ''
 
   const notEditingSpanClass = value.trim() ? '' : 'text-muted-foreground/50'
+
+  const handleTextareaKeyDown = useCallback((event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== 'Tab') return
+    event.preventDefault()
+    const textarea = event.currentTarget
+    const insert = '  '
+    const start = textarea.selectionStart ?? 0
+    const end = textarea.selectionEnd ?? start
+    textarea.setRangeText(insert, start, end, 'end')
+    const nativeEvent = new Event('input', { bubbles: true })
+    textarea.dispatchEvent(nativeEvent)
+  }, [])
+
+  if (isImageNode) {
+    const hasLabel = value.trim().length > 0
+
+    return (
+      <div className='relative w-full h-full rounded-md'>
+        <div className='absolute inset-0 flex items-center justify-center'>
+          {imageUrl ? (
+            <ImageShape imageUrl={imageUrl} className="w-full h-full" />
+          ) : (
+            <div className='w-full h-full flex items-center justify-center text-sm text-muted-foreground/60'>
+              No image selected
+            </div>
+          )}
+        </div>
+
+        <div className={`absolute left-3 right-3 -bottom-4 transform translate-y-1/2 flex justify-center z-10 ${labelEditing ? '' : 'pointer-events-none'}`}>
+          {labelEditing ? (
+            <TextareaAutosize
+              className='nodrag nopan nowheel w-full border border-border rounded-md bg-background/90 text-sm text-center shadow-sm px-3 py-2'
+              value={value}
+              onChange={onChange}
+              onKeyDown={handleTextareaKeyDown}
+              placeholder={placeHolder}
+              ref={textareaRef}
+              minRows={1}
+            />
+          ) : hasLabel ? (
+            <LiteMarkdown
+              text={value}
+              className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
+            />
+          ) : (
+            <div className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-muted-foreground/70'>
+              {placeHolder}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className='w-full h-full flex items-center justify-center'>
@@ -62,13 +118,18 @@ export const Shape = memo(function Shape({
             className={`${base} nodrag nopan nowheel !-mb-2`}
             value={value}
             onChange={onChange}
+            onKeyDown={handleTextareaKeyDown}
             placeholder={placeHolder}
             ref={textareaRef}
             readOnly={!labelEditing}
           />
         ) : (
           <div className={`${base} whitespace-pre-wrap`}>
-            <span className={notEditingSpanClass}>{value || placeHolder}</span>
+            {value.trim() ? (
+              <LiteMarkdown text={value} className='block' />
+            ) : (
+              <span className={notEditingSpanClass}>{placeHolder}</span>
+            )}
           </div>
         )}
       </div>

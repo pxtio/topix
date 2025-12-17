@@ -6,6 +6,57 @@ import { useAddNoteNode } from "@/features/board/hooks/add-node"
 import { useDebouncedValue } from "@/features/board/hooks/debounce"
 import { useState } from "react"
 
+const IMAGE_NODE_MAX_DIMENSION = 420
+const IMAGE_NODE_MIN_DIMENSION = 160
+const FALLBACK_IMAGE_RATIO = 4 / 3
+
+const loadImageDimensions = (url: string) =>
+  new Promise<{ width: number; height: number }>((resolve, reject) => {
+    const image = new Image()
+    image.crossOrigin = "anonymous"
+    image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight })
+    image.onerror = reject
+    image.src = url
+  })
+
+const normalizeImageSize = (width?: number, height?: number) => {
+  if (!width || !height) {
+    return {
+      width: IMAGE_NODE_MAX_DIMENSION,
+      height: Math.round(IMAGE_NODE_MAX_DIMENSION / FALLBACK_IMAGE_RATIO)
+    }
+  }
+
+  const ratio = width / height
+  if (ratio >= 1) {
+    let targetWidth = IMAGE_NODE_MAX_DIMENSION
+    let targetHeight = targetWidth / ratio
+    if (targetHeight < IMAGE_NODE_MIN_DIMENSION) {
+      targetHeight = IMAGE_NODE_MIN_DIMENSION
+      targetWidth = targetHeight * ratio
+    }
+    if (targetWidth > IMAGE_NODE_MAX_DIMENSION) {
+      const scale = IMAGE_NODE_MAX_DIMENSION / targetWidth
+      targetWidth = IMAGE_NODE_MAX_DIMENSION
+      targetHeight *= scale
+    }
+    return { width: Math.round(targetWidth), height: Math.round(targetHeight) }
+  }
+
+  let targetHeight = IMAGE_NODE_MAX_DIMENSION
+  let targetWidth = targetHeight * ratio
+  if (targetWidth < IMAGE_NODE_MIN_DIMENSION) {
+    targetWidth = IMAGE_NODE_MIN_DIMENSION
+    targetHeight = targetWidth / ratio
+  }
+  if (targetHeight > IMAGE_NODE_MAX_DIMENSION) {
+    const scale = IMAGE_NODE_MAX_DIMENSION / targetHeight
+    targetHeight = IMAGE_NODE_MAX_DIMENSION
+    targetWidth *= scale
+  }
+  return { width: Math.round(targetWidth), height: Math.round(targetHeight) }
+}
+
 
 export interface ImageSearchDialogProps {
   openImageSearch: boolean
@@ -25,10 +76,16 @@ export const ImageSearchDialog = ({ openImageSearch, setOpenImageSearch }: Image
 
   const addNode = useAddNoteNode()
 
-  const handleSelectImage = (imgUrl: string) => {
-    // Future: insert selected image into canvas
-    addNode({ nodeType: 'image', imageUrl: imgUrl })
-    setOpenImageSearch(false)
+  const handleSelectImage = async (imgUrl: string) => {
+    try {
+      const { width, height } = await loadImageDimensions(imgUrl)
+      const size = normalizeImageSize(width, height)
+      addNode({ nodeType: 'image', imageUrl: imgUrl, size })
+    } catch {
+      addNode({ nodeType: 'image', imageUrl: imgUrl })
+    } finally {
+      setOpenImageSearch(false)
+    }
   }
 
   return (
@@ -59,7 +116,7 @@ export const ImageSearchDialog = ({ openImageSearch, setOpenImageSearch }: Image
                 <button
                   key={img.url}
                   className='group relative aspect-square rounded-md overflow-hidden border hover:ring-2 hover:ring-secondary/75'
-                  onClick={() => handleSelectImage(img.url)}
+                  onClick={() => { void handleSelectImage(img.url) }}
                 >
                   <img src={img.url} alt={img.description || 'image'} className='size-full object-cover' />
                 </button>

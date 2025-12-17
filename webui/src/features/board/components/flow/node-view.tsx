@@ -1,10 +1,11 @@
-import { memo, useMemo } from 'react'
+import { memo, useMemo, type CSSProperties } from 'react'
 import {
   type ControlPosition,
   Handle,
   type NodeProps,
   NodeResizeControl,
   Position,
+  useStore,
 } from '@xyflow/react'
 import type { NoteNode } from '../../types/flow'
 import { NodeCard } from './note-card'
@@ -14,6 +15,8 @@ import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { useContentMinHeight } from '../../hooks/content-min-height'
 import { ShapeChrome } from './shape-chrome'
+
+const CONNECTOR_GAP = 4
 
 /**
  * Node view component for rendering a note node in the graph.
@@ -25,9 +28,14 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
 
   // measure content & drive minHeight
-  const { contentRef, computedMinH } = useContentMinHeight(id, 24, 24)
+  const { contentRef, computedMinH } = useContentMinHeight(
+    id,
+    24 + CONNECTOR_GAP * 2,
+    50,
+  )
 
-  const minH = data.style.type === 'image' || data.style.type === 'icon' ? 50 : computedMinH
+  const baseMinH = data.style.type === 'image' || data.style.type === 'icon' ? 50 : computedMinH
+  const innerMinH = Math.max(30, baseMinH - CONNECTOR_GAP * 2)
 
   const resizeHandles = useMemo(() => ([
     { pos: 'top-left', class: 'top-0 left-0 cursor-nwse-resize' },
@@ -37,9 +45,6 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   ]), [])
 
   const isPinned = data.properties.pinned.boolean
-
-  const handleClassRight = 'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none -translate-x-[calc(50%-10px)] border-none'
-  const handleClassLeft = 'w-full h-full !bg-transparent !absolute -inset-[10px] rounded-none translate-x-1/2 border-none'
 
   const nodeClass = 'w-full h-full relative font-handwriting drag-handle pointer-events-auto bg-transparent'
   const rounded = data.style.roundness > 0 ? 'rounded-2xl' : 'none'
@@ -62,50 +67,148 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   )
 
   const nodeType = data.style.type
+  const connectionState = useStore(state => state.connection)
+  const connectionClickStartHandle = useStore(state => state.connectionClickStartHandle)
+  const isConnectModeActive = connectionState.inProgress || !!connectionClickStartHandle
+
+  const shouldHighlightHandles = Boolean(
+    (connectionState.inProgress && connectionState.fromNode?.id === id) ||
+    (connectionState.inProgress && connectionState.toNode?.id === id) ||
+    (!connectionState.inProgress && connectionClickStartHandle?.nodeId === id)
+  )
 
   const handleResizeStart = () => setIsResizingNode(true)
   const handleResizeEnd = () => setIsResizingNode(false)
 
+  const isVisualNode = nodeType === 'image' || nodeType === 'icon'
+  const resizeMinWidth = isVisualNode ? 80 : 200
+  const resizeMinHeight = isVisualNode ? 80 : innerMinH
+
+  const handleOverlayStyles: CSSProperties = {
+    top: -CONNECTOR_GAP,
+    right: -CONNECTOR_GAP,
+    bottom: -CONNECTOR_GAP,
+    left: -CONNECTOR_GAP,
+  }
+
+  const renderHandleOverlay = () => {
+    if (!shouldHighlightHandles) return null
+    return (
+      <div
+        className='absolute rounded-2xl bg-secondary/20 pointer-events-none transition-colors duration-150'
+        style={handleOverlayStyles}
+      />
+    )
+  }
+
+  const handleClassBase =
+    'w-full h-full !absolute -inset-[8px] rounded-none border-none cursor-crosshair'
+  const handleBgClass = shouldHighlightHandles ? '!bg-secondary/5' : '!bg-transparent'
+  const handleClassRight = clsx(handleClassBase, '-translate-x-[calc(50%-8px)]', handleBgClass)
+  const handleClassLeft = clsx(handleClassBase, 'translate-x-[calc(50%-8px)]', handleBgClass)
+
+  if (nodeType === 'sheet') {
+    const sheetHandleDivClass = clsx(
+      'absolute inset-0 w-full h-full overflow-visible pointer-events-none',
+      isConnectModeActive ? 'z-20' : 'z-0'
+    )
+
+    return (
+      <div className='border-none relative p-3 bg-transparent overflow-visible w-full h-full'>
+        <div className={sheetHandleDivClass}>
+          {renderHandleOverlay()}
+          <Handle className={handleClassRight} position={Position.Right} type='source' />
+          <Handle className={handleClassLeft} position={Position.Left} type='target' isConnectableStart={false} />
+        </div>
+
+        <ShapeChrome
+          type={nodeType}
+          minHeight={computedMinH}
+          rounded={rounded}
+          frameClass={frameClass}
+          textColor={textColor}
+          backgroundColor={backgroundColor}
+          strokeColor={strokeColor}
+          roughness={data.style.roughness}
+          fillStyle={data.style.fillStyle}
+          strokeStyle={data.style.strokeStyle}
+          strokeWidth={data.style.strokeWidth}
+          seed={data.roughSeed}
+        >
+          {content}
+        </ShapeChrome>
+      </div>
+    )
+  }
+
+  const handleDivClass = clsx('absolute inset-0', isConnectModeActive ? 'z-20' : 'z-0')
+
   return (
-    <div className='border-none relative p-2 bg-transparent overflow-visible w-full h-full'>
-      <div className='absolute inset-0 w-full h-full overflow-visible'>
-        <Handle className={handleClassRight} position={Position.Right} type='source' />
-        <Handle className={handleClassLeft} position={Position.Left} type='target' isConnectableStart={false} />
+    <div className='border-none relative bg-transparent overflow-visible w-full h-full p-0'>
+      <div className={handleDivClass}>
+        {renderHandleOverlay()}
+        <Handle
+          className={handleClassRight}
+          position={Position.Right}
+          type='source'
+        />
+        <Handle
+          className={handleClassLeft}
+          position={Position.Left}
+          type='target'
+          isConnectableStart={false}
+        />
       </div>
 
-      <ShapeChrome
-        type={nodeType}
-        minHeight={computedMinH}
-        rounded={rounded}
-        frameClass={frameClass}
-        textColor={textColor}
-        backgroundColor={backgroundColor}
-        strokeColor={strokeColor}
-        roughness={data.style.roughness}
-        fillStyle={data.style.fillStyle}
-        strokeStyle={data.style.strokeStyle}
-        strokeWidth={data.style.strokeWidth}
-        seed={data.roughSeed}
+      <div
+        className='absolute inset-0'
+        style={{
+          top: CONNECTOR_GAP,
+          right: CONNECTOR_GAP,
+          bottom: CONNECTOR_GAP,
+          left: CONNECTOR_GAP,
+        }}
       >
-        {content}
-      </ShapeChrome>
-
-      {nodeType !== 'sheet' && selected && resizeHandles.map(({ pos, class: posClass }) => (
-        <NodeResizeControl
-          key={pos}
-          position={pos as ControlPosition}
-          onResizeStart={handleResizeStart}
-          onResizeEnd={handleResizeEnd}
-          minHeight={minH}
-          minWidth={200}
-          keepAspectRatio={nodeType === 'image'}
+        <ShapeChrome
+          type={nodeType}
+          minHeight={innerMinH}
+          rounded={rounded}
+          frameClass={frameClass}
+          textColor={textColor}
+          backgroundColor={backgroundColor}
+          strokeColor={strokeColor}
+          roughness={data.style.roughness}
+          fillStyle={data.style.fillStyle}
+          strokeStyle={data.style.strokeStyle}
+          strokeWidth={data.style.strokeWidth}
+          seed={data.roughSeed}
+          className='w-full h-full'
         >
-          <div
-            className={`absolute w-3 h-3 bg-transparent border border-secondary rounded-full ${posClass} z-20`}
-            style={{ transform: `translate(${pos.includes('right') ? '50%' : '-50%'}, ${pos.includes('bottom') ? '50%' : '-50%'})` }}
-          />
-        </NodeResizeControl>
-      ))}
+          {content}
+        </ShapeChrome>
+      </div>
+
+      {
+        selected &&
+        resizeHandles.map(
+          ({ pos, class: posClass }) => (
+            <NodeResizeControl
+              key={pos}
+              position={pos as ControlPosition}
+              onResizeStart={handleResizeStart}
+              onResizeEnd={handleResizeEnd}
+              minHeight={resizeMinHeight}
+              minWidth={resizeMinWidth}
+              keepAspectRatio={isVisualNode}
+            >
+              <div
+                className={`absolute w-3 h-3 bg-transparent border border-secondary rounded-full ${posClass} z-20`}
+                style={{ transform: `translate(${pos.includes('right') ? '50%' : '-50%'}, ${pos.includes('bottom') ? '50%' : '-50%'})` }}
+              />
+            </NodeResizeControl>
+          )
+        )
+      }
     </div>
   )
 }

@@ -127,10 +127,10 @@ export const SidebarLabel = () => {
 
   // UI pieces
   const wrapClass =
-    "flex flex-row items-center gap-2 px-2 py-1 text-sm font-medium rounded-md backdrop-blur-md supports-[backdrop-filter]:bg-background/50 bg-transparent"
+    "flex flex-row items-center gap-2 px-2 py-1 text-sm font-medium rounded-md backdrop-blur-md supports-[backdrop-filter]:bg-background/50 bg-transparent min-w-0 w-full"
 
   const crumbBtn =
-    "inline-flex items-center max-w-[16rem] truncate text-foreground/80 hover:text-foreground underline-offset-4 hover:underline"
+    "inline-flex items-center min-w-0 truncate text-foreground/80 hover:text-foreground underline-offset-4 hover:underline"
 
   const sep = <span className="opacity-50">›</span>
 
@@ -159,7 +159,7 @@ export const SidebarLabel = () => {
         {active.id && (
           <>
             {sep}
-            <span className="truncate max-w-[24rem]" title={label}>{label}</span>
+            <span className="truncate" title={label}>{label}</span>
           </>
         )}
       </div>
@@ -174,6 +174,7 @@ export const SidebarLabel = () => {
           key={`board:${active.id}`}
           initialLabel={label}
           onSave={handleSaveEdit}
+          className='flex-1 min-w-0'
         />
       </div>
     )
@@ -192,7 +193,7 @@ export const SidebarLabel = () => {
               className={crumbBtn}
               title={selectedBoard?.label ?? UNTITLED_LABEL}
             >
-              <span className="truncate">{selectedBoard?.label ?? UNTITLED_LABEL}</span>
+              <span className="truncate" title={selectedBoard?.label ?? UNTITLED_LABEL}>{selectedBoard?.label ?? UNTITLED_LABEL}</span>
             </button>
             {sep}
           </>
@@ -205,9 +206,12 @@ export const SidebarLabel = () => {
                 key={`${active.view}:${active.id ?? "none"}`}
                 initialLabel={label}
                 onSave={handleSaveEdit}
+                className='flex-1 min-w-0'
               />
             ) : (
-              <span className={`${crumbBtn} mr-2`}>{label}</span>
+              <span className={`${crumbBtn} mr-2`} title={label}>
+                {label}
+              </span>
             )
           }
         </div>

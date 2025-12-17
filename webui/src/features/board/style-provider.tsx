@@ -36,9 +36,16 @@ export function StyleDefaultsProvider({ children }: { children: ReactNode }): JS
   }, [setDefaultLinkStyle])
 
   const applyDefaultNodeStyle = useCallback((type?: NodeType): Style => {
-    const base = createDefaultStyle({ type: type ?? defaultStyle.type })
+    const targetType = type ?? defaultStyle.type
+    const base = createDefaultStyle({ type: targetType })
     const { ...overlay } = defaultStyle
-    return { ...base, ...overlay, type: type ?? defaultStyle.type }
+
+    if (targetType === 'sheet') {
+      overlay.backgroundColor = base.backgroundColor
+      overlay.strokeColor = base.strokeColor
+    }
+
+    return { ...base, ...overlay, type: targetType }
   }, [defaultStyle])
 
   const applyDefaultLinkStyle = useCallback((): LinkStyle => {

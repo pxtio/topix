@@ -4,6 +4,7 @@ import asyncio
 import functools
 import inspect
 import json
+import traceback
 
 from typing import Any, Awaitable, Callable, Type
 
@@ -190,20 +191,49 @@ class ToolHandler:
 
             # Run the agent
             agent_input = await agent._input_formatter(context, input)
-            if streamed:
-                response = Runner.run_streamed(
-                    starting_agent=agent,
-                    input=agent_input,
-                    context=context,
-                    max_turns=max_turns,
+            try:
+                if streamed:
+                    response = Runner.run_streamed(
+                        starting_agent=agent,
+                        input=agent_input,
+                        context=context,
+                        max_turns=max_turns,
+                    )
+                    await cls.process_llm_streaming(context, response, tool_id, tool_name)
+                else:
+                    response = await Runner.run(agent, agent_input, context=context)
+            except Exception as e:
+                tb = traceback.format_exc()
+                # signal error in running agent
+                context._message_queue.put_nowait(
+                    AgentStreamMessage(
+                        tool_id=tool_id,
+                        tool_name=tool_name,
+                        content=Content(
+                            type=ContentType.STATUS,
+                            text=f"Error during agent run: {e}\n{tb}",
+                        ),
+                        is_stop='error',
+                    )
                 )
-                await cls.process_llm_streaming(context, response, tool_id, tool_name)
-            else:
-                response = await Runner.run(agent, agent_input, context=context)
+                raise ValueError(f"An error occurred while running the agent: {e}")
 
             try:
                 final_output = await agent._output_extractor(context, response)
             except Exception as e:
+                tb = traceback.format_exc()
+                # signal error in output extraction
+                context._message_queue.put_nowait(
+                    AgentStreamMessage(
+                        tool_id=tool_id,
+                        tool_name=tool_name,
+                        content=Content(
+                            type=ContentType.STATUS,
+                            text=f"Error in output extraction: {e}\n{tb}",
+                        ),
+                        is_stop='error',
+                    )
+                )
                 raise ValueError(
                     f"An error occurred in `agent._output_extractor`: {e}. \n"
                     "To define a custom _output_extractor, "

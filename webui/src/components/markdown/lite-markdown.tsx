@@ -11,11 +11,12 @@ type Token =
   | { type: 'strike'; content: string }
   | { type: 'code'; content: string }
   | { type: 'code-block'; content: string; language?: string }
+  | { type: 'link'; content: string; href: string }
   | { type: 'math-inline'; content: string }
   | { type: 'math-block'; content: string }
 
 const INLINE_PATTERN =
-  /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|_[^_]+_)/g
+  /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|_[^_]+_|\[[^\]]+\]\([^)]+\))/g
 
 function tokenizeInline(segment: string): Token[] {
   if (!segment) return []
@@ -40,6 +41,11 @@ function tokenizeInline(segment: string): Token[] {
       tokens.push({ type: 'strike', content: match.slice(2, -2) })
     } else if (match.startsWith('_') && match.endsWith('_')) {
       tokens.push({ type: 'underline', content: match.slice(1, -1) })
+    } else if (match.startsWith('[') && match.includes('](') && match.endsWith(')')) {
+      const splitIndex = match.indexOf('](')
+      const text = match.slice(1, splitIndex)
+      const href = match.slice(splitIndex + 2, -1)
+      tokens.push({ type: 'link', content: text, href })
     } else if (match.startsWith('`') && match.endsWith('`')) {
       tokens.push({ type: 'code', content: match.slice(1, -1) })
     } else {
@@ -156,6 +162,20 @@ export function LiteMarkdown({ text, className }: LiteMarkdownProps) {
                 {token.content}
               </code>
             </pre>
+          )
+        }
+
+        if (token.type === 'link') {
+          return (
+            <a
+              key={index}
+              href={token.href}
+              target='_blank'
+              rel='noreferrer'
+              className='text-secondary underline hover:text-secondary/80'
+            >
+              {token.content}
+            </a>
           )
         }
 

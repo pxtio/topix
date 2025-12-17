@@ -4,13 +4,13 @@ from pydantic import BaseModel
 from qdrant_client.models import Record, ScoredPoint
 
 from topix.datatypes.chat.chat import Message
+from topix.datatypes.file.chunk import Chunk
+from topix.datatypes.file.document import Document
 from topix.datatypes.newsfeed.newsfeed import Newsfeed
 from topix.datatypes.newsfeed.subscription import Subscription
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.datatypes.resource import Resource
-from topix.datatypes.file.document import Document
-from topix.datatypes.file.chunk import Chunk
 
 
 def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str]:
@@ -34,13 +34,13 @@ def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str
 class RetrieveOutput(BaseModel):
     """Output for all methods involving retrieval."""
 
-    id: str | int
+    id: str
     resource: Resource | None = None
     vector: list[list[float]] | None = None
     score: float | None = None
 
 
-def convert_point(
+def convert_point(  # noqa: C901
     point: ScoredPoint | Record,
 ) -> RetrieveOutput:
     """Convert a Qdrant point to a resource."""
@@ -77,3 +77,9 @@ def convert_point(
         score=score,
         vector=point.vector
     )
+
+
+# TODO: implement a helper that converts a filter dict -> Qdrant Filter object
+def build_qdrant_filter(filter_dict: dict):
+    """Build a Qdrant filter from a dict."""
+    pass

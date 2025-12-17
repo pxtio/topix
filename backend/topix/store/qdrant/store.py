@@ -23,7 +23,6 @@ from qdrant_client.models import (
 )
 
 from topix.config.config import Config, QdrantConfig
-# from topix.datatypes.property import TextProperty
 from topix.datatypes.resource import Resource
 from topix.nlp.embed import DIMENSIONS, OpenAIEmbedder
 from topix.store.qdrant.utils import (
@@ -192,35 +191,12 @@ class ContentStore:
             if isinstance(entry, dict):
                 embeddable = {}
                 if entry.get("content") and entry["content"].get("searchable"):
-                    # searchable_texts.append(entry["content"]["markdown"])
-                    # indices.append(i)
                     embeddable["content"] = entry["content"]["markdown"]
                 if entry.get("label") and entry["label"].get("searchable"):
-                    # searchable_texts.append(entry["label"]["markdown"])
-                    # indices.append(i)
                     embeddable["label"] = entry["label"]["markdown"]
 
-                # for prop in entry.get("properties", {}).values():
-                #     if isinstance(prop, dict):
-                #         if prop.get("searchable") and prop.get("text"):
-                #             searchable_texts.append(prop["text"])
-                #             indices.append(i)
             else:
                 embeddable = entry.to_embeddable()
-                # Get content and label
-                # if entry.content and entry.content.searchable:
-                #     searchable_texts.append(entry.content.markdown)
-                #     indices.append(i)
-                # if entry.label and entry.label.searchable:
-                #     searchable_texts.append(entry.label.markdown)
-                #     indices.append(i)
-
-                # # Get all searchable text properties
-                # for prop in entry.properties.__dict__.values():
-                #     if isinstance(prop, TextProperty):
-                #         if prop.searchable and prop.text:
-                #             searchable_texts.append(prop.text)
-                #             indices.append(i)
             searchable_texts.append(str(embeddable))
 
         embeds = await self.embedder.embed(searchable_texts)
@@ -230,7 +206,6 @@ class ContentStore:
             if embeddings[i] is None:
                 embeddings[i] = []
             embeddings[i].append(embeds[idx])
-            # embeddings[i] = embeds[idx]
 
         # Fill in None embeddings with zero vectors
         for i, emb in enumerate(embeddings):

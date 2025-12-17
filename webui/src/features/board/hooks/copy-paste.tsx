@@ -172,7 +172,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
                 ...finalLinkData,
                 properties: {
                   ...finalLinkData.properties,
-                  edgeControlPoint: { type: 'position' },
+                  edgeControlPoint: { type: 'position' as const },
                 },
               }
             : undefined

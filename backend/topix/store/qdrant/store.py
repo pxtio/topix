@@ -4,6 +4,7 @@ import logging
 
 from datetime import datetime
 
+from fastembed import SparseTextEmbedding, SparseEmbedding
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import (
     Distance,
@@ -20,6 +21,7 @@ from qdrant_client.models import (
     SetPayload,
     SetPayloadOperation,
     VectorParams,
+    QueryPoints,
 )
 
 from topix.config.config import Config, QdrantConfig
@@ -63,10 +65,12 @@ class ContentStore:
         qdrant_client: AsyncQdrantClient,
         embedder: OpenAIEmbedder,
         collection: str = DEFAULT_COLLECTION,
+        sparse_model: str = "Qdrant/bm25",
     ):
         """Init method."""
         self.client = qdrant_client
         self.embedder = embedder
+        self.sparse_encoder = SparseTextEmbedding(model=sparse_model)
         self.collection = collection
 
     @classmethod
@@ -185,7 +189,7 @@ class ContentStore:
 
     async def _embed(  # noqa: C901
         self, entries: list[Resource | dict]
-    ) -> list[list[list[float]] | None]:
+    ) -> tuple[list[list[list[float]] | None], list[list[SparseEmbedding] | None]]:
         searchable_texts = []
         indices = []
         for i, entry in enumerate(entries):
@@ -237,7 +241,13 @@ class ContentStore:
             if emb is None:
                 embeddings[i] = [[0.0] * DIMENSIONS]
 
-        return embeddings
+        # BM25 sparse vectors (NEW)
+        sparse_embeds = list(self.sparse_encoder.embed(searchable_texts))
+        sparse_vectors = [None] * len(entries)
+        for idx, i in enumerate(indices):
+            sparse_vectors[i] = sparse_embeds[idx]  # SparseVector object
+
+        return embeddings, sparse_vectors
 
     async def add(
         self,
@@ -246,19 +256,23 @@ class ContentStore:
         batch_size: int = 1000,
     ):
         """Create a new note in the Qdrant store."""
-        embeddings = await self._embed(resources)
+        embeddings, sparse_vectors = await self._embed(resources)
 
         for i in range(0, len(resources), batch_size):
             batch_entries = resources[i:i + batch_size]
             batch_embeddings = embeddings[i:i + batch_size]
+            batch_sparse_vectors = sparse_vectors[i:i + batch_size]
 
             points = [
                 PointStruct(
                     id=entry.id,
-                    vector=embedding,
+                    vector={
+                        "dense": embedding,
+                        "bm25": sparse_vector,
+                    },
                     payload=entry.model_dump(exclude_none=True),
                 )
-                for entry, embedding in zip(batch_entries, batch_embeddings)
+                for entry, embedding, sparse_vector in zip(batch_entries, batch_embeddings, batch_sparse_vectors)
             ]
             if points:
                 await self.client.upsert(
@@ -286,14 +300,15 @@ class ContentStore:
         self,
         ids: list[str | int],
         embeds: list[list[list[float]] | None],
+        sparse_vectors: list[list[SparseEmbedding] | None],
     ):
         points = [
             PointVectors(
                 id=id_,
-                vector=emb,
+                vector={"dense": emb, "bm25": sparse_vector},
             )
-            for id_, emb in zip(ids, embeds)
-            if emb
+            for id_, emb, sparse_vector in zip(ids, embeds, sparse_vectors)
+            if emb and sparse_vector
         ]
         if points:
             await self.client.update_vectors(
@@ -368,13 +383,28 @@ class ContentStore:
     ) -> list[RetrieveOutput]:
         """Semantic Search for text query."""
         query_vector = (await self.embedder.embed([query]))[0]
+        sparse_vector = list(self.sparse_encoder.embed([query]))[0]
         if isinstance(include, dict):
             include = payload_dict_to_field_list(include)
             if "type" not in include:
                 include.append("type")
         results = await self.client.query_points(
             collection_name=self.collection,
-            query=query_vector,
+            prefetch=[
+                # Vector search (what you have now)
+                QueryPoints(
+                    query=query_vector,
+                    query_filter=filter,
+                    limit=limit * 2,  # Get more for reranking
+                ),
+                # BM25 sparse search (NEW)
+                QueryPoints(
+                    query=sparse_vector,  # BM25 representation of text
+                    using="bm25",
+                    query_filter=filter,
+                    limit=limit * 2,
+                )
+            ],
             query_filter=filter,
             limit=limit,
             with_payload=include,

@@ -36,13 +36,20 @@ class RedisStore:
         """Close the Redis connection."""
         await self.redis.aclose()
 
-    async def check_rate_limit(self, user_id: str, max_requests: int, window_seconds: int) -> bool:
+    async def check_rate_limit(
+        self,
+        user_id: str,
+        max_requests: int,
+        window_seconds: int,
+        scope: str | None = None,
+    ) -> bool:
         """Check if a user is within the rate limit using a sliding window algorithm.
 
         Args:
             user_id: The user ID to check the rate limit for.
             max_requests: Maximum number of requests allowed in the time window.
             window_seconds: Time window in seconds.
+            scope: Optional scope to differentiate rate limits (e.g., per endpoint).
 
         Returns:
             True if the user is within the rate limit, False otherwise.
@@ -52,7 +59,10 @@ class RedisStore:
         window_start = current_time - window_seconds
 
         # Redis key for this user's rate limit
-        key = f"rate_limit:{user_id}"
+        if scope:
+            key = f"rate_limit:{scope}:{user_id}"
+        else:
+            key = f"rate_limit:{user_id}"
 
         # Use Redis pipeline for atomic operations
         pipe = self.redis.pipeline()

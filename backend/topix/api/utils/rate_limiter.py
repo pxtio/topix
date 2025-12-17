@@ -30,7 +30,14 @@ async def rate_limiter(
 
     """
     redis: RedisStore = request.app.redis_store
-    is_allowed = await redis.check_rate_limit(user_id=user_id, max_requests=RATE_LIMIT_REQUESTS, window_seconds=RATE_LIMIT_WINDOW)
+    endpoint_scope = getattr(request.scope.get("route"), "path", request.url.path)
+
+    is_allowed = await redis.check_rate_limit(
+        user_id=user_id,
+        max_requests=RATE_LIMIT_REQUESTS,
+        window_seconds=RATE_LIMIT_WINDOW,
+        scope=endpoint_scope,
+    )
     if not is_allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,

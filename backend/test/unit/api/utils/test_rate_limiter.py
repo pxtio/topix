@@ -20,12 +20,19 @@ class _FakeRedisStore:
         self.is_allowed = is_allowed
         self.calls = []
 
-    async def check_rate_limit(self, user_id: str, max_requests: int, window_seconds: int) -> bool:
+    async def check_rate_limit(
+        self,
+        user_id: str,
+        max_requests: int,
+        window_seconds: int,
+        scope: str | None = None,
+    ) -> bool:
         self.calls.append(
             {
                 "user_id": user_id,
                 "max_requests": max_requests,
                 "window_seconds": window_seconds,
+                "scope": scope,
             }
         )
         return self.is_allowed
@@ -35,7 +42,11 @@ class _FakeRedisStore:
 async def test_rate_limiter_allows_requests_within_limits():
     """Should return without raising when the Redis store allows the request."""
     fake_store = _FakeRedisStore(is_allowed=True)
-    request = SimpleNamespace(app=SimpleNamespace(redis_store=fake_store))
+    request = SimpleNamespace(
+        app=SimpleNamespace(redis_store=fake_store),
+        scope={"route": SimpleNamespace(path="/foo")},
+        url=SimpleNamespace(path="/fallback"),
+    )
 
     result = await rate_limiter(request=request, user_id="user-123")
 
@@ -45,6 +56,7 @@ async def test_rate_limiter_allows_requests_within_limits():
             "user_id": "user-123",
             "max_requests": RATE_LIMIT_REQUESTS,
             "window_seconds": RATE_LIMIT_WINDOW,
+            "scope": "/foo",
         }
     ]
 
@@ -53,7 +65,11 @@ async def test_rate_limiter_allows_requests_within_limits():
 async def test_rate_limiter_raises_when_limit_exceeded():
     """Should raise HTTPException 429 when Redis indicates the limit is exceeded."""
     fake_store = _FakeRedisStore(is_allowed=False)
-    request = SimpleNamespace(app=SimpleNamespace(redis_store=fake_store))
+    request = SimpleNamespace(
+        app=SimpleNamespace(redis_store=fake_store),
+        scope={"route": SimpleNamespace(path="/foo")},
+        url=SimpleNamespace(path="/fallback"),
+    )
 
     with pytest.raises(HTTPException) as exc:
         await rate_limiter(request=request, user_id="user-123")

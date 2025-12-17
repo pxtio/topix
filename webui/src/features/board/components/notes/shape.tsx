@@ -1,6 +1,6 @@
 import TextareaAutosize from 'react-textarea-autosize'
-import { memo } from 'react'
-import type { RefObject } from 'react'
+import { memo, useCallback } from 'react'
+import type { RefObject, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { NodeType } from '../../types/style'
 import { IconShape } from './icon-shape'
 import { ImageShape } from './image-shape'
@@ -55,6 +55,18 @@ export const Shape = memo(function Shape({
 
   const notEditingSpanClass = value.trim() ? '' : 'text-muted-foreground/50'
 
+  const handleTextareaKeyDown = useCallback((event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== 'Tab') return
+    event.preventDefault()
+    const textarea = event.currentTarget
+    const insert = '  '
+    const start = textarea.selectionStart ?? 0
+    const end = textarea.selectionEnd ?? start
+    textarea.setRangeText(insert, start, end, 'end')
+    const nativeEvent = new Event('input', { bubbles: true })
+    textarea.dispatchEvent(nativeEvent)
+  }, [])
+
   if (isImageNode) {
     const hasLabel = value.trim().length > 0
 
@@ -76,6 +88,7 @@ export const Shape = memo(function Shape({
               className='nodrag nopan nowheel w-full border border-border rounded-md bg-background/90 text-sm text-center shadow-sm px-3 py-2'
               value={value}
               onChange={onChange}
+              onKeyDown={handleTextareaKeyDown}
               placeholder={placeHolder}
               ref={textareaRef}
               minRows={1}
@@ -105,6 +118,7 @@ export const Shape = memo(function Shape({
             className={`${base} nodrag nopan nowheel !-mb-2`}
             value={value}
             onChange={onChange}
+            onKeyDown={handleTextareaKeyDown}
             placeholder={placeHolder}
             ref={textareaRef}
             readOnly={!labelEditing}

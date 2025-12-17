@@ -151,7 +151,7 @@ export function LiteMarkdown({ text, className }: LiteMarkdownProps) {
 
         if (token.type === 'code-block') {
           return (
-            <pre key={index} className='my-2 rounded bg-muted px-3 py-2 overflow-x-auto'>
+            <pre key={index} className='my-2 rounded bg-transparent px-3 py-2 overflow-x-auto'>
               <code className='font-mono text-sm whitespace-pre-wrap'>
                 {token.content}
               </code>

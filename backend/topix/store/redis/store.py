@@ -1,7 +1,7 @@
 """Redis store manager for handling data in Redis."""
 import time
 
-from redis import Redis
+from redis.asyncio import Redis
 
 from topix.config.config import Config, RedisConfig
 

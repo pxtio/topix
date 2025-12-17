@@ -60,7 +60,7 @@ export const NodeCard = memo(({
       clsx(
         'relative bg-transparent overflow-visible flex items-center justify-center',
         isSheet
-          ? `w-[300px] ${fontFamilyToTwClass(fontFamily)} p-2 pt-8`
+          ? `w-[360px] ${fontFamilyToTwClass(fontFamily)} p-2 pt-8`
           : 'w-full h-full p-2'
       ),
     [isSheet, fontFamily]

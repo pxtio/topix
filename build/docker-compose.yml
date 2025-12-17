@@ -8,6 +8,10 @@ x-postgres: &postgres-base
     POSTGRES_USER: topix
     POSTGRES_HOST_AUTH_METHOD: trust
 
+x-redis: &redis-base
+  image: redis:7-alpine
+  command: redis-server --appendonly yes
+
 services:
   # -------- LOCAL PROFILE (DBs) --------
   qdrant-local:
@@ -30,6 +34,20 @@ services:
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "topix"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  redis-local:
+    <<: *redis-base
+    container_name: redis-local
+    profiles: ["local"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_local:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 2s
       retries: 10
@@ -59,6 +77,20 @@ services:
       timeout: 2s
       retries: 10
 
+  redis-dev:
+    <<: *redis-base
+    container_name: redis-dev
+    profiles: ["dev"]
+    ports:
+      - "6380:6379"   # host:container
+    volumes:
+      - redis_data_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
   # ===========================
   #       APP SERVICES
   # ===========================
@@ -80,10 +112,13 @@ services:
       QDRANT_PORT: ${QDRANT_PORT:-6333}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres-local}
       POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis-local}
+      REDIS_PORT: ${REDIS_PORT:-6379}
     command: ["python","-m","topix.api.app","--stage","local"]
     depends_on:
       - postgres-local
       - qdrant-local
+      - redis-local
     ports:
       - "${API_PORT:-8081}:${API_PORT:-8081}"
 
@@ -119,10 +154,13 @@ services:
       QDRANT_PORT: ${QDRANT_PORT:-6333}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres-dev}
       POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis-dev}
+      REDIS_PORT: ${REDIS_PORT:-6379}
     command: ["python","-m","topix.api.app","--stage","dev"]
     depends_on:
       - postgres-dev
       - qdrant-dev
+      - redis-dev
     ports:
       - "${API_PORT:-8081}:${API_PORT:-8081}"
 
@@ -143,5 +181,7 @@ services:
 volumes:
   qdrant_data_local:
   pg_data_local:
+  redis_data_local:
   qdrant_data_dev:
   pg_data_dev:
+  redis_data_dev:

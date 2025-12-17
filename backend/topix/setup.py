@@ -40,6 +40,13 @@ def load_env_file(stage: StageEnum):
             )
             os.environ["QDRANT_HOST"] = f"qdrant-{str(stage)}"
             os.environ["QDRANT_PORT"] = "6333"
+        if os.environ.get("REDIS_HOST") in ("", "localhost"):
+            logger.info(
+                "Detected REDIS_HOST is empty or localhost. "
+                f"Overriding REDIS_HOST and REDIS_PORT for docker environment to `redis-{str(stage)}` and `6379` respectively."
+            )
+            os.environ["REDIS_HOST"] = f"redis-{str(stage)}"
+            os.environ["REDIS_PORT"] = "6379"
 
 
 async def setup(stage: StageEnum) -> Config:

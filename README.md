@@ -46,6 +46,8 @@ POSTGRES_HOST=
 POSTGRES_PORT=5432 # please set the correct port you have set for Postgres
 QDRANT_HOST=
 QDRANT_PORT=6333 # please set the correct port you have set for Qdrant
+REDIS_HOST=
+REDIS_PORT=
 
 JWT_SECRET_KEY= # required for JWT authentication; if not set, a random key will be generated at startup
 

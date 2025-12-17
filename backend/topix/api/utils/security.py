@@ -22,6 +22,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 # refresh token lifetime (example: 7 days)
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/signin")
 
 

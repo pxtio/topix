@@ -189,6 +189,14 @@ type EdgeLabelEditingData = {
 
 type EdgeRenderData = Link & EdgeLabelEditingData & EdgeControlPointHandlers
 
+function isFinitePoint(point: Partial<Point> | null | undefined): point is Point {
+  return Boolean(
+    point &&
+    Number.isFinite(point.x) &&
+    Number.isFinite(point.y)
+  )
+}
+
 export const EdgeView = memo(function EdgeView({
   id,
   source,
@@ -335,7 +343,9 @@ export const EdgeView = memo(function EdgeView({
   const pathStyle = linkStyle?.pathStyle ?? 'bezier'
   const isBezierPath = pathStyle === 'bezier'
 
-  const storedBendPoint = edgeExtras.properties?.edgeControlPoint?.position
+  const storedBendPoint = isFinitePoint(edgeExtras.properties?.edgeControlPoint?.position)
+    ? edgeExtras.properties?.edgeControlPoint?.position
+    : null
   const sourceCenter = useMemo(() => {
     if (sourceNode) return nodeCenter(sourceNode)
     if (!geom) return null

@@ -20,6 +20,7 @@ from topix.api.datatypes.requests import (
     SendMessageRequest,
 )
 from topix.api.utils.decorators import with_standard_response
+from topix.api.utils.rate_limiter import rate_limiter
 from topix.api.utils.resilient_streaming import with_streaming_resilient_ndjson
 from topix.api.utils.security import get_current_user_uid, verify_chat_user
 from topix.datatypes.chat.chat import Chat
@@ -143,7 +144,8 @@ async def send_message(
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
     body: Annotated[SendMessageRequest, Body(description="Message content")],
-    _: Annotated[None, Depends(verify_chat_user)]
+    _: Annotated[None, Depends(verify_chat_user)],
+    __: Annotated[None, Depends(rate_limiter)],
 ):
     """Send a message to a chat."""
     chat_store: ChatStore = request.app.chat_store

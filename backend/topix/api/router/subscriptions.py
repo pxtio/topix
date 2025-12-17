@@ -9,6 +9,7 @@ from fastapi.params import Body, Path, Query
 
 from topix.api.datatypes.requests import AddSubscriptionRequest, NewsfeedUpdateRequest, SubscriptionUpdateRequest
 from topix.api.utils.decorators import with_standard_response
+from topix.api.utils.rate_limiter import rate_limiter
 from topix.api.utils.security import get_current_user_uid
 from topix.store.subscription import SubscriptionStore
 
@@ -29,6 +30,7 @@ async def create_subscription(
     request: Request,
     user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[AddSubscriptionRequest, Body(description="Subscription creation data")],
+    _: Annotated[None, Depends(rate_limiter)],
 ):
     """Create a new subscription for the user."""
     store: SubscriptionStore = request.app.subscription_store
@@ -107,6 +109,7 @@ async def create_newsfeed(
     request: Request,
     user_id: Annotated[str, Depends(get_current_user_uid)],
     subscription_id: Annotated[str, Path(description="Subscription Unique ID")],
+    _: Annotated[None, Depends(rate_limiter)],
     uid: Annotated[str | None, Query(description="Optional Newsfeed Unique ID")] = None,
 ):
     """Create a new newsfeed for a subscription."""

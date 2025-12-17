@@ -17,6 +17,7 @@ from topix.datatypes.stage import StageEnum
 from topix.setup import setup
 from topix.store.chat import ChatStore
 from topix.store.graph import GraphStore
+from topix.store.redis.store import RedisStore
 from topix.store.subscription import SubscriptionStore
 from topix.store.user import UserStore
 from topix.utils.logging import logging_config
@@ -30,6 +31,7 @@ def create_app(stage: StageEnum):
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         """Application lifespan context manager."""
+        # Initialize stores
         app.graph_store = GraphStore()
         await app.graph_store.open()
         app.user_store = UserStore()
@@ -38,11 +40,19 @@ def create_app(stage: StageEnum):
         await app.chat_store.open()
         app.subscription_store = SubscriptionStore()
         await app.subscription_store.open()
+
+        # Initialize Redis
+        app.redis_store = RedisStore.from_config()
+
         yield
+
+        # Close stores
         await app.graph_store.close()
         await app.user_store.close()
         await app.chat_store.close()
         await app.subscription_store.close()
+        # Close Redis
+        await app.redis_store.close()
 
     app = FastAPI(lifespan=lifespan)
 

@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/shallow'
 
 import NodeView from './node-view'
-import { EdgeView } from './edge-view'
+import { EdgeView } from './edge/edge-view'
 import { CustomConnectionLine } from './connection'
 import { GraphSidebar } from '../style-panel/panel'
 import { ActionPanel } from './action-panel'

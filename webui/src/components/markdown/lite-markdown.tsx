@@ -1,4 +1,4 @@
-import { Fragment, useMemo } from 'react'
+import { Fragment, memo, useMemo } from 'react'
 import clsx from 'clsx'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
@@ -125,7 +125,7 @@ function renderMath(content: string, displayMode: boolean): { __html: string } {
   }
 }
 
-export function LiteMarkdown({ text, className }: LiteMarkdownProps) {
+export const LiteMarkdown = memo(function LiteMarkdown({ text, className }: LiteMarkdownProps) {
   const tokens = useMemo(() => tokenize(text), [text])
 
   return (
@@ -219,4 +219,4 @@ export function LiteMarkdown({ text, className }: LiteMarkdownProps) {
       })}
     </span>
   )
-}
+})

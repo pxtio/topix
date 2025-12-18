@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
@@ -24,6 +24,8 @@ type SheetNodeViewProps = {
   onOpenSticky: () => void
 }
 
+const COLOR_OPTIONS = [{ name: 'white', hex: '#ffffff' }, ...TAILWIND_200]
+
 export const SheetNodeView = memo(function SheetNodeView({
   note,
   isDark,
@@ -37,26 +39,49 @@ export const SheetNodeView = memo(function SheetNodeView({
     state => state.isPanning || state.isZooming
   )
   const [hidden, setHidden] = useState(false)
+  const [contentReady, setContentReady] = useState(false)
   const resumeTimeoutRef = useRef<number | null>(null)
+  const deferredRenderRef = useRef<number | null>(null)
   const [measuredHeight, setMeasuredHeight] = useState<number>(MIN_HEIGHT)
   const contentRef = useRef<HTMLDivElement | null>(null)
   const observerRef = useRef<ResizeObserver | null>(null)
+  const heightCacheRef = useRef(new Map<string, number>())
 
   const targetHeight = useMemo(
     () => Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, measuredHeight)),
     [measuredHeight]
   )
 
+  const paletteOptions = useMemo(
+    () =>
+      COLOR_OPTIONS.map(option => ({
+        ...option,
+        resolved: isDark ? darkModeDisplayHex(option.hex) || option.hex : option.hex
+      })),
+    [isDark]
+  )
+
+  useEffect(() => {
+    const cachedHeight = heightCacheRef.current.get(note.id)
+    setMeasuredHeight(cachedHeight ?? MIN_HEIGHT)
+  }, [note.id])
+
+  const updateMeasuredHeight = useCallback((incoming: number) => {
+    setMeasuredHeight(prev => {
+      const next = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, incoming))
+      if (prev === next) return prev
+      heightCacheRef.current.set(note.id, next)
+      return next
+    })
+  }, [note.id])
+
   useEffect(() => {
     const el = contentRef.current
-    if (!el) return
+    if (!el || hidden) return
     const observer = new ResizeObserver(entries => {
       if (!entries.length) return
       const height = entries[0].contentRect.height
-      setMeasuredHeight(prev => {
-        const next = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, height))
-        return prev === next ? prev : next
-      })
+      updateMeasuredHeight(height)
     })
     observer.observe(el)
     observerRef.current = observer
@@ -64,15 +89,17 @@ export const SheetNodeView = memo(function SheetNodeView({
       observer.disconnect()
       observerRef.current = null
     }
-  }, [note.content?.markdown])
+  }, [note.content?.markdown, hidden, updateMeasuredHeight])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
     if (suspendContent) {
       if (resumeTimeoutRef.current) {
         clearTimeout(resumeTimeoutRef.current)
         resumeTimeoutRef.current = null
       }
       setHidden(true)
+      setContentReady(false)
       return
     }
     resumeTimeoutRef.current = window.setTimeout(() => {
@@ -87,6 +114,34 @@ export const SheetNodeView = memo(function SheetNodeView({
       }
     }
   }, [suspendContent])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (hidden) {
+      if (deferredRenderRef.current) {
+        window.clearTimeout(deferredRenderRef.current)
+        deferredRenderRef.current = null
+      }
+      setContentReady(false)
+      return
+    }
+
+    deferredRenderRef.current = window.setTimeout(() => {
+      setContentReady(true)
+      deferredRenderRef.current = null
+    }, 80)
+
+    return () => {
+      if (deferredRenderRef.current) {
+        window.clearTimeout(deferredRenderRef.current)
+        deferredRenderRef.current = null
+      }
+    }
+  }, [hidden])
+
+  const handlePaletteClick = useCallback((hex: string) => {
+    onPickPalette(hex)
+  }, [onPickPalette])
 
   return (
     <>
@@ -104,14 +159,14 @@ export const SheetNodeView = memo(function SheetNodeView({
           </PopoverTrigger>
           <PopoverContent align='end' className='w-auto p-2'>
             <div className='grid grid-cols-6 gap-2'>
-              {[{ name: 'white', hex: '#ffffff' }, ...TAILWIND_200].map(c => (
+              {paletteOptions.map(c => (
                 <button
                   key={c.name}
                   className='h-6 w-6 rounded-full border border-border hover:brightness-95'
-                  style={{ backgroundColor: isDark ? darkModeDisplayHex(c.hex) || c.hex : c.hex }}
+                  style={{ backgroundColor: c.resolved }}
                   title={`${c.name}-200`}
                   aria-label={`${c.name}-200`}
-                  onClick={() => onPickPalette(c.hex)}
+                  onClick={() => handlePaletteClick(c.hex)}
                 />
               ))}
             </div>
@@ -145,7 +200,7 @@ export const SheetNodeView = memo(function SheetNodeView({
         style={{ minHeight: MIN_HEIGHT, maxHeight: MAX_HEIGHT, height: targetHeight }}
         onClick={onOpenSticky}
       >
-        {hidden ? (
+        {hidden || !contentReady ? (
           <div className='w-full h-full' aria-hidden='true' />
         ) : (
           <div ref={contentRef}>

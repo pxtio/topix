@@ -144,7 +144,7 @@ export function useEdgeGeometry({
     let pathData: { path: string, labelX: number, labelY: number } | null = null
     let renderedStart: Point | null = null
     let renderedEnd: Point | null = null
-    let displayBendPoint: Point | null = null
+  let displayBendPoint: Point | null = null
     let isInvalid = false
 
     if (isBezierPath) {
@@ -160,17 +160,18 @@ export function useEdgeGeometry({
         const endExit = 1 - findExitParam(targetNode ?? null, (t: number) => pointGetter(1 - t))
         const trimmed = extractQuadraticSegment(sourceCenter, centerControl, targetCenter, startExit, endExit)
 
-        renderedStart = trimmed.p0
-        renderedEnd = trimmed.p2
+        const startPoint = startKind !== 'none'
+          ? shiftPointAlong(trimmed.p0, trimmed.p1, arrowOffset)
+          : trimmed.p0
 
-        if (startKind !== 'none') {
-          renderedStart = shiftPointAlong(trimmed.p0, trimmed.p1, arrowOffset)
-        }
-        if (endKind !== 'none') {
-          renderedEnd = shiftPointAlong(trimmed.p2, trimmed.p1, arrowOffset)
-        }
+        const endPoint = endKind !== 'none'
+          ? shiftPointAlong(trimmed.p2, trimmed.p1, arrowOffset)
+          : trimmed.p2
 
-        pathData = quadraticPath(renderedStart, trimmed.p1, renderedEnd)
+        renderedStart = startPoint
+        renderedEnd = endPoint
+
+        pathData = quadraticPath(startPoint, trimmed.p1, endPoint)
       }
     } else {
       renderedStart = { x: geom.sx, y: geom.sy }

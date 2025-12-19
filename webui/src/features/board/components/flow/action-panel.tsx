@@ -134,7 +134,7 @@ export const ActionPanel = memo(function ActionPanel({
 
       <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
 
-      {/* ——— GRAPH MODE CONTROLS ——— */}
+      {/* -- GRAPH MODE CONTROLS -- */}
       {viewMode === 'graph' && (
         <>
           {/* Pan / Select modes */}

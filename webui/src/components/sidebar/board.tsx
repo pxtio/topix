@@ -7,12 +7,12 @@ import { useNavigate, useRouterState } from "@tanstack/react-router"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "../ui/context-menu"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { DashboardCircleAddIcon, Delete02Icon, Edit01Icon, NoteIcon } from "@hugeicons/core-free-icons"
-import type { Chat } from "@/features/agent/types/chat"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible"
 import { Minus, Plus } from "lucide-react"
 import { ChatMenuItem, NewChatItem } from "./chat"
 import { ConfirmDeleteBoardAlert } from "./confirm-delete-board"
 import { useState } from "react"
+import { useListChats } from "@/features/agent/api/list-chats"
 
 /**
  * Dashboard menu item component
@@ -66,12 +66,13 @@ export function NewBoardItem() {
 
 
 /** Existing board item */
-export function BoardItem({ boardId, label, chats }: { boardId: string, label?: string, chats?: Chat[] }) {
+export function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
   const { deleteBoard } = useDeleteBoard()
   const navigate = useNavigate()
   const pathname = useRouterState({ select: s => s.location.pathname })
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const { data: chats = [] } = useListChats({ graphUid: boardId })
 
   const isActive =
     pathname === `/boards/${boardId}` ||

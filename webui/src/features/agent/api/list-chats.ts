@@ -24,12 +24,15 @@ interface ListChatsResponse {
  * Fetch the list of chats.
  */
 export async function listChats(
-  userId: string
+  offset: number = 0,
+  limit: number = 100,
+  graphUid: string | null = null
 ): Promise<Chat[]> {
+  console.log("Fetching chats with", { offset, limit, graphUid })
   const res = await apiFetch<ListChatsResponse>({
     path: `/chats`,
     method: "GET",
-    params: { user_id: userId },
+    params: { offset, limit, graph_uid: graphUid },
   })
   return res.data.chats.map((chat) => camelcaseKeys(chat, { deep: true })) as Chat[]
 }
@@ -43,14 +46,18 @@ export async function listChats(
  * @returns A query object containing the list of chats.
  */
 export const useListChats = ({
-  userId
+  offset = 0,
+  limit = 100,
+  graphUid = null
 }: {
-  userId: string
+  offset?: number,
+  limit?: number,
+  graphUid?: string | null
 }) => {
   return useQuery<Chat[]>({
-    queryKey: ["listChats", userId],
-    queryFn: () => listChats(userId),
-    enabled: !!userId,
+    queryKey: ["listChats", offset, limit, graphUid],
+    queryFn: () => listChats(offset, limit, graphUid),
+    enabled: offset >= 0 && limit > 0,
     staleTime: 1000 * 60 * 5 // 5 minutes
   })
 }

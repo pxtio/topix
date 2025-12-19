@@ -65,10 +65,16 @@ class ChatStore:
             hard_delete=hard_delete
         )
 
-    async def list_chats(self, user_uid: str) -> list[Chat]:
+    async def list_chats(
+        self,
+        user_uid: str,
+        graph_uid: str | None = None,
+        offset: int = 0,
+        limit: int = 100
+    ) -> list[Chat]:
         """List all chats for a user."""
         async with self._pg_pool.acquire() as conn:
-            return await list_chats_by_user_uid(conn, user_uid)
+            return await list_chats_by_user_uid(conn, user_uid, graph_uid, offset, limit)
 
     async def add_messages(self, chat_uid: str, messages: list[dict | Message]):
         """Add messages to the chat store."""

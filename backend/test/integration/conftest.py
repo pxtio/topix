@@ -5,11 +5,13 @@ import pytest_asyncio
 
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
+from topix.setup import load_env_file
 
 
 @pytest.fixture(scope="session")
 def config() -> Config:
     """Fixture to provide the application configuration."""
+    load_env_file(StageEnum.TEST)
     return Config.load(stage=StageEnum.TEST)
 
 

@@ -15,10 +15,11 @@ from topix.utils.common import running_in_docker
 
 logger = logging.getLogger(__name__)
 
+envpath = Path(__file__).parent.parent.parent / '.env'
+
 
 def load_env_file(stage: StageEnum):
     """Load environment variables from a .env file."""
-    envpath = Path(__file__).parent.parent.parent / '.env'
     logger.info(f"Loading env from: {envpath}")
     load_dotenv(dotenv_path=envpath, override=True, verbose=True)
 

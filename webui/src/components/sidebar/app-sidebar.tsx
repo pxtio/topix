@@ -32,12 +32,21 @@ import { SubscriptionsMenuItem } from './subscription'
 import { ModeToggle } from '@/components/mode-toggle'
 import { HomeMenuItem } from './home'
 
+
+/**
+ * Props for the AppSidebar component.
+ *
+ * @property onLogout - Callback function to handle user logout.
+ */
 type AppSidebarProps = {
   onLogout: () => void
 }
 
+
+/**
+ * Application Sidebar Component.
+ */
 export function AppSidebar({ onLogout }: AppSidebarProps) {
-  const userId = useAppStore(s => s.userId)
   const userEmail = useAppStore(s => s.userEmail)
 
   const initials = useMemo(() => {
@@ -46,29 +55,14 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     return name.slice(0, 2).toUpperCase()
   }, [userEmail])
 
-  const { data: chats = [] } = useListChats({ userId })
+  const { data: chats = [] } = useListChats({})
   const { data: boards = [] } = useListBoards()
 
-  const { chatHistoryItems, chatsByBoard } = useMemo(() => {
-    const map = new Map<string, typeof chats>()
-    const history: typeof chats = []
-    for (const chat of chats) {
-      const gid = chat.graphUid ?? null
-      if (gid == null) history.push(chat)
-      else {
-        const bucket = map.get(gid) ?? []
-        bucket.push(chat)
-        map.set(gid, bucket)
-      }
-    }
-    return { chatHistoryItems: history, chatsByBoard: map }
-  }, [chats])
-
   const chatItems = useMemo(
-    () => chatHistoryItems.map(chat => (
+    () => chats.map(chat => (
       <ChatMenuItem key={chat.uid} chatId={chat.uid} label={chat.label} />
     )),
-    [chatHistoryItems]
+    [chats]
   )
 
   const boardItems = useMemo(
@@ -77,10 +71,9 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         key={board.uid}
         boardId={board.uid}
         label={board.label}
-        chats={chatsByBoard.get(board.uid) ?? []}
       />
     )),
-    [boards, chatsByBoard]
+    [boards]
   )
 
   return (

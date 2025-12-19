@@ -1,5 +1,7 @@
 """Chat Store Module."""
 
+from typing import Literal
+
 from topix.datatypes.chat.chat import Chat, Message
 from topix.store.postgres.chat import (
     _dangerous_hard_delete_chat_by_uid,
@@ -68,11 +70,23 @@ class ChatStore:
     async def list_chats(
         self,
         user_uid: str,
-        graph_uid: str | None = None,
+        graph_uid: str | Literal["none"] | None = None,
         offset: int = 0,
         limit: int = 100
     ) -> list[Chat]:
-        """List all chats for a user."""
+        """List all chats for a user.
+
+        Args:
+            user_uid: str - User UID to filter chats.
+            graph_uid: str | Literal["none"] | None - Optional Graph UID to filter chats.
+                "none" filters for chats without a graph.
+            offset: int - Pagination offset.
+            limit: int - Pagination limit.
+
+        Returns:
+            List[Chat]: List of Chat objects.
+
+        """
         async with self._pg_pool.acquire() as conn:
             return await list_chats_by_user_uid(conn, user_uid, graph_uid, offset, limit)
 

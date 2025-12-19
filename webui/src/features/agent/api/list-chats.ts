@@ -26,7 +26,7 @@ interface ListChatsResponse {
 export async function listChats(
   offset: number = 0,
   limit: number = 100,
-  graphUid: string | null = null
+  graphUid: string | "none" | null = "none"
 ): Promise<Chat[]> {
   console.log("Fetching chats with", { offset, limit, graphUid })
   const res = await apiFetch<ListChatsResponse>({
@@ -48,11 +48,11 @@ export async function listChats(
 export const useListChats = ({
   offset = 0,
   limit = 100,
-  graphUid = null
+  graphUid = "none"
 }: {
   offset?: number,
   limit?: number,
-  graphUid?: string | null
+  graphUid?: string | "none" | null
 }) => {
   return useQuery<Chat[]>({
     queryKey: ["listChats", offset, limit, graphUid],

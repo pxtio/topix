@@ -129,18 +129,7 @@ async def list_chats_by_user_uid(
         List[Chat]: List of Chat objects.
 
     """
-    if graph_uid is not None:
-        query = (
-            "SELECT id, uid, label, user_uid, "
-            "graph_uid, created_at, updated_at, deleted_at "
-            "FROM chats WHERE user_uid = $1 "
-            "AND graph_uid = $2 "
-            "AND deleted_at IS NULL "
-            "ORDER BY COALESCE(updated_at, created_at) DESC "
-            "LIMIT $3 OFFSET $4"
-        )
-        rows = await conn.fetch(query, user_uid, graph_uid, limit, offset)
-    elif graph_uid == "none":
+    if graph_uid == "none":
         query = (
             "SELECT id, uid, label, user_uid, "
             "graph_uid, created_at, updated_at, deleted_at "
@@ -151,6 +140,17 @@ async def list_chats_by_user_uid(
             "LIMIT $2 OFFSET $3"
         )
         rows = await conn.fetch(query, user_uid, limit, offset)
+    elif graph_uid is not None:
+        query = (
+            "SELECT id, uid, label, user_uid, "
+            "graph_uid, created_at, updated_at, deleted_at "
+            "FROM chats WHERE user_uid = $1 "
+            "AND graph_uid = $2 "
+            "AND deleted_at IS NULL "
+            "ORDER BY COALESCE(updated_at, created_at) DESC "
+            "LIMIT $3 OFFSET $4"
+        )
+        rows = await conn.fetch(query, user_uid, graph_uid, limit, offset)
     else:
         query = (
             "SELECT id, uid, label, user_uid, "

@@ -15,11 +15,10 @@ from topix.utils.common import running_in_docker
 
 logger = logging.getLogger(__name__)
 
-envpath = Path(__file__).parent.parent.parent / '.env'
 
-
-def load_env_file(stage: StageEnum):
+def load_env_file(stage: StageEnum, env_filename: str = '.env') -> None:
     """Load environment variables from a .env file."""
+    envpath = Path(__file__).parent.parent.parent / env_filename
     logger.info(f"Loading env from: {envpath}")
     load_dotenv(dotenv_path=envpath, override=True, verbose=True)
 
@@ -50,10 +49,10 @@ def load_env_file(stage: StageEnum):
             os.environ["REDIS_PORT"] = "6379"
 
 
-async def setup(stage: StageEnum) -> Config:
+async def setup(stage: StageEnum, env_filename: str = '.env') -> Config:
     """Set up the application configuration and environment variables."""
     # load .env file
-    load_env_file(stage)
+    load_env_file(stage, env_filename=env_filename)
 
     config = Config.load(stage=stage)
     logger.info(f"Loaded configuration for stage: {stage}")

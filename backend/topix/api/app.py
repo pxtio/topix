@@ -80,7 +80,7 @@ def create_app(stage: StageEnum):
 
 async def main(args) -> tuple[FastAPI, int]:
     """Run the application entry point."""
-    await setup(stage=args.stage)
+    await setup(stage=args.stage, env_filename=args.env_file)
     app = create_app(stage=args.stage)
 
     config: Config = Config.instance()
@@ -100,6 +100,12 @@ if __name__ == "__main__":
         type=int,
         default=None,
         help="Port to run the application on."
+    )
+    args.add_argument(
+        "--env-file",
+        type=str,
+        default=".env",
+        help="Overridden name to the .env file to load. For example: .env.staging",
     )
     args = args.parse_args()
 

@@ -9,9 +9,9 @@ from topix.setup import load_env_file
 
 
 @pytest.fixture(scope="session")
-def config() -> Config:
+def config(env_file: str) -> Config:
     """Fixture to provide the application configuration."""
-    load_env_file(StageEnum.TEST)
+    load_env_file(StageEnum.TEST, env_filename=env_file)
     return Config.load(stage=StageEnum.TEST)
 
 

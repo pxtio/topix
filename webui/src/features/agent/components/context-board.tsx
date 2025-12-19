@@ -1,7 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { useUpdateChat } from "@/features/agent/api/update-chat"
-import { useAppStore } from "@/store"
 import { useParams } from "@tanstack/react-router"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -20,7 +19,6 @@ export interface ContextBoardProps {
  * Context board selector component in chat interface
  */
 export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardProps) => {
-  const { userId } = useAppStore()
   const { data: boards } = useListBoards()
   const { updateChat } = useUpdateChat()
   const params = useParams({ from: "/chats/$id", shouldThrow: false })
@@ -44,8 +42,8 @@ export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardPro
     }
 
     // Otherwise, auto-handle for chat route
-    if (chatId && userId) {
-      updateChat({ chatId, userId, chatData: { graphUid: finalId } })
+    if (chatId) {
+      updateChat({ chatId, chatData: { graphUid: finalId } })
     }
   }
 

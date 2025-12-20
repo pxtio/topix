@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, Message02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { AddNoteNodeOptions } from '../../hooks/add-node'
@@ -10,6 +10,9 @@ import { IconSearchDialog } from './utils/icon-search'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { ChevronDown, Cloud, Layers } from 'lucide-react'
 import type { NodeType } from '../../types/style'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Chat } from '@/features/agent/components/chat-view'
+import { useGraphStore } from '../../store/graph-store'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -47,8 +50,10 @@ export const ActionPanel = memo(function ActionPanel({
   setViewMode
 }: ActionPanelProps) {
   const [openImageSearch, setOpenImageSearch] = useState(false)
-
   const [openIconSearch, setOpenIconSearch] = useState(false)
+  const [openChatDialog, setOpenChatDialog] = useState(false)
+  const boardId = useGraphStore(state => state.boardId)
+
   const handleAddShape = (nodeType: NodeType) => onAddNode({ nodeType })
 
   const shapeOptions: { nodeType: NodeType, label: string, icon: ReactNode }[] = [
@@ -221,6 +226,17 @@ export const ActionPanel = memo(function ActionPanel({
           >
             <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => setOpenChatDialog(true)}
+            title='Open Chat'
+            aria-label='Open Chat'
+            disabled={!boardId}
+          >
+            <HugeiconsIcon icon={Message02Icon} className='size-4 shrink-0' strokeWidth={2} />
+          </Button>
 
           {/* Shape picker */}
           <DropdownMenu>
@@ -310,6 +326,26 @@ export const ActionPanel = memo(function ActionPanel({
       {/* Dialogs */}
       <ImageSearchDialog openImageSearch={openImageSearch} setOpenImageSearch={setOpenImageSearch} />
       <IconSearchDialog openIconSearch={openIconSearch} setOpenIconSearch={setOpenIconSearch} />
+      <Dialog open={openChatDialog} onOpenChange={setOpenChatDialog}>
+        <DialogContent className="sm:max-w-4xl w-full h-[85vh] !p-0 overflow-hidden flex flex-col gap-0">
+          <DialogHeader className="px-6 pt-6 pb-2 border-b text-left">
+            <DialogTitle>Board Copilot</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 relative bg-background overflow-y-auto scrollbar-thin">
+            {boardId ? (
+              <Chat
+                initialBoardId={boardId}
+                className="relative"
+                showHistoricalChats
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                Select a board to start a conversation.
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 })

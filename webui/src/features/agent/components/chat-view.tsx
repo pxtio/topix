@@ -36,7 +36,7 @@ const HistoryList = ({
 }) => {
   if (!chats.length) {
     return (
-      <div className="w-full max-w-[900px] mx-auto">
+      <div className="w-full max-w-[900px] mx-auto p-4 sm:p-8">
         <div className="text-sm font-medium text-muted-foreground mb-2">Chat History</div>
         <div className="text-sm text-muted-foreground/80 rounded-md border border-dashed border-border px-4 py-6 text-center">
           No chats yet. Start a new one below.
@@ -46,7 +46,7 @@ const HistoryList = ({
   }
 
   return (
-    <div className="w-full max-w-[900px] mx-auto">
+    <div className="w-full max-w-[900px] mx-auto p-4 sm:p-8">
       <div className="text-sm font-medium text-muted-foreground mb-2">Chat History</div>
       <div className="max-h-64 overflow-y-auto flex flex-col gap-1 pr-1">
         {chats.map(chat => {
@@ -93,7 +93,7 @@ const ChatBody = ({
 
   const chatClassName = cn(
     "absolute inset-0 h-full w-full overflow-hidden flex flex-col",
-    showHistoricalChats ? "p-4 gap-4" : "items-center",
+    showHistoricalChats ? "gap-4" : "items-center",
     className
   )
 

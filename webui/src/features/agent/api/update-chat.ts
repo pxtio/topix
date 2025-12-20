@@ -5,6 +5,7 @@ import {
   useQueryClient,
   type InfiniteData,
   type QueryKey,
+  type QueryClient,
 } from "@tanstack/react-query"
 import { apiFetch } from "@/api"
 
@@ -34,9 +35,9 @@ export async function updateChat(
  *
  * @returns An object containing the updateChat function and its mutation state.
  */
-type ChatCollection = Chat[] | InfiniteData<Chat[]>
+export type ChatCollection = Chat[] | InfiniteData<Chat[]>
 
-const normalizeGraphUid = (graphUid?: string | null) => graphUid ?? "none"
+export const normalizeGraphUid = (graphUid?: string | null) => graphUid ?? "none"
 
 const getGraphFromQueryKey = (queryKey: QueryKey): string | undefined => {
   if (!Array.isArray(queryKey)) return undefined
@@ -152,6 +153,50 @@ const updateInfiniteCollection = (
   return changed ? { ...collection, pages: nextPages } : collection
 }
 
+export const updateCachedChatEverywhere = ({
+  queryClient,
+  chatId,
+  patch,
+}: {
+  queryClient: QueryClient
+  chatId: string
+  patch: Partial<Chat>
+}) => {
+  const cachedQueries = queryClient.getQueryCache().findAll({
+    queryKey: ["listChats"],
+    exact: false
+  })
+
+  let baseChat: Chat | undefined
+  for (const { queryKey } of cachedQueries) {
+    const data = queryClient.getQueryData(queryKey) as ChatCollection | undefined
+    const found = findChatInCollection(data, chatId)
+    if (found) {
+      baseChat = found
+      break
+    }
+  }
+
+  const updatedChat: Chat = baseChat
+    ? { ...baseChat, ...patch }
+    : ({ uid: chatId, ...patch } as Chat)
+  const targetGraph = normalizeGraphUid(updatedChat.graphUid)
+
+  cachedQueries.forEach(({ queryKey }) => {
+    const queryGraph = getGraphFromQueryKey(queryKey)
+    const pageSize = getPageSizeFromQueryKey(queryKey)
+    queryClient.setQueryData(queryKey, (oldData) =>
+      updateCollectionForChat(
+        oldData as ChatCollection | undefined,
+        queryGraph,
+        targetGraph,
+        updatedChat,
+        pageSize
+      )
+    )
+  })
+}
+
 const updateCollectionForChat = (
   collection: ChatCollection | undefined,
   queryGraph: string | undefined,
@@ -183,41 +228,7 @@ export const useUpdateChat = () => {
       chatId: string
       chatData: Partial<Chat>
     }) => {
-      // Optimistically update every cached chat list
-      const cachedQueries = queryClient.getQueryCache().findAll({
-        queryKey: ["listChats"],
-        exact: false
-      })
-
-      let baseChat: Chat | undefined
-      for (const { queryKey } of cachedQueries) {
-        const data = queryClient.getQueryData(queryKey) as ChatCollection | undefined
-        const found = findChatInCollection(data, chatId)
-        if (found) {
-          baseChat = found
-          break
-        }
-      }
-
-      const updatedChat: Chat = baseChat
-        ? { ...baseChat, ...chatData }
-        : ({ uid: chatId, ...chatData } as Chat)
-      const targetGraph = normalizeGraphUid(updatedChat.graphUid)
-
-      cachedQueries.forEach(({ queryKey }) => {
-        const queryGraph = getGraphFromQueryKey(queryKey)
-        const pageSize = getPageSizeFromQueryKey(queryKey)
-        queryClient.setQueryData(queryKey, (oldData) =>
-          updateCollectionForChat(
-            oldData as ChatCollection | undefined,
-            queryGraph,
-            targetGraph,
-            updatedChat,
-            pageSize
-          )
-        )
-      })
-
+      updateCachedChatEverywhere({ queryClient, chatId, patch: chatData })
       await updateChat(chatId, chatData)
     }
   })

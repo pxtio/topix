@@ -303,7 +303,7 @@ export const ActionPanel = memo(function ActionPanel({
             aria-label='Open Chat'
             disabled={!boardId}
           >
-            <BotMessageSquare className='size-4 shrink-0 text-secondary' strokeWidth={2} />
+            <BotMessageSquare className='size-4 shrink-0 text-sidebar-icon-4' strokeWidth={2} />
           </Button>
         </>
       )}
@@ -332,7 +332,7 @@ export const ActionPanel = memo(function ActionPanel({
         <DialogContent className="sm:max-w-4xl w-full h-[85vh] !p-0 overflow-hidden flex flex-col gap-0">
           <DialogHeader className="px-6 pt-6 pb-2 border-b text-left">
             <DialogTitle className='flex flex-row items-center gap-0'>
-              <BotMessageSquare className="size-5 inline-block mr-2 text-secondary" strokeWidth={2} />
+              <BotMessageSquare className="size-5 inline-block mr-2 text-sidebar-icon-4" strokeWidth={2} />
               Board Copilot
             </DialogTitle>
           </DialogHeader>

@@ -73,7 +73,9 @@ export const InputBar = ({ attachedBoardId, layout = "floating" }: InputBarProps
 
     if (createNewChat) {
       const newChatId = generateUuid()
-      setChatId(newChatId)
+      await createChatAsync({ userId, boardId: attachedBoardId, chatId: newChatId })
+      await updateChatAsync({ chatId: newChatId, chatData: { label: trimText(trimmed, 20) } })
+
       if (isBoardRoute && targetBoardId) {
         navigate({
           to: "/boards/$id",
@@ -87,8 +89,7 @@ export const InputBar = ({ attachedBoardId, layout = "floating" }: InputBarProps
         navigate({ to: ChatUrl, params: { id: newChatId } })
       }
 
-      await createChatAsync({ userId, boardId: attachedBoardId, chatId: newChatId })
-      await updateChatAsync({ chatId: newChatId, chatData: { label: trimText(trimmed, 20) } })
+      setChatId(newChatId)
       id = newChatId
     } else {
       id = chatId!

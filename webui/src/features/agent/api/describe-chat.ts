@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { type Chat } from "../types/chat"
 import { apiFetch } from "@/api"
+import { updateCachedChatEverywhere } from "./update-chat"
 
 
 /**
@@ -28,14 +28,11 @@ export const useDescribeChat = () => {
 
   const mutation = useMutation({
     mutationFn: describeChat,
-    onSuccess: (data, variables) => {
-      queryClient.setQueryData<Chat[]>(["listChats", variables.userId], (oldChats) => {
-        if (!oldChats) return []
-        return oldChats.map(chat =>
-          chat.uid === variables.chatId
-            ? { ...chat, label: data }
-            : chat
-        )
+    onSuccess: (label, variables) => {
+      updateCachedChatEverywhere({
+        queryClient,
+        chatId: variables.chatId,
+        patch: { label }
       })
     }
   })

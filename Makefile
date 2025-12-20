@@ -84,11 +84,11 @@ up-webui: ## Start only webui (no deps): make up-webui SERVICE=webui-dev
 
 .PHONY: up-db
 up-db: ## Start only databases for $(PROFILE)
-	$(COMPOSE) --profile $(PROFILE) up -d postgres-$(PROFILE) qdrant-$(PROFILE)
+	$(COMPOSE) --profile $(PROFILE) up -d postgres-$(PROFILE) qdrant-$(PROFILE) redis-$(PROFILE)
 
 .PHONY: down-db
 down-db: ## Stop DBs for $(PROFILE)
-	$(COMPOSE) --profile $(PROFILE) stop postgres-$(PROFILE) qdrant-$(PROFILE)
+	$(COMPOSE) --profile $(PROFILE) stop postgres-$(PROFILE) qdrant-$(PROFILE) redis-$(PROFILE)
 
 # -------- Diagnostics --------
 .PHONY: config

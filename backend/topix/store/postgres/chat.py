@@ -1,6 +1,7 @@
 """Chat management functions for PostgreSQL backend."""
 
 from datetime import datetime
+from typing import Literal
 
 import asyncpg
 
@@ -77,7 +78,7 @@ async def update_chat_by_uid(
     data['updated_at'] = datetime.now()
 
     # Build dynamic query with positional parameters
-    set_clauses = [f"{k} = ${i+1}" for i, k in enumerate(data.keys())]
+    set_clauses = [f"{k} = ${i + 1}" for i, k in enumerate(data.keys())]
     set_clause = ', '.join(set_clauses)
     values = list(data.values())
 
@@ -109,20 +110,57 @@ async def _dangerous_hard_delete_chat_by_uid(
 
 async def list_chats_by_user_uid(
     conn: asyncpg.Connection,
-    user_uid: str
+    user_uid: str,
+    graph_uid: str | Literal["none"] | None = None,
+    offset: int = 0,
+    limit: int = 100
 ) -> list[Chat]:
     """List all chats for a given user UID.
 
-    Returns a list of Chat objects.
+    Args:
+        conn: asyncpg.Connection - Active database connection.
+        user_uid: str - User UID to filter chats.
+        graph_uid: str | Literal["none"] | None - Optional Graph UID to filter chats.
+            "none" filters for chats without a graph.
+        offset: int - Pagination offset.
+        limit: int - Pagination limit.
+
+    Returns:
+        List[Chat]: List of Chat objects.
+
     """
-    query = (
-        "SELECT id, uid, label, user_uid, "
-        "graph_uid, created_at, updated_at, deleted_at "
-        "FROM chats WHERE user_uid = $1 "
-        "AND deleted_at IS NULL "
-        "ORDER BY COALESCE(updated_at, created_at) DESC"
-    )
-    rows = await conn.fetch(query, user_uid)
+    if graph_uid == "none":
+        query = (
+            "SELECT id, uid, label, user_uid, "
+            "graph_uid, created_at, updated_at, deleted_at "
+            "FROM chats WHERE user_uid = $1 "
+            "AND graph_uid IS NULL "
+            "AND deleted_at IS NULL "
+            "ORDER BY COALESCE(updated_at, created_at) DESC "
+            "LIMIT $2 OFFSET $3"
+        )
+        rows = await conn.fetch(query, user_uid, limit, offset)
+    elif graph_uid is not None:
+        query = (
+            "SELECT id, uid, label, user_uid, "
+            "graph_uid, created_at, updated_at, deleted_at "
+            "FROM chats WHERE user_uid = $1 "
+            "AND graph_uid = $2 "
+            "AND deleted_at IS NULL "
+            "ORDER BY COALESCE(updated_at, created_at) DESC "
+            "LIMIT $3 OFFSET $4"
+        )
+        rows = await conn.fetch(query, user_uid, graph_uid, limit, offset)
+    else:
+        query = (
+            "SELECT id, uid, label, user_uid, "
+            "graph_uid, created_at, updated_at, deleted_at "
+            "FROM chats WHERE user_uid = $1 "
+            "AND deleted_at IS NULL "
+            "ORDER BY COALESCE(updated_at, created_at) DESC "
+            "LIMIT $2 OFFSET $3"
+        )
+        rows = await conn.fetch(query, user_uid, limit, offset)
     return [
         Chat(
             id=row['id'],

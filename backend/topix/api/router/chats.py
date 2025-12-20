@@ -2,7 +2,7 @@
 
 import logging
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Body, Depends, Request, Response
 from fastapi.params import Path, Query
@@ -112,11 +112,23 @@ async def get_chat(
 async def list_chats(
     response: Response,
     request: Request,
-    user_id: Annotated[str, Depends(get_current_user_uid)]
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    offset: Annotated[int, Query(description="Pagination offset")] = 0,
+    limit: Annotated[int, Query(description="Pagination limit")] = 100,
+    graph_uid: Annotated[
+        str | Literal["none"] | None,
+        Query(description="Optional Graph UID")
+    ] = None,
 ):
     """List all chats for the user."""
     store: ChatStore = request.app.chat_store
-    chats = await store.list_chats(user_uid=user_id)
+    chats = await store.list_chats(
+        user_uid=user_id,
+        offset=offset,
+        limit=limit,
+        graph_uid=graph_uid
+    )
+
     return {"chats": [chat.model_dump(exclude_none=True) for chat in chats]}
 
 

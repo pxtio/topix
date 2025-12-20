@@ -1,6 +1,5 @@
 import { Conversation } from "./chat/conversation"
 import { InputBar } from "./chat/input"
-import { useAppStore } from "@/store"
 import { useListChats } from "../api/list-chats"
 import { ChatProvider } from "../hooks/chat-context"
 import { cn } from "@/lib/utils"
@@ -9,9 +8,7 @@ import { cn } from "@/lib/utils"
  * Chat view component
  */
 export const Chat = ({ chatId, initialBoardId, className }: { chatId?: string, initialBoardId?: string, className?: string }) => {
-  const { userId } = useAppStore()
-
-  const { data: chatList } = useListChats({ userId })
+  const { data: chatList } = useListChats({ graphUid: initialBoardId })
 
   const chat = chatList?.find(c => c.uid === chatId)
   const attachedBoardId = chat?.graphUid || initialBoardId

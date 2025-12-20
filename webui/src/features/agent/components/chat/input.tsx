@@ -70,7 +70,7 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
       navigate({ to: ChatUrl, params: { id: newChatId } })
 
       await createChatAsync({ userId, boardId: attachedBoardId, chatId: newChatId })
-      await updateChatAsync({ chatId: newChatId, userId, chatData: { label: trimText(trimmed, 20) } })
+      await updateChatAsync({ chatId: newChatId, chatData: { label: trimText(trimmed, 20) } })
       id = newChatId
     } else {
       id = chatId!

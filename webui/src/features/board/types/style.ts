@@ -298,6 +298,6 @@ export const createDefaultLinkStyle = (): LinkStyle => ({
   textColor: "#000000",
   textStyle: "normal",
   sourceArrowhead: "none",
-  targetArrowhead: "arrow",
+  targetArrowhead: "arrow-filled",
   pathStyle: "bezier"
 })

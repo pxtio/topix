@@ -64,9 +64,8 @@ const ChatLine = ({ chat }: { chat: Chat }) => {
 
 
 export const DefaultBoardView = () => {
-  const userId = useAppStore(state => state.userId)
   const boardId = useGraphStore(state => state.boardId)
-  const { data: chats = [] } = useListChats({ userId })
+  const { data: chats = [] } = useListChats({ graphUid: boardId })
 
   const boardChats = chats.filter(chat => chat.graphUid === boardId)
 

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
 import { useParams, useRouterState, useSearch, useNavigate } from "@tanstack/react-router"
-import { useAppStore } from "@/store"
 import { useListChats } from "@/features/agent/api/list-chats"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { useUpdateBoard } from "@/features/board/api/update-board"
@@ -12,7 +11,6 @@ import { ContextBoard } from "@/features/agent/components/context-board"
 import { UNTITLED_LABEL } from "@/features/board/const"
 
 export const SidebarLabel = () => {
-  const { userId } = useAppStore()
   const navigate = useNavigate()
 
   // route params
@@ -49,7 +47,7 @@ export const SidebarLabel = () => {
   }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptionsRoot, isHome])
 
   // data
-  const { data: chatList }  = useListChats({ userId })
+  const { data: chatList }  = useListChats({ graphUid: null })
   const { data: boardList } = useListBoards()
   const { data: subscriptionList } = useListSubscriptions()
   const { updateBoard } = useUpdateBoard()
@@ -87,7 +85,7 @@ export const SidebarLabel = () => {
       updateBoard({ boardId: active.id, graphData: { label: newLabel } })
     }
     if (active.view === "chat" && active.id) {
-      updateChat({ chatId: active.id, userId, chatData: { label: newLabel } })
+      updateChat({ chatId: active.id, chatData: { label: newLabel } })
     }
   }
 
@@ -108,7 +106,7 @@ export const SidebarLabel = () => {
   const handleChangeContext = (nextBoardId?: string) => {
     if (active.view === "chat" && active.id) {
       // persist to API for existing chat
-      updateChat({ chatId: active.id, userId, chatData: { graphUid: nextBoardId } })
+      updateChat({ chatId: active.id, chatData: { graphUid: nextBoardId } })
     } else if (active.view === "new-chat") {
       // persist to URL for new chat (no local state)
       navigate({

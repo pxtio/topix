@@ -1,6 +1,6 @@
 import type { Chat } from "../types/chat"
 import camelcaseKeys from "camelcase-keys"
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery, useQuery, type InfiniteData } from "@tanstack/react-query"
 import { apiFetch } from "@/api"
 
 
@@ -24,12 +24,18 @@ interface ListChatsResponse {
  * Fetch the list of chats.
  */
 export async function listChats(
-  userId: string
+  offset: number = 0,
+  limit: number = 100,
+  graphUid: string | "none" | null = "none"
 ): Promise<Chat[]> {
+  if (graphUid === undefined) {
+    graphUid = "none"
+  }
+
   const res = await apiFetch<ListChatsResponse>({
     path: `/chats`,
     method: "GET",
-    params: { user_id: userId },
+    params: { offset, limit, graph_uid: graphUid },
   })
   return res.data.chats.map((chat) => camelcaseKeys(chat, { deep: true })) as Chat[]
 }
@@ -43,14 +49,40 @@ export async function listChats(
  * @returns A query object containing the list of chats.
  */
 export const useListChats = ({
-  userId
+  offset = 0,
+  limit = 100,
+  graphUid = "none"
 }: {
-  userId: string
+  offset?: number,
+  limit?: number,
+  graphUid?: string | "none" | null
 }) => {
   return useQuery<Chat[]>({
-    queryKey: ["listChats", userId],
-    queryFn: () => listChats(userId),
-    enabled: !!userId,
+    queryKey: ["listChats", offset, limit, graphUid],
+    queryFn: () => listChats(offset, limit, graphUid),
+    enabled: offset >= 0 && limit > 0,
     staleTime: 1000 * 60 * 5 // 5 minutes
+  })
+}
+
+/**
+ * Infinite chat list hook for incremental fetching (e.g., chat history sidebar).
+ */
+export const useInfiniteChats = ({
+  graphUid = "none",
+  pageSize = 20
+}: {
+  graphUid?: string | "none" | null,
+  pageSize?: number
+} = {}) => {
+  const normalizedGraphUid = graphUid ?? "none"
+  return useInfiniteQuery<Chat[], Error, InfiniteData<Chat[]>, [string, string, string | "none", number], number>({
+    queryKey: ["listChats", "infinite", normalizedGraphUid, pageSize],
+    initialPageParam: 0,
+    queryFn: ({ pageParam = 0 }) => listChats(pageParam, pageSize, normalizedGraphUid),
+    getNextPageParam: (lastPage, allPages) => (
+      lastPage.length === pageSize ? allPages.length * pageSize : undefined
+    ),
+    staleTime: 1000 * 60 * 5,
   })
 }

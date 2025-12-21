@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { AddNoteNodeOptions } from '../../hooks/add-node'
@@ -10,9 +10,10 @@ import { IconSearchDialog } from './utils/icon-search'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { BotMessageSquare, ChevronDown, Cloud, Layers } from 'lucide-react'
 import type { NodeType } from '../../types/style'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Chat } from '@/features/agent/components/chat-view'
 import { useGraphStore } from '../../store/graph-store'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -53,6 +54,13 @@ export const ActionPanel = memo(function ActionPanel({
   const [openIconSearch, setOpenIconSearch] = useState(false)
   const [openChatDialog, setOpenChatDialog] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
+  const navigate = useNavigate()
+  const boardSearch = useSearch({
+    from: "/boards/$id",
+    select: (s: { currentChatId?: string }) => ({ currentChatId: s.currentChatId }),
+    shouldThrow: false,
+  })
+  const currentChatId = boardSearch?.currentChatId
 
   const handleAddShape = (nodeType: NodeType) => onAddNode({ nodeType })
 
@@ -329,12 +337,39 @@ export const ActionPanel = memo(function ActionPanel({
       <ImageSearchDialog openImageSearch={openImageSearch} setOpenImageSearch={setOpenImageSearch} />
       <IconSearchDialog openIconSearch={openIconSearch} setOpenIconSearch={setOpenIconSearch} />
       <Dialog open={openChatDialog} onOpenChange={setOpenChatDialog}>
-        <DialogContent className="sm:max-w-4xl w-full h-[85vh] !p-0 overflow-hidden flex flex-col gap-0">
+        <DialogContent className="sm:max-w-4xl w-full h-[85vh] !p-0 overflow-hidden flex flex-col gap-0" showCloseButton={false}>
           <DialogHeader className="px-6 pt-6 pb-2 border-b text-left">
-            <DialogTitle className='flex flex-row items-center gap-0'>
-              <BotMessageSquare className="size-5 inline-block mr-2 text-sidebar-icon-4" strokeWidth={2} />
-              Board Copilot
-            </DialogTitle>
+            <div className="flex items-center justify-between gap-3">
+              <DialogTitle className='flex flex-row items-center gap-0'>
+                <BotMessageSquare className="size-5 inline-block mr-2 text-sidebar-icon-4" strokeWidth={2} />
+                Board Copilot
+              </DialogTitle>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setOpenChatDialog(false)
+                    if (currentChatId) {
+                      navigate({ to: "/chats/$id", params: { id: currentChatId } })
+                    } else {
+                      navigate({ to: "/chats" })
+                    }
+                  }}
+                  title="Open full chat view"
+                  aria-label="Open full chat view"
+                >
+                  <HugeiconsIcon icon={LinkSquare01Icon} className="size-4" strokeWidth={2} />
+                </Button>
+                <DialogClose
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-foreground shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label="Close"
+                >
+                  <span className="sr-only">Close</span>
+                  <span aria-hidden className="text-lg leading-none">&times;</span>
+                </DialogClose>
+              </div>
+            </div>
           </DialogHeader>
           <div className="flex-1 relative bg-background overflow-y-auto scrollbar-thin">
             {boardId ? (

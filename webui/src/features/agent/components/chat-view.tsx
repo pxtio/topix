@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Clock02Icon, Message02Icon, PlusSignIcon } from "@hugeicons/core-free-icons"
+import { ThemedWelcome } from "./chat/welcome-message"
 
 type ChatProps = {
   chatId?: string
@@ -56,7 +57,7 @@ const HistoryList = ({
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full border border-border shadow-sm"
+              className="rounded-full border border-border shadow-sm bg-accent hover:bg-background transition-colors"
             >
               <HugeiconsIcon icon={Message02Icon} className="size-4" strokeWidth={2} />
               <span className="sr-only">Open chat history</span>
@@ -202,8 +203,11 @@ const ChatBody = ({
           </div>
         ) : (
           showHistoricalChats && (
-            <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground px-4 text-center">
-              Select a chat from history or start a new conversation below.
+            <div className="flex flex-1 w-full items-center justify-center text-sm text-muted-foreground px-4 text-center">
+              <ThemedWelcome
+                name="Panda"
+                message={"Select a chat from history or start a new conversation below."}
+              />
             </div>
           )
         )}

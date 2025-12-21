@@ -10,7 +10,7 @@ import { useListChats } from "@/features/agent/api/list-chats"
 export const ResponseActions = ({ message, saveAsIs = false }: { message: string, saveAsIs?: boolean }) => {
   const { chatId } = useChat()
 
-  const { data: chatList } = useListChats({})
+  const { data: chatList } = useListChats({ graphUid: null })
 
   const chat = chatList?.find((c) => c.uid === chatId)
   const attachedBoardId = chat?.graphUid

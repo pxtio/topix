@@ -9,7 +9,7 @@ import TextareaAutosize from 'react-textarea-autosize'
 import { useChat } from '../../hooks/chat-context'
 import { useCreateChat } from '../../api/create-chat'
 import { useUpdateChat } from '../../api/update-chat'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouterState, useParams } from '@tanstack/react-router'
 import { ChatUrl } from '@/routes'
 import { useDescribeChat } from '../../api/describe-chat'
 import type { SendMessageRequestPayload } from '../../api/types'
@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label'
 
 export interface InputBarProps {
   attachedBoardId?: string
+  layout?: "floating" | "docked"
 }
 
 /**
@@ -32,7 +33,7 @@ export interface InputBarProps {
  *  - Lets the user edit the SAME input
  *  - Confirms to send & create a new chat
  */
-export const InputBar = ({ attachedBoardId }: InputBarProps) => {
+export const InputBar = ({ attachedBoardId, layout = "floating" }: InputBarProps) => {
   const { chatId, setChatId } = useChat()
 
   const userId = useAppStore((state) => state.userId)
@@ -56,6 +57,10 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
   const { describeChatAsync } = useDescribeChat()
 
   const navigate = useNavigate()
+  const routerLocation = useRouterState({ select: (s) => s.location })
+  const boardParams = useParams({ from: "/boards/$id", shouldThrow: false })
+  const isBoardRoute = routerLocation.pathname?.startsWith("/boards/")
+  const boardRouteId = boardParams?.id
 
   const proceedSend = async (text: string, forceNewChat = false) => {
     const trimmed = text.trim()
@@ -64,13 +69,27 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
     const createNewChat = forceNewChat || !chatId
     let id: string
 
+    const targetBoardId = attachedBoardId ?? boardRouteId
+
     if (createNewChat) {
       const newChatId = generateUuid()
-      setChatId(newChatId)
-      navigate({ to: ChatUrl, params: { id: newChatId } })
-
       await createChatAsync({ userId, boardId: attachedBoardId, chatId: newChatId })
       await updateChatAsync({ chatId: newChatId, chatData: { label: trimText(trimmed, 20) } })
+
+      if (isBoardRoute && targetBoardId) {
+        navigate({
+          to: "/boards/$id",
+          params: { id: targetBoardId },
+          search: (prev: Record<string, unknown>) => ({
+            ...prev,
+            currentChatId: newChatId
+          })
+        })
+      } else {
+        navigate({ to: ChatUrl, params: { id: newChatId } })
+      }
+
+      setChatId(newChatId)
       id = newChatId
     } else {
       id = chatId!
@@ -130,9 +149,16 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
     isStreaming ? 'cursor-not-allowed' : 'cursor-pointer'
   )
 
+  const isFloating = layout === "floating"
+
   const className = clsx(
-    'transition-all absolute inset-x-0 p-4 z-20 flex flex-col justify-center items-center gap-12 bg-transparent',
-    chatId ? 'bottom-0' : 'bottom-1/2 transform translate-y-1/2'
+    'transition-all flex flex-col items-center bg-transparent',
+    isFloating
+      ? clsx(
+        'absolute inset-x-0 p-4 z-20 gap-12',
+        chatId ? 'bottom-0' : 'bottom-1/2 transform translate-y-1/2'
+      )
+      : 'w-full mt-auto gap-4 px-4 pb-4'
   )
 
   const inboxClass = clsx(
@@ -143,9 +169,12 @@ export const InputBar = ({ attachedBoardId }: InputBarProps) => {
 
   return (
     <div className={className}>
-      {!chatId && <WelcomeMessage />}
+      {isFloating && !chatId && <WelcomeMessage />}
 
-      <div className="flex flex-col space-y-2 w-full items-center justify-center">
+      <div className={clsx(
+        "flex flex-col space-y-2 w-full items-center justify-center",
+        isFloating ? '' : 'max-w-[900px] mx-auto'
+      )}>
         <div className="relative w-full max-w-[800px] mx-auto">
           <div className="absolute -top-9 left-0 transform flex flex-row items-center gap-1">
             <InputSettings />

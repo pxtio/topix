@@ -37,7 +37,10 @@ const ReasoningStepViewImpl = ({
 
   const { reasoning, message, title, input } = extractStepDescription(step)
 
-  const sources = viewMore ? getWebSearchUrls(step) : []
+  const sources = useMemo(() => {
+    if (!viewMore) return []
+    return getWebSearchUrls(step)
+  }, [viewMore, step])
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
@@ -137,18 +140,25 @@ const ReasoningStepViewImpl = ({
 }
 
 
+const eventMessagesEqual = (a?: string[], b?: string[]) => {
+  if (!a && !b) return true
+  if (!a || !b) return false
+  if (a.length !== b.length) return false
+  const last = a.length - 1
+  return last < 0 || a[last] === b[last]
+}
+
 export const ReasoningStepView = memo(ReasoningStepViewImpl, (prev, next) => {
   const a = prev.step
   const b = next.step
   if (prev.isLoading !== next.isLoading) return false
-  // compare the fields that actually affect rendering
   return (
     a.id === b.id &&
     a.name === b.name &&
     a.state === b.state &&
     a.thought === b.thought &&
     a.output === b.output &&
-    (a.eventMessages?.length || 0) === (b.eventMessages?.length || 0)
+    eventMessagesEqual(a.eventMessages, b.eventMessages)
   )
 })
 
@@ -190,16 +200,27 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
     <>
       {
         (!isOpen || isStreaming) ? (
-          <div className='w-full p-4 text-left flex flex-row items-center gap-2'>
-            <ThinkingDots message={titleMessage} isStopped={!isStreaming} />
+          <div className='w-full flex flex-col items-center gap-2'>
+            <div className='w-full p-4 text-left flex flex-row items-center gap-2'>
+              <ThinkingDots message={titleMessage} isStopped={!isStreaming} />
+              {
+                !isStreaming && (
+                  <span
+                    className='transition-all text-xs text-accent-foreground hover:text-card-foreground'
+                    onClick={() => setIsOpen(!isOpen)}
+                  >
+                    <ChevronDown className='w-4 h-4 flex-shrink-0' />
+                  </span>
+                )
+              }
+            </div>
             {
-              !isStreaming && (
-                <span
-                  className='transition-all text-xs text-accent-foreground hover:text-card-foreground'
-                  onClick={() => setIsOpen(!isOpen)}
-                >
-                  <ChevronDown className='w-4 h-4 flex-shrink-0' />
-                </span>
+              estimatedDurationSeconds && isStreaming && (
+                <div className='w-full flex flex-col items-start'>
+                  <div className='w-full max-w-[300px] border border-border shadow-sm rounded-lg bg-background px-2 py-4'>
+                    <ProgressBar estimatedTime={estimatedDurationSeconds} isStop={!isStreaming} startedAt={response.sentAt} />
+                  </div>
+                </div>
               )
             }
           </div>
@@ -224,11 +245,7 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
                 <ChevronUp className='w-4 h-4 flex-shrink-0' />
               </span>
             </div>
-            {
-              estimatedDurationSeconds && (
-                <ProgressBar estimatedTime={estimatedDurationSeconds} isStop={!isStreaming} startedAt={response.sentAt} />
-              )
-            }
+
             <div
               className={`
                 flex flex-col items-start
@@ -239,8 +256,8 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
             >
               {
                 isOpen &&
-                response.steps.map((step, index) => <ReasoningStepView
-                  key={index}
+                response.steps.map((step) => <ReasoningStepView
+                  key={step.id}
                   step={step}
                   isLoading={step.state === "started"}
                 />)

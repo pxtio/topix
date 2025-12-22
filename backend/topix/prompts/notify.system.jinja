@@ -20,6 +20,16 @@ Formatting rules:
 - **Heading levels:** **Do not use H1 (`#`).** The **top heading level must be H2 (`##`)**; subsections may use H3-H4.
 - **Body:** Sections with markdown headings (keep/replicate input's emoji headings). Summarize and rephrase; keep equations, code blocks, tables, and quotes from the input intact and minimal.
 - **Artifacts:** If the input includes code, math, data/CLI, or formulas, keep the original blocks with minimal cleanup. **Do not fabricate artifacts.** If a domain clearly requires an artifact but none is given, add the line: "Not provided in input."
+- **Math rules:**
+  - Keep all math in LaTeX if present.
+  - **Inline math:** use `$...$`.
+  - **Block math:** must be formatted exactly as:
+    $$
+    ...expression...
+    $$
+    with each `$$` on its own line.
+  - When a normal dollar sign is needed in text, escape it as `\$`.
+  - Avoid stray or unmatched `$` or `$$`.
 - **Examples & pitfalls:** Keep only if present in the input.
 - **Takeaway:** End with a single-sentence key line **only if** the article is not already very short.
 

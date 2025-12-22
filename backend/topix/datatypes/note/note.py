@@ -35,6 +35,9 @@ class NoteProperties(ResourceProperties):
             size=SizeProperty.Size(width=300, height=100)
         )
     )
+    node_z_index: NumberProperty = Field(
+        default_factory=lambda: NumberProperty(number=0)
+    )
     emoji: IconProperty = Field(
         default_factory=lambda: IconProperty(
             icon=IconProperty.Emoji(emoji="")

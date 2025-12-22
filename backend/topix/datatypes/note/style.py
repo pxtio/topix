@@ -16,6 +16,9 @@ class NodeType(StrEnum):
     TEXT = "text"
     IMAGE = "image"
     ICON = "icon"
+    LAYERED_RECTANGLE = "layered-rectangle"
+    THOUGHT_CLOUD = "thought-cloud"
+    CAPSULE = "capsule"
 
 
 class StrokeStyle(StrEnum):
@@ -111,6 +114,14 @@ class Arrowhead(StrEnum):
     NONE = "none"
 
 
+class PathStyle(StrEnum):
+    """Enumeration for path styles."""
+
+    BEZIER = "bezier"
+    STRAIGHT = "straight"
+    POLYLINE = "polyline"
+
+
 class LinkStyle(Style):
     """Style for links in a graph."""
 
@@ -118,3 +129,5 @@ class LinkStyle(Style):
 
     source_arrowhead: Arrowhead = Arrowhead.NONE
     target_arrowhead: Arrowhead = Arrowhead.ARROW
+
+    path_style: PathStyle = PathStyle.BEZIER

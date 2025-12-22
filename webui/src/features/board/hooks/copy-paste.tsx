@@ -166,13 +166,24 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
               }
             : undefined
 
+          const finalLinkData = newLink ?? (edge.data as Link | undefined)
+          const sanitizedLink = finalLinkData
+            ? {
+                ...finalLinkData,
+                properties: {
+                  ...finalLinkData.properties,
+                  edgeControlPoint: { type: 'position' as const },
+                },
+              }
+            : undefined
+
           const clonedEdge: LinkEdge = {
             ...edge,
             id: newId,
             source: newSource,
             target: newTarget,
             selected: true,
-            data: newLink ?? edge.data,
+            data: sanitizedLink,
           }
 
           return clonedEdge

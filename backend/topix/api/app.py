@@ -18,6 +18,7 @@ from topix.nlp.pipeline.rag import ParsingPipeline
 from topix.setup import setup
 from topix.store.chat import ChatStore
 from topix.store.graph import GraphStore
+from topix.store.redis.store import RedisStore
 from topix.store.subscription import SubscriptionStore
 from topix.store.user import UserStore
 from topix.utils.logging import logging_config
@@ -33,6 +34,7 @@ def create_app(stage: StageEnum):
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         """Application lifespan context manager."""
+        # Initialize stores
         app.graph_store = GraphStore()
         await app.graph_store.open()
         app.user_store = UserStore()
@@ -44,11 +46,19 @@ def create_app(stage: StageEnum):
         config = ParsingConfig()
         config.vector_store = ContentStore.from_config()  # TODO: delete when from_config is fixed
         app.parser_pipeline = ParsingPipeline(config=config)
+
+        # Initialize Redis
+        app.redis_store = RedisStore.from_config()
+
         yield
+
+        # Close stores
         await app.graph_store.close()
         await app.user_store.close()
         await app.chat_store.close()
         await app.subscription_store.close()
+        # Close Redis
+        await app.redis_store.close()
 
     app = FastAPI(lifespan=lifespan)
 
@@ -76,7 +86,7 @@ def create_app(stage: StageEnum):
 
 async def main(args) -> tuple[FastAPI, int]:
     """Run the application entry point."""
-    await setup(stage=args.stage)
+    await setup(stage=args.stage, env_filename=args.env_file)
 
     config: Config = Config.instance()
 
@@ -98,6 +108,12 @@ if __name__ == "__main__":
         type=int,
         default=None,
         help="Port to run the application on."
+    )
+    args.add_argument(
+        "--env-file",
+        type=str,
+        default=".env",
+        help="Overridden name to the .env file to load. For example: .env.staging",
     )
     args = args.parse_args()
 

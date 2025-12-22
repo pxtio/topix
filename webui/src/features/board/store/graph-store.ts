@@ -557,6 +557,12 @@ export interface GraphStore {
   deletedEdges: LinkEdge[]
 
   isResizingNode: boolean
+  isDragging: boolean
+  setIsDragging: (dragging: boolean) => void
+  isPanning: boolean
+  setIsPanning: (panning: boolean) => void
+  isZooming: boolean
+  setIsZooming: (zooming: boolean) => void
 
   setNodes: (nodes: Updater<NoteNode[]>) => void
   setEdges: (edges: Updater<LinkEdge[]>) => void
@@ -601,6 +607,9 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   deletedEdges: [],
 
   isResizingNode: false,
+  isDragging: false,
+  isPanning: false,
+  isZooming: false,
 
   // --- flexible setters ---
 
@@ -803,7 +812,23 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   setDeletedEdges: (edges) => set({ deletedEdges: edges }),
 
-  setIsResizingNode: (resizing) => set({ isResizingNode: resizing }),
+  setIsResizingNode: (resizing) =>
+    set((state) =>
+      state.isResizingNode === resizing ? {} : { isResizingNode: resizing },
+    ),
+
+  setIsDragging: (dragging) =>
+    set((state) =>
+      state.isDragging === dragging ? {} : { isDragging: dragging },
+    ),
+  setIsPanning: (panning) =>
+    set((state) =>
+      state.isPanning === panning ? {} : { isPanning: panning },
+    ),
+  setIsZooming: (zooming) =>
+    set((state) =>
+      state.isZooming === zooming ? {} : { isZooming: zooming },
+    ),
 
   graphViewports: {},
 

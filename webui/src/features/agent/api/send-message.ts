@@ -1,13 +1,15 @@
 import { API_URL } from "@/config/api"
-import type { AgentStreamMessage } from "../types/stream"
+import type { AgentStreamMessage, AgentResponse, ReasoningStep } from "../types/stream"
 import type { SendMessageRequestPayload } from "./types"
 import { handleStreamingResponse } from "../utils/stream/digest"
 import { useChatStore } from "../store/chat-store"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import type {ChatMessage } from "../types/chat"
+import type { ChatMessage } from "../types/chat"
 import snakecaseKeys from "snakecase-keys"
 import { buildResponse } from "../utils/stream/build"
 import { fetchWithAuthRaw } from "@/api"
+import type { ToolOutput } from "../types/tool-outputs"
+import { trimResponseAnnotations } from "../utils/annotations"
 
 
 /**
@@ -122,7 +124,10 @@ export const useSendMessage = () => {
             continue
           }
 
-          const step = rep.steps[0]
+          const safeResponse = trimResponseAnnotations(
+            sanitizeResponseForStreaming(rep, isStop)
+          )
+          const step = safeResponse.steps[0]
           const responseId = step.id
 
           if (!setNewAssistantMessageId) {
@@ -155,7 +160,7 @@ export const useSendMessage = () => {
                   msgs = [...newMessages]
                 }
                 return msgs.map((m) => {
-                  const lastStep = rep.steps[rep.steps.length - 1]
+                  const lastStep = safeResponse.steps[safeResponse.steps.length - 1]
                   let content = ""
                   if (lastStep.name === 'synthesizer' || lastStep.name === 'answer_reformulate') {
                     content = typeof lastStep.output === 'string' ? lastStep.output : ''
@@ -168,7 +173,7 @@ export const useSendMessage = () => {
                         ...m.properties,
                         reasoning: {
                           type: "reasoning",
-                          reasoning: rep.steps
+                          reasoning: safeResponse.steps
                         }
                       },
                       streaming: !isStop
@@ -193,5 +198,48 @@ export const useSendMessage = () => {
     sendMessage: mutation.mutate,
     sendMessageAsync: mutation.mutateAsync,
     ...mutation
+  }
+}
+
+const STREAMING_EVENT_CAP = 10
+
+const sanitizeResponseForStreaming = (response: AgentResponse, isStop: boolean): AgentResponse => {
+  if (isStop) return response
+  return {
+    ...response,
+    steps: response.steps.map((step) => sanitizeStep(step))
+  }
+}
+
+const sanitizeStep = (step: ReasoningStep): ReasoningStep => {
+  const eventMessages = step.eventMessages.slice(-STREAMING_EVENT_CAP)
+  const output = typeof step.output === "string" ? step.output : sanitizeToolOutput(step.output)
+  return {
+    ...step,
+    eventMessages,
+    output
+  }
+}
+
+const sanitizeToolOutput = (output: ToolOutput): ToolOutput => {
+  if (typeof output === "string") return output
+
+  switch (output.type) {
+    case "web_search":
+      return { type: "web_search", answer: "", searchResults: [] }
+    case "memory_search":
+      return { type: "memory_search", answer: "", references: [] }
+    case "code_interpreter":
+      return { type: "code_interpreter", answer: "", executedCode: "", annotations: [] }
+    case "display_weather_widget":
+      return { type: "display_weather_widget", city: "" }
+    case "display_stock_widget":
+      return { type: "display_stock_widget", symbol: "" }
+    case "display_image_search_widget":
+      return { type: "display_image_search_widget", query: "", images: [] }
+    case "image_generation":
+      return { type: "image_generation", imageUrls: [] }
+    default:
+      return output
   }
 }

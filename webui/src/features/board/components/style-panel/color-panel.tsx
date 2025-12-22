@@ -40,6 +40,7 @@ export function ColorGrid({
 }: Props) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === "dark"
+  const isValueTransparent = isTransparent(value)
 
   const defaultFamily = useMemo(() => FAMILIES.find(f => !!f.family)!, [])
   const [activeFamily, setActiveFamily] = useState<Family>(defaultFamily)
@@ -112,8 +113,8 @@ export function ColorGrid({
     const isCompact = variant === "compact"
     const colorHex = resolveEntryHexAtShade(f, shade)
     const selected = f.transparent
-      ? isTransparent(value)
-      : !!colorHex && isSameColor(value, colorHex)
+      ? isValueTransparent
+      : (!isValueTransparent && !!colorHex && isSameColor(value, colorHex))
 
     // Special entries: no context menu, just pick on click
     if (f.transparent || f.fixedHex) {
@@ -154,7 +155,7 @@ export function ColorGrid({
             <div className="grid grid-cols-4 gap-1">
               {SHADE_STEPS.map((step) => {
                 const hex = resolveFamilyShade(f.family!, step)
-                const selectedShade = !!hex && isSameColor(value, hex)
+                const selectedShade = !isValueTransparent && !!hex && isSameColor(value, hex)
                 const baseHex = toBaseHex(hex)
                 return (
                   <KeySwatch

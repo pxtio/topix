@@ -1,17 +1,24 @@
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, StarIcon, Image02Icon, ChartBubble02Icon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
-import type { NodeType } from '../../types/style'
+import type { AddNoteNodeOptions } from '../../hooks/add-node'
 import { Separator } from '@/components/ui/separator'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { BotMessageSquare, ChevronDown, Cloud, Layers } from 'lucide-react'
+import type { NodeType } from '../../types/style'
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Chat } from '@/features/agent/components/chat-view'
+import { useGraphStore } from '../../store/graph-store'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 
 type ViewMode = 'graph' | 'linear'
 
 interface ActionPanelProps {
-  onAddNode: ({ nodeType }: { nodeType: NodeType }) => void
+  onAddNode: (options: AddNoteNodeOptions) => void
   enableSelection: boolean
   setEnableSelection: (mode: boolean) => void
 
@@ -31,7 +38,7 @@ interface ActionPanelProps {
 /**
  * Action panel component for graph controls and node additions.
  */
-export function ActionPanel({
+export const ActionPanel = memo(function ActionPanel({
   onAddNode,
   enableSelection,
   setEnableSelection,
@@ -44,8 +51,27 @@ export function ActionPanel({
   setViewMode
 }: ActionPanelProps) {
   const [openImageSearch, setOpenImageSearch] = useState(false)
-
   const [openIconSearch, setOpenIconSearch] = useState(false)
+  const [openChatDialog, setOpenChatDialog] = useState(false)
+  const boardId = useGraphStore(state => state.boardId)
+  const navigate = useNavigate()
+  const boardSearch = useSearch({
+    from: "/boards/$id",
+    select: (s: { currentChatId?: string }) => ({ currentChatId: s.currentChatId }),
+    shouldThrow: false,
+  })
+  const currentChatId = boardSearch?.currentChatId
+
+  const handleAddShape = (nodeType: NodeType) => onAddNode({ nodeType })
+
+  const shapeOptions: { nodeType: NodeType, label: string, icon: ReactNode }[] = [
+    { nodeType: 'rectangle', label: 'Rectangle', icon: <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'layered-rectangle', label: 'Layered card', icon: <Layers className='w-4 h-4 shrink-0' /> },
+    { nodeType: 'ellipse', label: 'Ellipse', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'diamond', label: 'Diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'thought-cloud', label: 'Cloud', icon: <Cloud className='w-4 h-4 shrink-0' /> },
+    { nodeType: 'capsule', label: 'Capsule', icon: <HugeiconsIcon icon={Tag01Icon} className='size-4 shrink-0' strokeWidth={2} /> },
+  ]
 
   const normalButtonClass = `
     transition-colors
@@ -121,7 +147,7 @@ export function ActionPanel({
 
       <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
 
-      {/* ——— GRAPH MODE CONTROLS ——— */}
+      {/* -- GRAPH MODE CONTROLS -- */}
       {viewMode === 'graph' && (
         <>
           {/* Pan / Select modes */}
@@ -209,41 +235,35 @@ export function ActionPanel({
             <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
-          {/* Add rectangle */}
-          <Button
-            variant={null}
-            className={normalButtonClass}
-            size='icon'
-            onClick={() => onAddNode({ nodeType: 'rectangle' })}
-            title='Add Rectangle'
-            aria-label='Add Rectangle'
-          >
-            <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />
-          </Button>
-
-          {/* Add circle */}
-          <Button
-            variant={null}
-            className={normalButtonClass}
-            size='icon'
-            onClick={() => onAddNode({ nodeType: 'ellipse' })}
-            title='Add Ellipse'
-            aria-label='Add Ellipse'
-          >
-            <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} />
-          </Button>
-
-          {/* Add diamond */}
-          <Button
-            variant={null}
-            className={normalButtonClass}
-            size='icon'
-            onClick={() => onAddNode({ nodeType: 'diamond' })}
-            title='Add Diamond'
-            aria-label='Add Diamond'
-          >
-            <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} />
-          </Button>
+          {/* Shape picker */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                title='Add shape'
+                aria-label='Add shape'
+              >
+                <div className='flex flex-col items-center gap-0.5 relative'>
+                  <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ChevronDown className='absolute inset-x-0 -bottom-3.5 w-3 h-3 text-muted-foreground' />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='center' side='bottom' sideOffset={8} className='min-w-[180px]'>
+              {shapeOptions.map(option => (
+                <DropdownMenuItem
+                  key={option.nodeType}
+                  onSelect={() => handleAddShape(option.nodeType)}
+                  className='gap-2 text-sm'
+                >
+                  {option.icon}
+                  <span>{option.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Add text */}
           <Button
@@ -266,7 +286,7 @@ export function ActionPanel({
             title='Search icons'
             aria-label='Search icons'
           >
-            <HugeiconsIcon icon={StarIcon} className='size-4 shrink-0' strokeWidth={2} />
+            <HugeiconsIcon icon={GeometricShapes01Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Image search */}
@@ -280,10 +300,23 @@ export function ActionPanel({
           >
             <HugeiconsIcon icon={Image02Icon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
+
+          {/* Open Chat */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => setOpenChatDialog(true)}
+            title='Open Chat'
+            aria-label='Open Chat'
+            disabled={!boardId}
+          >
+            <BotMessageSquare className='size-4 shrink-0 text-sidebar-icon-4' strokeWidth={2} />
+          </Button>
         </>
       )}
 
-      {/* ——— LINEAR MODE CONTROLS ——— */}
+      {/* -- LINEAR MODE CONTROLS -- */}
       {viewMode !== "graph" && (
         <>
           {/* Keep it simple in linear: only Add sheet */}
@@ -303,6 +336,56 @@ export function ActionPanel({
       {/* Dialogs */}
       <ImageSearchDialog openImageSearch={openImageSearch} setOpenImageSearch={setOpenImageSearch} />
       <IconSearchDialog openIconSearch={openIconSearch} setOpenIconSearch={setOpenIconSearch} />
+      <Dialog open={openChatDialog} onOpenChange={setOpenChatDialog}>
+        <DialogContent className="sm:max-w-4xl w-full h-[85vh] !p-0 overflow-hidden flex flex-col gap-0" showCloseButton={false}>
+          <DialogHeader className="px-6 pt-6 pb-2 border-b text-left">
+            <div className="flex items-center justify-between gap-3">
+              <DialogTitle className='flex flex-row items-center gap-0'>
+                <BotMessageSquare className="size-5 inline-block mr-2 text-sidebar-icon-4" strokeWidth={2} />
+                Board Copilot
+              </DialogTitle>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setOpenChatDialog(false)
+                    if (currentChatId) {
+                      navigate({ to: "/chats/$id", params: { id: currentChatId } })
+                    } else {
+                      navigate({ to: "/chats" })
+                    }
+                  }}
+                  title="Open full chat view"
+                  aria-label="Open full chat view"
+                >
+                  <HugeiconsIcon icon={LinkSquare01Icon} className="size-4" strokeWidth={2} />
+                </Button>
+                <DialogClose
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-foreground shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label="Close"
+                >
+                  <span className="sr-only">Close</span>
+                  <span aria-hidden className="text-lg leading-none">&times;</span>
+                </DialogClose>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 relative bg-background overflow-y-auto scrollbar-thin">
+            {boardId ? (
+              <Chat
+                initialBoardId={boardId}
+                className="relative"
+                showHistoricalChats
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                Select a board to start a conversation.
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
-}
+})

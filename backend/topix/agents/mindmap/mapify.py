@@ -71,7 +71,7 @@ def convert_mapify_output_to_notes_links(
         parent: Note | None = None,
     ) -> Note:
         note = Note(
-            label=RichText(markdown=f"{theme.label} - {theme.description}"),
+            label=RichText(markdown=f"**{theme.label}** -\n{theme.description}"),
         )
         note.style.type = NodeType.RECTANGLE
         notes.append(note)

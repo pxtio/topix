@@ -8,8 +8,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
+  SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
-import { useListChats } from '@/features/agent/api/list-chats'
+import { useInfiniteChats } from '@/features/agent/api/list-chats'
 import { useAppStore } from '@/store'
 import { useListBoards } from '@/features/board/api/list-boards'
 import { Collapsible, CollapsibleTrigger } from '../ui/collapsible'
@@ -17,7 +18,8 @@ import { CollapsibleContent } from '@radix-ui/react-collapsible'
 import { ScrollArea } from '../ui/scroll-area'
 import { ChatMenuItem, NewChatItem } from './chat'
 import { BoardItem, DashboardMenuItem, NewBoardItem } from './board'
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { Chat } from '@/features/agent/types/chat'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Clock02Icon, LogoutSquareIcon, MinusSignIcon, PlusSignIcon, Settings01Icon, UserIcon } from '@hugeicons/core-free-icons'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -31,13 +33,25 @@ import {
 import { SubscriptionsMenuItem } from './subscription'
 import { ModeToggle } from '@/components/mode-toggle'
 import { HomeMenuItem } from './home'
+import { useCheckEleInView } from '@/hooks/use-check-ele-in-view'
 
+
+/**
+ * Props for the AppSidebar component.
+ *
+ * @property onLogout - Callback function to handle user logout.
+ */
 type AppSidebarProps = {
   onLogout: () => void
 }
 
+
+/**
+ * Application Sidebar Component.
+ */
+const CHAT_HISTORY_PAGE_SIZE = 50
+
 export function AppSidebar({ onLogout }: AppSidebarProps) {
-  const userId = useAppStore(s => s.userId)
   const userEmail = useAppStore(s => s.userEmail)
 
   const initials = useMemo(() => {
@@ -46,23 +60,32 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     return name.slice(0, 2).toUpperCase()
   }, [userEmail])
 
-  const { data: chats = [] } = useListChats({ userId })
-  const { data: boards = [] } = useListBoards()
+  const [scrollViewport, setScrollViewport] = useState<HTMLDivElement | null>(null)
+  const handleScrollAreaRef = useCallback((node: HTMLDivElement | null) => {
+    setScrollViewport(node)
+  }, [])
 
-  const { chatHistoryItems, chatsByBoard } = useMemo(() => {
-    const map = new Map<string, typeof chats>()
-    const history: typeof chats = []
-    for (const chat of chats) {
-      const gid = chat.graphUid ?? null
-      if (gid == null) history.push(chat)
-      else {
-        const bucket = map.get(gid) ?? []
-        bucket.push(chat)
-        map.set(gid, bucket)
-      }
-    }
-    return { chatHistoryItems: history, chatsByBoard: map }
-  }, [chats])
+  const { data: chatPagesData, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteChats({
+    pageSize: CHAT_HISTORY_PAGE_SIZE,
+    graphUid: "none"
+  })
+  const { data: boards = [] } = useListBoards()
+  const { ref: sentinelRef, inView: isSentinelInView } = useCheckEleInView<HTMLDivElement>({
+    root: scrollViewport,
+    margin: '0px 0px -20% 0px'
+  })
+
+  const chatHistoryItems = useMemo<Chat[]>(
+    () => chatPagesData?.pages.flat() ?? [],
+    [chatPagesData]
+  )
+
+  useEffect(() => {
+    if (!isSentinelInView) return
+    if (!hasNextPage) return
+    if (isFetchingNextPage) return
+    fetchNextPage()
+  }, [isSentinelInView, hasNextPage, isFetchingNextPage, fetchNextPage])
 
   const chatItems = useMemo(
     () => chatHistoryItems.map(chat => (
@@ -77,15 +100,14 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         key={board.uid}
         boardId={board.uid}
         label={board.label}
-        chats={chatsByBoard.get(board.uid) ?? []}
       />
     )),
-    [boards, chatsByBoard]
+    [boards]
   )
 
   return (
     <Sidebar variant="inset" collapsible="icon">
-      <ScrollArea className="h-full w-full flex flex-row">
+      <ScrollArea ref={handleScrollAreaRef} className="h-full w-full flex flex-row">
         <SidebarContent className="w-[calc(var(--sidebar-width)-theme(spacing.2)*2)]">
 
           {/* User section (top) */}
@@ -169,7 +191,12 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                     </SidebarMenuItem>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <SidebarMenuSub>{chatItems}</SidebarMenuSub>
+                    <SidebarMenuSub>
+                      {chatItems}
+                      <SidebarMenuSubItem aria-hidden className="pointer-events-none">
+                        <div ref={sentinelRef} className="h-4 w-full opacity-0" />
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
                   </CollapsibleContent>
                 </Collapsible>
               </SidebarMenu>

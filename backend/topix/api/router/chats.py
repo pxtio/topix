@@ -2,7 +2,7 @@
 
 import logging
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Body, Depends, Request, Response
 from fastapi.params import Path, Query
@@ -20,6 +20,7 @@ from topix.api.datatypes.requests import (
     SendMessageRequest,
 )
 from topix.api.utils.decorators import with_standard_response
+from topix.api.utils.rate_limiter import rate_limiter
 from topix.api.utils.resilient_streaming import with_streaming_resilient_ndjson
 from topix.api.utils.security import get_current_user_uid, verify_chat_user
 from topix.datatypes.chat.chat import Chat
@@ -111,11 +112,23 @@ async def get_chat(
 async def list_chats(
     response: Response,
     request: Request,
-    user_id: Annotated[str, Depends(get_current_user_uid)]
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    offset: Annotated[int, Query(description="Pagination offset")] = 0,
+    limit: Annotated[int, Query(description="Pagination limit")] = 100,
+    graph_uid: Annotated[
+        str | Literal["none"] | None,
+        Query(description="Optional Graph UID")
+    ] = None,
 ):
     """List all chats for the user."""
     store: ChatStore = request.app.chat_store
-    chats = await store.list_chats(user_uid=user_id)
+    chats = await store.list_chats(
+        user_uid=user_id,
+        offset=offset,
+        limit=limit,
+        graph_uid=graph_uid
+    )
+
     return {"chats": [chat.model_dump(exclude_none=True) for chat in chats]}
 
 
@@ -143,7 +156,8 @@ async def send_message(
     request: Request,
     chat_id: Annotated[str, Path(description="Chat ID")],
     body: Annotated[SendMessageRequest, Body(description="Message content")],
-    _: Annotated[None, Depends(verify_chat_user)]
+    _: Annotated[None, Depends(verify_chat_user)],
+    __: Annotated[None, Depends(rate_limiter)],
 ):
     """Send a message to a chat."""
     chat_store: ChatStore = request.app.chat_store

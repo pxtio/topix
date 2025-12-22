@@ -8,6 +8,10 @@ x-postgres: &postgres-base
     POSTGRES_USER: topix
     POSTGRES_HOST_AUTH_METHOD: trust
 
+x-redis: &redis-base
+  image: redis:7-alpine
+  command: redis-server --appendonly yes
+
 services:
   # -------- LOCAL PROFILE (DBs) --------
   qdrant-local:
@@ -30,6 +34,20 @@ services:
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "topix"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  redis-local:
+    <<: *redis-base
+    container_name: redis-local
+    profiles: ["local"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_local:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 2s
       retries: 10
@@ -59,6 +77,134 @@ services:
       timeout: 2s
       retries: 10
 
+  redis-dev:
+    <<: *redis-base
+    container_name: redis-dev
+    profiles: ["dev"]
+    ports:
+      - "6380:6379"   # host:container
+    volumes:
+      - redis_data_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  qdrant-test:
+    <<: *qdrant-base
+    container_name: qdrant-test
+    profiles: ["test"]
+    ports:
+      - "6335:6333"
+    volumes:
+      - qdrant_data_test:/qdrant/storage
+
+  postgres-test:
+    <<: *postgres-base
+    container_name: postgres-test
+    profiles: ["test"]
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg_data_test:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "topix"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  redis-test:
+    <<: *redis-base
+    container_name: redis-test
+    profiles: ["test"]
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_data_test:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  qdrant-staging:
+    <<: *qdrant-base
+    container_name: qdrant-staging
+    profiles: ["staging"]
+    ports:
+      - "6336:6333"
+    volumes:
+      - qdrant_data_staging:/qdrant/storage
+
+  postgres-staging:
+    <<: *postgres-base
+    container_name: postgres-staging
+    profiles: ["staging"]
+    ports:
+      - "5435:5432"
+    volumes:
+      - pg_data_staging:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "topix"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  redis-staging:
+    <<: *redis-base
+    container_name: redis-staging
+    profiles: ["staging"]
+    ports:
+      - "6382:6379"
+    volumes:
+      - redis_data_staging:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  qdrant-prod:
+    <<: *qdrant-base
+    container_name: qdrant-prod
+    profiles: ["prod"]
+    ports:
+      - "6337:6333"
+    volumes:
+      - qdrant_data_prod:/qdrant/storage
+
+  postgres-prod:
+    <<: *postgres-base
+    container_name: postgres-prod
+    profiles: ["prod"]
+    ports:
+      - "5436:5432"
+    volumes:
+      - pg_data_prod:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "topix"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  redis-prod:
+    <<: *redis-base
+    container_name: redis-prod
+    profiles: ["prod"]
+    ports:
+      - "6383:6379"
+    volumes:
+      - redis_data_prod:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
   # ===========================
   #       APP SERVICES
   # ===========================
@@ -80,10 +226,13 @@ services:
       QDRANT_PORT: ${QDRANT_PORT:-6333}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres-local}
       POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis-local}
+      REDIS_PORT: ${REDIS_PORT:-6379}
     command: ["python","-m","topix.api.app","--stage","local"]
     depends_on:
       - postgres-local
       - qdrant-local
+      - redis-local
     ports:
       - "${API_PORT:-8081}:${API_PORT:-8081}"
 
@@ -119,10 +268,13 @@ services:
       QDRANT_PORT: ${QDRANT_PORT:-6333}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres-dev}
       POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis-dev}
+      REDIS_PORT: ${REDIS_PORT:-6379}
     command: ["python","-m","topix.api.app","--stage","dev"]
     depends_on:
       - postgres-dev
       - qdrant-dev
+      - redis-dev
     ports:
       - "${API_PORT:-8081}:${API_PORT:-8081}"
 
@@ -140,8 +292,136 @@ services:
     ports:
       - "${APP_PORT:-5174}:80"
 
+  backend-test:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+      args:
+        ENVFILE: ${ENVFILE:-.env}
+    container_name: backend-test
+    profiles: ["test"]
+    environment:
+      DOPPLER_TOKEN: ${DOPPLER_TOKEN}
+      API_HOST: 0.0.0.0
+      API_PORT: ${API_PORT:-8082}
+      QDRANT_HOST: ${QDRANT_HOST:-qdrant-test}
+      QDRANT_PORT: ${QDRANT_PORT:-6333}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres-test}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis-test}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    command: ["python","-m","topix.api.app","--stage","test"]
+    depends_on:
+      - postgres-test
+      - qdrant-test
+      - redis-test
+    ports:
+      - "${API_PORT:-8082}:${API_PORT:-8082}"
+
+  webui-test:
+    build:
+      context: ..
+      dockerfile: webui/Dockerfile
+    container_name: webui-test
+    profiles: ["test"]
+    environment:
+      API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8082}}
+    depends_on:
+      - backend-test
+    ports:
+      - "${APP_PORT:-5175}:80"
+
+  backend-staging:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+      args:
+        ENVFILE: ${ENVFILE:-.env}
+    container_name: backend-staging
+    profiles: ["staging"]
+    environment:
+      DOPPLER_TOKEN: ${DOPPLER_TOKEN}
+      API_HOST: 0.0.0.0
+      API_PORT: ${API_PORT:-8083}
+      QDRANT_HOST: ${QDRANT_HOST:-qdrant-staging}
+      QDRANT_PORT: ${QDRANT_PORT:-6333}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres-staging}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis-staging}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    command: ["python","-m","topix.api.app","--stage","staging"]
+    depends_on:
+      - postgres-staging
+      - qdrant-staging
+      - redis-staging
+    ports:
+      - "${API_PORT:-8083}:${API_PORT:-8083}"
+
+  webui-staging:
+    build:
+      context: ..
+      dockerfile: webui/Dockerfile
+    container_name: webui-staging
+    profiles: ["staging"]
+    environment:
+      API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8083}}
+    depends_on:
+      - backend-staging
+    ports:
+      - "${APP_PORT:-5176}:80"
+
+  backend-prod:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+      args:
+        ENVFILE: ${ENVFILE:-.env}
+    container_name: backend-prod
+    profiles: ["prod"]
+    environment:
+      DOPPLER_TOKEN: ${DOPPLER_TOKEN}
+      API_HOST: 0.0.0.0
+      API_PORT: ${API_PORT:-8084}
+      QDRANT_HOST: ${QDRANT_HOST:-qdrant-prod}
+      QDRANT_PORT: ${QDRANT_PORT:-6333}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres-prod}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis-prod}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    command: ["python","-m","topix.api.app","--stage","prod"]
+    depends_on:
+      - postgres-prod
+      - qdrant-prod
+      - redis-prod
+    ports:
+      - "${API_PORT:-8084}:${API_PORT:-8084}"
+
+  webui-prod:
+    build:
+      context: ..
+      dockerfile: webui/Dockerfile
+    container_name: webui-prod
+    profiles: ["prod"]
+    environment:
+      API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8084}}
+    depends_on:
+      - backend-prod
+    ports:
+      - "${APP_PORT:-5177}:80"
+
 volumes:
   qdrant_data_local:
   pg_data_local:
+  redis_data_local:
   qdrant_data_dev:
   pg_data_dev:
+  redis_data_dev:
+  qdrant_data_test:
+  pg_data_test:
+  redis_data_test:
+  qdrant_data_staging:
+  pg_data_staging:
+  redis_data_staging:
+  qdrant_data_prod:
+  pg_data_prod:
+  redis_data_prod:

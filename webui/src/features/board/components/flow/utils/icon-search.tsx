@@ -8,6 +8,8 @@ import { Icon } from "@iconify/react"
 import { cn } from "@/lib/utils"
 import { useAddNoteNode } from "@/features/board/hooks/add-node"
 
+const ICON_NODE_SIZE = 220
+
 
 /**
  * Example usage of the Icon component from Iconify.
@@ -48,7 +50,11 @@ export const IconSearchDialog = ({
 
   const handleSelectIcon = (iconName: string) => {
     // Future: insert selected icon into canvas
-    addNode({ nodeType: "icon", icon: iconName })
+    addNode({
+      nodeType: "icon",
+      icon: iconName,
+      size: { width: ICON_NODE_SIZE, height: ICON_NODE_SIZE }
+    })
     setOpenIconSearch(false)
   }
 

@@ -1,5 +1,23 @@
 import { generateUuid } from "@/lib/common"
 import { createDefaultLinkStyle, type LinkStyle } from "./style"
+import type { RichText } from "./note"
+
+
+/**
+ * Interface for properties of a link.
+ */
+export interface LinkProperties {
+  edgeControlPoint: {
+    type: "position",
+    position?: { x: number; y: number }
+  }
+}
+
+export const createDefaultLinkProperties = (): LinkProperties => ({
+  edgeControlPoint: {
+    type: "position"
+  }
+})
 
 
 /**
@@ -10,9 +28,11 @@ export interface Link extends Record<string, unknown> {
   type: "link"
   version: number
 
+  properties: LinkProperties
+
   source: string
   target: string
-  label?: string
+  label?: RichText
   style: LinkStyle
 
   createdAt: string
@@ -39,6 +59,7 @@ export const createDefaultLink = (
   id: generateUuid(),
   type: "link",
   version: 1,
+  properties: createDefaultLinkProperties(),
   source,
   target,
   style: createDefaultLinkStyle(),

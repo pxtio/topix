@@ -11,6 +11,7 @@ from topix.agents.mindmap.schemify.schemify import SchemifyAgent, convert_schemi
 from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.utils.decorators import with_standard_response
+from topix.api.utils.rate_limiter import rate_limiter
 from topix.api.utils.security import get_current_user_uid
 from topix.utils.web.preview import preview_webpage
 
@@ -28,7 +29,8 @@ async def notify(
     response: Response,
     request: Request,
     user_id: Annotated[str, Depends(get_current_user_uid)],
-    body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
+    body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")],
+    _: Annotated[None, Depends(rate_limiter)],
 ):
     """Convert a mindmap to a graph."""
     context = Context()
@@ -49,7 +51,8 @@ async def mapify(
     response: Response,
     request: Request,
     user_id: Annotated[str, Depends(get_current_user_uid)],
-    body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
+    body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")],
+    _: Annotated[None, Depends(rate_limiter)],
 ):
     """Convert a mindmap to a graph."""
     context = Context()
@@ -70,7 +73,8 @@ async def schemify(
     response: Response,
     request: Request,
     user_id: Annotated[str, Depends(get_current_user_uid)],
-    body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")]
+    body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")],
+    _: Annotated[None, Depends(rate_limiter)],
 ):
     """Convert a mindmap to a graph using Schemify."""
     context = Context()

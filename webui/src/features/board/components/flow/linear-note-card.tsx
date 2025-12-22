@@ -112,7 +112,7 @@ export function LinearNoteCard({ node }: Props) {
             </PopoverTrigger>
             <PopoverContent align='start' className='w-auto p-2'>
               <div className='grid grid-cols-6 gap-2'>
-                {TAILWIND_200.map(c => (
+                {[{ name: 'white', hex: '#ffffff' }, ...TAILWIND_200].map(c => (
                   <button
                     key={c.name}
                     className='h-6 w-6 rounded-md border border-border hover:brightness-95'

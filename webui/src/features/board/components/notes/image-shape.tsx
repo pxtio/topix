@@ -10,7 +10,7 @@ export interface ImageShapeProps {
  */
 export const ImageShape = ({ imageUrl, className }: ImageShapeProps) => {
   const clName = cn(
-    "w-full flex justify-center",
+    "relative w-full h-full flex items-center justify-center",
     className
   )
 
@@ -19,7 +19,7 @@ export const ImageShape = ({ imageUrl, className }: ImageShapeProps) => {
       <img
         src={imageUrl}
         alt="Note Image"
-        className="w-full h-auto object-contain"
+        className="max-w-full max-h-full object-contain rounded-md shadow-sm"
       />
     </div>
   )

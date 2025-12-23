@@ -10,13 +10,13 @@ from agents import (
 )
 
 from topix.agents.assistant.code_interpreter import CodeInterpreter
-from topix.agents.assistant.memory_search import MemorySearch
 from topix.agents.base import BaseAgent
 from topix.agents.config import PlanConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName, tool_descriptions
 from topix.agents.image.gen import generate_image_tool
+from topix.agents.memory.search import create_memory_search_tool
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.agents.websearch.navigate import NavigateAgent
 from topix.agents.widgets.finance import display_stock_widget_tool
@@ -55,17 +55,14 @@ class Plan(BaseAgent):
         super().__post_init__()
 
     @classmethod
-    def from_config(cls, content_store: ContentStore, config: PlanConfig) -> Plan:
+    def from_config(cls, content_store: ContentStore, config: PlanConfig, memory_filters: dict | None = None) -> Plan:
         """Create an instance of Plan from configuration."""
         tools = [
             display_stock_widget_tool,
             display_weather_widget_tool,
             display_image_search_widget_tool,
             WebSearchHandler.from_config(config.web_search),
-            MemorySearch.from_config(content_store, config.memory_search).as_tool(
-                tool_name=AgentToolName.MEMORY_SEARCH,
-                tool_description=tool_descriptions.get(AgentToolName.MEMORY_SEARCH),
-            ),
+            create_memory_search_tool(memory_filters, content_store),  # memory search tool
         ]
 
         if config.code_interpreter:

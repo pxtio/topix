@@ -45,13 +45,13 @@ def convert_dict_to_must_match_filter(filter_dict: dict) -> Filter:
 class RetrieveOutput(BaseModel):
     """Output for all methods involving retrieval."""
 
-    id: str | int
+    id: str
     resource: Resource | None = None
     vector: list[list[float]] | None = None
     score: float | None = None
 
 
-def convert_point(
+def convert_point(  # noqa: C901
     point: ScoredPoint | Record,
 ) -> RetrieveOutput:
     """Convert a Qdrant point to a resource."""
@@ -88,3 +88,9 @@ def convert_point(
         score=score,
         vector=point.vector
     )
+
+
+# TODO: implement a helper that converts a filter dict -> Qdrant Filter object
+def build_qdrant_filter(filter_dict: dict):
+    """Build a Qdrant filter from a dict."""
+    pass

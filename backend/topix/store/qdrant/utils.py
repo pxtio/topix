@@ -1,16 +1,16 @@
 """Utility functions for Qdrant."""
 
 from pydantic import BaseModel
-from qdrant_client.models import Record, ScoredPoint
+from qdrant_client.models import Record, ScoredPoint, Filter, FieldCondition, MatchValue
 
 from topix.datatypes.chat.chat import Message
+from topix.datatypes.file.chunk import Chunk
+from topix.datatypes.file.document import Document
 from topix.datatypes.newsfeed.newsfeed import Newsfeed
 from topix.datatypes.newsfeed.subscription import Subscription
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.datatypes.resource import Resource
-from topix.datatypes.file.document import Document
-from topix.datatypes.file.chunk import Chunk
 
 
 def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str]:
@@ -29,6 +29,17 @@ def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str
             fields.extend(payload_dict_to_field_list(value, full_key))
         # else: skip (only True and dict supported)
     return fields
+
+
+def convert_dict_to_must_match_filter(filter_dict: dict) -> Filter:
+    """Convert a dict to a Qdrant must match filter."""
+    query_filter = Filter(
+        must=[
+            FieldCondition(key=key, match=MatchValue(value=value))
+            for key, value in filter_dict.items()
+        ]
+    )
+    return query_filter
 
 
 class RetrieveOutput(BaseModel):

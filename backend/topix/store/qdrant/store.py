@@ -23,6 +23,7 @@ from qdrant_client.models import (
 )
 
 from topix.config.config import Config, QdrantConfig
+
 # from topix.datatypes.property import TextProperty
 from topix.datatypes.resource import Resource
 from topix.nlp.embed import DIMENSIONS, OpenAIEmbedder

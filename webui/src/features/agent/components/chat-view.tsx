@@ -64,11 +64,19 @@ const HistoryList = ({
               <span className="sr-only">Open chat history</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-72 max-h-80 overflow-y-auto">
+          <DropdownMenuContent align="start" className="w-72 max-h-80 overflow-y-auto scrollbar-thin">
             <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide flex flex-row items-center gap-0">
               <HugeiconsIcon icon={Clock02Icon} className="size-4 mr-2 inline-block" strokeWidth={2} />
               <span>Chat History</span>
             </div>
+            <DropdownMenuItem
+              onSelect={onNewChat}
+              className="text-sm font-medium text-primary cursor-pointer flex flex-row items-center gap-0"
+            >
+              <HugeiconsIcon icon={PlusSignIcon} className="size-4 mr-2" strokeWidth={2} />
+              <span>Create new chat</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             {chats.length ? (
               chats.map(chat => {
                 const subtitle = formatChatDate(chat.updatedAt || chat.createdAt)
@@ -94,14 +102,6 @@ const HistoryList = ({
                 No chats yet.
               </div>
             )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onSelect={onNewChat}
-              className="text-sm font-medium text-primary cursor-pointer flex flex-row items-center gap-0"
-            >
-              <HugeiconsIcon icon={PlusSignIcon} className="size-4 mr-2" strokeWidth={2} />
-              <span>Create new chat</span>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -121,7 +121,7 @@ const HistoryList = ({
         </Button>
       </div>
       {chats.length ? (
-        <div className="max-h-64 overflow-y-auto flex flex-col gap-1 pr-1">
+        <div className="max-h-64 overflow-y-auto scrollbar-thin flex flex-col gap-1 pr-1">
           {chats.map(chat => {
             const subtitle = formatChatDate(chat.updatedAt || chat.createdAt)
             const isActive = chat.uid === activeChatId

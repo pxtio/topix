@@ -82,7 +82,7 @@ export const InputBar = ({ attachedBoardId, layout = "floating" }: InputBarProps
           params: { id: targetBoardId },
           search: (prev: Record<string, unknown>) => ({
             ...prev,
-            currentChatId: newChatId
+            current_chat_id: newChatId
           })
         })
       } else {

@@ -16,6 +16,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Clock02Icon, Message02Icon, PlusSignIcon } from "@hugeicons/core-free-icons"
 import { ThemedWelcome } from "./chat/welcome-message"
+import { useNavigate, useParams, useRouterState } from "@tanstack/react-router"
 
 type ChatProps = {
   chatId?: string
@@ -158,6 +159,9 @@ const ChatBody = ({
 }: ChatProps) => {
   const { chatId, setChatId } = useChat()
   const { data: chatList = [] } = useListChats({ graphUid: initialBoardId })
+  const navigate = useNavigate()
+  const routerLocation = useRouterState({ select: (s) => s.location })
+  const boardParams = useParams({ from: "/boards/$id", shouldThrow: false })
 
   const attachedBoardId = useMemo(() => {
     const currentChat = chatList?.find(c => c.uid === chatId)
@@ -177,14 +181,35 @@ const ChatBody = ({
     className
   )
 
+  const isBoardRoute = routerLocation.pathname?.startsWith("/boards/")
+  const boardRouteId = boardParams?.id ?? initialBoardId
+
+  const syncBoardUrl = (nextChatId?: string) => {
+    if (!isBoardRoute || !boardRouteId) return
+    navigate({
+      to: "/boards/$id",
+      params: { id: boardRouteId },
+      search: (prev: Record<string, unknown>) => ({
+        ...prev,
+        current_chat_id: nextChatId || undefined,
+      }),
+    })
+  }
+
   return (
     <div className={chatClassName}>
       {showHistoricalChats && (
         <HistoryList
           chats={historicalChats}
           activeChatId={chatId}
-          onSelectChat={setChatId}
-          onNewChat={() => setChatId(undefined)}
+          onSelectChat={(id) => {
+            setChatId(id)
+            syncBoardUrl(id)
+          }}
+          onNewChat={() => {
+            setChatId(undefined)
+            syncBoardUrl(undefined)
+          }}
           variant={historyVariant}
         />
       )}

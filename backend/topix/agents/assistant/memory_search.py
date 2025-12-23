@@ -9,6 +9,7 @@ from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.outputs import MemorySearchOutput
 from topix.store.qdrant.store import ContentStore
+from topix.store.qdrant.utils import convert_dict_to_must_match_filter
 
 NOT_FOUND = "No more relevant information found in the memory base."
 
@@ -54,7 +55,7 @@ class MemorySearch(BaseAgent):
             query=input,
             limit=context.memory_search_limit,
             include={"type": True, "content": True, "label": True},
-            filter=context.memory_search_filter,
+            filter=convert_dict_to_must_match_filter(context.memory_search_filter),
         )
 
         memories = []

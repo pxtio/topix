@@ -31,15 +31,16 @@ def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str
     return fields
 
 
-def convert_dict_to_must_match_filter(filter_dict: dict) -> Filter:
+def convert_dict_to_must_match_filter(filter_dict: dict) -> Filter | None:
     """Convert a dict to a Qdrant must match filter."""
-    query_filter = Filter(
+    if filter_dict is None:
+        return None
+    return Filter(
         must=[
             FieldCondition(key=key, match=MatchValue(value=value))
             for key, value in filter_dict.items()
         ]
     )
-    return query_filter
 
 
 class RetrieveOutput(BaseModel):
@@ -90,7 +91,13 @@ def convert_point(  # noqa: C901
     )
 
 
-# TODO: implement a helper that converts a filter dict -> Qdrant Filter object
-def build_qdrant_filter(filter_dict: dict):
-    """Build a Qdrant filter from a dict."""
-    pass
+def build_must_match_filter(filter_dict: dict) -> Filter | None:
+    """Build a Qdrant must match filter from a dict."""
+    if filter_dict is None:
+        return None
+    return Filter(
+        must=[
+            FieldCondition(key=key, match=MatchValue(value=value))
+            for key, value in filter_dict.items()
+        ]
+    )

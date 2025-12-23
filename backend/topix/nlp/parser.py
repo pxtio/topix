@@ -16,8 +16,10 @@ logger = logging.getLogger(__name__)
 class MistralParser():
     """A class used to parse a PDF document using the Mistral OCR API."""
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str | None = None):
         """Initialize the MistralParser."""
+        if api_key is None:
+            raise ValueError("API key is required, got None")
         self.client = Mistral(api_key=api_key)
 
     @classmethod
@@ -26,7 +28,7 @@ class MistralParser():
         config: Config = Config.instance()
         mistral_config: MistralConfig = config.run.apis.mistral
 
-        return cls(api_key=mistral_config.api_key)
+        return cls(api_key=mistral_config.api_key.get_secret_value() if mistral_config.api_key else None)
 
     def get_num_pages(self, fname: str) -> int:
         """Get the number of pages in a PDF file.

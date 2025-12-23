@@ -13,9 +13,9 @@ from topix.store.qdrant.store import ContentStore
 class ParsingConfig():
     """RAG configuration."""
 
-    ocr_parser: MistralParser = MistralParser(api_key=os.getenv("MISTRAL_API_KEY"))  # TODO: fix the mistral api key
+    ocr_parser: MistralParser = MistralParser().from_config()
     chunker: Chunker = Chunker()
-    vector_store: ContentStore   # = ContentStore.from_config()  TODO: fix the from_config
+    vector_store: ContentStore = ContentStore.from_config()  # TODO: fix the from_config
 
 
 class ParsingPipeline:

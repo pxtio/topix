@@ -12,7 +12,7 @@ from topix.agents.datatypes.tools import AgentToolName, tool_descriptions
 from topix.agents.memory.utils import resource_to_ref_annotation
 from topix.agents.tool_handler import ToolHandler
 from topix.store.qdrant.store import ContentStore
-from topix.store.qdrant.utils import build_qdrant_filter
+from topix.store.qdrant.utils import build_must_match_filter
 
 
 async def mem_search(
@@ -35,7 +35,7 @@ async def mem_search(
     results = await content_store.search(
         query=query,
         limit=limit,
-        filter=build_qdrant_filter(filters) if isinstance(filters, dict) else filters
+        filter=build_must_match_filter(filters) if isinstance(filters, dict) else filters
     )
     return MemorySearchOutput(
         references=[resource_to_ref_annotation(res.resource) for res in results if res.resource is not None]

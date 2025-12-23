@@ -46,8 +46,8 @@ export const ShapeChrome = memo(({
   if (type === 'sheet') {
     return (
       <div
-        className={clsx('rounded-xl border border-border shadow-md', frameClass, className)}
-        style={{ backgroundColor, color: textColor, borderColor: strokeColor, ...wrapperStyle }}
+        className={clsx('rounded-md border-2 border-foreground/30 shadow-md bg-background overflow-hidden', frameClass, className)}
+        style={{ backgroundColor}}
       >
         {children}
       </div>

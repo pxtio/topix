@@ -1,18 +1,22 @@
+import { useEffect } from "react"
 import { useParams } from "@tanstack/react-router"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 import { SheetEditor } from "../components/sheet/sheet-editor"
-import { getNote } from "../api/get-note"
+import { useGetNote } from "../api/get-note"
 import { updateNote } from "../api/update-note"
 import { cn } from "@/lib/utils"
 import { SheetUrl } from "@/routes"
+import { useGraphStore } from "../store/graph-store"
 
 export const SheetScreen = () => {
   const { id: boardId, noteId } = useParams({ from: SheetUrl }) as { id: string; noteId: string }
+  const setBoardId = useGraphStore(state => state.setBoardId)
 
-  const { data: note, isLoading } = useQuery({
-    queryKey: ["sheet", boardId, noteId],
-    queryFn: () => getNote(boardId, noteId),
-  })
+  useEffect(() => {
+    setBoardId(boardId)
+  }, [boardId, setBoardId])
+
+  const { data: note, isLoading } = useGetNote({ boardId, noteId })
 
   const mutation = useMutation({
     mutationFn: (markdown: string) =>

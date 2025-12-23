@@ -1,6 +1,6 @@
 import type { Note } from "../types/note"
 import snakecaseKeys from "snakecase-keys"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/api"
 
 
@@ -31,6 +31,8 @@ export async function updateNote(
  * @returns An object containing the updateNote function and its mutation state.
  */
 export const useUpdateNote = () => {
+  const queryClient = useQueryClient()
+
   const mutation = useMutation({
     mutationFn: async ({
       boardId,
@@ -42,7 +44,34 @@ export const useUpdateNote = () => {
       noteData: Partial<Note>
     }) => {
       await updateNote(boardId, noteId, noteData)
-    }
+    },
+    onMutate: async ({ boardId, noteId, noteData }) => {
+      const key = ["note", boardId, noteId]
+      await queryClient.cancelQueries({ queryKey: key })
+
+      const previous = queryClient.getQueryData<Note>(key)
+
+      if (previous) {
+        const optimistic: Note = {
+          ...previous,
+          ...noteData,
+          label: noteData.label ?? previous.label,
+          content: noteData.content ?? previous.content,
+        }
+        queryClient.setQueryData(key, optimistic)
+      }
+
+      return { key, previous }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(ctx.key, ctx.previous)
+      }
+    },
+    onSettled: (_data, _error, variables, ctx) => {
+      const key = ctx?.key ?? ["note", variables.boardId, variables.noteId]
+      queryClient.invalidateQueries({ queryKey: key })
+    },
   })
 
   return {

@@ -4,7 +4,7 @@ import type { Note, NoteProperties } from '../../types/note'
 import type { NoteNode } from '../../types/flow'
 import { MdEditor } from '@/components/editor/milkdown'
 import { MilkdownProvider } from '@milkdown/react'
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { clsx } from 'clsx'
 import { useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,7 @@ import { SheetNodeView } from './sheet-node-view'
 import { SheetEditor } from '../sheet/sheet-editor'
 import { SheetUrl } from '@/routes'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { LinkSquare02Icon } from '@hugeicons/core-free-icons'
+import { LinkSquare02Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
 
 export type NoteWithPin = Note & { pinned?: boolean }
 
@@ -276,6 +276,7 @@ export const NodeCard = memo(({
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2' showCloseButton={!isSheet}>
         {isSheet ? (
           <div className='w-full flex items-center justify-end gap-2 px-2 pt-1'>
+            <DialogTitle className="sr-only">Sheet</DialogTitle>
             <Button
               variant={'ghost'}
               size='icon-sm'
@@ -285,12 +286,15 @@ export const NodeCard = memo(({
             >
               <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" strokeWidth={2} />
             </Button>
-            <DialogClose
-              className='inline-flex h-8 w-8 !p-1 items-center justify-center rounded-md text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            <Button
+              variant='ghost'
+              size='icon-sm'
+              onClick={() => setDialogOpen(false)}
+              title='Close'
               aria-label='Close'
             >
-              <span aria-hidden className='text-lg leading-none'>&times;</span>
-            </DialogClose>
+              <HugeiconsIcon icon={Cancel01Icon} className="size-4" strokeWidth={2} />
+            </Button>
           </div>
         ) : (
           <DialogHeader className='w-full'>

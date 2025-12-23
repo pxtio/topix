@@ -1,6 +1,7 @@
 import camelcaseKeys from "camelcase-keys"
 import type { Note } from "../types/note"
 import { apiFetch } from "@/api"
+import { useQuery } from "@tanstack/react-query"
 
 
 /**
@@ -14,9 +15,22 @@ export async function getNote(
   boardId: string,
   noteId: string
 ): Promise<Note> {
-  const res = await apiFetch<{ data: Record<string, unknown> }>({
+  const res = await apiFetch<{ data: { note: Record<string, unknown> } }>({
     path: `/boards/${boardId}/notes/${noteId}`,
     method: "GET"
   })
-  return camelcaseKeys(res.data, { deep: true }) as Note
+  return camelcaseKeys(res.data.note, { deep: true }) as Note
 }
+
+type UseGetNoteParams = {
+  boardId?: string
+  noteId?: string
+  enabled?: boolean
+}
+
+export const useGetNote = ({ boardId, noteId, enabled = true }: UseGetNoteParams) =>
+  useQuery({
+    queryKey: ["note", boardId, noteId],
+    queryFn: () => getNote(boardId!, noteId!),
+    enabled: !!boardId && !!noteId && enabled,
+  })

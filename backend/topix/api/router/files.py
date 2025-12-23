@@ -1,15 +1,15 @@
 """File-related API routes."""
 
+import json
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, UploadFile, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.params import File, Query
 
 from topix.api.utils.decorators import with_standard_response
 from topix.api.utils.security import get_current_user_uid
 from topix.utils.common import gen_uid
 from topix.utils.file import convert_to_base64_url, detect_mime_type, get_file_path, save_file
-
 
 router = APIRouter(
     prefix="/files",
@@ -81,13 +81,59 @@ async def parse_file(
 
     true_path = get_file_path(saved_path)
 
+    # Generate a unique job ID for tracking parsing status
+    job_id = gen_uid()
+
+    # Store initial status in Redis
+    redis_store = request.app.redis_store
+    status_data = {
+        "status": "pending",
+        "filepath": true_path,
+        "filename": file.filename,
+        "message": "File parsing queued"
+    }
+    await redis_store.redis.setex(
+        f"parse_job:{job_id}",
+        3600,  # Expire after 1 hour
+        json.dumps(status_data)
+    )
+
     pipeline = request.app.parser_pipeline
 
-    background_tasks.add_task(pipeline.process_file, true_path)
+    # Pass job_id and redis_store to the background task
+    background_tasks.add_task(
+        pipeline.process_file_with_status,
+        true_path,
+        job_id,
+        redis_store
+    )
 
     return {
         "status": "success",
         "data": {
+            "job_id": job_id,
             "message": "File parsing started in background"
         }
+    }
+
+
+@router.get("/parse/status/{job_id}", include_in_schema=False)
+@router.get("/parse/status/{job_id}")
+@with_standard_response
+async def get_parse_status(
+    response: Response,
+    request: Request,
+    job_id: str,
+):
+    """Get the parsing status for a job."""
+    redis_store = request.app.redis_store
+    status_json = await redis_store.redis.get(f"parse_job:{job_id}")
+
+    if not status_json:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    status_data = json.loads(status_json)
+    return {
+        "status": "success",
+        "data": status_data
     }

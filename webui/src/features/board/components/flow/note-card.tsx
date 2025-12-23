@@ -2,16 +2,22 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Note, NoteProperties } from '../../types/note'
 import type { NoteNode } from '../../types/flow'
-import { MilkdownProvider } from '@milkdown/react'
 import { MdEditor } from '@/components/editor/milkdown'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { MilkdownProvider } from '@milkdown/react'
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { clsx } from 'clsx'
+import { useNavigate } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
 
 import { Shape } from '../notes/shape'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from '../../types/style'
 import { useGraphStore } from '../../store/graph-store'
 import { SheetNodeView } from './sheet-node-view'
+import { SheetEditor } from '../sheet/sheet-editor'
+import { SheetUrl } from '@/routes'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { LinkSquare02Icon } from '@hugeicons/core-free-icons'
 
 export type NoteWithPin = Note & { pinned?: boolean }
 
@@ -33,6 +39,7 @@ export const NodeCard = memo(({
   contentRef
 }: NodeCardProps) => {
   const isSheet = note.style.type === 'sheet'
+  const navigate = useNavigate()
 
   const [internalOpen, setInternalOpen] = useState(false)
   const dialogOpen = typeof open === 'boolean' ? open : internalOpen
@@ -160,6 +167,11 @@ export const NodeCard = memo(({
     )
   }, [note.id, setNodesPersist])
 
+  const handleOpenFullView = useCallback(() => {
+    if (!note.graphUid) return
+    navigate({ to: SheetUrl, params: { id: note.graphUid, noteId: note.id } })
+  }, [navigate, note.graphUid, note.id])
+
   const updateStyle = useCallback((next: Partial<Note['style']>) => {
     setNodesPersist(nds =>
       nds.map(n => {
@@ -261,12 +273,25 @@ export const NodeCard = memo(({
       </div>
 
       {/* DIALOG CONTENT */}
-      <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2'>
+      <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2' showCloseButton={!isSheet}>
         {isSheet ? (
-          <DialogHeader className='hidden'>
-            <DialogTitle />
-            <DialogDescription />
-          </DialogHeader>
+          <div className='w-full flex items-center justify-end gap-2 px-2 pt-1'>
+            <Button
+              variant={'ghost'}
+              size='icon-sm'
+              onClick={handleOpenFullView}
+              title='Open full view'
+              aria-label='Open full view'
+            >
+              <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" strokeWidth={2} />
+            </Button>
+            <DialogClose
+              className='inline-flex h-8 w-8 !p-1 items-center justify-center rounded-md text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+              aria-label='Close'
+            >
+              <span aria-hidden className='text-lg leading-none'>&times;</span>
+            </DialogClose>
+          </div>
         ) : (
           <DialogHeader className='w-full'>
             <DialogTitle asChild>
@@ -285,9 +310,16 @@ export const NodeCard = memo(({
 
         <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
           <div className='h-full w-full min-w-0 overflow-y-auto overflow-x-hidden scrollbar-thin'>
-            <MilkdownProvider>
-              <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
-            </MilkdownProvider>
+            {isSheet ? (
+              <SheetEditor
+                value={note.content?.markdown || ''}
+                onSave={handleNoteChange}
+              />
+            ) : (
+              <MilkdownProvider>
+                <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
+              </MilkdownProvider>
+            )}
           </div>
         </div>
       </DialogContent>

@@ -17,6 +17,7 @@ import { SubscriptionsScreen } from "@/features/newsfeed/screens/subscriptions"
 import { NewsfeedsScreen } from "@/features/newsfeed/screens/newsfeeds"
 import { NewsfeedLinearPage } from "@/features/newsfeed/screens/newsfeed-linear-page"
 import { HomePage } from "@/features/home/screens/home"
+import { SheetScreen } from "@/features/board/screens/sheet-screen"
 export const rootRoute = createRootRoute({ component: RootLayout })
 
 // --- auth guard ---
@@ -97,6 +98,15 @@ const boardRoute = createRoute({
   component: BoardScreen,
 })
 
+// /boards/:id/sheets/:noteId (protected)
+export const SheetUrl = "/boards/$id/sheets/$noteId"
+const sheetRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: SheetUrl,
+  beforeLoad: requireAuth,
+  component: SheetScreen,
+})
+
 // /subscriptions (protected)
 export const SubscriptionsUrl = "/subscriptions"
 const subscriptionsRoute = createRoute({
@@ -136,6 +146,7 @@ const routeTree = rootRoute.addChildren([
   chatRoute,
   dashboardRoute,
   boardRoute,
+  sheetRoute,
   subscriptionsRoute,
   newsfeedsRoute,
   newsfeedDetailRoute,

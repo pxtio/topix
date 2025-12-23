@@ -14,16 +14,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from topix.api.router import boards, chats, files, finance, subscriptions, tools, users, utils
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
-from topix.nlp.pipeline.rag import ParsingPipeline
+from topix.nlp.pipeline.rag import ParsingConfig, ParsingPipeline
 from topix.setup import setup
 from topix.store.chat import ChatStore
 from topix.store.graph import GraphStore
+from topix.store.qdrant.store import ContentStore
 from topix.store.redis.store import RedisStore
 from topix.store.subscription import SubscriptionStore
 from topix.store.user import UserStore
 from topix.utils.logging import logging_config
-from topix.nlp.pipeline.rag import ParsingConfig
-from topix.store.qdrant.store import ContentStore
 
 logging_config()
 logger = logging.getLogger(__name__)

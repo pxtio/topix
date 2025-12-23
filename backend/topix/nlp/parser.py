@@ -1,11 +1,11 @@
-# Take a path (loacal first) and parse it, return a json with the markdown and the page number
-"""This module contains the MistralOCRParser class used to parse a PDF document using the Mistral OCR API."""
+"""Module containing the MistralParser class used to parse a PDF document using the Mistral OCR API."""
 
+import base64
 import logging
 import os
-import base64
-from pypdf import PdfReader
+
 from mistralai import Mistral
+from pypdf import PdfReader
 
 from topix.config.config import Config, MistralConfig
 from topix.datatypes.mime import MimeTypeEnum
@@ -14,15 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 class MistralParser():
-    """A class used to parse a PDF document using the Mistral OCR API.
-    """
+    """A class used to parse a PDF document using the Mistral OCR API."""
 
     def __init__(self, api_key: str):
+        """Initialize the MistralParser."""
         self.client = Mistral(api_key=api_key)
 
     @classmethod
     def from_config(cls):
-        """Create an instance of QdrantStore from configuration."""
+        """Create an instance of MistralParser from configuration."""
         config: Config = Config.instance()
         mistral_config: MistralConfig = config.run.apis.mistral
 
@@ -36,6 +36,7 @@ class MistralParser():
 
         Returns:
             int: The number of pages in the PDF file. If an error occurs, -1 is returned.
+
         """
         try:
             with open(fname, 'rb') as f:
@@ -85,6 +86,7 @@ class MistralParser():
 
         Returns:
             str: The base64 encoded PDF file.
+
         """
         with open(pdf_path, "rb") as pdf_file:
             return base64.b64encode(pdf_file.read()).decode('utf-8')
@@ -94,20 +96,19 @@ class MistralParser():
         filepath: str,
         max_pages: int = 200,
     ) -> dict[str, int | str]:
-        """Parse the PDF document using the Mistral OCR API.
+        """Parse the PDF document at the given file path using the Mistral OCR API.
 
         Args:
-            image_limit_per_page (int, optional): limit of extracted images per page. Defaults to 5.
-            image_min_size (int, optional): minimum size of extracted images. Defaults to 0.
-            adjust_headers_by_toc (bool, optional): adjust headers by the table of contents. Defaults to True.
-            annotate_images (bool, optional): whether to annotate images with bounding boxes. Defaults to False.
+            filepath (str): Path to the PDF file to parse.
+            max_pages (int, optional): Maximum number of pages allowed to parse. Defaults to 200.
 
         Raises:
-            requests.exceptions.HTTPError: Error while sending the request to the Mistral OCR API.
-            Exception: Error while sending the request to the Mistral OCR API.
+            ValueError: If the file type is not supported.
+            AssertionError: If the number of pages in the PDF exceeds max_pages.
+            Exception: If an error occurs during OCR processing.
 
         Returns:
-            list[str]: pages in markdown format
+            list[dict[str, int | str]]: A list of dictionaries containing each page's markdown content and page number.
 
         """
         assert self.detect_mime_type(filepath) == MimeTypeEnum.PDF, "Unsupported file format"

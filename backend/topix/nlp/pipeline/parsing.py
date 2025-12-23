@@ -2,18 +2,17 @@
 
 import os
 
-# from pydantic import BaseModel
-
-from topix.datatypes.property import URLProperty, NumberProperty, TextProperty
-from topix.datatypes.resource import RichText
-from topix.nlp.parsing import MistralParser
-from topix.nlp.chunking import Chunker
-from topix.store.qdrant.store import ContentStore
 from topix.datatypes.file.document import Document, DocumentProperties
+from topix.datatypes.property import NumberProperty, TextProperty, URLProperty
+from topix.datatypes.resource import RichText
+from topix.nlp.chunking import Chunker
+from topix.nlp.parsing import MistralParser
+from topix.store.qdrant.store import ContentStore
 
 
 class ParsingConfig():
     """RAG configuration."""
+
     ocr_parser: MistralParser = MistralParser(api_key=os.getenv("MISTRAL_API_KEY"))  # TODO: fix the mistral api key
     chunker: Chunker = Chunker()
     vector_store: ContentStore   # = ContentStore.from_config()  TODO: fix the from_config
@@ -21,7 +20,9 @@ class ParsingConfig():
 
 class ParsingPipeline:
     """Parsing pipeline."""
+
     def __init__(self, config: ParsingConfig = ParsingConfig()):
+        """Initialize the parsing pipeline."""
         self.config = config
 
     async def process_file(self, filepath: str) -> list[str]:

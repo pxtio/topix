@@ -2,14 +2,13 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response, UploadFile, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.params import File, Query
 
 from topix.api.utils.decorators import with_standard_response
 from topix.api.utils.security import get_current_user_uid
 from topix.utils.common import gen_uid
 from topix.utils.file import convert_to_base64_url, detect_mime_type, get_file_path, save_file
-
 
 router = APIRouter(
     prefix="/files",

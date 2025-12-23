@@ -1,8 +1,9 @@
-# Basic fonction to tranform a list of markdown or one markdown into chunks
+"""Module containing the Chunker class used to chunk a list of markdown strings or a single markdown string into smaller chunks."""
 
 import re
 
 import tiktoken
+
 from pydantic import BaseModel
 
 from topix.datatypes.file.chunk import Chunk, ChunkProperties
@@ -12,6 +13,7 @@ from topix.datatypes.resource import RichText
 
 class MarkdownLine(BaseModel):
     """Represents a single line from markdown with metadata."""
+
     text: str
     token_size: int
     is_title: bool
@@ -19,7 +21,10 @@ class MarkdownLine(BaseModel):
 
 
 class Chunker:
+    """Class used to chunk a list of markdown strings or a single markdown string into smaller chunks."""
+
     def __init__(self, min_chunk_size: int = 700, max_chunk_size: int = 1200):
+        """Initialize the Chunker."""
         self.min_chunk_size = min_chunk_size
         self.max_chunk_size = max_chunk_size
         self.encoding = tiktoken.get_encoding("cl100k_base")
@@ -33,9 +38,11 @@ class Chunker:
                     "markdown": str,
                     "page": str
                 }
+
         Returns:
             list[MarkdownLine]: A list of MarkdownLine objects containing text, token size,
                                 whether it's a title, and the page number.
+
         """
         markdown_lines = []
 
@@ -73,10 +80,11 @@ class Chunker:
                     "markdown": str,
                     "page": str
                 }
+
         Returns:
             list[Chunk]: A list of Chunk objects.
-        """
 
+        """
         lines = self._extract_lines_with_metadata(markdowns)
 
         chunks = []
@@ -130,6 +138,7 @@ class Chunker:
 
         Returns:
             Chunk: A Chunk object with the combined content
+
         """
         # Combine lines into markdown content
         content_text = "\n".join(line.text for line in lines)

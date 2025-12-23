@@ -1,13 +1,15 @@
 """RAG pipeline."""
 
+import json
 import os
 
 from topix.datatypes.file.document import Document, DocumentProperties
 from topix.datatypes.property import NumberProperty, TextProperty, URLProperty
 from topix.datatypes.resource import RichText
 from topix.nlp.chunking import Chunker
-from topix.nlp.parsing import MistralParser
+from topix.nlp.parser import MistralParser
 from topix.store.qdrant.store import ContentStore
+from topix.store.redis.store import RedisStore
 
 
 class ParsingConfig():
@@ -51,3 +53,58 @@ class ParsingPipeline:
         await self.config.vector_store.add(elements)
 
         return elements
+
+    async def process_file_with_status(
+        self,
+        filepath: str,
+        job_id: str,
+        redis_store: RedisStore
+    ) -> list[str]:
+        """Process a file and update status in Redis."""
+        try:
+            # Update status to processing
+            status_data = {
+                "status": "processing",
+                "filepath": filepath,
+                "message": "File parsing in progress"
+            }
+            await redis_store.redis.setex(
+                f"parse_job:{job_id}",
+                3600,  # Expire after 1 hour
+                json.dumps(status_data)
+            )
+
+            # Process the file
+            elements = await self.process_file(filepath)
+
+            # Update status to completed
+            document_name = os.path.basename(filepath)
+            status_data = {
+                "status": "completed",
+                "filepath": filepath,
+                "filename": document_name,
+                "message": "File parsing completed successfully",
+                "document_id": elements[-1].id if elements else None,
+                "num_elements": len(elements)
+            }
+            await redis_store.redis.setex(
+                f"parse_job:{job_id}",
+                3600,  # Expire after 1 hour
+                json.dumps(status_data)
+            )
+
+            return elements
+        except Exception as e:
+            # Update status to failed
+            status_data = {
+                "status": "failed",
+                "filepath": filepath,
+                "message": f"File parsing failed: {str(e)}",
+                "error": str(e)
+            }
+            await redis_store.redis.setex(
+                f"parse_job:{job_id}",
+                3600,  # Expire after 1 hour
+                json.dumps(status_data)
+            )
+            raise

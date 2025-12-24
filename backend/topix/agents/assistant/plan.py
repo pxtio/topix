@@ -50,7 +50,7 @@ class Plan(BaseAgent):
             model=model,
             model_settings=model_settings,
             instructions=instructions,
-            tools=tools,
+            tools=tools or [],
         )
         super().__post_init__()
 

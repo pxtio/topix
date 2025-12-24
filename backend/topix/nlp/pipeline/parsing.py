@@ -15,7 +15,7 @@ class ParsingConfig():
 
     ocr_parser: MistralParser = MistralParser.from_config()
     chunker: Chunker = Chunker()
-    vector_store: ContentStore = ContentStore.from_config()  # TODO: fix the from_config
+    vector_store: ContentStore = ContentStore.from_config()
 
 
 class ParsingPipeline:

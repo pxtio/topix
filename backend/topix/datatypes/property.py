@@ -34,6 +34,7 @@ class PropertyType(StrEnum):
     URL = "url"
     REASONING = "reasoning"
     MULTI_SOURCE = "multi_source"
+    STATUS = "status"
 
 
 class Property(abc.ABC, BaseModel):
@@ -41,6 +42,22 @@ class Property(abc.ABC, BaseModel):
 
     id: str = Field(default_factory=gen_uid)
     type: PropertyType
+
+
+class StatusEnum(StrEnum):
+    """Status enum."""
+
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class StatusProperty(Property):
+    """Property for status values."""
+
+    type: Literal[PropertyType.STATUS] = PropertyType.STATUS
+    value: StatusEnum | None = StatusEnum.PENDING
 
 
 class NumberProperty(Property):

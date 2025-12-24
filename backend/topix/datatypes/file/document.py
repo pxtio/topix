@@ -6,9 +6,9 @@ from pydantic import Field
 
 from topix.datatypes.property import (
     DataProperty,
-    NumberProperty,
     PositionProperty,
     SizeProperty,
+    StatusProperty,
     TextProperty,
     URLProperty,
 )
@@ -38,8 +38,8 @@ class DocumentProperties(ResourceProperties):
     mime_type: TextProperty = Field(
         default_factory=lambda: TextProperty(text="application/pdf")
     )
-    number_of_pages: NumberProperty = Field(
-        default_factory=lambda: NumberProperty(number=0)
+    status: StatusProperty = Field(
+        default_factory=lambda: StatusProperty()
     )
 
 

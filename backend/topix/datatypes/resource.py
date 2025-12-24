@@ -8,7 +8,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
-from topix.datatypes.property import DataProperty
+from topix.datatypes.property import DataProperty, TextProperty
 from topix.utils.common import gen_uid
 
 logger = logging.getLogger(__name__)
@@ -89,4 +89,9 @@ class Resource(BaseModel):
             embeddable["label"] = self.label.markdown
         if self.content and self.content.markdown and self.content.searchable:
             embeddable["content"] = self.content.markdown
+
+        # Get all searchable text properties
+        for prop in self.properties.__dict__.values():
+            if isinstance(prop, TextProperty) and prop.searchable and prop.text:
+                embeddable[prop.key] = prop.text
         return embeddable

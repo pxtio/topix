@@ -6,14 +6,14 @@ from topix.datatypes.file.document import Document, DocumentProperties
 from topix.datatypes.property import NumberProperty, TextProperty, URLProperty
 from topix.datatypes.resource import RichText
 from topix.nlp.chunking import Chunker
-from topix.nlp.parsing import MistralParser
+from topix.nlp.parser import MistralParser
 from topix.store.qdrant.store import ContentStore
 
 
 class ParsingConfig():
     """RAG configuration."""
 
-    ocr_parser: MistralParser = MistralParser().from_config()
+    ocr_parser: MistralParser = MistralParser.from_config()
     chunker: Chunker = Chunker()
     vector_store: ContentStore = ContentStore.from_config()  # TODO: fix the from_config
 

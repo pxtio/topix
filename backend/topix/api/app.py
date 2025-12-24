@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from topix.api.router import boards, chats, files, finance, subscriptions, tools, users, utils
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
-from topix.nlp.pipeline.rag import ParsingConfig, ParsingPipeline
+from topix.nlp.pipeline.parsing import ParsingConfig, ParsingPipeline
 from topix.setup import setup
 from topix.store.chat import ChatStore
 from topix.store.graph import GraphStore
@@ -42,9 +42,7 @@ def create_app(stage: StageEnum):
         await app.chat_store.open()
         app.subscription_store = SubscriptionStore()
         await app.subscription_store.open()
-        config = ParsingConfig()
-        config.vector_store = ContentStore.from_config()  # TODO: delete when from_config is fixed
-        app.parser_pipeline = ParsingPipeline(config=config)
+        app.parser_pipeline = ParsingPipeline(config=ParsingConfig())
 
         # Initialize Redis
         app.redis_store = RedisStore.from_config()

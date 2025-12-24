@@ -31,18 +31,6 @@ def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str
     return fields
 
 
-def convert_dict_to_must_match_filter(filter_dict: dict) -> Filter | None:
-    """Convert a dict to a Qdrant must match filter."""
-    if filter_dict is None:
-        return None
-    return Filter(
-        must=[
-            FieldCondition(key=key, match=MatchValue(value=value))
-            for key, value in filter_dict.items()
-        ]
-    )
-
-
 class RetrieveOutput(BaseModel):
     """Output for all methods involving retrieval."""
 
@@ -91,13 +79,26 @@ def convert_point(  # noqa: C901
     )
 
 
-def build_must_match_filter(filter_dict: dict) -> Filter | None:
-    """Build a Qdrant must match filter from a dict."""
-    if filter_dict is None:
+def build_filter(
+    must: dict | None = None,
+    should: dict | None = None,
+    must_not: dict | None = None,
+) -> Filter | None:
+    """Build a Qdrant filter supporting must, should, must_not clauses from dicts."""
+    if not any([must, should, must_not]):
         return None
+
+    def build_conditions(d):
+        if not d:
+            return []
+        return [FieldCondition(key=k, match=MatchValue(value=v)) for k, v in d.items()]
+
+    must_conditions = build_conditions(must)
+    should_conditions = build_conditions(should)
+    must_not_conditions = build_conditions(must_not)
+
     return Filter(
-        must=[
-            FieldCondition(key=key, match=MatchValue(value=value))
-            for key, value in filter_dict.items()
-        ]
+        must=must_conditions if must_conditions else None,
+        should=should_conditions if should_conditions else None,
+        must_not=must_not_conditions if must_not_conditions else None,
     )

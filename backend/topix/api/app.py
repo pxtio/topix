@@ -18,7 +18,6 @@ from topix.nlp.pipeline.parsing import ParsingConfig, ParsingPipeline
 from topix.setup import setup
 from topix.store.chat import ChatStore
 from topix.store.graph import GraphStore
-from topix.store.qdrant.store import ContentStore
 from topix.store.redis.store import RedisStore
 from topix.store.subscription import SubscriptionStore
 from topix.store.user import UserStore

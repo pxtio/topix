@@ -6,19 +6,26 @@ import { useUpdateBoard } from "@/features/board/api/update-board"
 import { useUpdateChat } from "@/features/agent/api/update-chat"
 import { LabelEditor } from "./label-editor"
 import { useListSubscriptions } from "@/features/newsfeed/api/list-subscriptions"
-import { NewChatUrl } from "@/routes"
+import { NewChatUrl, SheetUrl } from "@/routes"
 import { ContextBoard } from "@/features/agent/components/context-board"
 import { UNTITLED_LABEL } from "@/features/board/const"
+import { useGraphStore } from "@/features/board/store/graph-store"
+import { useGetNote } from "@/features/board/api/get-note"
+import { useUpdateNote } from "@/features/board/api/update-note"
 
 export const SidebarLabel = () => {
   const navigate = useNavigate()
+  const { updateNote } = useUpdateNote()
 
   // route params
   const chatParams  = useParams({ from: "/chats/$id", shouldThrow: false })
   const boardParams = useParams({ from: "/boards/$id", shouldThrow: false })
+  const sheetParams = useParams({ from: SheetUrl, shouldThrow: false })
   const subscriptionParams = useParams({ from: "/subscriptions/$id", shouldThrow: false })
   const chatId  = chatParams?.id
   const boardId = boardParams?.id
+  const sheetBoardId = sheetParams?.id
+  const sheetNoteId = sheetParams?.noteId
   const subscriptionId = subscriptionParams?.id
 
   // new-chat search (?board_id=...)
@@ -36,6 +43,7 @@ export const SidebarLabel = () => {
   const isSubscriptionsRoot = pathname === "/subscriptions"
 
   const active = useMemo(() => {
+    if (sheetBoardId && sheetNoteId) return { view: "sheet" as const, id: sheetNoteId, boardId: sheetBoardId }
     if (boardId) return { view: "board" as const, id: boardId }
     if (chatId)  return { view: "chat"  as const, id: chatId }
     if (subscriptionId) return { view: "subscriptions" as const, id: subscriptionId }
@@ -44,7 +52,7 @@ export const SidebarLabel = () => {
     if (isDashboard) return { view: "dashboard" as const, id: undefined }
     if (isSubscriptionsRoot) return { view: "subscriptions" as const, id: undefined }
     return { view: "unknown" as const, id: undefined }
-  }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptionsRoot, isHome])
+  }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptionsRoot, isHome, sheetBoardId, sheetNoteId])
 
   // data
   const { data: chatList }  = useListChats({ graphUid: null })
@@ -52,6 +60,14 @@ export const SidebarLabel = () => {
   const { data: subscriptionList } = useListSubscriptions()
   const { updateBoard } = useUpdateBoard()
   const { updateChat }  = useUpdateChat()
+  const sheetNode = useGraphStore(state =>
+    sheetNoteId ? state.nodes.find(n => n.id === sheetNoteId) : undefined
+  )
+  const { data: fetchedSheet } = useGetNote({
+    boardId: sheetBoardId,
+    noteId: sheetNoteId,
+    enabled: !!sheetBoardId && !!sheetNoteId && !sheetNode,
+  })
 
   // title label only (no context local state needed)
   const [label, setLabel] = useState("")
@@ -76,8 +92,13 @@ export const SidebarLabel = () => {
       setLabel(c?.label.markdown ?? "Topics")
       return
     }
+    if (active.view === "sheet") {
+      const sheetLabel = sheetNode?.data?.label?.markdown ?? fetchedSheet?.label?.markdown
+      setLabel(sheetLabel ?? "Sheet")
+      return
+    }
     setLabel("")
-  }, [active.view, active.id, boardList, chatList, subscriptionList])
+  }, [active.view, active.id, boardList, chatList, subscriptionList, sheetNode, fetchedSheet])
 
   const handleSaveEdit = (newLabel: string) => {
     setLabel(newLabel)
@@ -87,9 +108,16 @@ export const SidebarLabel = () => {
     if (active.view === "chat" && active.id) {
       updateChat({ chatId: active.id, chatData: { label: newLabel } })
     }
+    if (active.view === "sheet" && active.id && active.boardId) {
+      updateNote({
+        boardId: active.boardId,
+        noteId: active.id,
+        noteData: { label: { markdown: newLabel } }
+      })
+    }
   }
 
-  // 🔑 Single source of truth for the selected board:
+  // Single source of truth for the selected board:
   // - existing chat: chat.graphUid
   // - new chat: URL ?board_id
   const currentChat = chatId ? chatList?.find(c => c.uid === chatId) : undefined
@@ -173,6 +201,30 @@ export const SidebarLabel = () => {
           initialLabel={label}
           onSave={handleSaveEdit}
           className='flex-1 min-w-0'
+        />
+      </div>
+    )
+  }
+
+  // SHEET (full view)
+  if (active.view === "sheet" && active.id && active.boardId) {
+    const boardLabel = boardList?.find(b => b.uid === active.boardId)?.label ?? UNTITLED_LABEL
+    return (
+      <div className={`${wrapClass} flex-1 min-w-0`}>
+        <button
+          type="button"
+          onClick={() => goBoard(active.boardId!)}
+          className={crumbBtn}
+          title={boardLabel}
+        >
+          <span className="truncate" title={boardLabel}>{boardLabel}</span>
+        </button>
+        {sep}
+        <LabelEditor
+          key={`sheet:${active.id}`}
+          initialLabel={label || "Sheet"}
+          onSave={handleSaveEdit}
+          className="flex-1 min-w-0"
         />
       </div>
     )

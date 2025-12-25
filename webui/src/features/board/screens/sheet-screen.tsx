@@ -29,18 +29,20 @@ export const SheetScreen = () => {
 
   return (
     <div className="h-full w-full flex flex-col bg-background">
-      <div className={cn("flex-1 min-h-0 min-w-0 p-4 sm:p-8")}>
+      <div className={cn("flex-1 min-h-0 min-w-0 p-4 sm:p-8 overflow-y-auto scrollbar-thin")}>
         {isLoading || !note ? (
           <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
             Loading sheet...
           </div>
         ) : (
           <div className="h-full w-full rounded-lg bg-background">
-            <SheetEditor
-              value={note.content?.markdown || ""}
-              onSave={handleSave}
-              className="h-[calc(100vh-180px)]"
-            />
+            <div className='w-full max-w-[1000px] h-full mx-auto'>
+              <SheetEditor
+                value={note.content?.markdown || ""}
+                onSave={handleSave}
+                className="h-[calc(100vh-180px)]"
+              />
+            </div>
           </div>
         )}
       </div>

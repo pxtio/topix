@@ -147,7 +147,7 @@ export const SheetNodeView = memo(function SheetNodeView({
   return (
     <>
       <div
-        className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end bg-background/10 backdrop-blur-md rounded-t-sm'
+        className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end rounded-t-sm border-b border-foreground/20'
       >
         <Popover>
           <PopoverTrigger asChild>

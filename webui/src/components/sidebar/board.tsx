@@ -13,6 +13,7 @@ import { ChatMenuItem, NewChatItem } from "./chat"
 import { ConfirmDeleteBoardAlert } from "./confirm-delete-board"
 import { useState } from "react"
 import { useListChats } from "@/features/agent/api/list-chats"
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
 
 /**
  * Dashboard menu item component
@@ -98,6 +99,9 @@ export function BoardItem({ boardId, label }: { boardId: string, label?: string 
     }, 0)
   }
 
+  const boardLabel = label || UNTITLED_LABEL
+  const boardDisplayLabel = trimText(boardLabel, 20)
+
   return (
     <SidebarMenuItem>
       <ContextMenu>
@@ -105,16 +109,23 @@ export function BoardItem({ boardId, label }: { boardId: string, label?: string 
           defaultOpen={false}
           className="group/collapsible w-full"
         >
-          <ContextMenuTrigger asChild>
-            <SidebarMenuButton
-              onClick={handleClick}
-              className="text-xs font-medium truncate"
-              isActive={isActive}
-            >
-              <HugeiconsIcon icon={NoteIcon} className="shrink-0 size-4" strokeWidth={2} />
-              <span>{trimText(label || UNTITLED_LABEL, 20)}</span>
-            </SidebarMenuButton>
-          </ContextMenuTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ContextMenuTrigger asChild>
+                <SidebarMenuButton
+                  onClick={handleClick}
+                  className="text-xs font-medium truncate"
+                  isActive={isActive}
+                >
+                  <HugeiconsIcon icon={NoteIcon} className="shrink-0 size-4" strokeWidth={2} />
+                  <span>{boardDisplayLabel}</span>
+                </SidebarMenuButton>
+              </ContextMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="right" align="center" className="max-w-64">
+              <p className="text-xs">{boardLabel}</p>
+            </TooltipContent>
+          </Tooltip>
 
           <ContextMenuContent className="w-44">
             <ContextMenuItem

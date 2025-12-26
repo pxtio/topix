@@ -14,7 +14,11 @@ type SheetEditorProps = {
  */
 export const SheetEditor = ({ value, onSave, className }: SheetEditorProps) => {
   return (
-    <div className={cn("h-full w-full", className)}>
+    <div
+      className={cn("h-full w-full", className)}
+      onDoubleClickCapture={(e) => e.stopPropagation()}
+      onMouseDownCapture={(e) => e.stopPropagation()}
+    >
       <MilkdownProvider>
         <MdEditor markdown={value} onSave={onSave} />
       </MilkdownProvider>

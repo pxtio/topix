@@ -18,6 +18,9 @@ type Token =
 const INLINE_PATTERN =
   /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|_[^_]+_|\[[^\]]+\]\([^)]+\))/g
 
+const transformArrows = (value: string) =>
+  value.replace(/<-|->/g, (match) => (match === '->' ? '→' : '←'))
+
 function tokenizeInline(segment: string): Token[] {
   if (!segment) return []
   const tokens: Token[] = []
@@ -26,7 +29,7 @@ function tokenizeInline(segment: string): Token[] {
   segment.replace(INLINE_PATTERN, (match, _group, offset) => {
     const idx = offset as number
     if (idx > lastIndex) {
-      tokens.push({ type: 'text', content: segment.slice(lastIndex, idx) })
+      tokens.push({ type: 'text', content: transformArrows(segment.slice(lastIndex, idx)) })
     }
 
     if (match.startsWith('$$') && match.endsWith('$$')) {
@@ -34,22 +37,22 @@ function tokenizeInline(segment: string): Token[] {
     } else if (match.startsWith('$') && match.endsWith('$')) {
       tokens.push({ type: 'math-inline', content: match.slice(1, -1).trim() })
     } else if ((match.startsWith('**') && match.endsWith('**')) || (match.startsWith('__') && match.endsWith('__'))) {
-      tokens.push({ type: 'bold', content: match.slice(2, -2) })
+      tokens.push({ type: 'bold', content: transformArrows(match.slice(2, -2)) })
     } else if ((match.startsWith('*') && match.endsWith('*'))) {
-      tokens.push({ type: 'italic', content: match.slice(1, -1) })
+      tokens.push({ type: 'italic', content: transformArrows(match.slice(1, -1)) })
     } else if (match.startsWith('~~') && match.endsWith('~~')) {
-      tokens.push({ type: 'strike', content: match.slice(2, -2) })
+      tokens.push({ type: 'strike', content: transformArrows(match.slice(2, -2)) })
     } else if (match.startsWith('_') && match.endsWith('_')) {
-      tokens.push({ type: 'underline', content: match.slice(1, -1) })
+      tokens.push({ type: 'underline', content: transformArrows(match.slice(1, -1)) })
     } else if (match.startsWith('[') && match.includes('](') && match.endsWith(')')) {
       const splitIndex = match.indexOf('](')
       const text = match.slice(1, splitIndex)
       const href = match.slice(splitIndex + 2, -1)
-      tokens.push({ type: 'link', content: text, href })
+      tokens.push({ type: 'link', content: transformArrows(text), href })
     } else if (match.startsWith('`') && match.endsWith('`')) {
       tokens.push({ type: 'code', content: match.slice(1, -1) })
     } else {
-      tokens.push({ type: 'text', content: match })
+      tokens.push({ type: 'text', content: transformArrows(match) })
     }
 
     lastIndex = idx + match.length
@@ -57,7 +60,7 @@ function tokenizeInline(segment: string): Token[] {
   })
 
   if (lastIndex < segment.length) {
-    tokens.push({ type: 'text', content: segment.slice(lastIndex) })
+    tokens.push({ type: 'text', content: transformArrows(segment.slice(lastIndex)) })
   }
 
   return tokens

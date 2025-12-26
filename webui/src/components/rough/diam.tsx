@@ -69,7 +69,7 @@ const oversampleForZoom = (value: number): number => {
   if (value >= 1) {
     return Math.min(1.5, 1 + (value - 1) * 0.5)
   }
-  return Math.max(0.15, value)
+  return Math.max(0.1, value)
 }
 const MAX_RENDER_WIDTH = 1920
 const MAX_RENDER_HEIGHT = 1080

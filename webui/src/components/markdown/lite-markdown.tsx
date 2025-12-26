@@ -16,7 +16,7 @@ type Token =
   | { type: 'math-block'; content: string }
 
 const INLINE_PATTERN =
-  /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|_[^_]+_|\[[^\]]+\]\([^)]+\))/g
+  /(\$\$[\s\S]+?\$\$|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|_[^_]+_|\[[^\]]+\]\([^)]+\))/g
 
 const transformArrows = (value: string) =>
   value.replace(/<-|->/g, (match) => (match === '->' ? '→' : '←'))
@@ -33,9 +33,10 @@ function tokenizeInline(segment: string): Token[] {
     }
 
     if (match.startsWith('$$') && match.endsWith('$$')) {
-      tokens.push({ type: 'math-block', content: match.slice(2, -2).trim() })
-    } else if (match.startsWith('$') && match.endsWith('$')) {
-      tokens.push({ type: 'math-inline', content: match.slice(1, -1).trim() })
+      const body = match.slice(2, -2)
+      const trimmed = body.trim()
+      const isBlock = body.includes('\n')
+      tokens.push({ type: isBlock ? 'math-block' : 'math-inline', content: trimmed })
     } else if ((match.startsWith('**') && match.endsWith('**')) || (match.startsWith('__') && match.endsWith('__'))) {
       tokens.push({ type: 'bold', content: transformArrows(match.slice(2, -2)) })
     } else if ((match.startsWith('*') && match.endsWith('*'))) {

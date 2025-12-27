@@ -57,7 +57,7 @@ export const ActionPanel = memo(function ActionPanel({
   const navigate = useNavigate()
   const boardSearch = useSearch({
     from: "/boards/$id",
-    select: (s: { currentChatId?: string }) => ({ currentChatId: s.currentChatId }),
+    select: (s: { current_chat_id?: string }) => ({ currentChatId: s.current_chat_id }),
     shouldThrow: false,
   })
   const currentChatId = boardSearch?.currentChatId
@@ -377,6 +377,7 @@ export const ActionPanel = memo(function ActionPanel({
                 initialBoardId={boardId}
                 className="relative"
                 showHistoricalChats
+                chatId={currentChatId}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">

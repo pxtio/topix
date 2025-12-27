@@ -69,10 +69,11 @@ const oversampleForZoom = (value: number): number => {
   if (value >= 1) {
     return Math.min(1.5, 1 + (value - 1) * 0.5)
   }
-  return Math.max(0.5, value)
+  return Math.max(0.1, value)
 }
 const MAX_RENDER_WIDTH = 1920
 const MAX_RENDER_HEIGHT = 1080
+const RENDER_SCALE_FACTOR = 0.92
 
 type DetailSettings = {
   curveStepCount: number
@@ -231,7 +232,7 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
 
     const paddedWidth = cssW + bleed * 2
     const paddedHeight = cssH + bleed * 2
-    const baseScale = dpr * oversample
+    const baseScale = dpr * oversample * RENDER_SCALE_FACTOR
     const limiter = Math.min(
       1,
       MAX_RENDER_WIDTH / (paddedWidth * baseScale),

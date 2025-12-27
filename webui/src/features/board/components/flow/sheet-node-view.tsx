@@ -11,7 +11,7 @@ import type { NoteWithPin } from './note-card'
 import { useGraphStore } from '../../store/graph-store'
 
 const RESUME_DELAY = 180
-const MIN_HEIGHT = 160
+const MIN_HEIGHT = 250
 const MAX_HEIGHT = 400
 
 type SheetNodeViewProps = {
@@ -143,9 +143,12 @@ export const SheetNodeView = memo(function SheetNodeView({
     onPickPalette(hex)
   }, [onPickPalette])
 
+
   return (
     <>
-      <div className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end border-b border-foreground/10'>
+      <div
+        className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end rounded-t-sm border-b border-foreground/20'
+      >
         <Popover>
           <PopoverTrigger asChild>
             <button

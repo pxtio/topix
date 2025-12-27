@@ -8,6 +8,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { useNavigate, useRouterState, useSearch } from "@tanstack/react-router"
 import { Delete02Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
 
 /**
  * New chat item component
@@ -86,20 +87,28 @@ export function ChatMenuItem({ chatId, label }: { chatId: string, label?: string
     }
   }
 
-  const chatLabel = trimText(label || UNTITLED_LABEL, 100)
+  const fullChatLabel = label || UNTITLED_LABEL
+  const chatLabel = trimText(fullChatLabel, 100)
 
   return (
     <SidebarMenuSubItem>
       <ContextMenu>
-        <ContextMenuTrigger asChild>
-          <SidebarMenuSubButton
-            onClick={handleClick}
-            className='transition-all text-xs font-medium truncate cursor-pointer'
-            isActive={isActive}
-          >
-            <span>{chatLabel}</span>
-          </SidebarMenuSubButton>
-        </ContextMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <ContextMenuTrigger asChild>
+              <SidebarMenuSubButton
+                onClick={handleClick}
+                className='transition-all text-xs font-medium truncate cursor-pointer'
+                isActive={isActive}
+              >
+                <span>{chatLabel}</span>
+              </SidebarMenuSubButton>
+            </ContextMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="right" align="center" className="max-w-64">
+            <p className="text-xs">{fullChatLabel}</p>
+          </TooltipContent>
+        </Tooltip>
         <ContextMenuContent className='w-44'>
           <ContextMenuItem
             onClick={() => handleDeleteChat(chatId)}

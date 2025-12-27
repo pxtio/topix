@@ -68,9 +68,9 @@ const oversampleForZoom = (value: number): number => {
   }
   return Math.max(0.1, value)
 }
-const MAX_RENDER_WIDTH = 1920
-const MAX_RENDER_HEIGHT = 1080
-const RENDER_SCALE_FACTOR = 0.92
+const MAX_RENDER_WIDTH = 1600
+const MAX_RENDER_HEIGHT = 900
+const RENDER_SCALE_FACTOR = 0.75
 
 type DetailSettings = {
   curveStepCount: number

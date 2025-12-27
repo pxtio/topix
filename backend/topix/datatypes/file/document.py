@@ -1,18 +1,34 @@
 """Classes representing a document object with properties and content."""
 
-from typing import Literal
+from enum import StrEnum
+from typing import Literal, Type
 
 from pydantic import Field
 
 from topix.datatypes.property import (
     DataProperty,
+    KeywordProperty,
     PositionProperty,
     SizeProperty,
-    StatusProperty,
     TextProperty,
     URLProperty,
 )
 from topix.datatypes.resource import Resource, ResourceProperties
+
+
+class DocumentAnalysisStatusEnum(StrEnum):
+    """Status enum."""
+
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class DocumentStatusProperty(KeywordProperty):
+    """Property for document analysis status."""
+
+    value_type: Type[DocumentAnalysisStatusEnum] = DocumentAnalysisStatusEnum
 
 
 class DocumentProperties(ResourceProperties):
@@ -38,8 +54,11 @@ class DocumentProperties(ResourceProperties):
     mime_type: TextProperty = Field(
         default_factory=lambda: TextProperty(text="application/pdf")
     )
-    status: StatusProperty = Field(
-        default_factory=lambda: StatusProperty()
+    status: DocumentStatusProperty = Field(
+        default_factory=lambda: DocumentStatusProperty()
+    )
+    summary: TextProperty = Field(
+        default_factory=lambda: TextProperty()
     )
 
 
@@ -55,10 +74,3 @@ class Document(Resource):
 
     # graph attributes
     graph_uid: str | None = None
-
-    def to_embeddable(self) -> dict[str, str]:
-        """Convert the chunk to a string that can be embedded in a vector database."""
-        embeddable = super().to_embeddable()
-        if self.properties.number_of_pages:
-            embeddable["number_of_pages"] = str(self.properties.number_of_pages.number)
-        return embeddable

@@ -82,16 +82,39 @@ class Resource(BaseModel):
         all_values["id"] = id
         return cls.model_construct(**all_values)
 
-    def to_embeddable(self) -> dict[str, str]:
+    def to_embeddable(self) -> list[str]:
         """Convert the resource to a string that can be embedded in a vector database."""
-        embeddable = {}
+        to_embed = []
         if self.label and self.label.markdown and self.label.searchable:
-            embeddable["label"] = self.label.markdown
+            to_embed.append(self.label.markdown)
+
         if self.content and self.content.markdown and self.content.searchable:
-            embeddable["content"] = self.content.markdown
+            to_embed.append(self.content.markdown)
 
         # Get all searchable text properties
         for prop in self.properties.__dict__.values():
             if isinstance(prop, TextProperty) and prop.searchable and prop.text:
-                embeddable[prop.key] = prop.text
-        return embeddable
+                to_embed.append(prop.text)
+
+        return to_embed
+
+
+def dict_to_embeddable(d: dict) -> list[str]:
+    """Convert a dict representation of a resource to a list of embeddable strings."""
+    to_embed = []
+    if d.get("label") and d["label"].get("markdown") and d["label"].get("searchable"):
+        to_embed.append(d["label"]["markdown"])
+
+    if d.get("content") and d["content"].get("markdown") and d["content"].get("searchable"):
+        to_embed.append(d["content"]["markdown"])
+
+    if d.get("properties"):
+        for prop in d["properties"].values():
+            if (
+                isinstance(prop, dict)
+                and prop.get("text")
+                and prop.get("searchable")
+            ):
+                to_embed.append(prop["text"])
+
+    return to_embed

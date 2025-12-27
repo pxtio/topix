@@ -7,6 +7,7 @@ from fastapi.params import File, Query
 
 from topix.api.utils.decorators import with_standard_response
 from topix.api.utils.security import get_current_user_uid
+from topix.nlp.pipeline.parsing import ParsingPipeline
 from topix.utils.common import gen_uid
 from topix.utils.file import convert_to_base64_url, detect_mime_type, get_file_path, save_file
 
@@ -65,22 +66,23 @@ async def parse_file(
     request: Request,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="File to parse"),
+    id: Annotated[str | None, Query(description="Optional ID for the parsed document")] = None,
 ):
     """Parse a file."""
     file_bytes = await file.read()
     mime_type = detect_mime_type(file.filename)
-    if mime_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Image files are not supported for parsing.")
-    elif mime_type.startswith("application/pdf"):
+
+    if mime_type.startswith("application/pdf"):
         cat = "files"
         new_filename = f"{gen_uid()}_{file.filename}"
         saved_path = save_file(filename=new_filename, file_bytes=file_bytes, cat=cat)
     else:
-        raise HTTPException(status_code=400, detail="Unsupported file type for parsing.")
+        raise HTTPException(status_code=400, detail=f"Unsupported file type `{mime_type}` for parsing. Only PDF files are supported.")
 
+    # Get the true file path from the saved representative path
     true_path = get_file_path(saved_path)
 
-    pipeline = request.app.parser_pipeline
+    pipeline: ParsingPipeline = request.app.parser_pipeline
 
     background_tasks.add_task(pipeline.process_file, true_path)
 

@@ -23,7 +23,7 @@ from qdrant_client.models import (
 )
 
 from topix.config.config import Config, QdrantConfig
-from topix.datatypes.resource import Resource
+from topix.datatypes.resource import Resource, dict_to_embeddable
 from topix.nlp.embed import DIMENSIONS, OpenAIEmbedder
 from topix.store.qdrant.utils import (
     RetrieveOutput,
@@ -189,17 +189,16 @@ class ContentStore:
         indices = []
         for i, entry in enumerate(entries):
             if isinstance(entry, dict):
-                embeddable = {}
-                if entry.get("content") and entry["content"].get("searchable"):
-                    embeddable["content"] = entry["content"]["markdown"]
-                if entry.get("label") and entry["label"].get("searchable"):
-                    embeddable["label"] = entry["label"]["markdown"]
-
+                to_embed = dict_to_embeddable(entry)
             else:
-                embeddable = entry.to_embeddable()
-            searchable_texts.append(str(embeddable))
+                to_embed = entry.to_embeddable()
+
+            for text in to_embed:
+                indices.append(i)
+                searchable_texts.append(text)
 
         embeds = await self.embedder.embed(searchable_texts)
+
         # Create a list of embeddings with the same length as entries
         embeddings = [None] * len(entries)
         for idx, i in enumerate(indices):

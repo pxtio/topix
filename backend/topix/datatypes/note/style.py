@@ -22,6 +22,7 @@ class NodeType(StrEnum):
     LAYERED_DIAMOND = "layered-diamond"
     SOFT_DIAMOND = "soft-diamond"
     LAYERED_CIRCLE = "layered-circle"
+    TAG = "tag"
 
 
 class StrokeStyle(StrEnum):

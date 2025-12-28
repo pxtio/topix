@@ -6,6 +6,7 @@ import { RoughDiamond } from '@/components/rough/diam'
 import { LayeredRectangle } from './shapes/layered-rectangle'
 import { LayeredDiamond } from './shapes/layered-diamond'
 import { LayeredCircle } from './shapes/layered-circle'
+import { TagShape } from './shapes/tag-shape'
 import { ThoughtCloud } from './shapes/thought-cloud'
 import { CapsuleShape } from './shapes/capsule'
 import { SoftDiamond } from './shapes/soft-diamond'
@@ -183,6 +184,19 @@ export const ShapeChrome = memo(({
       >
         {children}
       </LayeredCircle>
+    )
+  }
+
+  if (type === 'tag') {
+    return (
+      <TagShape
+        minHeight={minHeight}
+        wrapperClass={baseWrapperClass}
+        wrapperStyle={wrapperStyle}
+        {...shapeProps}
+      >
+        {children}
+      </TagShape>
     )
   }
 

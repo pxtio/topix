@@ -78,6 +78,7 @@ const drawableNodeTypes: NodeType[] = [
   'soft-diamond',
   'layered-diamond',
   'layered-circle',
+  'tag',
   'layered-rectangle',
   'thought-cloud',
   'capsule',

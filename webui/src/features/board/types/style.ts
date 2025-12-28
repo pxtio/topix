@@ -12,6 +12,7 @@ export type NodeType =
   | "ellipse"
   | "diamond"
   | "soft-diamond"
+  | "tag"
   | "layered-circle"
   | "image"
   | "icon"
@@ -188,6 +189,7 @@ export const createDefaultStyle = ({
     case "rectangle":
     case "layered-rectangle":
     case "layered-circle":
+    case "tag":
       return {
         ...defaultOptions,
         roughness: 0.5,

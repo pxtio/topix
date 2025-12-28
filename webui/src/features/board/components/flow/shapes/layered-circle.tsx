@@ -31,7 +31,7 @@ export const LayeredCircle = memo(({
   children
 }: LayeredCircleProps) => {
   const baseSize = Math.max(minHeight, 50)
-  const offset = Math.min(baseSize * 0.08, 12)
+  const offset = Math.min(baseSize * 0.12, 16)
 
   const commonProps = {
     roughness,

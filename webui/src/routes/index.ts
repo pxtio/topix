@@ -8,7 +8,6 @@ import {
 import { RootLayout } from "./root-layout"
 import { ChatScreen } from "@/features/agent/screens/chat-screen"
 import { BoardScreen } from "@/features/board/screens/board-screen"
-import { Dashboard } from "@/features/board/components/dashboard"
 import { SigninPage } from "@/features/signin/screens/sign-in"
 import { SignupPage } from "@/features/signin/screens/sign-up"
 import { clearTokens, getAccessToken } from "@/features/signin/auth-storage"
@@ -18,6 +17,9 @@ import { NewsfeedsScreen } from "@/features/newsfeed/screens/newsfeeds"
 import { NewsfeedLinearPage } from "@/features/newsfeed/screens/newsfeed-linear-page"
 import { HomePage } from "@/features/home/screens/home"
 import { SheetScreen } from "@/features/board/screens/sheet-screen"
+import { DashboardScreen } from "@/features/board/screens/dashboard-screen"
+
+
 export const rootRoute = createRootRoute({ component: RootLayout })
 
 // --- auth guard ---
@@ -86,7 +88,7 @@ const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: DashboardUrl,
   beforeLoad: requireAuth,
-  component: Dashboard,
+  component: DashboardScreen,
 })
 
 // /boards/:id (protected)

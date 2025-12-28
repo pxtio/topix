@@ -195,7 +195,8 @@ class MemorySearchOutput(BaseModel):
         formatted = "Memory search Results:\n\n"
         for reference in self.references:
             if reference.label or reference.content:
-                formatted += f"\n<Source\n  id=\"{reference.ref_id[:5]}\""
+                url = f"/{reference.ref_type}/{reference.ref_id[:5]}"
+                formatted += f"\n<Source\n  id=\"{reference.ref_id}\"\n  url=\"{url}\""
                 if reference.label:
                     formatted += f"\n  label=\"{reference.label}\""
                 formatted += (

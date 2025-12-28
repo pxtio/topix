@@ -1,4 +1,5 @@
 """Main agent manager."""
+from __future__ import annotations
 
 import logging
 
@@ -43,9 +44,18 @@ class AssistantManager:
         self.synthesis_agent = synthesis_agent
 
     @classmethod
-    def from_config(cls, content_store: ContentStore, config: AssistantManagerConfig):
+    def from_config(
+        cls,
+        content_store: ContentStore,
+        config: AssistantManagerConfig,
+        memory_filters: dict | None = None,
+    ) -> AssistantManager:
         """Create an instance of AssistantManager from configuration."""
-        plan_agent = Plan.from_config(content_store, config.plan)
+        plan_agent = Plan.from_config(
+            content_store,
+            config.plan,
+            memory_filters=memory_filters,
+        )
         query_rewrite_agent = QueryRewrite.from_config(config.query_rewrite)
         synthesis_agent = AnswerReformulate.from_config(config.synthesis)
 

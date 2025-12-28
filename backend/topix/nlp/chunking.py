@@ -145,7 +145,7 @@ class Chunker:
 
         # Sort pages and combine them
         sorted_pages = sorted(pages)
-        pages_text = ", ".join(sorted_pages)
+        pages_text = ",".join(sorted_pages)
 
         # Create chunk with content and properties
         chunk = Chunk(

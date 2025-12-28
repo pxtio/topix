@@ -45,9 +45,9 @@ class Chunk(Resource):
     def to_embeddable(self) -> list[str]:
         """Convert the chunk to a string that can be embedded in a vector database."""
         return [
-            "--- Chunk ---\n",
-            f"document_label: {self.properties.document_label.text or ''}\n",
-            f"pages: {self.properties.pages.text or ''}\n",
-            f"content: {self.content.markdown or ''}\n",
-            "----------------\n",
+            (
+                f"document_label: {self.properties.document_label.text or ''}\n"
+                f"pages: {self.properties.pages.text or ''}\n"
+                f"content:\n{self.content.markdown or ''}"
+            )
         ]

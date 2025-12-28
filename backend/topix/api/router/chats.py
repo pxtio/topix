@@ -176,12 +176,23 @@ async def send_message(
         assistant_config.set_web_engine(body.web_search_engine)
         assistant_config.set_reasoning(body.reasoning_effort)
 
+        # retrieve chat to get graph_uid for memory filters
+        chat = await chat_store.get_chat(chat_id)
+        memory_filters = {"graph_uid": chat.graph_uid} if chat.graph_uid else None
+
+        enabled_tools = body.enabled_tools or []
+        if memory_filters is None:
+            # if no graph_uid, disable memory search tool
+            enabled_tools = [tool for tool in enabled_tools if tool != "memory_search"]
+
         assistant: AssistantManager = AssistantManager.from_config(
             content_store=chat_store._content_store,
-            config=assistant_config
+            config=assistant_config,
+            memory_filters=memory_filters
         )
 
-        assistant.plan_agent.set_enabled_tools(body.enabled_tools)
+        assistant.plan_agent.set_enabled_tools(enabled_tools)
+
         if body.force_tool:
             assistant.plan_agent.force_tool(body.force_tool)
         run_streamed = assistant.run_streamed

@@ -20,7 +20,7 @@ export const IconShape = ({ iconName, className }: IconShapeProps) => {
     <div className={clName}>
       <Icon
         icon={iconName}
-        className="w-[75%] h-[75%] text-inherit bg-transparent"
+        className="w-full h-full text-inherit bg-transparent"
       />
     </div>
   )

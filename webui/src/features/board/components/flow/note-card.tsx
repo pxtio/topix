@@ -2,8 +2,6 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Note, NoteProperties } from '../../types/note'
 import type { NoteNode } from '../../types/flow'
-import { MdEditor } from '@/components/editor/milkdown'
-import { MilkdownProvider } from '@milkdown/react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { clsx } from 'clsx'
 import { useNavigate } from '@tanstack/react-router'
@@ -314,16 +312,10 @@ export const NodeCard = memo(({
 
         <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
           <div className='h-full w-full min-w-0 overflow-y-auto overflow-x-hidden scrollbar-thin'>
-            {isSheet ? (
-              <SheetEditor
-                value={note.content?.markdown || ''}
-                onSave={handleNoteChange}
-              />
-            ) : (
-              <MilkdownProvider>
-                <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
-              </MilkdownProvider>
-            )}
+            <SheetEditor
+              value={note.content?.markdown || ''}
+              onSave={handleNoteChange}
+            />
           </div>
         </div>
       </DialogContent>

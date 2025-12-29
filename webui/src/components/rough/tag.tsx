@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
 import type { Options as RoughOptions } from 'roughjs/bin/core'
-import { useViewport } from '@xyflow/react'
 import clsx from 'clsx'
 import type { StrokeStyle } from '@/features/board/types/style'
 import { getCachedCanvas, serializeCacheKey } from './cache'
+import { useGraphStore } from '@/features/board/store/graph-store'
 
 type RoughShapeProps = {
   children?: React.ReactNode
@@ -67,6 +67,18 @@ const oversampleForZoom = (value: number): number => {
 const MAX_RENDER_WIDTH = 1600
 const MAX_RENDER_HEIGHT = 900
 const RENDER_SCALE_FACTOR = 0.75
+
+type DetailSettings = {
+  curveStepCount: number
+  maxRandomnessOffset: number
+  hachureGap: number
+}
+
+const detailForSize = (maxSide: number): DetailSettings => {
+  if (maxSide >= 800) return { curveStepCount: 3, maxRandomnessOffset: 0.9, hachureGap: 9 }
+  if (maxSide >= 400) return { curveStepCount: 4, maxRandomnessOffset: 1.1, hachureGap: 7 }
+  return { curveStepCount: 5, maxRandomnessOffset: 1.3, hachureGap: 5 }
+}
 
 /** Map logical stroke style to dash pattern + desired canvas lineCap (set on ctx). */
 function mapStrokeStyle(
@@ -192,8 +204,8 @@ export const RoughTag: React.FC<RoughShapeProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
-  const { zoom: viewportZoom = 1 } = useViewport()
-  const effectiveZoom = quantizeZoom(viewportZoom)
+  const viewportZoom = useGraphStore(state => state.zoom ?? 1)
+  const effectiveZoom = quantizeZoom(viewportZoom || 1)
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     const rect = wrapper.getBoundingClientRect()
@@ -248,7 +260,8 @@ export const RoughTag: React.FC<RoughShapeProps> = ({
     const pathData = tagPath(cssW, cssH, notch, radius)
 
     const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
-    const { curveStepCount, maxRandomnessOffset, hachureGap } = { curveStepCount: 7, maxRandomnessOffset: 1.2, hachureGap: 6 }
+    const apparentSize = Math.max(cssW, cssH) * Math.min(1, effectiveZoom)
+    const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(apparentSize)
 
     const cacheKey = serializeCacheKey([
       'tag',

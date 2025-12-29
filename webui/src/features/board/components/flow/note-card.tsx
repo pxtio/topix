@@ -278,7 +278,7 @@ export const NodeCard = memo(({
       </div>
 
       {/* DIALOG CONTENT */}
-      <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2' showCloseButton>
+      <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2' showCloseButton={false}>
         <div className='w-full flex items-center justify-end gap-2 px-2 pt-1'>
           <DialogTitle className="sr-only">Sheet</DialogTitle>
           <Button

@@ -26,6 +26,7 @@ interface ActionPanelProps {
   onZoomIn: () => void
   onZoomOut: () => void
   onFitView: () => void
+  onResetZoom: () => void
   isLocked: boolean
   toggleLock: () => void
 
@@ -45,6 +46,7 @@ export const ActionPanel = memo(function ActionPanel({
   onZoomIn,
   onZoomOut,
   onFitView,
+  onResetZoom,
   isLocked,
   toggleLock,
   viewMode,
@@ -54,6 +56,7 @@ export const ActionPanel = memo(function ActionPanel({
   const [openIconSearch, setOpenIconSearch] = useState(false)
   const [openChatDialog, setOpenChatDialog] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
+  const zoom = useGraphStore(state => state.zoom ?? 1)
   const navigate = useNavigate()
   const boardSearch = useSearch({
     from: "/boards/$id",
@@ -196,6 +199,16 @@ export const ActionPanel = memo(function ActionPanel({
             aria-label='Zoom out'
           >
             <HugeiconsIcon icon={MinusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
+          </Button>
+          <Button
+            variant={null}
+            size='icon'
+            onClick={onResetZoom}
+            className={normalButtonClass}
+            title='Reset zoom to 100%'
+            aria-label='Reset zoom to 100%'
+          >
+            <span className='text-xs font-medium text-secondary'>{Math.round((zoom || 1) * 100)}%</span>
           </Button>
           <Button
             variant={null}

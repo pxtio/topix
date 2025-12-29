@@ -4,8 +4,12 @@ import { RoughRect } from '@/components/rough/rect'
 import { RoughCircle } from '@/components/rough/circ'
 import { RoughDiamond } from '@/components/rough/diam'
 import { LayeredRectangle } from './shapes/layered-rectangle'
+import { LayeredDiamond } from './shapes/layered-diamond'
+import { LayeredCircle } from './shapes/layered-circle'
+import { TagShape } from './shapes/tag-shape'
 import { ThoughtCloud } from './shapes/thought-cloud'
 import { CapsuleShape } from './shapes/capsule'
+import { SoftDiamond } from './shapes/soft-diamond'
 import type { FillStyle, NodeType, StrokeStyle, StrokeWidth } from '../../types/style'
 
 type ShapeChromeProps = {
@@ -125,6 +129,18 @@ export const ShapeChrome = memo(({
     )
   }
 
+  if (type === 'soft-diamond') {
+    return (
+      <SoftDiamond
+        wrapperClass={baseWrapperClass}
+        wrapperStyle={wrapperStyle}
+        {...shapeProps}
+      >
+        {children}
+      </SoftDiamond>
+    )
+  }
+
   if (type === 'ellipse') {
     return (
       <div className={baseWrapperClass} style={wrapperStyle}>
@@ -142,6 +158,45 @@ export const ShapeChrome = memo(({
           {children}
         </RoughDiamond>
       </div>
+    )
+  }
+
+  if (type === 'layered-diamond') {
+    return (
+      <LayeredDiamond
+        minHeight={minHeight}
+        wrapperClass={baseWrapperClass}
+        wrapperStyle={wrapperStyle}
+        {...shapeProps}
+      >
+        {children}
+      </LayeredDiamond>
+    )
+  }
+
+  if (type === 'layered-circle') {
+    return (
+      <LayeredCircle
+        minHeight={minHeight}
+        wrapperClass={baseWrapperClass}
+        wrapperStyle={wrapperStyle}
+        {...shapeProps}
+      >
+        {children}
+      </LayeredCircle>
+    )
+  }
+
+  if (type === 'tag') {
+    return (
+      <TagShape
+        minHeight={minHeight}
+        wrapperClass={baseWrapperClass}
+        wrapperStyle={wrapperStyle}
+        {...shapeProps}
+      >
+        {children}
+      </TagShape>
     )
   }
 

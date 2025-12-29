@@ -19,6 +19,10 @@ class NodeType(StrEnum):
     LAYERED_RECTANGLE = "layered-rectangle"
     THOUGHT_CLOUD = "thought-cloud"
     CAPSULE = "capsule"
+    LAYERED_DIAMOND = "layered-diamond"
+    SOFT_DIAMOND = "soft-diamond"
+    LAYERED_CIRCLE = "layered-circle"
+    TAG = "tag"
 
 
 class StrokeStyle(StrEnum):

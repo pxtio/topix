@@ -6,6 +6,29 @@ import httpx
 from pydantic import BaseModel
 
 ICONIFY_SEARCH_URL = "https://api.iconify.design/search"
+ICON_FAMILIES = [
+    "streamline-freehand",
+    "streamline-freehand-color",
+    "hugeicons",
+    "streamline-ultimate-color",
+    "skill-icons",
+    "openmoji",
+    "streamline-emojis",
+    "streamline-stickies-color",
+    "streamline-color",
+    "streamline-ultimate",
+    "streamline-logos"
+    "solar",
+    "material-icon-theme",
+    "dinkie-icons",
+    "vscode-icons",
+    "bi",
+    "streamline-pixel",
+    "memory",
+    "devicon",
+    "logos"
+]
+ICON_FAMILIES_STR = ",".join(ICON_FAMILIES)
 
 
 class IconifySearchResult(BaseModel):
@@ -15,11 +38,11 @@ class IconifySearchResult(BaseModel):
     url: str
 
 
-async def search_iconify_icons(query: str, limit: int = 5) -> list[IconifySearchResult]:
+async def search_iconify_icons(query: str, limit: int = 50) -> list[IconifySearchResult]:
     """Search Iconify public API for icons matching a query."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         # for now we only search for streamline-freehand icons
-        params = {"query": query, "limit": str(limit), "prefixes": "streamline-freehand,hugeicons,streamline-ultimate-color"}
+        params = {"query": query, "limit": str(limit), "prefixes": ICON_FAMILIES_STR}
         resp = await client.get(ICONIFY_SEARCH_URL, params=params)
 
         # Handle errors

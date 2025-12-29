@@ -11,11 +11,15 @@ export type NodeType =
   | "sheet"
   | "ellipse"
   | "diamond"
+  | "soft-diamond"
+  | "tag"
+  | "layered-circle"
   | "image"
   | "icon"
   | "layered-rectangle"
   | "thought-cloud"
   | "capsule"
+  | "layered-diamond"
 
 /**
  * Stroke style for the node.
@@ -184,6 +188,8 @@ export const createDefaultStyle = ({
   switch (type) {
     case "rectangle":
     case "layered-rectangle":
+    case "layered-circle":
+    case "tag":
       return {
         ...defaultOptions,
         roughness: 0.5,
@@ -223,6 +229,8 @@ export const createDefaultStyle = ({
         textAlign: "center"
       } as Style
     case "diamond":
+    case "layered-diamond":
+    case "soft-diamond":
       return {
         ...defaultOptions,
         roughness: 0.5,

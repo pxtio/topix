@@ -563,6 +563,8 @@ export interface GraphStore {
   setIsPanning: (panning: boolean) => void
   isZooming: boolean
   setIsZooming: (zooming: boolean) => void
+  zoom: number
+  setZoom: (zoom: number) => void
 
   setNodes: (nodes: Updater<NoteNode[]>) => void
   setEdges: (edges: Updater<LinkEdge[]>) => void
@@ -610,6 +612,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   isDragging: false,
   isPanning: false,
   isZooming: false,
+  zoom: 1,
 
   // --- flexible setters ---
 
@@ -828,6 +831,10 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setIsZooming: (zooming) =>
     set((state) =>
       state.isZooming === zooming ? {} : { isZooming: zooming },
+    ),
+  setZoom: (zoom) =>
+    set((state) =>
+      state.zoom === zoom ? {} : { zoom },
     ),
 
   graphViewports: {},

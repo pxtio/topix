@@ -63,6 +63,7 @@ const oversampleForZoom = (value: number): number => {
   }
   return Math.max(0.1, value)
 }
+
 const MAX_RENDER_WIDTH = 1600
 const MAX_RENDER_HEIGHT = 900
 const RENDER_SCALE_FACTOR = 0.75
@@ -79,7 +80,7 @@ const detailForSize = (maxSide: number): DetailSettings => {
   return { curveStepCount: 5, maxRandomnessOffset: 1.3, hachureGap: 5 }
 }
 
-/** Same helper you already use elsewhere */
+/** Map logical stroke style to dash pattern + desired canvas lineCap (set on ctx). */
 function mapStrokeStyle(
   strokeStyle: StrokeStyle | undefined,
   strokeWidth: number | undefined
@@ -89,17 +90,106 @@ function mapStrokeStyle(
     case 'dashed':
       return { strokeLineDash: [5.5 * sw, 4 * sw], lineCap: 'round' }
     case 'dotted':
-      return { strokeLineDash: [0, 3 * sw], lineCap: 'round' }
+      return { strokeLineDash: [0, 3 * sw], lineCap: 'round' } // round caps → dots
     case 'solid':
     default:
       return { strokeLineDash: undefined, lineCap: 'butt' }
   }
 }
 
-/* =========================
-   ELLIPSE — inscribed
-   ========================= */
-export const RoughCircle: React.FC<RoughShapeProps> = ({
+// Single-path tag: notch (triangle-ish) leading into rounded body.
+function tagPath(
+  w: number,
+  h: number,
+  notch: number,
+  radius: number,
+  tipRadius: number = 6
+): string {
+  const tipX = 0
+  const tipY = h / 2
+
+  const bodyLeft = Math.max(0, Math.min(notch, w))
+  const right = w
+  const bottom = h
+
+  const rBody = Math.min(radius, h / 2, (right - bodyLeft) / 2)
+  const rJoin = Math.min(radius, h * 0.45, bodyLeft * 0.8)
+
+  if (bodyLeft <= 0.001) {
+    const r = Math.min(radius, h / 2, w / 2)
+    return [
+      `M ${r} 0`,
+      `L ${w - r} 0`,
+      `Q ${w} 0 ${w} ${r}`,
+      `L ${w} ${h - r}`,
+      `Q ${w} ${h} ${w - r} ${h}`,
+      `L ${r} ${h}`,
+      `Q 0 ${h} 0 ${h - r}`,
+      `L 0 ${r}`,
+      `Q 0 0 ${r} 0`,
+      `Z`,
+    ].join(" ")
+  }
+
+  const pTop = { x: bodyLeft, y: rJoin }
+  const pBot = { x: bodyLeft, y: bottom - rJoin }
+
+  const unit = (ax: number, ay: number, bx: number, by: number) => {
+    const dx = bx - ax
+    const dy = by - ay
+    const len = Math.hypot(dx, dy) || 1
+    return { x: dx / len, y: dy / len, len }
+  }
+
+  // directions from join points -> tip
+  const dTop = unit(pTop.x, pTop.y, tipX, tipY)
+  const dBot = unit(pBot.x, pBot.y, tipX, tipY)
+
+  // how much we can round without overshooting the diagonals
+  const maxTipRound = Math.min(dTop.len, dBot.len) * 0.49
+  const t = Math.max(0, Math.min(tipRadius, maxTipRound))
+
+  // points on the diagonals, "t" away from the tip
+  const tipEnter = { x: tipX - dBot.x * t, y: tipY - dBot.y * t } // coming from bottom side
+  const tipExit = { x: tipX - dTop.x * t, y: tipY - dTop.y * t }  // leaving to top side
+
+  const k = rJoin * 0.65
+  const topStart = { x: bodyLeft + rBody, y: 0 }
+  const botEnd = { x: bodyLeft + rBody, y: bottom }
+
+  return [
+    // top edge
+    `M ${topStart.x} ${topStart.y}`,
+    `L ${right - rBody} 0`,
+    `Q ${right} 0 ${right} ${rBody}`,
+
+    // right edge
+    `L ${right} ${bottom - rBody}`,
+    `Q ${right} ${bottom} ${right - rBody} ${bottom}`,
+
+    // bottom edge back left
+    `L ${botEnd.x} ${botEnd.y}`,
+
+    // bottom edge -> bottom join (smooth)
+    `C ${botEnd.x - k} ${bottom} ${pBot.x - dBot.x * k} ${pBot.y - dBot.y * k} ${pBot.x} ${pBot.y}`,
+
+    // bottom join -> (near) tip
+    `L ${t > 0 ? tipEnter.x : tipX} ${t > 0 ? tipEnter.y : tipY}`,
+
+    // rounded tip (if t>0) using a quadratic curve with control at the true tip
+    ...(t > 0 ? [`Q ${tipX} ${tipY} ${tipExit.x} ${tipExit.y}`] : []),
+
+    // (near) tip -> top join
+    `L ${pTop.x} ${pTop.y}`,
+
+    // top join -> top edge (smooth)
+    `C ${pTop.x + (-dTop.x) * k} ${pTop.y + (-dTop.y) * k} ${topStart.x - k} 0 ${topStart.x} 0`,
+
+    `Z`,
+  ].join(" ")
+}
+
+export const RoughTag: React.FC<RoughShapeProps> = ({
   children,
   roughness = 1.2,
   stroke = 'transparent',
@@ -126,9 +216,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
     const oversample = oversampleForZoom(effectiveZoom)
 
-    // bleed so jitter/stroke won't clip
     const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 2)
-
     const paddedWidth = cssW + bleed * 2
     const paddedHeight = cssH + bleed * 2
     const baseScale = dpr * oversample * RENDER_SCALE_FACTOR
@@ -167,20 +255,16 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     }
 
     const visibleStroke = stroke === 'transparent' && !fill ? '#222' : stroke
-
-    const innerW = cssW
-    const innerH = cssH
-    const cx = innerW / 2
-    const cy = innerH / 2
-    const ellipseW = innerW
-    const ellipseH = innerH
+    const notch = Math.min(cssH * 0.45, cssW * 0.3)
+    const radius = Math.min(cssH / 2, cssW / 4, 18)
+    const pathData = tagPath(cssW, cssH, notch, radius)
 
     const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
     const apparentSize = Math.max(cssW, cssH) * Math.min(1, effectiveZoom)
     const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(apparentSize)
 
     const cacheKey = serializeCacheKey([
-      'ellipse',
+      'tag',
       roughness,
       visibleStroke,
       strokeStyle,
@@ -204,7 +288,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
       offCtx.translate(bleed, bleed)
 
       const rc = new RoughCanvas(target)
-      const drawable = rc.generator.ellipse(cx, cy, ellipseW, ellipseH, {
+      const drawable = rc.generator.path(pathData, {
         roughness,
         stroke: visibleStroke,
         strokeWidth: strokeWidth ?? 1,
@@ -280,8 +364,10 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     }
   }, [scheduleRedraw])
 
+  const mainDivClass = clsx('relative', className || '')
+
   return (
-    <div ref={wrapperRef} className={clsx('relative', className || '')}>
+    <div ref={wrapperRef} className={mainDivClass}>
       <canvas
         ref={canvasRef}
         className='absolute inset-0 w-full h-full pointer-events-none'

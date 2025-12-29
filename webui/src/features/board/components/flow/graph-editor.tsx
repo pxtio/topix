@@ -75,6 +75,10 @@ const drawableNodeTypes: NodeType[] = [
   'rectangle',
   'ellipse',
   'diamond',
+  'soft-diamond',
+  'layered-diamond',
+  'layered-circle',
+  'tag',
   'layered-rectangle',
   'thought-cloud',
   'capsule',
@@ -226,6 +230,7 @@ export default function GraphEditor() {
     zoomOut,
     fitView,
     viewportInitialized,
+    zoomTo,
     screenToFlowPosition,
   } = useReactFlow<NoteNode, LinkEdge>()
 
@@ -250,6 +255,7 @@ export default function GraphEditor() {
   const setIsPanning = useGraphStore(state => state.setIsPanning)
   const isZooming = useGraphStore(state => state.isZooming)
   const setIsZooming = useGraphStore(state => state.setIsZooming)
+  const setZoom = useGraphStore(state => state.setZoom)
   const graphViewports = useGraphStore(state => state.graphViewports)
   const setGraphViewport = useGraphStore(state => state.setGraphViewport)
 
@@ -464,6 +470,9 @@ export default function GraphEditor() {
     () => fitView({ padding: 0.2, duration: 250 }),
     [fitView],
   )
+  const handleResetZoom = useCallback(() => {
+    zoomTo(1)
+  }, [zoomTo])
   const handleToggleLock = useCallback(() => {
     setIsLocked(value => !value)
   }, [setIsLocked])
@@ -509,6 +518,7 @@ export default function GraphEditor() {
       if (boardId) {
         setGraphViewport(boardId, vp)
       }
+      setZoom(vp.zoom)
       setIsPanning(false)
       setIsZooming(false)
       lastViewportRef.current = vp
@@ -617,6 +627,7 @@ export default function GraphEditor() {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
+        onResetZoom={handleResetZoom}
         isLocked={isLocked}
         toggleLock={handleToggleLock}
         viewMode={viewMode}

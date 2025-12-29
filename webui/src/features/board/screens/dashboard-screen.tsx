@@ -4,7 +4,7 @@ import { Dashboard } from "../components/dashboard"
 export const DashboardScreen = () => {
   return (
     <>
-      <Dashboard />
+      <Dashboard className="absolute inset-0 overflow-y-auto scrollbar-thin" />
     </>
   )
 }

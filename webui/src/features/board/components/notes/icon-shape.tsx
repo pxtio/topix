@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
 import { Icon } from "@iconify/react"
+import { memo } from "react"
 
 export interface IconShapeProps {
   iconName: string
@@ -10,7 +11,7 @@ export interface IconShapeProps {
  * A perfectly square icon container (1:1 ratio),
  * with the icon sized to ~75% of the container.
  */
-export const IconShape = ({ iconName, className }: IconShapeProps) => {
+export const IconShape = memo(function IconShape({ iconName, className }: IconShapeProps) {
   const clName = cn(
     "relative aspect-square flex items-center justify-center text-card-foreground w-full",
     className
@@ -20,8 +21,8 @@ export const IconShape = ({ iconName, className }: IconShapeProps) => {
     <div className={clName}>
       <Icon
         icon={iconName}
-        className="w-[75%] h-[75%] text-inherit bg-transparent"
+        className="w-full h-full text-inherit bg-transparent"
       />
     </div>
   )
-}
+})

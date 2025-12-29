@@ -2,9 +2,7 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Note, NoteProperties } from '../../types/note'
 import type { NoteNode } from '../../types/flow'
-import { MdEditor } from '@/components/editor/milkdown'
-import { MilkdownProvider } from '@milkdown/react'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { clsx } from 'clsx'
 import { useNavigate } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
@@ -42,7 +40,7 @@ export const NodeCard = memo(({
   const navigate = useNavigate()
 
   const [internalOpen, setInternalOpen] = useState(false)
-  const dialogOpen = typeof open === 'boolean' ? open : internalOpen
+  const dialogOpen = isSheet ? (typeof open === 'boolean' ? open : internalOpen) : false
 
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
   const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
@@ -73,15 +71,13 @@ export const NodeCard = memo(({
     [isSheet, fontFamily]
   )
 
-  const titleEditorClass =
-    'text-3xl focus:outline-none focus:ring-0 focus:border-none overflow-visible whitespace-normal break-words resize-none w-full'
-
   const setDialogOpen = useCallback(
     (v: boolean) => {
+      if (!isSheet) return
       if (typeof open === 'boolean') onOpenChange?.(v)
       else setInternalOpen(v)
     },
-    [open, onOpenChange]
+    [isSheet, open, onOpenChange]
   )
 
   // keep draft in sync when not editing or when external value changes
@@ -234,6 +230,34 @@ export const NodeCard = memo(({
 
   const imageUrl = note.properties.imageUrl?.image?.url
 
+  if (!isSheet) {
+    return (
+      <div
+        className={labelClass}
+        onDoubleClick={onDoubleClick}
+        onPointerDown={stopDragging}
+        style={{ color: textColor || 'inherit' }}
+      >
+        <Shape
+          nodeType={note.style.type}
+          value={labelEditing ? labelDraft : (note.label?.markdown || '')}
+          labelEditing={labelEditing}
+          onChange={handleLabelChange}
+          textareaRef={textareaRef}
+          textAlign={note.style.textAlign}
+          styleHelpers={{
+            text: textStyleToTwClass(note.style.textStyle),
+            font: fontFamilyToTwClass(fontFamily),
+            size: fontSizeToTwClass(note.style.fontSize)
+          }}
+          contentRef={contentRef}
+          icon={icon}
+          imageUrl={imageUrl}
+        />
+      </div>
+    )
+  }
+
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <div
@@ -242,88 +266,47 @@ export const NodeCard = memo(({
         onPointerDown={stopDragging}
         style={{ color: textColor || 'inherit' }}
       >
-        {isSheet ? (
-          <SheetNodeView
-            note={note}
-            isDark={isDark}
-            isPinned={isPinned}
-            onPickPalette={onPickPalette}
-            onTogglePin={onTogglePin}
-            onDelete={onDelete}
-            onOpenSticky={openDialogFromSticky}
-          />
-        ) : (
-          <Shape
-            nodeType={note.style.type}
-            value={labelEditing ? labelDraft : (note.label?.markdown || '')}
-            labelEditing={labelEditing}
-            onChange={handleLabelChange}
-            textareaRef={textareaRef}
-            textAlign={note.style.textAlign}
-            styleHelpers={{
-              text: textStyleToTwClass(note.style.textStyle),
-              font: fontFamilyToTwClass(fontFamily),
-              size: fontSizeToTwClass(note.style.fontSize)
-            }}
-            contentRef={contentRef}
-            icon={icon}
-            imageUrl={imageUrl}
-          />
-        )}
+        <SheetNodeView
+          note={note}
+          isDark={isDark}
+          isPinned={isPinned}
+          onPickPalette={onPickPalette}
+          onTogglePin={onTogglePin}
+          onDelete={onDelete}
+          onOpenSticky={openDialogFromSticky}
+        />
       </div>
 
       {/* DIALOG CONTENT */}
-      <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2' showCloseButton={!isSheet}>
-        {isSheet ? (
-          <div className='w-full flex items-center justify-end gap-2 px-2 pt-1'>
-            <DialogTitle className="sr-only">Sheet</DialogTitle>
-            <Button
-              variant={'ghost'}
-              size='icon-sm'
-              onClick={handleOpenFullView}
-              title='Open full view'
-              aria-label='Open full view'
-            >
-              <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" strokeWidth={2} />
-            </Button>
-            <Button
-              variant='ghost'
-              size='icon-sm'
-              onClick={() => setDialogOpen(false)}
-              title='Close'
-              aria-label='Close'
-            >
-              <HugeiconsIcon icon={Cancel01Icon} className="size-4" strokeWidth={2} />
-            </Button>
-          </div>
-        ) : (
-          <DialogHeader className='w-full'>
-            <DialogTitle asChild>
-              <div className='flex items-center gap-2 w-full pt-10 px-20'>
-                <textarea
-                  className={titleEditorClass}
-                  value={labelEditing ? labelDraft : (note.label?.markdown || '')}
-                  onChange={e => setLabelDraft(e.target.value)}
-                  placeholder=''
-                />
-              </div>
-            </DialogTitle>
-            <DialogDescription className='hidden'>Note description</DialogDescription>
-          </DialogHeader>
-        )}
+      <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2' showCloseButton={false}>
+        <div className='w-full flex items-center justify-end gap-2 px-2 pt-1'>
+          <DialogTitle className="sr-only">Sheet</DialogTitle>
+          <Button
+            variant={'ghost'}
+            size='icon-sm'
+            onClick={handleOpenFullView}
+            title='Open full view'
+            aria-label='Open full view'
+          >
+            <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" strokeWidth={2} />
+          </Button>
+          <Button
+            variant='ghost'
+            size='icon-sm'
+            onClick={() => setDialogOpen(false)}
+            title='Close'
+            aria-label='Close'
+          >
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" strokeWidth={2} />
+          </Button>
+        </div>
 
         <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
           <div className='h-full w-full min-w-0 overflow-y-auto overflow-x-hidden scrollbar-thin'>
-            {isSheet ? (
-              <SheetEditor
-                value={note.content?.markdown || ''}
-                onSave={handleNoteChange}
-              />
-            ) : (
-              <MilkdownProvider>
-                <MdEditor markdown={note.content?.markdown || ''} onSave={handleNoteChange} />
-              </MilkdownProvider>
-            )}
+            <SheetEditor
+              value={note.content?.markdown || ''}
+              onSave={handleNoteChange}
+            />
           </div>
         </div>
       </DialogContent>

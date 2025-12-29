@@ -2,8 +2,9 @@ import { useMemo } from "react"
 import { useListBoards } from "../api/list-boards"
 import { BoardCard, NewBoardCard } from "./board-card"
 import { ThemedWelcome } from "@/features/agent/components/chat/welcome-message"
-import clsx from "clsx"
 import type { Graph } from "../types/board"
+import { cn } from "@/lib/utils"
+
 
 /**
  * Dashboard component displaying user's boards, styled like SubscriptionsPage.
@@ -11,7 +12,7 @@ import type { Graph } from "../types/board"
 export const Dashboard = ({ className, hideTitle = false }: { className?: string; hideTitle?: boolean }) => {
   const { data: boards, isLoading, isError } = useListBoards()
 
-  const pageClassName = clsx("w-full h-full", className)
+  const pageClassName = cn("w-full h-full", className)
 
   const sorted = useMemo(
     () =>

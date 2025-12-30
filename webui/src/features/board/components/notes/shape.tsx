@@ -51,6 +51,7 @@ export const Shape = memo(function Shape({
   `
 
   const isImageNode = nodeType === 'image'
+  const isIconNode = nodeType === 'icon'
   const placeHolder = nodeType === 'text' ? 'Add text...' : isImageNode ? 'Add caption...' : ''
 
   const notEditingSpanClass = value.trim() ? '' : 'text-muted-foreground/50'
@@ -108,11 +109,19 @@ export const Shape = memo(function Shape({
     )
   }
 
+  if (isIconNode) {
+    return (
+      <div className='w-full h-full flex items-center justify-center'>
+        <div className='w-full' ref={contentRef}>
+          {icon && <IconShape iconName={icon} />}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className='w-full h-full flex items-center justify-center'>
       <div className='w-full' ref={contentRef}>
-        {icon && <IconShape iconName={icon} className="mt-1" />}
-        {imageUrl && <ImageShape imageUrl={imageUrl} className="mt-1 mb-2" />}
         {labelEditing ? (
           <TextareaAutosize
             className={`${base} nodrag nopan nowheel !-mb-2`}

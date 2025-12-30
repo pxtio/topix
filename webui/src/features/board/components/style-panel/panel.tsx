@@ -453,6 +453,12 @@ export function StylePanel<T extends StyleLike>({
                   Aa
                 </ToggleGroupItem>
                 <ToggleGroupItem
+                  value='informal'
+                  className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary font-informal'
+                >
+                  Aa
+                </ToggleGroupItem>
+                <ToggleGroupItem
                   value='sans-serif'
                   className='h-9 w-9 items-center justify-center rounded-xl border bg-muted data-[state=on]:bg-secondary/10 data-[state=on]:text-secondary font-sans'
                 >

@@ -38,7 +38,7 @@ class IconifySearchResult(BaseModel):
     url: str
 
 
-async def search_iconify_icons(query: str, limit: int = 50) -> list[IconifySearchResult]:
+async def search_iconify_icons(query: str, limit: int = 100) -> list[IconifySearchResult]:
     """Search Iconify public API for icons matching a query."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         # for now we only search for streamline-freehand icons

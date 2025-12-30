@@ -67,6 +67,7 @@ class FontFamily(StrEnum):
     SANS_SERIF = "sans-serif"
     SERIF = "serif"
     MONOSPACE = "monospace"
+    INFORMAL = "informal"
 
 
 class Style(BaseModel):

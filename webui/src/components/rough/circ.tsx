@@ -127,7 +127,8 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     const oversample = oversampleForZoom(effectiveZoom)
 
     // bleed so jitter/stroke won't clip
-    const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 2)
+    // add a tiny extra margin to avoid clipping at seams
+    const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 3)
 
     const paddedWidth = cssW + bleed * 2
     const paddedHeight = cssH + bleed * 2

@@ -61,7 +61,7 @@ export function fontSizeToTwClass(size?: FontSize): string {
 /**
  * Font family options for the node.
  */
-export type FontFamily = "handwriting" | "sans-serif" | "serif" | "monospace"
+export type FontFamily = "handwriting" | "sans-serif" | "serif" | "monospace" | "informal"
 
 
 // Convert font family to Tailwind CSS class
@@ -75,6 +75,8 @@ export function fontFamilyToTwClass(family?: FontFamily): string {
       return "font-serif"
     case "monospace":
       return "font-mono"
+    case "informal":
+      return "font-informal"
     default:
       return "font-sans"
   }

@@ -50,7 +50,7 @@ export const ShapeChrome = memo(({
   if (type === 'sheet') {
     return (
       <div
-        className={clsx('rounded-xl overflow-hidden', frameClass, className)}
+        className={clsx('rounded-xl overflow-hidden shadow-md', frameClass, className)}
         style={{ backgroundColor}}
       >
         {children}

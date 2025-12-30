@@ -19,6 +19,7 @@ ICON_FAMILIES = [
     "streamline-ultimate",
     "streamline-logos"
     "solar",
+    "material-symbols",
     "material-icon-theme",
     "dinkie-icons",
     "vscode-icons",
@@ -26,7 +27,8 @@ ICON_FAMILIES = [
     "streamline-pixel",
     "memory",
     "devicon",
-    "logos"
+    "logos",
+    "tabler"
 ]
 ICON_FAMILIES_STR = ",".join(ICON_FAMILIES)
 

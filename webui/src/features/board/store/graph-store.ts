@@ -24,6 +24,10 @@ import { updateLink } from "../api/update-link"
 import { updateNote } from "../api/update-note"
 import { removeLink } from "../api/remove-link"
 import { removeNote } from "../api/remove-note"
+import {
+  loadViewportsFromStorage,
+  saveViewportToStorage,
+} from "./viewport-store"
 
 // --- helpers ---
 
@@ -837,13 +841,15 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       state.zoom === zoom ? {} : { zoom },
     ),
 
-  graphViewports: {},
+  graphViewports: loadViewportsFromStorage(),
 
   setGraphViewport: (boardId, vp) =>
-    set((state) => ({
-      graphViewports: {
+    set((state) => {
+      const next = {
         ...state.graphViewports,
         [boardId]: vp,
-      },
-    })),
+      }
+      saveViewportToStorage(boardId, vp)
+      return { graphViewports: next }
+    }),
 }))

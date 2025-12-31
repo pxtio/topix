@@ -256,7 +256,7 @@ export default function GraphEditor() {
   const isZooming = useGraphStore(state => state.isZooming)
   const setIsZooming = useGraphStore(state => state.setIsZooming)
   const setZoom = useGraphStore(state => state.setZoom)
-  const graphViewports = useGraphStore(state => state.graphViewports)
+  const graphViewports = useGraphStore(useShallow(state => state.graphViewports))
   const setGraphViewport = useGraphStore(state => state.setGraphViewport)
 
   const mindmaps = useMindMapStore(state => state.mindmaps)

@@ -175,7 +175,7 @@ function GraphView({
       connectionLineComponent={CustomConnectionLine}
       connectionLineStyle={connectionLineStyle}
       selectionOnDrag={enableSelection}
-      selectionMode={SelectionMode.Partial}
+      selectionMode={SelectionMode.Full}
       panOnDrag={!isLocked && !enableSelection}
       selectionKeyCode={null}
       onNodeDragStart={onNodeDragStart}

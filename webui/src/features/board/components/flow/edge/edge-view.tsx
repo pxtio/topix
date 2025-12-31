@@ -78,10 +78,15 @@ export const EdgeView = memo(function EdgeView({
   const linkStyle = (data?.style ?? undefined) as LinkStyle | undefined
 
   const baseStroke = linkStyle?.strokeColor ?? '#333333'
-  const displayStroke = useMemo(() => {
-    if (!isDark) return baseStroke
-    return darkModeDisplayHex(baseStroke) ?? '#a5c9ff'
-  }, [isDark, baseStroke])
+  const baseLabelColor = linkStyle?.textColor ?? '#000000'
+
+  const { displayStroke, displayLabelColor } = useMemo(() => {
+    if (!isDark) return { displayStroke: baseStroke, displayLabelColor: baseLabelColor }
+    return {
+      displayStroke: darkModeDisplayHex(baseStroke) ?? '#a5c9ff',
+      displayLabelColor: darkModeDisplayHex(baseLabelColor) ?? '#a5c9ff'
+    }
+  }, [isDark, baseStroke, baseLabelColor])
 
   const strokeWidth = linkStyle?.strokeWidth ?? 1.5
 
@@ -332,6 +337,7 @@ export const EdgeView = memo(function EdgeView({
       {(isLabelEditing || hasLabel) && (
         <EdgeLabel
           labelText={labelText}
+          labelColor={displayLabelColor}
           labelDraft={labelDraft}
           isEditing={isLabelEditing}
           onChange={edgeExtras.onLabelChange}

@@ -24,6 +24,10 @@ import { updateLink } from "../api/update-link"
 import { updateNote } from "../api/update-note"
 import { removeLink } from "../api/remove-link"
 import { removeNote } from "../api/remove-note"
+import {
+  loadViewportsFromStorage,
+  saveViewportToStorage,
+} from "./viewport-store"
 
 // --- helpers ---
 
@@ -74,20 +78,13 @@ let edgePersistTimeout: ReturnType<typeof setTimeout> | null = null
 
 // --- debounced flushes (conversion happens here, not on hot path) ---
 
-function scheduleNodeFlush(get: () => { boardId?: string; nodes: NoteNode[] }) {
+function scheduleNodeFlush() {
   if (nodePersistTimeout !== null) {
     clearTimeout(nodePersistTimeout)
   }
 
   nodePersistTimeout = setTimeout(async () => {
     nodePersistTimeout = null
-
-    const { boardId } = get()
-    if (!boardId) {
-      pendingNewNodes.clear()
-      pendingUpdatedNodes.clear()
-      return
-    }
 
     const newNodes = Array.from(pendingNewNodes.values())
     const updatedNodes = Array.from(pendingUpdatedNodes.values())
@@ -96,24 +93,46 @@ function scheduleNodeFlush(get: () => { boardId?: string; nodes: NoteNode[] }) {
     pendingUpdatedNodes.clear()
 
     try {
-      if (newNodes.length > 0) {
-        await addNotes(
-          boardId,
-          newNodes.map((n) => convertNodeToNote(boardId, n)),
-        )
+      const newByBoard = new Map<string, NoteNode[]>()
+      for (const node of newNodes) {
+        const graphUid = node.data?.graphUid
+        if (!graphUid) continue
+        const list = newByBoard.get(graphUid) ?? []
+        list.push(node)
+        newByBoard.set(graphUid, list)
       }
 
-      if (updatedNodes.length > 0) {
-        await Promise.all(
-          updatedNodes.map((n) =>
-            updateNote(
-              boardId,
-              n.id,
-              convertNodeToNote(boardId, n) as Partial<Note>,
+      const updatedByBoard = new Map<string, NoteNode[]>()
+      for (const node of updatedNodes) {
+        const graphUid = node.data?.graphUid
+        if (!graphUid) continue
+        const list = updatedByBoard.get(graphUid) ?? []
+        list.push(node)
+        updatedByBoard.set(graphUid, list)
+      }
+
+      await Promise.all(
+        Array.from(newByBoard.entries()).map(([graphUid, nodes]) =>
+          addNotes(
+            graphUid,
+            nodes.map((n) => convertNodeToNote(n)),
+          ),
+        ),
+      )
+
+      await Promise.all(
+        Array.from(updatedByBoard.entries()).map(([graphUid, nodes]) =>
+          Promise.all(
+            nodes.map((n) =>
+              updateNote(
+                graphUid,
+                n.id,
+                convertNodeToNote(n) as Partial<Note>,
+              ),
             ),
           ),
-        )
-      }
+        ),
+      )
     } catch (err) {
       console.error("Failed to persist nodes", err)
     }
@@ -145,23 +164,16 @@ function queueNodesForPersistence(
     pendingUpdatedNodes.set(id, node)
   }
 
-  scheduleNodeFlush(get)
+  scheduleNodeFlush()
 }
 
-function scheduleEdgeFlush(get: () => { boardId?: string; edges: LinkEdge[] }) {
+function scheduleEdgeFlush() {
   if (edgePersistTimeout !== null) {
     clearTimeout(edgePersistTimeout)
   }
 
   edgePersistTimeout = setTimeout(async () => {
     edgePersistTimeout = null
-
-    const { boardId } = get()
-    if (!boardId) {
-      pendingNewEdges.clear()
-      pendingUpdatedEdges.clear()
-      return
-    }
 
     const newEdges = Array.from(pendingNewEdges.values())
     const updatedEdges = Array.from(pendingUpdatedEdges.values())
@@ -170,24 +182,46 @@ function scheduleEdgeFlush(get: () => { boardId?: string; edges: LinkEdge[] }) {
     pendingUpdatedEdges.clear()
 
     try {
-      if (newEdges.length > 0) {
-        await addLinks(
-          boardId,
-          newEdges.map((e) => convertEdgeToLink(boardId, e)),
-        )
+      const newByBoard = new Map<string, LinkEdge[]>()
+      for (const edge of newEdges) {
+        const graphUid = (edge.data as Link | undefined)?.graphUid
+        if (!graphUid) continue
+        const list = newByBoard.get(graphUid) ?? []
+        list.push(edge)
+        newByBoard.set(graphUid, list)
       }
 
-      if (updatedEdges.length > 0) {
-        await Promise.all(
-          updatedEdges.map((e) =>
-            updateLink(
-              boardId,
-              e.id,
-              convertEdgeToLink(boardId, e) as Partial<Link>,
+      const updatedByBoard = new Map<string, LinkEdge[]>()
+      for (const edge of updatedEdges) {
+        const graphUid = (edge.data as Link | undefined)?.graphUid
+        if (!graphUid) continue
+        const list = updatedByBoard.get(graphUid) ?? []
+        list.push(edge)
+        updatedByBoard.set(graphUid, list)
+      }
+
+      await Promise.all(
+        Array.from(newByBoard.entries()).map(([graphUid, edges]) =>
+          addLinks(
+            graphUid,
+            edges.map((e) => convertEdgeToLink(e)),
+          ),
+        ),
+      )
+
+      await Promise.all(
+        Array.from(updatedByBoard.entries()).map(([graphUid, edges]) =>
+          Promise.all(
+            edges.map((e) =>
+              updateLink(
+                graphUid,
+                e.id,
+                convertEdgeToLink(e) as Partial<Link>,
+              ),
             ),
           ),
-        )
-      }
+        ),
+      )
     } catch (err) {
       console.error("Failed to persist edges", err)
     }
@@ -219,7 +253,7 @@ function queueEdgesForPersistence(
     pendingUpdatedEdges.set(id, edge)
   }
 
-  scheduleEdgeFlush(get)
+  scheduleEdgeFlush()
 }
 
 // --- background helpers (diff + persist) ---
@@ -837,13 +871,15 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       state.zoom === zoom ? {} : { zoom },
     ),
 
-  graphViewports: {},
+  graphViewports: loadViewportsFromStorage(),
 
   setGraphViewport: (boardId, vp) =>
-    set((state) => ({
-      graphViewports: {
+    set((state) => {
+      const next = {
         ...state.graphViewports,
         [boardId]: vp,
-      },
-    })),
+      }
+      saveViewportToStorage(boardId, vp)
+      return { graphViewports: next }
+    }),
 }))

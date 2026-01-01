@@ -75,17 +75,17 @@ export const IconSearchDialog = ({
         </div>
         <div className='p-4 pt-2 h-full w-full flex-1 overflow-y-auto scrollbar-thin'>
           {isLoading ? (
-            <div className='grid grid-cols-3 sm:grid-cols-4 gap-2 w-full'>
-              {Array.from({ length: 8 }).map((_, i) => (
+            <div className='grid grid-cols-5 sm:grid-cols-10 gap-1 w-full'>
+              {Array.from({ length: 10 }).map((_, i) => (
                 <Skeleton key={i} className='aspect-square w-full' />
               ))}
             </div>
           ) : (
-            <div className='grid grid-cols-3 sm:grid-cols-4 gap-2 w-full'>
+            <div className='grid grid-cols-5 sm:grid-cols-10 gap-1 w-full'>
               {data?.map(icon => (
                 <button
                   key={icon.url}
-                  className='group relative aspect-square rounded-md border hover:ring-2 hover:ring-secondary/75 grid place-items-center p-3 bg-card'
+                  className='group relative aspect-square rounded-md border hover:ring-2 hover:ring-secondary/75 grid place-items-center p-1 bg-card'
                   title={icon.name}
                   onClick={() => handleSelectIcon(icon.name)}
                 >

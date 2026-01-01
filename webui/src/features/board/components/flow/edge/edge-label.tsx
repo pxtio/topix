@@ -5,6 +5,7 @@ import { LiteMarkdown } from '@/components/markdown/lite-markdown'
 
 type EdgeLabelProps = {
   labelText: string
+  labelColor?: string
   labelDraft: string
   isEditing: boolean
   onChange?: (value: string) => void
@@ -16,6 +17,7 @@ type EdgeLabelProps = {
 
 export const EdgeLabel = memo(function EdgeLabel({
   labelText,
+  labelColor,
   labelDraft,
   isEditing,
   onChange,
@@ -42,9 +44,13 @@ export const EdgeLabel = memo(function EdgeLabel({
             className='text-center text-base px-2 py-1 bg-background focus:outline-none min-w-[160px] resize-none max-w-[240px] font-handwriting'
             minRows={1}
             maxRows={4}
+            style={{ color: labelColor ?? 'inherit' }}
           />
         ) : (
-          <div className='text-center px-2 py-1 bg-background text-base text-card-foreground max-w-[240px] font-handwriting'>
+          <div
+            className='text-center px-2 py-1 bg-background text-base text-card-foreground max-w-[240px] font-handwriting'
+            style={{ color: labelColor ?? 'inherit' }}
+          >
             <LiteMarkdown text={labelText} />
           </div>
         )}

@@ -62,11 +62,15 @@ export const convertLinkToEdge = (link: Link): LinkEdge => {
 /**
  * Function to convert a NoteNode back to a Note.
  */
-export const convertNodeToNote = (graphId: string, node: NoteNode): Note => {
+export const convertNodeToNote = (node: NoteNode): Note => {
   const note = { ...node.data }
 
+  const graphUid = note.graphUid ?? node.data?.graphUid
+  if (!graphUid) {
+    throw new Error("convertNodeToNote: missing graphUid on node")
+  }
   note.id = node.id
-  note.graphUid = graphId
+  note.graphUid = graphUid
   note.properties = note.properties || createDefaultNoteProperties({ type: note.style.type })
 
   if (node.position) {
@@ -97,7 +101,12 @@ export const convertNodeToNote = (graphId: string, node: NoteNode): Note => {
 /**
  * Function to convert a LinkEdge back to a Link.
  */
-export const convertEdgeToLink = (graphId: string, edge: LinkEdge): Link => {
+export const convertEdgeToLink = (edge: LinkEdge): Link => {
+  const graphUid = (edge.data as Link | undefined)?.graphUid
+  if (!graphUid) {
+    throw new Error("convertEdgeToLink: missing graphUid on edge")
+  }
+
   return {
     id: edge.id,
     source: edge.source,
@@ -109,7 +118,7 @@ export const convertEdgeToLink = (graphId: string, edge: LinkEdge): Link => {
     updatedAt: edge.data?.updatedAt,
     deletedAt: edge.data?.deletedAt,
     style: edge.data?.style || createDefaultLinkStyle(),
-    graphUid: graphId,
+    graphUid,
     label: edge.data?.label
   }
 }

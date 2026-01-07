@@ -19,6 +19,7 @@ type ViewMode = 'graph' | 'linear'
 
 interface ActionPanelProps {
   onAddNode: (options: AddNoteNodeOptions) => void
+  onAddLine: () => void
   enableSelection: boolean
   setEnableSelection: (mode: boolean) => void
 
@@ -41,6 +42,7 @@ interface ActionPanelProps {
  */
 export const ActionPanel = memo(function ActionPanel({
   onAddNode,
+  onAddLine,
   enableSelection,
   setEnableSelection,
   onZoomIn,
@@ -250,6 +252,18 @@ export const ActionPanel = memo(function ActionPanel({
             aria-label='Add Sticky Note'
           >
             <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
+          </Button>
+
+          {/* Add line */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={onAddLine}
+            title='Add line'
+            aria-label='Add line'
+          >
+            <HugeiconsIcon icon={MinusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Shape picker */}

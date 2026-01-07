@@ -30,6 +30,11 @@ export interface Link extends Record<string, unknown> {
 
   properties: LinkProperties
 
+  sourcePointId?: string
+  targetPointId?: string
+  sourcePointPos?: { x: number; y: number }
+  targetPointPos?: { x: number; y: number }
+
   source: string
   target: string
   label?: RichText

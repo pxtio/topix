@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/shallow'
 
 import NodeView from './node-view'
+import { PointNode } from './point-node'
 import { EdgeView } from './edge/edge-view'
 import { CustomConnectionLine } from './connection'
 import { GraphSidebar } from '../style-panel/panel'
@@ -32,6 +33,7 @@ import type { NodeType } from '../../types/style'
 import type { Link } from '../../types/link'
 import { createDefaultLinkProperties } from '../../types/link'
 import { createDefaultLinkStyle } from '../../types/style'
+import { generateUuid } from '@/lib/common'
 
 import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/add-node'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
@@ -44,7 +46,7 @@ import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
 
 const proOptions = { hideAttribution: true }
 
-const nodeTypes = { default: NodeView }
+const nodeTypes = { default: NodeView, point: PointNode }
 const edgeTypes = { default: EdgeView }
 
 const defaultEdgeOptions = {
@@ -240,6 +242,7 @@ export default function GraphEditor() {
   const edges = useGraphStore(useShallow(state => state.edges))
 
   const setNodes = useGraphStore(state => state.setNodes)
+  const setEdges = useGraphStore(state => state.setEdges)
   const onNodesChange = useGraphStore(state => state.onNodesChange)
   const onEdgesChange = useGraphStore(state => state.onEdgesChange)
   const onNodesDelete = useGraphStore(state => state.onNodesDelete)
@@ -334,6 +337,54 @@ export default function GraphEditor() {
     },
     [addNoteNode, beginPlacement],
   )
+
+  const handleAddLine = useCallback(() => {
+    const pointAId = generateUuid()
+    const pointBId = generateUuid()
+    const edgeId = generateUuid()
+
+    const pointA = {
+      id: pointAId,
+      type: 'point',
+      position: { x: 0, y: 0 },
+      data: { kind: 'point' },
+      draggable: true,
+      selectable: true,
+    } as NoteNode
+
+    const pointB = {
+      id: pointBId,
+      type: 'point',
+      position: { x: 120, y: 0 },
+      data: { kind: 'point' },
+      draggable: true,
+      selectable: true,
+    } as NoteNode
+
+    const edge: LinkEdge = {
+      id: edgeId,
+      type: 'default',
+      source: pointAId,
+      target: pointBId,
+      sourceHandle: 'point',
+      targetHandle: 'point',
+      data: {
+        id: edgeId,
+        type: 'link',
+        version: 1,
+        source: pointAId,
+        target: pointBId,
+        properties: createDefaultLinkProperties(),
+        style: { ...createDefaultLinkStyle(), pathStyle: 'straight' },
+        createdAt: new Date().toISOString(),
+        sourcePointId: pointAId,
+        targetPointId: pointBId,
+      } as Link,
+    }
+
+    setNodes(prev => [...prev, pointA, pointB])
+    setEdges(prev => [...prev, edge])
+  }, [setEdges, setNodes])
 
   const handleEdgeDoubleClick = useCallback<NonNullable<ReactFlowProps<NoteNode, LinkEdge>['onEdgeDoubleClick']>>(
     (event, edge) => {
@@ -639,6 +690,7 @@ export default function GraphEditor() {
     <div className="w-full h-full relative">
       <ActionPanel
         onAddNode={handlePanelAddNode}
+        onAddLine={handleAddLine}
         enableSelection={enableSelection}
         setEnableSelection={setEnableSelection}
         onZoomIn={handleZoomIn}

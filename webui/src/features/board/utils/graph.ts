@@ -63,6 +63,9 @@ export const convertLinkToEdge = (link: Link): LinkEdge => {
  * Function to convert a NoteNode back to a Note.
  */
 export const convertNodeToNote = (node: NoteNode): Note => {
+  if ((node.data as { kind?: string }).kind === 'point') {
+    throw new Error("convertNodeToNote: point nodes are not persistable")
+  }
   const note = { ...node.data }
 
   const graphUid = note.graphUid ?? node.data?.graphUid

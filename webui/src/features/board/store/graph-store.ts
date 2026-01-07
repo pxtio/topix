@@ -36,6 +36,9 @@ type Updater<T> = T | ((prev: T) => T)
 const resolveUpdater = <T>(updater: Updater<T>, prev: T): T =>
   typeof updater === "function" ? (updater as (p: T) => T)(prev) : updater
 
+const isPointNode = (node: NoteNode | undefined) =>
+  Boolean(node && (node.data as { kind?: string }).kind === "point")
+
 function shouldPersistNodeChange(
   ch: NodeChange<NoteNode>,
   isResizing: boolean,
@@ -152,7 +155,7 @@ function queueNodesForPersistence(
 
   for (const id of addedIds) {
     const node = byId.get(id)
-    if (!node) continue
+    if (!node || isPointNode(node)) continue
     pendingNewNodes.set(id, node)
     pendingUpdatedNodes.delete(id)
   }
@@ -160,7 +163,7 @@ function queueNodesForPersistence(
   for (const id of updatedIds) {
     if (pendingNewNodes.has(id)) continue
     const node = byId.get(id)
-    if (!node) continue
+    if (!node || isPointNode(node)) continue
     pendingUpdatedNodes.set(id, node)
   }
 
@@ -296,6 +299,22 @@ function scheduleNodePersistFromDiff(
         removedIds.add(id)
       }
     }
+
+    // filter out point nodes from persistence
+    const nextById = new Map(nextNodes.map((n) => [n.id, n]))
+
+    const dropPointIds = (ids: Set<string>, lookup: Map<string, NoteNode>) => {
+      for (const id of Array.from(ids)) {
+        const node = lookup.get(id)
+        if (isPointNode(node)) {
+          ids.delete(id)
+        }
+      }
+    }
+
+    dropPointIds(addedIds, nextById)
+    dropPointIds(updatedIds, nextById)
+    dropPointIds(removedIds, prevById)
 
     if (removedIds.size > 0) {
       removedIds.forEach((id) => {

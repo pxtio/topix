@@ -39,6 +39,9 @@ const resolveUpdater = <T>(updater: Updater<T>, prev: T): T =>
 const isPointNode = (node: NoteNode | undefined) =>
   Boolean(node && (node.data as { kind?: string }).kind === "point")
 
+const buildNodesById = (nodes: NoteNode[]) =>
+  new Map(nodes.map((n) => [n.id, n]))
+
 function shouldPersistNodeChange(
   ch: NodeChange<NoteNode>,
   isResizing: boolean,
@@ -618,6 +621,7 @@ export interface GraphStore {
   setIsLoading: (loading: boolean) => void
 
   nodes: NoteNode[]
+  nodesById: Map<string, NoteNode>
   edges: LinkEdge[]
 
   deletedNodes: NoteNode[]
@@ -670,6 +674,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setIsLoading: (loading) => set({ isLoading: loading }),
 
   nodes: [],
+  nodesById: new Map(),
   edges: [],
 
   deletedNodes: [],
@@ -684,9 +689,10 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   // --- flexible setters ---
 
   setNodes: (nodesOrUpdater) =>
-    set((state) => ({
-      nodes: resolveUpdater<NoteNode[]>(nodesOrUpdater, state.nodes),
-    })),
+    set((state) => {
+      const nextNodes = resolveUpdater<NoteNode[]>(nodesOrUpdater, state.nodes)
+      return { nodes: nextNodes, nodesById: buildNodesById(nextNodes) }
+    }),
 
   setEdges: (edgesOrUpdater) =>
     set((state) => ({
@@ -704,7 +710,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         ? (nodesOrUpdater as (prev: NoteNode[]) => NoteNode[])(prevNodes)
         : nodesOrUpdater
 
-    set({ nodes: nextNodes })
+    set({ nodes: nextNodes, nodesById: buildNodesById(nextNodes) })
 
     scheduleNodePersistFromDiff(prevNodes, nextNodes, boardId, () => ({
       boardId: get().boardId,
@@ -746,7 +752,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     })
 
     const updatedNodes = applyNodeChanges(changes, prevNodes)
-    set({ nodes: updatedNodes })
+    set({ nodes: updatedNodes, nodesById: buildNodesById(updatedNodes) })
 
     if (onlyTransient) return
 

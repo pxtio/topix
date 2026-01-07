@@ -24,6 +24,7 @@ import { GraphSidebar } from '../style-panel/panel'
 import { ActionPanel } from './action-panel'
 import { DefaultBoardView } from '../default-view'
 import { NodePlacementOverlay } from './node-placement-overlay'
+import { LinePlacementOverlay } from './line-placement-overlay'
 import { GraphContextMenu } from './graph-context-menu'
 import { NavigableMiniMap } from './navigable-minimap'
 
@@ -222,6 +223,7 @@ export default function GraphEditor() {
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [isSelecting, setIsSelecting] = useState<boolean>(false)
   const [pendingPlacement, setPendingPlacement] = useState<AddNoteNodeOptions | null>(null)
+  const [pendingLinePlacement, setPendingLinePlacement] = useState<boolean>(false)
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null)
   const [edgeLabelDraft, setEdgeLabelDraft] = useState<string>('')
   const [showMiniMap, setShowMiniMap] = useState<boolean>(true)
@@ -286,6 +288,14 @@ export default function GraphEditor() {
     setPendingPlacement(null)
   }, [])
 
+  const beginLinePlacement = useCallback(() => {
+    setPendingLinePlacement(true)
+  }, [])
+
+  const cancelLinePlacement = useCallback(() => {
+    setPendingLinePlacement(false)
+  }, [])
+
   const handlePlacementComplete = useCallback(
     (options: AddNoteNodeOptions) => {
       addNoteNode(options)
@@ -298,11 +308,14 @@ export default function GraphEditor() {
     if (viewMode !== 'graph' && pendingPlacement) {
       cancelPlacement()
     }
+    if (viewMode !== 'graph' && pendingLinePlacement) {
+      cancelLinePlacement()
+    }
     if (viewMode !== 'graph' && editingEdgeId) {
       setEditingEdgeId(null)
       setEdgeLabelDraft('')
     }
-  }, [viewMode, pendingPlacement, cancelPlacement, editingEdgeId])
+  }, [viewMode, pendingPlacement, pendingLinePlacement, cancelPlacement, cancelLinePlacement, editingEdgeId])
 
   useEffect(() => {
     if (!editingEdgeId) return
@@ -338,6 +351,10 @@ export default function GraphEditor() {
   )
 
   const handleAddLine = useCallback(() => {
+    beginLinePlacement()
+  }, [beginLinePlacement])
+
+  const handlePlaceLine = useCallback((start: { x: number; y: number }, end: { x: number; y: number }) => {
     if (!boardId) return
     const pointAId = generateUuid()
     const pointBId = generateUuid()
@@ -346,7 +363,7 @@ export default function GraphEditor() {
     const pointA = {
       id: pointAId,
       type: 'point',
-      position: { x: 0, y: 0 },
+      position: { x: start.x, y: start.y },
       data: { kind: 'point' },
       draggable: true,
       selectable: true,
@@ -355,7 +372,7 @@ export default function GraphEditor() {
     const pointB = {
       id: pointBId,
       type: 'point',
-      position: { x: 120, y: 0 },
+      position: { x: end.x, y: end.y },
       data: { kind: 'point' },
       draggable: true,
       selectable: true,
@@ -387,7 +404,8 @@ export default function GraphEditor() {
 
     setNodes(prev => [...prev, pointA, pointB])
     setEdgesPersist(prev => [...prev, edge])
-  }, [boardId, setEdgesPersist, setNodes])
+    cancelLinePlacement()
+  }, [boardId, setEdgesPersist, setNodes, cancelLinePlacement])
 
   const handleEdgeDoubleClick = useCallback<NonNullable<ReactFlowProps<NoteNode, LinkEdge>['onEdgeDoubleClick']>>(
     (event, edge) => {
@@ -757,6 +775,12 @@ export default function GraphEditor() {
                   pendingPlacement={pendingPlacement}
                   onPlace={handlePlacementComplete}
                   onCancel={cancelPlacement}
+                  screenToFlowPosition={screenToFlowPosition}
+                />
+                <LinePlacementOverlay
+                  pending={pendingLinePlacement}
+                  onPlace={handlePlaceLine}
+                  onCancel={cancelLinePlacement}
                   screenToFlowPosition={screenToFlowPosition}
                 />
               </>

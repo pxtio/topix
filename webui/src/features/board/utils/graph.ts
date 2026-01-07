@@ -4,6 +4,10 @@ import { createDefaultLinkProperties, type Link } from "../types/link"
 import { createDefaultNoteProperties, type Note } from "../types/note"
 import { createDefaultLinkStyle } from "../types/style"
 
+type PointPair = {
+  points: NoteNode[]
+  edge: LinkEdge
+}
 
 /**
  * Function to convert a Note to a NoteNode.
@@ -58,13 +62,55 @@ export const convertLinkToEdge = (link: Link): LinkEdge => {
   }
 }
 
+export const convertLinkToEdgeWithPoints = (link: Link): PointPair => {
+  const edge = convertLinkToEdge(link)
+  const start = link.properties?.startPoint?.position
+  const end = link.properties?.endPoint?.position
+
+  if (!start || !end) {
+    return { edge, points: [] }
+  }
+
+  const startId = `${link.id}-start`
+  const endId = `${link.id}-end`
+
+  const startNode: NoteNode = {
+    id: startId,
+    type: 'point',
+    position: { x: start.x, y: start.y },
+    data: { kind: 'point' } as NoteNode['data'],
+    draggable: true,
+    selectable: true,
+  }
+
+  const endNode: NoteNode = {
+    id: endId,
+    type: 'point',
+    position: { x: end.x, y: end.y },
+    data: { kind: 'point' } as NoteNode['data'],
+    draggable: true,
+    selectable: true,
+  }
+
+  return {
+    points: [startNode, endNode],
+    edge: {
+      ...edge,
+      source: startId,
+      target: endId,
+      sourceHandle: 'point',
+      targetHandle: 'point',
+    },
+  }
+}
+
 
 /**
  * Function to convert a NoteNode back to a Note.
  */
-export const convertNodeToNote = (node: NoteNode): Note => {
+export const convertNodeToNote = (node: NoteNode): Note | null => {
   if ((node.data as { kind?: string }).kind === 'point') {
-    throw new Error("convertNodeToNote: point nodes are not persistable")
+    return null
   }
   const note = { ...node.data }
 
@@ -124,4 +170,33 @@ export const convertEdgeToLink = (edge: LinkEdge): Link => {
     graphUid,
     label: edge.data?.label
   }
+}
+
+export const convertEdgeToLinkWithPoints = (
+  edge: LinkEdge,
+  nodesById: Map<string, NoteNode>,
+): Link => {
+  const link = convertEdgeToLink(edge)
+  const sourceNode = nodesById.get(edge.source)
+  const targetNode = nodesById.get(edge.target)
+
+  const isPoint = (node?: NoteNode) =>
+    Boolean(node && (node.data as { kind?: string }).kind === 'point')
+
+  const nextProps = link.properties ?? createDefaultLinkProperties()
+
+  if (isPoint(sourceNode)) {
+    nextProps.startPoint = {
+      type: 'position',
+      position: sourceNode?.position,
+    }
+  }
+  if (isPoint(targetNode)) {
+    nextProps.endPoint = {
+      type: 'position',
+      position: targetNode?.position,
+    }
+  }
+
+  return { ...link, properties: nextProps }
 }

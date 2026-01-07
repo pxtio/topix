@@ -2,7 +2,8 @@ import type { Graph } from "../types/board"
 import camelcaseKeys from "camelcase-keys"
 import { useMutation } from "@tanstack/react-query"
 import { useGraphStore } from "../store/graph-store"
-import { convertLinkToEdge, convertNoteToNode } from "../utils/graph"
+import { convertLinkToEdgeWithPoints, convertNoteToNode } from "../utils/graph"
+import type { LinkEdge, NoteNode } from "../types/flow"
 import { apiFetch } from "@/api"
 
 
@@ -38,9 +39,18 @@ export const useGetBoard = () => {
       try {
         const { nodes: notes, edges: links } = await getBoard(boardId)
         const nodes = (notes ?? []).map(convertNoteToNode)
-        const edges = (links ?? []).map(convertLinkToEdge)
+        const edges: LinkEdge[] = []
+        const pointNodes: NoteNode[] = []
 
-        setNodes(nodes)
+        for (const link of links ?? []) {
+          const { edge, points } = convertLinkToEdgeWithPoints(link)
+          edges.push(edge)
+          if (points.length) {
+            pointNodes.push(...points)
+          }
+        }
+
+        setNodes([...nodes, ...pointNodes])
         setEdges(edges)
         return true
       } finally {

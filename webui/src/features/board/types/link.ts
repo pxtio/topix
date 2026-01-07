@@ -11,6 +11,14 @@ export interface LinkProperties {
     type: "position",
     position?: { x: number; y: number }
   }
+  startPoint?: {
+    type: "position",
+    position?: { x: number; y: number }
+  }
+  endPoint?: {
+    type: "position",
+    position?: { x: number; y: number }
+  }
 }
 
 export const createDefaultLinkProperties = (): LinkProperties => ({
@@ -29,11 +37,6 @@ export interface Link extends Record<string, unknown> {
   version: number
 
   properties: LinkProperties
-
-  sourcePointId?: string
-  targetPointId?: string
-  sourcePointPos?: { x: number; y: number }
-  targetPointPos?: { x: number; y: number }
 
   source: string
   target: string

@@ -242,14 +242,13 @@ export default function GraphEditor() {
   const edges = useGraphStore(useShallow(state => state.edges))
 
   const setNodes = useGraphStore(state => state.setNodes)
-  const setEdges = useGraphStore(state => state.setEdges)
+  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
   const onNodesChange = useGraphStore(state => state.onNodesChange)
   const onEdgesChange = useGraphStore(state => state.onEdgesChange)
   const onNodesDelete = useGraphStore(state => state.onNodesDelete)
   const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const storeOnConnect = useGraphStore(state => state.onConnect)
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
-  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
 
   const isResizingNode = useGraphStore(state => state.isResizingNode)
   const isDragging = useGraphStore(state => state.isDragging)
@@ -339,6 +338,7 @@ export default function GraphEditor() {
   )
 
   const handleAddLine = useCallback(() => {
+    if (!boardId) return
     const pointAId = generateUuid()
     const pointBId = generateUuid()
     const edgeId = generateUuid()
@@ -374,17 +374,20 @@ export default function GraphEditor() {
         version: 1,
         source: pointAId,
         target: pointBId,
-        properties: createDefaultLinkProperties(),
+        properties: {
+          ...createDefaultLinkProperties(),
+          startPoint: { type: 'position', position: pointA.position },
+          endPoint: { type: 'position', position: pointB.position },
+        },
         style: { ...createDefaultLinkStyle(), pathStyle: 'straight' },
         createdAt: new Date().toISOString(),
-        sourcePointId: pointAId,
-        targetPointId: pointBId,
+        graphUid: boardId,
       } as Link,
     }
 
     setNodes(prev => [...prev, pointA, pointB])
-    setEdges(prev => [...prev, edge])
-  }, [setEdges, setNodes])
+    setEdgesPersist(prev => [...prev, edge])
+  }, [boardId, setEdgesPersist, setNodes])
 
   const handleEdgeDoubleClick = useCallback<NonNullable<ReactFlowProps<NoteNode, LinkEdge>['onEdgeDoubleClick']>>(
     (event, edge) => {

@@ -34,9 +34,9 @@ import type { NodeType } from '../../types/style'
 import type { Link } from '../../types/link'
 import { createDefaultLinkProperties } from '../../types/link'
 import { createDefaultLinkStyle } from '../../types/style'
-import { generateUuid } from '@/lib/common'
 
 import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/add-node'
+import { usePlaceLine } from '../../hooks/use-place-line'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
@@ -223,7 +223,12 @@ export default function GraphEditor() {
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [isSelecting, setIsSelecting] = useState<boolean>(false)
   const [pendingPlacement, setPendingPlacement] = useState<AddNoteNodeOptions | null>(null)
-  const [pendingLinePlacement, setPendingLinePlacement] = useState<boolean>(false)
+  const {
+    pending: pendingLinePlacement,
+    begin: beginLinePlacement,
+    cancel: cancelLinePlacement,
+    place: handlePlaceLine,
+  } = usePlaceLine()
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null)
   const [edgeLabelDraft, setEdgeLabelDraft] = useState<string>('')
   const [showMiniMap, setShowMiniMap] = useState<boolean>(true)
@@ -288,14 +293,6 @@ export default function GraphEditor() {
     setPendingPlacement(null)
   }, [])
 
-  const beginLinePlacement = useCallback(() => {
-    setPendingLinePlacement(true)
-  }, [])
-
-  const cancelLinePlacement = useCallback(() => {
-    setPendingLinePlacement(false)
-  }, [])
-
   const handlePlacementComplete = useCallback(
     (options: AddNoteNodeOptions) => {
       addNoteNode(options)
@@ -353,59 +350,6 @@ export default function GraphEditor() {
   const handleAddLine = useCallback(() => {
     beginLinePlacement()
   }, [beginLinePlacement])
-
-  const handlePlaceLine = useCallback((start: { x: number; y: number }, end: { x: number; y: number }) => {
-    if (!boardId) return
-    const edgeId = generateUuid()
-    const pointAId = `${edgeId}-start`
-    const pointBId = `${edgeId}-end`
-
-    const pointA = {
-      id: pointAId,
-      type: 'point',
-      position: { x: start.x, y: start.y },
-      data: { kind: 'point' },
-      draggable: true,
-      selectable: true,
-    } as NoteNode
-
-    const pointB = {
-      id: pointBId,
-      type: 'point',
-      position: { x: end.x, y: end.y },
-      data: { kind: 'point' },
-      draggable: true,
-      selectable: true,
-    } as NoteNode
-
-    const edge: LinkEdge = {
-      id: edgeId,
-      type: 'default',
-      source: pointAId,
-      target: pointBId,
-      sourceHandle: 'point',
-      targetHandle: 'point',
-      data: {
-        id: edgeId,
-        type: 'link',
-        version: 1,
-        source: pointAId,
-        target: pointBId,
-        properties: {
-          ...createDefaultLinkProperties(),
-          startPoint: { type: 'position', position: pointA.position },
-          endPoint: { type: 'position', position: pointB.position },
-        },
-        style: { ...createDefaultLinkStyle(), pathStyle: 'straight' },
-        createdAt: new Date().toISOString(),
-        graphUid: boardId,
-      } as Link,
-    }
-
-    setNodes(prev => [...prev, pointA, pointB])
-    setEdgesPersist(prev => [...prev, edge])
-    cancelLinePlacement()
-  }, [boardId, setEdgesPersist, setNodes, cancelLinePlacement])
 
   const handleEdgeDoubleClick = useCallback<NonNullable<ReactFlowProps<NoteNode, LinkEdge>['onEdgeDoubleClick']>>(
     (event, edge) => {

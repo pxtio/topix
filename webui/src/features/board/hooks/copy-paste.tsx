@@ -41,8 +41,9 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
   const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
 
-  // clipboard: notes + edges that connect those notes
+  // clipboard: notes + point nodes + edges that connect those nodes
   const copiedNotesRef = useRef<Note[] | null>(null)
+  const copiedPointNodesRef = useRef<NoteNode[] | null>(null)
   const copiedEdgesRef = useRef<LinkEdge[] | null>(null)
 
   const randJitter = useCallback(() => {
@@ -62,21 +63,36 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     const selectedNodes = getSelectedNoteNodes()
     if (!selectedNodes.length) {
       copiedNotesRef.current = null
-      copiedEdgesRef.current = null
-      return
-    }
-
-    const notes = selectedNodes
-      .map(n => (n.data?.note ?? n.data) as Note | undefined)
-      .filter((v): v is Note => !!v)
-
-    if (!notes.length) {
-      copiedNotesRef.current = null
+      copiedPointNodesRef.current = null
       copiedEdgesRef.current = null
       return
     }
 
     const selectedIds = new Set(selectedNodes.map(n => n.id))
+    const selectedEdges = edges.filter(e => e.selected)
+    if (selectedEdges.length > 0) {
+      for (const edge of selectedEdges) {
+        selectedIds.add(edge.source)
+        selectedIds.add(edge.target)
+      }
+    }
+
+    const selectedWithEdges = nodes.filter(n => selectedIds.has(n.id)) as NoteNode[]
+
+    const notes = selectedWithEdges
+      .map(n => (n.data?.note ?? n.data) as Note | undefined)
+      .filter((v): v is Note => v?.type === 'note')
+
+    const pointNodes = selectedWithEdges.filter(
+      n => (n.data as { kind?: string }).kind === 'point'
+    )
+
+    if (!notes.length && !pointNodes.length) {
+      copiedNotesRef.current = null
+      copiedPointNodesRef.current = null
+      copiedEdgesRef.current = null
+      return
+    }
 
     // copy edges whose source & target are both in the selected node set
     const connectingEdges = edges.filter(
@@ -84,8 +100,9 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     )
 
     copiedNotesRef.current = notes
+    copiedPointNodesRef.current = pointNodes
     copiedEdgesRef.current = connectingEdges
-  }, [getSelectedNoteNodes, edges])
+  }, [getSelectedNoteNodes, edges, nodes])
 
   /**
    * Returns a cloned note with a shared jitter offset applied
@@ -119,82 +136,130 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
   const pasteCopied = useCallback(async () => {
     if (!boardId || !userId) return
     const copiedNotes = copiedNotesRef.current
+    const copiedPointNodes = copiedPointNodesRef.current
     const copiedEdges = copiedEdgesRef.current
 
-    if (!copiedNotes || !copiedNotes.length) return
+    if ((!copiedNotes || !copiedNotes.length) && (!copiedPointNodes || !copiedPointNodes.length)) return
 
     // one shared jitter per paste to preserve the internal structure
     const jitter = { dx: randJitter(), dy: randJitter() }
 
     // clone notes with jitter
-    const clonedNotes = copiedNotes.map(note => cloneNoteWithJitter(note, jitter))
+    const clonedNotes = (copiedNotes ?? []).map(note => cloneNoteWithJitter(note, jitter))
 
     // build node id mapping: original note id -> cloned note id
     const idMap = new Map<string, string>()
-    copiedNotes.forEach((orig, idx) => {
+    copiedNotes?.forEach((orig, idx) => {
       const clone = clonedNotes[idx]
       idMap.set(orig.id, clone.id)
     })
+
+    const pointNodes = copiedPointNodes ?? []
 
     // convert cloned notes to nodes
     const newNodes = clonedNotes
       .map(convertNoteToNode)
       .map(n => ({ ...n, selected: true }))
 
-    // clone edges if we have any
-    let newEdges: LinkEdge[] = []
-    if (copiedEdges && copiedEdges.length > 0) {
-      newEdges = copiedEdges
-        .map(edge => {
-          const newSource = idMap.get(edge.source)
-          const newTarget = idMap.get(edge.target)
-          if (!newSource || !newTarget) return null
+    const edgePlans = (copiedEdges ?? []).map(edge => {
+      const sourceNode = pointNodes.find(n => n.id === edge.source)
+      const targetNode = pointNodes.find(n => n.id === edge.target)
+      const isLine = !!sourceNode && !!targetNode
+      const newId = generateUuid()
+      if (isLine) {
+        idMap.set(edge.source, `${newId}-start`)
+        idMap.set(edge.target, `${newId}-end`)
+      }
+      return { edge, sourceNode, targetNode, isLine, newId }
+    })
 
-          const newId = generateUuid()
-          const oldLink = edge.data as Link | undefined
+    for (const node of pointNodes) {
+      if (!idMap.has(node.id)) {
+        idMap.set(node.id, generateUuid())
+      }
+    }
 
-          const newLink: Link | undefined = oldLink
-            ? {
-                ...oldLink,
-                id: newId,
-                source: newSource,
-                target: newTarget,
-                graphUid: boardId,
-                createdAt: new Date().toISOString(),
-                updatedAt: undefined,
-                deletedAt: undefined,
-              }
-            : undefined
+    const clonedPointNodes: NoteNode[] = pointNodes.map((node) => {
+      const newId = idMap.get(node.id)
+      if (!newId) return node
+      return {
+        ...node,
+        id: newId,
+        position: {
+          x: node.position.x + jitter.dx,
+          y: node.position.y + jitter.dy,
+        },
+        selected: true,
+        data: {
+          ...node.data,
+          endpointActive: true,
+        },
+      }
+    })
 
-          const finalLinkData = newLink ?? (edge.data as Link | undefined)
-          const sanitizedLink = finalLinkData
-            ? {
-                ...finalLinkData,
-                properties: {
-                  ...finalLinkData.properties,
-                  edgeControlPoint: { type: 'position' as const },
-                },
-              }
-            : undefined
+    const newEdges: LinkEdge[] = []
+    for (const { edge, sourceNode, targetNode, isLine, newId } of edgePlans) {
+      const newSource = idMap.get(edge.source)
+      const newTarget = idMap.get(edge.target)
+      if (!newSource || !newTarget) continue
 
-          const clonedEdge: LinkEdge = {
-            ...edge,
+      const oldLink = edge.data as Link | undefined
+      const newLink: Link | undefined = oldLink
+        ? {
+            ...oldLink,
             id: newId,
             source: newSource,
             target: newTarget,
-            selected: true,
-            data: sanitizedLink,
+            graphUid: boardId,
+            createdAt: new Date().toISOString(),
+            updatedAt: undefined,
+            deletedAt: undefined,
           }
+        : undefined
 
-          return clonedEdge
-        })
-        .filter((e): e is LinkEdge => !!e)
+      const finalLinkData = newLink ?? (edge.data as Link | undefined)
+      const sanitizedLink = finalLinkData
+        ? {
+            ...finalLinkData,
+            properties: {
+              ...finalLinkData.properties,
+              edgeControlPoint: { type: 'position' as const },
+              ...(isLine
+                ? {
+                    startPoint: {
+                      type: 'position' as const,
+                      position: {
+                        x: (sourceNode?.position.x ?? 0) + jitter.dx,
+                        y: (sourceNode?.position.y ?? 0) + jitter.dy,
+                      },
+                    },
+                    endPoint: {
+                      type: 'position' as const,
+                      position: {
+                        x: (targetNode?.position.x ?? 0) + jitter.dx,
+                        y: (targetNode?.position.y ?? 0) + jitter.dy,
+                      },
+                    },
+                  }
+                : {}),
+            },
+          }
+        : undefined
+
+      newEdges.push({
+        ...edge,
+        id: newId,
+        source: newSource,
+        target: newTarget,
+        selected: true,
+        data: sanitizedLink,
+      })
     }
 
     // update nodes (persisted): clear selection then append new nodes
     setNodesPersist(curr => {
       const cleared = curr.map(n => ({ ...n, selected: false }))
-      return [...cleared, ...newNodes]
+      return [...cleared, ...newNodes, ...clonedPointNodes]
     })
 
     // update edges (persisted): clear selection then append new edges

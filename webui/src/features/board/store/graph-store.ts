@@ -42,6 +42,33 @@ const isPointNode = (node: NoteNode | undefined) =>
 const buildNodesById = (nodes: NoteNode[]) =>
   new Map(nodes.map((n) => [n.id, n]))
 
+// Incrementally update node index for small change sets to avoid full rebuilds.
+const updateNodesById = (
+  prev: Map<string, NoteNode>,
+  nextNodes: NoteNode[],
+  changes: NodeChange<NoteNode>[],
+) => {
+  const next = new Map(prev)
+
+  for (const ch of changes) {
+    if (ch.type === "add") {
+      next.set(ch.item.id, ch.item)
+      continue
+    }
+    if (ch.type === "remove") {
+      if (ch.id) next.delete(ch.id)
+      continue
+    }
+    // For other change types, swap in the latest node instance.
+    if (ch.id) {
+      const updated = nextNodes.find((n) => n.id === ch.id)
+      if (updated) next.set(ch.id, updated)
+    }
+  }
+
+  return next
+}
+
 function shouldPersistNodeChange(
   ch: NodeChange<NoteNode>,
   isResizing: boolean,
@@ -752,7 +779,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     })
 
     const updatedNodes = applyNodeChanges(changes, prevNodes)
-    set({ nodes: updatedNodes, nodesById: buildNodesById(updatedNodes) })
+    const updatedNodesById = updateNodesById(get().nodesById, updatedNodes, changes)
+    set({ nodes: updatedNodes, nodesById: updatedNodesById })
 
     if (onlyTransient) return
 

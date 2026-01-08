@@ -13,7 +13,7 @@ import {
   type ReactFlowProps,
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useShallow } from 'zustand/shallow'
 
 import NodeView from './node-view'
@@ -32,10 +32,9 @@ import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
 import type { NodeType } from '../../types/style'
 import type { Link } from '../../types/link'
-import { createDefaultLinkProperties } from '../../types/link'
-import { createDefaultLinkStyle } from '../../types/style'
 
 import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/add-node'
+import { useDecoratedEdges } from '../../hooks/use-decorated-edges'
 import { usePlaceLine } from '../../hooks/use-place-line'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
@@ -91,26 +90,7 @@ const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(no
 const PAN_EPS = 0.01
 const ZOOM_EPS = 0.0001
 
-const ensureLinkData = (edge: LinkEdge): Link => {
-  if (edge.data) {
-    const existing = edge.data as Link
-    return {
-      ...existing,
-      properties: existing.properties ?? createDefaultLinkProperties(),
-    }
-  }
-
-  return {
-    id: edge.id,
-    type: 'link',
-    version: 1,
-    source: edge.source,
-    target: edge.target,
-    style: createDefaultLinkStyle(),
-    createdAt: new Date().toISOString(),
-    properties: createDefaultLinkProperties(),
-  }
-}
+const ensureLinkData = (edge: LinkEdge): Link => edge.data as Link
 
 type ViewMode = 'graph' | 'linear'
 
@@ -372,6 +352,7 @@ export default function GraphEditor() {
 
   const handleEdgeControlPointChange = useCallback(
     (edgeId: string, position: { x: number; y: number }) => {
+      if (!boardId) return
       setEdgesPersist(prev =>
         prev.map(edge => {
           if (edge.id !== edgeId) return edge
@@ -390,7 +371,7 @@ export default function GraphEditor() {
         }),
       )
     },
-    [setEdgesPersist],
+    [boardId, setEdgesPersist],
   )
 
   const handleEdgeLabelSave = useCallback(() => {
@@ -414,44 +395,17 @@ export default function GraphEditor() {
     setEdgeLabelDraft('')
   }, [editingEdgeId, edgeLabelDraft, setEdgesPersist])
 
-  const edgesForRender = useMemo(() => {
-    return edges.map(edge => {
-      const isEditing = edge.id === editingEdgeId
-      const baseLink = ensureLinkData(edge)
-      const baseData: Link & {
-        labelEditing?: boolean
-        labelDraft?: string
-        onLabelChange?: (value: string) => void
-        onLabelSave?: () => void
-        onLabelCancel?: () => void
-        onControlPointChange?: (point: { x: number, y: number }) => void
-      } = {
-        ...baseLink,
-        onControlPointChange: position => handleEdgeControlPointChange(edge.id, position),
-      }
-
-      if (isEditing) {
-        baseData.labelEditing = true
-        baseData.labelDraft = edgeLabelDraft
-        baseData.onLabelChange = handleEdgeLabelChange
-        baseData.onLabelSave = handleEdgeLabelSave
-        baseData.onLabelCancel = handleEdgeLabelCancel
-      }
-
-      return {
-        ...edge,
-        data: baseData as Link,
-      }
-    })
-  }, [
+  const edgesForRender = useDecoratedEdges({
     edges,
     editingEdgeId,
     edgeLabelDraft,
-    handleEdgeControlPointChange,
-    handleEdgeLabelCancel,
-    handleEdgeLabelChange,
-    handleEdgeLabelSave,
-  ])
+    onControlPointChange: handleEdgeControlPointChange,
+    labelHandlers: {
+      onLabelChange: handleEdgeLabelChange,
+      onLabelSave: handleEdgeLabelSave,
+      onLabelCancel: handleEdgeLabelCancel,
+    },
+  })
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
   const lastViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null)

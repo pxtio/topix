@@ -47,7 +47,7 @@ export interface Link extends Record<string, unknown> {
   updatedAt?: string
   deletedAt?: string
 
-  graphUid?: string
+  graphUid: string
 }
 
 

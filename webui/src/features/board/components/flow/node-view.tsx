@@ -102,10 +102,10 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   }
 
   const handleClassBase =
-    'w-full h-full !absolute -inset-[8px] rounded-none border-none cursor-crosshair'
+    'w-full h-full !absolute -inset-[24px] rounded-none border-none cursor-crosshair'
   const handleBgClass = shouldHighlightHandles ? '!bg-secondary/5' : '!bg-transparent'
-  const handleClassRight = clsx(handleClassBase, '-translate-x-[calc(50%-8px)]', handleBgClass)
-  const handleClassLeft = clsx(handleClassBase, 'translate-x-[calc(50%-8px)]', handleBgClass)
+  const handleClassRight = clsx(handleClassBase, '-translate-x-[calc(50%-24px)]', handleBgClass)
+  const handleClassLeft = clsx(handleClassBase, '!translate-x-1/2', handleBgClass)
 
   if (nodeType === 'sheet') {
     const sheetHandleDivClass = clsx(

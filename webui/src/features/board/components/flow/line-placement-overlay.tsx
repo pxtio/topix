@@ -24,6 +24,7 @@ export function LinePlacementOverlay({
   const [start, setStart] = useState<ScreenPoint | null>(null)
   const [end, setEnd] = useState<ScreenPoint | null>(null)
   const pointerIdRef = useRef<number | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   const reset = useCallback(() => {
     setStart(null)
@@ -114,11 +115,18 @@ export function LinePlacementOverlay({
 
   if (!pending) return null
 
-  const line = start && end ? { x1: start.x, y1: start.y, x2: end.x, y2: end.y } : null
+  const bounds = containerRef.current?.getBoundingClientRect()
+  const line = start && end && bounds ? {
+    x1: start.x - bounds.left,
+    y1: start.y - bounds.top,
+    x2: end.x - bounds.left,
+    y2: end.y - bounds.top,
+  } : null
 
   return (
     <div
       className="absolute inset-0 z-40 cursor-crosshair"
+      ref={containerRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

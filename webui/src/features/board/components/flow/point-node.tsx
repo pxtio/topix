@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import clsx from 'clsx'
 import type { NoteNode } from '../../types/flow'
@@ -9,9 +10,11 @@ import type { NoteNode } from '../../types/flow'
  * @param selected - Indicates if the node is selected.
  * @returns A React component for the point node.
  */
-export function PointNode({ selected }: NodeProps<NoteNode>) {
+function PointNodeBase({ selected, data }: NodeProps<NoteNode>) {
   const size = 14
+  const showActive = Boolean((data as { endpointActive?: boolean }).endpointActive)
   const highlight = selected ? 'ring-2 ring-secondary ring-offset-2 ring-offset-background' : ''
+  const fillClass = showActive ? 'bg-secondary' : 'bg-transparent'
   return (
     <div
       className={clsx('w-full h-full flex items-center justify-center pointer-events-auto')}
@@ -30,7 +33,8 @@ export function PointNode({ selected }: NodeProps<NoteNode>) {
       />
       <div
         className={clsx(
-          'rounded-full bg-secondary',
+          'rounded-full',
+          fillClass,
           highlight,
         )}
         style={{ width: size, height: size }}
@@ -38,3 +42,5 @@ export function PointNode({ selected }: NodeProps<NoteNode>) {
     </div>
   )
 }
+
+export const PointNode = memo(PointNodeBase)

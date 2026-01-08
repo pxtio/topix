@@ -7,6 +7,7 @@ type NoteNodeData = Note & {
   lineStart?: PositionProperty
   lineEnd?: PositionProperty
   kind?: "point"
+  endpointActive?: boolean
 }
 
 export type NoteNode = Node<NoteNodeData>

@@ -356,9 +356,9 @@ export default function GraphEditor() {
 
   const handlePlaceLine = useCallback((start: { x: number; y: number }, end: { x: number; y: number }) => {
     if (!boardId) return
-    const pointAId = generateUuid()
-    const pointBId = generateUuid()
     const edgeId = generateUuid()
+    const pointAId = `${edgeId}-start`
+    const pointBId = `${edgeId}-end`
 
     const pointA = {
       id: pointAId,

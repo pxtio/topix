@@ -815,6 +815,33 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         }
       }
     }
+
+    const selectedPointIds = new Set(
+      updatedNodes
+        .filter((n) => n.selected && isPointNode(n))
+        .map((n) => n.id),
+    )
+
+    if (selectedPointIds.size > 0) {
+      const activePointIds = new Set(selectedPointIds)
+      const edges = get().edges
+      for (const edge of edges) {
+        if (selectedPointIds.has(edge.source) || selectedPointIds.has(edge.target)) {
+          activePointIds.add(edge.source)
+          activePointIds.add(edge.target)
+        }
+      }
+
+      const nextNodes = updatedNodes.map((n) => {
+        if (!isPointNode(n)) return n
+        const shouldActive = activePointIds.has(n.id)
+        const data = n.data as { endpointActive?: boolean }
+        if (data.endpointActive === shouldActive) return n
+        return { ...n, data: { ...n.data, endpointActive: shouldActive } }
+      })
+
+      set({ nodes: nextNodes, nodesById: buildNodesById(nextNodes) })
+    }
   },
 
   onEdgesChange: (changes) => {
@@ -822,6 +849,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     if (!boardId) return
 
     const prevEdges = get().edges
+    const prevNodes = get().nodes
 
     // fast path: selection-only
     const onlySelect = changes.every((ch) => ch.type === "select")
@@ -829,7 +857,26 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const updatedEdges = applyEdgeChanges(changes, prevEdges)
     set({ edges: updatedEdges })
 
-    if (onlySelect) return
+    if (onlySelect) {
+      const activePointIds = new Set<string>()
+      for (const edge of updatedEdges) {
+        if (!edge.selected) continue
+        activePointIds.add(edge.source)
+        activePointIds.add(edge.target)
+      }
+
+      if (activePointIds.size > 0 || prevNodes.some(n => isPointNode(n) && (n.data as { endpointActive?: boolean }).endpointActive)) {
+        const nextNodes = prevNodes.map((n) => {
+          if (!isPointNode(n)) return n
+          const shouldActive = activePointIds.has(n.id)
+          const data = n.data as { endpointActive?: boolean }
+          if (data.endpointActive === shouldActive) return n
+          return { ...n, data: { ...n.data, endpointActive: shouldActive } }
+        })
+        set({ nodes: nextNodes, nodesById: buildNodesById(nextNodes) })
+      }
+      return
+    }
 
     scheduleEdgePersistFromChanges(
       prevEdges,

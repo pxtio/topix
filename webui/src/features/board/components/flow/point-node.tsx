@@ -24,12 +24,14 @@ function PointNodeBase({ selected, data }: NodeProps<NoteNode>) {
         id="point"
         position={Position.Right}
         className="!opacity-0 !w-1 !h-1"
+        isConnectable={false}
       />
       <Handle
         type="target"
         id="point"
         position={Position.Left}
         className="!opacity-0 !w-1 !h-1"
+        isConnectable={false}
       />
       <div
         className={clsx(

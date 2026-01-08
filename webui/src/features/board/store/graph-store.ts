@@ -1,5 +1,4 @@
 import {
-  addEdge as rfAddEdge,
   applyEdgeChanges,
   applyNodeChanges,
   type Connection,
@@ -988,7 +987,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     } as Link
 
     const prevEdges = get().edges
-    const newEdges = rfAddEdge(newEdge, prevEdges)
+    const newEdges = [...prevEdges, newEdge]
 
     if (newEdges.length > prevEdges.length) {
       set({ edges: newEdges })

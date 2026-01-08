@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon, ArrowMoveDownRightIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { AddNoteNodeOptions } from '../../hooks/add-node'
@@ -263,7 +263,7 @@ export const ActionPanel = memo(function ActionPanel({
             title='Add line'
             aria-label='Add line'
           >
-            <HugeiconsIcon icon={MinusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
+            <HugeiconsIcon icon={ArrowMoveDownRightIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Shape picker */}

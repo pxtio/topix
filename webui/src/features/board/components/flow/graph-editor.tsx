@@ -11,7 +11,6 @@ import {
   type OnNodesDelete,
   type OnEdgesDelete,
   type ReactFlowProps,
-  MiniMap,
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -25,6 +24,7 @@ import { ActionPanel } from './action-panel'
 import { DefaultBoardView } from '../default-view'
 import { NodePlacementOverlay } from './node-placement-overlay'
 import { GraphContextMenu } from './graph-context-menu'
+import { NavigableMiniMap } from './navigable-minimap'
 
 import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
@@ -75,6 +75,10 @@ const drawableNodeTypes: NodeType[] = [
   'rectangle',
   'ellipse',
   'diamond',
+  'soft-diamond',
+  'layered-diamond',
+  'layered-circle',
+  'tag',
   'layered-rectangle',
   'thought-cloud',
   'capsule',
@@ -171,7 +175,7 @@ function GraphView({
       connectionLineComponent={CustomConnectionLine}
       connectionLineStyle={connectionLineStyle}
       selectionOnDrag={enableSelection}
-      selectionMode={SelectionMode.Partial}
+      selectionMode={SelectionMode.Full}
       panOnDrag={!isLocked && !enableSelection}
       selectionKeyCode={null}
       onNodeDragStart={onNodeDragStart}
@@ -226,6 +230,7 @@ export default function GraphEditor() {
     zoomOut,
     fitView,
     viewportInitialized,
+    zoomTo,
     screenToFlowPosition,
   } = useReactFlow<NoteNode, LinkEdge>()
 
@@ -250,7 +255,8 @@ export default function GraphEditor() {
   const setIsPanning = useGraphStore(state => state.setIsPanning)
   const isZooming = useGraphStore(state => state.isZooming)
   const setIsZooming = useGraphStore(state => state.setIsZooming)
-  const graphViewports = useGraphStore(state => state.graphViewports)
+  const setZoom = useGraphStore(state => state.setZoom)
+  const graphViewports = useGraphStore(useShallow(state => state.graphViewports))
   const setGraphViewport = useGraphStore(state => state.setGraphViewport)
 
   const mindmaps = useMindMapStore(state => state.mindmaps)
@@ -432,6 +438,7 @@ export default function GraphEditor() {
   ])
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
+  const lastViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null)
 
   // Mindmap integration
   useEffect(() => {
@@ -464,9 +471,30 @@ export default function GraphEditor() {
     () => fitView({ padding: 0.2, duration: 250 }),
     [fitView],
   )
+  const handleResetZoom = useCallback(() => {
+    zoomTo(1)
+  }, [zoomTo])
+
   const handleToggleLock = useCallback(() => {
     setIsLocked(value => !value)
   }, [setIsLocked])
+
+  const getCurrentViewport = useCallback(() => {
+    return (
+      lastViewportRef.current ??
+      rfInstanceRef.current?.getViewport?.() ??
+      null
+    )
+  }, [])
+
+  const handleMiniMapNavigate = useCallback(
+    ({ x, y }: { x: number; y: number }, zoom: number) => {
+      const instance = rfInstanceRef.current
+      if (!instance?.setCenter) return
+      instance.setCenter(x, y, { zoom, duration: 150 })
+    },
+    [],
+  )
 
   // Connect using store (store handles addLink + persistence)
   const connectNodes: OnConnect = useCallback(
@@ -484,8 +512,6 @@ export default function GraphEditor() {
   const handleSelectionDragStart = useCallback(() => setIsSelecting(true), [])
   const handleSelectionEnd = useCallback(() => setIsSelecting(false), [])
   const handleSelectionDragStop = useCallback(() => setIsSelecting(false), [])
-
-  const lastViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null)
 
   useOnViewportChange({
     onStart: vp => {
@@ -509,6 +535,7 @@ export default function GraphEditor() {
       if (boardId) {
         setGraphViewport(boardId, vp)
       }
+      setZoom(vp.zoom)
       setIsPanning(false)
       setIsZooming(false)
       lastViewportRef.current = vp
@@ -617,6 +644,7 @@ export default function GraphEditor() {
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitView={handleFitView}
+        onResetZoom={handleResetZoom}
         isLocked={isLocked}
         toggleLock={handleToggleLock}
         viewMode={viewMode}
@@ -662,7 +690,11 @@ export default function GraphEditor() {
                   onEdgeDoubleClick={handleEdgeDoubleClick}
                 >
                   {showMiniMap && !moving && !isDragging && !isResizingNode && !isSelecting && (
-                    <MiniMap className='!bg-sidebar rounded-lg' />
+                    <NavigableMiniMap
+                      nodes={nodes}
+                      onNavigate={handleMiniMapNavigate}
+                      getCurrentViewport={getCurrentViewport}
+                    />
                   )}
                 </GraphView>
 

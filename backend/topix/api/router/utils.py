@@ -22,7 +22,7 @@ router = APIRouter(
 @router.get("/icons/search/", include_in_schema=False)
 @router.get("/icons/search")
 @with_standard_response
-async def search_icons(query: str, limit: int = 5):
+async def search_icons(query: str, limit: int = 100):
     """Search for icons."""
     results = await search_iconify_icons(query, limit)
     return {

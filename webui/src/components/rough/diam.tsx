@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
 import type { Options as RoughOptions } from 'roughjs/bin/core'
-import { useViewport } from '@xyflow/react'
 import clsx from 'clsx'
 import type { StrokeStyle } from '@/features/board/types/style'
 import { getCachedCanvas, serializeCacheKey } from './cache'
+import { useGraphStore } from '@/features/board/store/graph-store'
 
 type RoundedClass = 'none' | 'rounded-2xl'
 
@@ -71,9 +71,9 @@ const oversampleForZoom = (value: number): number => {
   }
   return Math.max(0.1, value)
 }
-const MAX_RENDER_WIDTH = 1920
-const MAX_RENDER_HEIGHT = 1080
-const RENDER_SCALE_FACTOR = 0.92
+const MAX_RENDER_WIDTH = 1600
+const MAX_RENDER_HEIGHT = 900
+const RENDER_SCALE_FACTOR = 0.75
 
 type DetailSettings = {
   curveStepCount: number
@@ -82,9 +82,9 @@ type DetailSettings = {
 }
 
 const detailForSize = (maxSide: number): DetailSettings => {
-  if (maxSide >= 800) return { curveStepCount: 5, maxRandomnessOffset: 1, hachureGap: 8 }
-  if (maxSide >= 400) return { curveStepCount: 7, maxRandomnessOffset: 1.2, hachureGap: 6 }
-  return { curveStepCount: 9, maxRandomnessOffset: 1.4, hachureGap: 5 }
+  if (maxSide >= 800) return { curveStepCount: 3, maxRandomnessOffset: 0.9, hachureGap: 9 }
+  if (maxSide >= 400) return { curveStepCount: 4, maxRandomnessOffset: 1.1, hachureGap: 7 }
+  return { curveStepCount: 5, maxRandomnessOffset: 1.3, hachureGap: 5 }
 }
 
 /** Map logical stroke style to dash pattern + desired canvas lineCap (set on ctx). */
@@ -215,8 +215,8 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
-  const { zoom: viewportZoom = 1 } = useViewport()
-  const effectiveZoom = quantizeZoom(viewportZoom)
+  const viewportZoom = useGraphStore(state => state.zoom ?? 1)
+  const effectiveZoom = quantizeZoom(viewportZoom || 1)
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     const rect = wrapper.getBoundingClientRect()

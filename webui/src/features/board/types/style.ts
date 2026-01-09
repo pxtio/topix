@@ -11,11 +11,15 @@ export type NodeType =
   | "sheet"
   | "ellipse"
   | "diamond"
+  | "soft-diamond"
+  | "tag"
+  | "layered-circle"
   | "image"
   | "icon"
   | "layered-rectangle"
   | "thought-cloud"
   | "capsule"
+  | "layered-diamond"
 
 /**
  * Stroke style for the node.
@@ -57,7 +61,7 @@ export function fontSizeToTwClass(size?: FontSize): string {
 /**
  * Font family options for the node.
  */
-export type FontFamily = "handwriting" | "sans-serif" | "serif" | "monospace"
+export type FontFamily = "handwriting" | "sans-serif" | "serif" | "monospace" | "informal"
 
 
 // Convert font family to Tailwind CSS class
@@ -71,6 +75,8 @@ export function fontFamilyToTwClass(family?: FontFamily): string {
       return "font-serif"
     case "monospace":
       return "font-mono"
+    case "informal":
+      return "font-informal"
     default:
       return "font-sans"
   }
@@ -184,6 +190,8 @@ export const createDefaultStyle = ({
   switch (type) {
     case "rectangle":
     case "layered-rectangle":
+    case "layered-circle":
+    case "tag":
       return {
         ...defaultOptions,
         roughness: 0.5,
@@ -223,6 +231,8 @@ export const createDefaultStyle = ({
         textAlign: "center"
       } as Style
     case "diamond":
+    case "layered-diamond":
+    case "soft-diamond":
       return {
         ...defaultOptions,
         roughness: 0.5,

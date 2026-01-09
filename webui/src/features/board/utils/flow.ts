@@ -10,8 +10,8 @@ type ShapeType = 'rectangle' | 'ellipse' | 'diamond'
  */
 function getNodeShape(node: InternalNode<Node>): ShapeType {
   const t = (node.data?.style as { type?: string } | undefined)?.type
-  if (t === 'ellipse') return 'ellipse'
-  if (t === 'diamond') return 'diamond'
+  if (t === 'ellipse' || t === 'layered-circle') return 'ellipse'
+  if (t === 'diamond' || t === 'soft-diamond' || t === 'layered-diamond') return 'diamond'
   return 'rectangle'
 }
 

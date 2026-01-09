@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { AddNoteNodeOptions } from '../../hooks/add-node'
@@ -26,6 +26,7 @@ interface ActionPanelProps {
   onZoomIn: () => void
   onZoomOut: () => void
   onFitView: () => void
+  onResetZoom: () => void
   isLocked: boolean
   toggleLock: () => void
 
@@ -45,6 +46,7 @@ export const ActionPanel = memo(function ActionPanel({
   onZoomIn,
   onZoomOut,
   onFitView,
+  onResetZoom,
   isLocked,
   toggleLock,
   viewMode,
@@ -54,6 +56,7 @@ export const ActionPanel = memo(function ActionPanel({
   const [openIconSearch, setOpenIconSearch] = useState(false)
   const [openChatDialog, setOpenChatDialog] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
+  const zoom = useGraphStore(state => state.zoom ?? 1)
   const navigate = useNavigate()
   const boardSearch = useSearch({
     from: "/boards/$id",
@@ -69,6 +72,10 @@ export const ActionPanel = memo(function ActionPanel({
     { nodeType: 'layered-rectangle', label: 'Layered card', icon: <Layers className='w-4 h-4 shrink-0' /> },
     { nodeType: 'ellipse', label: 'Ellipse', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} /> },
     { nodeType: 'diamond', label: 'Diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'soft-diamond', label: 'Rounded diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'layered-diamond', label: 'Layered diamond', icon: <Layers className='w-4 h-4 shrink-0' /> },
+    { nodeType: 'layered-circle', label: 'Layered circle', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'tag', label: 'Tag', icon: <HugeiconsIcon icon={LabelIcon} className='size-4 shrink-0' strokeWidth={2} /> },
     { nodeType: 'thought-cloud', label: 'Cloud', icon: <Cloud className='w-4 h-4 shrink-0' /> },
     { nodeType: 'capsule', label: 'Capsule', icon: <HugeiconsIcon icon={Tag01Icon} className='size-4 shrink-0' strokeWidth={2} /> },
   ]
@@ -192,6 +199,16 @@ export const ActionPanel = memo(function ActionPanel({
             aria-label='Zoom out'
           >
             <HugeiconsIcon icon={MinusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
+          </Button>
+          <Button
+            variant={null}
+            size='icon'
+            onClick={onResetZoom}
+            className={normalButtonClass}
+            title='Reset zoom to 100%'
+            aria-label='Reset zoom to 100%'
+          >
+            <span className='text-xs font-medium text-secondary'>{Math.round((zoom || 1) * 100)}%</span>
           </Button>
           <Button
             variant={null}

@@ -81,7 +81,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const handleResizeEnd = () => setIsResizingNode(false)
 
   const isVisualNode = nodeType === 'image' || nodeType === 'icon'
-  const resizeMinWidth = isVisualNode ? 80 : 200
+  const resizeMinWidth = isVisualNode ? 80 : 20
   const resizeMinHeight = isVisualNode ? 80 : innerMinH
 
   const handleOverlayStyles: CSSProperties = {

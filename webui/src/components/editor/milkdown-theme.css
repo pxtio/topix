@@ -161,7 +161,7 @@
 .milkdown .ProseMirror h3 {
   margin-top: 1rem !important;
   font-size: 1.25rem !important; /* xl */
-  line-height: 1.4 !important;
+  line-height: 1.2 !important;
   font-weight: 600 !important;
 }
 
@@ -169,7 +169,7 @@
 .milkdown .ProseMirror h4 {
   margin-top: 1rem !important;
   font-size: 1.125rem !important; /* lg */
-  line-height: 1.5 !important;
+  line-height: 1.2 !important;
   font-weight: 600 !important;
 }
 
@@ -213,16 +213,10 @@
    -------------------------------------------------------------------------- */
 .milkdown .ProseMirror a {
   display: inline-block;
-  padding: 0.25rem 0.5rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.75rem;
+  font-family: var(--font-sans);
   font-weight: 500;
-  color: var(--muted-foreground);
-  text-decoration: none;
-  border: 1px solid var(--border);
-  background: var(--card);
-  border-radius: 0.5rem;
-  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+  color: var(--secondary);
+  text-decoration: underline;
   cursor: pointer;
 }
 .milkdown .ProseMirror a:hover { background: var(--accent); }

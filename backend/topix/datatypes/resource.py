@@ -99,22 +99,6 @@ class Resource(BaseModel):
         return to_embed
 
 
-def dict_to_embeddable(d: dict) -> list[str]:
+def dict_to_embeddable(dct: dict) -> list[str]:
     """Convert a dict representation of a resource to a list of embeddable strings."""
-    to_embed = []
-    if d.get("label") and d["label"].get("markdown") and d["label"].get("searchable"):
-        to_embed.append(d["label"]["markdown"])
-
-    if d.get("content") and d["content"].get("markdown") and d["content"].get("searchable"):
-        to_embed.append(d["content"]["markdown"])
-
-    if d.get("properties"):
-        for prop in d["properties"].values():
-            if (
-                isinstance(prop, dict)
-                and prop.get("text")
-                and prop.get("searchable")
-            ):
-                to_embed.append(prop["text"])
-
-    return to_embed
+    return Resource.model_validate(dct).to_embeddable()

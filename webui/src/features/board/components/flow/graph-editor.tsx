@@ -177,6 +177,7 @@ function GraphView({
       zoomOnPinch={!isLocked}
       zoomOnDoubleClick={false}
       panOnScroll={!isLocked}
+      minZoom={0.32}
       onlyRenderVisibleElements
       onInit={onInit}
     >

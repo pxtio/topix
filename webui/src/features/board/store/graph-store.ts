@@ -27,6 +27,7 @@ import {
   loadViewportsFromStorage,
   saveViewportToStorage,
 } from "./viewport-store"
+import { clearRoughCanvasCache } from "@/components/rough/cache"
 
 // --- helpers ---
 
@@ -692,7 +693,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     // pendingUpdatedNodes.clear()
     // pendingNewEdges.clear()
     // pendingUpdatedEdges.clear()
-    set({ boardId })
+    set((state) => {
+      if (state.boardId !== boardId) {
+        clearRoughCanvasCache()
+      }
+      return { boardId }
+    })
   },
 
   isLoading: false,

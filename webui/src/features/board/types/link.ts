@@ -11,6 +11,14 @@ export interface LinkProperties {
     type: "position",
     position?: { x: number; y: number }
   }
+  startPoint?: {
+    type: "position",
+    position?: { x: number; y: number }
+  }
+  endPoint?: {
+    type: "position",
+    position?: { x: number; y: number }
+  }
 }
 
 export const createDefaultLinkProperties = (): LinkProperties => ({
@@ -39,7 +47,7 @@ export interface Link extends Record<string, unknown> {
   updatedAt?: string
   deletedAt?: string
 
-  graphUid?: string
+  graphUid: string
 }
 
 

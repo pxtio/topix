@@ -292,22 +292,6 @@ export const EdgeView = memo(function EdgeView({
     )
   }
 
-  const selectionHandles = selected ? (
-    <>
-      <circle
-        cx={renderedStart.x}
-        cy={renderedStart.y}
-        r={6}
-        className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
-      />
-      <circle
-        cx={renderedEnd.x}
-        cy={renderedEnd.y}
-        r={6}
-        className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
-      />
-    </>
-  ) : null
 
   const showControlPoint =
     isBezierPath &&
@@ -331,8 +315,6 @@ export const EdgeView = memo(function EdgeView({
         markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
         markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
       />
-
-      {selectionHandles}
 
       {(isLabelEditing || hasLabel) && (
         <EdgeLabel

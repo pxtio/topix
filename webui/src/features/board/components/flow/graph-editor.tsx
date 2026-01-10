@@ -13,16 +13,18 @@ import {
   type ReactFlowProps,
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useShallow } from 'zustand/shallow'
 
 import NodeView from './node-view'
+import { PointNode } from './point-node'
 import { EdgeView } from './edge/edge-view'
 import { CustomConnectionLine } from './connection'
 import { GraphSidebar } from '../style-panel/panel'
 import { ActionPanel } from './action-panel'
 import { DefaultBoardView } from '../default-view'
 import { NodePlacementOverlay } from './node-placement-overlay'
+import { LinePlacementOverlay } from './line-placement-overlay'
 import { GraphContextMenu } from './graph-context-menu'
 import { NavigableMiniMap } from './navigable-minimap'
 
@@ -30,10 +32,10 @@ import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
 import type { NodeType } from '../../types/style'
 import type { Link } from '../../types/link'
-import { createDefaultLinkProperties } from '../../types/link'
-import { createDefaultLinkStyle } from '../../types/style'
 
 import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/add-node'
+import { useDecoratedEdges } from '../../hooks/use-decorated-edges'
+import { usePlaceLine } from '../../hooks/use-place-line'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
@@ -44,7 +46,7 @@ import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
 
 const proOptions = { hideAttribution: true }
 
-const nodeTypes = { default: NodeView }
+const nodeTypes = { default: NodeView, point: PointNode }
 const edgeTypes = { default: EdgeView }
 
 const defaultEdgeOptions = {
@@ -88,26 +90,7 @@ const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(no
 const PAN_EPS = 0.01
 const ZOOM_EPS = 0.0001
 
-const ensureLinkData = (edge: LinkEdge): Link => {
-  if (edge.data) {
-    const existing = edge.data as Link
-    return {
-      ...existing,
-      properties: existing.properties ?? createDefaultLinkProperties(),
-    }
-  }
-
-  return {
-    id: edge.id,
-    type: 'link',
-    version: 1,
-    source: edge.source,
-    target: edge.target,
-    style: createDefaultLinkStyle(),
-    createdAt: new Date().toISOString(),
-    properties: createDefaultLinkProperties(),
-  }
-}
+const ensureLinkData = (edge: LinkEdge): Link => edge.data as Link
 
 type ViewMode = 'graph' | 'linear'
 
@@ -194,6 +177,7 @@ function GraphView({
       zoomOnPinch={!isLocked}
       zoomOnDoubleClick={false}
       panOnScroll={!isLocked}
+      minZoom={0.32}
       onlyRenderVisibleElements
       onInit={onInit}
     >
@@ -220,6 +204,12 @@ export default function GraphEditor() {
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [isSelecting, setIsSelecting] = useState<boolean>(false)
   const [pendingPlacement, setPendingPlacement] = useState<AddNoteNodeOptions | null>(null)
+  const {
+    pending: pendingLinePlacement,
+    begin: beginLinePlacement,
+    cancel: cancelLinePlacement,
+    place: handlePlaceLine,
+  } = usePlaceLine()
   const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null)
   const [edgeLabelDraft, setEdgeLabelDraft] = useState<string>('')
   const [showMiniMap, setShowMiniMap] = useState<boolean>(true)
@@ -240,13 +230,13 @@ export default function GraphEditor() {
   const edges = useGraphStore(useShallow(state => state.edges))
 
   const setNodes = useGraphStore(state => state.setNodes)
+  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
   const onNodesChange = useGraphStore(state => state.onNodesChange)
   const onEdgesChange = useGraphStore(state => state.onEdgesChange)
   const onNodesDelete = useGraphStore(state => state.onNodesDelete)
   const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const storeOnConnect = useGraphStore(state => state.onConnect)
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
-  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
 
   const isResizingNode = useGraphStore(state => state.isResizingNode)
   const isDragging = useGraphStore(state => state.isDragging)
@@ -296,11 +286,14 @@ export default function GraphEditor() {
     if (viewMode !== 'graph' && pendingPlacement) {
       cancelPlacement()
     }
+    if (viewMode !== 'graph' && pendingLinePlacement) {
+      cancelLinePlacement()
+    }
     if (viewMode !== 'graph' && editingEdgeId) {
       setEditingEdgeId(null)
       setEdgeLabelDraft('')
     }
-  }, [viewMode, pendingPlacement, cancelPlacement, editingEdgeId])
+  }, [viewMode, pendingPlacement, pendingLinePlacement, cancelPlacement, cancelLinePlacement, editingEdgeId])
 
   useEffect(() => {
     if (!editingEdgeId) return
@@ -335,6 +328,10 @@ export default function GraphEditor() {
     [addNoteNode, beginPlacement],
   )
 
+  const handleAddLine = useCallback(() => {
+    beginLinePlacement()
+  }, [beginLinePlacement])
+
   const handleEdgeDoubleClick = useCallback<NonNullable<ReactFlowProps<NoteNode, LinkEdge>['onEdgeDoubleClick']>>(
     (event, edge) => {
       event.preventDefault()
@@ -356,6 +353,7 @@ export default function GraphEditor() {
 
   const handleEdgeControlPointChange = useCallback(
     (edgeId: string, position: { x: number; y: number }) => {
+      if (!boardId) return
       setEdgesPersist(prev =>
         prev.map(edge => {
           if (edge.id !== edgeId) return edge
@@ -374,7 +372,7 @@ export default function GraphEditor() {
         }),
       )
     },
-    [setEdgesPersist],
+    [boardId, setEdgesPersist],
   )
 
   const handleEdgeLabelSave = useCallback(() => {
@@ -398,44 +396,17 @@ export default function GraphEditor() {
     setEdgeLabelDraft('')
   }, [editingEdgeId, edgeLabelDraft, setEdgesPersist])
 
-  const edgesForRender = useMemo(() => {
-    return edges.map(edge => {
-      const isEditing = edge.id === editingEdgeId
-      const baseLink = ensureLinkData(edge)
-      const baseData: Link & {
-        labelEditing?: boolean
-        labelDraft?: string
-        onLabelChange?: (value: string) => void
-        onLabelSave?: () => void
-        onLabelCancel?: () => void
-        onControlPointChange?: (point: { x: number, y: number }) => void
-      } = {
-        ...baseLink,
-        onControlPointChange: position => handleEdgeControlPointChange(edge.id, position),
-      }
-
-      if (isEditing) {
-        baseData.labelEditing = true
-        baseData.labelDraft = edgeLabelDraft
-        baseData.onLabelChange = handleEdgeLabelChange
-        baseData.onLabelSave = handleEdgeLabelSave
-        baseData.onLabelCancel = handleEdgeLabelCancel
-      }
-
-      return {
-        ...edge,
-        data: baseData as Link,
-      }
-    })
-  }, [
+  const edgesForRender = useDecoratedEdges({
     edges,
     editingEdgeId,
     edgeLabelDraft,
-    handleEdgeControlPointChange,
-    handleEdgeLabelCancel,
-    handleEdgeLabelChange,
-    handleEdgeLabelSave,
-  ])
+    onControlPointChange: handleEdgeControlPointChange,
+    labelHandlers: {
+      onLabelChange: handleEdgeLabelChange,
+      onLabelSave: handleEdgeLabelSave,
+      onLabelCancel: handleEdgeLabelCancel,
+    },
+  })
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
   const lastViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null)
@@ -639,6 +610,7 @@ export default function GraphEditor() {
     <div className="w-full h-full relative">
       <ActionPanel
         onAddNode={handlePanelAddNode}
+        onAddLine={handleAddLine}
         enableSelection={enableSelection}
         setEnableSelection={setEnableSelection}
         onZoomIn={handleZoomIn}
@@ -702,6 +674,12 @@ export default function GraphEditor() {
                   pendingPlacement={pendingPlacement}
                   onPlace={handlePlacementComplete}
                   onCancel={cancelPlacement}
+                  screenToFlowPosition={screenToFlowPosition}
+                />
+                <LinePlacementOverlay
+                  pending={pendingLinePlacement}
+                  onPlace={handlePlaceLine}
+                  onCancel={cancelLinePlacement}
                   screenToFlowPosition={screenToFlowPosition}
                 />
               </>

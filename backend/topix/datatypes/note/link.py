@@ -16,6 +16,8 @@ class LinkProperties(ResourceProperties):
     edge_control_point: PositionProperty = Field(
         default_factory=lambda: PositionProperty()
     )
+    start_point: PositionProperty | None = None
+    end_point: PositionProperty | None = None
 
 
 class Link(Resource):

@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon, ArrowMoveDownRightIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { AddNoteNodeOptions } from '../../hooks/add-node'
@@ -19,6 +19,7 @@ type ViewMode = 'graph' | 'linear'
 
 interface ActionPanelProps {
   onAddNode: (options: AddNoteNodeOptions) => void
+  onAddLine: () => void
   enableSelection: boolean
   setEnableSelection: (mode: boolean) => void
 
@@ -41,6 +42,7 @@ interface ActionPanelProps {
  */
 export const ActionPanel = memo(function ActionPanel({
   onAddNode,
+  onAddLine,
   enableSelection,
   setEnableSelection,
   onZoomIn,
@@ -250,6 +252,18 @@ export const ActionPanel = memo(function ActionPanel({
             aria-label='Add Sticky Note'
           >
             <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
+          </Button>
+
+          {/* Add line */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={onAddLine}
+            title='Add line'
+            aria-label='Add line'
+          >
+            <HugeiconsIcon icon={ArrowMoveDownRightIcon} className='size-4 shrink-0' strokeWidth={2} />
           </Button>
 
           {/* Shape picker */}

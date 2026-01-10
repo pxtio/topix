@@ -663,7 +663,10 @@ export function GraphSidebar(): ReactElement | null {
 
   // selected nodes (exclude sheets as before)
   const selectedNodes = useMemo(
-    () => (nodes as NoteNode[]).filter(n => n.selected && n.data.style.type !== 'sheet'),
+    () =>
+      (nodes as NoteNode[]).filter(
+        n => n.selected && n.data?.style?.type && n.data.style.type !== 'sheet'
+      ),
     [nodes]
   )
 
@@ -684,7 +687,7 @@ export function GraphSidebar(): ReactElement | null {
     setNodes(ns =>
       (ns as NoteNode[]).map(n => {
         if (!n.selected) return n
-        if (n.data.style.type === 'sheet') return n
+        if (!n.data?.style || n.data.style.type === 'sheet') return n
         return {
           ...n,
           data: {

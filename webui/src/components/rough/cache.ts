@@ -58,3 +58,10 @@ export function getCachedCanvas(
 export function deleteCachedCanvas(key: string): void {
   roughCanvasCache.delete(key)
 }
+
+/**
+ * Clears all cached rough canvases.
+ */
+export function clearRoughCanvasCache(): void {
+  roughCanvasCache.clear()
+}

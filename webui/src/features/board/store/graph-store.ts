@@ -1,5 +1,4 @@
 import {
-  addEdge as rfAddEdge,
   applyEdgeChanges,
   applyNodeChanges,
   type Connection,
@@ -13,7 +12,7 @@ import type { LinkEdge, NoteNode } from "../types/flow"
 import type { Link } from "../types/link"
 import type { Note } from "../types/note"
 
-import { convertEdgeToLink, convertNodeToNote } from "../utils/graph"
+import { convertEdgeToLinkWithPoints, convertNodeToNote } from "../utils/graph"
 import { generateUuid } from "@/lib/common"
 import { createDefaultLinkStyle, type LinkStyle } from "../types/style"
 import { DEBOUNCE_DELAY } from "../const"
@@ -28,6 +27,7 @@ import {
   loadViewportsFromStorage,
   saveViewportToStorage,
 } from "./viewport-store"
+import { clearRoughCanvasCache } from "@/components/rough/cache"
 
 // --- helpers ---
 
@@ -35,6 +35,39 @@ type Updater<T> = T | ((prev: T) => T)
 
 const resolveUpdater = <T>(updater: Updater<T>, prev: T): T =>
   typeof updater === "function" ? (updater as (p: T) => T)(prev) : updater
+
+const isPointNode = (node: NoteNode | undefined) =>
+  Boolean(node && (node.data as { kind?: string }).kind === "point")
+
+const buildNodesById = (nodes: NoteNode[]) =>
+  new Map(nodes.map((n) => [n.id, n]))
+
+// Incrementally update node index for small change sets to avoid full rebuilds.
+const updateNodesById = (
+  prev: Map<string, NoteNode>,
+  nextNodes: NoteNode[],
+  changes: NodeChange<NoteNode>[],
+) => {
+  const next = new Map(prev)
+
+  for (const ch of changes) {
+    if (ch.type === "add") {
+      next.set(ch.item.id, ch.item)
+      continue
+    }
+    if (ch.type === "remove") {
+      if (ch.id) next.delete(ch.id)
+      continue
+    }
+    // For other change types, swap in the latest node instance.
+    if (ch.id) {
+      const updated = nextNodes.find((n) => n.id === ch.id)
+      if (updated) next.set(ch.id, updated)
+    }
+  }
+
+  return next
+}
 
 function shouldPersistNodeChange(
   ch: NodeChange<NoteNode>,
@@ -115,7 +148,9 @@ function scheduleNodeFlush() {
         Array.from(newByBoard.entries()).map(([graphUid, nodes]) =>
           addNotes(
             graphUid,
-            nodes.map((n) => convertNodeToNote(n)),
+            nodes
+              .map((n) => convertNodeToNote(n))
+              .filter((n): n is Note => n !== null),
           ),
         ),
       )
@@ -123,13 +158,15 @@ function scheduleNodeFlush() {
       await Promise.all(
         Array.from(updatedByBoard.entries()).map(([graphUid, nodes]) =>
           Promise.all(
-            nodes.map((n) =>
-              updateNote(
-                graphUid,
-                n.id,
-                convertNodeToNote(n) as Partial<Note>,
-              ),
-            ),
+            (() => {
+              const updates: Promise<void>[] = []
+              for (const n of nodes) {
+                const note = convertNodeToNote(n)
+                if (!note) continue
+                updates.push(updateNote(graphUid, n.id, note as Partial<Note>))
+              }
+              return updates
+            })(),
           ),
         ),
       )
@@ -152,7 +189,7 @@ function queueNodesForPersistence(
 
   for (const id of addedIds) {
     const node = byId.get(id)
-    if (!node) continue
+    if (!node || isPointNode(node)) continue
     pendingNewNodes.set(id, node)
     pendingUpdatedNodes.delete(id)
   }
@@ -160,14 +197,16 @@ function queueNodesForPersistence(
   for (const id of updatedIds) {
     if (pendingNewNodes.has(id)) continue
     const node = byId.get(id)
-    if (!node) continue
+    if (!node || isPointNode(node)) continue
     pendingUpdatedNodes.set(id, node)
   }
 
   scheduleNodeFlush()
 }
 
-function scheduleEdgeFlush() {
+function scheduleEdgeFlush(
+  get: () => { boardId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
+) {
   if (edgePersistTimeout !== null) {
     clearTimeout(edgePersistTimeout)
   }
@@ -177,6 +216,7 @@ function scheduleEdgeFlush() {
 
     const newEdges = Array.from(pendingNewEdges.values())
     const updatedEdges = Array.from(pendingUpdatedEdges.values())
+    const nodesById = new Map(get().nodes.map((n) => [n.id, n]))
 
     pendingNewEdges.clear()
     pendingUpdatedEdges.clear()
@@ -204,7 +244,7 @@ function scheduleEdgeFlush() {
         Array.from(newByBoard.entries()).map(([graphUid, edges]) =>
           addLinks(
             graphUid,
-            edges.map((e) => convertEdgeToLink(e)),
+            edges.map((e) => convertEdgeToLinkWithPoints(e, nodesById)),
           ),
         ),
       )
@@ -216,7 +256,7 @@ function scheduleEdgeFlush() {
               updateLink(
                 graphUid,
                 e.id,
-                convertEdgeToLink(e) as Partial<Link>,
+                convertEdgeToLinkWithPoints(e, nodesById) as Partial<Link>,
               ),
             ),
           ),
@@ -229,7 +269,7 @@ function scheduleEdgeFlush() {
 }
 
 function queueEdgesForPersistence(
-  get: () => { boardId?: string; edges: LinkEdge[] },
+  get: () => { boardId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
   addedIds: Set<string>,
   updatedIds: Set<string>,
 ) {
@@ -253,7 +293,7 @@ function queueEdgesForPersistence(
     pendingUpdatedEdges.set(id, edge)
   }
 
-  scheduleEdgeFlush()
+  scheduleEdgeFlush(get)
 }
 
 // --- background helpers (diff + persist) ---
@@ -297,6 +337,22 @@ function scheduleNodePersistFromDiff(
       }
     }
 
+    // filter out point nodes from persistence
+    const nextById = new Map(nextNodes.map((n) => [n.id, n]))
+
+    const dropPointIds = (ids: Set<string>, lookup: Map<string, NoteNode>) => {
+      for (const id of Array.from(ids)) {
+        const node = lookup.get(id)
+        if (isPointNode(node)) {
+          ids.delete(id)
+        }
+      }
+    }
+
+    dropPointIds(addedIds, nextById)
+    dropPointIds(updatedIds, nextById)
+    dropPointIds(removedIds, prevById)
+
     if (removedIds.size > 0) {
       removedIds.forEach((id) => {
         pendingNewNodes.delete(id)
@@ -322,7 +378,7 @@ function scheduleEdgePersistFromDiff(
   prevEdges: LinkEdge[],
   nextEdges: LinkEdge[],
   boardIdAtTime: string | undefined,
-  get: () => { boardId?: string; edges: LinkEdge[] },
+  get: () => { boardId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
 ) {
   if (!boardIdAtTime) return
 
@@ -370,6 +426,7 @@ function scheduleEdgePersistFromDiff(
         () => ({
           boardId: get().boardId,
           edges,
+          nodes: get().nodes,
         }),
         addedIds,
         updatedIds,
@@ -481,7 +538,12 @@ function scheduleEdgePersistFromChanges(
   nextEdges: LinkEdge[],
   boardIdAtTime: string | undefined,
   changes: EdgeChange<LinkEdge>[],
-  get: () => { boardId?: string; edges: LinkEdge[]; deletedEdges: LinkEdge[] },
+  get: () => {
+    boardId?: string
+    edges: LinkEdge[]
+    nodes: NoteNode[]
+    deletedEdges: LinkEdge[]
+  },
   set: (
     partial:
       | Partial<GraphStore>
@@ -567,6 +629,7 @@ function scheduleEdgePersistFromChanges(
         () => ({
           boardId: get().boardId,
           edges,
+          nodes: get().nodes,
         }),
         addedIds,
         updatedIds,
@@ -585,6 +648,7 @@ export interface GraphStore {
   setIsLoading: (loading: boolean) => void
 
   nodes: NoteNode[]
+  nodesById: Map<string, NoteNode>
   edges: LinkEdge[]
 
   deletedNodes: NoteNode[]
@@ -629,7 +693,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     // pendingUpdatedNodes.clear()
     // pendingNewEdges.clear()
     // pendingUpdatedEdges.clear()
-    set({ boardId })
+    set((state) => {
+      if (state.boardId !== boardId) {
+        clearRoughCanvasCache()
+      }
+      return { boardId }
+    })
   },
 
   isLoading: false,
@@ -637,6 +706,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setIsLoading: (loading) => set({ isLoading: loading }),
 
   nodes: [],
+  nodesById: new Map(),
   edges: [],
 
   deletedNodes: [],
@@ -651,9 +721,10 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   // --- flexible setters ---
 
   setNodes: (nodesOrUpdater) =>
-    set((state) => ({
-      nodes: resolveUpdater<NoteNode[]>(nodesOrUpdater, state.nodes),
-    })),
+    set((state) => {
+      const nextNodes = resolveUpdater<NoteNode[]>(nodesOrUpdater, state.nodes)
+      return { nodes: nextNodes, nodesById: buildNodesById(nextNodes) }
+    }),
 
   setEdges: (edgesOrUpdater) =>
     set((state) => ({
@@ -671,7 +742,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         ? (nodesOrUpdater as (prev: NoteNode[]) => NoteNode[])(prevNodes)
         : nodesOrUpdater
 
-    set({ nodes: nextNodes })
+    set({ nodes: nextNodes, nodesById: buildNodesById(nextNodes) })
 
     scheduleNodePersistFromDiff(prevNodes, nextNodes, boardId, () => ({
       boardId: get().boardId,
@@ -693,6 +764,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     scheduleEdgePersistFromDiff(prevEdges, nextEdges, boardId, () => ({
       boardId: get().boardId,
       edges: get().edges,
+      nodes: get().nodes,
     }))
   },
 
@@ -712,7 +784,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     })
 
     const updatedNodes = applyNodeChanges(changes, prevNodes)
-    set({ nodes: updatedNodes })
+    const updatedNodesById = updateNodesById(get().nodesById, updatedNodes, changes)
+    set({ nodes: updatedNodes, nodesById: updatedNodesById })
 
     if (onlyTransient) return
 
@@ -731,6 +804,77 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       }),
       set,
     )
+
+    const movedPointIds = new Set(
+      changes
+        .filter((ch): ch is NodeChange<NoteNode> & { id: string } =>
+          ch.type === "position" &&
+          ch.dragging === false &&
+          typeof ch.id === "string",
+        )
+        .map((ch) => ch.id),
+    )
+
+    if (movedPointIds.size > 0) {
+      const updatedPointIds = new Set(
+        updatedNodes
+          .filter((n) => movedPointIds.has(n.id))
+          .filter((n) => isPointNode(n))
+          .map((n) => n.id),
+      )
+
+      if (updatedPointIds.size > 0) {
+        const edgeIds = new Set(
+          get()
+            .edges
+            .filter(
+              (e) =>
+                updatedPointIds.has(e.source) ||
+                updatedPointIds.has(e.target),
+            )
+            .map((e) => e.id),
+        )
+
+        if (edgeIds.size > 0) {
+          queueEdgesForPersistence(
+            () => ({
+              boardId: get().boardId,
+              edges: get().edges,
+              nodes: get().nodes,
+            }),
+            new Set(),
+            edgeIds,
+          )
+        }
+      }
+    }
+
+    const selectedPointIds = new Set(
+      updatedNodes
+        .filter((n) => n.selected && isPointNode(n))
+        .map((n) => n.id),
+    )
+
+    if (selectedPointIds.size > 0) {
+      const activePointIds = new Set(selectedPointIds)
+      const edges = get().edges
+      for (const edge of edges) {
+        if (selectedPointIds.has(edge.source) || selectedPointIds.has(edge.target)) {
+          activePointIds.add(edge.source)
+          activePointIds.add(edge.target)
+        }
+      }
+
+      const nextNodes = updatedNodes.map((n) => {
+        if (!isPointNode(n)) return n
+        const shouldActive = activePointIds.has(n.id)
+        const data = n.data as { endpointActive?: boolean }
+        if (data.endpointActive === shouldActive) return n
+        return { ...n, data: { ...n.data, endpointActive: shouldActive } }
+      })
+
+      set({ nodes: nextNodes, nodesById: buildNodesById(nextNodes) })
+    }
   },
 
   onEdgesChange: (changes) => {
@@ -738,6 +882,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     if (!boardId) return
 
     const prevEdges = get().edges
+    const prevNodes = get().nodes
 
     // fast path: selection-only
     const onlySelect = changes.every((ch) => ch.type === "select")
@@ -745,7 +890,26 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const updatedEdges = applyEdgeChanges(changes, prevEdges)
     set({ edges: updatedEdges })
 
-    if (onlySelect) return
+    if (onlySelect) {
+      const activePointIds = new Set<string>()
+      for (const edge of updatedEdges) {
+        if (!edge.selected) continue
+        activePointIds.add(edge.source)
+        activePointIds.add(edge.target)
+      }
+
+      if (activePointIds.size > 0 || prevNodes.some(n => isPointNode(n) && (n.data as { endpointActive?: boolean }).endpointActive)) {
+        const nextNodes = prevNodes.map((n) => {
+          if (!isPointNode(n)) return n
+          const shouldActive = activePointIds.has(n.id)
+          const data = n.data as { endpointActive?: boolean }
+          if (data.endpointActive === shouldActive) return n
+          return { ...n, data: { ...n.data, endpointActive: shouldActive } }
+        })
+        set({ nodes: nextNodes, nodesById: buildNodesById(nextNodes) })
+      }
+      return
+    }
 
     scheduleEdgePersistFromChanges(
       prevEdges,
@@ -755,6 +919,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       () => ({
         boardId: get().boardId,
         edges: get().edges,
+        nodes: get().nodes,
         deletedEdges: get().deletedEdges,
       }),
       set,
@@ -828,7 +993,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     } as Link
 
     const prevEdges = get().edges
-    const newEdges = rfAddEdge(newEdge, prevEdges)
+    const newEdges = [...prevEdges, newEdge]
 
     if (newEdges.length > prevEdges.length) {
       set({ edges: newEdges })
@@ -837,6 +1002,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       scheduleEdgePersistFromDiff(prevEdges, newEdges, boardId, () => ({
         boardId: get().boardId,
         edges: get().edges,
+        nodes: get().nodes,
       }))
 
       return newEdge

@@ -111,6 +111,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   seed = 1337
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
@@ -266,22 +267,33 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   }, [draw])
 
   useEffect(() => {
-    const wrapper = wrapperRef.current
-    const canvas = canvasRef.current
-    if (!wrapper || !canvas) return
-
     const handleResize = () => scheduleRedraw()
-    const ro = new ResizeObserver(handleResize)
-    ro.observe(wrapper)
+    resizeObserverRef.current = new ResizeObserver(handleResize)
 
-    scheduleRedraw()
+    const wrapper = wrapperRef.current
+    if (wrapper) {
+      resizeObserverRef.current.observe(wrapper)
+      scheduleRedraw()
+    }
 
     return () => {
-      ro.disconnect()
+      resizeObserverRef.current?.disconnect()
+      resizeObserverRef.current = null
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current)
         rafRef.current = null
       }
+    }
+  }, [scheduleRedraw])
+
+  const setWrapperRef = useCallback((node: HTMLDivElement | null) => {
+    if (wrapperRef.current === node) return
+    wrapperRef.current = node
+    if (!resizeObserverRef.current) return
+    resizeObserverRef.current.disconnect()
+    if (node) {
+      resizeObserverRef.current.observe(node)
+      scheduleRedraw()
     }
   }, [scheduleRedraw])
 
@@ -325,7 +337,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   }
 
   return (
-    <div ref={wrapperRef} className={mainDivClass}>
+    <div ref={setWrapperRef} className={mainDivClass}>
       <canvas
         ref={canvasRef}
         className='absolute pointer-events-none'

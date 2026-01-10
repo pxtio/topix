@@ -137,6 +137,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   const viewportZoom = useGraphStore(state => state.zoom ?? 1)
   const isPanning = useGraphStore(state => state.isPanning)
   const isZooming = useGraphStore(state => state.isZooming)
+  const isResizing = useGraphStore(state => state.isResizingNode)
   const effectiveZoom = quantizeZoom(viewportZoom || 1)
   const roundedClass = rounded === 'rounded-2xl' ? 'rounded-2xl' : 'rounded-none'
 
@@ -312,7 +313,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     }
   }, [scheduleRedraw])
 
-  const isSimplified = isPanning || isZooming
+  const isSimplified = (isPanning || isZooming) && !isResizing
 
   useEffect(() => {
     if (isSimplified) {

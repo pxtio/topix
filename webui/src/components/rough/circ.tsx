@@ -117,8 +117,9 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   const viewportZoom = useGraphStore(state => state.zoom ?? 1)
   const isPanning = useGraphStore(state => state.isPanning)
   const isZooming = useGraphStore(state => state.isZooming)
+  const isResizing = useGraphStore(state => state.isResizingNode)
   const effectiveZoom = quantizeZoom(viewportZoom || 1)
-  const isSimplified = isPanning || isZooming
+  const isSimplified = (isPanning || isZooming) && !isResizing
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     const rect = wrapper.getBoundingClientRect()

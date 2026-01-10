@@ -312,6 +312,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
             inset: visualInset,
             background: fill || 'transparent',
             border: `${strokeWidth ?? 1}px solid ${stroke || 'transparent'}`,
+            borderStyle: strokeStyle === 'dashed' ? 'dashed' : strokeStyle === 'dotted' ? 'dotted' : 'solid',
             zIndex: 10,
           }}
         />

@@ -325,20 +325,14 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   }
 
   return (
-    <div className={mainDivClass}>
-      <div
-        ref={wrapperRef}
-        className='absolute'
-        style={{ inset: visualInset }}
-      >
-        <canvas
-          ref={canvasRef}
-          className='absolute inset-0 w-full h-full pointer-events-none'
-          style={{ zIndex: 10, background: 'transparent' }}
-        />
-        <div className='relative z-20 w-full h-full'>
-          {children}
-        </div>
+    <div ref={wrapperRef} className={mainDivClass}>
+      <canvas
+        ref={canvasRef}
+        className='absolute pointer-events-none'
+        style={{ inset: visualInset, zIndex: 10, background: 'transparent' }}
+      />
+      <div className='relative z-20 w-full h-full'>
+        {children}
       </div>
     </div>
   )

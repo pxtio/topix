@@ -71,11 +71,11 @@ export const ActionPanel = memo(function ActionPanel({
 
   const handleAddShape = (nodeType: NodeType) => onAddNode({ nodeType })
 
-  const shapeOptions: { nodeType: NodeType, label: string, icon: ReactNode }[] = [
-    { nodeType: 'rectangle', label: 'Rectangle', icon: <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+  const shapeOptions: { nodeType: NodeType, label: string, icon: ReactNode, shortcut?: string }[] = [
+    { nodeType: 'rectangle', label: 'Rectangle', icon: <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />, shortcut: 'R' },
     { nodeType: 'layered-rectangle', label: 'Layered card', icon: <Layers className='w-4 h-4 shrink-0' /> },
-    { nodeType: 'ellipse', label: 'Ellipse', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} /> },
-    { nodeType: 'diamond', label: 'Diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'ellipse', label: 'Ellipse', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} />, shortcut: 'O' },
+    { nodeType: 'diamond', label: 'Diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} />, shortcut: 'D' },
     { nodeType: 'soft-diamond', label: 'Double diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} /> },
     { nodeType: 'layered-diamond', label: 'Layered diamond', icon: <Layers className='w-4 h-4 shrink-0' /> },
     { nodeType: 'layered-circle', label: 'Layered circle', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} /> },
@@ -135,12 +135,24 @@ export const ActionPanel = memo(function ActionPanel({
     </span>
   )
 
+  const MenuShortcutHint = ({ label }: { label?: string }) => {
+    if (!label) return null
+    return (
+      <span className='pointer-events-none absolute -bottom-1 -right-1 text-[9px] leading-none text-muted-foreground/80'>
+        {label}
+      </span>
+    )
+  }
+
   useBoardShortcuts({
     enabled: viewMode === 'graph',
     shortcuts: [
       { key: 'a', handler: onAddLine },
       { key: 'n', handler: () => onAddNode({ nodeType: 'sheet' }) },
       { key: 's', handler: () => setOpenShapeMenu(true) },
+      { key: 'r', handler: () => onAddNode({ nodeType: 'rectangle' }) },
+      { key: 'o', handler: () => onAddNode({ nodeType: 'ellipse' }) },
+      { key: 'd', handler: () => onAddNode({ nodeType: 'diamond' }) },
       { key: 't', handler: () => onAddNode({ nodeType: 'text' }) },
       { key: 'g', handler: () => setOpenIconSearch(true) },
       { key: 'i', handler: () => setOpenImageSearch(true) },
@@ -335,14 +347,41 @@ export const ActionPanel = memo(function ActionPanel({
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align='center' side='bottom' sideOffset={8} className='min-w-[180px]'>
+            <DropdownMenuContent
+              align='center'
+              side='bottom'
+              sideOffset={8}
+              className='min-w-[180px]'
+              onKeyDown={(event) => {
+                const key = event.key.toLowerCase()
+                if (key === 'escape') {
+                  event.preventDefault()
+                  setOpenShapeMenu(false)
+                  return
+                }
+                if (key === 'r' || key === 'o' || key === 'd') {
+                  event.preventDefault()
+                  const nextType =
+                    key === 'r'
+                      ? 'rectangle'
+                      : key === 'o'
+                        ? 'ellipse'
+                        : 'diamond'
+                  handleAddShape(nextType)
+                  setOpenShapeMenu(false)
+                }
+              }}
+            >
               {shapeOptions.map(option => (
                 <DropdownMenuItem
                   key={option.nodeType}
                   onSelect={() => handleAddShape(option.nodeType)}
                   className='gap-2 text-sm'
                 >
-                  {option.icon}
+                  <span className='relative inline-flex items-center justify-center'>
+                    {option.icon}
+                    <MenuShortcutHint label={option.shortcut} />
+                  </span>
                   <span>{option.label}</span>
                 </DropdownMenuItem>
               ))}

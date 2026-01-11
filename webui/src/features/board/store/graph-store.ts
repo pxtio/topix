@@ -12,7 +12,7 @@ import type { Link } from "../types/link"
 import type { Note } from "../types/note"
 
 import { convertEdgeToLinkWithPoints, convertNodeToNote } from "../utils/graph"
-import { boundaryFromDirection, computeAttachment, findAttachTarget } from "../utils/point-attach"
+import { computeAttachment, findAttachTarget, nodeCenter } from "../utils/point-attach"
 import { POINT_NODE_SIZE } from "../components/flow/point-node"
 import { DEBOUNCE_DELAY } from "../const"
 
@@ -855,11 +855,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         if (!data.attachedToNodeId || !movedNodeIds.has(data.attachedToNodeId)) continue
         const target = nextById.get(data.attachedToNodeId)
         if (!target || isPointNode(target)) continue
+        const targetCenter = nodeCenter(target)
         const dir = data.attachedDirection ?? {
-          x: node.position.x + pointOffset - (target.position.x + (target.measured?.width ?? target.width ?? 1) / 2),
-          y: node.position.y + pointOffset - (target.position.y + (target.measured?.height ?? target.height ?? 1) / 2),
+          x: node.position.x + pointOffset - targetCenter.x,
+          y: node.position.y + pointOffset - targetCenter.y,
         }
-        const boundary = boundaryFromDirection(target, dir)
+        const boundary = { x: targetCenter.x + dir.x, y: targetCenter.y + dir.y }
         applyNodeUpdate(node.id, n => ({
           ...n,
           position: { x: boundary.x - pointOffset, y: boundary.y - pointOffset },

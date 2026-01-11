@@ -37,6 +37,8 @@ type GeometryResult = {
 type Params = {
   sourceNode: InternalNode<Node> | undefined
   targetNode: InternalNode<Node> | undefined
+  sourceClipNode?: InternalNode<Node>
+  targetClipNode?: InternalNode<Node>
   linkStyle: LinkStyle | undefined
   startKind: ArrowheadType
   endKind: ArrowheadType
@@ -49,6 +51,8 @@ type Params = {
 export function useEdgeGeometry({
   sourceNode,
   targetNode,
+  sourceClipNode,
+  targetClipNode,
   linkStyle,
   startKind,
   endKind,
@@ -156,8 +160,10 @@ export function useEdgeGeometry({
         const activeBend = shouldUseControlPoint ? displayBendPoint ?? fallbackBendPoint : fallbackBendPoint
         const centerControl = bendToControlPoint(activeBend, sourceCenter, targetCenter)
         const pointGetter = (t: number) => pointOnQuadratic(sourceCenter, centerControl, targetCenter, t)
-        const startExit = findExitParam(sourceNode ?? null, pointGetter)
-        const endExit = 1 - findExitParam(targetNode ?? null, (t: number) => pointGetter(1 - t))
+        const clipSource = sourceClipNode ?? sourceNode ?? null
+        const clipTarget = targetClipNode ?? targetNode ?? null
+        const startExit = findExitParam(clipSource, pointGetter)
+        const endExit = 1 - findExitParam(clipTarget, (t: number) => pointGetter(1 - t))
         const trimmed = extractQuadraticSegment(sourceCenter, centerControl, targetCenter, startExit, endExit)
 
         const startPoint = startKind !== 'none'
@@ -192,7 +198,9 @@ export function useEdgeGeometry({
     endKind,
     arrowOffset,
     sourceNode,
-    targetNode
+    targetNode,
+    sourceClipNode,
+    targetClipNode
   ])
 
   return {

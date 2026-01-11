@@ -3,7 +3,8 @@ import type { LinkEdge, NoteNode } from "../types/flow"
 import { createDefaultLinkProperties, type Link } from "../types/link"
 import { createDefaultNoteProperties, type Note } from "../types/note"
 import { createDefaultLinkStyle } from "../types/style"
-import { computeAttachment, nodeCenter } from "./point-attach"
+import { nodeCenter } from "./point-attach"
+import { POINT_NODE_SIZE } from "../components/flow/point-node"
 
 type PointPair = {
   points: NoteNode[]
@@ -72,6 +73,7 @@ export const convertLinkToEdgeWithPoints = (
   const end = link.properties?.endPoint?.position
   const startTarget = nodesById?.get(link.source)
   const endTarget = nodesById?.get(link.target)
+  const offset = POINT_NODE_SIZE / 2
 
   if (!start && !end && !(startTarget && endTarget)) {
     return { edge, points: [] }
@@ -85,42 +87,32 @@ export const convertLinkToEdgeWithPoints = (
 
   const startId = `${link.id}-start`
   const endId = `${link.id}-end`
-  const startFallback = start ?? (startTarget ? nodeCenter(startTarget) : undefined)
-  const endFallback = end ?? (endTarget ? nodeCenter(endTarget) : undefined)
-  const classicStart = !start && startTarget && endTarget
-    ? computeAttachment(startTarget, nodeCenter(endTarget))
-    : null
-  const classicEnd = !end && startTarget && endTarget
-    ? computeAttachment(endTarget, nodeCenter(startTarget))
-    : null
-
-  const fallbackStart = classicStart?.point ?? startFallback
-  const fallbackEnd = classicEnd?.point ?? endFallback
+  const fallbackStart = start ?? (startTarget
+    ? { x: nodeCenter(startTarget).x - offset, y: nodeCenter(startTarget).y - offset }
+    : undefined)
+  const fallbackEnd = end ?? (endTarget
+    ? { x: nodeCenter(endTarget).x - offset, y: nodeCenter(endTarget).y - offset }
+    : undefined)
 
   if (!fallbackStart || !fallbackEnd) {
     return { edge, points: [] }
   }
 
-  // If endpoint is attached to a node, preserve explicit positions when present.
-  const startAttach = classicStart ?? (startTarget
-    ? computeAttachment(startTarget, start ?? fallbackStart)
-    : null)
-  const endAttach = classicEnd ?? (endTarget
-    ? computeAttachment(endTarget, end ?? fallbackEnd)
-    : null)
+  const startCenter = { x: fallbackStart.x + offset, y: fallbackStart.y + offset }
+  const endCenter = { x: fallbackEnd.x + offset, y: fallbackEnd.y + offset }
 
   const startNode: NoteNode = {
     id: startId,
     type: 'point',
-    position: start ?? (startAttach?.point ?? fallbackStart),
+    position: fallbackStart,
     data: {
       kind: 'point',
       attachedToNodeId: startTarget?.id,
       attachedDirection: startTarget
-        ? (startAttach?.direction ?? {
-            x: (start ?? fallbackStart).x - nodeCenter(startTarget).x,
-            y: (start ?? fallbackStart).y - nodeCenter(startTarget).y,
-          })
+        ? {
+            x: startCenter.x - nodeCenter(startTarget).x,
+            y: startCenter.y - nodeCenter(startTarget).y,
+          }
         : undefined,
     } as NoteNode['data'],
     draggable: true,
@@ -130,15 +122,15 @@ export const convertLinkToEdgeWithPoints = (
   const endNode: NoteNode = {
     id: endId,
     type: 'point',
-    position: end ?? (endAttach?.point ?? fallbackEnd),
+    position: fallbackEnd,
     data: {
       kind: 'point',
       attachedToNodeId: endTarget?.id,
       attachedDirection: endTarget
-        ? (endAttach?.direction ?? {
-            x: (end ?? fallbackEnd).x - nodeCenter(endTarget).x,
-            y: (end ?? fallbackEnd).y - nodeCenter(endTarget).y,
-          })
+        ? {
+            x: endCenter.x - nodeCenter(endTarget).x,
+            y: endCenter.y - nodeCenter(endTarget).y,
+          }
         : undefined,
     } as NoteNode['data'],
     draggable: true,

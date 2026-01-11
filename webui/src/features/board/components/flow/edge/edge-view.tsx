@@ -72,6 +72,10 @@ export const EdgeView = memo(function EdgeView({
 
   const sourceNode = useInternalNode(source)
   const targetNode = useInternalNode(target)
+  const attachedSourceId = (sourceNode?.data as { attachedToNodeId?: string } | undefined)?.attachedToNodeId
+  const attachedTargetId = (targetNode?.data as { attachedToNodeId?: string } | undefined)?.attachedToNodeId
+  const attachedSourceNode = useInternalNode(attachedSourceId || '')
+  const attachedTargetNode = useInternalNode(attachedTargetId || '')
   const [bendPointDrag, setBendPointDrag] = useState<Point | null>(null)
   const bendPointDragRef = useRef<Point | null>(null)
 
@@ -119,6 +123,8 @@ export const EdgeView = memo(function EdgeView({
   } = useEdgeGeometry({
     sourceNode,
     targetNode,
+    sourceClipNode: attachedSourceNode || undefined,
+    targetClipNode: attachedTargetNode || undefined,
     linkStyle,
     startKind,
     endKind,

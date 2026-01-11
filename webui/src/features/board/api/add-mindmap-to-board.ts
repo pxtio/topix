@@ -3,7 +3,7 @@ import { useAppStore } from '@/store'
 import { useMutation } from '@tanstack/react-query'
 import { useGraphStore } from '../store/graph-store'
 import { displaceNodes } from '../utils/flow-view'
-import { computeAttachment, nodeCenter } from '../utils/point-attach'
+import { nodeCenter } from '../utils/point-attach'
 import { POINT_NODE_SIZE } from '../components/flow/point-node'
 import { generateUuid } from '@/lib/common'
 import type { LinkEdge, NoteNode } from '../types/flow'
@@ -62,20 +62,20 @@ export const useAddMindMapToBoard = () => {
           const startId = `${edgeId}-start`
           const endId = `${edgeId}-end`
           const offset = POINT_NODE_SIZE / 2
-          const startAttach = computeAttachment(sourceNode, nodeCenter(targetNode))
-          const endAttach = computeAttachment(targetNode, nodeCenter(sourceNode))
+          const sourceCenter = nodeCenter(sourceNode)
+          const targetCenter = nodeCenter(targetNode)
 
           const startPoint: NoteNode = {
             id: startId,
             type: 'point',
             position: {
-              x: startAttach.point.x - offset,
-              y: startAttach.point.y - offset,
+              x: sourceCenter.x - offset,
+              y: sourceCenter.y - offset,
             },
             data: {
               kind: 'point',
               attachedToNodeId: sourceNode.id,
-              attachedDirection: startAttach.direction,
+              attachedDirection: { x: 0, y: 0 },
             } as NoteNode['data'],
             draggable: true,
             selectable: true,
@@ -85,13 +85,13 @@ export const useAddMindMapToBoard = () => {
             id: endId,
             type: 'point',
             position: {
-              x: endAttach.point.x - offset,
-              y: endAttach.point.y - offset,
+              x: targetCenter.x - offset,
+              y: targetCenter.y - offset,
             },
             data: {
               kind: 'point',
               attachedToNodeId: targetNode.id,
-              attachedDirection: endAttach.direction,
+              attachedDirection: { x: 0, y: 0 },
             } as NoteNode['data'],
             draggable: true,
             selectable: true,

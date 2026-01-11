@@ -43,53 +43,12 @@ export function pointInNoteNode(p: Point, node: NoteNode): boolean {
   return p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h
 }
 
-function boundaryPointToward(node: NoteNode, targetPoint: Point, iters = 20): Point {
-  const c = nodeCenter(node)
-  const dir = { x: targetPoint.x - c.x, y: targetPoint.y - c.y }
-  const len = Math.hypot(dir.x, dir.y) || 1
-  const ux = dir.x / len
-  const uy = dir.y / len
-
-  const { w, h } = nodeRect(node)
-  const farDist = Math.max(w, h) * 4
-  let a = c
-  let b = { x: c.x + ux * farDist, y: c.y + uy * farDist }
-
-  if (pointInNoteNode(b, node)) {
-    b = { x: c.x + ux * farDist * 8, y: c.y + uy * farDist * 8 }
-  }
-
-  for (let k = 0; k < iters; k++) {
-    const mid: Point = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
-    if (pointInNoteNode(mid, node)) {
-      a = mid
-    } else {
-      b = mid
-    }
-  }
-
-  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
-}
-
-function normalize(v: Point): Point {
-  const len = Math.hypot(v.x, v.y) || 1
-  return { x: v.x / len, y: v.y / len }
-}
-
 export function computeAttachment(node: NoteNode, targetPoint: Point): { point: Point; direction: Point } {
   const c = nodeCenter(node)
-  const dir = normalize({ x: targetPoint.x - c.x, y: targetPoint.y - c.y })
-  const boundary = boundaryPointToward(node, { x: c.x + dir.x, y: c.y + dir.y })
-  const inset = 6
-  return { point: { x: boundary.x - dir.x * inset, y: boundary.y - dir.y * inset }, direction: dir }
-}
-
-export function boundaryFromDirection(node: NoteNode, direction: Point): Point {
-  const c = nodeCenter(node)
-  const dir = normalize(direction)
-  const boundary = boundaryPointToward(node, { x: c.x + dir.x, y: c.y + dir.y })
-  const inset = 6
-  return { x: boundary.x - dir.x * inset, y: boundary.y - dir.y * inset }
+  return {
+    point: targetPoint,
+    direction: { x: targetPoint.x - c.x, y: targetPoint.y - c.y },
+  }
 }
 
 export function findAttachTarget(point: Point, nodes: NoteNode[]): NoteNode | null {

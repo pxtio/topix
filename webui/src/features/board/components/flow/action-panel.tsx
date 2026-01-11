@@ -157,6 +157,7 @@ export const ActionPanel = memo(function ActionPanel({
       { key: 'g', handler: () => setOpenIconSearch(true) },
       { key: 'i', handler: () => setOpenImageSearch(true) },
       { key: 'c', handler: () => boardId && setOpenChatDialog(true) },
+      { key: 'p', handler: () => setEnableSelection(false) },
       { key: 'v', handler: () => setEnableSelection(!enableSelection) },
       { key: 'l', handler: toggleLock },
       { key: 'f', handler: onFitView },
@@ -208,7 +209,10 @@ export const ActionPanel = memo(function ActionPanel({
             title='Pan mode'
             aria-label='Pan mode'
           >
-            <HugeiconsIcon icon={Hold04Icon} className='size-4 shrink-0' />
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={Hold04Icon} className='size-4 shrink-0' />
+              <ShortcutHint label='P' />
+            </span>
           </Button>
           <Button
             variant={null}

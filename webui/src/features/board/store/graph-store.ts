@@ -1007,8 +1007,13 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         if (!isPointNode(n)) return n
         const shouldActive = activePointIds.has(n.id)
         const data = n.data as { endpointActive?: boolean }
-        if (data.endpointActive === shouldActive) return n
-        return { ...n, data: { ...n.data, endpointActive: shouldActive } }
+        if (data.endpointActive === shouldActive && n.draggable === shouldActive) return n
+        return {
+          ...n,
+          draggable: shouldActive,
+          selectable: shouldActive,
+          data: { ...n.data, endpointActive: shouldActive },
+        }
       })
 
       set({ nodes: toggledNodes, nodesById: buildNodesById(toggledNodes) })
@@ -1041,8 +1046,13 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
           if (!isPointNode(n)) return n
           const shouldActive = activePointIds.has(n.id)
           const data = n.data as { endpointActive?: boolean }
-          if (data.endpointActive === shouldActive) return n
-          return { ...n, data: { ...n.data, endpointActive: shouldActive } }
+          if (data.endpointActive === shouldActive && n.draggable === shouldActive) return n
+          return {
+            ...n,
+            draggable: shouldActive,
+            selectable: shouldActive,
+            data: { ...n.data, endpointActive: shouldActive },
+          }
         })
         set({ nodes: nextNodes, nodesById: buildNodesById(nextNodes) })
       }

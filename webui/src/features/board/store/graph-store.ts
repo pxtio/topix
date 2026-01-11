@@ -657,6 +657,8 @@ export interface GraphStore {
   isDragging: boolean
   setIsDragging: (dragging: boolean) => void
   draggingPointId?: string
+  isSelectMode: boolean
+  setIsSelectMode: (enabled: boolean) => void
   isPanning: boolean
   setIsPanning: (panning: boolean) => void
   isZooming: boolean
@@ -714,6 +716,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   isResizingNode: false,
   isDragging: false,
   draggingPointId: undefined,
+  isSelectMode: false,
   isPanning: false,
   isZooming: false,
   zoom: 1,
@@ -1003,15 +1006,22 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       activePointIds.size > 0 ||
       nextNodes.some(n => isPointNode(n) && (n.data as { endpointActive?: boolean }).endpointActive)
     ) {
+      const selectMode = get().isSelectMode
       const toggledNodes = nextNodes.map((n) => {
         if (!isPointNode(n)) return n
         const shouldActive = activePointIds.has(n.id)
         const data = n.data as { endpointActive?: boolean }
-        if (data.endpointActive === shouldActive && n.draggable === shouldActive) return n
+        if (
+          data.endpointActive === shouldActive &&
+          n.draggable === shouldActive &&
+          n.selectable === (shouldActive || selectMode)
+        ) {
+          return n
+        }
         return {
           ...n,
           draggable: shouldActive,
-          selectable: shouldActive,
+          selectable: shouldActive || selectMode,
           data: { ...n.data, endpointActive: shouldActive },
         }
       })
@@ -1042,15 +1052,22 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       }
 
       if (activePointIds.size > 0 || prevNodes.some(n => isPointNode(n) && (n.data as { endpointActive?: boolean }).endpointActive)) {
+        const selectMode = get().isSelectMode
         const nextNodes = prevNodes.map((n) => {
           if (!isPointNode(n)) return n
           const shouldActive = activePointIds.has(n.id)
           const data = n.data as { endpointActive?: boolean }
-          if (data.endpointActive === shouldActive && n.draggable === shouldActive) return n
+          if (
+            data.endpointActive === shouldActive &&
+            n.draggable === shouldActive &&
+            n.selectable === (shouldActive || selectMode)
+          ) {
+            return n
+          }
           return {
             ...n,
             draggable: shouldActive,
-            selectable: shouldActive,
+            selectable: shouldActive || selectMode,
             data: { ...n.data, endpointActive: shouldActive },
           }
         })
@@ -1133,6 +1150,22 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     set((state) =>
       state.isDragging === dragging ? {} : { isDragging: dragging },
     ),
+  setIsSelectMode: (enabled) =>
+    set((state) => {
+      if (state.isSelectMode === enabled) return {}
+      const nextNodes = state.nodes.map((n) => {
+        if (!isPointNode(n)) return n
+        const active = Boolean((n.data as { endpointActive?: boolean }).endpointActive)
+        const nextSelectable = active || enabled
+        if (n.selectable === nextSelectable) return n
+        return { ...n, selectable: nextSelectable }
+      })
+      return {
+        isSelectMode: enabled,
+        nodes: nextNodes,
+        nodesById: buildNodesById(nextNodes),
+      }
+    }),
   setIsPanning: (panning) =>
     set((state) =>
       state.isPanning === panning ? {} : { isPanning: panning },

@@ -185,7 +185,8 @@ function LinearView() {
 export default function GraphEditor() {
   const [viewMode, setViewMode] = useState<ViewMode>('graph')
 
-  const [enableSelection, setEnableSelection] = useState<boolean>(false)
+  const enableSelection = useGraphStore(state => state.isSelectMode)
+  const setEnableSelection = useGraphStore(state => state.setIsSelectMode)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [isSelecting, setIsSelecting] = useState<boolean>(false)

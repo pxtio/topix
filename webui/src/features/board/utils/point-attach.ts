@@ -80,13 +80,16 @@ export function computeAttachment(node: NoteNode, targetPoint: Point): { point: 
   const c = nodeCenter(node)
   const dir = normalize({ x: targetPoint.x - c.x, y: targetPoint.y - c.y })
   const boundary = boundaryPointToward(node, { x: c.x + dir.x, y: c.y + dir.y })
-  return { point: boundary, direction: dir }
+  const inset = 6
+  return { point: { x: boundary.x - dir.x * inset, y: boundary.y - dir.y * inset }, direction: dir }
 }
 
 export function boundaryFromDirection(node: NoteNode, direction: Point): Point {
   const c = nodeCenter(node)
   const dir = normalize(direction)
-  return boundaryPointToward(node, { x: c.x + dir.x, y: c.y + dir.y })
+  const boundary = boundaryPointToward(node, { x: c.x + dir.x, y: c.y + dir.y })
+  const inset = 6
+  return { x: boundary.x - dir.x * inset, y: boundary.y - dir.y * inset }
 }
 
 export function findAttachTarget(point: Point, nodes: NoteNode[]): NoteNode | null {

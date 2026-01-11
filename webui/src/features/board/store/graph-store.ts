@@ -847,6 +847,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     )
 
     if (movedNodeIds.size > 0) {
+      // TODO: Keep a map of attachedToNodeId -> point ids to avoid scanning all nodes.
       const attachedPointIds = new Set<string>()
       for (const node of nextNodes) {
         if (!isPointNode(node)) continue

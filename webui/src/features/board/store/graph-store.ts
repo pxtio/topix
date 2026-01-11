@@ -851,6 +851,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     )
 
     if (movedNodeIds.size > 0) {
+      const attachedPointIds = new Set<string>()
       for (const node of nextNodes) {
         if (!isPointNode(node)) continue
         const data = node.data as { attachedToNodeId?: string; attachedDirection?: { x: number; y: number } }
@@ -867,6 +868,32 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
           position: { x: boundary.x - pointOffset, y: boundary.y - pointOffset },
           data: { ...n.data, attachedToNodeId: target.id, attachedDirection: dir },
         }))
+        attachedPointIds.add(node.id)
+      }
+
+      if (attachedPointIds.size > 0) {
+        const edgeIds = new Set(
+          get()
+            .edges
+            .filter(
+              (e) =>
+                attachedPointIds.has(e.source) ||
+                attachedPointIds.has(e.target),
+            )
+            .map((e) => e.id),
+        )
+
+        if (edgeIds.size > 0) {
+          queueEdgesForPersistence(
+            () => ({
+              boardId: get().boardId,
+              edges: get().edges,
+              nodes: get().nodes,
+            }),
+            new Set(),
+            edgeIds,
+          )
+        }
       }
     }
 

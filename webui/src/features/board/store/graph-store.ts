@@ -1,7 +1,6 @@
 import {
   applyEdgeChanges,
   applyNodeChanges,
-  type Connection,
   type EdgeChange,
   type NodeChange,
   type Viewport,
@@ -15,8 +14,6 @@ import type { Note } from "../types/note"
 import { convertEdgeToLinkWithPoints, convertNodeToNote } from "../utils/graph"
 import { boundaryFromDirection, computeAttachment, findAttachTarget } from "../utils/point-attach"
 import { POINT_NODE_SIZE } from "../components/flow/point-node"
-import { generateUuid } from "@/lib/common"
-import { createDefaultLinkStyle, type LinkStyle } from "../types/style"
 import { DEBOUNCE_DELAY } from "../const"
 
 import { addLinks } from "../api/add-links"
@@ -676,7 +673,6 @@ export interface GraphStore {
   onEdgesChange: (changes: EdgeChange<LinkEdge>[]) => void
   onNodesDelete: (nodes: NoteNode[]) => void
   onEdgesDelete: (edges: LinkEdge[]) => void
-  onConnect: (params: Connection, style?: LinkStyle) => LinkEdge | undefined
 
   setDeletedNodes: (nodes: NoteNode[]) => void
   setDeletedEdges: (edges: LinkEdge[]) => void
@@ -1088,45 +1084,6 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     // DB delete is covered via onEdgesChange's background diff
   },
 
-  onConnect: (params, style) => {
-    const boardId = get().boardId
-    if (!boardId) return undefined
-
-    const edgeId = generateUuid()
-    const newEdge: LinkEdge = {
-      ...params,
-      id: edgeId,
-    }
-
-    newEdge.data = {
-      id: edgeId,
-      type: "link",
-      version: 1,
-      source: newEdge.source,
-      target: newEdge.target,
-      style: style || createDefaultLinkStyle(),
-      createdAt: new Date().toISOString(),
-      graphUid: boardId,
-    } as Link
-
-    const prevEdges = get().edges
-    const newEdges = [...prevEdges, newEdge]
-
-    if (newEdges.length > prevEdges.length) {
-      set({ edges: newEdges })
-
-      // treat as "new" edge for persistence
-      scheduleEdgePersistFromDiff(prevEdges, newEdges, boardId, () => ({
-        boardId: get().boardId,
-        edges: get().edges,
-        nodes: get().nodes,
-      }))
-
-      return newEdge
-    }
-
-    return undefined
-  },
 
   setDeletedNodes: (nodes) => set({ deletedNodes: nodes }),
 

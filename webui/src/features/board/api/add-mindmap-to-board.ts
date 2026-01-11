@@ -3,6 +3,10 @@ import { useAppStore } from '@/store'
 import { useMutation } from '@tanstack/react-query'
 import { useGraphStore } from '../store/graph-store'
 import { displaceNodes } from '../utils/flow-view'
+import { computeAttachment, nodeCenter } from '../utils/point-attach'
+import { POINT_NODE_SIZE } from '../components/flow/point-node'
+import { generateUuid } from '@/lib/common'
+import type { LinkEdge, NoteNode } from '../types/flow'
 import { useFitNodes } from '../hooks/fit-nodes'
 import { useShallow } from 'zustand/react/shallow'
 
@@ -42,8 +46,71 @@ export const useAddMindMapToBoard = () => {
 
         // avoid overlap and merge into the board
         const displacedMindMapNodes = displaceNodes(nodes_, mindMapNodes)
-        nodes_ = [...displacedMindMapNodes, ...nodes_]
-        edges_ = [...mindMapEdges, ...edges_]
+        const displacedById = new Map(displacedMindMapNodes.map(node => [node.id, node]))
+        const newPointNodes: NoteNode[] = []
+        const convertedEdges: LinkEdge[] = []
+
+        const attachPointPair = (edge: LinkEdge) => {
+          const sourceNode = displacedById.get(edge.source)
+          const targetNode = displacedById.get(edge.target)
+          if (!sourceNode || !targetNode) {
+            convertedEdges.push(edge)
+            return
+          }
+
+          const edgeId = edge.id || generateUuid()
+          const startId = `${edgeId}-start`
+          const endId = `${edgeId}-end`
+          const offset = POINT_NODE_SIZE / 2
+          const startAttach = computeAttachment(sourceNode, nodeCenter(targetNode))
+          const endAttach = computeAttachment(targetNode, nodeCenter(sourceNode))
+
+          const startPoint: NoteNode = {
+            id: startId,
+            type: 'point',
+            position: {
+              x: startAttach.point.x - offset,
+              y: startAttach.point.y - offset,
+            },
+            data: {
+              kind: 'point',
+              attachedToNodeId: sourceNode.id,
+              attachedDirection: startAttach.direction,
+            } as NoteNode['data'],
+            draggable: true,
+            selectable: true,
+          }
+
+          const endPoint: NoteNode = {
+            id: endId,
+            type: 'point',
+            position: {
+              x: endAttach.point.x - offset,
+              y: endAttach.point.y - offset,
+            },
+            data: {
+              kind: 'point',
+              attachedToNodeId: targetNode.id,
+              attachedDirection: endAttach.direction,
+            } as NoteNode['data'],
+            draggable: true,
+            selectable: true,
+          }
+
+          newPointNodes.push(startPoint, endPoint)
+
+          convertedEdges.push({
+            ...edge,
+            id: edgeId,
+            source: startId,
+            target: endId,
+            sourceHandle: 'point',
+            targetHandle: 'point',
+          })
+        }
+        mindMapEdges.forEach(attachPointPair)
+        nodes_ = [...displacedMindMapNodes, ...newPointNodes, ...nodes_]
+        edges_ = [...convertedEdges, ...edges_]
 
         // update stores (drives React Flow)
         setNodesPersist(nodes_)

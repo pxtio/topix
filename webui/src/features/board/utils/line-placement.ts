@@ -106,7 +106,7 @@ export function buildLinePlacement({
         startPoint: { type: 'position', position: pointA.position },
         endPoint: { type: 'position', position: pointB.position },
       },
-      style: { ...createDefaultLinkStyle(), pathStyle: 'straight' },
+      style: { ...createDefaultLinkStyle(), pathStyle: 'bezier' },
       createdAt: new Date().toISOString(),
       graphUid: boardId,
     } as Link,

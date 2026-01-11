@@ -25,7 +25,7 @@ const HEAD_SCALE = 1.5
 const TIP_FACTOR = 0.95           // tip at 95% of viewBox width → no clipping
 const BASE_X_FACTOR = 0.25        // base is at 25% of width (where shaft meets head)
 const BASE_THICKNESS_BOOST = 1.1  // bottom side slightly thicker
-const ARROW_CLEARANCE_FACTOR = 1 // pull heads farther from node surface
+const ARROW_CLEARANCE_FACTOR = 0.5 // pull heads farther from node surface
 
 type EdgeControlPointHandlers = {
   onControlPointChange?: (point: Point) => void

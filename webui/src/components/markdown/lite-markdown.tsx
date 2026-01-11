@@ -14,9 +14,13 @@ type Token =
   | { type: 'link'; content: string; href: string }
   | { type: 'math-inline'; content: string }
   | { type: 'math-block'; content: string }
+  | { type: 'progress'; completed: number; total: number }
 
 const INLINE_PATTERN =
   /(\$\$[\s\S]+?\$\$|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|_[^_]+_|\[[^\]]+\]\([^)]+\))/g
+const CHECK_LINE_PATTERN = /^[ \t]*(\[(v)\]|☑|✅)/i
+const EMPTY_LINE_PATTERN = /^[ \t]*(\[\]|☐)/i
+const CROSS_LINE_PATTERN = /^([ \t]*)(\[(x)\]|☒|❎)(\s*)(.*)$/i
 
 const transformSymbols = (value: string) =>
   value.replace(/<=>|<->|<-|->|\[\]|\[[vx]\]/gi, (match) => {
@@ -27,8 +31,8 @@ const transformSymbols = (value: string) =>
     if (normalized === '<->') return '↔'
     if (normalized === '<=>') return '⇔'
     if (normalized === '[]') return '☐'
-    if (normalized === '[v]') return '☑'
-    if (normalized === '[x]') return '☒'
+    if (normalized === '[v]') return '✅'
+    if (normalized === '[x]') return '❎'
 
     return match
   })
@@ -79,6 +83,93 @@ function tokenizeInline(segment: string): Token[] {
   return tokens
 }
 
+function tokenizeLine(line: string): Token[] {
+  const match = line.match(CROSS_LINE_PATTERN)
+  if (!match) {
+    return tokenizeInline(line)
+  }
+
+  const prefix = `${match[1]}${match[2]}${match[4] ?? ''}`
+  const rest = match[5] ?? ''
+  const tokens: Token[] = [{ type: 'text', content: transformSymbols(prefix) }]
+
+  if (rest.length > 0) {
+    tokens.push({ type: 'strike', content: transformSymbols(rest) })
+  }
+
+  return tokens
+}
+
+function tokenizeTextBlock(block: string): Token[] {
+  if (!block) return []
+  const lines = block.split('\n')
+  const tokens: Token[] = []
+
+  lines.forEach((line, index) => {
+    tokens.push(...tokenizeLine(line))
+    if (index < lines.length - 1) {
+      tokens.push({ type: 'text', content: '\n' })
+    }
+  })
+
+  return tokens
+}
+
+type TaskCounts = {
+  completed: number
+  total: number
+}
+
+function countTasksInTextBlock(block: string, counts: TaskCounts) {
+  if (!block) return
+  const lines = block.split('\n')
+
+  lines.forEach(line => {
+    if (CHECK_LINE_PATTERN.test(line)) {
+      counts.completed += 1
+      counts.total += 1
+      return
+    }
+
+    if (CROSS_LINE_PATTERN.test(line)) {
+      counts.completed += 1
+      counts.total += 1
+      return
+    }
+
+    if (EMPTY_LINE_PATTERN.test(line)) {
+      counts.total += 1
+    }
+  })
+}
+
+function countTasks(input: string): TaskCounts {
+  const counts = { completed: 0, total: 0 }
+  if (!input) return counts
+  let cursor = 0
+
+  while (cursor < input.length) {
+    const fenceStart = input.indexOf('```', cursor)
+    if (fenceStart === -1) {
+      countTasksInTextBlock(input.slice(cursor), counts)
+      break
+    }
+
+    if (fenceStart > cursor) {
+      countTasksInTextBlock(input.slice(cursor, fenceStart), counts)
+    }
+
+    const fenceEnd = input.indexOf('```', fenceStart + 3)
+    if (fenceEnd === -1) {
+      break
+    }
+
+    cursor = fenceEnd + 3
+  }
+
+  return counts
+}
+
 function tokenize(input: string): Token[] {
   if (!input) return []
   const tokens: Token[] = []
@@ -87,17 +178,17 @@ function tokenize(input: string): Token[] {
   while (cursor < input.length) {
     const fenceStart = input.indexOf('```', cursor)
     if (fenceStart === -1) {
-      tokens.push(...tokenizeInline(input.slice(cursor)))
+      tokens.push(...tokenizeTextBlock(input.slice(cursor)))
       break
     }
 
     if (fenceStart > cursor) {
-      tokens.push(...tokenizeInline(input.slice(cursor, fenceStart)))
+      tokens.push(...tokenizeTextBlock(input.slice(cursor, fenceStart)))
     }
 
     const fenceEnd = input.indexOf('```', fenceStart + 3)
     if (fenceEnd === -1) {
-      tokens.push(...tokenizeInline(input.slice(fenceStart)))
+      tokens.push(...tokenizeTextBlock(input.slice(fenceStart)))
       break
     }
 
@@ -142,7 +233,26 @@ function renderMath(content: string, displayMode: boolean): { __html: string } {
 }
 
 export const LiteMarkdown = memo(function LiteMarkdown({ text, className }: LiteMarkdownProps) {
-  const tokens = useMemo(() => tokenize(text), [text])
+  const tokens = useMemo<Token[]>(() => {
+    const baseTokens = tokenize(text)
+    const counts = countTasks(text)
+
+    if (counts.total === 0) {
+      return baseTokens
+    }
+
+    const progressToken: Token = {
+      type: 'progress',
+      completed: counts.completed,
+      total: counts.total
+    }
+
+    return [
+      progressToken,
+      { type: 'text', content: '\n' },
+      ...baseTokens
+    ]
+  }, [text])
 
   return (
     <span className={clsx('whitespace-pre-wrap break-words', className)}>
@@ -216,7 +326,7 @@ export const LiteMarkdown = memo(function LiteMarkdown({ text, className }: Lite
             <span
               key={index}
               className='inline-block align-middle'
-              dangerouslySetInnerHTML={renderMath(token.content, false)}
+              dangerouslySetInnerHTML={renderMath(token.content || '', false)}
             />
           )
         }
@@ -226,8 +336,47 @@ export const LiteMarkdown = memo(function LiteMarkdown({ text, className }: Lite
             <div
               key={index}
               className='my-1 flex justify-center'
-              dangerouslySetInnerHTML={renderMath(token.content, true)}
+              dangerouslySetInnerHTML={renderMath(token.content || '', true)}
             />
+          )
+        }
+
+        if (token.type === 'progress') {
+          const total = token.total || 0
+          const completed = token.completed || 0
+          const percent = total > 0 ? Math.min(100, Math.max(0, Math.round((completed / total) * 100))) : 0
+
+          return (
+            <span key={index} className='inline-flex items-center gap-1 align-middle mb-2'>
+              <svg
+                aria-hidden='true'
+                viewBox='0 0 36 36'
+                className='h-5 w-5 shrink-0 text-foreground'
+              >
+                <circle
+                  cx='18'
+                  cy='18'
+                  r='15.5'
+                  fill='none'
+                  strokeWidth='4'
+                  className='stroke-muted'
+                />
+                <circle
+                  cx='18'
+                  cy='18'
+                  r='15.5'
+                  fill='none'
+                  strokeWidth='4'
+                  strokeDasharray={`${percent} 100`}
+                  strokeLinecap='round'
+                  transform='rotate(-90 18 18)'
+                  className='stroke-secondary'
+                />
+              </svg>
+              <span className='text-sm font-semibold font-mono text-muted-foreground'>
+                [{completed}/{total}]
+              </span>
+            </span>
           )
         }
 

@@ -656,6 +656,7 @@ export interface GraphStore {
   isResizingNode: boolean
   isDragging: boolean
   setIsDragging: (dragging: boolean) => void
+  draggingPointId?: string
   isPanning: boolean
   setIsPanning: (panning: boolean) => void
   isZooming: boolean
@@ -712,6 +713,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   isResizingNode: false,
   isDragging: false,
+  draggingPointId: undefined,
   isPanning: false,
   isZooming: false,
   zoom: 1,
@@ -970,16 +972,37 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         .map((n) => n.id),
     )
 
+    // If a point endpoint is selected (e.g. dragging), keep its edge selected too.
+    let edgesForSelection = get().edges
     if (selectedPointIds.size > 0) {
-      const activePointIds = new Set(selectedPointIds)
-      const edges = get().edges
-      for (const edge of edges) {
-        if (selectedPointIds.has(edge.source) || selectedPointIds.has(edge.target)) {
-          activePointIds.add(edge.source)
-          activePointIds.add(edge.target)
+      let edgesChanged = false
+      const nextEdges = edgesForSelection.map((edge) => {
+        if (!selectedPointIds.has(edge.source) && !selectedPointIds.has(edge.target)) {
+          return edge
         }
+        if (edge.selected) return edge
+        edgesChanged = true
+        return { ...edge, selected: true }
+      })
+      if (edgesChanged) {
+        set({ edges: nextEdges })
+        edgesForSelection = nextEdges
       }
+    }
 
+    // Endpoint visibility follows edge selection (edge-selected => both endpoints active).
+    const activePointIds = new Set<string>()
+    for (const edge of edgesForSelection) {
+      if (!edge.selected) continue
+      activePointIds.add(edge.source)
+      activePointIds.add(edge.target)
+    }
+
+    // Also allow clearing active endpoints when nothing is selected anymore.
+    if (
+      activePointIds.size > 0 ||
+      nextNodes.some(n => isPointNode(n) && (n.data as { endpointActive?: boolean }).endpointActive)
+    ) {
       const toggledNodes = nextNodes.map((n) => {
         if (!isPointNode(n)) return n
         const shouldActive = activePointIds.has(n.id)

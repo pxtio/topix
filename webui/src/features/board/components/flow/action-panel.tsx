@@ -14,6 +14,7 @@ import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@
 import { Chat } from '@/features/agent/components/chat-view'
 import { useGraphStore } from '../../store/graph-store'
 import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -57,6 +58,7 @@ export const ActionPanel = memo(function ActionPanel({
   const [openImageSearch, setOpenImageSearch] = useState(false)
   const [openIconSearch, setOpenIconSearch] = useState(false)
   const [openChatDialog, setOpenChatDialog] = useState(false)
+  const [openShapeMenu, setOpenShapeMenu] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
   const zoom = useGraphStore(state => state.zoom ?? 1)
   const navigate = useNavigate()
@@ -74,7 +76,7 @@ export const ActionPanel = memo(function ActionPanel({
     { nodeType: 'layered-rectangle', label: 'Layered card', icon: <Layers className='w-4 h-4 shrink-0' /> },
     { nodeType: 'ellipse', label: 'Ellipse', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} /> },
     { nodeType: 'diamond', label: 'Diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} /> },
-    { nodeType: 'soft-diamond', label: 'Rounded diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'soft-diamond', label: 'Double diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} /> },
     { nodeType: 'layered-diamond', label: 'Layered diamond', icon: <Layers className='w-4 h-4 shrink-0' /> },
     { nodeType: 'layered-circle', label: 'Layered circle', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} /> },
     { nodeType: 'tag', label: 'Tag', icon: <HugeiconsIcon icon={LabelIcon} className='size-4 shrink-0' strokeWidth={2} /> },
@@ -127,6 +129,32 @@ export const ActionPanel = memo(function ActionPanel({
     )
   }
 
+  const ShortcutHint = ({ label }: { label: string }) => (
+    <span className='pointer-events-none absolute -bottom-1 -right-1 text-[9px] leading-none text-muted-foreground/80'>
+      {label}
+    </span>
+  )
+
+  useBoardShortcuts({
+    enabled: viewMode === 'graph',
+    shortcuts: [
+      { key: 'a', handler: onAddLine },
+      { key: 'n', handler: () => onAddNode({ nodeType: 'sheet' }) },
+      { key: 's', handler: () => setOpenShapeMenu(true) },
+      { key: 't', handler: () => onAddNode({ nodeType: 'text' }) },
+      { key: 'g', handler: () => setOpenIconSearch(true) },
+      { key: 'i', handler: () => setOpenImageSearch(true) },
+      { key: 'c', handler: () => boardId && setOpenChatDialog(true) },
+      { key: 'v', handler: () => setEnableSelection(!enableSelection) },
+      { key: 'l', handler: toggleLock },
+      { key: 'f', handler: onFitView },
+      { key: '=', handler: onZoomIn },
+      { key: '+', handler: onZoomIn },
+      { key: '-', handler: onZoomOut },
+      { key: '_', handler: onZoomOut },
+      { key: '0', handler: onResetZoom },
+    ],
+  })
 
   return (
     <div
@@ -178,7 +206,10 @@ export const ActionPanel = memo(function ActionPanel({
             title='Selection mode'
             aria-label='Selection mode'
           >
-            <HugeiconsIcon icon={Cursor02Icon} className='size-4 shrink-0' strokeWidth={2} />
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={Cursor02Icon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='V' />
+            </span>
           </Button>
 
           {/* Zoom controls */}
@@ -190,7 +221,10 @@ export const ActionPanel = memo(function ActionPanel({
             title='Zoom in'
             aria-label='Zoom in'
           >
-            <HugeiconsIcon icon={PlusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={PlusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='+' />
+            </span>
           </Button>
           <Button
             variant={null}
@@ -200,7 +234,10 @@ export const ActionPanel = memo(function ActionPanel({
             title='Zoom out'
             aria-label='Zoom out'
           >
-            <HugeiconsIcon icon={MinusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={MinusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='-' />
+            </span>
           </Button>
           <Button
             variant={null}
@@ -210,7 +247,10 @@ export const ActionPanel = memo(function ActionPanel({
             title='Reset zoom to 100%'
             aria-label='Reset zoom to 100%'
           >
-            <span className='text-xs font-medium text-secondary'>{Math.round((zoom || 1) * 100)}%</span>
+            <span className='relative inline-flex items-center justify-center text-xs font-medium text-secondary'>
+              {Math.round((zoom || 1) * 100)}%
+              <ShortcutHint label='0' />
+            </span>
           </Button>
           <Button
             variant={null}
@@ -220,7 +260,10 @@ export const ActionPanel = memo(function ActionPanel({
             title='Fit view'
             aria-label='Fit view'
           >
-            <HugeiconsIcon icon={FitToScreenIcon} className='size-4 shrink-0' strokeWidth={2} />
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={FitToScreenIcon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='F' />
+            </span>
           </Button>
 
           {/* Lock / Unlock canvas */}
@@ -233,11 +276,14 @@ export const ActionPanel = memo(function ActionPanel({
             aria-pressed={isLocked}
             aria-label={isLocked ? 'Unlock canvas' : 'Lock canvas'}
           >
-            {isLocked ? (
-              <HugeiconsIcon icon={SquareLock02Icon} className='size-4 shrink-0' strokeWidth={2} />
-            ) : (
-              <HugeiconsIcon icon={SquareUnlock02Icon} className='size-4 shrink-0' strokeWidth={2} />
-            )}
+            <span className='relative inline-flex items-center justify-center'>
+              {isLocked ? (
+                <HugeiconsIcon icon={SquareLock02Icon} className='size-4 shrink-0' strokeWidth={2} />
+              ) : (
+                <HugeiconsIcon icon={SquareUnlock02Icon} className='size-4 shrink-0' strokeWidth={2} />
+              )}
+              <ShortcutHint label='L' />
+            </span>
           </Button>
 
           <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
@@ -251,7 +297,10 @@ export const ActionPanel = memo(function ActionPanel({
             title='Add Sticky Note'
             aria-label='Add Sticky Note'
           >
-            <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='N' />
+            </span>
           </Button>
 
           {/* Add line */}
@@ -263,11 +312,14 @@ export const ActionPanel = memo(function ActionPanel({
             title='Add line'
             aria-label='Add line'
           >
-            <HugeiconsIcon icon={ArrowMoveDownRightIcon} className='size-4 shrink-0' strokeWidth={2} />
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={ArrowMoveDownRightIcon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='A' />
+            </span>
           </Button>
 
           {/* Shape picker */}
-          <DropdownMenu>
+          <DropdownMenu open={openShapeMenu} onOpenChange={setOpenShapeMenu}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant={null}
@@ -279,6 +331,7 @@ export const ActionPanel = memo(function ActionPanel({
                 <div className='flex flex-col items-center gap-0.5 relative'>
                   <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />
                   <ChevronDown className='absolute inset-x-0 -bottom-3.5 w-3 h-3 text-muted-foreground' />
+                  <ShortcutHint label='S' />
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -305,7 +358,10 @@ export const ActionPanel = memo(function ActionPanel({
             title='Add Text'
             aria-label='Add Text'
           >
-            <HugeiconsIcon icon={TextIcon} className='size-4 shrink-0' strokeWidth={2} />
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={TextIcon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='T' />
+            </span>
           </Button>
 
           {/* Icon search */}
@@ -317,7 +373,10 @@ export const ActionPanel = memo(function ActionPanel({
             title='Search icons'
             aria-label='Search icons'
           >
-            <HugeiconsIcon icon={GeometricShapes01Icon} className='size-4 shrink-0' strokeWidth={2} />
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={GeometricShapes01Icon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='G' />
+            </span>
           </Button>
 
           {/* Image search */}
@@ -329,7 +388,10 @@ export const ActionPanel = memo(function ActionPanel({
             title='Search images'
             aria-label='Search images'
           >
-            <HugeiconsIcon icon={Image02Icon} className='size-4 shrink-0' strokeWidth={2} />
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={Image02Icon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='I' />
+            </span>
           </Button>
 
           {/* Open Chat */}
@@ -342,7 +404,10 @@ export const ActionPanel = memo(function ActionPanel({
             aria-label='Open Chat'
             disabled={!boardId}
           >
-            <BotMessageSquare className='size-4 shrink-0 text-sidebar-icon-4' strokeWidth={2} />
+            <span className='relative inline-flex items-center justify-center'>
+              <BotMessageSquare className='size-4 shrink-0 text-sidebar-icon-4' strokeWidth={2} />
+              <ShortcutHint label='C' />
+            </span>
           </Button>
         </>
       )}

@@ -8,6 +8,8 @@ type NoteNodeData = Note & {
   lineEnd?: PositionProperty
   kind?: "point"
   endpointActive?: boolean
+  attachedToNodeId?: string
+  attachedDirection?: { x: number; y: number }
 }
 
 export type NoteNode = Node<NoteNodeData>

@@ -13,6 +13,8 @@ import type { Link } from "../types/link"
 import type { Note } from "../types/note"
 
 import { convertEdgeToLinkWithPoints, convertNodeToNote } from "../utils/graph"
+import { boundaryFromDirection, computeAttachment, findAttachTarget } from "../utils/point-attach"
+import { POINT_NODE_SIZE } from "../components/flow/point-node"
 import { generateUuid } from "@/lib/common"
 import { createDefaultLinkStyle, type LinkStyle } from "../types/style"
 import { DEBOUNCE_DELAY } from "../const"
@@ -783,9 +785,97 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       return false
     })
 
-    const updatedNodes = applyNodeChanges(changes, prevNodes)
-    const updatedNodesById = updateNodesById(get().nodesById, updatedNodes, changes)
-    set({ nodes: updatedNodes, nodesById: updatedNodesById })
+    let nextNodes = applyNodeChanges(changes, prevNodes)
+    let nextNodesById = updateNodesById(get().nodesById, nextNodes, changes)
+    let nodesChanged = false
+
+    const pointOffset = POINT_NODE_SIZE / 2
+    const nextById = new Map(nextNodes.map(n => [n.id, n]))
+
+    const applyNodeUpdate = (id: string, updater: (node: NoteNode) => NoteNode) => {
+      const node = nextById.get(id)
+      if (!node) return
+      const updated = updater(node)
+      if (updated !== node) {
+        nextById.set(id, updated)
+        nodesChanged = true
+      }
+    }
+
+    const isPositionChangeWithId = (
+      ch: NodeChange<NoteNode>,
+    ): ch is NodeChange<NoteNode> & { id: string; dragging?: boolean } =>
+      ch.type === "position" && typeof (ch as { id?: unknown }).id === "string"
+
+    // Detach point nodes when drag begins.
+    for (const ch of changes) {
+      if (!isPositionChangeWithId(ch) || !ch.dragging) continue
+      const node = nextById.get(ch.id)
+      if (!node || !isPointNode(node)) continue
+      const data = node.data as { attachedToNodeId?: string; attachedDirection?: { x: number; y: number } }
+      if (!data.attachedToNodeId) continue
+      applyNodeUpdate(node.id, n => ({
+        ...n,
+        data: { ...n.data, attachedToNodeId: undefined, attachedDirection: undefined },
+      }))
+    }
+
+    // Snap point nodes to targets on drag end.
+    for (const ch of changes) {
+      if (!isPositionChangeWithId(ch) || ch.dragging !== false) continue
+      const node = nextById.get(ch.id)
+      if (!node || !isPointNode(node)) continue
+      const center = { x: node.position.x + pointOffset, y: node.position.y + pointOffset }
+      const target = findAttachTarget(center, nextNodes)
+      if (!target) {
+        applyNodeUpdate(node.id, n => ({
+          ...n,
+          data: { ...n.data, attachedToNodeId: undefined, attachedDirection: undefined },
+        }))
+        continue
+      }
+
+      const attach = computeAttachment(target, center)
+      applyNodeUpdate(node.id, n => ({
+        ...n,
+        position: { x: attach.point.x - pointOffset, y: attach.point.y - pointOffset },
+        data: { ...n.data, attachedToNodeId: target.id, attachedDirection: attach.direction },
+      }))
+    }
+
+    // Keep attached points aligned while their target node moves.
+    const movedNodeIds = new Set(
+      changes
+        .filter(isPositionChangeWithId)
+        .map(ch => ch.id),
+    )
+
+    if (movedNodeIds.size > 0) {
+      for (const node of nextNodes) {
+        if (!isPointNode(node)) continue
+        const data = node.data as { attachedToNodeId?: string; attachedDirection?: { x: number; y: number } }
+        if (!data.attachedToNodeId || !movedNodeIds.has(data.attachedToNodeId)) continue
+        const target = nextById.get(data.attachedToNodeId)
+        if (!target || isPointNode(target)) continue
+        const dir = data.attachedDirection ?? {
+          x: node.position.x + pointOffset - (target.position.x + (target.measured?.width ?? target.width ?? 1) / 2),
+          y: node.position.y + pointOffset - (target.position.y + (target.measured?.height ?? target.height ?? 1) / 2),
+        }
+        const boundary = boundaryFromDirection(target, dir)
+        applyNodeUpdate(node.id, n => ({
+          ...n,
+          position: { x: boundary.x - pointOffset, y: boundary.y - pointOffset },
+          data: { ...n.data, attachedToNodeId: target.id, attachedDirection: dir },
+        }))
+      }
+    }
+
+    if (nodesChanged) {
+      nextNodes = nextNodes.map(n => nextById.get(n.id) ?? n)
+      nextNodesById = buildNodesById(nextNodes)
+    }
+
+    set({ nodes: nextNodes, nodesById: nextNodesById })
 
     if (onlyTransient) return
 
@@ -793,7 +883,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
     scheduleNodePersistFromChanges(
       prevNodes,
-      updatedNodes,
+      nextNodes,
       boardId,
       changes,
       isResizingAtTime,
@@ -817,7 +907,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
     if (movedPointIds.size > 0) {
       const updatedPointIds = new Set(
-        updatedNodes
+        nextNodes
           .filter((n) => movedPointIds.has(n.id))
           .filter((n) => isPointNode(n))
           .map((n) => n.id),
@@ -850,7 +940,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     }
 
     const selectedPointIds = new Set(
-      updatedNodes
+      nextNodes
         .filter((n) => n.selected && isPointNode(n))
         .map((n) => n.id),
     )
@@ -865,7 +955,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         }
       }
 
-      const nextNodes = updatedNodes.map((n) => {
+      const toggledNodes = nextNodes.map((n) => {
         if (!isPointNode(n)) return n
         const shouldActive = activePointIds.has(n.id)
         const data = n.data as { endpointActive?: boolean }
@@ -873,7 +963,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         return { ...n, data: { ...n.data, endpointActive: shouldActive } }
       })
 
-      set({ nodes: nextNodes, nodesById: buildNodesById(nextNodes) })
+      set({ nodes: toggledNodes, nodesById: buildNodesById(toggledNodes) })
     }
   },
 

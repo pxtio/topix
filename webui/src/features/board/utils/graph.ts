@@ -3,6 +3,7 @@ import type { LinkEdge, NoteNode } from "../types/flow"
 import { createDefaultLinkProperties, type Link } from "../types/link"
 import { createDefaultNoteProperties, type Note } from "../types/note"
 import { createDefaultLinkStyle } from "../types/style"
+import { computeAttachment, nodeCenter } from "./point-attach"
 
 type PointPair = {
   points: NoteNode[]
@@ -62,23 +63,52 @@ export const convertLinkToEdge = (link: Link): LinkEdge => {
   }
 }
 
-export const convertLinkToEdgeWithPoints = (link: Link): PointPair => {
+export const convertLinkToEdgeWithPoints = (
+  link: Link,
+  nodesById?: Map<string, NoteNode>,
+): PointPair => {
   const edge = convertLinkToEdge(link)
   const start = link.properties?.startPoint?.position
   const end = link.properties?.endPoint?.position
+  const startTarget = nodesById?.get(link.source)
+  const endTarget = nodesById?.get(link.target)
 
-  if (!start || !end) {
+  if (!start && !end) {
+    return { edge, points: [] }
+  }
+  if (!start && !startTarget) {
+    return { edge, points: [] }
+  }
+  if (!end && !endTarget) {
     return { edge, points: [] }
   }
 
   const startId = `${link.id}-start`
   const endId = `${link.id}-end`
+  const fallbackStart = start ?? (startTarget ? nodeCenter(startTarget) : undefined)
+  const fallbackEnd = end ?? (endTarget ? nodeCenter(endTarget) : undefined)
+
+  if (!fallbackStart || !fallbackEnd) {
+    return { edge, points: [] }
+  }
+
+  // If endpoint is attached to a node, snap to its boundary and store direction.
+  const startAttach = startTarget
+    ? computeAttachment(startTarget, start ?? fallbackStart)
+    : null
+  const endAttach = endTarget
+    ? computeAttachment(endTarget, end ?? fallbackEnd)
+    : null
 
   const startNode: NoteNode = {
     id: startId,
     type: 'point',
-    position: { x: start.x, y: start.y },
-    data: { kind: 'point' } as NoteNode['data'],
+    position: startAttach?.point ?? fallbackStart,
+    data: {
+      kind: 'point',
+      attachedToNodeId: startTarget?.id,
+      attachedDirection: startAttach?.direction,
+    } as NoteNode['data'],
     draggable: true,
     selectable: true,
   }
@@ -86,8 +116,12 @@ export const convertLinkToEdgeWithPoints = (link: Link): PointPair => {
   const endNode: NoteNode = {
     id: endId,
     type: 'point',
-    position: { x: end.x, y: end.y },
-    data: { kind: 'point' } as NoteNode['data'],
+    position: endAttach?.point ?? fallbackEnd,
+    data: {
+      kind: 'point',
+      attachedToNodeId: endTarget?.id,
+      attachedDirection: endAttach?.direction,
+    } as NoteNode['data'],
     draggable: true,
     selectable: true,
   }
@@ -183,6 +217,13 @@ export const convertEdgeToLinkWithPoints = (
   const isPoint = (node?: NoteNode) =>
     Boolean(node && (node.data as { kind?: string }).kind === 'point')
 
+  const sourceAttachedTo = isPoint(sourceNode)
+    ? (sourceNode?.data as { attachedToNodeId?: string }).attachedToNodeId
+    : undefined
+  const targetAttachedTo = isPoint(targetNode)
+    ? (targetNode?.data as { attachedToNodeId?: string }).attachedToNodeId
+    : undefined
+
   const nextProps = link.properties ?? createDefaultLinkProperties()
 
   if (isPoint(sourceNode)) {
@@ -198,5 +239,11 @@ export const convertEdgeToLinkWithPoints = (
     }
   }
 
-  return { ...link, properties: nextProps }
+  // Persist attached endpoints as real node ids when available.
+  return {
+    ...link,
+    source: sourceAttachedTo ?? link.source,
+    target: targetAttachedTo ?? link.target,
+    properties: nextProps,
+  }
 }

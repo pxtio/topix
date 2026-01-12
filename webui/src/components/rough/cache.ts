@@ -5,6 +5,7 @@ type CacheEntry = {
 }
 
 const roughCanvasCache = new Map<string, CacheEntry>()
+const MAX_CACHE_ENTRIES = 200
 
 const hasDocument = typeof document !== 'undefined'
 
@@ -37,6 +38,9 @@ export function getCachedCanvas(
 ): HTMLCanvasElement {
   let entry = roughCanvasCache.get(key)
   if (entry && entry.width === width && entry.height === height) {
+    // Refresh LRU ordering.
+    roughCanvasCache.delete(key)
+    roughCanvasCache.set(key, entry)
     return entry.canvas
   }
 
@@ -49,6 +53,12 @@ export function getCachedCanvas(
 
   entry = { canvas, width, height }
   roughCanvasCache.set(key, entry)
+
+  // lru eviction
+  if (roughCanvasCache.size > MAX_CACHE_ENTRIES) {
+    const oldestKey = roughCanvasCache.keys().next().value as string | undefined
+    if (oldestKey) roughCanvasCache.delete(oldestKey)
+  }
   return canvas
 }
 

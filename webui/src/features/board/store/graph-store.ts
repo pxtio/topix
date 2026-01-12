@@ -671,6 +671,8 @@ export interface GraphStore {
 
   setNodesPersist: (nodes: Updater<NoteNode[]>) => void
   setEdgesPersist: (edges: Updater<LinkEdge[]>) => void
+  moveEdgeEndpointsByDelta: (edgeId: string, delta: { x: number; y: number }) => void
+  persistEdgeById: (edgeId: string) => void
 
   onNodesChange: (changes: NodeChange<NoteNode>[]) => void
   onEdgesChange: (changes: EdgeChange<LinkEdge>[]) => void
@@ -733,6 +735,42 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     set((state) => ({
       edges: resolveUpdater<LinkEdge[]>(edgesOrUpdater, state.edges),
     })),
+
+  moveEdgeEndpointsByDelta: (edgeId, delta) => {
+    const edge = get().edges.find((e) => e.id === edgeId)
+    if (!edge) return
+    set((state) => {
+      const nextNodes = state.nodes.map((node) => {
+        if (!isPointNode(node)) return node
+        if (node.id !== edge.source && node.id !== edge.target) return node
+        return {
+          ...node,
+          position: {
+            x: node.position.x + delta.x,
+            y: node.position.y + delta.y,
+          },
+          data: {
+            ...node.data,
+            attachedToNodeId: undefined,
+            attachedDirection: undefined,
+          },
+        }
+      })
+      return { nodes: nextNodes, nodesById: buildNodesById(nextNodes) }
+    })
+  },
+
+  persistEdgeById: (edgeId) => {
+    queueEdgesForPersistence(
+      () => ({
+        boardId: get().boardId,
+        edges: get().edges,
+        nodes: get().nodes,
+      }),
+      new Set(),
+      new Set([edgeId]),
+    )
+  },
 
   // --- set + background diff + debounced persist ---
 

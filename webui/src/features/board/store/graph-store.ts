@@ -41,6 +41,25 @@ const isPointNode = (node: NoteNode | undefined) =>
 const buildNodesById = (nodes: NoteNode[]) =>
   new Map(nodes.map((n) => [n.id, n]))
 
+const buildAttachedPointIdsByNode = (nodes: NoteNode[]) => {
+  const map = new Map<string, Set<string>>()
+  for (const node of nodes) {
+    if (!isPointNode(node)) continue
+    const attachedTo = (node.data as { attachedToNodeId?: string }).attachedToNodeId
+    if (!attachedTo) continue
+    let set = map.get(attachedTo)
+    if (!set) {
+      set = new Set()
+      map.set(attachedTo, set)
+    }
+    set.add(node.id)
+  }
+  return map
+}
+
+const cloneAttachedPointIdsByNode = (source: Map<string, Set<string>>) =>
+  new Map(Array.from(source.entries()).map(([id, set]) => [id, new Set(set)]))
+
 // Incrementally update node index for small change sets to avoid full rebuilds.
 const updateNodesById = (
   prev: Map<string, NoteNode>,
@@ -449,6 +468,12 @@ function scheduleNodePersistFromChanges(
   ) => void,
 ) {
   if (!boardIdAtTime) return
+  const onlyTransient = changes.every((ch) => {
+    if (ch.type === "select") return true
+    if (ch.type === "position" && ch.dragging) return true
+    return false
+  })
+  if (onlyTransient) return
 
   setTimeout(() => {
     const state = get()
@@ -550,6 +575,7 @@ function scheduleEdgePersistFromChanges(
   ) => void,
 ) {
   if (!boardIdAtTime) return
+  if (changes.every((ch) => ch.type === "select")) return
 
   setTimeout(() => {
     const state = get()
@@ -648,6 +674,7 @@ export interface GraphStore {
 
   nodes: NoteNode[]
   nodesById: Map<string, NoteNode>
+  attachedPointIdsByNode: Map<string, Set<string>>
   edges: LinkEdge[]
 
   deletedNodes: NoteNode[]
@@ -710,6 +737,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   nodes: [],
   nodesById: new Map(),
+  attachedPointIdsByNode: new Map(),
   edges: [],
 
   deletedNodes: [],
@@ -728,7 +756,11 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setNodes: (nodesOrUpdater) =>
     set((state) => {
       const nextNodes = resolveUpdater<NoteNode[]>(nodesOrUpdater, state.nodes)
-      return { nodes: nextNodes, nodesById: buildNodesById(nextNodes) }
+      return {
+        nodes: nextNodes,
+        nodesById: buildNodesById(nextNodes),
+        attachedPointIdsByNode: buildAttachedPointIdsByNode(nextNodes),
+      }
     }),
 
   setEdges: (edgesOrUpdater) =>
@@ -783,7 +815,11 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         ? (nodesOrUpdater as (prev: NoteNode[]) => NoteNode[])(prevNodes)
         : nodesOrUpdater
 
-    set({ nodes: nextNodes, nodesById: buildNodesById(nextNodes) })
+    set({
+      nodes: nextNodes,
+      nodesById: buildNodesById(nextNodes),
+      attachedPointIdsByNode: buildAttachedPointIdsByNode(nextNodes),
+    })
 
     scheduleNodePersistFromDiff(prevNodes, nextNodes, boardId, () => ({
       boardId: get().boardId,
@@ -816,6 +852,36 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     if (!boardId) return
 
     const prevNodes = get().nodes
+    const prevNodesById = get().nodesById
+    let attachedIndex = get().attachedPointIdsByNode
+    let attachedIndexDirty = false
+
+    const ensureAttachedIndex = () => {
+      if (!attachedIndexDirty) {
+        attachedIndex = cloneAttachedPointIdsByNode(attachedIndex)
+        attachedIndexDirty = true
+      }
+    }
+
+    const updateAttachedIndex = (nodeId: string, prevAttached?: string, nextAttached?: string) => {
+      if (prevAttached === nextAttached) return
+      ensureAttachedIndex()
+      if (prevAttached) {
+        const set = attachedIndex.get(prevAttached)
+        if (set) {
+          set.delete(nodeId)
+          if (set.size === 0) attachedIndex.delete(prevAttached)
+        }
+      }
+      if (nextAttached) {
+        let set = attachedIndex.get(nextAttached)
+        if (!set) {
+          set = new Set()
+          attachedIndex.set(nextAttached, set)
+        }
+        set.add(nodeId)
+      }
+    }
 
     // fast path: only selection + intermediate drag (no persistence at all)
     const onlyTransient = changes.every((ch) => {
@@ -846,6 +912,24 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     ): ch is NodeChange<NoteNode> & { id: string; dragging?: boolean } =>
       ch.type === "position" && typeof (ch as { id?: unknown }).id === "string"
 
+    for (const ch of changes) {
+      if (ch.type === "add" && ch.item && isPointNode(ch.item)) {
+        const attachedTo = (ch.item.data as { attachedToNodeId?: string }).attachedToNodeId
+        if (attachedTo) {
+          updateAttachedIndex(ch.item.id, undefined, attachedTo)
+        }
+      }
+      if (ch.type === "remove" && ch.id) {
+        const prev = prevNodesById.get(ch.id)
+        if (prev && isPointNode(prev)) {
+          const attachedTo = (prev.data as { attachedToNodeId?: string }).attachedToNodeId
+          if (attachedTo) {
+            updateAttachedIndex(prev.id, attachedTo, undefined)
+          }
+        }
+      }
+    }
+
     // Detach point nodes when drag begins.
     for (const ch of changes) {
       if (!isPositionChangeWithId(ch) || !ch.dragging) continue
@@ -853,6 +937,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       if (!node || !isPointNode(node)) continue
       const data = node.data as { attachedToNodeId?: string; attachedDirection?: { x: number; y: number } }
       if (!data.attachedToNodeId) continue
+      updateAttachedIndex(node.id, data.attachedToNodeId, undefined)
       applyNodeUpdate(node.id, n => ({
         ...n,
         data: { ...n.data, attachedToNodeId: undefined, attachedDirection: undefined },
@@ -875,6 +960,11 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       }
 
       const attach = computeAttachment(target, center)
+      updateAttachedIndex(
+        node.id,
+        (node.data as { attachedToNodeId?: string }).attachedToNodeId,
+        target.id,
+      )
       applyNodeUpdate(node.id, n => ({
         ...n,
         position: { x: attach.point.x - pointOffset, y: attach.point.y - pointOffset },
@@ -890,26 +980,30 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     )
 
     if (movedNodeIds.size > 0) {
-      // TODO: Keep a map of attachedToNodeId -> point ids to avoid scanning all nodes.
       const attachedPointIds = new Set<string>()
-      for (const node of nextNodes) {
-        if (!isPointNode(node)) continue
-        const data = node.data as { attachedToNodeId?: string; attachedDirection?: { x: number; y: number } }
-        if (!data.attachedToNodeId || !movedNodeIds.has(data.attachedToNodeId)) continue
-        const target = nextById.get(data.attachedToNodeId)
-        if (!target || isPointNode(target)) continue
-        const targetCenter = nodeCenter(target)
-        const dir = data.attachedDirection ?? {
-          x: node.position.x + pointOffset - targetCenter.x,
-          y: node.position.y + pointOffset - targetCenter.y,
+      for (const movedNodeId of movedNodeIds) {
+        const pointIds = attachedIndex.get(movedNodeId)
+        if (!pointIds) continue
+        for (const pointId of pointIds) {
+          const node = nextById.get(pointId)
+          if (!node || !isPointNode(node)) continue
+          const data = node.data as { attachedToNodeId?: string; attachedDirection?: { x: number; y: number } }
+          if (!data.attachedToNodeId) continue
+          const target = nextById.get(data.attachedToNodeId)
+          if (!target || isPointNode(target)) continue
+          const targetCenter = nodeCenter(target)
+          const dir = data.attachedDirection ?? {
+            x: node.position.x + pointOffset - targetCenter.x,
+            y: node.position.y + pointOffset - targetCenter.y,
+          }
+          const boundary = { x: targetCenter.x + dir.x, y: targetCenter.y + dir.y }
+          applyNodeUpdate(node.id, n => ({
+            ...n,
+            position: { x: boundary.x - pointOffset, y: boundary.y - pointOffset },
+            data: { ...n.data, attachedToNodeId: target.id, attachedDirection: dir },
+          }))
+          attachedPointIds.add(node.id)
         }
-        const boundary = { x: targetCenter.x + dir.x, y: targetCenter.y + dir.y }
-        applyNodeUpdate(node.id, n => ({
-          ...n,
-          position: { x: boundary.x - pointOffset, y: boundary.y - pointOffset },
-          data: { ...n.data, attachedToNodeId: target.id, attachedDirection: dir },
-        }))
-        attachedPointIds.add(node.id)
       }
 
       if (attachedPointIds.size > 0) {
@@ -942,8 +1036,11 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       nextNodes = nextNodes.map(n => nextById.get(n.id) ?? n)
       nextNodesById = buildNodesById(nextNodes)
     }
-
-    set({ nodes: nextNodes, nodesById: nextNodesById })
+    set({
+      nodes: nextNodes,
+      nodesById: nextNodesById,
+      attachedPointIdsByNode: attachedIndexDirty ? attachedIndex : get().attachedPointIdsByNode,
+    })
 
     if (onlyTransient) return
 
@@ -1180,12 +1277,16 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const updatedNodes = deletedPointIds.size > 0
       ? get().nodes.filter((node) => !deletedPointIds.has(node.id))
       : get().nodes
+    const updatedAttachedIndex = deletedPointIds.size > 0
+      ? buildAttachedPointIdsByNode(updatedNodes)
+      : get().attachedPointIdsByNode
 
     set({
       edges: updatedEdges,
       deletedEdges: [...get().deletedEdges, ...deletedEdges],
       nodes: updatedNodes,
       nodesById: deletedPointIds.size > 0 ? buildNodesById(updatedNodes) : get().nodesById,
+      attachedPointIdsByNode: updatedAttachedIndex,
     })
     // DB delete is covered via onEdgesChange's background diff
   },

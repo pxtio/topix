@@ -203,6 +203,29 @@ export const EdgeView = memo(function EdgeView({
   }
 
   const dragStartRef = useRef<Point | null>(null)
+  const edgeMoveRef = useRef<((event: PointerEvent) => void) | null>(null)
+  const edgeUpRef = useRef<((event: PointerEvent) => void) | null>(null)
+  const controlMoveRef = useRef<((event: PointerEvent) => void) | null>(null)
+  const controlUpRef = useRef<((event: PointerEvent) => void) | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (edgeMoveRef.current) {
+        window.removeEventListener('pointermove', edgeMoveRef.current)
+      }
+      if (edgeUpRef.current) {
+        window.removeEventListener('pointerup', edgeUpRef.current)
+        window.removeEventListener('pointercancel', edgeUpRef.current)
+      }
+      if (controlMoveRef.current) {
+        window.removeEventListener('pointermove', controlMoveRef.current)
+      }
+      if (controlUpRef.current) {
+        window.removeEventListener('pointerup', controlUpRef.current)
+        window.removeEventListener('pointercancel', controlUpRef.current)
+      }
+    }
+  }, [])
 
   const handleEdgePointerDown = (event: React.PointerEvent<SVGPathElement>) => {
     if (event.button !== 0) return
@@ -211,6 +234,16 @@ export const EdgeView = memo(function EdgeView({
 
     const start = screenToFlowPosition({ x: event.clientX, y: event.clientY })
     dragStartRef.current = start
+
+    if (edgeMoveRef.current) {
+      window.removeEventListener('pointermove', edgeMoveRef.current)
+      edgeMoveRef.current = null
+    }
+    if (edgeUpRef.current) {
+      window.removeEventListener('pointerup', edgeUpRef.current)
+      window.removeEventListener('pointercancel', edgeUpRef.current)
+      edgeUpRef.current = null
+    }
 
     const handleMove = (moveEvent: PointerEvent) => {
       const current = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY })
@@ -223,12 +256,20 @@ export const EdgeView = memo(function EdgeView({
 
     const handleUp = () => {
       dragStartRef.current = null
-      window.removeEventListener('pointermove', handleMove)
-      window.removeEventListener('pointerup', handleUp)
-      window.removeEventListener('pointercancel', handleUp)
+      if (edgeMoveRef.current) {
+        window.removeEventListener('pointermove', edgeMoveRef.current)
+        edgeMoveRef.current = null
+      }
+      if (edgeUpRef.current) {
+        window.removeEventListener('pointerup', edgeUpRef.current)
+        window.removeEventListener('pointercancel', edgeUpRef.current)
+        edgeUpRef.current = null
+      }
       persistEdgeById(id)
     }
 
+    edgeMoveRef.current = handleMove
+    edgeUpRef.current = handleUp
     window.addEventListener('pointermove', handleMove)
     window.addEventListener('pointerup', handleUp)
     window.addEventListener('pointercancel', handleUp)
@@ -244,14 +285,30 @@ export const EdgeView = memo(function EdgeView({
       updateBendPoint(projected)
     }
 
+    if (controlMoveRef.current) {
+      window.removeEventListener('pointermove', controlMoveRef.current)
+      controlMoveRef.current = null
+    }
+    if (controlUpRef.current) {
+      window.removeEventListener('pointerup', controlUpRef.current)
+      window.removeEventListener('pointercancel', controlUpRef.current)
+      controlUpRef.current = null
+    }
+
     const handleMove = (moveEvent: PointerEvent) => {
       updateFromEvent(moveEvent.clientX, moveEvent.clientY)
     }
 
     const handleUp = () => {
-      window.removeEventListener('pointermove', handleMove)
-      window.removeEventListener('pointerup', handleUp)
-      window.removeEventListener('pointercancel', handleUp)
+      if (controlMoveRef.current) {
+        window.removeEventListener('pointermove', controlMoveRef.current)
+        controlMoveRef.current = null
+      }
+      if (controlUpRef.current) {
+        window.removeEventListener('pointerup', controlUpRef.current)
+        window.removeEventListener('pointercancel', controlUpRef.current)
+        controlUpRef.current = null
+      }
       const finalPoint = bendPointDragRef.current
       if (finalPoint) {
         edgeExtras.onControlPointChange?.(finalPoint)
@@ -260,6 +317,8 @@ export const EdgeView = memo(function EdgeView({
     }
 
     updateFromEvent(event.clientX, event.clientY)
+    controlMoveRef.current = handleMove
+    controlUpRef.current = handleUp
     window.addEventListener('pointermove', handleMove)
     window.addEventListener('pointerup', handleUp)
     window.addEventListener('pointercancel', handleUp)

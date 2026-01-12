@@ -1113,8 +1113,18 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   },
 
   onEdgesDelete: (edges) => {
+    const deletedEdgeIds = new Set(edges.map((edge) => edge.id))
+    const deletedPointIds = new Set<string>()
+    const nodesById = get().nodesById
+    for (const edge of edges) {
+      const sourceNode = nodesById.get(edge.source)
+      const targetNode = nodesById.get(edge.target)
+      if (sourceNode && isPointNode(sourceNode)) deletedPointIds.add(sourceNode.id)
+      if (targetNode && isPointNode(targetNode)) deletedPointIds.add(targetNode.id)
+    }
+
     const updatedEdges = get().edges.filter(
-      (edge) => !edges.some((e) => e.id === edge.id),
+      (edge) => !deletedEdgeIds.has(edge.id),
     )
     const deletedEdges = edges.map((edge) => {
       const link = edge.data as Link
@@ -1129,9 +1139,15 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       pendingUpdatedEdges.delete(e.id)
     })
 
+    const updatedNodes = deletedPointIds.size > 0
+      ? get().nodes.filter((node) => !deletedPointIds.has(node.id))
+      : get().nodes
+
     set({
       edges: updatedEdges,
       deletedEdges: [...get().deletedEdges, ...deletedEdges],
+      nodes: updatedNodes,
+      nodesById: deletedPointIds.size > 0 ? buildNodesById(updatedNodes) : get().nodesById,
     })
     // DB delete is covered via onEdgesChange's background diff
   },

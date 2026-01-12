@@ -6,6 +6,7 @@ import { createDefaultLinkProperties } from '../types/link'
 import { createDefaultLinkStyle } from '../types/style'
 import { pointInNode } from './flow'
 import { POINT_NODE_SIZE } from '../components/flow/point-node'
+import { computeAttachment } from './point-attach'
 
 type Point = { x: number; y: number }
 
@@ -42,54 +43,70 @@ export function buildLinePlacement({
 
   const pointNodes: NoteNode[] = []
 
-  const pointA = startHit
-    ? null
-    : ({
-        id: pointAId,
-        type: 'point',
-        position: { x: start.x - offset, y: start.y - offset },
-        data: { kind: 'point' },
-        draggable: true,
-        selectable: true,
-      } as NoteNode)
+  const toNoteNode = (n: InternalNode<Node>): NoteNode => ({
+    id: n.id,
+    type: 'default',
+    position: { x: n.internals.positionAbsolute.x, y: n.internals.positionAbsolute.y },
+    measured: n.measured,
+    data: n.data as NoteNode['data'],
+  })
 
-  const pointB = endHit
-    ? null
-    : ({
-        id: pointBId,
-        type: 'point',
-        position: { x: end.x - offset, y: end.y - offset },
-        data: { kind: 'point' },
-        draggable: true,
-        selectable: true,
-      } as NoteNode)
+  const startAttach = startHit ? computeAttachment(toNoteNode(startHit), start) : null
+  const endAttach = endHit ? computeAttachment(toNoteNode(endHit), end) : null
 
-  if (pointA) pointNodes.push(pointA)
-  if (pointB) pointNodes.push(pointB)
+  const pointA: NoteNode = {
+    id: pointAId,
+    type: 'point',
+    position: {
+      x: (startAttach?.point.x ?? start.x) - offset,
+      y: (startAttach?.point.y ?? start.y) - offset,
+    },
+    data: {
+      kind: 'point',
+      attachedToNodeId: startHit?.id,
+      attachedDirection: startAttach?.direction,
+    } as NoteNode['data'],
+    draggable: true,
+    selectable: true,
+  }
+
+  const pointB: NoteNode = {
+    id: pointBId,
+    type: 'point',
+    position: {
+      x: (endAttach?.point.x ?? end.x) - offset,
+      y: (endAttach?.point.y ?? end.y) - offset,
+    },
+    data: {
+      kind: 'point',
+      attachedToNodeId: endHit?.id,
+      attachedDirection: endAttach?.direction,
+    } as NoteNode['data'],
+    draggable: true,
+    selectable: true,
+  }
+
+  pointNodes.push(pointA, pointB)
 
   const edge: LinkEdge = {
     id: edgeId,
     type: 'default',
-    source: startHit?.id ?? pointAId,
-    target: endHit?.id ?? pointBId,
-    sourceHandle: startHit ? undefined : 'point',
-    targetHandle: endHit ? undefined : 'point',
+    source: pointAId,
+    target: pointBId,
+    sourceHandle: 'point',
+    targetHandle: 'point',
     data: {
       id: edgeId,
       type: 'link',
       version: 1,
-      source: startHit?.id ?? pointAId,
-      target: endHit?.id ?? pointBId,
+      source: pointAId,
+      target: pointBId,
       properties: {
         ...createDefaultLinkProperties(),
-        ...(!startHit && pointA
-          ? { startPoint: { type: 'position', position: pointA.position } }
-          : {}),
-        ...(!endHit && pointB
-          ? { endPoint: { type: 'position', position: pointB.position } }
-          : {}),
+        startPoint: { type: 'position', position: pointA.position },
+        endPoint: { type: 'position', position: pointB.position },
       },
-      style: { ...createDefaultLinkStyle(), pathStyle: 'straight' },
+      style: { ...createDefaultLinkStyle(), pathStyle: 'bezier' },
       createdAt: new Date().toISOString(),
       graphUid: boardId,
     } as Link,

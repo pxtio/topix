@@ -15,11 +15,15 @@ export const POINT_NODE_SIZE = 14
 function PointNodeBase({ selected, data }: NodeProps<NoteNode>) {
   const size = POINT_NODE_SIZE
   const showActive = Boolean((data as { endpointActive?: boolean }).endpointActive)
+  const isInteractive = showActive
   const highlight = selected ? 'ring-2 ring-secondary ring-offset-2 ring-offset-background' : ''
   const fillClass = showActive ? 'bg-secondary' : 'bg-transparent'
   return (
     <div
-      className={clsx('w-full h-full flex items-center justify-center pointer-events-auto')}
+      className={clsx(
+        'w-full h-full flex items-center justify-center',
+        isInteractive ? 'pointer-events-auto' : 'pointer-events-none',
+      )}
     >
       <Handle
         type="source"

@@ -39,11 +39,12 @@ export const useGetBoard = () => {
       try {
         const { nodes: notes, edges: links } = await getBoard(boardId)
         const nodes = (notes ?? []).map(convertNoteToNode)
+        const nodesById = new Map(nodes.map(node => [node.id, node]))
         const edges: LinkEdge[] = []
         const pointNodes: NoteNode[] = []
 
         for (const link of links ?? []) {
-          const { edge, points } = convertLinkToEdgeWithPoints(link)
+          const { edge, points } = convertLinkToEdgeWithPoints(link, nodesById)
           edges.push(edge)
           if (points.length) {
             pointNodes.push(...points)

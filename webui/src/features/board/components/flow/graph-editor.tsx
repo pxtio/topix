@@ -1,7 +1,6 @@
 import {
   ReactFlow,
   MarkerType,
-  type OnConnect,
   useReactFlow,
   SelectionMode,
   useOnViewportChange,
@@ -19,7 +18,6 @@ import { useShallow } from 'zustand/shallow'
 import NodeView from './node-view'
 import { PointNode } from './point-node'
 import { EdgeView } from './edge/edge-view'
-import { CustomConnectionLine } from './connection'
 import { GraphSidebar } from '../style-panel/panel'
 import { ActionPanel } from './action-panel'
 import { DefaultBoardView } from '../default-view'
@@ -39,7 +37,6 @@ import { usePlaceLine } from '../../hooks/use-place-line'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
-import { useStyleDefaults } from '../../style-provider'
 
 import './graph-styles.css'
 import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
@@ -63,12 +60,6 @@ const defaultEdgeOptions = {
     width: 22,
     height: 22,
   },
-}
-const connectionLineStyle = {
-  stroke: 'var(--secondary)',
-  strokeWidth: 2,
-  strokeDasharray: '8 6',
-  strokeLinecap: 'round' as const,
 }
 
 const FLOATING_UI_REAPPEAR_DELAY = 400
@@ -101,7 +92,6 @@ type GraphViewProps = {
   onEdgesChange: OnEdgesChange<LinkEdge>
   onNodesDelete: OnNodesDelete<NoteNode>
   onEdgesDelete: OnEdgesDelete<LinkEdge>
-  onConnect: OnConnect
   enableSelection: boolean
   isLocked: boolean
   onNodeDragStart: () => void
@@ -127,7 +117,6 @@ function GraphView({
   onEdgesChange,
   onNodesDelete,
   onEdgesDelete,
-  onConnect,
   enableSelection,
   isLocked,
   onNodeDragStart,
@@ -153,10 +142,7 @@ function GraphView({
       proOptions={proOptions}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
-      onConnect={onConnect}
       defaultEdgeOptions={defaultEdgeOptions}
-      connectionLineComponent={CustomConnectionLine}
-      connectionLineStyle={connectionLineStyle}
       selectionOnDrag={enableSelection}
       selectionMode={SelectionMode.Full}
       panOnDrag={!isLocked && !enableSelection}
@@ -171,7 +157,7 @@ function GraphView({
       onNodeContextMenu={onNodeContextMenu}
       onEdgeDoubleClick={onEdgeDoubleClick}
       nodesDraggable={!isLocked}
-      nodesConnectable={!isLocked}
+      nodesConnectable={false}
       elementsSelectable={!isLocked}
       zoomOnScroll={!isLocked}
       zoomOnPinch={!isLocked}
@@ -199,7 +185,8 @@ function LinearView() {
 export default function GraphEditor() {
   const [viewMode, setViewMode] = useState<ViewMode>('graph')
 
-  const [enableSelection, setEnableSelection] = useState<boolean>(false)
+  const enableSelection = useGraphStore(state => state.isSelectMode)
+  const setEnableSelection = useGraphStore(state => state.setIsSelectMode)
   const [shouldRecenter, setShouldRecenter] = useState<boolean>(false)
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [isSelecting, setIsSelecting] = useState<boolean>(false)
@@ -235,7 +222,6 @@ export default function GraphEditor() {
   const onEdgesChange = useGraphStore(state => state.onEdgesChange)
   const onNodesDelete = useGraphStore(state => state.onNodesDelete)
   const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
-  const storeOnConnect = useGraphStore(state => state.onConnect)
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
 
   const isResizingNode = useGraphStore(state => state.isResizingNode)
@@ -252,7 +238,6 @@ export default function GraphEditor() {
   const mindmaps = useMindMapStore(state => state.mindmaps)
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
 
-  const { applyDefaultLinkStyle } = useStyleDefaults()
 
   useCopyPasteNodes({
     jitterMax: 40,
@@ -467,15 +452,6 @@ export default function GraphEditor() {
     [],
   )
 
-  // Connect using store (store handles addLink + persistence)
-  const connectNodes: OnConnect = useCallback(
-    params => {
-      if (!boardId) return
-      const style = applyDefaultLinkStyle()
-      storeOnConnect(params, style)
-    },
-    [boardId, storeOnConnect, applyDefaultLinkStyle],
-  )
 
   const handleDragStart = useCallback(() => setIsDragging(true), [setIsDragging])
   const handleDragStop = useCallback(() => setIsDragging(false), [setIsDragging])
@@ -647,7 +623,6 @@ export default function GraphEditor() {
                   onEdgesChange={onEdgesChange}
                   onNodesDelete={onNodesDelete}
                   onEdgesDelete={onEdgesDelete}
-                  onConnect={connectNodes}
                   enableSelection={enableSelection}
                   isLocked={isLocked}
                   onNodeDragStart={handleDragStart}

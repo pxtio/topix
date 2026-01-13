@@ -72,7 +72,11 @@ export const DefaultBoardView = () => {
   return (
     <div className='absolute inset h-full w-full min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin'>
       <div className="w-full flex flex-col items-center justify-center gap-16 py-8 pb-32">
-        <ChatView initialBoardId={boardId} className="relative sm:h-[300px] h-[350px]" />
+        <ChatView
+          initialBoardId={boardId}
+          className="relative sm:h-[300px] h-[350px]"
+          preferChatRoute
+        />
         <div className='w-full flex flex-col items-center'>
           <div className='text-left max-w-[900px] w-full border-b border-border'>
             <h3 className="transition-all text-lg font-medium py-1 px-4 flex flex-row items-center gap-2">

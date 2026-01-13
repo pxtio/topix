@@ -23,6 +23,7 @@ type ChatProps = {
   initialBoardId?: string
   className?: string
   showHistoricalChats?: boolean
+  preferChatRoute?: boolean
 }
 
 const formatChatDate = (value?: string) => {
@@ -156,6 +157,7 @@ const ChatBody = ({
   initialBoardId,
   className,
   showHistoricalChats = false,
+  preferChatRoute = false,
 }: ChatProps) => {
   const { chatId, setChatId } = useChat()
   const { data: chatList = [] } = useListChats({ graphUid: initialBoardId })
@@ -241,6 +243,7 @@ const ChatBody = ({
       <InputBar
         attachedBoardId={attachedBoardId}
         layout={showHistoricalChats ? "docked" : "floating"}
+        preferChatRoute={preferChatRoute}
       />
     </div>
   )

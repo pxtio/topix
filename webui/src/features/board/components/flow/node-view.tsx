@@ -13,7 +13,7 @@ import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { useContentMinHeight } from '../../hooks/content-min-height'
 import { ShapeChrome } from './shape-chrome'
 
-const CONNECTOR_GAP = 4
+const CONNECTOR_GAP = 0
 
 /**
  * Node view component for rendering a note node in the graph.
@@ -28,11 +28,11 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const { contentRef, computedMinH } = useContentMinHeight(
     id,
     24,
-    50,
+    20,
   )
 
   const baseMinH = data.style.type === 'image' || data.style.type === 'icon' ? 50 : computedMinH
-  const innerMinH = Math.max(30, baseMinH)
+  const innerMinH = Math.max(20, baseMinH)
 
   const resizeHandles = useMemo(() => ([
     { pos: 'top-left', class: 'top-0 left-0 cursor-nwse-resize' },

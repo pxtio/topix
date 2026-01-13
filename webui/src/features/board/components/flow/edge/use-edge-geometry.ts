@@ -14,7 +14,11 @@ import {
   quadraticPath,
   shiftPointAlong
 } from './edge-geometry'
-import { getEdgeParams, nodeCenter } from '../../../utils/flow'
+import {
+  getEdgeParamsFromGeometry,
+  nodeCenterFromGeometry,
+  toNodeGeometry
+} from '../../../utils/flow'
 import type { Node, InternalNode } from '@xyflow/react'
 
 type GeometryResult = {
@@ -61,10 +65,26 @@ export function useEdgeGeometry({
   bendPointDrag,
   storedBendPoint
 }: Params): GeometryResult {
-  const geom = useMemo(() => {
-    if (!sourceNode || !targetNode) return null
+  const sourceGeom = useMemo(
+    () => (sourceNode ? toNodeGeometry(sourceNode) : null),
+    [sourceNode],
+  )
+  const targetGeom = useMemo(
+    () => (targetNode ? toNodeGeometry(targetNode) : null),
+    [targetNode],
+  )
+  const sourceClipGeom = useMemo(
+    () => (sourceClipNode ? toNodeGeometry(sourceClipNode) : null),
+    [sourceClipNode],
+  )
+  const targetClipGeom = useMemo(
+    () => (targetClipNode ? toNodeGeometry(targetClipNode) : null),
+    [targetClipNode],
+  )
 
-    const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(sourceNode, targetNode)
+  const geom = useMemo(() => {
+    if (!sourceGeom || !targetGeom) return null
+    const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParamsFromGeometry(sourceGeom, targetGeom)
 
     let sxAdj = sx
     let syAdj = sy
@@ -111,19 +131,19 @@ export function useEdgeGeometry({
     }
 
     return { sx: sxAdj, sy: syAdj, tx: txAdj, ty: tyAdj, edgePath, labelX, labelY }
-  }, [sourceNode, targetNode, linkStyle?.pathStyle, startKind, endKind, arrowOffset])
+  }, [sourceGeom, targetGeom, linkStyle?.pathStyle, startKind, endKind, arrowOffset])
 
   const sourceCenter = useMemo(() => {
-    if (sourceNode) return nodeCenter(sourceNode)
+    if (sourceGeom) return nodeCenterFromGeometry(sourceGeom)
     if (!geom) return null
     return { x: geom.sx, y: geom.sy }
-  }, [sourceNode, geom])
+  }, [sourceGeom, geom])
 
   const targetCenter = useMemo(() => {
-    if (targetNode) return nodeCenter(targetNode)
+    if (targetGeom) return nodeCenterFromGeometry(targetGeom)
     if (!geom) return null
     return { x: geom.tx, y: geom.ty }
-  }, [targetNode, geom])
+  }, [targetGeom, geom])
 
   const fallbackBendPoint: Point | null = useMemo(() => {
     if (!isBezierPath) return null
@@ -148,7 +168,7 @@ export function useEdgeGeometry({
     let pathData: { path: string, labelX: number, labelY: number } | null = null
     let renderedStart: Point | null = null
     let renderedEnd: Point | null = null
-  let displayBendPoint: Point | null = null
+    let displayBendPoint: Point | null = null
     let isInvalid = false
 
     if (isBezierPath) {
@@ -160,8 +180,8 @@ export function useEdgeGeometry({
         const activeBend = shouldUseControlPoint ? displayBendPoint ?? fallbackBendPoint : fallbackBendPoint
         const centerControl = bendToControlPoint(activeBend, sourceCenter, targetCenter)
         const pointGetter = (t: number) => pointOnQuadratic(sourceCenter, centerControl, targetCenter, t)
-        const clipSource = sourceClipNode ?? sourceNode ?? null
-        const clipTarget = targetClipNode ?? targetNode ?? null
+        const clipSource = sourceClipGeom ?? sourceGeom ?? null
+        const clipTarget = targetClipGeom ?? targetGeom ?? null
         const startExit = findExitParam(clipSource, pointGetter)
         const endExit = 1 - findExitParam(clipTarget, (t: number) => pointGetter(1 - t))
         const trimmed = extractQuadraticSegment(sourceCenter, centerControl, targetCenter, startExit, endExit)
@@ -197,10 +217,10 @@ export function useEdgeGeometry({
     startKind,
     endKind,
     arrowOffset,
-    sourceNode,
-    targetNode,
-    sourceClipNode,
-    targetClipNode
+    sourceGeom,
+    targetGeom,
+    sourceClipGeom,
+    targetClipGeom
   ])
 
   return {

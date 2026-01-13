@@ -59,6 +59,10 @@ function isFinitePoint(point: Partial<Point> | null | undefined): point is Point
   )
 }
 
+
+/**
+ * Renders an edge between two nodes, with optional arrowheads, label, and control point.
+ */
 export const EdgeView = memo(function EdgeView({
   id,
   source,
@@ -82,7 +86,24 @@ export const EdgeView = memo(function EdgeView({
   const [bendPointDrag, setBendPointDrag] = useState<Point | null>(null)
   const bendPointDragRef = useRef<Point | null>(null)
 
-  const linkStyle = (data?.style ?? undefined) as LinkStyle | undefined
+  const edgeExtras = (data ?? {}) as EdgeRenderData
+
+  const edgeData = useMemo(() => {
+    const controlPoint = edgeExtras.properties?.edgeControlPoint?.position
+    return {
+      linkStyle: edgeExtras.style ?? undefined,
+      label: edgeExtras.label,
+      labelEditing: edgeExtras.labelEditing,
+      labelDraft: edgeExtras.labelDraft,
+      onControlPointChange: edgeExtras.onControlPointChange,
+      onLabelChange: edgeExtras.onLabelChange,
+      onLabelSave: edgeExtras.onLabelSave,
+      onLabelCancel: edgeExtras.onLabelCancel,
+      controlPoint: isFinitePoint(controlPoint) ? controlPoint : null,
+    }
+  }, [edgeExtras.properties?.edgeControlPoint?.position, edgeExtras.style, edgeExtras.label, edgeExtras.labelEditing, edgeExtras.labelDraft, edgeExtras.onControlPointChange, edgeExtras.onLabelChange, edgeExtras.onLabelSave, edgeExtras.onLabelCancel])
+
+  const linkStyle = edgeData.linkStyle as LinkStyle | undefined
 
   const baseStroke = linkStyle?.strokeColor ?? '#333333'
   const baseLabelColor = linkStyle?.textColor ?? '#000000'
@@ -111,10 +132,7 @@ export const EdgeView = memo(function EdgeView({
   const pathStyle = linkStyle?.pathStyle ?? 'bezier'
   const isBezierPath = pathStyle === 'bezier'
 
-  const edgeExtras = (data ?? {}) as EdgeRenderData
-  const storedBendPoint = isFinitePoint(edgeExtras.properties?.edgeControlPoint?.position)
-    ? edgeExtras.properties?.edgeControlPoint?.position
-    : null
+  const storedBendPoint = edgeData.controlPoint
 
   const {
     geom,
@@ -155,10 +173,10 @@ export const EdgeView = memo(function EdgeView({
   const filledHeadSize = headSize * 0.95
   const headStrokeWidth = Math.max(1, strokeWidth)
 
-  const labelText = edgeExtras?.label?.markdown ?? ''
+  const labelText = edgeData.label?.markdown ?? ''
   const hasLabel = Boolean(labelText)
-  const isLabelEditing = Boolean(edgeExtras?.labelEditing)
-  const labelDraft = isLabelEditing ? edgeExtras?.labelDraft ?? '' : labelText
+  const isLabelEditing = Boolean(edgeData.labelEditing)
+  const labelDraft = isLabelEditing ? edgeData.labelDraft ?? '' : labelText
   const labelInputRef = useRef<HTMLTextAreaElement | null>(null)
   const skipSaveRef = useRef(false)
 
@@ -179,7 +197,7 @@ export const EdgeView = memo(function EdgeView({
       skipSaveRef.current = false
       return
     }
-    edgeExtras.onLabelSave?.()
+    edgeData.onLabelSave?.()
   }
 
   const labelTransformStyle = pathData
@@ -189,11 +207,11 @@ export const EdgeView = memo(function EdgeView({
   const handleLabelKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault()
-      edgeExtras.onLabelSave?.()
+      edgeData.onLabelSave?.()
     } else if (event.key === 'Escape') {
       event.preventDefault()
       skipSaveRef.current = true
-      edgeExtras.onLabelCancel?.()
+      edgeData.onLabelCancel?.()
     }
   }
 
@@ -276,7 +294,7 @@ export const EdgeView = memo(function EdgeView({
   }
 
   const handleControlPointPointerDown = (event: React.PointerEvent<SVGCircleElement>) => {
-    if (!edgeExtras.onControlPointChange) return
+    if (!edgeData.onControlPointChange) return
     event.stopPropagation()
     event.preventDefault()
 
@@ -311,7 +329,7 @@ export const EdgeView = memo(function EdgeView({
       }
       const finalPoint = bendPointDragRef.current
       if (finalPoint) {
-        edgeExtras.onControlPointChange?.(finalPoint)
+        edgeData.onControlPointChange?.(finalPoint)
       }
       updateBendPoint(null)
     }
@@ -392,11 +410,10 @@ export const EdgeView = memo(function EdgeView({
     )
   }
 
-
   const showControlPoint =
     isBezierPath &&
     !!displayBendPoint &&
-    !!edgeExtras.onControlPointChange &&
+    !!edgeData.onControlPointChange &&
     selected &&
     !isLabelEditing
 
@@ -409,15 +426,17 @@ export const EdgeView = memo(function EdgeView({
         </defs>
       </svg>
 
-      <path
-        d={pathData.path}
-        fill="none"
-        stroke="transparent"
-        strokeWidth={Math.max(12, strokeWidth * 6)}
-        pointerEvents="stroke"
-        className="cursor-move"
-        onPointerDown={handleEdgePointerDown}
-      />
+      {selected && (
+        <path
+          d={pathData.path}
+          fill="none"
+          stroke="transparent"
+          strokeWidth={Math.max(12, strokeWidth * 6)}
+          pointerEvents="stroke"
+          className="cursor-move"
+          onPointerDown={handleEdgePointerDown}
+        />
+      )}
 
       <BaseEdge
         path={pathData.path}
@@ -432,7 +451,7 @@ export const EdgeView = memo(function EdgeView({
           labelColor={displayLabelColor}
           labelDraft={labelDraft}
           isEditing={isLabelEditing}
-          onChange={edgeExtras.onLabelChange}
+          onChange={edgeData.onLabelChange}
           labelInputRef={labelInputRef}
           transformStyle={labelTransformStyle}
           handleLabelBlur={handleLabelBlur}

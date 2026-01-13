@@ -1,6 +1,6 @@
 import type { Node, InternalNode } from '@xyflow/react'
 import type { LinkStyle } from '../../../types/style'
-import { pointInNode } from '../../../utils/flow'
+import { pointInNode, type NodeGeometry } from '../../../utils/flow'
 
 export type Point = { x: number; y: number }
 
@@ -101,7 +101,7 @@ export function extractQuadraticSegment(p0: Point, p1: Point, p2: Point, t0: num
   return { p0: first[0], p1: first[1], p2: first[2] }
 }
 
-type FlowInternalNode = InternalNode<Node> | null | undefined
+type FlowInternalNode = InternalNode<Node> | NodeGeometry | null | undefined
 
 export function findExitParam(
   node: FlowInternalNode,

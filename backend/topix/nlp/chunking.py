@@ -2,14 +2,15 @@
 
 import re
 
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 from topix.datatypes.file.chunk import Chunk, ChunkProperties
 from topix.datatypes.property import TextProperty
 from topix.datatypes.resource import RichText
 
 
-class MarkdownLine(BaseModel):
+@dataclass
+class MarkdownLine:
     """Represents a single line from markdown with metadata."""
 
     text: str
@@ -110,10 +111,10 @@ class Chunker:
 
                 # Check if we should finalize the chunk
                 is_last_line = i == len(lines) - 1
-                is_between_sizes = self.min_chunk_size <= current_chunk_chars <= self.max_chunk_size
+                within_size_bounds = self.min_chunk_size <= current_chunk_chars <= self.max_chunk_size
                 next_line_is_title = not is_last_line and lines[i + 1].is_title
 
-                should_finalize = is_between_sizes and (is_last_line or next_line_is_title)
+                should_finalize = within_size_bounds and (is_last_line or next_line_is_title)
 
                 if should_finalize or (is_last_line and current_chunk_lines):
                     chunk = self._create_chunk(current_chunk_lines, current_chunk_pages)

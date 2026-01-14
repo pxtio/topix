@@ -131,11 +131,16 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   seed = 1337
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
   const viewportZoom = useGraphStore(state => state.zoom ?? 1)
+  const isPanning = useGraphStore(state => state.isPanning)
+  const isZooming = useGraphStore(state => state.isZooming)
+  const isResizing = useGraphStore(state => state.isResizingNode)
   const effectiveZoom = quantizeZoom(viewportZoom || 1)
+  const roundedClass = rounded === 'rounded-2xl' ? 'rounded-2xl' : 'rounded-none'
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     const rect = wrapper.getBoundingClientRect()
@@ -290,18 +295,18 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   }, [draw])
 
   useEffect(() => {
-    const wrapper = wrapperRef.current
-    const canvas = canvasRef.current
-    if (!wrapper || !canvas) return
-
     const handleResize = () => scheduleRedraw()
-    const ro = new ResizeObserver(handleResize)
-    ro.observe(wrapper)
+    resizeObserverRef.current = new ResizeObserver(handleResize)
 
-    scheduleRedraw()
+    const wrapper = wrapperRef.current
+    if (wrapper) {
+      resizeObserverRef.current.observe(wrapper)
+      scheduleRedraw()
+    }
 
     return () => {
-      ro.disconnect()
+      resizeObserverRef.current?.disconnect()
+      resizeObserverRef.current = null
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current)
         rafRef.current = null
@@ -309,14 +314,64 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     }
   }, [scheduleRedraw])
 
+  const setWrapperRef = useCallback((node: HTMLDivElement | null) => {
+    if (wrapperRef.current === node) return
+    wrapperRef.current = node
+    if (!resizeObserverRef.current) return
+    resizeObserverRef.current.disconnect()
+    if (node) {
+      resizeObserverRef.current.observe(node)
+      scheduleRedraw()
+    }
+  }, [scheduleRedraw])
+
+  const isSimplified = (isPanning || isZooming) && !isResizing
+
+  useEffect(() => {
+    if (isSimplified) {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+      return
+    }
+    lastConfigRef.current = null
+    scheduleRedraw()
+  }, [isSimplified, scheduleRedraw])
+
   const mainDivClass = clsx('relative', className || '')
+  const hairlineInset = (strokeWidth ?? 1) <= 1.5 ? 0.5 : 0
+  const baseInset = Math.max(0, (strokeWidth ?? 1) / 2)
+  const visualInset = (stroke === 'transparent' || strokeWidth === 0)
+    ? hairlineInset
+    : hairlineInset + baseInset
+
+  if (isSimplified) {
+    return (
+      <div className={mainDivClass}>
+        <div
+          className={clsx('absolute pointer-events-none m-1', roundedClass)}
+          style={{
+            inset: visualInset,
+            background: fill || 'transparent',
+            border: `${strokeWidth ?? 1}px solid ${stroke || 'transparent'}`,
+            borderStyle: strokeStyle === 'dashed' ? 'dashed' : strokeStyle === 'dotted' ? 'dotted' : 'solid',
+            zIndex: 10,
+          }}
+        />
+        <div className='relative z-20 w-full h-full'>
+          {children}
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div ref={wrapperRef} className={mainDivClass}>
+    <div ref={setWrapperRef} className={mainDivClass}>
       <canvas
         ref={canvasRef}
-        className='absolute inset-0 w-full h-full pointer-events-none'
-        style={{ zIndex: 10, background: 'transparent' }}
+        className='absolute pointer-events-none'
+        style={{ inset: visualInset, zIndex: 10, background: 'transparent' }}
       />
       <div className='relative z-20 w-full h-full'>
         {children}

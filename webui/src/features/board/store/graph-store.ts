@@ -1,8 +1,6 @@
 import {
-  addEdge as rfAddEdge,
   applyEdgeChanges,
   applyNodeChanges,
-  type Connection,
   type EdgeChange,
   type NodeChange,
   type Viewport,
@@ -13,9 +11,9 @@ import type { LinkEdge, NoteNode } from "../types/flow"
 import type { Link } from "../types/link"
 import type { Note } from "../types/note"
 
-import { convertEdgeToLink, convertNodeToNote } from "../utils/graph"
-import { generateUuid } from "@/lib/common"
-import { createDefaultLinkStyle, type LinkStyle } from "../types/style"
+import { convertEdgeToLinkWithPoints, convertNodeToNote } from "../utils/graph"
+import { computeAttachment, findAttachTarget, nodeCenter } from "../utils/point-attach"
+import { POINT_NODE_SIZE } from "../components/flow/point-node"
 import { DEBOUNCE_DELAY } from "../const"
 
 import { addLinks } from "../api/add-links"
@@ -28,6 +26,7 @@ import {
   loadViewportsFromStorage,
   saveViewportToStorage,
 } from "./viewport-store"
+import { clearRoughCanvasCache } from "@/components/rough/cache"
 
 // --- helpers ---
 
@@ -35,6 +34,58 @@ type Updater<T> = T | ((prev: T) => T)
 
 const resolveUpdater = <T>(updater: Updater<T>, prev: T): T =>
   typeof updater === "function" ? (updater as (p: T) => T)(prev) : updater
+
+const isPointNode = (node: NoteNode | undefined) =>
+  Boolean(node && (node.data as { kind?: string }).kind === "point")
+
+const buildNodesById = (nodes: NoteNode[]) =>
+  new Map(nodes.map((n) => [n.id, n]))
+
+const buildAttachedPointIdsByNode = (nodes: NoteNode[]) => {
+  const map = new Map<string, Set<string>>()
+  for (const node of nodes) {
+    if (!isPointNode(node)) continue
+    const attachedTo = (node.data as { attachedToNodeId?: string }).attachedToNodeId
+    if (!attachedTo) continue
+    let set = map.get(attachedTo)
+    if (!set) {
+      set = new Set()
+      map.set(attachedTo, set)
+    }
+    set.add(node.id)
+  }
+  return map
+}
+
+const cloneAttachedPointIdsByNode = (source: Map<string, Set<string>>) =>
+  new Map(Array.from(source.entries()).map(([id, set]) => [id, new Set(set)]))
+
+// Incrementally update node index for small change sets to avoid full rebuilds.
+const updateNodesById = (
+  prev: Map<string, NoteNode>,
+  nextNodes: NoteNode[],
+  changes: NodeChange<NoteNode>[],
+) => {
+  const next = new Map(prev)
+
+  for (const ch of changes) {
+    if (ch.type === "add") {
+      next.set(ch.item.id, ch.item)
+      continue
+    }
+    if (ch.type === "remove") {
+      if (ch.id) next.delete(ch.id)
+      continue
+    }
+    // For other change types, swap in the latest node instance.
+    if (ch.id) {
+      const updated = nextNodes.find((n) => n.id === ch.id)
+      if (updated) next.set(ch.id, updated)
+    }
+  }
+
+  return next
+}
 
 function shouldPersistNodeChange(
   ch: NodeChange<NoteNode>,
@@ -115,7 +166,9 @@ function scheduleNodeFlush() {
         Array.from(newByBoard.entries()).map(([graphUid, nodes]) =>
           addNotes(
             graphUid,
-            nodes.map((n) => convertNodeToNote(n)),
+            nodes
+              .map((n) => convertNodeToNote(n))
+              .filter((n): n is Note => n !== null),
           ),
         ),
       )
@@ -123,13 +176,15 @@ function scheduleNodeFlush() {
       await Promise.all(
         Array.from(updatedByBoard.entries()).map(([graphUid, nodes]) =>
           Promise.all(
-            nodes.map((n) =>
-              updateNote(
-                graphUid,
-                n.id,
-                convertNodeToNote(n) as Partial<Note>,
-              ),
-            ),
+            (() => {
+              const updates: Promise<void>[] = []
+              for (const n of nodes) {
+                const note = convertNodeToNote(n)
+                if (!note) continue
+                updates.push(updateNote(graphUid, n.id, note as Partial<Note>))
+              }
+              return updates
+            })(),
           ),
         ),
       )
@@ -152,7 +207,7 @@ function queueNodesForPersistence(
 
   for (const id of addedIds) {
     const node = byId.get(id)
-    if (!node) continue
+    if (!node || isPointNode(node)) continue
     pendingNewNodes.set(id, node)
     pendingUpdatedNodes.delete(id)
   }
@@ -160,14 +215,16 @@ function queueNodesForPersistence(
   for (const id of updatedIds) {
     if (pendingNewNodes.has(id)) continue
     const node = byId.get(id)
-    if (!node) continue
+    if (!node || isPointNode(node)) continue
     pendingUpdatedNodes.set(id, node)
   }
 
   scheduleNodeFlush()
 }
 
-function scheduleEdgeFlush() {
+function scheduleEdgeFlush(
+  get: () => { boardId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
+) {
   if (edgePersistTimeout !== null) {
     clearTimeout(edgePersistTimeout)
   }
@@ -177,6 +234,7 @@ function scheduleEdgeFlush() {
 
     const newEdges = Array.from(pendingNewEdges.values())
     const updatedEdges = Array.from(pendingUpdatedEdges.values())
+    const nodesById = new Map(get().nodes.map((n) => [n.id, n]))
 
     pendingNewEdges.clear()
     pendingUpdatedEdges.clear()
@@ -204,7 +262,7 @@ function scheduleEdgeFlush() {
         Array.from(newByBoard.entries()).map(([graphUid, edges]) =>
           addLinks(
             graphUid,
-            edges.map((e) => convertEdgeToLink(e)),
+            edges.map((e) => convertEdgeToLinkWithPoints(e, nodesById)),
           ),
         ),
       )
@@ -216,7 +274,7 @@ function scheduleEdgeFlush() {
               updateLink(
                 graphUid,
                 e.id,
-                convertEdgeToLink(e) as Partial<Link>,
+                convertEdgeToLinkWithPoints(e, nodesById) as Partial<Link>,
               ),
             ),
           ),
@@ -229,7 +287,7 @@ function scheduleEdgeFlush() {
 }
 
 function queueEdgesForPersistence(
-  get: () => { boardId?: string; edges: LinkEdge[] },
+  get: () => { boardId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
   addedIds: Set<string>,
   updatedIds: Set<string>,
 ) {
@@ -253,7 +311,7 @@ function queueEdgesForPersistence(
     pendingUpdatedEdges.set(id, edge)
   }
 
-  scheduleEdgeFlush()
+  scheduleEdgeFlush(get)
 }
 
 // --- background helpers (diff + persist) ---
@@ -297,6 +355,22 @@ function scheduleNodePersistFromDiff(
       }
     }
 
+    // filter out point nodes from persistence
+    const nextById = new Map(nextNodes.map((n) => [n.id, n]))
+
+    const dropPointIds = (ids: Set<string>, lookup: Map<string, NoteNode>) => {
+      for (const id of Array.from(ids)) {
+        const node = lookup.get(id)
+        if (isPointNode(node)) {
+          ids.delete(id)
+        }
+      }
+    }
+
+    dropPointIds(addedIds, nextById)
+    dropPointIds(updatedIds, nextById)
+    dropPointIds(removedIds, prevById)
+
     if (removedIds.size > 0) {
       removedIds.forEach((id) => {
         pendingNewNodes.delete(id)
@@ -322,7 +396,7 @@ function scheduleEdgePersistFromDiff(
   prevEdges: LinkEdge[],
   nextEdges: LinkEdge[],
   boardIdAtTime: string | undefined,
-  get: () => { boardId?: string; edges: LinkEdge[] },
+  get: () => { boardId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
 ) {
   if (!boardIdAtTime) return
 
@@ -370,6 +444,7 @@ function scheduleEdgePersistFromDiff(
         () => ({
           boardId: get().boardId,
           edges,
+          nodes: get().nodes,
         }),
         addedIds,
         updatedIds,
@@ -393,6 +468,12 @@ function scheduleNodePersistFromChanges(
   ) => void,
 ) {
   if (!boardIdAtTime) return
+  const onlyTransient = changes.every((ch) => {
+    if (ch.type === "select") return true
+    if (ch.type === "position" && ch.dragging) return true
+    return false
+  })
+  if (onlyTransient) return
 
   setTimeout(() => {
     const state = get()
@@ -481,7 +562,12 @@ function scheduleEdgePersistFromChanges(
   nextEdges: LinkEdge[],
   boardIdAtTime: string | undefined,
   changes: EdgeChange<LinkEdge>[],
-  get: () => { boardId?: string; edges: LinkEdge[]; deletedEdges: LinkEdge[] },
+  get: () => {
+    boardId?: string
+    edges: LinkEdge[]
+    nodes: NoteNode[]
+    deletedEdges: LinkEdge[]
+  },
   set: (
     partial:
       | Partial<GraphStore>
@@ -489,6 +575,7 @@ function scheduleEdgePersistFromChanges(
   ) => void,
 ) {
   if (!boardIdAtTime) return
+  if (changes.every((ch) => ch.type === "select")) return
 
   setTimeout(() => {
     const state = get()
@@ -567,6 +654,7 @@ function scheduleEdgePersistFromChanges(
         () => ({
           boardId: get().boardId,
           edges,
+          nodes: get().nodes,
         }),
         addedIds,
         updatedIds,
@@ -585,6 +673,8 @@ export interface GraphStore {
   setIsLoading: (loading: boolean) => void
 
   nodes: NoteNode[]
+  nodesById: Map<string, NoteNode>
+  attachedPointIdsByNode: Map<string, Set<string>>
   edges: LinkEdge[]
 
   deletedNodes: NoteNode[]
@@ -593,6 +683,9 @@ export interface GraphStore {
   isResizingNode: boolean
   isDragging: boolean
   setIsDragging: (dragging: boolean) => void
+  draggingPointId?: string
+  isSelectMode: boolean
+  setIsSelectMode: (enabled: boolean) => void
   isPanning: boolean
   setIsPanning: (panning: boolean) => void
   isZooming: boolean
@@ -605,12 +698,13 @@ export interface GraphStore {
 
   setNodesPersist: (nodes: Updater<NoteNode[]>) => void
   setEdgesPersist: (edges: Updater<LinkEdge[]>) => void
+  moveEdgeEndpointsByDelta: (edgeId: string, delta: { x: number; y: number }) => void
+  persistEdgeById: (edgeId: string) => void
 
   onNodesChange: (changes: NodeChange<NoteNode>[]) => void
   onEdgesChange: (changes: EdgeChange<LinkEdge>[]) => void
   onNodesDelete: (nodes: NoteNode[]) => void
   onEdgesDelete: (edges: LinkEdge[]) => void
-  onConnect: (params: Connection, style?: LinkStyle) => LinkEdge | undefined
 
   setDeletedNodes: (nodes: NoteNode[]) => void
   setDeletedEdges: (edges: LinkEdge[]) => void
@@ -629,7 +723,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     // pendingUpdatedNodes.clear()
     // pendingNewEdges.clear()
     // pendingUpdatedEdges.clear()
-    set({ boardId })
+    set((state) => {
+      if (state.boardId !== boardId) {
+        clearRoughCanvasCache()
+      }
+      return { boardId }
+    })
   },
 
   isLoading: false,
@@ -637,6 +736,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setIsLoading: (loading) => set({ isLoading: loading }),
 
   nodes: [],
+  nodesById: new Map(),
+  attachedPointIdsByNode: new Map(),
   edges: [],
 
   deletedNodes: [],
@@ -644,6 +745,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   isResizingNode: false,
   isDragging: false,
+  draggingPointId: undefined,
+  isSelectMode: false,
   isPanning: false,
   isZooming: false,
   zoom: 1,
@@ -651,14 +754,55 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   // --- flexible setters ---
 
   setNodes: (nodesOrUpdater) =>
-    set((state) => ({
-      nodes: resolveUpdater<NoteNode[]>(nodesOrUpdater, state.nodes),
-    })),
+    set((state) => {
+      const nextNodes = resolveUpdater<NoteNode[]>(nodesOrUpdater, state.nodes)
+      return {
+        nodes: nextNodes,
+        nodesById: buildNodesById(nextNodes),
+        attachedPointIdsByNode: buildAttachedPointIdsByNode(nextNodes),
+      }
+    }),
 
   setEdges: (edgesOrUpdater) =>
     set((state) => ({
       edges: resolveUpdater<LinkEdge[]>(edgesOrUpdater, state.edges),
     })),
+
+  moveEdgeEndpointsByDelta: (edgeId, delta) => {
+    const edge = get().edges.find((e) => e.id === edgeId)
+    if (!edge) return
+    set((state) => {
+      const nextNodes = state.nodes.map((node) => {
+        if (!isPointNode(node)) return node
+        if (node.id !== edge.source && node.id !== edge.target) return node
+        return {
+          ...node,
+          position: {
+            x: node.position.x + delta.x,
+            y: node.position.y + delta.y,
+          },
+          data: {
+            ...node.data,
+            attachedToNodeId: undefined,
+            attachedDirection: undefined,
+          },
+        }
+      })
+      return { nodes: nextNodes, nodesById: buildNodesById(nextNodes) }
+    })
+  },
+
+  persistEdgeById: (edgeId) => {
+    queueEdgesForPersistence(
+      () => ({
+        boardId: get().boardId,
+        edges: get().edges,
+        nodes: get().nodes,
+      }),
+      new Set(),
+      new Set([edgeId]),
+    )
+  },
 
   // --- set + background diff + debounced persist ---
 
@@ -671,7 +815,11 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         ? (nodesOrUpdater as (prev: NoteNode[]) => NoteNode[])(prevNodes)
         : nodesOrUpdater
 
-    set({ nodes: nextNodes })
+    set({
+      nodes: nextNodes,
+      nodesById: buildNodesById(nextNodes),
+      attachedPointIdsByNode: buildAttachedPointIdsByNode(nextNodes),
+    })
 
     scheduleNodePersistFromDiff(prevNodes, nextNodes, boardId, () => ({
       boardId: get().boardId,
@@ -693,6 +841,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     scheduleEdgePersistFromDiff(prevEdges, nextEdges, boardId, () => ({
       boardId: get().boardId,
       edges: get().edges,
+      nodes: get().nodes,
     }))
   },
 
@@ -703,6 +852,36 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     if (!boardId) return
 
     const prevNodes = get().nodes
+    const prevNodesById = get().nodesById
+    let attachedIndex = get().attachedPointIdsByNode
+    let attachedIndexDirty = false
+
+    const ensureAttachedIndex = () => {
+      if (!attachedIndexDirty) {
+        attachedIndex = cloneAttachedPointIdsByNode(attachedIndex)
+        attachedIndexDirty = true
+      }
+    }
+
+    const updateAttachedIndex = (nodeId: string, prevAttached?: string, nextAttached?: string) => {
+      if (prevAttached === nextAttached) return
+      ensureAttachedIndex()
+      if (prevAttached) {
+        const set = attachedIndex.get(prevAttached)
+        if (set) {
+          set.delete(nodeId)
+          if (set.size === 0) attachedIndex.delete(prevAttached)
+        }
+      }
+      if (nextAttached) {
+        let set = attachedIndex.get(nextAttached)
+        if (!set) {
+          set = new Set()
+          attachedIndex.set(nextAttached, set)
+        }
+        set.add(nodeId)
+      }
+    }
 
     // fast path: only selection + intermediate drag (no persistence at all)
     const onlyTransient = changes.every((ch) => {
@@ -711,8 +890,157 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       return false
     })
 
-    const updatedNodes = applyNodeChanges(changes, prevNodes)
-    set({ nodes: updatedNodes })
+    let nextNodes = applyNodeChanges(changes, prevNodes)
+    let nextNodesById = updateNodesById(get().nodesById, nextNodes, changes)
+    let nodesChanged = false
+
+    const pointOffset = POINT_NODE_SIZE / 2
+    const nextById = new Map(nextNodes.map(n => [n.id, n]))
+
+    const applyNodeUpdate = (id: string, updater: (node: NoteNode) => NoteNode) => {
+      const node = nextById.get(id)
+      if (!node) return
+      const updated = updater(node)
+      if (updated !== node) {
+        nextById.set(id, updated)
+        nodesChanged = true
+      }
+    }
+
+    const isPositionChangeWithId = (
+      ch: NodeChange<NoteNode>,
+    ): ch is NodeChange<NoteNode> & { id: string; dragging?: boolean } =>
+      ch.type === "position" && typeof (ch as { id?: unknown }).id === "string"
+
+    for (const ch of changes) {
+      if (ch.type === "add" && ch.item && isPointNode(ch.item)) {
+        const attachedTo = (ch.item.data as { attachedToNodeId?: string }).attachedToNodeId
+        if (attachedTo) {
+          updateAttachedIndex(ch.item.id, undefined, attachedTo)
+        }
+      }
+      if (ch.type === "remove" && ch.id) {
+        const prev = prevNodesById.get(ch.id)
+        if (prev && isPointNode(prev)) {
+          const attachedTo = (prev.data as { attachedToNodeId?: string }).attachedToNodeId
+          if (attachedTo) {
+            updateAttachedIndex(prev.id, attachedTo, undefined)
+          }
+        }
+      }
+    }
+
+    // Detach point nodes when drag begins.
+    for (const ch of changes) {
+      if (!isPositionChangeWithId(ch) || !ch.dragging) continue
+      const node = nextById.get(ch.id)
+      if (!node || !isPointNode(node)) continue
+      const data = node.data as { attachedToNodeId?: string; attachedDirection?: { x: number; y: number } }
+      if (!data.attachedToNodeId) continue
+      updateAttachedIndex(node.id, data.attachedToNodeId, undefined)
+      applyNodeUpdate(node.id, n => ({
+        ...n,
+        data: { ...n.data, attachedToNodeId: undefined, attachedDirection: undefined },
+      }))
+    }
+
+    // Snap point nodes to targets on drag end.
+    for (const ch of changes) {
+      if (!isPositionChangeWithId(ch) || ch.dragging !== false) continue
+      const node = nextById.get(ch.id)
+      if (!node || !isPointNode(node)) continue
+      const center = { x: node.position.x + pointOffset, y: node.position.y + pointOffset }
+      const target = findAttachTarget(center, nextNodes)
+      if (!target) {
+        applyNodeUpdate(node.id, n => ({
+          ...n,
+          data: { ...n.data, attachedToNodeId: undefined, attachedDirection: undefined },
+        }))
+        continue
+      }
+
+      const attach = computeAttachment(target, center)
+      updateAttachedIndex(
+        node.id,
+        (node.data as { attachedToNodeId?: string }).attachedToNodeId,
+        target.id,
+      )
+      applyNodeUpdate(node.id, n => ({
+        ...n,
+        position: { x: attach.point.x - pointOffset, y: attach.point.y - pointOffset },
+        data: { ...n.data, attachedToNodeId: target.id, attachedDirection: attach.direction },
+      }))
+    }
+
+    // Keep attached points aligned while their target node moves.
+    const movedNodeIds = new Set(
+      changes
+        .filter(isPositionChangeWithId)
+        .map(ch => ch.id),
+    )
+
+    if (movedNodeIds.size > 0) {
+      const attachedPointIds = new Set<string>()
+      for (const movedNodeId of movedNodeIds) {
+        const pointIds = attachedIndex.get(movedNodeId)
+        if (!pointIds) continue
+        for (const pointId of pointIds) {
+          const node = nextById.get(pointId)
+          if (!node || !isPointNode(node)) continue
+          const data = node.data as { attachedToNodeId?: string; attachedDirection?: { x: number; y: number } }
+          if (!data.attachedToNodeId) continue
+          const target = nextById.get(data.attachedToNodeId)
+          if (!target || isPointNode(target)) continue
+          const targetCenter = nodeCenter(target)
+          const dir = data.attachedDirection ?? {
+            x: node.position.x + pointOffset - targetCenter.x,
+            y: node.position.y + pointOffset - targetCenter.y,
+          }
+          const boundary = { x: targetCenter.x + dir.x, y: targetCenter.y + dir.y }
+          applyNodeUpdate(node.id, n => ({
+            ...n,
+            position: { x: boundary.x - pointOffset, y: boundary.y - pointOffset },
+            data: { ...n.data, attachedToNodeId: target.id, attachedDirection: dir },
+          }))
+          attachedPointIds.add(node.id)
+        }
+      }
+
+      if (attachedPointIds.size > 0) {
+        const edgeIds = new Set(
+          get()
+            .edges
+            .filter(
+              (e) =>
+                attachedPointIds.has(e.source) ||
+                attachedPointIds.has(e.target),
+            )
+            .map((e) => e.id),
+        )
+
+        if (edgeIds.size > 0) {
+          queueEdgesForPersistence(
+            () => ({
+              boardId: get().boardId,
+              edges: get().edges,
+              nodes: get().nodes,
+            }),
+            new Set(),
+            edgeIds,
+          )
+        }
+      }
+    }
+
+    if (nodesChanged) {
+      nextNodes = nextNodes.map(n => nextById.get(n.id) ?? n)
+      nextNodesById = buildNodesById(nextNodes)
+    }
+    set({
+      nodes: nextNodes,
+      nodesById: nextNodesById,
+      attachedPointIdsByNode: attachedIndexDirty ? attachedIndex : get().attachedPointIdsByNode,
+    })
 
     if (onlyTransient) return
 
@@ -720,7 +1048,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
     scheduleNodePersistFromChanges(
       prevNodes,
-      updatedNodes,
+      nextNodes,
       boardId,
       changes,
       isResizingAtTime,
@@ -731,6 +1059,110 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       }),
       set,
     )
+
+    const movedPointIds = new Set(
+      changes
+        .filter((ch): ch is NodeChange<NoteNode> & { id: string } =>
+          ch.type === "position" &&
+          ch.dragging === false &&
+          typeof ch.id === "string",
+        )
+        .map((ch) => ch.id),
+    )
+
+    if (movedPointIds.size > 0) {
+      const updatedPointIds = new Set(
+        nextNodes
+          .filter((n) => movedPointIds.has(n.id))
+          .filter((n) => isPointNode(n))
+          .map((n) => n.id),
+      )
+
+      if (updatedPointIds.size > 0) {
+        const edgeIds = new Set(
+          get()
+            .edges
+            .filter(
+              (e) =>
+                updatedPointIds.has(e.source) ||
+                updatedPointIds.has(e.target),
+            )
+            .map((e) => e.id),
+        )
+
+        if (edgeIds.size > 0) {
+          queueEdgesForPersistence(
+            () => ({
+              boardId: get().boardId,
+              edges: get().edges,
+              nodes: get().nodes,
+            }),
+            new Set(),
+            edgeIds,
+          )
+        }
+      }
+    }
+
+    const selectedPointIds = new Set(
+      nextNodes
+        .filter((n) => n.selected && isPointNode(n))
+        .map((n) => n.id),
+    )
+
+    // If a point endpoint is selected (e.g. dragging), keep its edge selected too.
+    let edgesForSelection = get().edges
+    if (selectedPointIds.size > 0) {
+      let edgesChanged = false
+      const nextEdges = edgesForSelection.map((edge) => {
+        if (!selectedPointIds.has(edge.source) && !selectedPointIds.has(edge.target)) {
+          return edge
+        }
+        if (edge.selected) return edge
+        edgesChanged = true
+        return { ...edge, selected: true }
+      })
+      if (edgesChanged) {
+        set({ edges: nextEdges })
+        edgesForSelection = nextEdges
+      }
+    }
+
+    // Endpoint visibility follows edge selection (edge-selected => both endpoints active).
+    const activePointIds = new Set<string>()
+    for (const edge of edgesForSelection) {
+      if (!edge.selected) continue
+      activePointIds.add(edge.source)
+      activePointIds.add(edge.target)
+    }
+
+    // Also allow clearing active endpoints when nothing is selected anymore.
+    if (
+      activePointIds.size > 0 ||
+      nextNodes.some(n => isPointNode(n) && (n.data as { endpointActive?: boolean }).endpointActive)
+    ) {
+      const selectMode = get().isSelectMode
+      const toggledNodes = nextNodes.map((n) => {
+        if (!isPointNode(n)) return n
+        const shouldActive = activePointIds.has(n.id)
+        const data = n.data as { endpointActive?: boolean }
+        if (
+          data.endpointActive === shouldActive &&
+          n.draggable === shouldActive &&
+          n.selectable === (shouldActive || selectMode)
+        ) {
+          return n
+        }
+        return {
+          ...n,
+          draggable: shouldActive,
+          selectable: shouldActive || selectMode,
+          data: { ...n.data, endpointActive: shouldActive },
+        }
+      })
+
+      set({ nodes: toggledNodes, nodesById: buildNodesById(toggledNodes) })
+    }
   },
 
   onEdgesChange: (changes) => {
@@ -738,6 +1170,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     if (!boardId) return
 
     const prevEdges = get().edges
+    const prevNodes = get().nodes
 
     // fast path: selection-only
     const onlySelect = changes.every((ch) => ch.type === "select")
@@ -745,7 +1178,38 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const updatedEdges = applyEdgeChanges(changes, prevEdges)
     set({ edges: updatedEdges })
 
-    if (onlySelect) return
+    if (onlySelect) {
+      const activePointIds = new Set<string>()
+      for (const edge of updatedEdges) {
+        if (!edge.selected) continue
+        activePointIds.add(edge.source)
+        activePointIds.add(edge.target)
+      }
+
+      if (activePointIds.size > 0 || prevNodes.some(n => isPointNode(n) && (n.data as { endpointActive?: boolean }).endpointActive)) {
+        const selectMode = get().isSelectMode
+        const nextNodes = prevNodes.map((n) => {
+          if (!isPointNode(n)) return n
+          const shouldActive = activePointIds.has(n.id)
+          const data = n.data as { endpointActive?: boolean }
+          if (
+            data.endpointActive === shouldActive &&
+            n.draggable === shouldActive &&
+            n.selectable === (shouldActive || selectMode)
+          ) {
+            return n
+          }
+          return {
+            ...n,
+            draggable: shouldActive,
+            selectable: shouldActive || selectMode,
+            data: { ...n.data, endpointActive: shouldActive },
+          }
+        })
+        set({ nodes: nextNodes, nodesById: buildNodesById(nextNodes) })
+      }
+      return
+    }
 
     scheduleEdgePersistFromChanges(
       prevEdges,
@@ -755,6 +1219,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       () => ({
         boardId: get().boardId,
         edges: get().edges,
+        nodes: get().nodes,
         deletedEdges: get().deletedEdges,
       }),
       set,
@@ -783,8 +1248,18 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   },
 
   onEdgesDelete: (edges) => {
+    const deletedEdgeIds = new Set(edges.map((edge) => edge.id))
+    const deletedPointIds = new Set<string>()
+    const nodesById = get().nodesById
+    for (const edge of edges) {
+      const sourceNode = nodesById.get(edge.source)
+      const targetNode = nodesById.get(edge.target)
+      if (sourceNode && isPointNode(sourceNode)) deletedPointIds.add(sourceNode.id)
+      if (targetNode && isPointNode(targetNode)) deletedPointIds.add(targetNode.id)
+    }
+
     const updatedEdges = get().edges.filter(
-      (edge) => !edges.some((e) => e.id === edge.id),
+      (edge) => !deletedEdgeIds.has(edge.id),
     )
     const deletedEdges = edges.map((edge) => {
       const link = edge.data as Link
@@ -799,51 +1274,23 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       pendingUpdatedEdges.delete(e.id)
     })
 
+    const updatedNodes = deletedPointIds.size > 0
+      ? get().nodes.filter((node) => !deletedPointIds.has(node.id))
+      : get().nodes
+    const updatedAttachedIndex = deletedPointIds.size > 0
+      ? buildAttachedPointIdsByNode(updatedNodes)
+      : get().attachedPointIdsByNode
+
     set({
       edges: updatedEdges,
       deletedEdges: [...get().deletedEdges, ...deletedEdges],
+      nodes: updatedNodes,
+      nodesById: deletedPointIds.size > 0 ? buildNodesById(updatedNodes) : get().nodesById,
+      attachedPointIdsByNode: updatedAttachedIndex,
     })
     // DB delete is covered via onEdgesChange's background diff
   },
 
-  onConnect: (params, style) => {
-    const boardId = get().boardId
-    if (!boardId) return undefined
-
-    const edgeId = generateUuid()
-    const newEdge: LinkEdge = {
-      ...params,
-      id: edgeId,
-    }
-
-    newEdge.data = {
-      id: edgeId,
-      type: "link",
-      version: 1,
-      source: newEdge.source,
-      target: newEdge.target,
-      style: style || createDefaultLinkStyle(),
-      createdAt: new Date().toISOString(),
-      graphUid: boardId,
-    } as Link
-
-    const prevEdges = get().edges
-    const newEdges = rfAddEdge(newEdge, prevEdges)
-
-    if (newEdges.length > prevEdges.length) {
-      set({ edges: newEdges })
-
-      // treat as "new" edge for persistence
-      scheduleEdgePersistFromDiff(prevEdges, newEdges, boardId, () => ({
-        boardId: get().boardId,
-        edges: get().edges,
-      }))
-
-      return newEdge
-    }
-
-    return undefined
-  },
 
   setDeletedNodes: (nodes) => set({ deletedNodes: nodes }),
 
@@ -858,6 +1305,22 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     set((state) =>
       state.isDragging === dragging ? {} : { isDragging: dragging },
     ),
+  setIsSelectMode: (enabled) =>
+    set((state) => {
+      if (state.isSelectMode === enabled) return {}
+      const nextNodes = state.nodes.map((n) => {
+        if (!isPointNode(n)) return n
+        const active = Boolean((n.data as { endpointActive?: boolean }).endpointActive)
+        const nextSelectable = active || enabled
+        if (n.selectable === nextSelectable) return n
+        return { ...n, selectable: nextSelectable }
+      })
+      return {
+        isSelectMode: enabled,
+        nodes: nextNodes,
+        nodesById: buildNodesById(nextNodes),
+      }
+    }),
   setIsPanning: (panning) =>
     set((state) =>
       state.isPanning === panning ? {} : { isPanning: panning },

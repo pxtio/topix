@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label'
 export interface InputBarProps {
   attachedBoardId?: string
   layout?: "floating" | "docked"
+  preferChatRoute?: boolean
 }
 
 /**
@@ -33,7 +34,11 @@ export interface InputBarProps {
  *  - Lets the user edit the SAME input
  *  - Confirms to send & create a new chat
  */
-export const InputBar = ({ attachedBoardId, layout = "floating" }: InputBarProps) => {
+export const InputBar = ({
+  attachedBoardId,
+  layout = "floating",
+  preferChatRoute = false,
+}: InputBarProps) => {
   const { chatId, setChatId } = useChat()
 
   const userId = useAppStore((state) => state.userId)
@@ -73,10 +78,10 @@ export const InputBar = ({ attachedBoardId, layout = "floating" }: InputBarProps
 
     if (createNewChat) {
       const newChatId = generateUuid()
-      await createChatAsync({ userId, boardId: attachedBoardId, chatId: newChatId })
+      await createChatAsync({ userId, boardId: targetBoardId, chatId: newChatId })
       await updateChatAsync({ chatId: newChatId, chatData: { label: trimText(trimmed, 20) } })
 
-      if (isBoardRoute && targetBoardId) {
+      if (!preferChatRoute && isBoardRoute && targetBoardId) {
         navigate({
           to: "/boards/$id",
           params: { id: targetBoardId },

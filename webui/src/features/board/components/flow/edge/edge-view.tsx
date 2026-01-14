@@ -19,13 +19,14 @@ import {
   cssDashArray,
 } from './edge-geometry'
 import { useEdgeGeometry } from './use-edge-geometry'
+import { useGraphStore } from '../../../store/graph-store'
 
 const BASE_HEAD_SIZE = 10
 const HEAD_SCALE = 1.5
 const TIP_FACTOR = 0.95           // tip at 95% of viewBox width → no clipping
 const BASE_X_FACTOR = 0.25        // base is at 25% of width (where shaft meets head)
 const BASE_THICKNESS_BOOST = 1.1  // bottom side slightly thicker
-const ARROW_CLEARANCE_FACTOR = 1 // pull heads farther from node surface
+const ARROW_CLEARANCE_FACTOR = 0.5 // pull heads farther from node surface
 
 type EdgeControlPointHandlers = {
   onControlPointChange?: (point: Point) => void
@@ -58,6 +59,10 @@ function isFinitePoint(point: Partial<Point> | null | undefined): point is Point
   )
 }
 
+
+/**
+ * Renders an edge between two nodes, with optional arrowheads, label, and control point.
+ */
 export const EdgeView = memo(function EdgeView({
   id,
   source,
@@ -69,13 +74,36 @@ export const EdgeView = memo(function EdgeView({
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const { screenToFlowPosition } = useReactFlow()
+  const moveEdgeEndpointsByDelta = useGraphStore((state) => state.moveEdgeEndpointsByDelta)
+  const persistEdgeById = useGraphStore((state) => state.persistEdgeById)
 
   const sourceNode = useInternalNode(source)
   const targetNode = useInternalNode(target)
+  const attachedSourceId = (sourceNode?.data as { attachedToNodeId?: string } | undefined)?.attachedToNodeId
+  const attachedTargetId = (targetNode?.data as { attachedToNodeId?: string } | undefined)?.attachedToNodeId
+  const attachedSourceNode = useInternalNode(attachedSourceId || '')
+  const attachedTargetNode = useInternalNode(attachedTargetId || '')
   const [bendPointDrag, setBendPointDrag] = useState<Point | null>(null)
   const bendPointDragRef = useRef<Point | null>(null)
 
-  const linkStyle = (data?.style ?? undefined) as LinkStyle | undefined
+  const edgeExtras = (data ?? {}) as EdgeRenderData
+
+  const edgeData = useMemo(() => {
+    const controlPoint = edgeExtras.properties?.edgeControlPoint?.position
+    return {
+      linkStyle: edgeExtras.style ?? undefined,
+      label: edgeExtras.label,
+      labelEditing: edgeExtras.labelEditing,
+      labelDraft: edgeExtras.labelDraft,
+      onControlPointChange: edgeExtras.onControlPointChange,
+      onLabelChange: edgeExtras.onLabelChange,
+      onLabelSave: edgeExtras.onLabelSave,
+      onLabelCancel: edgeExtras.onLabelCancel,
+      controlPoint: isFinitePoint(controlPoint) ? controlPoint : null,
+    }
+  }, [edgeExtras.properties?.edgeControlPoint?.position, edgeExtras.style, edgeExtras.label, edgeExtras.labelEditing, edgeExtras.labelDraft, edgeExtras.onControlPointChange, edgeExtras.onLabelChange, edgeExtras.onLabelSave, edgeExtras.onLabelCancel])
+
+  const linkStyle = edgeData.linkStyle as LinkStyle | undefined
 
   const baseStroke = linkStyle?.strokeColor ?? '#333333'
   const baseLabelColor = linkStyle?.textColor ?? '#000000'
@@ -104,10 +132,7 @@ export const EdgeView = memo(function EdgeView({
   const pathStyle = linkStyle?.pathStyle ?? 'bezier'
   const isBezierPath = pathStyle === 'bezier'
 
-  const edgeExtras = (data ?? {}) as EdgeRenderData
-  const storedBendPoint = isFinitePoint(edgeExtras.properties?.edgeControlPoint?.position)
-    ? edgeExtras.properties?.edgeControlPoint?.position
-    : null
+  const storedBendPoint = edgeData.controlPoint
 
   const {
     geom,
@@ -119,6 +144,8 @@ export const EdgeView = memo(function EdgeView({
   } = useEdgeGeometry({
     sourceNode,
     targetNode,
+    sourceClipNode: attachedSourceNode || undefined,
+    targetClipNode: attachedTargetNode || undefined,
     linkStyle,
     startKind,
     endKind,
@@ -146,10 +173,10 @@ export const EdgeView = memo(function EdgeView({
   const filledHeadSize = headSize * 0.95
   const headStrokeWidth = Math.max(1, strokeWidth)
 
-  const labelText = edgeExtras?.label?.markdown ?? ''
+  const labelText = edgeData.label?.markdown ?? ''
   const hasLabel = Boolean(labelText)
-  const isLabelEditing = Boolean(edgeExtras?.labelEditing)
-  const labelDraft = isLabelEditing ? edgeExtras?.labelDraft ?? '' : labelText
+  const isLabelEditing = Boolean(edgeData.labelEditing)
+  const labelDraft = isLabelEditing ? edgeData.labelDraft ?? '' : labelText
   const labelInputRef = useRef<HTMLTextAreaElement | null>(null)
   const skipSaveRef = useRef(false)
 
@@ -170,7 +197,7 @@ export const EdgeView = memo(function EdgeView({
       skipSaveRef.current = false
       return
     }
-    edgeExtras.onLabelSave?.()
+    edgeData.onLabelSave?.()
   }
 
   const labelTransformStyle = pathData
@@ -180,11 +207,11 @@ export const EdgeView = memo(function EdgeView({
   const handleLabelKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault()
-      edgeExtras.onLabelSave?.()
+      edgeData.onLabelSave?.()
     } else if (event.key === 'Escape') {
       event.preventDefault()
       skipSaveRef.current = true
-      edgeExtras.onLabelCancel?.()
+      edgeData.onLabelCancel?.()
     }
   }
 
@@ -193,8 +220,81 @@ export const EdgeView = memo(function EdgeView({
     bendPointDragRef.current = point
   }
 
+  const dragStartRef = useRef<Point | null>(null)
+  const edgeMoveRef = useRef<((event: PointerEvent) => void) | null>(null)
+  const edgeUpRef = useRef<((event: PointerEvent) => void) | null>(null)
+  const controlMoveRef = useRef<((event: PointerEvent) => void) | null>(null)
+  const controlUpRef = useRef<((event: PointerEvent) => void) | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (edgeMoveRef.current) {
+        window.removeEventListener('pointermove', edgeMoveRef.current)
+      }
+      if (edgeUpRef.current) {
+        window.removeEventListener('pointerup', edgeUpRef.current)
+        window.removeEventListener('pointercancel', edgeUpRef.current)
+      }
+      if (controlMoveRef.current) {
+        window.removeEventListener('pointermove', controlMoveRef.current)
+      }
+      if (controlUpRef.current) {
+        window.removeEventListener('pointerup', controlUpRef.current)
+        window.removeEventListener('pointercancel', controlUpRef.current)
+      }
+    }
+  }, [])
+
+  const handleEdgePointerDown = (event: React.PointerEvent<SVGPathElement>) => {
+    if (event.button !== 0) return
+    event.stopPropagation()
+    event.preventDefault()
+
+    const start = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+    dragStartRef.current = start
+
+    if (edgeMoveRef.current) {
+      window.removeEventListener('pointermove', edgeMoveRef.current)
+      edgeMoveRef.current = null
+    }
+    if (edgeUpRef.current) {
+      window.removeEventListener('pointerup', edgeUpRef.current)
+      window.removeEventListener('pointercancel', edgeUpRef.current)
+      edgeUpRef.current = null
+    }
+
+    const handleMove = (moveEvent: PointerEvent) => {
+      const current = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY })
+      const prev = dragStartRef.current
+      if (!prev) return
+      const delta = { x: current.x - prev.x, y: current.y - prev.y }
+      dragStartRef.current = current
+      moveEdgeEndpointsByDelta(id, delta)
+    }
+
+    const handleUp = () => {
+      dragStartRef.current = null
+      if (edgeMoveRef.current) {
+        window.removeEventListener('pointermove', edgeMoveRef.current)
+        edgeMoveRef.current = null
+      }
+      if (edgeUpRef.current) {
+        window.removeEventListener('pointerup', edgeUpRef.current)
+        window.removeEventListener('pointercancel', edgeUpRef.current)
+        edgeUpRef.current = null
+      }
+      persistEdgeById(id)
+    }
+
+    edgeMoveRef.current = handleMove
+    edgeUpRef.current = handleUp
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', handleUp)
+    window.addEventListener('pointercancel', handleUp)
+  }
+
   const handleControlPointPointerDown = (event: React.PointerEvent<SVGCircleElement>) => {
-    if (!edgeExtras.onControlPointChange) return
+    if (!edgeData.onControlPointChange) return
     event.stopPropagation()
     event.preventDefault()
 
@@ -203,22 +303,40 @@ export const EdgeView = memo(function EdgeView({
       updateBendPoint(projected)
     }
 
+    if (controlMoveRef.current) {
+      window.removeEventListener('pointermove', controlMoveRef.current)
+      controlMoveRef.current = null
+    }
+    if (controlUpRef.current) {
+      window.removeEventListener('pointerup', controlUpRef.current)
+      window.removeEventListener('pointercancel', controlUpRef.current)
+      controlUpRef.current = null
+    }
+
     const handleMove = (moveEvent: PointerEvent) => {
       updateFromEvent(moveEvent.clientX, moveEvent.clientY)
     }
 
     const handleUp = () => {
-      window.removeEventListener('pointermove', handleMove)
-      window.removeEventListener('pointerup', handleUp)
-      window.removeEventListener('pointercancel', handleUp)
+      if (controlMoveRef.current) {
+        window.removeEventListener('pointermove', controlMoveRef.current)
+        controlMoveRef.current = null
+      }
+      if (controlUpRef.current) {
+        window.removeEventListener('pointerup', controlUpRef.current)
+        window.removeEventListener('pointercancel', controlUpRef.current)
+        controlUpRef.current = null
+      }
       const finalPoint = bendPointDragRef.current
       if (finalPoint) {
-        edgeExtras.onControlPointChange?.(finalPoint)
+        edgeData.onControlPointChange?.(finalPoint)
       }
       updateBendPoint(null)
     }
 
     updateFromEvent(event.clientX, event.clientY)
+    controlMoveRef.current = handleMove
+    controlUpRef.current = handleUp
     window.addEventListener('pointermove', handleMove)
     window.addEventListener('pointerup', handleUp)
     window.addEventListener('pointercancel', handleUp)
@@ -292,27 +410,10 @@ export const EdgeView = memo(function EdgeView({
     )
   }
 
-  const selectionHandles = selected ? (
-    <>
-      <circle
-        cx={renderedStart.x}
-        cy={renderedStart.y}
-        r={6}
-        className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
-      />
-      <circle
-        cx={renderedEnd.x}
-        cy={renderedEnd.y}
-        r={6}
-        className='pointer-events-none stroke-current stroke-2 text-secondary fill-transparent'
-      />
-    </>
-  ) : null
-
   const showControlPoint =
     isBezierPath &&
     !!displayBendPoint &&
-    !!edgeExtras.onControlPointChange &&
+    !!edgeData.onControlPointChange &&
     selected &&
     !isLabelEditing
 
@@ -325,6 +426,18 @@ export const EdgeView = memo(function EdgeView({
         </defs>
       </svg>
 
+      {selected && (
+        <path
+          d={pathData.path}
+          fill="none"
+          stroke="transparent"
+          strokeWidth={Math.max(12, strokeWidth * 6)}
+          pointerEvents="stroke"
+          className="cursor-move"
+          onPointerDown={handleEdgePointerDown}
+        />
+      )}
+
       <BaseEdge
         path={pathData.path}
         style={edgeStrokeStyle}
@@ -332,15 +445,13 @@ export const EdgeView = memo(function EdgeView({
         markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
       />
 
-      {selectionHandles}
-
       {(isLabelEditing || hasLabel) && (
         <EdgeLabel
           labelText={labelText}
           labelColor={displayLabelColor}
           labelDraft={labelDraft}
           isEditing={isLabelEditing}
-          onChange={edgeExtras.onLabelChange}
+          onChange={edgeData.onLabelChange}
           labelInputRef={labelInputRef}
           transformStyle={labelTransformStyle}
           handleLabelBlur={handleLabelBlur}

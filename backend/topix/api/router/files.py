@@ -84,7 +84,7 @@ async def parse_file(
 
     pipeline: ParsingPipeline = request.app.parser_pipeline
 
-    background_tasks.add_task(pipeline.process_file, true_path)
+    doc, _ = await pipeline.process_file(filepath=true_path, id=id)
 
     return {
         "status": "success",

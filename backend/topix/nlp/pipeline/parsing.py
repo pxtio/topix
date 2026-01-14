@@ -2,38 +2,41 @@
 
 import os
 
+from dataclasses import dataclass, field
+
 from fastapi.concurrency import run_in_threadpool
 
 from topix.datatypes.file.chunk import Chunk
 from topix.datatypes.file.document import Document, DocumentProperties
-from topix.datatypes.property import NumberProperty, TextProperty
+from topix.datatypes.property import NumberProperty, TextProperty, URLProperty
 from topix.datatypes.resource import RichText
 from topix.nlp.chunking import Chunker
 from topix.nlp.parser import MistralParser
 from topix.store.qdrant.store import ContentStore
 
 
-class ParsingConfig():
+@dataclass
+class ParsingConfig:
     """RAG configuration."""
 
-    ocr_parser: MistralParser = MistralParser.from_config()
-    chunker: Chunker = Chunker()
-    vector_store: ContentStore = ContentStore.from_config()
+    ocr_parser: MistralParser = field(default_factory=MistralParser.from_config)
+    chunker: Chunker = field(default_factory=Chunker)
+    vector_store: ContentStore = field(default_factory=ContentStore.from_config)
 
 
 class ParsingPipeline:
     """Parsing pipeline."""
 
-    def __init__(self, config: ParsingConfig = ParsingConfig()):
+    def __init__(self, config: ParsingConfig | None = None):
         """Initialize the parsing pipeline."""
-        self.config = config
+        self.config = config or ParsingConfig()
 
     async def process_file(
         self,
         filepath: str,
         id: str | None = None,
         file_url: str | None = None,
-    ) -> list[Chunk | Document]:
+    ) -> tuple[Document, list[Chunk]]:
         """Process a file."""
         parsed_file = await self.config.ocr_parser.parse(filepath)
 
@@ -49,7 +52,7 @@ class ParsingPipeline:
         if id is not None:
             document.id = id
         if file_url is not None:
-            document.properties.url = TextProperty(text=file_url)
+            document.properties.url = URLProperty(url=file_url)
 
         # move chunking to threadpool to avoid blocking event loop
         elements = await run_in_threadpool(
@@ -61,9 +64,8 @@ class ParsingPipeline:
             element.document_uid = document.id
             element.properties.document_label = TextProperty(text=document_name)
 
-        elements.append(document)
-
         # embed and save chunks to vector store
+        await self.config.vector_store.add([document])
         await self.config.vector_store.add(elements)
 
-        return elements
+        return document, elements

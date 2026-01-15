@@ -5,7 +5,7 @@ import os
 from fastapi.concurrency import run_in_threadpool
 
 from topix.datatypes.file.chunk import Chunk
-from topix.datatypes.file.document import Document, DocumentProperties
+from topix.datatypes.file.document import Document, DocumentProperties, DocumentStatusEnum
 from topix.datatypes.property import NumberProperty, TextProperty, URLProperty
 from topix.datatypes.resource import RichText
 from topix.nlp.chunking import Chunker
@@ -82,6 +82,7 @@ class ParsingPipeline:
 
         """
         document.graph_uid = graph_uid
+        document.properties.status.value = DocumentStatusEnum.COMPLETED
         for chunk in chunks:
             chunk.graph_uid = graph_uid
         await self.vector_store.add([document])

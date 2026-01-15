@@ -99,6 +99,7 @@ class ContentStore:
         Supporting multiple vector storage
         """
         exists = await self.client.collection_exists(self.collection)
+
         if force_recreate and exists:
             await self.client.delete_collection(self.collection)
 
@@ -116,10 +117,10 @@ class ContentStore:
                     scalar=ScalarQuantizationConfig(
                         type="int8", quantile=0.99, always_ram=True
                     )
-                )
-                if quantized
-                else None,
+                ) if quantized else None,
+                on_disk_payload=True
             )
+
             for field_name, field_type in INDEX_FIELDS:
                 await self.client.create_payload_index(
                     collection_name=self.collection,

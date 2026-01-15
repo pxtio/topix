@@ -9,6 +9,6 @@ def resource_to_ref_annotation(res: Resource) -> RefAnnotation:
     return RefAnnotation(
         ref_id=res.id,
         ref_type=res.type,
-        label=res.get_property("label").get("markdown") if res.get_property("label") else None,
-        content=res.get_property("content").get("markdown") if res.get_property("content") else None,
+        label=res.label.markdown if res.label else None,
+        content=res.content.markdown if res.content else None,
     )

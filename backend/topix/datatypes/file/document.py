@@ -1,9 +1,9 @@
 """Classes representing a document object with properties and content."""
 
 from enum import StrEnum
-from typing import Literal, Type
+from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from topix.datatypes.property import (
     DataProperty,
@@ -16,7 +16,7 @@ from topix.datatypes.property import (
 from topix.datatypes.resource import Resource, ResourceProperties
 
 
-class DocumentAnalysisStatusEnum(StrEnum):
+class DocumentStatusEnum(StrEnum):
     """Status enum."""
 
     PENDING = "pending"
@@ -28,7 +28,17 @@ class DocumentAnalysisStatusEnum(StrEnum):
 class DocumentStatusProperty(KeywordProperty):
     """Property for document analysis status."""
 
-    value_type: Type[DocumentAnalysisStatusEnum] = DocumentAnalysisStatusEnum
+    value: DocumentStatusEnum | None = None
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def validate_value(cls, v: DocumentStatusEnum | str | None) -> DocumentStatusEnum | None:
+        """Ensure status values are valid DocumentStatusEnum entries."""
+        if v is None:
+            return None
+        if isinstance(v, DocumentStatusEnum):
+            return v
+        return DocumentStatusEnum(v)
 
 
 class DocumentProperties(ResourceProperties):

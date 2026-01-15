@@ -2,8 +2,6 @@
 
 import os
 
-from dataclasses import dataclass, field
-
 from fastapi.concurrency import run_in_threadpool
 
 from topix.datatypes.file.chunk import Chunk
@@ -15,30 +13,33 @@ from topix.nlp.parser import MistralParser
 from topix.store.qdrant.store import ContentStore
 
 
-@dataclass
-class ParsingConfig:
-    """RAG configuration."""
-
-    ocr_parser: MistralParser = field(default_factory=MistralParser.from_config)
-    chunker: Chunker = field(default_factory=Chunker)
-    vector_store: ContentStore = field(default_factory=ContentStore.from_config)
-
-
 class ParsingPipeline:
     """Parsing pipeline."""
 
-    def __init__(self, config: ParsingConfig | None = None):
+    def __init__(self) -> None:
         """Initialize the parsing pipeline."""
-        self.config = config or ParsingConfig()
+        self.parser = MistralParser.from_config()
+        self.chunker = Chunker()
+        self.vector_store = ContentStore.from_config()
 
     async def process_file(
         self,
         filepath: str,
         id: str | None = None,
-        file_url: str | None = None,
+        file_url: str | None = None
     ) -> tuple[Document, list[Chunk]]:
-        """Process a file."""
-        parsed_file = await self.config.ocr_parser.parse(filepath)
+        """Process a file.
+
+        Args:
+            filepath (str): The path to the file to process.
+            id (str | None): The optional ID to assign to the document.
+            file_url (str | None): The optional URL to assign to the document.
+
+        Returns:
+            tuple[Document, list[Chunk]]: The processed document and its chunks.
+
+        """
+        parsed_file = await self.parser.parse(filepath)
 
         document_name = os.path.basename(filepath)
 
@@ -56,7 +57,7 @@ class ParsingPipeline:
 
         # move chunking to threadpool to avoid blocking event loop
         elements = await run_in_threadpool(
-            self.config.chunker.chunk_markdowns,
+            self.chunker.chunk_markdowns,
             parsed_file
         )
 
@@ -64,8 +65,24 @@ class ParsingPipeline:
             element.document_uid = document.id
             element.properties.document_label = TextProperty(text=document_name)
 
-        # embed and save chunks to vector store
-        await self.config.vector_store.add([document])
-        await self.config.vector_store.add(elements)
-
         return document, elements
+
+    async def save_to_store(
+        self,
+        graph_uid: str,
+        document: Document,
+        chunks: list[Chunk]
+    ) -> None:
+        """Save document and chunks to vector store.
+
+        Args:
+            graph_uid (str): The graph UID.
+            document (Document): The document to save.
+            chunks (list[Chunk]): The chunks to save.
+
+        """
+        document.graph_uid = graph_uid
+        for chunk in chunks:
+            chunk.graph_uid = graph_uid
+        await self.vector_store.add([document])
+        await self.vector_store.add(chunks)

@@ -1,5 +1,7 @@
 """GraphStore for managing graph data in the database."""
 
+from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue
+
 from topix.datatypes.graph.graph import Graph
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
@@ -73,21 +75,33 @@ class GraphStore:
         if not graph:
             return None
         node_results = await self._content_store.filt(
-            filters={
-                "must": [
-                    {"key": "type", "match": {"value": "note"}},
-                    {"key": "graph_uid", "match": {"value": graph_uid}},
+            filters=Filter(
+                must=[
+                    FieldCondition(
+                        key="graph_uid",
+                        match=MatchValue(value=graph_uid),
+                    ),
+                    FieldCondition(
+                        key="type",
+                        match=MatchAny(any=["note", "document"]),
+                    ),
                 ]
-            }
+            )
         )
         graph.nodes = [result.resource for result in node_results]
         link_results = await self._content_store.filt(
-            filters={
-                "must": [
-                    {"key": "type", "match": {"value": "link"}},
-                    {"key": "graph_uid", "match": {"value": graph_uid}},
+            filters=Filter(
+                must=[
+                    FieldCondition(
+                        key="graph_uid",
+                        match=MatchValue(value=graph_uid),
+                    ),
+                    FieldCondition(
+                        key="type",
+                        match=MatchValue(value="link"),
+                    ),
                 ]
-            }
+            )
         )
         graph.edges = [result.resource for result in link_results]
         return graph

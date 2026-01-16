@@ -1,5 +1,6 @@
 """IGraph-based graph layout utilities."""
 
+from enum import StrEnum
 from typing import Annotated
 
 from igraph import Graph
@@ -116,10 +117,19 @@ def displace_nodes(
     return displaced
 
 
+class LayoutDirection(StrEnum):
+    """Layout direction enum."""
+
+    TOP_BOTTOM = "TB"
+    BOTTOM_TOP = "BT"
+    LEFT_RIGHT = "LR"
+    RIGHT_LEFT = "RL"
+
+
 def layout_directed(
     nodes: list[str],
     edges: list[list[str]],
-    direction: str = "LR",
+    direction: LayoutDirection = LayoutDirection.LEFT_RIGHT,
     hgap: float = 75,
     vgap: float = 150,
 ) -> dict[str, tuple[float, float]]:
@@ -155,13 +165,13 @@ def layout_directed(
     coords = layout.coords  # list[(x, y)]
 
     # Apply Dagre-style direction transform
-    if direction == "TB":
+    if direction == LayoutDirection.TOP_BOTTOM:
         pass
-    elif direction == "BT":
+    elif direction == LayoutDirection.BOTTOM_TOP:
         coords = [(x, -y) for x, y in coords]
-    elif direction == "LR":
+    elif direction == LayoutDirection.LEFT_RIGHT:
         coords = [(y, x) for x, y in coords]
-    elif direction == "RL":
+    elif direction == LayoutDirection.RIGHT_LEFT:
         coords = [(-y, x) for x, y in coords]
     else:
         raise ValueError("direction must be one of: TB, BT, LR, RL")

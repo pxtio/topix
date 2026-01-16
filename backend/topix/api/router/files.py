@@ -2,10 +2,11 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
 from fastapi.params import File, Query
 
 from topix.api.utils.decorators import with_standard_response
+from topix.api.utils.resilient_streaming import with_resilient_request
 from topix.api.utils.security import get_current_user_uid
 from topix.nlp.pipeline.parsing import ParsingPipeline
 from topix.utils.common import gen_uid
@@ -60,11 +61,11 @@ async def upload_file(
 
 @router.post("/parse/", include_in_schema=False)
 @router.post("/parse")
+@with_resilient_request()
 @with_standard_response
 async def parse_file(
-    response: Response,
     request: Request,
-    background_tasks: BackgroundTasks,
+    graph_id: Annotated[str, Query(description="Graph ID")],
     file: UploadFile = File(..., description="File to parse"),
     id: Annotated[str | None, Query(description="Optional ID for the parsed document")] = None,
 ):
@@ -84,11 +85,20 @@ async def parse_file(
 
     pipeline: ParsingPipeline = request.app.parser_pipeline
 
-    doc, _ = await pipeline.process_file(filepath=true_path, id=id)
+    document, chunks, notes, links = await pipeline.process_file(
+        filepath=true_path,
+        id=id,
+    )
+    document, notes, links = await pipeline.save_to_store(
+        graph_uid=graph_id,
+        document=document,
+        chunks=chunks,
+        notes=notes,
+        links=links,
+    )
 
     return {
-        "status": "success",
-        "data": {
-            "message": "File parsing started in background"
-        }
+        "document": document.model_dump(exclude_none=True),
+        "notes": [note.model_dump(exclude_none=True) for note in notes],
+        "links": [link.model_dump(exclude_none=True) for link in links],
     }

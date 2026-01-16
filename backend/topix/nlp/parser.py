@@ -4,7 +4,7 @@ import base64
 import logging
 import os
 
-from mistralai import Mistral
+from mistralai import Mistral, OCRPageObject
 from pypdf import PdfReader
 
 from topix.config.config import Config, MistralConfig
@@ -65,7 +65,7 @@ class MistralParser():
             return MimeTypeEnum.PDF
         raise ValueError("Unsupported file format")
 
-    def post_process_page(self, page) -> dict[str, int | str]:
+    def post_process_page(self, page: OCRPageObject) -> dict[str, int | str]:
         """Post-process the page data returned by the Mistral OCR API and return a markdown string.
 
         Args:
@@ -97,7 +97,7 @@ class MistralParser():
         self,
         filepath: str,
         max_pages: int = 200,
-    ) -> dict[str, int | str]:
+    ) -> list[dict[str, int | str]]:
         """Parse the PDF document at the given file path using the Mistral OCR API.
 
         Args:

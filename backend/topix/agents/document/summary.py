@@ -3,6 +3,7 @@
 from agents import ModelSettings
 
 from topix.agents.base import BaseAgent
+from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.model_enum import ModelEnum
 
 
@@ -12,7 +13,7 @@ class DocumentSummaryAgent(BaseAgent):
     def __init__(
         self,
         model: str = ModelEnum.OpenAI.GPT_4O_MINI,
-        instructions_template: str = "document_summary.system.jinja",
+        instructions_template: str = "document/document_summary.system.jinja",
         model_settings: ModelSettings | None = None,
     ):
         """Initialize the Document Summary Agent."""
@@ -30,13 +31,14 @@ class DocumentSummaryAgent(BaseAgent):
         )
         super().__post_init__()
 
-    def _input_formatter(
+    async def _input_formatter(
         self,
+        context: Context,
         document_text: str,
     ) -> list[dict[str, str]]:
         """Format the input for the document summary agent."""
         prompt = self._render_prompt(
-            "document_summary.user.jinja",
+            "document/document_summary.user.jinja",
             document_text=document_text,
         )
 

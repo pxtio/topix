@@ -686,10 +686,8 @@ export interface GraphStore {
   draggingPointId?: string
   isSelectMode: boolean
   setIsSelectMode: (enabled: boolean) => void
-  isPanning: boolean
-  setIsPanning: (panning: boolean) => void
-  isZooming: boolean
-  setIsZooming: (zooming: boolean) => void
+  isMoving: boolean
+  setIsMoving: (moving: boolean) => void
   zoom: number
   setZoom: (zoom: number) => void
 
@@ -747,8 +745,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   isDragging: false,
   draggingPointId: undefined,
   isSelectMode: false,
-  isPanning: false,
-  isZooming: false,
+  isMoving: false,
   zoom: 1,
 
   // --- flexible setters ---
@@ -1321,13 +1318,9 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         nodesById: buildNodesById(nextNodes),
       }
     }),
-  setIsPanning: (panning) =>
+  setIsMoving: (moving) =>
     set((state) =>
-      state.isPanning === panning ? {} : { isPanning: panning },
-    ),
-  setIsZooming: (zooming) =>
-    set((state) =>
-      state.isZooming === zooming ? {} : { isZooming: zooming },
+      state.isMoving === moving ? {} : { isMoving: moving },
     ),
   setZoom: (zoom) =>
     set((state) =>

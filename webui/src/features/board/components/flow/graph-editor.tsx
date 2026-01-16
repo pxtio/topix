@@ -78,9 +78,6 @@ const drawableNodeTypes: NodeType[] = [
 ]
 
 const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(nodeType)
-const PAN_EPS = 0.01
-const ZOOM_EPS = 0.0001
-
 const ensureLinkData = (edge: LinkEdge): Link => edge.data as Link
 
 type ViewMode = 'graph' | 'linear'
@@ -227,10 +224,8 @@ export default function GraphEditor() {
   const isResizingNode = useGraphStore(state => state.isResizingNode)
   const isDragging = useGraphStore(state => state.isDragging)
   const setIsDragging = useGraphStore(state => state.setIsDragging)
-  const isPanning = useGraphStore(state => state.isPanning)
-  const setIsPanning = useGraphStore(state => state.setIsPanning)
-  const isZooming = useGraphStore(state => state.isZooming)
-  const setIsZooming = useGraphStore(state => state.setIsZooming)
+  const isMoving = useGraphStore(state => state.isMoving)
+  const setIsMoving = useGraphStore(state => state.setIsMoving)
   const setZoom = useGraphStore(state => state.setZoom)
   const graphViewports = useGraphStore(useShallow(state => state.graphViewports))
   const setGraphViewport = useGraphStore(state => state.setGraphViewport)
@@ -394,7 +389,6 @@ export default function GraphEditor() {
   })
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
-  const lastViewportRef = useRef<{ x: number; y: number; zoom: number } | null>(null)
 
   // Mindmap integration
   useEffect(() => {
@@ -436,11 +430,7 @@ export default function GraphEditor() {
   }, [setIsLocked])
 
   const getCurrentViewport = useCallback(() => {
-    return (
-      lastViewportRef.current ??
-      rfInstanceRef.current?.getViewport?.() ??
-      null
-    )
+    return rfInstanceRef.current?.getViewport?.() ?? null
   }, [])
 
   const handleMiniMapNavigate = useCallback(
@@ -461,35 +451,19 @@ export default function GraphEditor() {
   const handleSelectionDragStop = useCallback(() => setIsSelecting(false), [])
 
   useOnViewportChange({
-    onStart: vp => {
-      lastViewportRef.current = vp
-    },
-    onChange: vp => {
-      const prev = lastViewportRef.current
-      if (prev) {
-        const panChanged = Math.abs(prev.x - vp.x) > PAN_EPS || Math.abs(prev.y - vp.y) > PAN_EPS
-        const zoomChanged = Math.abs(prev.zoom - vp.zoom) > ZOOM_EPS
-        if (panChanged) {
-          setIsPanning(true)
-        }
-        if (zoomChanged) {
-          setIsZooming(true)
-        }
-      }
-      lastViewportRef.current = vp
+    onStart: () => {
+      setIsMoving(true)
     },
     onEnd: vp => {
       if (boardId) {
         setGraphViewport(boardId, vp)
       }
       setZoom(vp.zoom)
-      setIsPanning(false)
-      setIsZooming(false)
-      lastViewportRef.current = vp
+      setIsMoving(false)
     },
   })
 
-  const moving = isPanning || isZooming
+  const moving = isMoving
   const shouldHideFloatingUi = viewMode !== 'graph' || moving || isDragging || isResizingNode || isSelecting
   const miniMapTimeoutRef = useRef<number | null>(null)
   const stylePanelTimeoutRef = useRef<number | null>(null)

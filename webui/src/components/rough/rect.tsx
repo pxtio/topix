@@ -282,6 +282,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle])
 
   const scheduleRedraw = useCallback(() => {
+    if (isMoving) return
     if (rafRef.current !== null) return
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = null
@@ -291,9 +292,10 @@ export const RoughRect: React.FC<RoughRectProps> = ({
         draw(wrapper, canvas)
       }
     })
-  }, [draw])
+  }, [draw, isMoving])
 
   useEffect(() => {
+    if (isMoving) return
     const handleResize = () => scheduleRedraw()
     resizeObserverRef.current = new ResizeObserver(handleResize)
 
@@ -311,18 +313,18 @@ export const RoughRect: React.FC<RoughRectProps> = ({
         rafRef.current = null
       }
     }
-  }, [scheduleRedraw])
+  }, [isMoving, scheduleRedraw])
 
   const setWrapperRef = useCallback((node: HTMLDivElement | null) => {
     if (wrapperRef.current === node) return
     wrapperRef.current = node
-    if (!resizeObserverRef.current) return
+    if (!resizeObserverRef.current || isMoving) return
     resizeObserverRef.current.disconnect()
     if (node) {
       resizeObserverRef.current.observe(node)
       scheduleRedraw()
     }
-  }, [scheduleRedraw])
+  }, [isMoving, scheduleRedraw])
 
   const isSimplified = isMoving && !isResizing
 

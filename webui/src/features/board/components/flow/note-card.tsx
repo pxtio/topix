@@ -70,7 +70,7 @@ export const NodeCard = memo(({
           ? `w-[360px] ${fontFamilyToTwClass(fontFamily)} p-2 pt-8`
           : isText
           ? 'w-full h-full p-0'
-          : 'w-full h-full p-2'
+          : 'w-full h-full p-1'
       ),
     [isSheet, isText, fontFamily]
   )

@@ -5,7 +5,7 @@ type CacheEntry = {
 }
 
 const roughCanvasCache = new Map<string, CacheEntry>()
-const MAX_CACHE_ENTRIES = 200
+const MAX_CACHE_ENTRIES = 400
 
 const hasDocument = typeof document !== 'undefined'
 

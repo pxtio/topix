@@ -18,6 +18,7 @@ import { useShallow } from 'zustand/shallow'
 import NodeView from './node-view'
 import { PointNode } from './point-node'
 import { EdgeView } from './edge/edge-view'
+import { EdgeMarkerDefs } from './edge/edge-markers'
 import { GraphSidebar } from '../style-panel/panel'
 import { ActionPanel } from './action-panel'
 import { DefaultBoardView } from '../default-view'
@@ -610,6 +611,7 @@ export default function GraphEditor() {
                   onNodeContextMenu={onNodeContextMenu}
                   onEdgeDoubleClick={handleEdgeDoubleClick}
                 >
+                  <EdgeMarkerDefs edges={edges} />
                   {showMiniMap && !moving && !isDragging && !isResizingNode && !isSelecting && (
                     <NavigableMiniMap
                       nodes={nodes}

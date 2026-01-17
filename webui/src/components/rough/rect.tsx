@@ -351,7 +351,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     return (
       <div className={mainDivClass}>
         <div
-          className={clsx('absolute pointer-events-none m-0', roundedClass)}
+          className={clsx('absolute pointer-events-none m-0.75', roundedClass)}
           style={{
             inset: visualInset,
             background: fill || 'transparent',

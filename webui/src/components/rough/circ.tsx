@@ -321,7 +321,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     return (
       <div className={mainDivClass}>
         <div
-          className='absolute rounded-full m-0 pointer-events-none'
+          className='absolute rounded-full m-0.75 pointer-events-none'
           style={{
             inset: visualInset,
             background: fill || 'transparent',

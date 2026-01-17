@@ -36,7 +36,7 @@ export const SheetNodeView = memo(function SheetNodeView({
   onOpenSticky
 }: SheetNodeViewProps) {
   const suspendContent = useGraphStore(
-    state => state.isPanning || state.isZooming
+    state => state.isMoving
   )
   const [hidden, setHidden] = useState(false)
   const [contentReady, setContentReady] = useState(false)

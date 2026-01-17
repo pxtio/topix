@@ -136,8 +136,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
   const viewportZoom = useGraphStore(state => state.zoom ?? 1)
-  const isPanning = useGraphStore(state => state.isPanning)
-  const isZooming = useGraphStore(state => state.isZooming)
+  const isMoving = useGraphStore(state => state.isMoving)
   const isResizing = useGraphStore(state => state.isResizingNode)
   const effectiveZoom = quantizeZoom(viewportZoom || 1)
   const roundedClass = rounded === 'rounded-2xl' ? 'rounded-2xl' : 'rounded-none'
@@ -283,6 +282,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle])
 
   const scheduleRedraw = useCallback(() => {
+    if (isMoving) return
     if (rafRef.current !== null) return
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = null
@@ -292,9 +292,10 @@ export const RoughRect: React.FC<RoughRectProps> = ({
         draw(wrapper, canvas)
       }
     })
-  }, [draw])
+  }, [draw, isMoving])
 
   useEffect(() => {
+    if (isMoving) return
     const handleResize = () => scheduleRedraw()
     resizeObserverRef.current = new ResizeObserver(handleResize)
 
@@ -312,20 +313,20 @@ export const RoughRect: React.FC<RoughRectProps> = ({
         rafRef.current = null
       }
     }
-  }, [scheduleRedraw])
+  }, [isMoving, scheduleRedraw])
 
   const setWrapperRef = useCallback((node: HTMLDivElement | null) => {
     if (wrapperRef.current === node) return
     wrapperRef.current = node
-    if (!resizeObserverRef.current) return
+    if (!resizeObserverRef.current || isMoving) return
     resizeObserverRef.current.disconnect()
     if (node) {
       resizeObserverRef.current.observe(node)
       scheduleRedraw()
     }
-  }, [scheduleRedraw])
+  }, [isMoving, scheduleRedraw])
 
-  const isSimplified = (isPanning || isZooming) && !isResizing
+  const isSimplified = isMoving && !isResizing
 
   useEffect(() => {
     if (isSimplified) {
@@ -350,7 +351,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     return (
       <div className={mainDivClass}>
         <div
-          className={clsx('absolute pointer-events-none m-1', roundedClass)}
+          className={clsx('absolute pointer-events-none m-0.75', roundedClass)}
           style={{
             inset: visualInset,
             background: fill || 'transparent',

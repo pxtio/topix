@@ -116,11 +116,10 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
   const viewportZoom = useGraphStore(state => state.zoom ?? 1)
-  const isPanning = useGraphStore(state => state.isPanning)
-  const isZooming = useGraphStore(state => state.isZooming)
+  const isMoving = useGraphStore(state => state.isMoving)
   const isResizing = useGraphStore(state => state.isResizingNode)
   const effectiveZoom = quantizeZoom(viewportZoom || 1)
-  const isSimplified = (isPanning || isZooming) && !isResizing
+  const isSimplified = isMoving && !isResizing
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     const rect = wrapper.getBoundingClientRect()
@@ -255,6 +254,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   }, [roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle])
 
   const scheduleRedraw = useCallback(() => {
+    if (isMoving) return
     if (rafRef.current !== null) return
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = null
@@ -264,9 +264,10 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
         draw(wrapper, canvas)
       }
     })
-  }, [draw])
+  }, [draw, isMoving])
 
   useEffect(() => {
+    if (isMoving) return
     const handleResize = () => scheduleRedraw()
     resizeObserverRef.current = new ResizeObserver(handleResize)
 
@@ -284,18 +285,18 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
         rafRef.current = null
       }
     }
-  }, [scheduleRedraw])
+  }, [isMoving, scheduleRedraw])
 
   const setWrapperRef = useCallback((node: HTMLDivElement | null) => {
     if (wrapperRef.current === node) return
     wrapperRef.current = node
-    if (!resizeObserverRef.current) return
+    if (!resizeObserverRef.current || isMoving) return
     resizeObserverRef.current.disconnect()
     if (node) {
       resizeObserverRef.current.observe(node)
       scheduleRedraw()
     }
-  }, [scheduleRedraw])
+  }, [isMoving, scheduleRedraw])
 
   useEffect(() => {
     if (isSimplified) {
@@ -320,7 +321,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     return (
       <div className={mainDivClass}>
         <div
-          className='absolute rounded-full m-1 pointer-events-none'
+          className='absolute rounded-full m-0.75 pointer-events-none'
           style={{
             inset: visualInset,
             background: fill || 'transparent',

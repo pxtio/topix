@@ -3,7 +3,7 @@ import { generateUuid } from '@/lib/common'
 import type { LinkEdge, NoteNode } from '../types/flow'
 import type { Link } from '../types/link'
 import { createDefaultLinkProperties } from '../types/link'
-import { createDefaultLinkStyle } from '../types/style'
+import type { LinkStyle } from '../types/style'
 import { pointInNode } from './flow'
 import { POINT_NODE_SIZE } from '../components/flow/point-node'
 import { computeAttachment } from './point-attach'
@@ -15,6 +15,7 @@ type LinePlacementInput = {
   end: Point
   boardId: string
   internalNodes: Map<string, InternalNode<Node>>
+  style: LinkStyle
 }
 
 type LinePlacementResult = {
@@ -27,6 +28,7 @@ export function buildLinePlacement({
   end,
   boardId,
   internalNodes,
+  style,
 }: LinePlacementInput): LinePlacementResult {
   const candidateNodes = Array.from(internalNodes.values()).filter(n => {
     const data = n.data as { kind?: string } | undefined
@@ -106,7 +108,7 @@ export function buildLinePlacement({
         startPoint: { type: 'position', position: pointA.position },
         endPoint: { type: 'position', position: pointB.position },
       },
-      style: { ...createDefaultLinkStyle(), pathStyle: 'bezier' },
+      style: { ...style, pathStyle: 'bezier' },
       createdAt: new Date().toISOString(),
       graphUid: boardId,
     } as Link,

@@ -17,7 +17,7 @@ import {
   cssDashArray,
 } from './edge-geometry'
 import { useEdgeGeometry } from './use-edge-geometry'
-import { useGraphStore } from '../../../store/graph-store'
+import { useControlPointDrag } from './use-control-point-drag'
 import {
   BASE_HEAD_SIZE,
   HEAD_SCALE,
@@ -55,7 +55,6 @@ function isFinitePoint(point: Partial<Point> | null | undefined): point is Point
  * Renders an edge between two nodes, with optional arrowheads, label, and control point.
  */
 export const EdgeView = memo(function EdgeView({
-  id,
   source,
   target,
   style = {},
@@ -65,8 +64,6 @@ export const EdgeView = memo(function EdgeView({
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const { screenToFlowPosition } = useReactFlow()
-  const moveEdgeEndpointsByDelta = useGraphStore((state) => state.moveEdgeEndpointsByDelta)
-  const persistEdgeById = useGraphStore((state) => state.persistEdgeById)
 
   const sourceNode = useInternalNode(source)
   const targetNode = useInternalNode(target)
@@ -75,7 +72,6 @@ export const EdgeView = memo(function EdgeView({
   const attachedSourceNode = useInternalNode(attachedSourceId || '')
   const attachedTargetNode = useInternalNode(attachedTargetId || '')
   const [bendPointDrag, setBendPointDrag] = useState<Point | null>(null)
-  const bendPointDragRef = useRef<Point | null>(null)
 
   const edgeExtras = (data ?? {}) as EdgeRenderData
 
@@ -207,132 +203,19 @@ export const EdgeView = memo(function EdgeView({
     }
   }
 
-  const updateBendPoint = (point: Point | null) => {
-    setBendPointDrag(point)
-    bendPointDragRef.current = point
-  }
-
-  const dragStartRef = useRef<Point | null>(null)
-  const edgeMoveRef = useRef<((event: PointerEvent) => void) | null>(null)
-  const edgeUpRef = useRef<((event: PointerEvent) => void) | null>(null)
-  const controlMoveRef = useRef<((event: PointerEvent) => void) | null>(null)
-  const controlUpRef = useRef<((event: PointerEvent) => void) | null>(null)
+  const { dragPoint: controlPointDrag, handlePointerDown: handleControlPointPointerDown } =
+    useControlPointDrag({
+      screenToFlowPosition,
+      onCommit: edgeData.onControlPointChange,
+    })
 
   useEffect(() => {
-    return () => {
-      if (edgeMoveRef.current) {
-        window.removeEventListener('pointermove', edgeMoveRef.current)
-      }
-      if (edgeUpRef.current) {
-        window.removeEventListener('pointerup', edgeUpRef.current)
-        window.removeEventListener('pointercancel', edgeUpRef.current)
-      }
-      if (controlMoveRef.current) {
-        window.removeEventListener('pointermove', controlMoveRef.current)
-      }
-      if (controlUpRef.current) {
-        window.removeEventListener('pointerup', controlUpRef.current)
-        window.removeEventListener('pointercancel', controlUpRef.current)
-      }
+    if (controlPointDrag) {
+      setBendPointDrag(controlPointDrag)
+      return
     }
-  }, [])
-
-  const handleEdgePointerDown = (event: React.PointerEvent<SVGPathElement>) => {
-    if (event.button !== 0) return
-    event.stopPropagation()
-    event.preventDefault()
-
-    const start = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-    dragStartRef.current = start
-
-    if (edgeMoveRef.current) {
-      window.removeEventListener('pointermove', edgeMoveRef.current)
-      edgeMoveRef.current = null
-    }
-    if (edgeUpRef.current) {
-      window.removeEventListener('pointerup', edgeUpRef.current)
-      window.removeEventListener('pointercancel', edgeUpRef.current)
-      edgeUpRef.current = null
-    }
-
-    const handleMove = (moveEvent: PointerEvent) => {
-      const current = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY })
-      const prev = dragStartRef.current
-      if (!prev) return
-      const delta = { x: current.x - prev.x, y: current.y - prev.y }
-      dragStartRef.current = current
-      moveEdgeEndpointsByDelta(id, delta)
-    }
-
-    const handleUp = () => {
-      dragStartRef.current = null
-      if (edgeMoveRef.current) {
-        window.removeEventListener('pointermove', edgeMoveRef.current)
-        edgeMoveRef.current = null
-      }
-      if (edgeUpRef.current) {
-        window.removeEventListener('pointerup', edgeUpRef.current)
-        window.removeEventListener('pointercancel', edgeUpRef.current)
-        edgeUpRef.current = null
-      }
-      persistEdgeById(id)
-    }
-
-    edgeMoveRef.current = handleMove
-    edgeUpRef.current = handleUp
-    window.addEventListener('pointermove', handleMove)
-    window.addEventListener('pointerup', handleUp)
-    window.addEventListener('pointercancel', handleUp)
-  }
-
-  const handleControlPointPointerDown = (event: React.PointerEvent<SVGCircleElement>) => {
-    if (!edgeData.onControlPointChange) return
-    event.stopPropagation()
-    event.preventDefault()
-
-    const updateFromEvent = (clientX: number, clientY: number) => {
-      const projected = screenToFlowPosition({ x: clientX, y: clientY })
-      updateBendPoint(projected)
-    }
-
-    if (controlMoveRef.current) {
-      window.removeEventListener('pointermove', controlMoveRef.current)
-      controlMoveRef.current = null
-    }
-    if (controlUpRef.current) {
-      window.removeEventListener('pointerup', controlUpRef.current)
-      window.removeEventListener('pointercancel', controlUpRef.current)
-      controlUpRef.current = null
-    }
-
-    const handleMove = (moveEvent: PointerEvent) => {
-      updateFromEvent(moveEvent.clientX, moveEvent.clientY)
-    }
-
-    const handleUp = () => {
-      if (controlMoveRef.current) {
-        window.removeEventListener('pointermove', controlMoveRef.current)
-        controlMoveRef.current = null
-      }
-      if (controlUpRef.current) {
-        window.removeEventListener('pointerup', controlUpRef.current)
-        window.removeEventListener('pointercancel', controlUpRef.current)
-        controlUpRef.current = null
-      }
-      const finalPoint = bendPointDragRef.current
-      if (finalPoint) {
-        edgeData.onControlPointChange?.(finalPoint)
-      }
-      updateBendPoint(null)
-    }
-
-    updateFromEvent(event.clientX, event.clientY)
-    controlMoveRef.current = handleMove
-    controlUpRef.current = handleUp
-    window.addEventListener('pointermove', handleMove)
-    window.addEventListener('pointerup', handleUp)
-    window.addEventListener('pointercancel', handleUp)
-  }
+    setBendPointDrag(null)
+  }, [controlPointDrag])
 
   if (!geom || !pathData || !renderedStart || !renderedEnd || !labelTransformStyle || isInvalid) {
     return null
@@ -347,18 +230,6 @@ export const EdgeView = memo(function EdgeView({
 
   return (
     <>
-      {selected && (
-        <path
-          d={pathData.path}
-          fill="none"
-          stroke="transparent"
-          strokeWidth={Math.max(12, strokeWidth * 6)}
-          pointerEvents="stroke"
-          className="cursor-move"
-          onPointerDown={handleEdgePointerDown}
-        />
-      )}
-
       <BaseEdge
         path={pathData.path}
         style={edgeStrokeStyle}

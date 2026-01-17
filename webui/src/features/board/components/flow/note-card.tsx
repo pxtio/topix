@@ -37,7 +37,6 @@ export const NodeCard = memo(({
   contentRef
 }: NodeCardProps) => {
   const isSheet = note.style.type === 'sheet'
-  const isText = note.style.type === 'text'
 
   const navigate = useNavigate()
 
@@ -68,11 +67,9 @@ export const NodeCard = memo(({
         'relative bg-transparent overflow-visible flex items-center justify-center',
         isSheet
           ? `w-[360px] ${fontFamilyToTwClass(fontFamily)} p-2 pt-8`
-          : isText
-          ? 'w-full h-full p-0'
-          : 'w-full h-full p-2'
+          : 'w-full h-full p-0'
       ),
-    [isSheet, isText, fontFamily]
+    [isSheet, fontFamily]
   )
 
   const setDialogOpen = useCallback(

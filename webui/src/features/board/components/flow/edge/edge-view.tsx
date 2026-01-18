@@ -118,7 +118,7 @@ export const EdgeView = memo(function EdgeView({
   const headSize = BASE_HEAD_SIZE * HEAD_SCALE
   const arrowLength = headSize * (TIP_FACTOR - BASE_X_FACTOR)
   // pull endpoints back so head sits off the node (scaled with head length)
-  const arrowOffset = arrowLength * ARROW_CLEARANCE_FACTOR
+  const arrowOffset = arrowLength * ARROW_CLEARANCE_FACTOR + 6
 
   const pathStyle = linkStyle?.pathStyle ?? 'bezier'
   const isBezierPath = pathStyle === 'bezier'

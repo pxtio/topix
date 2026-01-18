@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { memo, useCallback, useEffect, useRef } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
 import type { Options as RoughOptions } from 'roughjs/bin/core'
 import clsx from 'clsx'
@@ -36,6 +36,75 @@ type DrawConfig = {
   dpr: number
   renderScale: number
 }
+
+type SimplifiedRectOverlayProps = {
+  rounded: RoundedClass
+  fill?: string
+  stroke?: string
+  strokeStyle?: StrokeStyle
+  strokeWidth?: number
+  visualInset: number
+}
+
+const SimplifiedRectOverlay = memo(function SimplifiedRectOverlay({
+  rounded,
+  fill,
+  stroke,
+  strokeStyle,
+  strokeWidth,
+  visualInset
+}: SimplifiedRectOverlayProps) {
+  const roundedClass = rounded === 'rounded-2xl' ? 'rounded-2xl' : 'rounded-none'
+  const hasStroke = stroke && stroke !== 'transparent' && (strokeWidth ?? 1) > 0
+  const useSvgDash = hasStroke && (strokeStyle === 'dashed' || strokeStyle === 'dotted')
+  const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+  const dashArray = strokeLineDash ? strokeLineDash.join(' ') : undefined
+  const borderInset = Math.max(0, visualInset)
+  const sizeCalc = `calc(100% - ${borderInset * 2}px)`
+  const radius = rounded === 'rounded-2xl' ? 16 : 0
+
+  if (useSvgDash) {
+    return (
+      <svg
+        className='absolute pointer-events-none m-0.75'
+        style={{
+          inset: visualInset,
+          zIndex: 10,
+          overflow: 'visible',
+          width: 'calc(100% - 0.375rem)',
+          height: 'calc(100% - 0.375rem)',
+        }}
+      >
+        <rect
+          x={borderInset}
+          y={borderInset}
+          width={sizeCalc}
+          height={sizeCalc}
+          rx={radius}
+          ry={radius}
+          fill={fill || 'transparent'}
+          stroke={stroke || 'transparent'}
+          strokeWidth={strokeWidth ?? 1}
+          strokeDasharray={dashArray}
+          strokeLinecap={lineCap}
+        />
+      </svg>
+    )
+  }
+
+  return (
+    <div
+      className={clsx('absolute pointer-events-none m-0.75', roundedClass)}
+      style={{
+        inset: visualInset,
+        background: fill || 'transparent',
+        border: `${strokeWidth ?? 1}px solid ${stroke || 'transparent'}`,
+        borderStyle: strokeStyle === 'dashed' ? 'dashed' : strokeStyle === 'dotted' ? 'dotted' : 'solid',
+        zIndex: 10,
+      }}
+    />
+  )
+})
 
 const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
   if (!a) return false
@@ -139,7 +208,6 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   const isMoving = useGraphStore(state => state.isMoving)
   const isResizing = useGraphStore(state => state.isResizingNode)
   const effectiveZoom = quantizeZoom(viewportZoom || 1)
-  const roundedClass = rounded === 'rounded-2xl' ? 'rounded-2xl' : 'rounded-none'
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     const rect = wrapper.getBoundingClientRect()
@@ -350,15 +418,13 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   if (isSimplified) {
     return (
       <div className={mainDivClass}>
-        <div
-          className={clsx('absolute pointer-events-none m-0.75', roundedClass)}
-          style={{
-            inset: visualInset,
-            background: fill || 'transparent',
-            border: `${strokeWidth ?? 1}px solid ${stroke || 'transparent'}`,
-            borderStyle: strokeStyle === 'dashed' ? 'dashed' : strokeStyle === 'dotted' ? 'dotted' : 'solid',
-            zIndex: 10,
-          }}
+        <SimplifiedRectOverlay
+          rounded={rounded}
+          fill={fill}
+          stroke={stroke}
+          strokeStyle={strokeStyle}
+          strokeWidth={strokeWidth}
+          visualInset={visualInset}
         />
         <div className='relative z-20 w-full h-full'>
           {children}

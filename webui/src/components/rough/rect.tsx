@@ -305,8 +305,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       offCtx.setTransform(1, 0, 0, 1, 0, 0)
       offCtx.clearRect(0, 0, target.width, target.height)
       offCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0)
-      const strokeInset = effectiveStrokeWidth / 2
-      offCtx.translate(bleed - strokeInset, bleed - strokeInset)
+      offCtx.translate(bleed, bleed)
 
       const rc = new RoughCanvas(target)
       const drawable = rc.generator.path(pathData, {
@@ -442,7 +441,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       <canvas
         ref={canvasRef}
         className='absolute pointer-events-none'
-        style={{ inset: visualInset, zIndex: 10, background: 'transparent' }}
+        style={{ inset: hairlineInset, zIndex: 10, background: 'transparent' }}
       />
       <div className='relative z-20 w-full h-full'>
         {children}

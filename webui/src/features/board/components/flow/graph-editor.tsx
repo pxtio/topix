@@ -236,7 +236,6 @@ export default function GraphEditor() {
   const mindmaps = useMindMapStore(state => state.mindmaps)
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
 
-
   useCopyPasteNodes({
     jitterMax: 40,
     shortcuts: true,

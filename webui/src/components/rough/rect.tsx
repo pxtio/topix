@@ -67,7 +67,7 @@ const SimplifiedRectOverlay = memo(function SimplifiedRectOverlay({
   if (useSvgDash) {
     return (
       <svg
-        className='absolute pointer-events-none'
+        className='absolute pointer-events-none m-0.375'
         style={{
           inset: visualInset,
           zIndex: 10,

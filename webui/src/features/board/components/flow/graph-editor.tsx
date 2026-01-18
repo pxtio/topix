@@ -164,6 +164,8 @@ function GraphView({
       minZoom={0.32}
       onlyRenderVisibleElements
       onInit={onInit}
+      elevateNodesOnSelect={false}
+      elevateEdgesOnSelect={true}
     >
       {children}
     </ReactFlow>

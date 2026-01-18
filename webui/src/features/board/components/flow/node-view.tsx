@@ -27,7 +27,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   // measure content & drive minHeight
   const { contentRef, computedMinH } = useContentMinHeight(
     id,
-    24,
+    0,
     20,
   )
 

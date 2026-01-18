@@ -164,6 +164,8 @@ function GraphView({
       minZoom={0.32}
       onlyRenderVisibleElements
       onInit={onInit}
+      elevateNodesOnSelect={false}
+      elevateEdgesOnSelect={true}
     >
       {children}
     </ReactFlow>
@@ -233,7 +235,6 @@ export default function GraphEditor() {
 
   const mindmaps = useMindMapStore(state => state.mindmaps)
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
-
 
   useCopyPasteNodes({
     jitterMax: 40,

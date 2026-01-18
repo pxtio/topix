@@ -13,7 +13,7 @@ import { useUpdateNodeInternals } from '@xyflow/react'
  * @param floor - Minimum height floor value (default is 100).
  * @returns An object containing a ref to attach to the content element and the computed minimum height.
  */
-export function useContentMinHeight(nodeId: string, extra = 24, floor = 100) {
+export function useContentMinHeight(nodeId: string, extra = 0, floor = 100) {
   const updateNodeInternals = useUpdateNodeInternals()
   const contentRef = useRef<HTMLDivElement | null>(null)
   const [contentH, setContentH] = useState(0)

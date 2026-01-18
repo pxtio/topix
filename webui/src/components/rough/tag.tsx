@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
 import type { Options as RoughOptions } from 'roughjs/bin/core'
 import clsx from 'clsx'
@@ -32,6 +32,58 @@ type DrawConfig = {
   dpr: number
   renderScale: number
 }
+
+type SimplifiedTagOverlayProps = {
+  stroke?: string
+  strokeStyle?: StrokeStyle
+  strokeWidth?: number
+  fill?: string
+  viewBoxWidth: number
+  viewBoxHeight: number
+}
+
+const SimplifiedTagOverlay = memo(function SimplifiedTagOverlay({
+  stroke,
+  strokeStyle,
+  strokeWidth,
+  fill,
+  viewBoxWidth,
+  viewBoxHeight
+}: SimplifiedTagOverlayProps) {
+  const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+  const dashArray = strokeLineDash ? strokeLineDash.join(' ') : undefined
+  const viewBoxW = Math.max(1, viewBoxWidth)
+  const viewBoxH = Math.max(1, viewBoxHeight)
+  const notch = Math.min(viewBoxH * 0.45, viewBoxW * 0.3)
+  const radius = Math.min(viewBoxH / 2, viewBoxW / 4, 18)
+  const pathData = tagPath(viewBoxW, viewBoxH, notch, radius)
+
+  return (
+    <svg
+      className='absolute pointer-events-none m-0.75'
+      style={{
+        inset: 0,
+        zIndex: 10,
+        overflow: 'visible',
+        width: 'calc(100% - 0.375rem)',
+        height: 'calc(100% - 0.375rem)',
+      }}
+      viewBox={`0 0 ${viewBoxW} ${viewBoxH}`}
+      preserveAspectRatio="none"
+    >
+      <path
+        d={pathData}
+        fill={fill || 'transparent'}
+        stroke={stroke || 'transparent'}
+        strokeWidth={strokeWidth ?? 1}
+        strokeDasharray={dashArray}
+        strokeLinecap={lineCap}
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  )
+})
 
 const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
   if (!a) return false
@@ -205,9 +257,13 @@ export const RoughTag: React.FC<RoughShapeProps> = ({
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
   const viewportZoom = useGraphStore(state => state.zoom ?? 1)
+  const isMoving = useGraphStore(state => state.isMoving)
+  const isResizing = useGraphStore(state => state.isResizingNode)
   const effectiveZoom = quantizeZoom(viewportZoom || 1)
+  const [overlaySize, setOverlaySize] = useState({ width: 0, height: 0 })
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
+    if (isMoving && !isResizing) return
     const rect = wrapper.getBoundingClientRect()
     const cssW = Math.max(1, wrapper.clientWidth || Math.floor(rect.width))
     const cssH = Math.max(1, wrapper.clientHeight || Math.floor(rect.height))
@@ -330,7 +386,7 @@ export const RoughTag: React.FC<RoughShapeProps> = ({
     ctx.drawImage(offscreen, 0, 0)
 
     lastConfigRef.current = config
-  }, [roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle])
+  }, [roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle, isMoving, isResizing])
 
   const scheduleRedraw = useCallback(() => {
     if (rafRef.current !== null) return
@@ -349,11 +405,18 @@ export const RoughTag: React.FC<RoughShapeProps> = ({
     const canvas = canvasRef.current
     if (!wrapper || !canvas) return
 
-    const handleResize = () => scheduleRedraw()
+    const handleResize = () => {
+      const width = wrapper.clientWidth
+      const height = wrapper.clientHeight
+      setOverlaySize(prev => (
+        prev.width === width && prev.height === height ? prev : { width, height }
+      ))
+      scheduleRedraw()
+    }
     const ro = new ResizeObserver(handleResize)
     ro.observe(wrapper)
 
-    scheduleRedraw()
+    handleResize()
 
     return () => {
       ro.disconnect()
@@ -365,13 +428,31 @@ export const RoughTag: React.FC<RoughShapeProps> = ({
   }, [scheduleRedraw])
 
   const mainDivClass = clsx('relative', className || '')
+  const isSimplified = isMoving && !isResizing
+  const overlayViewBox = useMemo(() => {
+    const inset = 6
+    return {
+      width: Math.max(1, overlaySize.width - inset),
+      height: Math.max(1, overlaySize.height - inset),
+    }
+  }, [overlaySize.height, overlaySize.width])
 
   return (
     <div ref={wrapperRef} className={mainDivClass}>
+      {isSimplified && (
+        <SimplifiedTagOverlay
+          stroke={stroke}
+          strokeStyle={strokeStyle}
+          strokeWidth={strokeWidth}
+          fill={fill}
+          viewBoxWidth={overlayViewBox.width}
+          viewBoxHeight={overlayViewBox.height}
+        />
+      )}
       <canvas
         ref={canvasRef}
         className='absolute inset-0 w-full h-full pointer-events-none'
-        style={{ zIndex: 10, background: 'transparent' }}
+        style={{ zIndex: 10, background: 'transparent', opacity: isSimplified ? 0 : 1 }}
       />
       <div className='relative z-20 w-full h-full'>
         {children}

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
 import type { Options as RoughOptions } from 'roughjs/bin/core'
 import clsx from 'clsx'
@@ -39,6 +39,67 @@ type DrawConfig = {
   dpr: number
   renderScale: number
 }
+
+type SimplifiedDiamondOverlayProps = {
+  rounded: RoundedClass
+  stroke?: string
+  strokeStyle?: StrokeStyle
+  strokeWidth?: number
+  fill?: string
+  viewBoxWidth: number
+  viewBoxHeight: number
+}
+
+const SimplifiedDiamondOverlay = memo(function SimplifiedDiamondOverlay({
+  rounded,
+  stroke,
+  strokeStyle,
+  strokeWidth,
+  fill,
+  viewBoxWidth,
+  viewBoxHeight,
+}: SimplifiedDiamondOverlayProps) {
+  const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+  const dashArray = strokeLineDash ? strokeLineDash.join(' ') : undefined
+  const viewW = Math.max(1, viewBoxWidth)
+  const viewH = Math.max(1, viewBoxHeight)
+  const inset = 1
+  const x0 = inset
+  const y0 = inset
+  const x1 = viewW - inset
+  const y1 = viewH - inset
+  const baseRadius = rounded === 'rounded-2xl' ? 16 : 0
+  const pathData =
+    baseRadius > 0
+      ? roundedDiamondPath(x0, y0, x1, y1, baseRadius)
+      : sharpDiamondPath(x0, y0, x1, y1)
+
+  return (
+    <svg
+      className='absolute pointer-events-none m-0.75'
+      style={{
+        inset: 0,
+        zIndex: 10,
+        overflow: 'visible',
+        width: 'calc(100% - 0.375rem)',
+        height: 'calc(100% - 0.375rem)',
+      }}
+      viewBox={`0 0 ${viewW} ${viewH}`}
+      preserveAspectRatio="none"
+    >
+      <path
+        d={pathData}
+        fill={fill || 'transparent'}
+        stroke={stroke || 'transparent'}
+        strokeWidth={strokeWidth ?? 1}
+        strokeDasharray={dashArray}
+        strokeLinecap={lineCap}
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  )
+})
 
 const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
   if (!a) return false
@@ -216,9 +277,13 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
   const viewportZoom = useGraphStore(state => state.zoom ?? 1)
+  const isMoving = useGraphStore(state => state.isMoving)
+  const isResizing = useGraphStore(state => state.isResizingNode)
   const effectiveZoom = quantizeZoom(viewportZoom || 1)
+  const [overlaySize, setOverlaySize] = useState({ width: 0, height: 0 })
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
+    if (isMoving && !isResizing) return
     const rect = wrapper.getBoundingClientRect()
     const cssW = Math.max(1, wrapper.clientWidth || Math.floor(rect.width))
     const cssH = Math.max(1, wrapper.clientHeight || Math.floor(rect.height))
@@ -354,7 +419,7 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     ctx.drawImage(offscreen, 0, 0)
 
     lastConfigRef.current = config
-  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle])
+  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle, isMoving, isResizing])
 
   const scheduleRedraw = useCallback(() => {
     if (rafRef.current !== null) return
@@ -373,11 +438,18 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     const canvas = canvasRef.current
     if (!wrapper || !canvas) return
 
-    const handleResize = () => scheduleRedraw()
+    const handleResize = () => {
+      const width = wrapper.clientWidth
+      const height = wrapper.clientHeight
+      setOverlaySize(prev => (
+        prev.width === width && prev.height === height ? prev : { width, height }
+      ))
+      scheduleRedraw()
+    }
     const ro = new ResizeObserver(handleResize)
     ro.observe(wrapper)
 
-    scheduleRedraw()
+    handleResize()
 
     return () => {
       ro.disconnect()
@@ -388,12 +460,39 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     }
   }, [scheduleRedraw])
 
+  const isSimplified = isMoving && !isResizing
+  const mainDivClass = clsx('relative', className || '')
+  const overlayViewBox = useMemo(() => {
+    const inset = 6
+    return {
+      width: Math.max(1, overlaySize.width - inset),
+      height: Math.max(1, overlaySize.height - inset),
+    }
+  }, [overlaySize.height, overlaySize.width])
+
+  useEffect(() => {
+    if (!isSimplified) {
+      scheduleRedraw()
+    }
+  }, [isSimplified, scheduleRedraw])
+
   return (
-    <div ref={wrapperRef} className={clsx('relative', className || '')}>
+    <div ref={wrapperRef} className={mainDivClass}>
+      {isSimplified && (
+        <SimplifiedDiamondOverlay
+          rounded={rounded}
+          stroke={stroke}
+          strokeStyle={strokeStyle}
+          strokeWidth={strokeWidth}
+          fill={fill}
+          viewBoxWidth={overlayViewBox.width}
+          viewBoxHeight={overlayViewBox.height}
+        />
+      )}
       <canvas
         ref={canvasRef}
         className='absolute inset-0 w-full h-full pointer-events-none'
-        style={{ zIndex: 10, background: 'transparent' }}
+        style={{ zIndex: 10, background: 'transparent', opacity: isSimplified ? 0 : 1 }}
       />
       <div className='relative z-20 w-full h-full'>
         {children}

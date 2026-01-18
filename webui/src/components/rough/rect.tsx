@@ -54,19 +54,20 @@ const SimplifiedRectOverlay = memo(function SimplifiedRectOverlay({
   strokeWidth,
   visualInset
 }: SimplifiedRectOverlayProps) {
-  const roundedClass = rounded === 'rounded-2xl' ? 'rounded-2xl' : 'rounded-none'
+  const roundedClass = rounded === 'rounded-2xl' ? 'rounded-[14px]' : 'rounded-none'
   const hasStroke = stroke && stroke !== 'transparent' && (strokeWidth ?? 1) > 0
   const useSvgDash = hasStroke && (strokeStyle === 'dashed' || strokeStyle === 'dotted')
   const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
   const dashArray = strokeLineDash ? strokeLineDash.join(' ') : undefined
   const borderInset = Math.max(0, visualInset)
-  const sizeCalc = `calc(100% - ${borderInset * 2}px)`
+  const halfStroke = (strokeWidth ?? 1) / 2
+  const sizeCalc = `calc(100% - ${(borderInset + halfStroke) * 2}px)`
   const radius = rounded === 'rounded-2xl' ? 16 : 0
 
   if (useSvgDash) {
     return (
       <svg
-        className='absolute pointer-events-none m-0.75'
+        className='absolute pointer-events-none'
         style={{
           inset: visualInset,
           zIndex: 10,
@@ -76,8 +77,8 @@ const SimplifiedRectOverlay = memo(function SimplifiedRectOverlay({
         }}
       >
         <rect
-          x={borderInset}
-          y={borderInset}
+          x={borderInset + halfStroke}
+          y={borderInset + halfStroke}
           width={sizeCalc}
           height={sizeCalc}
           rx={radius}
@@ -220,8 +221,9 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     // oversample backing store for zoom-in, clamped to avoid runaway buffers
     const oversample = oversampleForZoom(effectiveZoom)
 
+    const effectiveStrokeWidth = stroke === 'transparent' ? 0 : (strokeWidth ?? 1)
     // add a bleed in CSS units (display px), enough for stroke + jitter
-    const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 2)
+    const bleed = Math.ceil(effectiveStrokeWidth / 2 + (roughness ?? 1.2) * 1.5 + 2)
 
     const paddedWidth = cssW + bleed * 2
     const paddedHeight = cssH + bleed * 2
@@ -249,7 +251,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       roughness,
       stroke,
       strokeStyle,
-      strokeWidth,
+      strokeWidth: effectiveStrokeWidth,
       fill,
       fillStyle,
       seed,
@@ -263,8 +265,9 @@ export const RoughRect: React.FC<RoughRectProps> = ({
 
     const visibleStroke = stroke === 'transparent' && !fill ? '#222' : stroke
 
-    // hairline crispness without eating tiny boxes
-    const inset = (strokeWidth ?? 1) <= 1.5 ? Math.min(0.5, cssW / 4, cssH / 4) : 0
+    // hairline crispness without eating tiny boxes; include half stroke so outer edge aligns
+    const insetBase = Math.min(0.5, cssW / 4, cssH / 4)
+    const inset = insetBase + effectiveStrokeWidth / 2
     const w = Math.max(0, cssW - inset * 2)
     const h = Math.max(0, cssH - inset * 2)
 
@@ -275,7 +278,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       ? excalidrawRoundedRectPath(inset, inset, w, h, radius)
       : rectPath(inset, inset, w, h)
 
-    const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+    const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, effectiveStrokeWidth)
     const apparentSize = Math.max(cssW, cssH) * Math.min(1, effectiveZoom)
     const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(apparentSize)
 
@@ -285,7 +288,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       roughness,
       visibleStroke,
       strokeStyle,
-      strokeWidth,
+      effectiveStrokeWidth,
       fill || '',
       fillStyle || '',
       seed,
@@ -302,13 +305,14 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       offCtx.setTransform(1, 0, 0, 1, 0, 0)
       offCtx.clearRect(0, 0, target.width, target.height)
       offCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0)
-      offCtx.translate(bleed, bleed)
+      const strokeInset = effectiveStrokeWidth / 2
+      offCtx.translate(bleed - strokeInset, bleed - strokeInset)
 
       const rc = new RoughCanvas(target)
       const drawable = rc.generator.path(pathData, {
         roughness,
         stroke: visibleStroke,
-        strokeWidth: strokeWidth ?? 1,
+        strokeWidth: effectiveStrokeWidth,
         fill,
         fillStyle,
         fillWeight: 1,

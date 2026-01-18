@@ -59,7 +59,7 @@ const SimplifiedCircleOverlay = memo(function SimplifiedCircleOverlay({
   if (useSvgDash) {
     return (
       <svg
-        className='absolute pointer-events-none m-0.75'
+        className='absolute pointer-events-none'
         style={{
           inset: visualInset,
           zIndex: 10,
@@ -197,9 +197,10 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
     const oversample = oversampleForZoom(effectiveZoom)
 
+    const effectiveStrokeWidth = stroke === 'transparent' ? 0 : (strokeWidth ?? 1)
     // bleed so jitter/stroke won't clip
     // add a tiny extra margin to avoid clipping at seams
-    const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 3)
+    const bleed = Math.ceil(effectiveStrokeWidth / 2 + (roughness ?? 1.2) * 1.5 + 3)
 
     const paddedWidth = cssW + bleed * 2
     const paddedHeight = cssH + bleed * 2
@@ -226,7 +227,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
       roughness,
       stroke,
       strokeStyle,
-      strokeWidth,
+      strokeWidth: effectiveStrokeWidth,
       fill,
       fillStyle,
       seed,
@@ -247,7 +248,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     const ellipseW = innerW
     const ellipseH = innerH
 
-    const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+    const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, effectiveStrokeWidth)
     const apparentSize = Math.max(cssW, cssH) * Math.min(1, effectiveZoom)
     const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(apparentSize)
 
@@ -256,7 +257,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
       roughness,
       visibleStroke,
       strokeStyle,
-      strokeWidth,
+      effectiveStrokeWidth,
       fill || '',
       fillStyle || '',
       seed,
@@ -273,13 +274,14 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
       offCtx.setTransform(1, 0, 0, 1, 0, 0)
       offCtx.clearRect(0, 0, target.width, target.height)
       offCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0)
-      offCtx.translate(bleed, bleed)
+      const strokeInset = effectiveStrokeWidth / 2
+      offCtx.translate(bleed - strokeInset, bleed - strokeInset)
 
       const rc = new RoughCanvas(target)
       const drawable = rc.generator.ellipse(cx, cy, ellipseW, ellipseH, {
         roughness,
         stroke: visibleStroke,
-        strokeWidth: strokeWidth ?? 1,
+        strokeWidth: effectiveStrokeWidth,
         fill,
         fillStyle,
         fillWeight: 1,

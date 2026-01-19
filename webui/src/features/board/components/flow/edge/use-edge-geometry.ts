@@ -35,6 +35,7 @@ type GeometryResult = {
   renderedStart: Point | null
   renderedEnd: Point | null
   insideSegments: string[]
+  bezierPoints: { p0: Point; p1: Point; p2: Point } | null
   displayBendPoint: Point | null
   isInvalid: boolean
 }
@@ -170,6 +171,7 @@ export function useEdgeGeometry({
         renderedStart: null,
         renderedEnd: null,
         insideSegments: [],
+        bezierPoints: null,
         displayBendPoint: null,
         isInvalid: true
       }
@@ -179,6 +181,7 @@ export function useEdgeGeometry({
     let renderedStart: Point | null = null
     let renderedEnd: Point | null = null
     const insideSegments: string[] = []
+    let bezierPoints: { p0: Point; p1: Point; p2: Point } | null = null
     let displayBendPoint: Point | null = null
     let isInvalid = false
 
@@ -220,6 +223,7 @@ export function useEdgeGeometry({
 
         renderedStart = startPoint
         renderedEnd = endPoint
+        bezierPoints = { p0: startPoint, p1: trimmed.p1, p2: endPoint }
 
         pathData = quadraticPath(startPoint, trimmed.p1, endPoint)
       }
@@ -229,7 +233,7 @@ export function useEdgeGeometry({
       pathData = { path: geom.edgePath, labelX: geom.labelX, labelY: geom.labelY }
     }
 
-    return { pathData, renderedStart, renderedEnd, insideSegments, displayBendPoint, isInvalid }
+    return { pathData, renderedStart, renderedEnd, insideSegments, bezierPoints, displayBendPoint, isInvalid }
   }, [
     geom,
     isBezierPath,

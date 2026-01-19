@@ -9,6 +9,7 @@ type Token =
   | { type: 'italic'; content: string }
   | { type: 'underline'; content: string }
   | { type: 'strike'; content: string }
+  | { type: 'highlight'; content: string }
   | { type: 'code'; content: string }
   | { type: 'code-block'; content: string; language?: string }
   | { type: 'link'; content: string; href: string }
@@ -17,7 +18,7 @@ type Token =
   | { type: 'progress'; completed: number; total: number }
 
 const INLINE_PATTERN =
-  /(\$\$[\s\S]+?\$\$|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|_[^_]+_|\[[^\]]+\]\([^)]+\))/g
+  /(\$\$[\s\S]+?\$\$|\*\*[^*]+\*\*|==[^=\s](?:[^=]*?[^=\s])?==|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|_[^_]+_|\[[^\]]+\]\([^)]+\))/g
 const CHECK_LINE_PATTERN = /^[ \t]*(\[(v)\]|☑|✅)/i
 const EMPTY_LINE_PATTERN = /^[ \t]*(\[\]|☐)/i
 const CROSS_LINE_PATTERN = /^([ \t]*)(\[(x)\]|☒|❎)(\s*)(.*)$/i
@@ -59,6 +60,8 @@ function tokenizeInline(segment: string): Token[] {
       tokens.push({ type: 'italic', content: transformSymbols(match.slice(1, -1)) })
     } else if (match.startsWith('~~') && match.endsWith('~~')) {
       tokens.push({ type: 'strike', content: transformSymbols(match.slice(2, -2)) })
+    } else if (match.startsWith('==') && match.endsWith('==')) {
+      tokens.push({ type: 'highlight', content: transformSymbols(match.slice(2, -2)) })
     } else if (match.startsWith('_') && match.endsWith('_')) {
       tokens.push({ type: 'underline', content: transformSymbols(match.slice(1, -1)) })
     } else if (match.startsWith('[') && match.includes('](') && match.endsWith(')')) {
@@ -100,7 +103,7 @@ function tokenizeLine(line: string): Token[] {
   return tokens
 }
 
-function tokenizeTextBlock(block: string): Token[] {
+function tokenizeTextLines(block: string): Token[] {
   if (!block) return []
   const lines = block.split('\n')
   const tokens: Token[] = []
@@ -111,6 +114,32 @@ function tokenizeTextBlock(block: string): Token[] {
       tokens.push({ type: 'text', content: '\n' })
     }
   })
+
+  return tokens
+}
+
+function tokenizeTextBlock(block: string): Token[] {
+  if (!block) return []
+  const tokens: Token[] = []
+  const pattern = /\$\$[\s\S]+?\$\$/g
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = pattern.exec(block)) !== null) {
+    if (match.index > lastIndex) {
+      tokens.push(...tokenizeTextLines(block.slice(lastIndex, match.index)))
+    }
+
+    const body = match[0].slice(2, -2)
+    const trimmed = body.trim()
+    const isBlock = body.includes('\n')
+    tokens.push({ type: isBlock ? 'math-block' : 'math-inline', content: trimmed })
+    lastIndex = match.index + match[0].length
+  }
+
+  if (lastIndex < block.length) {
+    tokens.push(...tokenizeTextLines(block.slice(lastIndex)))
+  }
 
   return tokens
 }
@@ -318,6 +347,14 @@ export const LiteMarkdown = memo(function LiteMarkdown({ text, className }: Lite
             <span key={index} className='line-through'>
               {token.content}
             </span>
+          )
+        }
+
+        if (token.type === 'highlight') {
+          return (
+            <mark key={index} className='bg-yellow-100 text-foreground px-0.5 rounded'>
+              {token.content}
+            </mark>
           )
         }
 

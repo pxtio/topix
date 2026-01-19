@@ -187,12 +187,12 @@ export const ActionPanel = memo(function ActionPanel({
       {/* View mode toggle */}
       <ModeButton mode='graph' label='Graph'>
         <HugeiconsIcon icon={ChartBubble02Icon} className='size-4 shrink-0' strokeWidth={2} />
-        <span className='text-xs font-normal sr-only sm:not-sr-only'>Graph</span>
+        <span className='text-xs font-medium sr-only sm:not-sr-only'>Graph</span>
       </ModeButton>
 
       <ModeButton mode='linear' label='Linear'>
         <HugeiconsIcon icon={LeftToRightListBulletIcon} className='size-4 shrink-0' strokeWidth={2} />
-        <span className='text-xs font-normal sr-only sm:not-sr-only'>List</span>
+        <span className='text-xs font-medium sr-only sm:not-sr-only'>List</span>
       </ModeButton>
 
       <Separator orientation="vertical" className='md:!h-6 hidden md:block' />

@@ -49,6 +49,7 @@ const edgeTypes = { default: EdgeView }
 
 const defaultEdgeOptions = {
   type: 'default',
+  zIndex: 1000,
   style: {
     stroke: 'var(--secondary)',
     strokeWidth: 2,

@@ -54,7 +54,7 @@ const SimplifiedRectOverlay = memo(function SimplifiedRectOverlay({
   strokeWidth,
   visualInset
 }: SimplifiedRectOverlayProps) {
-  const roundedClass = rounded === 'rounded-2xl' ? 'rounded-[14px]' : 'rounded-none'
+  const roundedClass = rounded === 'rounded-2xl' ? 'rounded-[16px]' : 'rounded-none'
   const hasStroke = stroke && stroke !== 'transparent' && (strokeWidth ?? 1) > 0
   const useSvgDash = hasStroke && (strokeStyle === 'dashed' || strokeStyle === 'dotted')
   const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)

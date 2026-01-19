@@ -29,7 +29,7 @@ export const EdgeLabel = memo(function EdgeLabel({
   return (
     <EdgeLabelRenderer>
       <div
-        className={`nodrag nopan absolute origin-center ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        className={`nodrag nopan absolute origin-center z-[1001] ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}`}
         style={transformStyle}
         onPointerDown={event => event.stopPropagation()}
       >

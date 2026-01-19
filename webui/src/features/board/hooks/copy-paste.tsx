@@ -188,7 +188,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
       return {
         ...node,
         id: newId,
-        zIndex: zCursor++,
+        zIndex: 1001,
         position: {
           x: node.position.x + jitter.dx,
           y: node.position.y + jitter.dy,

@@ -61,6 +61,7 @@ export function buildLinePlacement({
   const pointA: NoteNode = {
     id: pointAId,
     type: 'point',
+    zIndex: 1001,
     position: {
       x: (startAttach?.point.x ?? start.x) - offset,
       y: (startAttach?.point.y ?? start.y) - offset,
@@ -77,6 +78,7 @@ export function buildLinePlacement({
   const pointB: NoteNode = {
     id: pointBId,
     type: 'point',
+    zIndex: 1001,
     position: {
       x: (endAttach?.point.x ?? end.x) - offset,
       y: (endAttach?.point.y ?? end.y) - offset,

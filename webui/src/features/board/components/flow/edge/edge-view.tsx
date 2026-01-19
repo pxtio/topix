@@ -130,6 +130,7 @@ export const EdgeView = memo(function EdgeView({
     pathData,
     renderedStart,
     renderedEnd,
+    insideSegments,
     displayBendPoint,
     isInvalid
   } = useEdgeGeometry({
@@ -147,6 +148,10 @@ export const EdgeView = memo(function EdgeView({
   })
 
   const dashArray = useMemo(() => cssDashArray(linkStyle, strokeWidth), [linkStyle, strokeWidth])
+  const hiddenDashArray = useMemo(() => {
+    const sw = Math.max(0.5, strokeWidth)
+    return `${5.5 * sw} ${4 * sw}`
+  }, [strokeWidth])
 
   const edgeStrokeStyle: CSSProperties = useMemo(
     (): CSSProperties => ({
@@ -236,6 +241,22 @@ export const EdgeView = memo(function EdgeView({
         markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
         markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
       />
+
+      {selected && insideSegments.length > 0 && insideSegments.map((segment, index) => (
+        <path
+          key={`edge-hidden-${index}`}
+          d={segment}
+          className='stroke-secondary'
+          style={{
+            strokeWidth,
+            fill: 'none',
+            strokeDasharray: hiddenDashArray,
+            strokeLinecap: 'round',
+            strokeLinejoin: 'round'
+          }}
+          pointerEvents="none"
+        />
+      ))}
 
       {(isLabelEditing || hasLabel) && (
         <EdgeLabel

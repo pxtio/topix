@@ -34,6 +34,7 @@ type GeometryResult = {
   pathData: { path: string; labelX: number; labelY: number } | null
   renderedStart: Point | null
   renderedEnd: Point | null
+  insideSegments: string[]
   displayBendPoint: Point | null
   isInvalid: boolean
 }
@@ -163,11 +164,21 @@ export function useEdgeGeometry({
   }, [isBezierPath, sourceCenter, targetCenter])
 
   const geometryResult = useMemo(() => {
-    if (!geom) return { pathData: null, renderedStart: null, renderedEnd: null, displayBendPoint: null, isInvalid: true }
+    if (!geom) {
+      return {
+        pathData: null,
+        renderedStart: null,
+        renderedEnd: null,
+        insideSegments: [],
+        displayBendPoint: null,
+        isInvalid: true
+      }
+    }
 
     let pathData: { path: string, labelX: number, labelY: number } | null = null
     let renderedStart: Point | null = null
     let renderedEnd: Point | null = null
+    const insideSegments: string[] = []
     let displayBendPoint: Point | null = null
     let isInvalid = false
 
@@ -185,6 +196,19 @@ export function useEdgeGeometry({
         const startExit = findExitParam(clipSource, pointGetter)
         const endExit = 1 - findExitParam(clipTarget, (t: number) => pointGetter(1 - t))
         const trimmed = extractQuadraticSegment(sourceCenter, centerControl, targetCenter, startExit, endExit)
+        const hasSourceClip = Boolean(clipSource)
+        const hasTargetClip = Boolean(clipTarget)
+        const minGap = 1e-3
+
+        if (hasSourceClip && startExit > minGap && startExit < endExit) {
+          const hiddenStart = extractQuadraticSegment(sourceCenter, centerControl, targetCenter, 0, startExit)
+          insideSegments.push(quadraticPath(hiddenStart.p0, hiddenStart.p1, hiddenStart.p2).path)
+        }
+
+        if (hasTargetClip && endExit < 1 - minGap && endExit > startExit) {
+          const hiddenEnd = extractQuadraticSegment(sourceCenter, centerControl, targetCenter, endExit, 1)
+          insideSegments.push(quadraticPath(hiddenEnd.p0, hiddenEnd.p1, hiddenEnd.p2).path)
+        }
 
         const startPoint = startKind !== 'none'
           ? shiftPointAlong(trimmed.p0, trimmed.p1, arrowOffset)
@@ -205,7 +229,7 @@ export function useEdgeGeometry({
       pathData = { path: geom.edgePath, labelX: geom.labelX, labelY: geom.labelY }
     }
 
-    return { pathData, renderedStart, renderedEnd, displayBendPoint, isInvalid }
+    return { pathData, renderedStart, renderedEnd, insideSegments, displayBendPoint, isInvalid }
   }, [
     geom,
     isBezierPath,

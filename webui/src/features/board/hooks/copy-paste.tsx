@@ -157,7 +157,11 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     const pointNodes = copiedPointNodes ?? []
 
     // convert cloned notes to nodes
-    const maxZ = nodes.reduce((acc, n) => Math.max(acc, n.zIndex ?? 0), 0)
+    const maxZ = nodes.reduce((acc, n) => {
+      const kind = (n.data as { kind?: string }).kind
+      if (kind === 'point') return acc
+      return Math.max(acc, n.zIndex ?? 0)
+    }, 0)
     let zCursor = maxZ + 1
 
     const newNodes = clonedNotes

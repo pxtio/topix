@@ -51,19 +51,28 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   const strokeColor = isDark ? darkModeDisplayHex(data.style.strokeColor) || undefined : data.style.strokeColor
   const textColor = isDark ? darkModeDisplayHex(data.style.textColor) || undefined : data.style.textColor
 
+  const nodeType = data.style.type
+
   const content = (
     <div className={nodeClass}>
       <NodeCard note={data} selected={selected} isDark={isDark} contentRef={contentRef} />
-      {selected && (
-        <div className='absolute inset-0 border border-secondary pointer-events-none rounded z-10' />
-      )}
-      {!selected && data.isNew && (
-        <div className='absolute inset-0 border-2 border-dashed border-secondary pointer-events-none rounded z-10' />
-      )}
+      {
+        selected && nodeType !== 'sheet' && (
+          <div className='absolute inset-1 border border-secondary pointer-events-none rounded z-10' />
+        )
+      }
+      {
+        selected && nodeType === 'sheet' && (
+          <div className='absolute inset-0 border-2 border-secondary pointer-events-none rounded z-10 rounded-2xl' />
+        )
+      }
+      {
+        !selected && data.isNew && (
+          <div className='absolute inset-0 border-2 border-dashed border-secondary pointer-events-none rounded z-10' />
+        )
+      }
     </div>
   )
-
-  const nodeType = data.style.type
 
   const handleResizeStart = () => setIsResizingNode(true)
   const handleResizeEnd = () => setIsResizingNode(false)

@@ -74,6 +74,8 @@ export function useAddNoteNode() {
       newNote.properties.nodeSize = { size, type: 'size' }
     }
     const node = convertNoteToNode(newNote)
+    const maxZ = nodes.reduce((acc, n) => Math.max(acc, n.zIndex ?? 0), 0)
+    node.zIndex = maxZ + 1
     const newNodes = nodes.map(n => ({ ...n, selected: false }))
     node.selected = true
     setNodesPersist([...newNodes, node])

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactFlowProps } from '@xyflow/react'
 
 import type { LinkEdge, NoteNode } from '../../types/flow'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { LayerBringForwardIcon, LayerBringToFrontIcon, LayerSendBackwardIcon, LayerSendToBackIcon } from '@hugeicons/core-free-icons'
 
 type GraphContextMenuProps = {
   nodes: NoteNode[]
@@ -120,7 +122,7 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
 
       {menuPosition && (
         <div
-          className='fixed z-50 min-w-[180px] rounded-md border bg-popover text-popover-foreground shadow-lg p-1 text-sm'
+          className='fixed z-50 min-w-[180px] max-w-[320px] rounded-md border bg-popover text-popover-foreground shadow-lg p-1 text-sm'
           style={{ top: menuPosition.y, left: menuPosition.x }}
           onMouseDown={event => event.stopPropagation()}
           onContextMenu={event => event.preventDefault()}
@@ -129,33 +131,37 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
         >
           <button
             type='button'
-            className='w-full px-3 py-2 text-left rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed'
+            className='w-full px-3 py-2 text-left rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
             onClick={handleSendBackward}
             disabled={!canSendBackward}
           >
-            Send backward
+            <HugeiconsIcon icon={LayerSendBackwardIcon} strokeWidth={2} className='size-4' />
+            <span>Send backward</span>
           </button>
           <button
             type='button'
-            className='w-full px-3 py-2 text-left rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed'
+            className='w-full px-3 py-2 text-left rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
             onClick={handleSendForward}
             disabled={!canSendForward}
           >
-            Send forward
+            <HugeiconsIcon icon={LayerBringForwardIcon} strokeWidth={2} className='size-4' />
+            <span>Send forward</span>
           </button>
           <button
             type='button'
-            className='w-full px-3 py-2 text-left rounded hover:bg-muted'
+            className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2'
             onClick={handleSendToBack}
           >
-            Send to back
+            <HugeiconsIcon icon={LayerSendToBackIcon} strokeWidth={2} className='size-4' />
+            <span>Send to back</span>
           </button>
           <button
             type='button'
-            className='w-full px-3 py-2 text-left rounded hover:bg-muted'
+            className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2'
             onClick={handleSendToFront}
           >
-            Send to front
+            <HugeiconsIcon icon={LayerBringToFrontIcon} strokeWidth={2} className='size-4' />
+            <span>Send to front</span>
           </button>
         </div>
       )}

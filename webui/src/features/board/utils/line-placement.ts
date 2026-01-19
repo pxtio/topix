@@ -30,10 +30,12 @@ export function buildLinePlacement({
   internalNodes,
   style,
 }: LinePlacementInput): LinePlacementResult {
-  const candidateNodes = Array.from(internalNodes.values()).filter(n => {
-    const data = n.data as { kind?: string } | undefined
-    return data?.kind !== 'point'
-  })
+  const candidateNodes = Array.from(internalNodes.values())
+    .filter(n => {
+      const data = n.data as { kind?: string } | undefined
+      return data?.kind !== 'point'
+    })
+    .sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0))
 
   const startHit = candidateNodes.find(n => pointInNode(start, n)) ?? null
   const endHit = candidateNodes.find(n => pointInNode(end, n)) ?? null

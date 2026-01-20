@@ -302,7 +302,7 @@ export const createDefaultLinkStyle = (): LinkStyle => ({
   roundness: 0,
   opacity: 100,
   groupIds: [],
-  fontFamily: "sans-serif",
+  fontFamily: "handwriting",
   fontSize: "M",
   textAlign: "center",
   textColor: "#000000",

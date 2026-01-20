@@ -127,7 +127,7 @@ export function ColorGrid({
           onClick={() => pickFamily(f)}
           checker={!!f.transparent}
           isDark={isDark}
-          size={isCompact ? "sm" : "md"}
+          size={isCompact ? "dot" : "md"}
           hideLabel={isCompact}
           className={isCompact ? "ring-offset-0" : undefined}
         />
@@ -146,13 +146,13 @@ export function ColorGrid({
               selected={selected}
               onClick={() => pickFamily(f)} // left click picks immediately
               isDark={isDark}
-              size="sm"
+              size="dot"
               hideLabel
               className="ring-offset-0"
             />
           </ContextMenuTrigger>
           <ContextMenuContent className="p-2">
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid grid-cols-6 gap-1">
               {SHADE_STEPS.map((step) => {
                 const hex = resolveFamilyShade(f.family!, step)
                 const selectedShade = !isValueTransparent && !!hex && isSameColor(value, hex)
@@ -169,7 +169,7 @@ export function ColorGrid({
                       }
                     }}
                     isDark={isDark}
-                    size="sm"
+                    size="dot"
                     hideLabel
                   />
                 )
@@ -197,7 +197,7 @@ export function ColorGrid({
   return (
     <div className="space-y-2">
       {/* Always 6 columns */}
-      <div className={cn("grid gap-2 grid-cols-6")}>
+      <div className={cn("grid gap-1 grid-cols-10")}>
         {FAMILIES
           .filter(f => allowTransparent || !f.transparent)
           .map(f => (

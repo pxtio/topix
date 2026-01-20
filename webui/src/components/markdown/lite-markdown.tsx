@@ -352,7 +352,7 @@ export const LiteMarkdown = memo(function LiteMarkdown({ text, className }: Lite
 
         if (token.type === 'highlight') {
           return (
-            <mark key={index} className='bg-yellow-100 text-foreground px-0.5 rounded'>
+            <mark key={index} className='bg-highlight-default text-foreground px-0.5 rounded'>
               {token.content}
             </mark>
           )

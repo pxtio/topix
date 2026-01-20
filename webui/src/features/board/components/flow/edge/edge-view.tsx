@@ -361,6 +361,7 @@ export const EdgeView = memo(function EdgeView({
           labelColor={displayLabelColor}
           labelDraft={labelDraft}
           isEditing={isLabelEditing}
+          fontFamily={linkStyle?.fontFamily}
           onChange={edgeData.onLabelChange}
           onSizeChange={setLabelSize}
           labelInputRef={labelInputRef}

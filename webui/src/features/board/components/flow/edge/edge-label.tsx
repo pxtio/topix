@@ -2,6 +2,7 @@ import { memo, useEffect, useRef } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 import { EdgeLabelRenderer } from '@xyflow/react'
 import { LiteMarkdown } from '@/components/markdown/lite-markdown'
+import { fontFamilyToTwClass, type FontFamily } from '../../../types/style'
 
 
 /**
@@ -12,6 +13,7 @@ type EdgeLabelProps = {
   labelColor?: string
   labelDraft: string
   isEditing: boolean
+  fontFamily?: FontFamily
   onChange?: (value: string) => void
   onSizeChange?: (size: { width: number; height: number }) => void
   labelInputRef: React.RefObject<HTMLTextAreaElement | null>
@@ -29,6 +31,7 @@ export const EdgeLabel = memo(function EdgeLabel({
   labelColor,
   labelDraft,
   isEditing,
+  fontFamily,
   onChange,
   onSizeChange,
   labelInputRef,
@@ -37,6 +40,7 @@ export const EdgeLabel = memo(function EdgeLabel({
   handleLabelKeyDown
 }: EdgeLabelProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null)
+  const fontFamilyClass = fontFamilyToTwClass(fontFamily)
 
   useEffect(() => {
     const node = wrapperRef.current
@@ -71,14 +75,14 @@ export const EdgeLabel = memo(function EdgeLabel({
             onBlur={handleLabelBlur}
             onKeyDown={handleLabelKeyDown}
             placeholder='Add label...'
-            className='text-center text-base px-2 py-1 bg-transparent focus:outline-none min-w-[160px] resize-none max-w-[240px] font-handwriting'
+            className={`text-center text-base px-2 py-1 bg-transparent focus:outline-none min-w-[160px] resize-none max-w-[240px] ${fontFamilyClass}`}
             minRows={1}
             maxRows={4}
             style={{ color: labelColor ?? 'inherit' }}
           />
         ) : (
           <div
-            className='text-center px-2 py-1 bg-transparent text-base text-card-foreground max-w-[240px] font-handwriting'
+            className={`text-center px-2 py-1 bg-transparent text-base text-card-foreground max-w-[240px] ${fontFamilyClass}`}
             style={{ color: labelColor ?? 'inherit' }}
           >
             <LiteMarkdown text={labelText} />

@@ -21,7 +21,7 @@ import { useGraphStore } from '../../store/graph-store'
 import type { NoteNode } from '../../types/flow'
 import { LinearNoteCard } from './linear-note-card'
 import { useUpdateNote } from '../../api/update-note'
-import type { NumberProperty } from '../../types/property'
+import type { NumberProperty } from '@/features/newsfeed/types/properties'
 import { useAppStore } from '@/store'
 
 export type LinearViewProps = {
@@ -56,11 +56,9 @@ function useEffectiveCols(cols: number, breakpointPx: number) {
     const mq = window.matchMedia(`(max-width: ${breakpointPx - 0.5}px)`)
     const update = () => setEffective(mq.matches ? 1 : cols)
     update()
-    if (mq.addEventListener) mq.addEventListener('change', update)
-    else mq.addListener(update)
+    mq.addEventListener('change', update)
     return () => {
-      if (mq.removeEventListener) mq.removeEventListener('change', update)
-      else mq.removeListener(update)
+      mq.removeEventListener('change', update)
     }
   }, [cols, breakpointPx])
 

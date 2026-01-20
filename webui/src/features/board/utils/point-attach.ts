@@ -52,7 +52,8 @@ export function computeAttachment(node: NoteNode, targetPoint: Point): { point: 
 }
 
 export function findAttachTarget(point: Point, nodes: NoteNode[]): NoteNode | null {
-  for (const node of nodes) {
+  const ordered = [...nodes].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0))
+  for (const node of ordered) {
     if ((node.data as { kind?: string }).kind === 'point') continue
     if (pointInNoteNode(point, node)) return node
   }

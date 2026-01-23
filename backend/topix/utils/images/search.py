@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 ICONIFY_SEARCH_URL = "https://api.iconify.design/search"
 ICON_FAMILIES = [
+    "arcticons",
     "bi",
     "devicon",
     "duo-icons",

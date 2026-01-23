@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils"
 import { getLuminance } from "../../lib/colors/tailwind"
 import { darkModeDisplayHex } from "../../lib/colors/dark-variants"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 type KeySwatchProps = {
   color: string | null
@@ -11,12 +10,13 @@ type KeySwatchProps = {
   onContextMenu?: (e: React.MouseEvent) => void
   checker?: boolean
   isDark?: boolean
-  size?: "sm" | "md" | "lg"
+  size?: "dot" | "sm" | "md" | "lg"
   hideLabel?: boolean
   className?: string
 }
 
 const SIZE_MAP = {
+  dot: "h-6 w-6 rounded-full",
   sm: "h-7 w-7 rounded-md",
   md: "h-9 w-9 rounded-lg",
   lg: "h-11 w-11 rounded-xl",
@@ -74,19 +74,6 @@ export const KeySwatch = ({
       )}
     </button>
   )
-
-  if (hideLabel && label) {
-    return (
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>{btn}</TooltipTrigger>
-          <TooltipContent side="top" align="center" className="py-1 px-2 text-xs">
-            {label}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    )
-  }
 
   return btn
 }

@@ -104,6 +104,7 @@ export const convertLinkToEdgeWithPoints = (
   const startNode: NoteNode = {
     id: startId,
     type: 'point',
+    zIndex: 1001,
     position: fallbackStart,
     data: {
       kind: 'point',
@@ -122,6 +123,7 @@ export const convertLinkToEdgeWithPoints = (
   const endNode: NoteNode = {
     id: endId,
     type: 'point',
+    zIndex: 1001,
     position: fallbackEnd,
     data: {
       kind: 'point',

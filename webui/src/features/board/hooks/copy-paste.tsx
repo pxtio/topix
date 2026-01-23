@@ -157,9 +157,16 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     const pointNodes = copiedPointNodes ?? []
 
     // convert cloned notes to nodes
+    const maxZ = nodes.reduce((acc, n) => {
+      const kind = (n.data as { kind?: string }).kind
+      if (kind === 'point') return acc
+      return Math.max(acc, n.zIndex ?? 0)
+    }, 0)
+    let zCursor = maxZ + 1
+
     const newNodes = clonedNotes
       .map(convertNoteToNode)
-      .map(n => ({ ...n, selected: true }))
+      .map(n => ({ ...n, selected: true, zIndex: zCursor++ }))
 
     const edgePlans = (copiedEdges ?? []).map(edge => {
       const sourceNode = pointNodes.find(n => n.id === edge.source)
@@ -185,6 +192,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
       return {
         ...node,
         id: newId,
+        zIndex: 1001,
         position: {
           x: node.position.x + jitter.dx,
           y: node.position.y + jitter.dy,
@@ -276,6 +284,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     cloneNoteWithJitter,
     setNodesPersist,
     setEdgesPersist,
+    nodes
   ])
 
   useEffect(() => {

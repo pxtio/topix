@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { memo, useCallback, useEffect, useRef } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
 import type { Options as RoughOptions } from 'roughjs/bin/core'
 import clsx from 'clsx'
@@ -32,6 +32,73 @@ type DrawConfig = {
   dpr: number
   renderScale: number
 }
+
+type SimplifiedCircleOverlayProps = {
+  fill?: string
+  stroke?: string
+  strokeStyle?: StrokeStyle
+  strokeWidth?: number
+  visualInset: number
+}
+
+const SimplifiedCircleOverlay = memo(function SimplifiedCircleOverlay({
+  fill,
+  stroke,
+  strokeStyle,
+  strokeWidth,
+  visualInset
+}: SimplifiedCircleOverlayProps) {
+  const hasStroke = stroke && stroke !== 'transparent' && (strokeWidth ?? 1) > 0
+  const useSvgDash = hasStroke && (strokeStyle === 'dashed' || strokeStyle === 'dotted')
+  const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+  const dashArray = strokeLineDash ? strokeLineDash.join(' ') : undefined
+  const viewBoxSize = 100
+  const inset = 1
+  const radius = viewBoxSize / 2 - inset
+
+  if (useSvgDash) {
+    return (
+      <svg
+        className='absolute pointer-events-none'
+        style={{
+          inset: visualInset,
+          zIndex: 10,
+          overflow: 'visible',
+          width: 'calc(100% - 0.375rem)',
+          height: 'calc(100% - 0.375rem)',
+        }}
+        viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
+        preserveAspectRatio="none"
+      >
+        <ellipse
+          cx={viewBoxSize / 2}
+          cy={viewBoxSize / 2}
+          rx={radius}
+          ry={radius}
+          fill={fill || 'transparent'}
+          stroke={stroke || 'transparent'}
+          strokeWidth={strokeWidth ?? 1}
+          strokeDasharray={dashArray}
+          strokeLinecap={lineCap}
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    )
+  }
+
+  return (
+    <div
+      className='absolute rounded-full m-0.75 pointer-events-none'
+      style={{
+        inset: visualInset,
+        background: fill || 'transparent',
+        border: `${strokeWidth ?? 1}px solid ${stroke || 'transparent'}`,
+        borderStyle: strokeStyle === 'dashed' ? 'dashed' : strokeStyle === 'dotted' ? 'dotted' : 'solid',
+        zIndex: 10,
+      }}
+    />
+  )
+})
 
 const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
   if (!a) return false
@@ -130,9 +197,10 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
     const oversample = oversampleForZoom(effectiveZoom)
 
+    const effectiveStrokeWidth = stroke === 'transparent' ? 0 : (strokeWidth ?? 1)
     // bleed so jitter/stroke won't clip
     // add a tiny extra margin to avoid clipping at seams
-    const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 3)
+    const bleed = Math.ceil(effectiveStrokeWidth / 2 + (roughness ?? 1.2) * 1.5 + 3)
 
     const paddedWidth = cssW + bleed * 2
     const paddedHeight = cssH + bleed * 2
@@ -159,7 +227,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
       roughness,
       stroke,
       strokeStyle,
-      strokeWidth,
+      strokeWidth: effectiveStrokeWidth,
       fill,
       fillStyle,
       seed,
@@ -180,7 +248,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     const ellipseW = innerW
     const ellipseH = innerH
 
-    const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+    const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, effectiveStrokeWidth)
     const apparentSize = Math.max(cssW, cssH) * Math.min(1, effectiveZoom)
     const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(apparentSize)
 
@@ -189,7 +257,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
       roughness,
       visibleStroke,
       strokeStyle,
-      strokeWidth,
+      effectiveStrokeWidth,
       fill || '',
       fillStyle || '',
       seed,
@@ -206,13 +274,14 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
       offCtx.setTransform(1, 0, 0, 1, 0, 0)
       offCtx.clearRect(0, 0, target.width, target.height)
       offCtx.setTransform(renderScale, 0, 0, renderScale, 0, 0)
-      offCtx.translate(bleed, bleed)
+      const strokeInset = effectiveStrokeWidth / 2
+      offCtx.translate(bleed - strokeInset, bleed - strokeInset)
 
       const rc = new RoughCanvas(target)
       const drawable = rc.generator.ellipse(cx, cy, ellipseW, ellipseH, {
         roughness,
         stroke: visibleStroke,
-        strokeWidth: strokeWidth ?? 1,
+        strokeWidth: effectiveStrokeWidth,
         fill,
         fillStyle,
         fillWeight: 1,
@@ -320,15 +389,12 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   if (isSimplified) {
     return (
       <div className={mainDivClass}>
-        <div
-          className='absolute rounded-full m-0.75 pointer-events-none'
-          style={{
-            inset: visualInset,
-            background: fill || 'transparent',
-            border: `${strokeWidth ?? 1}px solid ${stroke || 'transparent'}`,
-            borderStyle: strokeStyle === 'dashed' ? 'dashed' : strokeStyle === 'dotted' ? 'dotted' : 'solid',
-            zIndex: 10,
-          }}
+        <SimplifiedCircleOverlay
+          fill={fill}
+          stroke={stroke}
+          strokeStyle={strokeStyle}
+          strokeWidth={strokeWidth}
+          visualInset={visualInset}
         />
         <div className='relative z-20 w-full h-full'>
           {children}

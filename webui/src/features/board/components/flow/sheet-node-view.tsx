@@ -161,11 +161,11 @@ export const SheetNodeView = memo(function SheetNodeView({
             </button>
           </PopoverTrigger>
           <PopoverContent align='end' className='w-auto p-2'>
-            <div className='grid grid-cols-6 gap-2'>
+            <div className='grid grid-cols-10 gap-1'>
               {paletteOptions.map(c => (
                 <button
                   key={c.name}
-                  className='h-6 w-6 rounded-full border border-border hover:brightness-95'
+                  className='h-6 w-6 rounded-full border border-border shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-secondary'
                   style={{ backgroundColor: c.resolved }}
                   title={`${c.name}-200`}
                   aria-label={`${c.name}-200`}

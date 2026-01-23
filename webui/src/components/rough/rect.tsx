@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { memo, useCallback, useEffect, useRef } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
 import type { Options as RoughOptions } from 'roughjs/bin/core'
 import clsx from 'clsx'
@@ -36,6 +36,76 @@ type DrawConfig = {
   dpr: number
   renderScale: number
 }
+
+type SimplifiedRectOverlayProps = {
+  rounded: RoundedClass
+  fill?: string
+  stroke?: string
+  strokeStyle?: StrokeStyle
+  strokeWidth?: number
+  visualInset: number
+}
+
+const SimplifiedRectOverlay = memo(function SimplifiedRectOverlay({
+  rounded,
+  fill,
+  stroke,
+  strokeStyle,
+  strokeWidth,
+  visualInset
+}: SimplifiedRectOverlayProps) {
+  const roundedClass = rounded === 'rounded-2xl' ? 'rounded-[16px]' : 'rounded-none'
+  const hasStroke = stroke && stroke !== 'transparent' && (strokeWidth ?? 1) > 0
+  const useSvgDash = hasStroke && (strokeStyle === 'dashed' || strokeStyle === 'dotted')
+  const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+  const dashArray = strokeLineDash ? strokeLineDash.join(' ') : undefined
+  const borderInset = Math.max(0, visualInset)
+  const halfStroke = (strokeWidth ?? 1) / 2
+  const sizeCalc = `calc(100% - ${(borderInset + halfStroke) * 2}px)`
+  const radius = rounded === 'rounded-2xl' ? 16 : 0
+
+  if (useSvgDash) {
+    return (
+      <svg
+        className='absolute pointer-events-none m-0.5'
+        style={{
+          inset: visualInset,
+          zIndex: 10,
+          overflow: 'visible',
+          width: 'calc(100% - 0.375rem)',
+          height: 'calc(100% - 0.375rem)',
+        }}
+      >
+        <rect
+          x={borderInset + halfStroke}
+          y={borderInset + halfStroke}
+          width={sizeCalc}
+          height={sizeCalc}
+          rx={radius}
+          ry={radius}
+          fill={fill || 'transparent'}
+          stroke={stroke || 'transparent'}
+          strokeWidth={strokeWidth ?? 1}
+          strokeDasharray={dashArray}
+          strokeLinecap={lineCap}
+        />
+      </svg>
+    )
+  }
+
+  return (
+    <div
+      className={clsx('absolute pointer-events-none m-0.75', roundedClass)}
+      style={{
+        inset: visualInset,
+        background: fill || 'transparent',
+        border: `${strokeWidth ?? 1}px solid ${stroke || 'transparent'}`,
+        borderStyle: strokeStyle === 'dashed' ? 'dashed' : strokeStyle === 'dotted' ? 'dotted' : 'solid',
+        zIndex: 10,
+      }}
+    />
+  )
+})
 
 const drawConfigEqual = (a: DrawConfig | null, b: DrawConfig) => {
   if (!a) return false
@@ -139,7 +209,6 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   const isMoving = useGraphStore(state => state.isMoving)
   const isResizing = useGraphStore(state => state.isResizingNode)
   const effectiveZoom = quantizeZoom(viewportZoom || 1)
-  const roundedClass = rounded === 'rounded-2xl' ? 'rounded-2xl' : 'rounded-none'
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     const rect = wrapper.getBoundingClientRect()
@@ -152,8 +221,9 @@ export const RoughRect: React.FC<RoughRectProps> = ({
     // oversample backing store for zoom-in, clamped to avoid runaway buffers
     const oversample = oversampleForZoom(effectiveZoom)
 
+    const effectiveStrokeWidth = stroke === 'transparent' ? 0 : (strokeWidth ?? 1)
     // add a bleed in CSS units (display px), enough for stroke + jitter
-    const bleed = Math.ceil((strokeWidth ?? 1) / 2 + (roughness ?? 1.2) * 1.5 + 2)
+    const bleed = Math.ceil(effectiveStrokeWidth / 2 + (roughness ?? 1.2) * 1.5 + 2)
 
     const paddedWidth = cssW + bleed * 2
     const paddedHeight = cssH + bleed * 2
@@ -181,7 +251,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       roughness,
       stroke,
       strokeStyle,
-      strokeWidth,
+      strokeWidth: effectiveStrokeWidth,
       fill,
       fillStyle,
       seed,
@@ -195,8 +265,9 @@ export const RoughRect: React.FC<RoughRectProps> = ({
 
     const visibleStroke = stroke === 'transparent' && !fill ? '#222' : stroke
 
-    // hairline crispness without eating tiny boxes
-    const inset = (strokeWidth ?? 1) <= 1.5 ? Math.min(0.5, cssW / 4, cssH / 4) : 0
+    // hairline crispness without eating tiny boxes; include half stroke so outer edge aligns
+    const insetBase = Math.min(0.5, cssW / 4, cssH / 4)
+    const inset = insetBase + effectiveStrokeWidth / 2
     const w = Math.max(0, cssW - inset * 2)
     const h = Math.max(0, cssH - inset * 2)
 
@@ -207,7 +278,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       ? excalidrawRoundedRectPath(inset, inset, w, h, radius)
       : rectPath(inset, inset, w, h)
 
-    const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, strokeWidth)
+    const { strokeLineDash, lineCap } = mapStrokeStyle(strokeStyle, effectiveStrokeWidth)
     const apparentSize = Math.max(cssW, cssH) * Math.min(1, effectiveZoom)
     const { curveStepCount, maxRandomnessOffset, hachureGap } = detailForSize(apparentSize)
 
@@ -217,7 +288,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       roughness,
       visibleStroke,
       strokeStyle,
-      strokeWidth,
+      effectiveStrokeWidth,
       fill || '',
       fillStyle || '',
       seed,
@@ -240,7 +311,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       const drawable = rc.generator.path(pathData, {
         roughness,
         stroke: visibleStroke,
-        strokeWidth: strokeWidth ?? 1,
+        strokeWidth: effectiveStrokeWidth,
         fill,
         fillStyle,
         fillWeight: 1,
@@ -350,15 +421,13 @@ export const RoughRect: React.FC<RoughRectProps> = ({
   if (isSimplified) {
     return (
       <div className={mainDivClass}>
-        <div
-          className={clsx('absolute pointer-events-none m-0.75', roundedClass)}
-          style={{
-            inset: visualInset,
-            background: fill || 'transparent',
-            border: `${strokeWidth ?? 1}px solid ${stroke || 'transparent'}`,
-            borderStyle: strokeStyle === 'dashed' ? 'dashed' : strokeStyle === 'dotted' ? 'dotted' : 'solid',
-            zIndex: 10,
-          }}
+        <SimplifiedRectOverlay
+          rounded={rounded}
+          fill={fill}
+          stroke={stroke}
+          strokeStyle={strokeStyle}
+          strokeWidth={strokeWidth}
+          visualInset={visualInset}
         />
         <div className='relative z-20 w-full h-full'>
           {children}
@@ -372,7 +441,7 @@ export const RoughRect: React.FC<RoughRectProps> = ({
       <canvas
         ref={canvasRef}
         className='absolute pointer-events-none'
-        style={{ inset: visualInset, zIndex: 10, background: 'transparent' }}
+        style={{ inset: hairlineInset, zIndex: 10, background: 'transparent' }}
       />
       <div className='relative z-20 w-full h-full'>
         {children}

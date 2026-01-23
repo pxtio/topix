@@ -15,6 +15,9 @@ import { EdgeLabel } from './edge-label'
 import {
   type Point,
   cssDashArray,
+  extractQuadraticSegment,
+  pointOnQuadratic,
+  quadraticPath,
 } from './edge-geometry'
 import { useEdgeGeometry } from './use-edge-geometry'
 import { useControlPointDrag } from './use-control-point-drag'
@@ -72,6 +75,7 @@ export const EdgeView = memo(function EdgeView({
   const attachedSourceNode = useInternalNode(attachedSourceId || '')
   const attachedTargetNode = useInternalNode(attachedTargetId || '')
   const [bendPointDrag, setBendPointDrag] = useState<Point | null>(null)
+  const [labelSize, setLabelSize] = useState<{ width: number; height: number } | null>(null)
 
   const edgeExtras = (data ?? {}) as EdgeRenderData
 
@@ -118,7 +122,7 @@ export const EdgeView = memo(function EdgeView({
   const headSize = BASE_HEAD_SIZE * HEAD_SCALE
   const arrowLength = headSize * (TIP_FACTOR - BASE_X_FACTOR)
   // pull endpoints back so head sits off the node (scaled with head length)
-  const arrowOffset = arrowLength * ARROW_CLEARANCE_FACTOR
+  const arrowOffset = arrowLength * ARROW_CLEARANCE_FACTOR + 6
 
   const pathStyle = linkStyle?.pathStyle ?? 'bezier'
   const isBezierPath = pathStyle === 'bezier'
@@ -130,6 +134,8 @@ export const EdgeView = memo(function EdgeView({
     pathData,
     renderedStart,
     renderedEnd,
+    insideSegments,
+    bezierPoints,
     displayBendPoint,
     isInvalid
   } = useEdgeGeometry({
@@ -147,6 +153,10 @@ export const EdgeView = memo(function EdgeView({
   })
 
   const dashArray = useMemo(() => cssDashArray(linkStyle, strokeWidth), [linkStyle, strokeWidth])
+  const hiddenDashArray = useMemo(() => {
+    const sw = Math.max(0.5, strokeWidth)
+    return `0 ${3 * sw}`
+  }, [strokeWidth])
 
   const edgeStrokeStyle: CSSProperties = useMemo(
     (): CSSProperties => ({
@@ -217,6 +227,52 @@ export const EdgeView = memo(function EdgeView({
     setBendPointDrag(null)
   }, [controlPointDrag])
 
+  const labelGapPaths = useMemo(() => {
+    if (!pathData || !bezierPoints) return null
+    if (!labelSize || (!hasLabel && !isLabelEditing)) return null
+
+    const padding = 6
+    const rectX = pathData.labelX - labelSize.width / 2 - padding
+    const rectY = pathData.labelY - labelSize.height / 2 - padding
+    const rectW = labelSize.width + padding * 2
+    const rectH = labelSize.height + padding * 2
+
+    const inside = (p: Point) =>
+      p.x >= rectX && p.x <= rectX + rectW && p.y >= rectY && p.y <= rectY + rectH
+
+    const samples = 60
+    let t0: number | null = null
+    let t1: number | null = null
+    for (let i = 0; i <= samples; i += 1) {
+      const t = i / samples
+      const p = pointOnQuadratic(bezierPoints.p0, bezierPoints.p1, bezierPoints.p2, t)
+      if (inside(p)) {
+        if (t0 === null) t0 = t
+        t1 = t
+      }
+    }
+
+    if (t0 === null || t1 === null || t1 - t0 < 1e-3) return null
+
+    const first = t0 > 1e-3
+      ? (() => {
+          const seg = extractQuadraticSegment(bezierPoints.p0, bezierPoints.p1, bezierPoints.p2, 0, t0)
+          return quadraticPath(seg.p0, seg.p1, seg.p2)
+        })()
+      : null
+    const second = t1 < 1 - 1e-3
+      ? (() => {
+          const seg = extractQuadraticSegment(bezierPoints.p0, bezierPoints.p1, bezierPoints.p2, t1, 1)
+          return quadraticPath(seg.p0, seg.p1, seg.p2)
+        })()
+      : null
+
+    return {
+      first: first?.path ?? null,
+      second: second?.path ?? null
+    }
+  }, [pathData, bezierPoints, labelSize, hasLabel, isLabelEditing])
+
   if (!geom || !pathData || !renderedStart || !renderedEnd || !labelTransformStyle || isInvalid) {
     return null
   }
@@ -230,12 +286,74 @@ export const EdgeView = memo(function EdgeView({
 
   return (
     <>
-      <BaseEdge
-        path={pathData.path}
-        style={edgeStrokeStyle}
-        markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
-        markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
-      />
+      {labelGapPaths ? (
+        <>
+          <BaseEdge
+            path={pathData.path}
+            style={{
+              ...edgeStrokeStyle,
+              stroke: 'transparent',
+              strokeDasharray: undefined,
+              strokeWidth: Math.max(strokeWidth, 12),
+            }}
+          />
+          {labelGapPaths.first && (
+            <path
+              d={labelGapPaths.first}
+              style={edgeStrokeStyle}
+              markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
+              pointerEvents="none"
+            />
+          )}
+          {labelGapPaths.second && (
+            <path
+              d={labelGapPaths.second}
+              style={edgeStrokeStyle}
+              markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
+              pointerEvents="none"
+            />
+          )}
+          {!labelGapPaths.first && labelGapPaths.second && startMarkerId && (
+            <path
+              d={labelGapPaths.second}
+              style={edgeStrokeStyle}
+              markerStart={`url(#${startMarkerId})`}
+              pointerEvents="none"
+            />
+          )}
+          {!labelGapPaths.second && labelGapPaths.first && endMarkerId && (
+            <path
+              d={labelGapPaths.first}
+              style={edgeStrokeStyle}
+              markerEnd={`url(#${endMarkerId})`}
+              pointerEvents="none"
+            />
+          )}
+        </>
+      ) : (
+        <BaseEdge
+          path={pathData.path}
+          style={edgeStrokeStyle}
+          markerStart={startMarkerId ? `url(#${startMarkerId})` : undefined}
+          markerEnd={endMarkerId ? `url(#${endMarkerId})` : undefined}
+        />
+      )}
+
+      {selected && insideSegments.length > 0 && insideSegments.map((segment, index) => (
+        <path
+          key={`edge-hidden-${index}`}
+          d={segment}
+          className='stroke-secondary'
+          style={{
+            strokeWidth,
+            fill: 'none',
+            strokeDasharray: hiddenDashArray,
+            strokeLinecap: 'round',
+            strokeLinejoin: 'round'
+          }}
+          pointerEvents="none"
+        />
+      ))}
 
       {(isLabelEditing || hasLabel) && (
         <EdgeLabel
@@ -243,7 +361,9 @@ export const EdgeView = memo(function EdgeView({
           labelColor={displayLabelColor}
           labelDraft={labelDraft}
           isEditing={isLabelEditing}
+          fontFamily={linkStyle?.fontFamily}
           onChange={edgeData.onLabelChange}
+          onSizeChange={setLabelSize}
           labelInputRef={labelInputRef}
           transformStyle={labelTransformStyle}
           handleLabelBlur={handleLabelBlur}

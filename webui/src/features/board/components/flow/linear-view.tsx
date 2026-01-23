@@ -56,13 +56,9 @@ function useEffectiveCols(cols: number, breakpointPx: number) {
     const mq = window.matchMedia(`(max-width: ${breakpointPx - 0.5}px)`)
     const update = () => setEffective(mq.matches ? 1 : cols)
     update()
-    // Prefer modern event API; keep legacy fallback for older browsers
-    const useLegacy = !mq.addEventListener && mq.addListener
-    if (useLegacy) mq.addListener(update)
-    else mq.addEventListener?.('change', update)
+    mq.addEventListener('change', update)
     return () => {
-      if (useLegacy) mq.removeListener(update)
-      else mq.removeEventListener?.('change', update)
+      mq.removeEventListener('change', update)
     }
   }, [cols, breakpointPx])
 

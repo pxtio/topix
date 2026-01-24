@@ -179,6 +179,7 @@ async def send_message(
         # retrieve chat to get graph_uid for memory filters
         chat = await chat_store.get_chat(chat_id)
         memory_filters = {"graph_uid": chat.graph_uid} if chat.graph_uid else None
+        logger.info("Memory filters for chat %s: %s", chat_id, memory_filters)
 
         enabled_tools = body.enabled_tools or []
         if memory_filters is None:

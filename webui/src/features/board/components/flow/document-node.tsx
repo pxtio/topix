@@ -20,7 +20,7 @@ export const DocumentNode = memo(function DocumentNode({ data, selected }: NodeP
   const rounded = (style?.roundness ?? 1) > 0 ? "rounded-xl" : "rounded-none"
 
   const className = cn(
-    "p-3 text-card-foreground bg-card shadow-sm border-2 flex flex-col items-center w-full",
+    "h-full p-3 text-card-foreground bg-card shadow-sm border-2 flex flex-col justify-center items-center w-full",
     rounded,
     selected ? "border-secondary" : "border-border",
   )

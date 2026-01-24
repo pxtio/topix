@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+import random
 
 from fastapi.concurrency import run_in_threadpool
 from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue
@@ -29,6 +30,39 @@ from topix.store.qdrant.store import ContentStore
 from topix.utils.graph.layout import LayoutDirection, displace_nodes, layout_directed
 
 logger = logging.getLogger(__name__)
+
+TAILWIND_200_HEX = [
+    "#e2e8f0",  # slate
+    "#e5e7eb",  # gray
+    "#e7e5e4",  # stone
+    "#e5e5e5",  # neutral
+    "#e4e4e7",  # zinc
+    "#eaddd7",  # brown
+    "#fecaca",  # red
+    "#fecdd3",  # rose
+    "#fbcfe8",  # pink
+    "#f5d0fe",  # fuchsia
+    "#ddd6fe",  # violet
+    "#e9d5ff",  # purple
+    "#c7d2fe",  # indigo
+    "#bfdbfe",  # blue
+    "#bae6fd",  # sky
+    "#a5f3fc",  # cyan
+    "#99f6e4",  # teal
+    "#a7f3d0",  # emerald
+    "#bbf7d0",  # green
+    "#d9f99d",  # lime
+    "#fef08a",  # yellow
+    "#fde68a",  # amber
+    "#fed7aa",  # orange
+]
+
+
+def color_notes_random_200(notes: list[Note]) -> None:
+    """Assign a random Tailwind 200 background color to each note."""
+    for note in notes:
+        note.style.background_color = random.choice(TAILWIND_200_HEX)
+        note.style.text_color = "#000000"
 
 
 class ParsingPipeline:
@@ -92,6 +126,7 @@ class ParsingPipeline:
         logger.info("Starting document summarization for mindmap creation.")
         document_summary = await self.summarize_document(document_text)
         notes, links = await self.create_mindmap(document_summary)
+        color_notes_random_200(notes)
         return notes, links
 
     async def process_file(
@@ -247,8 +282,8 @@ class ParsingPipeline:
         nodes: list[Note | Document],
         links: list[Link],
         direction: LayoutDirection = LayoutDirection.LEFT_RIGHT,
-        hgap: float = 75,
-        vgap: float = 150,
+        hgap: float = 150,
+        vgap: float = 400,
         gap: float = 100.0,
         limit: int = 1000,
     ) -> list[Note | Document]:

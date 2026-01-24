@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon, ArrowMoveDownRightIcon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon, ArrowMoveDownRightIcon, GoogleDocIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { AddNoteNodeOptions } from '../../hooks/add-node'
@@ -15,6 +15,7 @@ import { Chat } from '@/features/agent/components/chat-view'
 import { useGraphStore } from '../../store/graph-store'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
+import { DocumentUploadDialog } from './utils/document-upload'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -59,6 +60,7 @@ export const ActionPanel = memo(function ActionPanel({
   const [openIconSearch, setOpenIconSearch] = useState(false)
   const [openChatDialog, setOpenChatDialog] = useState(false)
   const [openShapeMenu, setOpenShapeMenu] = useState(false)
+  const [openDocumentUpload, setOpenDocumentUpload] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
   const zoom = useGraphStore(state => state.zoom ?? 1)
   const navigate = useNavigate()
@@ -437,6 +439,22 @@ export const ActionPanel = memo(function ActionPanel({
             </span>
           </Button>
 
+          {/* Upload document */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => setOpenDocumentUpload(true)}
+            title='Upload document'
+            aria-label='Upload document'
+            disabled={!boardId}
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='P' />
+            </span>
+          </Button>
+
           {/* Open Chat */}
           <Button
             variant={null}
@@ -475,6 +493,7 @@ export const ActionPanel = memo(function ActionPanel({
       {/* Dialogs */}
       <ImageSearchDialog openImageSearch={openImageSearch} setOpenImageSearch={setOpenImageSearch} />
       <IconSearchDialog openIconSearch={openIconSearch} setOpenIconSearch={setOpenIconSearch} />
+      <DocumentUploadDialog open={openDocumentUpload} onOpenChange={setOpenDocumentUpload} />
       <Dialog open={openChatDialog} onOpenChange={setOpenChatDialog}>
         <DialogContent className="sm:max-w-4xl w-full h-[85vh] !p-0 overflow-hidden flex flex-col gap-0" showCloseButton={false}>
           <DialogHeader className="px-6 pt-6 pb-2 border-b text-left">

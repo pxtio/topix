@@ -5,15 +5,12 @@ from typing import Literal
 
 from pydantic import Field, field_validator
 
+from topix.datatypes.note.note import Note, NoteProperties
 from topix.datatypes.property import (
     DataProperty,
     KeywordProperty,
-    PositionProperty,
-    SizeProperty,
     TextProperty,
-    URLProperty,
 )
-from topix.datatypes.resource import Resource, ResourceProperties
 
 
 class DocumentStatusEnum(StrEnum):
@@ -41,26 +38,13 @@ class DocumentStatusProperty(KeywordProperty):
         return DocumentStatusEnum(v)
 
 
-class DocumentProperties(ResourceProperties):
+class DocumentProperties(NoteProperties):
     """Document properties."""
 
     # need to repeat this for every subclass of ResourceProperties
     # otherwise pydantic gets confused
     __pydantic_extra__: dict[str, DataProperty] = Field(init=False)
 
-    node_position: PositionProperty = Field(
-        default_factory=lambda: PositionProperty(
-            position=PositionProperty.Position(x=0, y=0)
-        )
-    )
-    node_size: SizeProperty = Field(
-        default_factory=lambda: SizeProperty(
-            size=SizeProperty.Size(width=300, height=100)
-        )
-    )
-    url: URLProperty = Field(
-        default_factory=lambda: URLProperty()
-    )
     mime_type: TextProperty = Field(
         default_factory=lambda: TextProperty(text="application/pdf")
     )
@@ -72,7 +56,7 @@ class DocumentProperties(ResourceProperties):
     )
 
 
-class Document(Resource):
+class Document(Note):
     """Document object."""
 
     type: Literal["document"] = "document"
@@ -81,6 +65,3 @@ class Document(Resource):
     properties: DocumentProperties = Field(
         default_factory=DocumentProperties
     )
-
-    # graph attributes
-    graph_uid: str | None = None

@@ -2,13 +2,11 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, Request, Response, UploadFile
 from fastapi.params import File, Query
 
 from topix.api.utils.decorators import with_standard_response
-from topix.api.utils.resilient_streaming import with_resilient_request
 from topix.api.utils.security import get_current_user_uid
-from topix.nlp.pipeline.parsing import ParsingPipeline
 from topix.utils.common import gen_uid
 from topix.utils.file import convert_to_base64_url, detect_mime_type, get_file_path, save_file
 
@@ -56,49 +54,4 @@ async def upload_file(
         "file": {
             "url": saved_path
         }
-    }
-
-
-@router.post("/parse/", include_in_schema=False)
-@router.post("/parse")
-@with_resilient_request()
-@with_standard_response
-async def parse_file(
-    request: Request,
-    graph_id: Annotated[str, Query(description="Graph ID")],
-    file: UploadFile = File(..., description="File to parse"),
-    id: Annotated[str | None, Query(description="Optional ID for the parsed document")] = None,
-):
-    """Parse a file."""
-    file_bytes = await file.read()
-    mime_type = detect_mime_type(file.filename)
-
-    if mime_type.startswith("application/pdf"):
-        cat = "files"
-        new_filename = f"{gen_uid()}_{file.filename}"
-        saved_path = save_file(filename=new_filename, file_bytes=file_bytes, cat=cat)
-    else:
-        raise HTTPException(status_code=400, detail=f"Unsupported file type `{mime_type}` for parsing. Only PDF files are supported.")
-
-    # Get the true file path from the saved representative path
-    true_path = get_file_path(saved_path)
-
-    pipeline: ParsingPipeline = request.app.parser_pipeline
-
-    document, chunks, notes, links = await pipeline.process_file(
-        filepath=true_path,
-        id=id,
-    )
-    document, notes, links = await pipeline.save_to_store(
-        graph_uid=graph_id,
-        document=document,
-        chunks=chunks,
-        notes=notes,
-        links=links,
-    )
-
-    return {
-        "document": document.model_dump(exclude_none=True),
-        "notes": [note.model_dump(exclude_none=True) for note in notes],
-        "links": [link.model_dump(exclude_none=True) for link in links],
     }

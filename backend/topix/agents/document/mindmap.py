@@ -12,7 +12,7 @@ class DocumentMindmapAgent(BaseAgent):
 
     def __init__(
         self,
-        model: str = ModelEnum.OpenAI.GPT_4O_MINI,
+        model: str = ModelEnum.OpenAI.GPT_4_1_MINI,
         instructions_template: str = "document/document_mindmap.system.jinja",
         model_settings: ModelSettings | None = None,
     ):
@@ -35,12 +35,12 @@ class DocumentMindmapAgent(BaseAgent):
     async def _input_formatter(
         self,
         context: Context,
-        document_summary: str,
+        document_text: str,
     ) -> list[dict[str, str]]:
         """Format the input for the document mindmap agent."""
         prompt = self._render_prompt(
             "document/document_mindmap.user.jinja",
-            document_summary=document_summary,
+            document_text=document_text,
         )
 
         return [{"role": "user", "content": prompt}]

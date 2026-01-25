@@ -10,7 +10,6 @@ from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue
 
 from topix.agents.datatypes.context import Context
 from topix.agents.document.mindmap import DocumentMindmapAgent
-from topix.agents.document.summary import DocumentSummaryAgent
 from topix.agents.mindmap.mapify import convert_mapify_output_to_notes_links
 from topix.agents.run import AgentRunner
 from topix.datatypes.file.chunk import Chunk
@@ -73,7 +72,6 @@ class ParsingPipeline:
         self.parser = MistralParser.from_config()
         self.chunker = Chunker()
         self.vector_store = ContentStore.from_config()
-        self.summarizer = DocumentSummaryAgent()
         self.mapifier = DocumentMindmapAgent()
         self.runner = AgentRunner()
 
@@ -124,8 +122,7 @@ class ParsingPipeline:
         document_text: str,
     ) -> tuple[list[Note], list[Link]]:
         logger.info("Starting document summarization for mindmap creation.")
-        document_summary = await self.summarize_document(document_text)
-        notes, links = await self.create_mindmap(document_summary)
+        notes, links = await self.create_mindmap(document_text)
         color_notes_random_200(notes)
         return notes, links
 

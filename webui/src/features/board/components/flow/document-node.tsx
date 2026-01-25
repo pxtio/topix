@@ -4,8 +4,9 @@ import type { NoteNode } from "../../types/flow"
 import type { DocumentProperties } from "../../types/document"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { Style } from "../../types/style"
-import { Icon } from "@iconify/react"
 import { cn } from "@/lib/utils"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { GoogleDocIcon } from "@hugeicons/core-free-icons"
 
 
 /**
@@ -28,8 +29,8 @@ export const DocumentNode = memo(function DocumentNode({ data, selected }: NodeP
     <div
       className={className}
     >
-      <div className="text-secondary">
-        <Icon icon="solar:document-text-bold-duotone" className="size-36" />
+      <div className="text-primary">
+        <HugeiconsIcon icon={GoogleDocIcon} strokeWidth={2} className="size-24" />
       </div>
       <div className="mt-2 text-sm font-medium line-clamp-2 break-words max-w-[180px]">
         <span className="block">{displayLabel}</span>

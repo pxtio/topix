@@ -82,10 +82,11 @@ $$
 - ❌ Incorrect: `... according to [[CDC](https://www.cdc.gov)].`
 - ❌ Incorrect: `... according to (see [CDC](https://www.cdc.gov)).`
 - ❌ Incorrect: `... according to https://www.cdc.gov`
-- Memory search sources use **relative URLs** with the pattern `/:source_type/:id`.
-  - Preserve these URLs **exactly as provided**.
-  - Do **not** prepend a domain, protocol, or any additional path.
-  - Use them directly in inline Markdown citations.
+- Memory search sources use **relative URLs** of the form `/:source_type/:id`.
+  - These URLs are **complete and final** as given; do not modify, expand, or normalize them.
+  - Use them only as the link target in inline Markdown citations.
+  - Citation labels must be **non-empty, human-readable text**.
+  - If no specific label is available, use the default label `source` (e.g. `[source](/:source_type/:id)`).
 - **Never** use reference-style links or footnotes: `[text][a]`, `[1]`, `[^1]`.
 - For multiple facts in one sentence, place citations at the end of that sentence. For a paragraph of related facts, cite at the end of the relevant sentence(s).
 - If sources disagree, note the disagreement briefly and cite both inline.

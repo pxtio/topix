@@ -9,6 +9,7 @@ from topix.datatypes.note.note import Note, NoteProperties
 from topix.datatypes.property import (
     DataProperty,
     KeywordProperty,
+    SizeProperty,
     TextProperty,
 )
 
@@ -44,6 +45,13 @@ class DocumentProperties(NoteProperties):
     # need to repeat this for every subclass of ResourceProperties
     # otherwise pydantic gets confused
     __pydantic_extra__: dict[str, DataProperty] = Field(init=False)
+
+    # Override default node size for documents
+    node_size: SizeProperty = Field(
+        default_factory=lambda: SizeProperty(
+            size=SizeProperty.Size(width=150, height=150)
+        )
+    )
 
     mime_type: TextProperty = Field(
         default_factory=lambda: TextProperty(text="application/pdf")

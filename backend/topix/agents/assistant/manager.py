@@ -98,6 +98,12 @@ class AssistantManager:
                 search_results = tool_call.output.search_results
                 for result in search_results:
                     valid_urls.append(result.url)
+            elif tool_call.name == AgentToolName.MEMORY_SEARCH:
+                for ref in tool_call.output.references:
+                    url_short_id = f"(/{ref.ref_type}/{ref.ref_id[:5]})"
+                    url_long_id = f"(/{ref.ref_type}/{ref.ref_id})"
+                    logger.info(f"Replacing {url_short_id} with {url_long_id} in answer.")
+                    answer = answer.replace(url_short_id, url_long_id)
         return post_process_url_citations(answer, valid_urls)
 
     async def run(

@@ -1,6 +1,6 @@
 import { useEffect } from "react"
 import * as htmlToImage from "html-to-image"
-import { saveThumbnail } from "../api/save-thumbnail";
+import { saveThumbnail } from "../api/save-thumbnail"
 
 
 export function useSaveThumbnailOnUnmount(boardId: string) {

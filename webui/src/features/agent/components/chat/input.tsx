@@ -79,7 +79,7 @@ export const InputBar = ({
     if (createNewChat) {
       const newChatId = generateUuid()
       await createChatAsync({ userId, boardId: targetBoardId, chatId: newChatId })
-      await updateChatAsync({ chatId: newChatId, chatData: { label: trimText(trimmed, 20) } })
+      void updateChatAsync({ chatId: newChatId, chatData: { label: trimText(trimmed, 20) } }).catch(() => {})
 
       if (!preferChatRoute && isBoardRoute && targetBoardId) {
         navigate({
@@ -117,7 +117,7 @@ export const InputBar = ({
     await sendMessageAsync({ payload, userId, chatId: id })
 
     if (createNewChat) {
-      await describeChatAsync({ chatId: id, userId })
+      void describeChatAsync({ chatId: id, userId }).catch(() => {})
     }
   }
 

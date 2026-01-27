@@ -199,7 +199,7 @@ export const createDefaultStyle = ({
         fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "center",
-        backgroundColor: "#dbeafe",
+        backgroundColor: "#bfdbfe",
       } as Style
     case "thought-cloud":
       return {

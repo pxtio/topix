@@ -5,6 +5,9 @@ const DotLottieReact = lazy(async () => {
   return { default: m.DotLottieReact }
 })
 
+/**
+ * 404 Lottie Animation
+ */
 function Lottie404({ size = 540 }: { size?: number }) {
   const src = `${import.meta.env.BASE_URL}animations/404.lottie`
   const box = { width: size, height: size }
@@ -15,6 +18,10 @@ function Lottie404({ size = 540 }: { size?: number }) {
   )
 }
 
+
+/**
+ * 404 Not Found Page
+ */
 export function NotFoundPage() {
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-transparent">

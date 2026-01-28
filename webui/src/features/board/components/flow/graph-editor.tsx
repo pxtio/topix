@@ -17,6 +17,7 @@ import { useShallow } from 'zustand/shallow'
 
 import NodeView from './node-view'
 import { PointNode } from './point-node'
+import { DocumentNode } from './document-node'
 import { EdgeView } from './edge/edge-view'
 import { EdgeMarkerDefs } from './edge/edge-markers'
 import { GraphSidebar } from '../style-panel/panel'
@@ -44,7 +45,7 @@ import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
 
 const proOptions = { hideAttribution: true }
 
-const nodeTypes = { default: NodeView, point: PointNode }
+const nodeTypes = { default: NodeView, point: PointNode, document: DocumentNode }
 const edgeTypes = { default: EdgeView }
 
 const defaultEdgeOptions = {

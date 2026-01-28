@@ -122,13 +122,8 @@ class FileProperty(Property):
 class URLProperty(Property):
     """Property for URL values."""
 
-    class URL(BaseModel):
-        """URL data model."""
-
-        url: str
-
     type: Literal[PropertyType.URL] = PropertyType.URL
-    url: URL | None = None
+    url: str | None = None
 
 
 class MultiTextProperty(Property):

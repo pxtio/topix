@@ -24,6 +24,9 @@ class RefAnnotation(BaseModel):
 
     type: Literal["reference"] = "reference"
     ref_id: str
+    ref_type: str
+    label: str | None = None
+    content: str | None = None
 
 
 class FileAnnotation(BaseModel):

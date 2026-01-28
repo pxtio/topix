@@ -1,6 +1,6 @@
 import { generateUuid, uuidToNumber } from "@/lib/common"
 import { createDefaultStyle, type NodeType, type Style } from "./style"
-import type { BooleanProperty, IconProperty, ImageProperty, NumberProperty, PositionProperty, SizeProperty, URLProperty } from "@/features/newsfeed/types/properties"
+import type { BooleanProperty, IconProperty, ImageProperty, NumberProperty, PositionProperty, SizeProperty, URLProperty, TextProperty, KeywordProperty } from "@/features/newsfeed/types/properties"
 
 
 /**
@@ -16,6 +16,9 @@ export interface NoteProperties {
   url: URLProperty
   imageUrl: ImageProperty
   iconData: IconProperty
+  mimeType?: TextProperty
+  status?: KeywordProperty
+  summary?: TextProperty
 }
 
 
@@ -32,7 +35,7 @@ export interface RichText {
  */
 export interface Note extends Record<string, unknown> {
   id: string
-  type: "note"
+  type: "note" | "document"
   version: number
 
   createdAt?: string

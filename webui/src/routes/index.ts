@@ -18,9 +18,13 @@ import { NewsfeedLinearPage } from "@/features/newsfeed/screens/newsfeed-linear-
 import { HomePage } from "@/features/home/screens/home"
 import { SheetScreen } from "@/features/board/screens/sheet-screen"
 import { DashboardScreen } from "@/features/board/screens/dashboard-screen"
+import { NotFoundPage } from "@/components/not-found"
 
 
-export const rootRoute = createRootRoute({ component: RootLayout })
+export const rootRoute = createRootRoute({
+  component: RootLayout,
+  notFoundComponent: NotFoundPage,
+})
 
 // --- auth guard ---
 const requireAuth = () => {

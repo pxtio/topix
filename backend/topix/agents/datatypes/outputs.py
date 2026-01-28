@@ -183,12 +183,29 @@ class MemorySearchOutput(BaseModel):
     """Output from memory search tool."""
 
     type: Literal["memory_search"] = "memory_search"
-    answer: str
+    answer: str = ""
     references: list[RefAnnotation] = []
 
     def __str__(self) -> str:
         """To string method."""
-        return self.answer
+        if self.answer:
+            return self.answer
+
+        # TODO: Voir pr document_label plus tard
+        formatted = "Memory search Results:\n\n"
+        for reference in self.references:
+            if reference.label or reference.content:
+                url = f"/{reference.ref_type}/{reference.ref_id[:5]}"
+                formatted += f"\n<Source\n  id=\"{reference.ref_id}\"\n  url=\"{url}\""
+                if reference.label:
+                    formatted += f"\n  label=\"{reference.label}\""
+                formatted += (
+                    f"\n  type=\"{reference.ref_type}\""
+                    "\n>"
+                    f"\n{reference.content or ""}\n"
+                    "\n</Source>\n"
+                )
+        return formatted
 
 
 class ImageGenerationOutput(BaseModel):

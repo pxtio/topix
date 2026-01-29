@@ -148,7 +148,7 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
               keepAspectRatio={isVisualNode}
             >
               <div
-                className={`absolute w-3 h-3 bg-transparent border border-secondary rounded-full ${posClass} z-20`}
+                className={`absolute w-3 h-3 bg-secondary rounded-full ${posClass} z-20`}
                 style={{ transform: `translate(${pos.includes('right') ? '50%' : '-50%'}, ${pos.includes('bottom') ? '50%' : '-50%'})` }}
               />
             </NodeResizeControl>

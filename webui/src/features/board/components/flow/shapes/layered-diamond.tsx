@@ -4,7 +4,6 @@ import { RoughDiamond } from '@/components/rough/diam'
 import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 
 type LayeredDiamondProps = {
-  minHeight: number
   wrapperClass: string
   wrapperStyle: CSSProperties
   roughness?: number
@@ -18,7 +17,6 @@ type LayeredDiamondProps = {
 }
 
 export const LayeredDiamond = memo(({
-  minHeight,
   wrapperClass,
   wrapperStyle,
   roughness,
@@ -30,8 +28,7 @@ export const LayeredDiamond = memo(({
   seed,
   children
 }: LayeredDiamondProps) => {
-  const baseSize = Math.max(minHeight, 50)
-  const offsetY = Math.min(baseSize * 0.18, 20)
+  const offsetY = 24
 
   const commonProps = {
     roughness,
@@ -49,7 +46,7 @@ export const LayeredDiamond = memo(({
     <div className={clsx(wrapperClass)} style={wrapperStyle}>
       <div
         className='absolute inset-0 pointer-events-none'
-        style={{ transform: `translate(0px, ${offsetY}px)`, filter: 'brightness(0.9)' }}
+        style={{ transform: `translate(0px, ${offsetY}px)`, filter: 'brightness(0.75)' }}
       >
         <RoughDiamond {...commonProps} />
       </div>

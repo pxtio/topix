@@ -5,7 +5,6 @@ import { RoughRect } from '@/components/rough/rect'
 import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 
 type ThoughtCloudProps = {
-  minHeight: number
   wrapperClass: string
   wrapperStyle: CSSProperties
   roughness?: number
@@ -20,7 +19,6 @@ type ThoughtCloudProps = {
 }
 
 export const ThoughtCloud = memo(({
-  minHeight,
   wrapperClass,
   wrapperStyle,
   roughness,
@@ -33,8 +31,7 @@ export const ThoughtCloud = memo(({
   backgroundColor,
   children
 }: ThoughtCloudProps) => {
-  const baseHeight = Math.max(minHeight, 50)
-  const accentSize = Math.min(80, Math.max(45, baseHeight * 0.7))
+  const accentSize = 72
   const circleLeft = accentSize * 0.18
   const circleTop = -accentSize * 0.4
 

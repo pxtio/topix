@@ -195,12 +195,12 @@ const components = {
 /** -------------------------------------------------------
  * Renderer: GFM + math override + mermaid
  * ------------------------------------------------------*/
-const Renderer: React.FC<{ content: string }> = ({ content }) => {
+const Renderer: React.FC<{ content: string; isStreaming?: boolean }> = ({ content, isStreaming }) => {
   return (
     <div>
       <Streamdown
         components={components}
-        shikiTheme={["rose-pine-dawn", "rose-pine-moon"]}
+        shikiTheme={isStreaming ? undefined : ["rose-pine-dawn", "rose-pine-moon"]}
         remarkPlugins={[
           remarkGfm, // <- restores GFM (tables, task lists, etc.)
           [remarkMath, { singleDollarTextMath: true }], // <- $...$ + $$...$$
@@ -215,23 +215,30 @@ const Renderer: React.FC<{ content: string }> = ({ content }) => {
   )
 }
 
-/** -------------------------------------------------------
- * MarkdownView wrapper
- * ------------------------------------------------------*/
+
+/**
+ * MarkdownView Props
+ */
 export interface MarkdownViewProps {
   content: string
   isStreaming?: boolean
 }
 
+
+/**
+ * MarkdownView
+ *
+ * A React component that renders markdown content with support for GFM, math, and custom styling.
+ */
 export const MarkdownView: React.FC<MarkdownViewProps> = React.memo(
-  ({ content }) => {
+  ({ content, isStreaming = false }) => {
     React.useEffect(() => {
       ensureScrollbarStyleInjected()
     }, [])
 
     return (
       <div className="w-full min-w-0">
-        <Renderer content={content} />
+        <Renderer content={content} isStreaming={isStreaming} />
       </div>
     )
   },

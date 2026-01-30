@@ -44,6 +44,8 @@ INDEX_FIELDS = [
     ("chat_uid", "keyword"),
     # note, link
     ("graph_uid", "keyword"),
+    # document
+    ("document_uid", "keyword"),
     # subscription
     ("user_uid", "keyword"),
     ("subscription_id", "keyword"),
@@ -138,7 +140,10 @@ class ContentStore:
             logger.warning(f"Collection '{self.collection}' does not exist.")
 
     async def delete(
-        self, ids: list[str | int], hard_delete: bool = False, refresh: bool = True
+        self,
+        ids: list[str | int],
+        hard_delete: bool = False,
+        refresh: bool = True
     ) -> None:
         """Delete multiple data objects by their IDs."""
         if not hard_delete:
@@ -156,7 +161,10 @@ class ContentStore:
         logger.info(f"Successfully deleted {len(ids)} data from the collection.")
 
     async def delete_by_filters(
-        self, filters: Filter, hard_delete: bool = False, refresh: bool = True
+        self,
+        filters: Filter,
+        hard_delete: bool = False,
+        refresh: bool = True
     ) -> None:
         """Delete Entry objects based on a filter condition."""
         if not hard_delete:

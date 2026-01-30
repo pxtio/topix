@@ -1,5 +1,3 @@
-import camelcaseKeys from 'camelcase-keys'
-
 /**
  * Handle streaming response from the AI assistant.
  *
@@ -27,12 +25,12 @@ export async function* handleStreamingResponse<T>(response: Response): AsyncGene
 
     for (const line of lines) {
       if (line.trim()) {
-        yield camelcaseKeys(JSON.parse(line), { deep: true }) as T
+        yield JSON.parse(line) as T
       }
     }
   }
 
   if (buffer.trim()) {
-    yield camelcaseKeys(JSON.parse(buffer), { deep: true }) as T
+    yield JSON.parse(buffer) as T
   }
 }

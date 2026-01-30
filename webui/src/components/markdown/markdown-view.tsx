@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { CustomTable } from "./custom-table"
 import { Pre } from "./custom-pre"
 import { Streamdown } from "streamdown"
+import { code } from "@streamdown/code"
 
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
@@ -199,8 +200,9 @@ const Renderer: React.FC<{ content: string; isStreaming?: boolean }> = ({ conten
   return (
     <div>
       <Streamdown
+        mode={isStreaming ? "streaming" : "static"}
         components={components}
-        shikiTheme={isStreaming ? undefined : ["rose-pine-dawn", "rose-pine-moon"]}
+        shikiTheme={["rose-pine-dawn", "rose-pine-moon"]}
         remarkPlugins={[
           remarkGfm, // <- restores GFM (tables, task lists, etc.)
           [remarkMath, { singleDollarTextMath: true }], // <- $...$ + $$...$$
@@ -208,6 +210,7 @@ const Renderer: React.FC<{ content: string; isStreaming?: boolean }> = ({ conten
         rehypePlugins={[
           rehypeKatex, // <- render math with KaTeX
         ]}
+        plugins={isStreaming ? undefined: { code: code }}
       >
         {content}
       </Streamdown>

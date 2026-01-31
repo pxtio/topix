@@ -683,6 +683,8 @@ export interface GraphStore {
   isResizingNode: boolean
   isDragging: boolean
   setIsDragging: (dragging: boolean) => void
+  isDraggingNodes: boolean
+  draggingNodeIds: Set<string>
   draggingPointId?: string
   isSelectMode: boolean
   setIsSelectMode: (enabled: boolean) => void
@@ -741,6 +743,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   isResizingNode: false,
   isDragging: false,
+  isDraggingNodes: false,
+  draggingNodeIds: new Set(),
   draggingPointId: undefined,
   isSelectMode: false,
   isMoving: false,
@@ -814,6 +818,15 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const prevNodesById = get().nodesById
     let attachedIndex = get().attachedPointIdsByNode
     let attachedIndexDirty = false
+    let draggingNodeIds = get().draggingNodeIds
+    let draggingDirty = false
+
+    const ensureDraggingIds = () => {
+      if (!draggingDirty) {
+        draggingNodeIds = new Set(draggingNodeIds)
+        draggingDirty = true
+      }
+    }
 
     const ensureAttachedIndex = () => {
       if (!attachedIndexDirty) {
@@ -870,6 +883,17 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       ch: NodeChange<NoteNode>,
     ): ch is NodeChange<NoteNode> & { id: string; dragging?: boolean } =>
       ch.type === "position" && typeof (ch as { id?: unknown }).id === "string"
+
+    for (const ch of changes) {
+      if (!isPositionChangeWithId(ch)) continue
+      if (ch.dragging === true) {
+        ensureDraggingIds()
+        draggingNodeIds.add(ch.id)
+      } else if (ch.dragging === false) {
+        ensureDraggingIds()
+        draggingNodeIds.delete(ch.id)
+      }
+    }
 
     for (const ch of changes) {
       if (ch.type === "add" && ch.item && isPointNode(ch.item)) {
@@ -1000,6 +1024,13 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       nodesById: nextNodesById,
       attachedPointIdsByNode: attachedIndexDirty ? attachedIndex : get().attachedPointIdsByNode,
     })
+
+    if (draggingDirty) {
+      set({
+        draggingNodeIds,
+        isDraggingNodes: draggingNodeIds.size > 0,
+      })
+    }
 
     if (onlyTransient) return
 

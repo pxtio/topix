@@ -97,6 +97,12 @@ class Plan(BaseAgent):
         return f"<message role='{role}'>\n<![CDATA[\n{content}\n]]>\n</message>"
 
     async def _input_formatter(self, context: ReasoningContext, input: list[dict[str, str]]) -> str:
+        # update context with memory search filters from tool if available
+        for tool in self.tools:
+            if tool.name == AgentToolName.MEMORY_SEARCH and hasattr(tool, "memory_search_filter"):
+                context.memory_search_filter = tool.memory_search_filter
+                break
+
         assert len(input) > 0, ValueError("Input must contain at least one message.")
         assert input[-1]["role"] == "user", ValueError("Input must end with a user message.")
 

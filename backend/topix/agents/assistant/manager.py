@@ -92,6 +92,13 @@ class AssistantManager:
         context: ReasoningContext,
     ) -> str:
         """Post process the final answer from the synthesis agent."""
+        graph_uid: str | None
+        if context.memory_search_filter is not None:
+            graph_uid = context.memory_search_filter.get("graph_uid")
+        else:
+            graph_uid = None
+        logger.info(f"Post-processing answer with graph_uid: {graph_uid}")
+        logger.info(f"tool calls: {context.tool_calls}")
         valid_urls = []
         for tool_call in context.tool_calls:
             if tool_call.name == AgentToolName.WEB_SEARCH:
@@ -101,10 +108,13 @@ class AssistantManager:
 
             # Correct shortened URLs in the answer by replacing shortened IDs with full IDs
             elif tool_call.name == AgentToolName.MEMORY_SEARCH:
-                for ref in tool_call.output.references:
-                    url_short_id = f"(/{ref.ref_type}/{ref.ref_id[:5]})"
-                    url_long_id = f"(/{ref.ref_type}/{ref.ref_id})"
-                    answer = answer.replace(url_short_id, url_long_id)
+                if graph_uid is not None:
+                    for ref in tool_call.output.references:
+                        logger.info(f"Processing reference of type and id: {ref.ref_type} - {ref.ref_id}")
+                        url_short_id = f"(/{ref.ref_type}/{ref.ref_id[:5]})"
+                        url_long_id = f"(/boards/{graph_uid}/{ref.ref_type}s/{ref.ref_id})"
+                        answer = answer.replace(url_short_id, url_long_id)
+
         return post_process_url_citations(answer, valid_urls)
 
     async def run(

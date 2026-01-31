@@ -62,8 +62,13 @@ def create_memory_search_tool(
             filters=filters,
         )
 
-    return ToolHandler.convert_func_to_tool(
+    toolfunc = ToolHandler.convert_func_to_tool(
         tool,
         tool_name=AgentToolName.MEMORY_SEARCH,
         tool_description=tool_descriptions[AgentToolName.MEMORY_SEARCH],
     )
+
+    # Attach filters to the tool for later reference
+    toolfunc.memory_search_filter = filters
+
+    return toolfunc

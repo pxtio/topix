@@ -17,7 +17,9 @@ import {
   applyEdgePatches,
   applyNodePatches,
   diffEdges,
+  diffEdgesById,
   diffNodes,
+  diffNodesById,
   hasPatchContent,
   sanitizeEdges,
   sanitizeNodes,
@@ -863,6 +865,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const recording = get().historyRecording
     const prevNodes = get().nodes
     const prevNodesById = get().nodesById
+    const touchedNodeIds = new Set<string>()
+    for (const ch of changes) {
+      if (typeof (ch as { id?: unknown }).id === 'string') {
+        touchedNodeIds.add((ch as { id: string }).id)
+      }
+    }
     const hasDragStart = changes.some(
       (ch) => ch.type === "position" && ch.dragging === true,
     )
@@ -933,6 +941,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       if (updated !== node) {
         nextById.set(id, updated)
         nodesChanged = true
+        touchedNodeIds.add(id)
       }
     }
 
@@ -1091,7 +1100,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
     if (recording) {
       if (hasDragEnd && dragSnapshot) {
-        const patches = diffNodes(dragSnapshot, sanitizeNodes(nextNodes))
+        const patches = diffNodesById(dragSnapshot, sanitizeNodes(nextNodes), touchedNodeIds)
         if (patches.length > 0) {
           get().pushPatch({
             id: generateUuid(),
@@ -1104,7 +1113,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       } else if (hasDragStart && dragSnapshot) {
         set({ dragSnapshotNodes: dragSnapshot })
       } else if (!hasDragStart && !hasDragEnd) {
-        const patches = diffNodes(sanitizeNodes(prevNodes), sanitizeNodes(nextNodes))
+        const patches = diffNodesById(sanitizeNodes(prevNodes), sanitizeNodes(nextNodes), touchedNodeIds)
         if (patches.length > 0) {
           get().pushPatch({
             id: generateUuid(),
@@ -1246,6 +1255,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const recording = get().historyRecording
     const prevEdges = get().edges
     const prevNodes = get().nodes
+    const touchedEdgeIds = new Set<string>()
+    for (const ch of changes) {
+      if (typeof (ch as { id?: unknown }).id === 'string') {
+        touchedEdgeIds.add((ch as { id: string }).id)
+      }
+    }
 
     // fast path: selection-only
     const onlySelect = changes.every((ch) => ch.type === "select")
@@ -1287,7 +1302,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     }
 
     if (recording) {
-      const patches = diffEdges(sanitizeEdges(prevEdges), sanitizeEdges(updatedEdges))
+      const patches = diffEdgesById(sanitizeEdges(prevEdges), sanitizeEdges(updatedEdges), touchedEdgeIds)
       if (patches.length > 0) {
         get().pushPatch({
           id: generateUuid(),
@@ -1453,6 +1468,9 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const patch = state.historyPast[state.historyPast.length - 1]
     if (!patch) return
 
+    const prevNodes = state.nodes
+    const prevEdges = state.edges
+
     const nextNodes = patch.nodes
       ? applyNodePatches(state.nodes, patch.nodes, "undo")
       : state.nodes
@@ -1470,6 +1488,16 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       attachedPointIdsByNode: buildAttachedPointIdsByNode(nextNodes),
     })
 
+    scheduleNodePersistFromDiff(prevNodes, nextNodes, state.boardId, () => ({
+      boardId: get().boardId,
+      nodes: get().nodes,
+    }))
+    scheduleEdgePersistFromDiff(prevEdges, nextEdges, state.boardId, () => ({
+      boardId: get().boardId,
+      edges: get().edges,
+      nodes: get().nodes,
+    }))
+
     setTimeout(() => set({ historyRecording: true }), 0)
   },
 
@@ -1477,6 +1505,9 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const state = get()
     const patch = state.historyFuture[0]
     if (!patch) return
+
+    const prevNodes = state.nodes
+    const prevEdges = state.edges
 
     const nextNodes = patch.nodes
       ? applyNodePatches(state.nodes, patch.nodes, "redo")
@@ -1494,6 +1525,16 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       nodesById: buildNodesById(nextNodes),
       attachedPointIdsByNode: buildAttachedPointIdsByNode(nextNodes),
     })
+
+    scheduleNodePersistFromDiff(prevNodes, nextNodes, state.boardId, () => ({
+      boardId: get().boardId,
+      nodes: get().nodes,
+    }))
+    scheduleEdgePersistFromDiff(prevEdges, nextEdges, state.boardId, () => ({
+      boardId: get().boardId,
+      edges: get().edges,
+      nodes: get().nodes,
+    }))
 
     setTimeout(() => set({ historyRecording: true }), 0)
   },

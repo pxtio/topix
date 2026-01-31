@@ -72,10 +72,68 @@ export const diffNodes = (prev: NoteNode[], next: NoteNode[]): NodePatch[] => {
   return patches
 }
 
+export const diffNodesById = (
+  prev: NoteNode[],
+  next: NoteNode[],
+  ids: Set<string>,
+): NodePatch[] => {
+  if (ids.size === 0) return []
+  const prevById = new Map(prev.map(n => [n.id, stripNodeUi(n)]))
+  const nextById = new Map(next.map(n => [n.id, stripNodeUi(n)]))
+  const patches: NodePatch[] = []
+
+  for (const id of ids) {
+    const before = prevById.get(id) ?? null
+    const after = nextById.get(id) ?? null
+    if (!before && after) {
+      patches.push({ id, before: null, after })
+      continue
+    }
+    if (before && !after) {
+      patches.push({ id, before, after: null })
+      continue
+    }
+    if (before && after && normalize(before) !== normalize(after)) {
+      patches.push({ id, before, after })
+    }
+  }
+
+  return patches
+}
+
 export const diffEdges = (prev: LinkEdge[], next: LinkEdge[]): EdgePatch[] => {
   const prevById = new Map(prev.map(e => [e.id, stripEdgeUi(e)]))
   const nextById = new Map(next.map(e => [e.id, stripEdgeUi(e)]))
   const ids = new Set<string>([...prevById.keys(), ...nextById.keys()])
+  const patches: EdgePatch[] = []
+
+  for (const id of ids) {
+    const before = prevById.get(id) ?? null
+    const after = nextById.get(id) ?? null
+    if (!before && after) {
+      patches.push({ id, before: null, after })
+      continue
+    }
+    if (before && !after) {
+      patches.push({ id, before, after: null })
+      continue
+    }
+    if (before && after && normalize(before) !== normalize(after)) {
+      patches.push({ id, before, after })
+    }
+  }
+
+  return patches
+}
+
+export const diffEdgesById = (
+  prev: LinkEdge[],
+  next: LinkEdge[],
+  ids: Set<string>,
+): EdgePatch[] => {
+  if (ids.size === 0) return []
+  const prevById = new Map(prev.map(e => [e.id, stripEdgeUi(e)]))
+  const nextById = new Map(next.map(e => [e.id, stripEdgeUi(e)]))
   const patches: EdgePatch[] = []
 
   for (const id of ids) {

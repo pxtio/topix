@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon, ArrowMoveDownRightIcon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon, ArrowMoveDownRightIcon, GoogleDocIcon, Undo03Icon, Redo03Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { AddNoteNodeOptions } from '../../hooks/add-node'
@@ -8,13 +8,14 @@ import { Separator } from '@/components/ui/separator'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { BotMessageSquare, ChevronDown, Cloud, Layers } from 'lucide-react'
+import { BotMessageSquare, ChevronDown, ChevronRight, Cloud, Layers } from 'lucide-react'
 import type { NodeType } from '../../types/style'
-import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Chat } from '@/features/agent/components/chat-view'
 import { useGraphStore } from '../../store/graph-store'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
+import { DocumentUploadDialog } from './utils/document-upload'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -59,8 +60,13 @@ export const ActionPanel = memo(function ActionPanel({
   const [openIconSearch, setOpenIconSearch] = useState(false)
   const [openChatDialog, setOpenChatDialog] = useState(false)
   const [openShapeMenu, setOpenShapeMenu] = useState(false)
+  const [openDocumentUpload, setOpenDocumentUpload] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
   const zoom = useGraphStore(state => state.zoom ?? 1)
+  const undo = useGraphStore(state => state.undo)
+  const redo = useGraphStore(state => state.redo)
+  const canUndo = useGraphStore(state => state.historyPast.length > 0)
+  const canRedo = useGraphStore(state => state.historyFuture.length > 0)
   const navigate = useNavigate()
   const boardSearch = useSearch({
     from: "/boards/$id",
@@ -225,6 +231,36 @@ export const ActionPanel = memo(function ActionPanel({
             <span className='relative inline-flex items-center justify-center'>
               <HugeiconsIcon icon={Cursor02Icon} className='size-4 shrink-0' strokeWidth={2} />
               <ShortcutHint label='V' />
+            </span>
+          </Button>
+
+          {/* Undo / Redo */}
+          <Button
+            variant={null}
+            size='icon'
+            onClick={undo}
+            className={normalButtonClass}
+            title='Undo'
+            aria-label='Undo'
+            disabled={!canUndo}
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={Undo03Icon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='Z' />
+            </span>
+          </Button>
+          <Button
+            variant={null}
+            size='icon'
+            onClick={redo}
+            className={normalButtonClass}
+            title='Redo'
+            aria-label='Redo'
+            disabled={!canRedo}
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={Redo03Icon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='Y' />
             </span>
           </Button>
 
@@ -437,6 +473,22 @@ export const ActionPanel = memo(function ActionPanel({
             </span>
           </Button>
 
+          {/* Upload document */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => setOpenDocumentUpload(true)}
+            title='Upload document'
+            aria-label='Upload document'
+            disabled={!boardId}
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='P' />
+            </span>
+          </Button>
+
           {/* Open Chat */}
           <Button
             variant={null}
@@ -475,42 +527,49 @@ export const ActionPanel = memo(function ActionPanel({
       {/* Dialogs */}
       <ImageSearchDialog openImageSearch={openImageSearch} setOpenImageSearch={setOpenImageSearch} />
       <IconSearchDialog openIconSearch={openIconSearch} setOpenIconSearch={setOpenIconSearch} />
-      <Dialog open={openChatDialog} onOpenChange={setOpenChatDialog}>
-        <DialogContent className="sm:max-w-4xl w-full h-[85vh] !p-0 overflow-hidden flex flex-col gap-0" showCloseButton={false}>
-          <DialogHeader className="px-6 pt-6 pb-2 border-b text-left">
-            <div className="flex items-center justify-between gap-3">
-              <DialogTitle className='flex flex-row items-center gap-0'>
-                <BotMessageSquare className="size-5 inline-block mr-2 text-sidebar-icon-4" strokeWidth={2} />
-                Board Copilot
-              </DialogTitle>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    setOpenChatDialog(false)
-                    if (currentChatId) {
-                      navigate({ to: "/chats/$id", params: { id: currentChatId } })
-                    } else {
-                      navigate({ to: "/chats" })
-                    }
-                  }}
-                  title="Open full chat view"
-                  aria-label="Open full chat view"
-                >
-                  <HugeiconsIcon icon={LinkSquare01Icon} className="size-4" strokeWidth={2} />
-                </Button>
-                <DialogClose
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-foreground shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  aria-label="Close"
-                >
-                  <span className="sr-only">Close</span>
-                  <span aria-hidden className="text-lg leading-none">&times;</span>
-                </DialogClose>
-              </div>
+      <DocumentUploadDialog open={openDocumentUpload} onOpenChange={setOpenDocumentUpload} />
+      <Sheet open={openChatDialog} onOpenChange={setOpenChatDialog} modal={false}>
+        <SheetContent
+          side="right"
+          showOverlay={false}
+          showClose={false}
+          onInteractOutside={(event) => event.preventDefault()}
+          className="w-[420px] max-w-[92vw] bg-sidebar text-sidebar-foreground border-l border-border p-0"
+        >
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-3 bg-sidebar">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <BotMessageSquare className="size-4 text-sidebar-icon-4" strokeWidth={2} />
+              Board Copilot
             </div>
-          </DialogHeader>
-          <div className="flex-1 relative bg-background overflow-y-auto scrollbar-thin">
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setOpenChatDialog(false)
+                  if (currentChatId) {
+                    navigate({ to: "/chats/$id", params: { id: currentChatId } })
+                  } else {
+                    navigate({ to: "/chats" })
+                  }
+                }}
+                title="Open full chat view"
+                aria-label="Open full chat view"
+              >
+                <HugeiconsIcon icon={LinkSquare01Icon} className="size-4" strokeWidth={2} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setOpenChatDialog(false)}
+                title="Close"
+                aria-label="Close"
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="flex-1 relative bg-sidebar overflow-y-auto scrollbar-thin">
             {boardId ? (
               <Chat
                 initialBoardId={boardId}
@@ -524,8 +583,8 @@ export const ActionPanel = memo(function ActionPanel({
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 })

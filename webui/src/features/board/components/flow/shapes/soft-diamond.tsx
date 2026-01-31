@@ -51,7 +51,7 @@ export const SoftDiamond = memo(({
             height: '100%',
             transform: `translate(${offset}px, ${offset}px) scale(1.08)`,
             transformOrigin: 'center',
-            filter: 'brightness(0.9)'
+            filter: 'brightness(0.75)'
           }}
         >
           <RoughDiamond {...commonProps} />

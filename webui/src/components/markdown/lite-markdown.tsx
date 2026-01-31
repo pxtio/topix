@@ -313,7 +313,7 @@ export const LiteMarkdown = memo(function LiteMarkdown({ text, className }: Lite
         if (token.type === 'code-block') {
           return (
             <pre key={index} className='my-2 rounded bg-transparent px-3 py-2 overflow-x-auto'>
-              <code className='font-mono text-sm whitespace-pre-wrap'>
+              <code className='font-mono whitespace-pre-wrap'>
                 {token.content}
               </code>
             </pre>

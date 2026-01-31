@@ -210,8 +210,8 @@
      WebKit/Blink (Chrome/Edge/Safari)
      ========================= */
   .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;   /* reserve space always */
-    height: 6px;
+    width: 4px;   /* reserve space always */
+    height: 4px;
     background: transparent;
   }
   .scrollbar-thin::-webkit-scrollbar-track {

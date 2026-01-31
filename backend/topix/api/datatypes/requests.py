@@ -78,6 +78,12 @@ class LinkUpdateRequest(BaseModel):
     data: dict
 
 
+class DocumentUpdateRequest(BaseModel):
+    """Request model for updating a document."""
+
+    data: dict
+
+
 class SubscriptionUpdateRequest(BaseModel):
     """Request model for updating a subscription."""
 

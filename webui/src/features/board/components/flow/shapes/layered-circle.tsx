@@ -4,7 +4,6 @@ import { RoughCircle } from '@/components/rough/circ'
 import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 
 type LayeredCircleProps = {
-  minHeight: number
   wrapperClass: string
   wrapperStyle: CSSProperties
   roughness?: number
@@ -18,7 +17,6 @@ type LayeredCircleProps = {
 }
 
 export const LayeredCircle = memo(({
-  minHeight,
   wrapperClass,
   wrapperStyle,
   roughness,
@@ -30,8 +28,7 @@ export const LayeredCircle = memo(({
   seed,
   children
 }: LayeredCircleProps) => {
-  const baseSize = Math.max(minHeight, 50)
-  const offset = Math.min(baseSize * 0.12, 16)
+  const offset = 24
 
   const commonProps = {
     roughness,
@@ -47,7 +44,7 @@ export const LayeredCircle = memo(({
     <div className={clsx(wrapperClass)} style={wrapperStyle}>
       <div
         className='absolute inset-0 pointer-events-none'
-        style={{ transform: `translate(${offset}px, ${offset}px)`, filter: 'brightness(0.9)' }}
+        style={{ transform: `translate(${offset}px, ${offset}px)`, filter: 'brightness(0.75)' }}
       >
         <RoughCircle {...commonProps} className='w-full h-full' />
       </div>

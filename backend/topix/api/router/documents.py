@@ -1,0 +1,70 @@
+"""Document-related API routes."""
+
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
+from fastapi.params import File, Query
+
+from topix.api.utils.decorators import with_standard_response
+from topix.api.utils.resilient_streaming import with_resilient_request
+from topix.api.utils.security import get_current_user_uid
+from topix.nlp.pipeline.parsing import ParsingPipeline
+from topix.utils.common import gen_uid
+from topix.utils.file import detect_mime_type, get_file_path, save_file
+
+router = APIRouter(
+    prefix="/documents",
+    tags=["documents"],
+    dependencies=[Depends(get_current_user_uid)],
+    responses={404: {"description": "Not found"}},
+)
+
+
+@router.post("/", include_in_schema=False)
+@router.post("")
+@with_resilient_request()
+@with_standard_response
+async def create_document_from_file(
+    request: Request,
+    graph_id: Annotated[str, Query(description="Graph ID")],
+    file: UploadFile = File(..., description="File to parse"),
+    id: Annotated[str | None, Query(description="Optional ID for the parsed document")] = None,
+):
+    """Create a document by parsing an uploaded file (PDF only)."""
+    file_bytes = await file.read()
+    mime_type = detect_mime_type(file.filename)
+
+    if mime_type.startswith("application/pdf"):
+        cat = "files"
+        new_filename = f"{gen_uid()}_{file.filename}"
+        saved_path = save_file(filename=new_filename, file_bytes=file_bytes, cat=cat)
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type `{mime_type}` for parsing. Only PDF files are supported.",
+        )
+
+    true_path = get_file_path(saved_path)
+
+    pipeline: ParsingPipeline = request.app.parser_pipeline
+
+    document, chunks, notes, links = await pipeline.process_file(
+        filepath=true_path,
+        id=id,
+    )
+    document, notes, links = await pipeline.save_to_store(
+        graph_uid=graph_id,
+        document=document,
+        chunks=chunks,
+        notes=notes,
+        links=links,
+    )
+
+    return {
+        "notes": [
+            document.model_dump(exclude_none=True)
+        ] + [
+            note.model_dump(exclude_none=True) for note in notes
+        ],
+        "links": [link.model_dump(exclude_none=True) for link in links],
+    }

@@ -68,7 +68,7 @@ export interface FileProperty extends BaseProperty<'file'> {
 }
 
 export interface URLProperty extends BaseProperty<'url'> {
-  url?: { url: string }
+  url?: string
 }
 
 export interface LocationProperty extends BaseProperty<'location'> {

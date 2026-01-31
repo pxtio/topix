@@ -11,9 +11,10 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from topix.api.router import boards, chats, files, finance, subscriptions, tools, users, utils
+from topix.api.router import boards, chats, documents, files, finance, subscriptions, tools, users, utils
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
+from topix.nlp.pipeline.parsing import ParsingPipeline
 from topix.setup import setup
 from topix.store.chat import ChatStore
 from topix.store.graph import GraphStore
@@ -40,6 +41,7 @@ def create_app(stage: StageEnum):
         await app.chat_store.open()
         app.subscription_store = SubscriptionStore()
         await app.subscription_store.open()
+        app.parser_pipeline = ParsingPipeline()
 
         # Initialize Redis
         app.redis_store = RedisStore.from_config()
@@ -74,6 +76,7 @@ def create_app(stage: StageEnum):
     app.include_router(utils.router)
     app.include_router(finance.router)
     app.include_router(files.router)
+    app.include_router(documents.router)
 
     return app
 
@@ -81,9 +84,11 @@ def create_app(stage: StageEnum):
 async def main(args) -> tuple[FastAPI, int]:
     """Run the application entry point."""
     await setup(stage=args.stage, env_filename=args.env_file)
-    app = create_app(stage=args.stage)
 
     config: Config = Config.instance()
+
+    app = create_app(stage=args.stage)
+
     return app, args.port or config.app.settings.port
 
 

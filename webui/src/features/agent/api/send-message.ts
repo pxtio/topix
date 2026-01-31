@@ -1,5 +1,5 @@
 import { API_URL } from "@/config/api"
-import type { AgentStreamMessage, AgentResponse, ReasoningStep } from "../types/stream"
+import type { AgentResponse, ReasoningStep } from "../types/stream"
 import type { SendMessageRequestPayload } from "./types"
 import { handleStreamingResponse } from "../utils/stream/digest"
 import { useChatStore } from "../store/chat-store"
@@ -25,7 +25,7 @@ export async function* sendMessage(
   chatId: string,
   userId: string,
   opts?: { signal?: AbortSignal }
-): AsyncGenerator<AgentStreamMessage> {
+): AsyncGenerator<Record<string, unknown>> {
   const url = new URL(`/chats/${chatId}/messages`, API_URL)
   url.searchParams.set("user_id", userId)
 
@@ -52,7 +52,7 @@ export async function* sendMessage(
   }
 
   // hand off to your streaming parser (SSE/NDJSON/etc.)
-  yield* handleStreamingResponse<AgentStreamMessage>(response)
+  yield* handleStreamingResponse<Record<string, unknown>>(response)
 }
 
 

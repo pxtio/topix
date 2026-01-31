@@ -15,8 +15,9 @@ import '@xyflow/react/dist/base.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useShallow } from 'zustand/shallow'
 
-import NodeView from './node-view'
+import { NodeView } from './node-view'
 import { PointNode } from './point-node'
+import { DocumentNode } from './document-node'
 import { EdgeView } from './edge/edge-view'
 import { EdgeMarkerDefs } from './edge/edge-markers'
 import { GraphSidebar } from '../style-panel/panel'
@@ -38,13 +39,15 @@ import { usePlaceLine } from '../../hooks/use-place-line'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
+import { useCenterAroundParam } from '../../hooks/use-center-around'
+import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
 
 import './graph-styles.css'
 import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
 
 const proOptions = { hideAttribution: true }
 
-const nodeTypes = { default: NodeView, point: PointNode }
+const nodeTypes = { default: NodeView, point: PointNode, document: DocumentNode }
 const edgeTypes = { default: EdgeView }
 
 const defaultEdgeOptions = {
@@ -210,6 +213,7 @@ export default function GraphEditor() {
     viewportInitialized,
     zoomTo,
     screenToFlowPosition,
+    setCenter,
   } = useReactFlow<NoteNode, LinkEdge>()
 
   const boardId = useGraphStore(state => state.boardId)
@@ -224,6 +228,8 @@ export default function GraphEditor() {
   const onNodesDelete = useGraphStore(state => state.onNodesDelete)
   const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const undo = useGraphStore(state => state.undo)
+  const redo = useGraphStore(state => state.redo)
 
   const isResizingNode = useGraphStore(state => state.isResizingNode)
   const isDragging = useGraphStore(state => state.isDragging)
@@ -240,6 +246,17 @@ export default function GraphEditor() {
   useCopyPasteNodes({
     jitterMax: 40,
     shortcuts: true,
+  })
+
+  useCenterAroundParam({ setCenter })
+
+  useBoardShortcuts({
+    enabled: viewMode === 'graph',
+    shortcuts: [
+      { key: 'z', withMod: true, withShift: false, handler: undo },
+      { key: 'z', withMod: true, withShift: true, handler: redo },
+      { key: 'y', withMod: true, handler: redo },
+    ],
   })
 
   const addNoteNode = useAddNoteNode()

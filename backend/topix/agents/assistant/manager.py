@@ -110,9 +110,15 @@ class AssistantManager:
             elif tool_call.name == AgentToolName.MEMORY_SEARCH:
                 if graph_uid is not None:
                     for ref in tool_call.output.references:
-                        logger.info(f"Processing reference of type and id: {ref.ref_type} - {ref.ref_id}")
                         url_short_id = f"(/{ref.ref_type}/{ref.ref_id[:5]})"
-                        url_long_id = f"(/boards/{graph_uid}/{ref.ref_type}s/{ref.ref_id})"
+                        tpe: str
+                        if ref.parent_type and ref.parent_id:
+                            tpe = ref.parent_type
+                            long_id = ref.parent_id
+                        else:
+                            tpe = ref.ref_type
+                            long_id = ref.ref_id
+                        url_long_id = f"(/boards/{graph_uid}/{tpe}s/{long_id})"
                         answer = answer.replace(url_short_id, url_long_id)
 
         return post_process_url_citations(answer, valid_urls)

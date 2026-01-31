@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { BotMessageSquare, ChevronDown, ChevronRight, Cloud, Layers } from 'lucide-react'
+import { BotMessageSquare, ChevronDown, ChevronRight, Cloud, Layers, RotateCcw, RotateCw } from 'lucide-react'
 import type { NodeType } from '../../types/style'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Chat } from '@/features/agent/components/chat-view'
@@ -63,6 +63,10 @@ export const ActionPanel = memo(function ActionPanel({
   const [openDocumentUpload, setOpenDocumentUpload] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
   const zoom = useGraphStore(state => state.zoom ?? 1)
+  const undo = useGraphStore(state => state.undo)
+  const redo = useGraphStore(state => state.redo)
+  const canUndo = useGraphStore(state => state.historyPast.length > 0)
+  const canRedo = useGraphStore(state => state.historyFuture.length > 0)
   const navigate = useNavigate()
   const boardSearch = useSearch({
     from: "/boards/$id",
@@ -227,6 +231,36 @@ export const ActionPanel = memo(function ActionPanel({
             <span className='relative inline-flex items-center justify-center'>
               <HugeiconsIcon icon={Cursor02Icon} className='size-4 shrink-0' strokeWidth={2} />
               <ShortcutHint label='V' />
+            </span>
+          </Button>
+
+          {/* Undo / Redo */}
+          <Button
+            variant={null}
+            size='icon'
+            onClick={undo}
+            className={normalButtonClass}
+            title='Undo'
+            aria-label='Undo'
+            disabled={!canUndo}
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <RotateCcw className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='Z' />
+            </span>
+          </Button>
+          <Button
+            variant={null}
+            size='icon'
+            onClick={redo}
+            className={normalButtonClass}
+            title='Redo'
+            aria-label='Redo'
+            disabled={!canRedo}
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <RotateCw className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='Y' />
             </span>
           </Button>
 

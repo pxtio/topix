@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon, ArrowMoveDownRightIcon, GoogleDocIcon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon, ArrowMoveDownRightIcon, GoogleDocIcon, Undo03Icon, Redo03Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { AddNoteNodeOptions } from '../../hooks/add-node'
@@ -63,6 +63,10 @@ export const ActionPanel = memo(function ActionPanel({
   const [openDocumentUpload, setOpenDocumentUpload] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
   const zoom = useGraphStore(state => state.zoom ?? 1)
+  const undo = useGraphStore(state => state.undo)
+  const redo = useGraphStore(state => state.redo)
+  const canUndo = useGraphStore(state => state.historyPast.length > 0)
+  const canRedo = useGraphStore(state => state.historyFuture.length > 0)
   const navigate = useNavigate()
   const boardSearch = useSearch({
     from: "/boards/$id",
@@ -227,6 +231,36 @@ export const ActionPanel = memo(function ActionPanel({
             <span className='relative inline-flex items-center justify-center'>
               <HugeiconsIcon icon={Cursor02Icon} className='size-4 shrink-0' strokeWidth={2} />
               <ShortcutHint label='V' />
+            </span>
+          </Button>
+
+          {/* Undo / Redo */}
+          <Button
+            variant={null}
+            size='icon'
+            onClick={undo}
+            className={normalButtonClass}
+            title='Undo'
+            aria-label='Undo'
+            disabled={!canUndo}
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={Undo03Icon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='Z' />
+            </span>
+          </Button>
+          <Button
+            variant={null}
+            size='icon'
+            onClick={redo}
+            className={normalButtonClass}
+            title='Redo'
+            aria-label='Redo'
+            disabled={!canRedo}
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={Redo03Icon} className='size-4 shrink-0' strokeWidth={2} />
+              <ShortcutHint label='Y' />
             </span>
           </Button>
 

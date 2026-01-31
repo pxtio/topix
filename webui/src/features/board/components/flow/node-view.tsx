@@ -18,7 +18,7 @@ const CONNECTOR_GAP = 0
 /**
  * Node view component for rendering a note node in the graph.
  */
-function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
+function NodeViewBase({ id, data, selected }: NodeProps<NoteNode>) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
 
@@ -159,4 +159,4 @@ function NodeView({ id, data, selected }: NodeProps<NoteNode>) {
   )
 }
 
-export default memo(NodeView)
+export const NodeView = memo(NodeViewBase)

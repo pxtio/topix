@@ -1,9 +1,12 @@
 import { useEffect } from "react"
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router"
 
-import type { NoteNode } from "../types/flow"
 import { nodeCenter } from "../utils/point-attach"
+import { useGraphStore } from "../store/graph-store"
 
+/**
+ * Type for the `center_around` search param.
+ */
 type CenterAroundSearch = { center_around?: string }
 
 /**
@@ -11,18 +14,19 @@ type CenterAroundSearch = { center_around?: string }
  * After centering, the param is removed to avoid repeated recentering.
  */
 export function useCenterAroundParam({
-  nodesById,
   setCenter,
 }: {
-  nodesById: Map<string, NoteNode>
   setCenter?: (x: number, y: number, options?: { zoom?: number; duration?: number }) => void
 }) {
   const navigate = useNavigate()
+  const nodesById = useGraphStore(state => state.nodesById)
+
   const params = useParams({
     from: "/boards/$id",
     select: (p: { id: string }) => p.id,
     shouldThrow: false,
   })
+
   const search = useSearch({
     from: "/boards/$id",
     select: (s: CenterAroundSearch) => s.center_around,

@@ -218,7 +218,6 @@ export default function GraphEditor() {
   const boardId = useGraphStore(state => state.boardId)
 
   const nodes = useGraphStore(useShallow(state => state.nodes))
-  const nodesById = useGraphStore(state => state.nodesById)
   const edges = useGraphStore(useShallow(state => state.edges))
 
   const setNodes = useGraphStore(state => state.setNodes)
@@ -246,10 +245,7 @@ export default function GraphEditor() {
     shortcuts: true,
   })
 
-  useCenterAroundParam({
-    nodesById,
-    setCenter,
-  })
+  useCenterAroundParam({ setCenter })
 
   const addNoteNode = useAddNoteNode()
 

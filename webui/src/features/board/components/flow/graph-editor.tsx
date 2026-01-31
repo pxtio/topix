@@ -39,6 +39,7 @@ import { usePlaceLine } from '../../hooks/use-place-line'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
 import { useCopyPasteNodes } from '../../hooks/copy-paste'
+import { useCenterAroundParam } from '../../hooks/use-center-around'
 
 import './graph-styles.css'
 import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
@@ -211,11 +212,13 @@ export default function GraphEditor() {
     viewportInitialized,
     zoomTo,
     screenToFlowPosition,
+    setCenter,
   } = useReactFlow<NoteNode, LinkEdge>()
 
   const boardId = useGraphStore(state => state.boardId)
 
   const nodes = useGraphStore(useShallow(state => state.nodes))
+  const nodesById = useGraphStore(state => state.nodesById)
   const edges = useGraphStore(useShallow(state => state.edges))
 
   const setNodes = useGraphStore(state => state.setNodes)
@@ -241,6 +244,11 @@ export default function GraphEditor() {
   useCopyPasteNodes({
     jitterMax: 40,
     shortcuts: true,
+  })
+
+  useCenterAroundParam({
+    nodesById,
+    setCenter,
   })
 
   const addNoteNode = useAddNoteNode()

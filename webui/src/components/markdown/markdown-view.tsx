@@ -4,6 +4,7 @@ import "katex/dist/katex.min.css"
 import { cn } from "@/lib/utils"
 import { CustomTable } from "./custom-table"
 import { Pre } from "./custom-pre"
+import { MarkdownLink } from "./markdown-link"
 import { Streamdown } from "streamdown"
 import { code } from "@streamdown/code"
 
@@ -35,26 +36,7 @@ function ensureScrollbarStyleInjected() {
 /** -------------------------------------------------------
  *  CustomLink — typed + small
  *  ------------------------------------------------------*/
-type CustomLinkProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
-  children?: React.ReactNode
-}
-
-function CustomLink({ children, href, ...rest }: CustomLinkProps) {
-  const content = Array.isArray(children) ? children[0] : children
-  const label = typeof content === "string" ? content.replace(/^[[]|[\]]$/g, "") : "KB"
-
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="transition-all inline-block px-2 py-1 text-muted-foreground text-xs font-mono font-medium border border-border bg-card hover:bg-accent rounded-lg"
-      {...rest}
-    >
-      {label}
-    </a>
-  )
-}
+const CustomLink = MarkdownLink
 
 /** -------------------------------------------------------
  *  Typed wrappers for common elements

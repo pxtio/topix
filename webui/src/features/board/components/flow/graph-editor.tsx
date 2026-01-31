@@ -15,7 +15,7 @@ import '@xyflow/react/dist/base.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useShallow } from 'zustand/shallow'
 
-import NodeView from './node-view'
+import { NodeView } from './node-view'
 import { PointNode } from './point-node'
 import { DocumentNode } from './document-node'
 import { EdgeView } from './edge/edge-view'

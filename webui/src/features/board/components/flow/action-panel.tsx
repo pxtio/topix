@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon, ArrowMoveDownRightIcon, GoogleDocIcon } from '@hugeicons/core-free-icons'
+import { CircleIcon, Cursor02Icon, DiamondIcon, FitToScreenIcon, Hold04Icon, LeftToRightListBulletIcon, MinusSignIcon, Note02Icon, PlusSignIcon, SquareIcon, SquareLock02Icon, SquareUnlock02Icon, TextIcon, Image02Icon, ChartBubble02Icon, GeometricShapes01Icon, Tag01Icon, LinkSquare01Icon, LabelIcon, ArrowMoveDownRightIcon, GoogleDocIcon, Undo03Icon, Redo03Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import type { AddNoteNodeOptions } from '../../hooks/add-node'
@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { BotMessageSquare, ChevronDown, ChevronRight, Cloud, Layers, RotateCcw, RotateCw } from 'lucide-react'
+import { BotMessageSquare, ChevronDown, ChevronRight, Cloud, Layers } from 'lucide-react'
 import type { NodeType } from '../../types/style'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Chat } from '@/features/agent/components/chat-view'
@@ -245,7 +245,7 @@ export const ActionPanel = memo(function ActionPanel({
             disabled={!canUndo}
           >
             <span className='relative inline-flex items-center justify-center'>
-              <RotateCcw className='size-4 shrink-0' strokeWidth={2} />
+              <HugeiconsIcon icon={Undo03Icon} className='size-4 shrink-0' strokeWidth={2} />
               <ShortcutHint label='Z' />
             </span>
           </Button>
@@ -259,7 +259,7 @@ export const ActionPanel = memo(function ActionPanel({
             disabled={!canRedo}
           >
             <span className='relative inline-flex items-center justify-center'>
-              <RotateCw className='size-4 shrink-0' strokeWidth={2} />
+              <HugeiconsIcon icon={Redo03Icon} className='size-4 shrink-0' strokeWidth={2} />
               <ShortcutHint label='Y' />
             </span>
           </Button>

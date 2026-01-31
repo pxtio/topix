@@ -747,7 +747,14 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       if (state.boardId !== boardId) {
         clearRoughCanvasCache()
       }
-      return { boardId }
+      return state.boardId !== boardId
+        ? {
+            boardId,
+            historyPast: [],
+            historyFuture: [],
+            dragSnapshotNodes: null,
+          }
+        : { boardId }
     })
   },
 

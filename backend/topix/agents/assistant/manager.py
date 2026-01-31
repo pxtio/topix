@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from collections.abc import AsyncGenerator
 
@@ -86,7 +87,7 @@ class AssistantManager:
                 return [{"role": "user", "content": query}]
         return [{"role": "user", "content": query}]
 
-    async def _postprocess_answer(
+    async def _postprocess_answer(  # noqa: C901
         self,
         answer: str,
         context: ReasoningContext,
@@ -97,8 +98,9 @@ class AssistantManager:
             graph_uid = context.memory_search_filter.get("graph_uid")
         else:
             graph_uid = None
-        logger.info(f"Post-processing answer with graph_uid: {graph_uid}")
-        logger.info(f"tool calls: {context.tool_calls}")
+
+        short_ref_re = re.compile(r"\(/(?P<rtype>[a-z_]+)/(?P<prefix>[a-zA-Z0-9]{4,})\)")
+
         valid_urls = []
         for tool_call in context.tool_calls:
             if tool_call.name == AgentToolName.WEB_SEARCH:
@@ -109,17 +111,31 @@ class AssistantManager:
             # Correct shortened URLs in the answer by replacing shortened IDs with full IDs
             elif tool_call.name == AgentToolName.MEMORY_SEARCH:
                 if graph_uid is not None:
-                    for ref in tool_call.output.references:
-                        url_short_id = f"(/{ref.ref_type}/{ref.ref_id[:5]})"
-                        tpe: str
-                        if ref.parent_type and ref.parent_id:
-                            tpe = ref.parent_type
-                            long_id = ref.parent_id
-                        else:
-                            tpe = ref.ref_type
-                            long_id = ref.ref_id
-                        url_long_id = f"(/boards/{graph_uid}/{tpe}s/{long_id})"
-                        answer = answer.replace(url_short_id, url_long_id)
+                    refs = tool_call.output.references
+
+                    # Each ref is a full ID; we match on any prefix the model emits.
+                    def replace_match(match: re.Match[str]) -> str:
+                        # Replace /:type/:prefix with the first matching full ID for that type.
+                        rtype = match.group("rtype")
+                        prefix = match.group("prefix")
+                        found = None
+
+                        for ref in refs:
+                            if ref.ref_type != rtype:
+                                continue
+                            if ref.ref_id.startswith(prefix):
+                                found = ref
+                                break
+
+                        if not found:
+                            return match.group(0)
+
+                        target_type = found.parent_type or found.ref_type
+                        target_id = found.parent_id or found.ref_id
+
+                        return f"(/boards/{graph_uid}/{target_type}s/{target_id})"
+
+                    answer = short_ref_re.sub(replace_match, answer)
 
         return post_process_url_citations(answer, valid_urls)
 

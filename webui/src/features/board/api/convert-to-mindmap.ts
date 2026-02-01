@@ -71,7 +71,7 @@ export const useConvertToMindMap = () => {
         colorTree({ notes, links })
       } else {
         if (notes.length > 0) {
-          notes.forEach((note) => note.style.backgroundColor = pickRandomColorOfShade(200, ['blue', 'amber', 'green', 'orange', 'rose', 'teal', 'cyan'])?.hex || note.style.backgroundColor)
+          notes.forEach((note) => note.style.backgroundColor = pickRandomColorOfShade(200, undefined)?.hex || note.style.backgroundColor)
         }
       }
       const rawNodes = notes.map(convertNoteToNode)
@@ -80,14 +80,9 @@ export const useConvertToMindMap = () => {
       const ns: NoteNode[] = []
       const es: LinkEdge[] = []
 
-      if (toolType !== "schemify") {
-        const { nodes, edges } = await autoLayout(rawNodes, rawEdges, defaultLayoutOptions)
-        ns.push(...nodes)
-        es.push(...edges)
-      } else {
-        ns.push(...rawNodes)
-        es.push(...rawEdges)
-      }
+      const { nodes, edges } = await autoLayout(rawNodes, rawEdges, defaultLayoutOptions)
+      ns.push(...nodes)
+      es.push(...edges)
 
       // store temporarily in mind map store
       // will be consumed by board component

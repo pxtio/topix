@@ -16,12 +16,16 @@ type Token =
   | { type: 'math-inline'; content: string }
   | { type: 'math-block'; content: string }
   | { type: 'progress'; completed: number; total: number }
+  | { type: 'hr' }
+  | { type: 'hr-double' }
 
 const INLINE_PATTERN =
   /(\$\$[\s\S]+?\$\$|\*\*[^*]+\*\*|==[^=\s](?:[^=]*?[^=\s])?==|`[^`]+`|\*[^*]+\*|__[^_]+__|~~[^~]+~~|_[^_]+_|\[[^\]]+\]\([^)]+\))/g
 const CHECK_LINE_PATTERN = /^[ \t]*(\[(v)\]|☑|✅)/i
 const EMPTY_LINE_PATTERN = /^[ \t]*(\[\]|☐)/i
 const CROSS_LINE_PATTERN = /^([ \t]*)(\[(x)\]|☒|❎)(\s*)(.*)$/i
+const HR_LINE_PATTERN = /^[ \t]*---[ \t]*$/
+const DOUBLE_HR_LINE_PATTERN = /^[ \t]*===[ \t]*$/
 
 const transformSymbols = (value: string) =>
   value.replace(/<=>|<->|<-|->|\[\]|\[[vx]\]/gi, (match) => {
@@ -87,6 +91,14 @@ function tokenizeInline(segment: string): Token[] {
 }
 
 function tokenizeLine(line: string): Token[] {
+  if (DOUBLE_HR_LINE_PATTERN.test(line)) {
+    return [{ type: 'hr-double' }]
+  }
+
+  if (HR_LINE_PATTERN.test(line)) {
+    return [{ type: 'hr' }]
+  }
+
   const match = line.match(CROSS_LINE_PATTERN)
   if (!match) {
     return tokenizeInline(line)
@@ -415,6 +427,14 @@ export const LiteMarkdown = memo(function LiteMarkdown({ text, className }: Lite
               </span>
             </span>
           )
+        }
+
+        if (token.type === 'hr') {
+          return <hr key={index} className='my-2 border-t border-current' />
+        }
+
+        if (token.type === 'hr-double') {
+          return <div key={index} className='my-2 border-t-2 border-b-2 border-current' />
         }
 
         return <Fragment key={index}>{token.content}</Fragment>

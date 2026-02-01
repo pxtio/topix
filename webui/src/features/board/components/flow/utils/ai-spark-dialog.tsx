@@ -7,6 +7,9 @@ import { toast } from "sonner"
 import type { NoteNode } from "@/features/board/types/flow"
 import { buildContextTextFromNodes } from "@/features/board/utils/context-text"
 import { useConvertToMindMap } from "@/features/board/api/convert-to-mindmap"
+import { CancelIcon, CheckmarkCircle03Icon, ReloadIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Sparkles } from "lucide-react"
 
 export interface AiSparkDialogProps {
   open: boolean
@@ -62,20 +65,30 @@ export const AiSparkDialog = ({
     const answer = `Request: ${trimmedRequest || "Summarize"}\n---\nInput Text:\n${trimmedContext}`
 
     setProcessing(true)
-    const toastId = toast("Working on it…", { duration: Infinity })
+    onOpenChange(false)
+    const toastId = toast("Working on it…", {
+      duration: Infinity,
+      icon: <HugeiconsIcon icon={ReloadIcon} className="size-4 animate-spin [animation-duration:750ms]" strokeWidth={2} />,
+    })
     try {
       await convertToMindMapAsync({
         boardId,
         answer,
         toolType: "summify",
       })
-      toast.success("Added to board.", { id: toastId })
-      onOpenChange(false)
+      toast.success("Added to board.", {
+        id: toastId,
+        icon: <HugeiconsIcon icon={CheckmarkCircle03Icon} className="size-4" strokeWidth={2} />,
+      })
     } catch (error) {
       console.error("AI action failed:", error)
-      toast.error("Could not complete the action.", { id: toastId })
+      toast.error("Could not complete the action.", {
+        id: toastId,
+        icon: <HugeiconsIcon icon={CancelIcon} className="size-4" strokeWidth={2} />,
+      })
     } finally {
       setProcessing(false)
+      toast.dismiss(toastId)
     }
   }
 
@@ -83,7 +96,10 @@ export const AiSparkDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>AI Spark</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="size-4 text-secondary" />
+            <span>AI Spark</span>
+          </DialogTitle>
           <DialogDescription>
             Run an AI action on selected nodes or custom context.
           </DialogDescription>
@@ -115,8 +131,9 @@ export const AiSparkDialog = ({
               value={contextText}
               onChange={(event) => setContextText(event.target.value)}
               placeholder="Paste or describe the context..."
-              rows={6}
+              rows={24}
               disabled={useSelection && selectionContext.length > 0}
+              className='resize-none min-h-[320px]'
             />
           </div>
         </div>

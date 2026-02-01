@@ -3,13 +3,16 @@ import type { ReactFlowProps } from '@xyflow/react'
 
 import type { LinkEdge, NoteNode } from '../../types/flow'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { LayerBringForwardIcon, LayerBringToFrontIcon, LayerSendBackwardIcon, LayerSendToBackIcon } from '@hugeicons/core-free-icons'
+import { LayerBringForwardIcon, LayerBringToFrontIcon, LayerSendBackwardIcon, LayerSendToBackIcon, CancelIcon, CheckmarkCircle03Icon, ReloadIcon } from '@hugeicons/core-free-icons'
 import { Sparkles } from 'lucide-react'
 import { useGraphStore } from '../../store/graph-store'
 import { useConvertToMindMap } from '../../api/convert-to-mindmap'
 import { buildContextTextFromNodes } from '../../utils/context-text'
 import { toast } from 'sonner'
 
+/**
+ * Props for the GraphContextMenu component.
+ */
 type GraphContextMenuProps = {
   nodes: NoteNode[]
   setNodesPersist: (updater: (prev: NoteNode[]) => NoteNode[]) => void
@@ -19,6 +22,11 @@ type GraphContextMenuProps = {
   }) => React.ReactNode
 }
 
+/**
+ * A context menu for the graph that appears on right-clicking
+ * selected nodes or the pane when nodes are selected.
+ * Allows changing z-index and performing AI actions on selected nodes.
+ */
 export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphContextMenuProps) {
   const [menuPosition, setMenuPosition] = useState<{ x: number, y: number } | null>(null)
 
@@ -142,17 +150,28 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
     }
     if (aiProcessing) return
     setAiProcessing(actionLabel)
-    const toastId = toast("Working on it…", { duration: Infinity })
+    setMenuPosition(null)
+    const toastId = toast("Working on it…", {
+      duration: Infinity,
+      icon: <HugeiconsIcon icon={ReloadIcon} className="size-4 animate-spin [animation-duration:750ms]" strokeWidth={2} />,
+    })
     try {
       const answer = `Request: ${actionLabel}\n---\nInput Text:\n${contextText}`
       await convertToMindMapAsync({ boardId, answer, toolType: "summify" })
-      toast.success("Added to board.", { id: toastId })
+      toast.success("Added to board.", {
+        id: toastId,
+        icon: <HugeiconsIcon icon={CheckmarkCircle03Icon} className="size-4" strokeWidth={2} />,
+      })
       setMenuPosition(null)
     } catch (error) {
       console.error("AI action failed:", error)
-      toast.error("Could not complete the action.", { id: toastId })
+      toast.error("Could not complete the action.", {
+        id: toastId,
+        icon: <HugeiconsIcon icon={CancelIcon} className="size-4" strokeWidth={2} />,
+      })
     } finally {
       setAiProcessing(null)
+      toast.dismiss(toastId)
     }
   }, [aiProcessing, boardId, convertToMindMapAsync, selectedNodes])
 
@@ -211,7 +230,7 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
             <>
               <div className='my-1 h-px bg-border' />
               <div className='px-3 py-1 text-xs font-medium text-muted-foreground flex items-center gap-2'>
-                <Sparkles className='size-3' />
+                <Sparkles className='size-3 text-secondary' />
                 AI Spark
               </div>
               <button
@@ -220,7 +239,7 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
                 onClick={() => handleAiAction("Summarize")}
                 disabled={!!aiProcessing}
               >
-                <span>Summarize</span>
+                <span>Summarize (quick overview)</span>
               </button>
               <button
                 type='button'
@@ -228,7 +247,7 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
                 onClick={() => handleAiAction("Mapify")}
                 disabled={!!aiProcessing}
               >
-                <span>Mapify</span>
+                <span>Mapify (generate mindmap)</span>
               </button>
               <button
                 type='button'
@@ -236,7 +255,7 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
                 onClick={() => handleAiAction("Schemify")}
                 disabled={!!aiProcessing}
               >
-                <span>Schemify</span>
+                <span>Schemify (generate schema)</span>
               </button>
             </>
           )}

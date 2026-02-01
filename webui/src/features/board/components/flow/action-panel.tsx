@@ -166,6 +166,7 @@ export const ActionPanel = memo(function ActionPanel({
       { key: 'g', handler: () => setOpenIconSearch(true) },
       { key: 'i', handler: () => setOpenImageSearch(true) },
       { key: 'c', handler: () => boardId && setOpenChatDialog(true) },
+      { key: 'b', handler: () => boardId && setOpenAiSpark(true) },
       { key: 'p', handler: () => setEnableSelection(false) },
       { key: 'v', handler: () => setEnableSelection(!enableSelection) },
       { key: 'l', handler: toggleLock },
@@ -519,7 +520,8 @@ export const ActionPanel = memo(function ActionPanel({
             disabled={!boardId}
           >
             <span className='relative inline-flex items-center justify-center'>
-              <Sparkles className='size-4 shrink-0' strokeWidth={2} />
+              <Sparkles className='size-4 shrink-0 text-sidebar-icon-1' strokeWidth={2} />
+              <ShortcutHint label='B' />
             </span>
           </Button>
         </>

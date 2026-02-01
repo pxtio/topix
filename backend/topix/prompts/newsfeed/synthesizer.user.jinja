@@ -8,6 +8,9 @@
 ## Time
 {{ time }}
 
+## Frequency
+The news articles used in the synthesis must not be older than a {{ frequency }} period from the current time.
+
 ## Tracker
 
 ### Topic
@@ -25,6 +28,9 @@
 ### Seed Sources
 {{ seed_sources }}
 
+## Language to write the news synthesize
+{{ lang }}
+
 ---
 
 ## History (optional — previously covered items)
@@ -38,6 +44,7 @@ Used to avoid repeating already covered stories unless there’s a clear progres
 
 # Recap — Synthesis Rules (Reminder)
 - **Format**: Return a single **Markdown newsletter** only, no JSON or commentary.
+- **Language**: All the final markdown content should be in {{ lang }}.
 - **Sections**: Headlines, Products & Releases, Research & Benchmarks, Policy/Security & Safety, Developer Changelogs, Quick Hits (omit empty ones).
 - **Item micro-format**:
   - **[Title](URL)** — 1–2 sentences (28–60 words), factual, present tense, light witty aside optional.

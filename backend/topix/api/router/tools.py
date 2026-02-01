@@ -8,6 +8,7 @@ from topix.agents.datatypes.context import Context
 from topix.agents.mindmap.mapify import MapifyAgent, convert_mapify_output_to_notes_links
 from topix.agents.mindmap.notify import NotifyAgent, convert_notify_output_to_notes_links
 from topix.agents.mindmap.schemify.schemify import SchemifyAgent, convert_schemify_output_to_notes_links
+from topix.agents.mindmap.summify.summify import SummifyAgent
 from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.utils.decorators import with_standard_response
@@ -80,6 +81,28 @@ async def schemify(
     context = Context()
     schemify_agent = SchemifyAgent()
     res = await AgentRunner.run(schemify_agent, body.answer, context=context)
+    notes, links = convert_schemify_output_to_notes_links(res)
+
+    return {
+        "notes": [note.model_dump(exclude_none=True) for note in notes],
+        "links": [link.model_dump(exclude_none=True) for link in links]
+    }
+
+
+@router.post("/mindmaps:summify/", include_in_schema=False)
+@router.post("/mindmaps:summify")
+@with_standard_response
+async def summify(
+    response: Response,
+    request: Request,
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")],
+    _: Annotated[None, Depends(rate_limiter)],
+):
+    """Convert a mindmap to a graph using Summify."""
+    context = Context()
+    summify_agent = SummifyAgent()
+    res = await AgentRunner.run(summify_agent, body.answer, context=context)
     notes, links = convert_schemify_output_to_notes_links(res)
 
     return {

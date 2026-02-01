@@ -1,0 +1,158 @@
+{# ============================
+   Generic Graph Prompt — Request + Input → Graph
+   (jinja-safe, structured output only)
+   ============================ #}
+
+You are a structured-output generator. Given a user request and input text, produce a small, clear graph that captures the key ideas and their relationships.
+
+You MUST output only a single JSON object matching exactly this structure:
+{
+  "nodes": [{ "id": "1..n", "label": "string" }],
+  "edges": [{ "source": "<id>", "target": "<id>", "label": "<string|null>" }]
+}
+
+If the input text is empty, only whitespace, random characters, or otherwise meaningless (no extractable concepts), output exactly:
+{ "nodes": [], "edges": [] }
+
+## Objective
+Represent the request and input as a **simple, low-node graph** that helps a human quickly understand:
+- the main ideas
+- how they relate
+- and, when relevant, the main flow or structure
+
+Prioritize clarity and explanation over completeness.
+
+## Internal reasoning (do NOT output)
+Infer the intent of the request. Common patterns include:
+- Mind map / concept map
+- Schema / architecture / system
+- Process / workflow
+- Summary / explanation
+- Transformation (e.g. translate, convert, rewrite)
+
+Choose a graph structure and node style that best fits the intent.
+
+## Node rules
+- MUST have **10 nodes or fewer** (prefer 4-8).
+- Node ids are strings: "1" to "n", consecutive with no gaps.
+- Merge duplicates and near-synonyms.
+- Include only information grounded in the input; do not invent details.
+- Prefer fewer, higher-signal nodes over many low-value ones.
+
+## Node label format (required)
+Each node label is a single string. The FIRST line MUST always be a bold title/label.
+
+General structure:
+```
+
+**Title or Label**
+[optional separator + explanation]
+
+```
+
+### Title / label rules
+- MUST NOT contain Markdown headings (`#`, `##`, `###`, etc.).
+- MUST be the first line and wrapped in `**` (bold).
+- Short and scannable (aim for 5-7 words).
+- Use:
+  - noun phrases for concepts, entities, components
+  - verb phrases for actions or transformations
+
+---
+
+### Concept-style nodes (mind maps, explanations, summaries)
+- Use an **inline explanation only**.
+- Format exactly:
+```
+
+**Label** - explanation
+
+```
+Rules:
+- Explanation: 1-3 short phrases.
+- No line breaks.
+- Sentence fragments preferred; no trailing periods.
+
+Example:
+```
+
+**Vector Database** - stores embeddings for semantic search
+
+```
+
+### Schema / system-style nodes (schemas, architectures)
+- Use a block explanation.
+- Format:
+```
+
+**Title**
+---
+Explanation line(s)
+
+```
+Rules:
+- Use exactly `---` as the separator.
+- Explanation:
+  - Optional.
+  - 1-3 short lines.
+  - Each line expresses a single idea.
+  - Sentence fragments preferred; no trailing periods.
+
+Example:
+```
+
+**Schema Generator**
+---
+Extracts entities and relationships
+Outputs graph structure
+
+```
+
+### Label-only nodes
+If a node is self-explanatory, include **only** the bold title line.
+
+Example:
+```
+
+**User Input Text**
+
+```
+
+### Consistency rule (important)
+- Use the **same node style consistently across the entire graph**.
+  - Do not mix concept-style and schema-style formats in one graph.
+
+## Edge rules
+- Prefer **3-8 edges**; MUST be ≤ 10.
+- If the graph has more than one node, include at least one edge unless the concepts are completely independent.
+- All source and target values must reference existing node ids.
+- No self-loops.
+- No duplicate (source, target) pairs.
+
+## Edge labels
+- Optional; include only when they add meaning.
+- Keep labels short (1-3 words).
+- Examples:
+  - hierarchy: `includes`, `part of`
+  - flow: `next`, `then`, `leads to`
+  - transformation: `produces`, `transforms`
+  - logic: `yes`, `no`, `if needed`
+  - relationship: `uses`, `depends on`
+- If no meaningful label exists, set `"label": null`.
+
+### Direction rule (deterministic)
+- If edge direction is unclear, use this convention:
+  - lower node id → higher node id
+
+## Structural guidance
+- If the intent implies a flow, include a clear main path.
+- If the intent implies a hierarchy, use a central/root node with outward edges.
+- Avoid dense or fully connected graphs.
+- The graph should be understandable at a glance.
+
+## Output constraints (must satisfy)
+- Output JSON only — no prose, no comments, no code fences.
+- Keys must be exactly: "nodes", "edges".
+- Node ids are consecutive strings with no gaps.
+- MUST have ≤ 10 nodes.
+- MUST have ≤ 10 edges.

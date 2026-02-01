@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { BotMessageSquare, ChevronDown, ChevronRight, Cloud, Layers } from 'lucide-react'
+import { BotMessageSquare, ChevronDown, ChevronRight, Cloud, Layers, Sparkles } from 'lucide-react'
 import type { NodeType } from '../../types/style'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Chat } from '@/features/agent/components/chat-view'
@@ -16,6 +16,7 @@ import { useGraphStore } from '../../store/graph-store'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
 import { DocumentUploadDialog } from './utils/document-upload'
+import { AiSparkDialog } from './utils/ai-spark-dialog'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -61,7 +62,9 @@ export const ActionPanel = memo(function ActionPanel({
   const [openChatDialog, setOpenChatDialog] = useState(false)
   const [openShapeMenu, setOpenShapeMenu] = useState(false)
   const [openDocumentUpload, setOpenDocumentUpload] = useState(false)
+  const [openAiSpark, setOpenAiSpark] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
+  const nodes = useGraphStore(state => state.nodes)
   const zoom = useGraphStore(state => state.zoom ?? 1)
   const undo = useGraphStore(state => state.undo)
   const redo = useGraphStore(state => state.redo)
@@ -504,6 +507,21 @@ export const ActionPanel = memo(function ActionPanel({
               <ShortcutHint label='C' />
             </span>
           </Button>
+
+          {/* AI Spark */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => setOpenAiSpark(true)}
+            title='AI Spark'
+            aria-label='AI Spark'
+            disabled={!boardId}
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <Sparkles className='size-4 shrink-0' strokeWidth={2} />
+            </span>
+          </Button>
         </>
       )}
 
@@ -528,6 +546,12 @@ export const ActionPanel = memo(function ActionPanel({
       <ImageSearchDialog openImageSearch={openImageSearch} setOpenImageSearch={setOpenImageSearch} />
       <IconSearchDialog openIconSearch={openIconSearch} setOpenIconSearch={setOpenIconSearch} />
       <DocumentUploadDialog open={openDocumentUpload} onOpenChange={setOpenDocumentUpload} />
+      <AiSparkDialog
+        open={openAiSpark}
+        onOpenChange={setOpenAiSpark}
+        boardId={boardId}
+        selectedNodes={nodes.filter(n => n.selected && (n.data as { kind?: string } | undefined)?.kind !== 'point')}
+      />
       <Sheet open={openChatDialog} onOpenChange={setOpenChatDialog} modal={false}>
         <SheetContent
           side="right"

@@ -4,6 +4,11 @@ import type { ReactFlowProps } from '@xyflow/react'
 import type { LinkEdge, NoteNode } from '../../types/flow'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { LayerBringForwardIcon, LayerBringToFrontIcon, LayerSendBackwardIcon, LayerSendToBackIcon } from '@hugeicons/core-free-icons'
+import { Sparkles } from 'lucide-react'
+import { useGraphStore } from '../../store/graph-store'
+import { useConvertToMindMap } from '../../api/convert-to-mindmap'
+import { buildContextTextFromNodes } from '../../utils/context-text'
+import { toast } from 'sonner'
 
 type GraphContextMenuProps = {
   nodes: NoteNode[]
@@ -53,6 +58,14 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
   const { selectedSet, hasSelection, globalMin, globalMax, selectedMin, selectedMax } = stats
   const canSendBackward = hasSelection && selectedMin > globalMin
   const canSendForward = hasSelection && selectedMax < globalMax
+  const boardId = useGraphStore(state => state.boardId)
+  const { convertToMindMapAsync } = useConvertToMindMap()
+  const [aiProcessing, setAiProcessing] = useState<string | null>(null)
+
+  const selectedNodes = useMemo(
+    () => nodes.filter((node) => node.selected && (node.data as { kind?: string } | undefined)?.kind !== 'point'),
+    [nodes],
+  )
 
   const openMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault()
@@ -117,6 +130,32 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
     applyToSelected(() => target)
   }, [applyToSelected, globalMax, selectedSet.size])
 
+  const handleAiAction = useCallback(async (actionLabel: string) => {
+    if (!boardId) {
+      toast.error("Select a board first.")
+      return
+    }
+    const contextText = buildContextTextFromNodes(selectedNodes)
+    if (!contextText) {
+      toast.error("Select at least one node with content.")
+      return
+    }
+    if (aiProcessing) return
+    setAiProcessing(actionLabel)
+    const toastId = toast("Working on it…", { duration: Infinity })
+    try {
+      const answer = `Request: ${actionLabel}\n---\nInput Text:\n${contextText}`
+      await convertToMindMapAsync({ boardId, answer, toolType: "summify" })
+      toast.success("Added to board.", { id: toastId })
+      setMenuPosition(null)
+    } catch (error) {
+      console.error("AI action failed:", error)
+      toast.error("Could not complete the action.", { id: toastId })
+    } finally {
+      setAiProcessing(null)
+    }
+  }, [aiProcessing, boardId, convertToMindMapAsync, selectedNodes])
+
   return (
     <>
       {children({
@@ -167,6 +206,40 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
             <HugeiconsIcon icon={LayerBringToFrontIcon} strokeWidth={2} className='size-4' />
             <span>Send to front</span>
           </button>
+
+          {hasSelection && (
+            <>
+              <div className='my-1 h-px bg-border' />
+              <div className='px-3 py-1 text-xs font-medium text-muted-foreground flex items-center gap-2'>
+                <Sparkles className='size-3' />
+                AI Spark
+              </div>
+              <button
+                type='button'
+                className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                onClick={() => handleAiAction("Summarize")}
+                disabled={!!aiProcessing}
+              >
+                <span>Summarize</span>
+              </button>
+              <button
+                type='button'
+                className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                onClick={() => handleAiAction("Mapify")}
+                disabled={!!aiProcessing}
+              >
+                <span>Mapify</span>
+              </button>
+              <button
+                type='button'
+                className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                onClick={() => handleAiAction("Schemify")}
+                disabled={!!aiProcessing}
+              >
+                <span>Schemify</span>
+              </button>
+            </>
+          )}
         </div>
       )}
     </>

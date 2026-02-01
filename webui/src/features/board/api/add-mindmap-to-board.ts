@@ -36,6 +36,11 @@ export const useAddMindMapToBoard = () => {
       let nodes_ = [...nodes]
       let edges_ = [...edges]
 
+      const contextNodes = nodes.filter(
+        n => n.selected && (n.data as { kind?: string } | undefined)?.kind !== 'point'
+      )
+      let stackBase = contextNodes
+
       const newIds: string[] = []
 
       for (const mindMap of boardMindmaps) {
@@ -45,7 +50,12 @@ export const useAddMindMapToBoard = () => {
         mindMapNodes.forEach(n => { n.data.isNew = true })
 
         // avoid overlap and merge into the board
-        const displacedMindMapNodes = displaceNodes(nodes_, mindMapNodes)
+        const displacedMindMapNodes = contextNodes.length > 0
+          ? displaceNodes(stackBase, mindMapNodes, contextNodes)
+          : displaceNodes(nodes_, mindMapNodes)
+        if (contextNodes.length > 0) {
+          stackBase = displacedMindMapNodes
+        }
         const displacedById = new Map(displacedMindMapNodes.map(node => [node.id, node]))
         const newPointNodes: NoteNode[] = []
         const convertedEdges: LinkEdge[] = []

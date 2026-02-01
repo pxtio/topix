@@ -7,7 +7,7 @@ import { nodeCenter } from '../utils/point-attach'
 import { POINT_NODE_SIZE } from '../components/flow/point-node'
 import { generateUuid } from '@/lib/common'
 import type { LinkEdge, NoteNode } from '../types/flow'
-import { useFitNodes } from '../hooks/fit-nodes'
+import { useFitNodes } from '../hooks/use-fit-nodes'
 import { useShallow } from 'zustand/react/shallow'
 
 /**

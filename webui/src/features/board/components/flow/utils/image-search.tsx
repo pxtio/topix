@@ -2,8 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSearchImages } from "@/features/board/api/image-search"
-import { useAddNoteNode } from "@/features/board/hooks/add-node"
-import { useDebouncedValue } from "@/features/board/hooks/debounce"
+import { useAddNoteNode } from "@/features/board/hooks/use-add-node"
+import { useDebouncedValue } from "@/features/board/hooks/use-debounce"
 import { useState } from "react"
 
 const IMAGE_NODE_MAX_DIMENSION = 420

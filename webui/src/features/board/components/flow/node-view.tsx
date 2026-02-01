@@ -10,7 +10,7 @@ import { useGraphStore } from '../../store/graph-store'
 import clsx from 'clsx'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
-import { useContentMinHeight } from '../../hooks/content-min-height'
+import { useContentMinHeight } from '../../hooks/use-content-min-height'
 import { ShapeChrome } from './shape-chrome'
 
 const CONNECTOR_GAP = 0

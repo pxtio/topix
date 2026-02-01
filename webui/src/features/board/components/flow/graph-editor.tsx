@@ -33,17 +33,17 @@ import type { LinkEdge, NoteNode } from '../../types/flow'
 import type { NodeType } from '../../types/style'
 import type { Link } from '../../types/link'
 
-import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/add-node'
+import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/use-add-node'
 import { useDecoratedEdges } from '../../hooks/use-decorated-edges'
 import { usePlaceLine } from '../../hooks/use-place-line'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
-import { useCopyPasteNodes } from '../../hooks/copy-paste'
+import { useCopyPasteNodes } from '../../hooks/use-copy-paste'
 import { useCenterAroundParam } from '../../hooks/use-center-around'
 import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
 
 import './graph-styles.css'
-import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
+import { useSaveThumbnailOnUnmount } from '../../hooks/use-make-thumbnail'
 
 const proOptions = { hideAttribution: true }
 

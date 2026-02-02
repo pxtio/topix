@@ -112,6 +112,13 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     const oy = note.properties?.nodePosition?.position?.y ?? 0
     const nx = ox + jitter.dx
     const ny = oy + jitter.dy
+    const isSlide = note.style?.type === 'slide'
+    const slideName = note.properties?.slideName?.text
+    const nextSlideName = slideName
+      ? slideName.endsWith(' (copy)')
+        ? slideName
+        : `${slideName} (copy)`
+      : undefined
 
     const cloned: Note = {
       ...note,
@@ -123,6 +130,15 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
           type: 'position',
           position: { x: nx, y: ny },
         },
+        ...(isSlide && nextSlideName
+          ? {
+              slideName: {
+                ...(note.properties.slideName ?? { type: 'text' }),
+                type: 'text',
+                text: nextSlideName,
+              },
+            }
+          : {}),
       },
     }
 

@@ -16,7 +16,7 @@ import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ChevronLeft, Grip, Presentation } from 'lucide-react'
+import { ChevronRight, Grip, Presentation } from 'lucide-react'
 import { useGraphStore } from '../../store/graph-store'
 import type { NoteNode } from '../../types/flow'
 import { useAddNoteNode } from '../../hooks/use-add-node'
@@ -113,7 +113,7 @@ export function SlidePanel({ onClose }: SlidePanelProps) {
             aria-label="Close slides panel"
             title="Close"
           >
-            <ChevronLeft className="size-4 text-muted-foreground" />
+            <ChevronRight className="size-4 text-muted-foreground" />
           </button>
           Slides
         </div>

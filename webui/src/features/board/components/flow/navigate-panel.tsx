@@ -15,6 +15,7 @@ import {
   SquareUnlock02Icon,
   Undo03Icon,
 } from '@hugeicons/core-free-icons'
+import { BitcoinPresentationIcon } from '@hugeicons/core-free-icons'
 import clsx from 'clsx'
 
 type ViewMode = 'graph' | 'linear'
@@ -35,6 +36,7 @@ export interface NavigatePanelProps {
   redo: () => void
   canUndo: boolean
   canRedo: boolean
+  onOpenSlidesPanel: () => void
 }
 
 export const NavigatePanel = memo(function NavigatePanel({
@@ -53,6 +55,7 @@ export const NavigatePanel = memo(function NavigatePanel({
   redo,
   canUndo,
   canRedo,
+  onOpenSlidesPanel,
 }: NavigatePanelProps) {
   const normalButtonClass = `
     transition-colors
@@ -260,6 +263,19 @@ export const NavigatePanel = memo(function NavigatePanel({
                 <HugeiconsIcon icon={SquareUnlock02Icon} className='size-4 shrink-0' strokeWidth={2} />
               )}
               <ShortcutHint label='L' />
+            </span>
+          </Button>
+
+          <Button
+            variant={null}
+            size='icon'
+            onClick={onOpenSlidesPanel}
+            className={normalButtonClass}
+            title='Slides'
+            aria-label='Slides'
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={BitcoinPresentationIcon} className='size-4 shrink-0 text-secondary' strokeWidth={2} />
             </span>
           </Button>
         </>

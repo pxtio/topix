@@ -17,13 +17,13 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Grip, Presentation } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { useGraphStore } from '../../store/graph-store'
 import type { NoteNode } from '../../types/flow'
 import { useAddNoteNode } from '../../hooks/use-add-node'
 import { useUpdateNote } from '../../api/update-note'
 import type { NumberProperty, TextProperty } from '@/features/newsfeed/types/properties'
 import { useReactFlow } from '@xyflow/react'
+import clsx from 'clsx'
 
 type SlidePanelProps = {
   onClose?: () => void
@@ -39,6 +39,8 @@ export function SlidePanel({ onClose }: SlidePanelProps) {
   const nodes = useGraphStore(state => state.nodes)
   const setNodes = useGraphStore(state => state.setNodes)
   const boardId = useGraphStore(state => state.boardId)
+  const setPresentationMode = useGraphStore(state => state.setPresentationMode)
+  const setActiveSlideId = useGraphStore(state => state.setActiveSlideId)
   const addNoteNode = useAddNoteNode()
   const { updateNote } = useUpdateNote()
   const { fitView } = useReactFlow()
@@ -95,6 +97,8 @@ export function SlidePanel({ onClose }: SlidePanelProps) {
   const handlePresent = async () => {
     if (slides.length === 0) return
     const node = slides[0]
+    setPresentationMode(true)
+    setActiveSlideId(node.id)
     await fitView({ nodes: [node], padding: 0.2, duration: 300 })
     onClose?.()
   }
@@ -104,13 +108,13 @@ export function SlidePanel({ onClose }: SlidePanelProps) {
       <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2 bg-sidebar">
         <div className="text-sm font-medium">Slides</div>
         <div className="flex items-center gap-2">
-          <Button size="sm" onClick={() => addNoteNode({ nodeType: 'slide' })}>
+          <button className={panelButtonClass} onClick={() => addNoteNode({ nodeType: 'slide' })}>
             Add Slide
-          </Button>
-          <Button size="sm" variant="secondary" onClick={handlePresent}>
-            <Presentation className="size-4 mr-1" />
+          </button>
+          <button className={panelButtonClass} onClick={handlePresent}>
+            <Presentation className="size-4 mr-1 inline-block" />
             Present
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -150,7 +154,10 @@ function SortableSlideRow({ node }: SortableSlideRowProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2"
+      className={clsx(
+        "flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2",
+        "transition-colors hover:bg-sidebar-primary/30"
+      )}
     >
       <button
         {...attributes}
@@ -165,3 +172,11 @@ function SortableSlideRow({ node }: SortableSlideRowProps) {
     </div>
   )
 }
+  const panelButtonClass = `
+    transition-colors
+    text-card-foreground
+    hover:bg-sidebar-primary hover:text-sidebar-primary-foreground
+    px-3 py-1.5 rounded-lg
+    text-xs font-medium
+    border border-border
+  `

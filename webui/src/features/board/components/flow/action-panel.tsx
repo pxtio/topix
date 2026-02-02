@@ -65,6 +65,7 @@ export const ActionPanel = memo(function ActionPanel({
   const boardId = useGraphStore(state => state.boardId)
   const nodes = useGraphStore(state => state.nodes)
   const setViewSlides = useGraphStore(state => state.setViewSlides)
+  const presentationMode = useGraphStore(state => state.presentationMode)
   const zoom = useGraphStore(state => state.zoom ?? 1)
   const undo = useGraphStore(state => state.undo)
   const redo = useGraphStore(state => state.redo)
@@ -110,38 +111,42 @@ export const ActionPanel = memo(function ActionPanel({
 
   return (
     <>
-      <NavigatePanel
-        enableSelection={enableSelection}
-        setEnableSelection={setEnableSelection}
-        onZoomIn={onZoomIn}
-        onZoomOut={onZoomOut}
-        onFitView={onFitView}
-        onResetZoom={onResetZoom}
-        isLocked={isLocked}
-        toggleLock={toggleLock}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        zoom={zoom}
-        undo={undo}
-        redo={redo}
-        canUndo={canUndo}
-        canRedo={canRedo}
-      />
+      {!presentationMode && (
+        <>
+          <NavigatePanel
+            enableSelection={enableSelection}
+            setEnableSelection={setEnableSelection}
+            onZoomIn={onZoomIn}
+            onZoomOut={onZoomOut}
+            onFitView={onFitView}
+            onResetZoom={onResetZoom}
+            isLocked={isLocked}
+            toggleLock={toggleLock}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            zoom={zoom}
+            undo={undo}
+            redo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onOpenSlidesPanel={() => setOpenSlidesPanel(true)}
+          />
 
-      <ToolPanel
-        onAddNode={onAddNode}
-        onAddLine={onAddLine}
-        viewMode={viewMode}
-        openShapeMenu={openShapeMenu}
-        setOpenShapeMenu={setOpenShapeMenu}
-        setOpenIconSearch={setOpenIconSearch}
-        setOpenImageSearch={setOpenImageSearch}
-        setOpenDocumentUpload={setOpenDocumentUpload}
-        setOpenChatDialog={setOpenChatDialog}
-        setOpenAiSpark={setOpenAiSpark}
-        setOpenSlidesPanel={setOpenSlidesPanel}
-        boardId={boardId}
-      />
+          <ToolPanel
+            onAddNode={onAddNode}
+            onAddLine={onAddLine}
+            viewMode={viewMode}
+            openShapeMenu={openShapeMenu}
+            setOpenShapeMenu={setOpenShapeMenu}
+            setOpenIconSearch={setOpenIconSearch}
+            setOpenImageSearch={setOpenImageSearch}
+            setOpenDocumentUpload={setOpenDocumentUpload}
+            setOpenChatDialog={setOpenChatDialog}
+            setOpenAiSpark={setOpenAiSpark}
+            boardId={boardId}
+          />
+        </>
+      )}
 
       <ImageSearchDialog openImageSearch={openImageSearch} setOpenImageSearch={setOpenImageSearch} />
       <IconSearchDialog openIconSearch={openIconSearch} setOpenIconSearch={setOpenIconSearch} />

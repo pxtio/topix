@@ -158,6 +158,7 @@ export const ActionPanel = memo(function ActionPanel({
             setOpenImageSearch={setOpenImageSearch}
             setOpenDocumentUpload={setOpenDocumentUpload}
             setOpenChatDialog={setOpenChatDialog}
+            chatOpen={openChatDialog}
             setOpenAiSpark={setOpenAiSpark}
             boardId={boardId}
           />

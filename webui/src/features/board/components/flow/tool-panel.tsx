@@ -18,6 +18,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { BotMessageSquare, ChevronDown, Cloud, Layers, Sparkles } from 'lucide-react'
 import type { AddNoteNodeOptions } from '../../hooks/use-add-node'
 import type { NodeType } from '../../types/style'
+import clsx from 'clsx'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -31,6 +32,7 @@ export interface ToolPanelProps {
   setOpenImageSearch: (open: boolean) => void
   setOpenDocumentUpload: (open: boolean) => void
   setOpenChatDialog: (open: boolean) => void
+  chatOpen: boolean
   setOpenAiSpark: (open: boolean) => void
   boardId?: string
 }
@@ -45,6 +47,7 @@ export const ToolPanel = memo(function ToolPanel({
   setOpenImageSearch,
   setOpenDocumentUpload,
   setOpenChatDialog,
+  chatOpen,
   setOpenAiSpark,
   boardId,
 }: ToolPanelProps) {
@@ -71,6 +74,10 @@ export const ToolPanel = memo(function ToolPanel({
     rounded-lg
     flex flex-row items-center justify-center gap-2
   `
+  const activeButtonClass = clsx(
+    normalButtonClass,
+    'bg-sidebar-primary text-secondary',
+  )
 
   const MenuShortcutHint = ({ label }: { label?: string }) => {
     if (!label) return null
@@ -246,9 +253,9 @@ export const ToolPanel = memo(function ToolPanel({
 
           <Button
             variant={null}
-            className={normalButtonClass}
+            className={chatOpen ? activeButtonClass : normalButtonClass}
             size='icon'
-            onClick={() => setOpenChatDialog(true)}
+            onClick={() => setOpenChatDialog(!chatOpen)}
             title='Open Chat'
             aria-label='Open Chat'
             disabled={!boardId}

@@ -11,6 +11,7 @@ type NoteNodeData = (Note | Document) & {
   endpointActive?: boolean
   attachedToNodeId?: string
   attachedDirection?: { x: number; y: number }
+  autoEdit?: boolean
 }
 
 export type NoteNode = Node<NoteNodeData>

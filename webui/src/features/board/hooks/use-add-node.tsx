@@ -74,6 +74,9 @@ export function useAddNoteNode() {
       newNote.properties.nodeSize = { size, type: 'size' }
     }
     const node = convertNoteToNode(newNote)
+    if (nodeType === 'text') {
+      node.data = { ...node.data, autoEdit: true }
+    }
     const maxZ = nodes.reduce((acc, n) => {
       const kind = (n.data as { kind?: string }).kind
       if (kind === 'point') return acc

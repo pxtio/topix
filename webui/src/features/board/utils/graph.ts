@@ -62,7 +62,7 @@ export const convertNoteToNode = (note: Note | Document): NoteNode => {
     height: height,
     width: width,
     measured: { width: width, height: height },
-    zIndex: zIndex
+    zIndex: type === 'slide' ? -1000 : zIndex
   }
 }
 

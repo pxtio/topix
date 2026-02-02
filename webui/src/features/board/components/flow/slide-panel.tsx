@@ -16,7 +16,7 @@ import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Grip, Presentation } from 'lucide-react'
+import { ChevronLeft, Grip, Presentation } from 'lucide-react'
 import { useGraphStore } from '../../store/graph-store'
 import type { NoteNode } from '../../types/flow'
 import { useAddNoteNode } from '../../hooks/use-add-node'
@@ -106,7 +106,17 @@ export function SlidePanel({ onClose }: SlidePanelProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2 bg-sidebar">
-        <div className="text-sm font-medium">Slides</div>
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <button
+            className="p-1 rounded-md hover:bg-sidebar-primary/30 transition"
+            onClick={onClose}
+            aria-label="Close slides panel"
+            title="Close"
+          >
+            <ChevronLeft className="size-4 text-muted-foreground" />
+          </button>
+          Slides
+        </div>
         <div className="flex items-center gap-2">
           <button className={panelButtonClass} onClick={() => addNoteNode({ nodeType: 'slide' })}>
             Add Slide

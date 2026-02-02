@@ -64,6 +64,7 @@ export const ActionPanel = memo(function ActionPanel({
   const [openSlidesPanel, setOpenSlidesPanel] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
   const nodes = useGraphStore(state => state.nodes)
+  const setNodes = useGraphStore(state => state.setNodes)
   const setViewSlides = useGraphStore(state => state.setViewSlides)
   const presentationMode = useGraphStore(state => state.presentationMode)
   const zoom = useGraphStore(state => state.zoom ?? 1)
@@ -82,6 +83,19 @@ export const ActionPanel = memo(function ActionPanel({
   useEffect(() => {
     setViewSlides(openSlidesPanel)
   }, [openSlidesPanel, setViewSlides])
+
+  useEffect(() => {
+    setNodes(ns =>
+      ns.map(n => {
+        if (n.data?.style?.type !== 'slide') return n
+        return {
+          ...n,
+          style: { ...(n.style ?? {}), pointerEvents: openSlidesPanel ? 'auto' : 'none' },
+          dragHandle: '.slide-handle',
+        }
+      })
+    )
+  }, [openSlidesPanel, setNodes])
 
   useBoardShortcuts({
     enabled: viewMode === 'graph',
@@ -130,7 +144,8 @@ export const ActionPanel = memo(function ActionPanel({
             redo={redo}
             canUndo={canUndo}
             canRedo={canRedo}
-            onOpenSlidesPanel={() => setOpenSlidesPanel(true)}
+            onToggleSlidesPanel={() => setOpenSlidesPanel(v => !v)}
+            slidesPanelOpen={openSlidesPanel}
           />
 
           <ToolPanel

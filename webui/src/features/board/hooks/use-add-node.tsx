@@ -87,10 +87,11 @@ export function useAddNoteNode() {
     }
     const maxZ = nodes.reduce((acc, n) => {
       const kind = (n.data as { kind?: string }).kind
-      if (kind === 'point') return acc
+      const nodeType = (n.data as { style?: { type?: string } }).style?.type
+      if (kind === 'point' || nodeType === 'slide') return acc
       return Math.max(acc, n.zIndex ?? 0)
     }, 0)
-    node.zIndex = maxZ + 1
+    node.zIndex = nodeType === 'slide' ? -1000 : maxZ + 1
     const newNodes = nodes.map(n => ({ ...n, selected: false }))
     node.selected = true
     setNodesPersist([...newNodes, node])

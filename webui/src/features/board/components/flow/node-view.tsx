@@ -12,6 +12,7 @@ import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { useContentMinHeight } from '../../hooks/use-content-min-height'
 import { ShapeChrome } from './shape-chrome'
+import { Grip } from 'lucide-react'
 
 const CONNECTOR_GAP = 0
 
@@ -65,7 +66,10 @@ function NodeViewBase({ id, data, selected }: NodeProps<NoteNode>) {
 
     const slideFrame = (
       <div className='w-full h-full relative'>
-        <div className='absolute -top-6 left-2 text-xs font-medium text-muted-foreground'>
+        <div className='absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-2 text-xs font-medium text-muted-foreground slide-handle cursor-grab active:cursor-grabbing'>
+          <span className='inline-flex items-center justify-center w-6 h-6 rounded-md border border-border bg-card shadow-sm'>
+            <Grip className='size-3' />
+          </span>
           {slideName}
         </div>
         <div className='w-full h-full rounded-lg border-2 border-dashed border-secondary/60 bg-transparent' />

@@ -32,8 +32,8 @@ export function buildLinePlacement({
 }: LinePlacementInput): LinePlacementResult {
   const candidateNodes = Array.from(internalNodes.values())
     .filter(n => {
-      const data = n.data as { kind?: string } | undefined
-      return data?.kind !== 'point'
+      const data = n.data as { kind?: string; style?: { type?: string } } | undefined
+      return data?.kind !== 'point' && data?.style?.type !== 'slide'
     })
     .sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0))
 

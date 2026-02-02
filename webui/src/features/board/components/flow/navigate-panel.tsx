@@ -36,7 +36,8 @@ export interface NavigatePanelProps {
   redo: () => void
   canUndo: boolean
   canRedo: boolean
-  onOpenSlidesPanel: () => void
+  onToggleSlidesPanel: () => void
+  slidesPanelOpen: boolean
 }
 
 export const NavigatePanel = memo(function NavigatePanel({
@@ -55,7 +56,8 @@ export const NavigatePanel = memo(function NavigatePanel({
   redo,
   canUndo,
   canRedo,
-  onOpenSlidesPanel,
+  onToggleSlidesPanel,
+  slidesPanelOpen,
 }: NavigatePanelProps) {
   const normalButtonClass = `
     transition-colors
@@ -269,8 +271,8 @@ export const NavigatePanel = memo(function NavigatePanel({
           <Button
             variant={null}
             size='icon'
-            onClick={onOpenSlidesPanel}
-            className={normalButtonClass}
+            onClick={onToggleSlidesPanel}
+            className={slidesPanelOpen ? activeButtonClass : normalButtonClass}
             title='Slides'
             aria-label='Slides'
           >

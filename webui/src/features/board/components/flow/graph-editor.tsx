@@ -245,6 +245,7 @@ export default function GraphEditor() {
   const setPresentationMode = useGraphStore(state => state.setPresentationMode)
   const activeSlideId = useGraphStore(state => state.activeSlideId)
   const setActiveSlideId = useGraphStore(state => state.setActiveSlideId)
+  const setLastCursorPosition = useGraphStore(state => state.setLastCursorPosition)
 
   const mindmaps = useMindMapStore(state => state.mindmaps)
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
@@ -320,6 +321,16 @@ export default function GraphEditor() {
       addNoteNode({ nodeType: 'text', position: flowPoint })
     },
     [viewMode, screenToFlowPosition, addNoteNode],
+  )
+
+  const handlePaneMouseMove = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (viewMode !== 'graph') return
+      if (!screenToFlowPosition) return
+      const flowPoint = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      setLastCursorPosition(flowPoint)
+    },
+    [viewMode, screenToFlowPosition, setLastCursorPosition],
   )
 
   const handlePanelAddNode = useCallback(
@@ -652,7 +663,11 @@ export default function GraphEditor() {
           </div>
         )}
 
-      <div className="relative w-full h-full" onDoubleClick={handlePaneDoubleClick}>
+      <div
+        className="relative w-full h-full"
+        onDoubleClick={handlePaneDoubleClick}
+        onMouseMove={handlePaneMouseMove}
+      >
         {viewMode === 'graph' ? (
           <GraphContextMenu nodes={nodes} setNodesPersist={setNodesPersist}>
             {({ onPaneContextMenu, onNodeContextMenu }) => (

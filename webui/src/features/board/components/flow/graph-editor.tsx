@@ -642,6 +642,7 @@ export default function GraphEditor() {
       {/* Graph-only sidebar (style controls) */}
       {viewMode === 'graph' &&
         showStylePanel &&
+        !presentationMode &&
         !isDragging &&
         !moving &&
         !isResizingNode &&

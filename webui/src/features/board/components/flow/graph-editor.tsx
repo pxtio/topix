@@ -677,7 +677,12 @@ export default function GraphEditor() {
                   onEdgeDoubleClick={handleEdgeDoubleClick}
                 >
                   <EdgeMarkerDefs edges={edges} />
-                  {showMiniMap && !moving && !isDragging && !isResizingNode && !isSelecting && (
+                  {showMiniMap &&
+                    !presentationMode &&
+                    !moving &&
+                    !isDragging &&
+                    !isResizingNode &&
+                    !isSelecting && (
                     <NavigableMiniMap
                       nodes={nodes}
                       onNavigate={handleMiniMapNavigate}

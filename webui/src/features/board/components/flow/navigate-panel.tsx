@@ -277,7 +277,7 @@ export const NavigatePanel = memo(function NavigatePanel({
             aria-label='Slides'
           >
             <span className='relative inline-flex items-center justify-center'>
-              <HugeiconsIcon icon={BitcoinPresentationIcon} className='size-4 shrink-0 text-secondary' strokeWidth={2} />
+              <HugeiconsIcon icon={BitcoinPresentationIcon} className='size-4 shrink-0' strokeWidth={2} />
               <ShortcutHint label='M' />
             </span>
           </Button>

@@ -3,12 +3,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { NoteNode } from "@/features/board/types/flow"
 import { buildContextTextFromNodes } from "@/features/board/utils/context-text"
-import { useConvertToMindMap } from "@/features/board/api/convert-to-mindmap"
-import { CancelIcon, CheckmarkCircle03Icon, ReloadIcon } from "@hugeicons/core-free-icons"
-import { HugeiconsIcon } from "@hugeicons/react"
+import { useAiSparkActions } from "@/features/board/hooks/use-ai-spark-actions"
 import { Sparkles } from "lucide-react"
 
 export interface AiSparkDialogProps {
@@ -25,10 +23,11 @@ export const AiSparkDialog = ({
   selectedNodes = [],
 }: AiSparkDialogProps) => {
   const [requestText, setRequestText] = useState("")
+  const [selectedAction, setSelectedAction] = useState("summarize")
   const [contextText, setContextText] = useState("")
   const [useSelection, setUseSelection] = useState(false)
   const [processing, setProcessing] = useState(false)
-  const { convertToMindMapAsync } = useConvertToMindMap()
+  const { actions, runAction } = useAiSparkActions()
 
   const selectionContext = useMemo(
     () => buildContextTextFromNodes(selectedNodes),
@@ -49,47 +48,23 @@ export const AiSparkDialog = ({
     setContextText(selectionContext)
   }, [useSelection, selectionContext])
 
-  const handleSubmit = async () => {
-    if (!boardId) {
-      toast.error("Select a board first.")
-      return
+  useEffect(() => {
+    const action = actions.find((item) => item.key === selectedAction)
+    if (action && selectedAction !== "custom") {
+      setRequestText(action.request)
     }
-    const trimmedContext = contextText.trim()
-    const trimmedRequest = requestText.trim()
-    if (!trimmedContext) {
-      toast.error("Add some context text first.")
-      return
-    }
-    if (processing) return
+  }, [actions, selectedAction])
 
-    const answer = `Request: ${trimmedRequest || "Summarize"}\n---\nInput Text:\n${trimmedContext}`
+  const handleSubmit = async () => {
+    const trimmedContext = contextText.trim()
+    if (processing) return
 
     setProcessing(true)
     onOpenChange(false)
-    const toastId = toast("Working on it…", {
-      duration: Infinity,
-      icon: <HugeiconsIcon icon={ReloadIcon} className="size-4 animate-spin [animation-duration:750ms]" strokeWidth={2} />,
-    })
-    try {
-      await convertToMindMapAsync({
-        boardId,
-        answer,
-        toolType: "summify",
-      })
-      toast.success("Added to board.", {
-        id: toastId,
-        icon: <HugeiconsIcon icon={CheckmarkCircle03Icon} className="size-4" strokeWidth={2} />,
-      })
-    } catch (error) {
-      console.error("AI action failed:", error)
-      toast.error("Could not complete the action.", {
-        id: toastId,
-        icon: <HugeiconsIcon icon={CancelIcon} className="size-4" strokeWidth={2} />,
-      })
-    } finally {
-      setProcessing(false)
-      toast.dismiss(toastId)
-    }
+    const customRequest = selectedAction === "custom" ? requestText.trim() : undefined
+    const actionKey = selectedAction === "custom" ? undefined : selectedAction
+    await runAction({ boardId, contextText: trimmedContext, actionKey, customRequest })
+    setProcessing(false)
   }
 
   return (
@@ -107,11 +82,29 @@ export const AiSparkDialog = ({
 
         <div className="flex flex-col gap-4">
           <div className="grid gap-2">
+            <label className="text-xs font-medium text-muted-foreground">Action</label>
+            <Select value={selectedAction} onValueChange={setSelectedAction}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose an action" />
+              </SelectTrigger>
+              <SelectContent>
+                {actions.map((action) => (
+                  <SelectItem key={action.key} value={action.key}>
+                    {action.label}
+                  </SelectItem>
+                ))}
+                <SelectItem value="custom">Custom action</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
             <label className="text-xs font-medium text-muted-foreground">Request</label>
             <Input
               value={requestText}
               onChange={(event) => setRequestText(event.target.value)}
               placeholder="What should the AI do?"
+              disabled={selectedAction !== "custom"}
             />
           </div>
 

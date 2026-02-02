@@ -6,8 +6,15 @@ type NoteLike = {
   properties?: { summary?: { text?: string } }
 }
 
+/**
+ * Normalize an optional string value for text extraction.
+ */
 const trimOrEmpty = (value?: string) => (value ?? "").trim()
 
+/**
+ * Pick the most useful textual representation of a node.
+ * Prefers label + content, then label, then summary, then content.
+ */
 const pickNodeText = (node: NoteNode) => {
   const data = node.data as NoteLike | undefined
   const label = trimOrEmpty(data?.label?.markdown)
@@ -23,6 +30,10 @@ const pickNodeText = (node: NoteNode) => {
   return ""
 }
 
+/**
+ * Build a plain-text context payload from a node list.
+ * Each entry is prefixed with "node content:" and separated by a blank line.
+ */
 export const buildContextTextFromNodes = (nodes: NoteNode[]) => {
   const lines = nodes
     .filter((node) => (node.data as { kind?: string } | undefined)?.kind !== "point")

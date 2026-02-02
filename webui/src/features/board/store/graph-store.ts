@@ -699,6 +699,8 @@ export interface GraphStore {
   isDraggingNodes: boolean
   draggingNodeIds: Set<string>
   draggingPointId?: string
+  viewSlides: boolean
+  setViewSlides: (enabled: boolean) => void
   isSelectMode: boolean
   setIsSelectMode: (enabled: boolean) => void
   isMoving: boolean
@@ -775,6 +777,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   isDraggingNodes: false,
   draggingNodeIds: new Set(),
   draggingPointId: undefined,
+  viewSlides: true,
+  setViewSlides: (enabled) => set({ viewSlides: enabled }),
   isSelectMode: false,
   isMoving: false,
   zoom: 1,

@@ -1,4 +1,4 @@
-import { memo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import type { AddNoteNodeOptions } from '../../hooks/use-add-node'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { LinkSquare01Icon } from '@hugeicons/core-free-icons'
 import { BotMessageSquare, ChevronRight } from 'lucide-react'
+import { SlidePanel } from './slide-panel'
 
 
 type ViewMode = 'graph' | 'linear'
@@ -60,8 +61,10 @@ export const ActionPanel = memo(function ActionPanel({
   const [openShapeMenu, setOpenShapeMenu] = useState(false)
   const [openDocumentUpload, setOpenDocumentUpload] = useState(false)
   const [openAiSpark, setOpenAiSpark] = useState(false)
+  const [openSlidesPanel, setOpenSlidesPanel] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
   const nodes = useGraphStore(state => state.nodes)
+  const setViewSlides = useGraphStore(state => state.setViewSlides)
   const zoom = useGraphStore(state => state.zoom ?? 1)
   const undo = useGraphStore(state => state.undo)
   const redo = useGraphStore(state => state.redo)
@@ -74,6 +77,10 @@ export const ActionPanel = memo(function ActionPanel({
     shouldThrow: false,
   })
   const currentChatId = boardSearch?.currentChatId
+
+  useEffect(() => {
+    setViewSlides(openSlidesPanel)
+  }, [openSlidesPanel, setViewSlides])
 
   useBoardShortcuts({
     enabled: viewMode === 'graph',
@@ -132,6 +139,7 @@ export const ActionPanel = memo(function ActionPanel({
         setOpenDocumentUpload={setOpenDocumentUpload}
         setOpenChatDialog={setOpenChatDialog}
         setOpenAiSpark={setOpenAiSpark}
+        setOpenSlidesPanel={setOpenSlidesPanel}
         boardId={boardId}
       />
 
@@ -144,6 +152,17 @@ export const ActionPanel = memo(function ActionPanel({
         boardId={boardId}
         selectedNodes={nodes.filter(n => n.selected && (n.data as { kind?: string } | undefined)?.kind !== 'point')}
       />
+      <Sheet open={openSlidesPanel} onOpenChange={setOpenSlidesPanel} modal={false}>
+        <SheetContent
+          side="right"
+          showOverlay={false}
+          showClose={false}
+          onInteractOutside={(event) => event.preventDefault()}
+          className="w-[360px] max-w-[92vw] bg-sidebar text-sidebar-foreground border-l border-border p-0"
+        >
+          <SlidePanel onClose={() => setOpenSlidesPanel(false)} />
+        </SheetContent>
+      </Sheet>
       <Sheet open={openChatDialog} onOpenChange={setOpenChatDialog} modal={false}>
         <SheetContent
           side="right"

@@ -13,6 +13,7 @@ import {
   SquareIcon,
   Tag01Icon,
   TextIcon,
+  BitcoinPresentationIcon,
 } from '@hugeicons/core-free-icons'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { BotMessageSquare, ChevronDown, Cloud, Layers, Sparkles } from 'lucide-react'
@@ -32,6 +33,7 @@ export interface ToolPanelProps {
   setOpenDocumentUpload: (open: boolean) => void
   setOpenChatDialog: (open: boolean) => void
   setOpenAiSpark: (open: boolean) => void
+  setOpenSlidesPanel: (open: boolean) => void
   boardId?: string
 }
 
@@ -46,6 +48,7 @@ export const ToolPanel = memo(function ToolPanel({
   setOpenDocumentUpload,
   setOpenChatDialog,
   setOpenAiSpark,
+  setOpenSlidesPanel,
   boardId,
 }: ToolPanelProps) {
   const handleAddShape = (nodeType: NodeType) => onAddNode({ nodeType })
@@ -113,6 +116,19 @@ export const ToolPanel = memo(function ToolPanel({
             <span className='relative inline-flex items-center justify-center'>
               <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
               <ShortcutHint label='N' />
+            </span>
+          </Button>
+
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => setOpenSlidesPanel(true)}
+            title='Slides'
+            aria-label='Slides'
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <HugeiconsIcon icon={BitcoinPresentationIcon} className='size-4 shrink-0' strokeWidth={2} />
             </span>
           </Button>
 

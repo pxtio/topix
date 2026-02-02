@@ -80,6 +80,7 @@ const drawableNodeTypes: NodeType[] = [
   'layered-rectangle',
   'thought-cloud',
   'capsule',
+  'slide',
 ]
 
 const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(nodeType)

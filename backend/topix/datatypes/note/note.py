@@ -13,6 +13,7 @@ from topix.datatypes.property import (
     NumberProperty,
     PositionProperty,
     SizeProperty,
+    TextProperty,
     URLProperty,
 )
 from topix.datatypes.resource import Resource, ResourceProperties
@@ -57,6 +58,12 @@ class NoteProperties(ResourceProperties):
     )
     icon_data: IconProperty = Field(
         default_factory=lambda: IconProperty()
+    )
+    slide_name: TextProperty = Field(
+        default_factory=lambda: TextProperty()
+    )
+    slide_number: NumberProperty = Field(
+        default_factory=lambda: NumberProperty()
     )
 
 

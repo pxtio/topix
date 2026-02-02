@@ -16,6 +16,8 @@ export interface NoteProperties {
   url: URLProperty
   imageUrl: ImageProperty
   iconData: IconProperty
+  slideName?: TextProperty
+  slideNumber?: NumberProperty
   mimeType?: TextProperty
   status?: KeywordProperty
   summary?: TextProperty
@@ -68,6 +70,9 @@ export const DEFAULT_TEXT_NOTE_HEIGHT = 20
 export const DEFAULT_STICKY_NOTE_WIDTH = 300
 export const DEFAULT_STICKY_NOTE_HEIGHT = 300
 
+export const DEFAULT_SLIDE_WIDTH = 960
+export const DEFAULT_SLIDE_HEIGHT = 540
+
 
 /**
  * Function to create default properties for a note.
@@ -78,6 +83,8 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     { width: DEFAULT_STICKY_NOTE_WIDTH, height: DEFAULT_STICKY_NOTE_HEIGHT }
     : type === 'text' ?
     { width: DEFAULT_TEXT_NOTE_WIDTH, height: DEFAULT_TEXT_NOTE_HEIGHT }
+    : type === 'slide' ?
+    { width: DEFAULT_SLIDE_WIDTH, height: DEFAULT_SLIDE_HEIGHT }
     : { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT }
 
   return {
@@ -107,7 +114,9 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     },
     url: { type: "url" },
     imageUrl: { type: "image" },
-    iconData: { type: "icon" }
+    iconData: { type: "icon" },
+    slideName: { type: "text" },
+    slideNumber: { type: "number" },
   }
 }
 

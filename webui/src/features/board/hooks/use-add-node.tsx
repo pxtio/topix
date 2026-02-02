@@ -49,6 +49,14 @@ export function useAddNoteNode() {
     if (icon) {
       newNote.properties.iconData = { type: 'icon', icon: { type: 'icon', icon } }
     }
+
+    if (nodeType === 'slide') {
+      const slideCount = nodes.filter(n => (n.data as { style?: { type?: string } }).style?.type === 'slide').length
+      const index = slideCount + 1
+      const letter = index <= 26 ? String.fromCharCode(64 + index) : String(index)
+      newNote.properties.slideName = { type: 'text', text: `Slide ${letter}` }
+      newNote.properties.slideNumber = { type: 'number', number: index }
+    }
     const jitter = () => Math.random() * 100 - 50
 
     const container = document.querySelector('.react-flow__viewport')?.getBoundingClientRect()

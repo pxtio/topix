@@ -12,6 +12,7 @@ import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { useContentMinHeight } from '../../hooks/use-content-min-height'
 import { ShapeChrome } from './shape-chrome'
+import { Grip } from 'lucide-react'
 
 const CONNECTOR_GAP = 0
 
@@ -23,6 +24,7 @@ function NodeViewBase({ id, data, selected }: NodeProps<NoteNode>) {
   const isDark = resolvedTheme === 'dark'
 
   const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
+  const viewSlides = useGraphStore(state => state.viewSlides)
 
   // measure content & drive minHeight
   const { contentRef, computedMinH } = useContentMinHeight(
@@ -52,6 +54,54 @@ function NodeViewBase({ id, data, selected }: NodeProps<NoteNode>) {
   const textColor = isDark ? darkModeDisplayHex(data.style.textColor) || undefined : data.style.textColor
 
   const nodeType = data.style.type
+  const handleResizeStart = () => setIsResizingNode(true)
+  const handleResizeEnd = () => setIsResizingNode(false)
+  const isVisualNode = nodeType === 'image' || nodeType === 'icon' || nodeType === 'slide'
+  const resizeMinWidth = isVisualNode ? 80 : 20
+  const resizeMinHeight = isVisualNode ? 80 : innerMinH
+
+  if (nodeType === 'slide') {
+    if (!viewSlides) return null
+    const slideName = (data.properties as { slideName?: { text?: string } } | undefined)?.slideName?.text || 'Slide'
+
+    const slideFrame = (
+      <div className='w-full h-full relative'>
+        <div className='absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-2 text-xs font-medium text-muted-foreground slide-handle cursor-grab active:cursor-grabbing'>
+          <span className='inline-flex items-center justify-center w-6 h-6 rounded-md border border-border bg-card shadow-sm'>
+            <Grip className='size-3' />
+          </span>
+          {slideName}
+        </div>
+        <div className='w-full h-full rounded-lg border-2 border-dashed border-secondary/60 bg-transparent' />
+      </div>
+    )
+
+    return (
+      <div className='border-none relative bg-transparent overflow-visible w-full h-full p-0'>
+        {slideFrame}
+        {selected &&
+          resizeHandles.map(
+            ({ pos, class: posClass }) => (
+              <NodeResizeControl
+                key={pos}
+                position={pos as ControlPosition}
+                onResizeStart={handleResizeStart}
+                onResizeEnd={handleResizeEnd}
+                minHeight={innerMinH}
+                minWidth={resizeMinWidth}
+                keepAspectRatio
+              >
+                <div
+                  className={`absolute w-3 h-3 bg-secondary rounded-full ${posClass} z-20`}
+                  style={{ transform: `translate(${pos.includes('right') ? '50%' : '-50%'}, ${pos.includes('bottom') ? '50%' : '-50%'})` }}
+                />
+              </NodeResizeControl>
+            )
+          )
+        }
+      </div>
+    )
+  }
 
   const content = (
     <div className={nodeClass}>
@@ -73,13 +123,6 @@ function NodeViewBase({ id, data, selected }: NodeProps<NoteNode>) {
       }
     </div>
   )
-
-  const handleResizeStart = () => setIsResizingNode(true)
-  const handleResizeEnd = () => setIsResizingNode(false)
-
-  const isVisualNode = nodeType === 'image' || nodeType === 'icon'
-  const resizeMinWidth = isVisualNode ? 80 : 20
-  const resizeMinHeight = isVisualNode ? 80 : innerMinH
 
   if (nodeType === 'sheet') {
     return (

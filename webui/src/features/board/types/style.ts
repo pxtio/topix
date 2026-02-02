@@ -9,6 +9,7 @@ export type NodeType =
   | "rectangle"
   | "text"
   | "sheet"
+  | "slide"
   | "ellipse"
   | "diamond"
   | "soft-diamond"
@@ -282,6 +283,19 @@ export const createDefaultStyle = ({
         textAlign: "center",
         backgroundColor: "#00000000",
         strokeColor: "#00000000",
+      } as Style
+    case "slide":
+      return {
+        ...defaultOptions,
+        roughness: 0,
+        roundness: 2,
+        fontFamily: "sans-serif",
+        fontSize: "M",
+        textAlign: "left",
+        backgroundColor: "#00000000",
+        strokeColor: "#94a3b8",
+        strokeStyle: "dashed",
+        opacity: 90,
       } as Style
   }
 }

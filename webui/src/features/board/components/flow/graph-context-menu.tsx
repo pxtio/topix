@@ -39,7 +39,8 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
 
     for (const node of nodes) {
       const kind = (node.data as { kind?: string } | undefined)?.kind
-      if (kind === 'point') continue
+      const nodeType = (node.data as { style?: { type?: string } } | undefined)?.style?.type
+      if (kind === 'point' || nodeType === 'slide') continue
       const z = node.zIndex ?? 0
       if (z < globalMin) globalMin = z
       if (z > globalMax) globalMax = z
@@ -107,7 +108,8 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
       prev.map(node => {
         if (!selectedSet.has(node.id)) return node
         const kind = (node.data as { kind?: string } | undefined)?.kind
-        if (kind === 'point') return node
+        const nodeType = (node.data as { style?: { type?: string } } | undefined)?.style?.type
+        if (kind === 'point' || nodeType === 'slide') return node
         const currentZ = node.zIndex ?? 0
         return { ...node, zIndex: updater(currentZ) }
       }),

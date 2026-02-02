@@ -12,7 +12,7 @@ import {
   type ReactFlowProps,
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/shallow'
 
 import { NodeView } from './node-view'
@@ -41,6 +41,7 @@ import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
 import { useCopyPasteNodes } from '../../hooks/use-copy-paste'
 import { useCenterAroundParam } from '../../hooks/use-center-around'
 import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
+import { PresentationControls } from './presentation-controls'
 
 import './graph-styles.css'
 import { useSaveThumbnailOnUnmount } from '../../hooks/use-make-thumbnail'
@@ -80,6 +81,7 @@ const drawableNodeTypes: NodeType[] = [
   'layered-rectangle',
   'thought-cloud',
   'capsule',
+  'slide',
 ]
 
 const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(nodeType)
@@ -239,6 +241,10 @@ export default function GraphEditor() {
   const setZoom = useGraphStore(state => state.setZoom)
   const graphViewports = useGraphStore(useShallow(state => state.graphViewports))
   const setGraphViewport = useGraphStore(state => state.setGraphViewport)
+  const presentationMode = useGraphStore(state => state.presentationMode)
+  const setPresentationMode = useGraphStore(state => state.setPresentationMode)
+  const activeSlideId = useGraphStore(state => state.activeSlideId)
+  const setActiveSlideId = useGraphStore(state => state.setActiveSlideId)
 
   const mindmaps = useMindMapStore(state => state.mindmaps)
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
@@ -409,6 +415,13 @@ export default function GraphEditor() {
   })
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
+  const slides = useMemo(
+    () => (nodes as NoteNode[])
+      .filter(n => n.data?.style?.type === 'slide')
+      .sort((a, b) => (a.data.properties.slideNumber?.number ?? 0) - (b.data.properties.slideNumber?.number ?? 0)),
+    [nodes]
+  )
+  const slideIds = useMemo(() => slides.map(s => s.id), [slides])
 
   // Mindmap integration
   useEffect(() => {
@@ -470,12 +483,45 @@ export default function GraphEditor() {
   const handleSelectionEnd = useCallback(() => setIsSelecting(false), [])
   const handleSelectionDragStop = useCallback(() => setIsSelecting(false), [])
 
+  const activeSlideIndex = activeSlideId ? slideIds.indexOf(activeSlideId) : -1
+  const canPrev = activeSlideIndex > 0
+  const canNext = activeSlideIndex >= 0 && activeSlideIndex < slideIds.length - 1
+
+  const goToSlide = useCallback(async (index: number) => {
+    const node = slides[index]
+    if (!node) return
+    setActiveSlideId(node.id)
+    await fitView({ nodes: [node], padding: 0.2, duration: 250 })
+  }, [fitView, setActiveSlideId, slides])
+
+  const restoreViewport = useCallback(() => {
+    if (!boardId) return
+    const saved = graphViewports[boardId]
+    if (saved && rfInstanceRef.current?.setViewport) {
+      rfInstanceRef.current.setViewport(saved, { duration: 200 })
+    }
+  }, [boardId, graphViewports])
+
+  useBoardShortcuts({
+    enabled: presentationMode,
+    shortcuts: [
+      { key: 'arrowleft', handler: () => canPrev && goToSlide(activeSlideIndex - 1) },
+      { key: 'arrowright', handler: () => canNext && goToSlide(activeSlideIndex + 1) },
+      { key: 'escape', handler: () => {
+        setPresentationMode(false)
+        setActiveSlideId(undefined)
+        setEnableSelection(false)
+        restoreViewport()
+      } },
+    ],
+  })
+
   useOnViewportChange({
     onStart: () => {
       setIsMoving(true)
     },
     onEnd: vp => {
-      if (boardId) {
+      if (boardId && !presentationMode) {
         setGraphViewport(boardId, vp)
       }
       setZoom(vp.zoom)
@@ -659,6 +705,21 @@ export default function GraphEditor() {
           <LinearView />
         )}
       </div>
+
+      {presentationMode && (
+        <PresentationControls
+          onPrev={() => canPrev && goToSlide(activeSlideIndex - 1)}
+          onNext={() => canNext && goToSlide(activeSlideIndex + 1)}
+          onStop={() => {
+            setPresentationMode(false)
+            setActiveSlideId(undefined)
+            setEnableSelection(false)
+            restoreViewport()
+          }}
+          disablePrev={!canPrev}
+          disableNext={!canNext}
+        />
+      )}
     </div>
   )
 }

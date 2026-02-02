@@ -79,7 +79,7 @@ export function NavigableMiniMap({ nodes, className, onNavigate, getCurrentViewp
     <div
       ref={wrapperRef}
       onClick={handleClick}
-      className='minimap-wrapper absolute bottom-4 right-4 p-0 overflow-hidden rounded-md'
+      className='minimap-wrapper absolute bottom-4 left-4 p-0 overflow-hidden rounded-md'
     >
       <MiniMap className={minimapClass} />
     </div>

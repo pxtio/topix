@@ -1,4 +1,4 @@
-import { memo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import type { AddNoteNodeOptions } from '../../hooks/use-add-node'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { LinkSquare01Icon } from '@hugeicons/core-free-icons'
 import { BotMessageSquare, ChevronRight } from 'lucide-react'
+import { SlidePanel } from './slide-panel'
 
 
 type ViewMode = 'graph' | 'linear'
@@ -60,8 +61,12 @@ export const ActionPanel = memo(function ActionPanel({
   const [openShapeMenu, setOpenShapeMenu] = useState(false)
   const [openDocumentUpload, setOpenDocumentUpload] = useState(false)
   const [openAiSpark, setOpenAiSpark] = useState(false)
+  const [openSlidesPanel, setOpenSlidesPanel] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
   const nodes = useGraphStore(state => state.nodes)
+  const setNodes = useGraphStore(state => state.setNodes)
+  const setViewSlides = useGraphStore(state => state.setViewSlides)
+  const presentationMode = useGraphStore(state => state.presentationMode)
   const zoom = useGraphStore(state => state.zoom ?? 1)
   const undo = useGraphStore(state => state.undo)
   const redo = useGraphStore(state => state.redo)
@@ -74,6 +79,23 @@ export const ActionPanel = memo(function ActionPanel({
     shouldThrow: false,
   })
   const currentChatId = boardSearch?.currentChatId
+
+  useEffect(() => {
+    setViewSlides(openSlidesPanel)
+  }, [openSlidesPanel, setViewSlides])
+
+  useEffect(() => {
+    setNodes(ns =>
+      ns.map(n => {
+        if (n.data?.style?.type !== 'slide') return n
+        return {
+          ...n,
+          style: { ...(n.style ?? {}), pointerEvents: openSlidesPanel ? 'auto' : 'none' },
+          dragHandle: '.slide-handle',
+        }
+      })
+    )
+  }, [openSlidesPanel, setNodes])
 
   useBoardShortcuts({
     enabled: viewMode === 'graph',
@@ -89,6 +111,7 @@ export const ActionPanel = memo(function ActionPanel({
       { key: 'i', handler: () => setOpenImageSearch(true) },
       { key: 'c', handler: () => boardId && setOpenChatDialog(true) },
       { key: 'b', handler: () => boardId && setOpenAiSpark(true) },
+      { key: 'm', handler: () => boardId && setOpenSlidesPanel(true) },
       { key: 'p', handler: () => setEnableSelection(false) },
       { key: 'v', handler: () => setEnableSelection(!enableSelection) },
       { key: 'l', handler: toggleLock },
@@ -103,37 +126,43 @@ export const ActionPanel = memo(function ActionPanel({
 
   return (
     <>
-      <NavigatePanel
-        enableSelection={enableSelection}
-        setEnableSelection={setEnableSelection}
-        onZoomIn={onZoomIn}
-        onZoomOut={onZoomOut}
-        onFitView={onFitView}
-        onResetZoom={onResetZoom}
-        isLocked={isLocked}
-        toggleLock={toggleLock}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        zoom={zoom}
-        undo={undo}
-        redo={redo}
-        canUndo={canUndo}
-        canRedo={canRedo}
-      />
+      {!presentationMode && (
+        <>
+          <NavigatePanel
+            enableSelection={enableSelection}
+            setEnableSelection={setEnableSelection}
+            onZoomIn={onZoomIn}
+            onZoomOut={onZoomOut}
+            onFitView={onFitView}
+            onResetZoom={onResetZoom}
+            isLocked={isLocked}
+            toggleLock={toggleLock}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            zoom={zoom}
+            undo={undo}
+            redo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onToggleSlidesPanel={() => setOpenSlidesPanel(v => !v)}
+            slidesPanelOpen={openSlidesPanel}
+          />
 
-      <ToolPanel
-        onAddNode={onAddNode}
-        onAddLine={onAddLine}
-        viewMode={viewMode}
-        openShapeMenu={openShapeMenu}
-        setOpenShapeMenu={setOpenShapeMenu}
-        setOpenIconSearch={setOpenIconSearch}
-        setOpenImageSearch={setOpenImageSearch}
-        setOpenDocumentUpload={setOpenDocumentUpload}
-        setOpenChatDialog={setOpenChatDialog}
-        setOpenAiSpark={setOpenAiSpark}
-        boardId={boardId}
-      />
+          <ToolPanel
+            onAddNode={onAddNode}
+            onAddLine={onAddLine}
+            viewMode={viewMode}
+            openShapeMenu={openShapeMenu}
+            setOpenShapeMenu={setOpenShapeMenu}
+            setOpenIconSearch={setOpenIconSearch}
+            setOpenImageSearch={setOpenImageSearch}
+            setOpenDocumentUpload={setOpenDocumentUpload}
+            setOpenChatDialog={setOpenChatDialog}
+            setOpenAiSpark={setOpenAiSpark}
+            boardId={boardId}
+          />
+        </>
+      )}
 
       <ImageSearchDialog openImageSearch={openImageSearch} setOpenImageSearch={setOpenImageSearch} />
       <IconSearchDialog openIconSearch={openIconSearch} setOpenIconSearch={setOpenIconSearch} />
@@ -144,6 +173,17 @@ export const ActionPanel = memo(function ActionPanel({
         boardId={boardId}
         selectedNodes={nodes.filter(n => n.selected && (n.data as { kind?: string } | undefined)?.kind !== 'point')}
       />
+      <Sheet open={openSlidesPanel} onOpenChange={setOpenSlidesPanel} modal={false}>
+        <SheetContent
+          side="right"
+          showOverlay={false}
+          showClose={false}
+          onInteractOutside={(event) => event.preventDefault()}
+          className="w-[360px] max-w-[92vw] bg-sidebar text-sidebar-foreground border-l border-border p-0"
+        >
+          <SlidePanel onClose={() => setOpenSlidesPanel(false)} />
+        </SheetContent>
+      </Sheet>
       <Sheet open={openChatDialog} onOpenChange={setOpenChatDialog} modal={false}>
         <SheetContent
           side="right"

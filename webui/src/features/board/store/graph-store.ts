@@ -699,6 +699,12 @@ export interface GraphStore {
   isDraggingNodes: boolean
   draggingNodeIds: Set<string>
   draggingPointId?: string
+  viewSlides: boolean
+  setViewSlides: (enabled: boolean) => void
+  presentationMode: boolean
+  setPresentationMode: (enabled: boolean) => void
+  activeSlideId?: string
+  setActiveSlideId: (id?: string) => void
   isSelectMode: boolean
   setIsSelectMode: (enabled: boolean) => void
   isMoving: boolean
@@ -753,6 +759,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             historyPast: [],
             historyFuture: [],
             dragSnapshotNodes: null,
+            presentationMode: false,
+            activeSlideId: undefined,
           }
         : { boardId }
     })
@@ -775,6 +783,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   isDraggingNodes: false,
   draggingNodeIds: new Set(),
   draggingPointId: undefined,
+  viewSlides: true,
+  setViewSlides: (enabled) => set({ viewSlides: enabled }),
+  presentationMode: false,
+  setPresentationMode: (enabled) => set({ presentationMode: enabled }),
+  activeSlideId: undefined,
+  setActiveSlideId: (id) => set({ activeSlideId: id }),
   isSelectMode: false,
   isMoving: false,
   zoom: 1,

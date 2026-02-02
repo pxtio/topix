@@ -159,14 +159,19 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     // convert cloned notes to nodes
     const maxZ = nodes.reduce((acc, n) => {
       const kind = (n.data as { kind?: string }).kind
-      if (kind === 'point') return acc
+      const nodeType = (n.data as { style?: { type?: string } }).style?.type
+      if (kind === 'point' || nodeType === 'slide') return acc
       return Math.max(acc, n.zIndex ?? 0)
     }, 0)
     let zCursor = maxZ + 1
 
     const newNodes = clonedNotes
       .map(convertNoteToNode)
-      .map(n => ({ ...n, selected: true, zIndex: zCursor++ }))
+      .map(n => ({
+        ...n,
+        selected: true,
+        zIndex: (n.data as { style?: { type?: string } }).style?.type === 'slide' ? -1000 : zCursor++
+      }))
 
     const edgePlans = (copiedEdges ?? []).map(edge => {
       const sourceNode = pointNodes.find(n => n.id === edge.source)

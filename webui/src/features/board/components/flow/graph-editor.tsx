@@ -494,6 +494,18 @@ export default function GraphEditor() {
     await fitView({ nodes: [node], padding: 0.2, duration: 250 })
   }, [fitView, setActiveSlideId, slides])
 
+  useBoardShortcuts({
+    enabled: presentationMode,
+    shortcuts: [
+      { key: 'arrowleft', handler: () => canPrev && goToSlide(activeSlideIndex - 1) },
+      { key: 'arrowright', handler: () => canNext && goToSlide(activeSlideIndex + 1) },
+      { key: 'escape', handler: () => {
+        setPresentationMode(false)
+        setActiveSlideId(undefined)
+      } },
+    ],
+  })
+
   useOnViewportChange({
     onStart: () => {
       setIsMoving(true)

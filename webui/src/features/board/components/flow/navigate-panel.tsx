@@ -276,6 +276,7 @@ export const NavigatePanel = memo(function NavigatePanel({
           >
             <span className='relative inline-flex items-center justify-center'>
               <HugeiconsIcon icon={BitcoinPresentationIcon} className='size-4 shrink-0 text-secondary' strokeWidth={2} />
+              <ShortcutHint label='M' />
             </span>
           </Button>
         </>

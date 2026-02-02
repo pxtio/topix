@@ -97,6 +97,7 @@ export const ActionPanel = memo(function ActionPanel({
       { key: 'i', handler: () => setOpenImageSearch(true) },
       { key: 'c', handler: () => boardId && setOpenChatDialog(true) },
       { key: 'b', handler: () => boardId && setOpenAiSpark(true) },
+      { key: 'm', handler: () => boardId && setOpenSlidesPanel(true) },
       { key: 'p', handler: () => setEnableSelection(false) },
       { key: 'v', handler: () => setEnableSelection(!enableSelection) },
       { key: 'l', handler: toggleLock },

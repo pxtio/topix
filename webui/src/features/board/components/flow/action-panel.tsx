@@ -493,6 +493,22 @@ export const ActionPanel = memo(function ActionPanel({
             </span>
           </Button>
 
+          {/* AI Spark */}
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => setOpenAiSpark(true)}
+            title='AI Spark'
+            aria-label='AI Spark'
+            disabled={!boardId}
+          >
+            <span className='relative inline-flex items-center justify-center'>
+              <Sparkles className='size-4 shrink-0 text-secondary' strokeWidth={2} />
+              <ShortcutHint label='B' />
+            </span>
+          </Button>
+
           {/* Open Chat */}
           <Button
             variant={null}
@@ -506,22 +522,6 @@ export const ActionPanel = memo(function ActionPanel({
             <span className='relative inline-flex items-center justify-center'>
               <BotMessageSquare className='size-4 shrink-0 text-sidebar-icon-4' strokeWidth={2} />
               <ShortcutHint label='C' />
-            </span>
-          </Button>
-
-          {/* AI Spark */}
-          <Button
-            variant={null}
-            className={normalButtonClass}
-            size='icon'
-            onClick={() => setOpenAiSpark(true)}
-            title='AI Spark'
-            aria-label='AI Spark'
-            disabled={!boardId}
-          >
-            <span className='relative inline-flex items-center justify-center'>
-              <Sparkles className='size-4 shrink-0 text-sidebar-icon-1' strokeWidth={2} />
-              <ShortcutHint label='B' />
             </span>
           </Button>
         </>

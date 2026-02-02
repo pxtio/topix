@@ -148,14 +148,14 @@ export const ToolPanel = memo(function ToolPanel({
               >
                 <div className='flex flex-col items-center gap-0.5 relative'>
                   <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />
-                  <ChevronDown className='absolute inset-x-0 -bottom-3.5 w-3 h-3 text-muted-foreground' />
+                  <ChevronDown className='absolute inset-x-0 -top-3.5 w-3 h-3 text-muted-foreground rotate-180' />
                   <ShortcutHint label='S' />
                 </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align='center'
-              side='bottom'
+              side='top'
               sideOffset={8}
               className='min-w-[180px]'
               onKeyDown={(event) => {

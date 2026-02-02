@@ -63,7 +63,13 @@ export const AiSparkDialog = ({
     onOpenChange(false)
     const customRequest = selectedAction === "custom" ? requestText.trim() : undefined
     const actionKey = selectedAction === "custom" ? undefined : selectedAction
-    await runAction({ boardId, contextText: trimmedContext, actionKey, customRequest })
+    await runAction({
+      boardId,
+      contextText: trimmedContext,
+      actionKey,
+      customRequest,
+      useAnchors: selectedAction !== "custom",
+    })
     setProcessing(false)
   }
 

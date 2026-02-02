@@ -16,6 +16,7 @@ export type AiSparkRunParams = {
   contextText: string
   actionKey?: string
   customRequest?: string
+  useAnchors?: boolean
 }
 
 const defaultActions: AiSparkAction[] = [
@@ -36,6 +37,7 @@ export const useAiSparkActions = () => {
     contextText,
     actionKey,
     customRequest,
+    useAnchors = true,
   }: AiSparkRunParams) => {
     if (!boardId) {
       toast.error("Select a board first.")
@@ -61,7 +63,7 @@ export const useAiSparkActions = () => {
     })
     try {
       const answer = `Request: ${request}\n---\nInput Text:\n${contextText.trim()}`
-      await convertToMindMapAsync({ boardId, answer, toolType: "summify" })
+      await convertToMindMapAsync({ boardId, answer, toolType: "summify", useAnchors })
       toast.success("Added to board.", {
         id: toastId,
         icon: <HugeiconsIcon icon={CheckmarkCircle03Icon} className="size-4" strokeWidth={2} />,

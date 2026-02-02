@@ -44,16 +44,16 @@ export const useAddMindMapToBoard = () => {
       const newIds: string[] = []
 
       for (const mindMap of boardMindmaps) {
-        const { nodes: mindMapNodes, edges: mindMapEdges } = mindMap
+        const { nodes: mindMapNodes, edges: mindMapEdges, useAnchors } = mindMap
 
         // mark as new (frontend only)
         mindMapNodes.forEach(n => { n.data.isNew = true })
 
         // avoid overlap and merge into the board
-        const displacedMindMapNodes = contextNodes.length > 0
+        const displacedMindMapNodes = contextNodes.length > 0 && useAnchors !== false
           ? displaceNodes(stackBase, mindMapNodes, contextNodes)
           : displaceNodes(nodes_, mindMapNodes)
-        if (contextNodes.length > 0) {
+        if (contextNodes.length > 0 && useAnchors !== false) {
           stackBase = displacedMindMapNodes
         }
         const displacedById = new Map(displacedMindMapNodes.map(node => [node.id, node]))

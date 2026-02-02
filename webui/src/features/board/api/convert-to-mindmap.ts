@@ -41,18 +41,20 @@ export const useConvertToMindMap = () => {
       boardId,
       answer,
       toolType,
-      saveAsIs = false
+      saveAsIs = false,
+      useAnchors = true
     }: {
       boardId: string,
       answer: string,
       toolType: "notify" | "mapify" | "schemify" | "summify",
-      saveAsIs?: boolean
+      saveAsIs?: boolean,
+      useAnchors?: boolean
     }): Promise<{ status: string }> => {
       // if saveAsIs and notify, just create a single note with the exact content
       if (saveAsIs && toolType === "notify") {
         const note = createDefaultNote({ boardId, nodeType: "sheet"})
         note.content = { markdown: answer }
-        setMindMap(boardId, [convertNoteToNode(note)], [])
+        setMindMap(boardId, [convertNoteToNode(note)], [], useAnchors)
         return { status: "success" }
       }
 
@@ -87,7 +89,7 @@ export const useConvertToMindMap = () => {
       // store temporarily in mind map store
       // will be consumed by board component
       // and then cleared
-      setMindMap(boardId, ns, es)
+      setMindMap(boardId, ns, es, useAnchors)
 
       return { status: "success" }
     }

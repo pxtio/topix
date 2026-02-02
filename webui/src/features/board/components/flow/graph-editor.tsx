@@ -494,6 +494,14 @@ export default function GraphEditor() {
     await fitView({ nodes: [node], padding: 0.2, duration: 250 })
   }, [fitView, setActiveSlideId, slides])
 
+  const restoreViewport = useCallback(() => {
+    if (!boardId) return
+    const saved = graphViewports[boardId]
+    if (saved && rfInstanceRef.current?.setViewport) {
+      rfInstanceRef.current.setViewport(saved, { duration: 200 })
+    }
+  }, [boardId, graphViewports])
+
   useBoardShortcuts({
     enabled: presentationMode,
     shortcuts: [
@@ -502,6 +510,8 @@ export default function GraphEditor() {
       { key: 'escape', handler: () => {
         setPresentationMode(false)
         setActiveSlideId(undefined)
+        setEnableSelection(false)
+        restoreViewport()
       } },
     ],
   })
@@ -511,7 +521,7 @@ export default function GraphEditor() {
       setIsMoving(true)
     },
     onEnd: vp => {
-      if (boardId) {
+      if (boardId && !presentationMode) {
         setGraphViewport(boardId, vp)
       }
       setZoom(vp.zoom)
@@ -703,6 +713,8 @@ export default function GraphEditor() {
           onStop={() => {
             setPresentationMode(false)
             setActiveSlideId(undefined)
+            setEnableSelection(false)
+            restoreViewport()
           }}
           disablePrev={!canPrev}
           disableNext={!canNext}

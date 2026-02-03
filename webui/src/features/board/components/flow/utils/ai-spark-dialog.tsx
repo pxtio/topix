@@ -28,6 +28,10 @@ export const AiSparkDialog = ({
   const [useSelection, setUseSelection] = useState(false)
   const [processing, setProcessing] = useState(false)
   const { actions, runAction } = useAiSparkActions()
+  const availableActions = useMemo(
+    () => actions.filter(action => action.key !== "translate"),
+    [actions],
+  )
 
   const selectionContext = useMemo(
     () => buildContextTextFromNodes(selectedNodes),
@@ -49,11 +53,11 @@ export const AiSparkDialog = ({
   }, [useSelection, selectionContext])
 
   useEffect(() => {
-    const action = actions.find((item) => item.key === selectedAction)
+    const action = availableActions.find((item) => item.key === selectedAction)
     if (action && selectedAction !== "custom") {
       setRequestText(action.request)
     }
-  }, [actions, selectedAction])
+  }, [availableActions, selectedAction])
 
   const handleSubmit = async () => {
     const trimmedContext = contextText.trim()
@@ -94,7 +98,7 @@ export const AiSparkDialog = ({
                 <SelectValue placeholder="Choose an action" />
               </SelectTrigger>
               <SelectContent>
-                {actions.map((action) => (
+                {availableActions.map((action) => (
                   <SelectItem key={action.key} value={action.key}>
                     {action.label}
                   </SelectItem>

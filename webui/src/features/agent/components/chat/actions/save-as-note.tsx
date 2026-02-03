@@ -91,7 +91,8 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
         saveAsIs
       })
       window.clearInterval(timer)
-      toast.success("Notes updated.", {
+      const finalElapsed = formatElapsed()
+      toast.success(`Notes updated. (${finalElapsed})`, {
         id,
         icon: <SuccessIcon />,
         duration: undefined,
@@ -105,7 +106,8 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
     } catch (error) {
       console.error("Error converting to mind map:", error)
       window.clearInterval(timer)
-      toast.error("Failed to rewrite.", {
+      const finalElapsed = formatElapsed()
+      toast.error(`Failed to rewrite. (${finalElapsed})`, {
         id,
         icon: <ErrorIcon />,
         duration: undefined
@@ -142,8 +144,9 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
       const boardId = await createBoardAsync()
       await convertToMindMapAsync({ boardId, answer: message, toolType: type, saveAsIs })
       window.clearInterval(timer)
+      const finalElapsed = formatElapsed()
       toast.success(
-        "Notes updated.",
+        `Notes updated. (${finalElapsed})`,
         {
           id,
           icon: <SuccessIcon />,
@@ -159,8 +162,9 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
     } catch (error) {
       console.error("Error creating board or converting to mind map:", error)
       window.clearInterval(timer)
+      const finalElapsed = formatElapsed()
       toast.error(
-        "Could not create the board or rewrite.",
+        `Could not create the board or rewrite. (${finalElapsed})`,
         {
           id,
           icon: <ErrorIcon />,

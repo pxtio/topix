@@ -75,7 +75,8 @@ export const useAiSparkActions = () => {
       const toolType = actionKey === "quizify" ? "quizify" : "summify"
       await convertToMindMapAsync({ boardId, answer, toolType, useAnchors })
       window.clearInterval(timer)
-      toast.success("Added to board.", {
+      const finalElapsed = formatElapsed()
+      toast.success(`Added to board. (${finalElapsed})`, {
         id: toastId,
         icon: <HugeiconsIcon icon={CheckmarkCircle03Icon} className="size-4" strokeWidth={2} />,
       })
@@ -83,7 +84,8 @@ export const useAiSparkActions = () => {
     } catch (error) {
       console.error("AI action failed:", error)
       window.clearInterval(timer)
-      toast.error("Could not complete the action.", {
+      const finalElapsed = formatElapsed()
+      toast.error(`Could not complete the action. (${finalElapsed})`, {
         id: toastId,
         icon: <HugeiconsIcon icon={CancelIcon} className="size-4" strokeWidth={2} />,
       })

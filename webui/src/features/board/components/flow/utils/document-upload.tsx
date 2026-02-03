@@ -65,13 +65,15 @@ export const DocumentUploadDialog = ({
       await parseDocumentAsync({ boardId, file })
       window.clearInterval(timer)
       toast.dismiss(id)
-      toast.success("Document parsed.", { icon: <SuccessIcon />, duration: 3000 })
+      const finalElapsed = formatElapsed()
+      toast.success(`Document parsed. (${finalElapsed})`, { icon: <SuccessIcon />, duration: 3000 })
       setFile(null)
     } catch (err) {
       console.error("Failed to parse document:", err)
       window.clearInterval(timer)
       toast.dismiss(id)
-      toast.error("Failed to parse document.", { icon: <ErrorIcon />, duration: 4000 })
+      const finalElapsed = formatElapsed()
+      toast.error(`Failed to parse document. (${finalElapsed})`, { icon: <ErrorIcon />, duration: 4000 })
     } finally {
       window.clearInterval(timer)
       setSubmitting(false)

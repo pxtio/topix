@@ -70,10 +70,19 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
     if (processing) return
 
     setProcessing(true)
-    const id = toast("Rewriting…", {
+    const startedAt = Date.now()
+    const formatElapsed = () => `${Math.max(0, Math.floor((Date.now() - startedAt) / 1000))}s`
+    const id = toast(`Rewriting… ${formatElapsed()}`, {
       icon: <LoadingIcon />,
       duration: Infinity
     })
+    const timer = window.setInterval(() => {
+      toast(`Rewriting… ${formatElapsed()}`, {
+        id,
+        icon: <LoadingIcon />,
+        duration: Infinity
+      })
+    }, 1000)
     try {
       await convertToMindMapAsync({
         boardId,
@@ -81,6 +90,7 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
         toolType: type,
         saveAsIs
       })
+      window.clearInterval(timer)
       toast.success("Notes updated.", {
         id,
         icon: <SuccessIcon />,
@@ -94,12 +104,14 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
       })
     } catch (error) {
       console.error("Error converting to mind map:", error)
+      window.clearInterval(timer)
       toast.error("Failed to rewrite.", {
         id,
         icon: <ErrorIcon />,
         duration: undefined
       })
     } finally {
+      window.clearInterval(timer)
       setProcessing(false)
     }
   }
@@ -110,16 +122,26 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
     if (processing) return
 
     setProcessing(true)
+    const startedAt = Date.now()
+    const formatElapsed = () => `${Math.max(0, Math.floor((Date.now() - startedAt) / 1000))}s`
     const id = toast(
-      "Creating board and rewriting…",
+      `Creating board and rewriting… ${formatElapsed()}`,
       {
         icon: <LoadingIcon />,
         duration: Infinity
       }
     )
+    const timer = window.setInterval(() => {
+      toast(`Creating board and rewriting… ${formatElapsed()}`, {
+        id,
+        icon: <LoadingIcon />,
+        duration: Infinity
+      })
+    }, 1000)
     try {
       const boardId = await createBoardAsync()
       await convertToMindMapAsync({ boardId, answer: message, toolType: type, saveAsIs })
+      window.clearInterval(timer)
       toast.success(
         "Notes updated.",
         {
@@ -136,6 +158,7 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
       )
     } catch (error) {
       console.error("Error creating board or converting to mind map:", error)
+      window.clearInterval(timer)
       toast.error(
         "Could not create the board or rewrite.",
         {
@@ -144,6 +167,7 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
           duration: undefined
         })
     } finally {
+      window.clearInterval(timer)
       setProcessing(false)
     }
   }

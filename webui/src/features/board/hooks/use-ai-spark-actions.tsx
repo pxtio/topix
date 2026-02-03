@@ -58,14 +58,23 @@ export const useAiSparkActions = () => {
     }
 
     setProcessingKey(actionKey ?? "custom")
-    const toastId = toast("Working on it…", {
+    const startedAt = Date.now()
+    const formatElapsed = () => `${Math.max(0, Math.floor((Date.now() - startedAt) / 1000))}s`
+    const toastId = toast(`Working on it… ${formatElapsed()}`, {
       duration: Infinity,
       icon: <HugeiconsIcon icon={ReloadIcon} className="size-4 animate-spin [animation-duration:750ms]" strokeWidth={2} />,
     })
+    const timer = window.setInterval(() => {
+      toast(`Working on it… ${formatElapsed()}`, {
+        id: toastId,
+        icon: <HugeiconsIcon icon={ReloadIcon} className="size-4 animate-spin [animation-duration:750ms]" strokeWidth={2} />,
+      })
+    }, 1000)
     try {
       const answer = `Request: ${request}\n---\nInput Text:\n${contextText.trim()}`
       const toolType = actionKey === "quizify" ? "quizify" : "summify"
       await convertToMindMapAsync({ boardId, answer, toolType, useAnchors })
+      window.clearInterval(timer)
       toast.success("Added to board.", {
         id: toastId,
         icon: <HugeiconsIcon icon={CheckmarkCircle03Icon} className="size-4" strokeWidth={2} />,
@@ -73,12 +82,14 @@ export const useAiSparkActions = () => {
       return true
     } catch (error) {
       console.error("AI action failed:", error)
+      window.clearInterval(timer)
       toast.error("Could not complete the action.", {
         id: toastId,
         icon: <HugeiconsIcon icon={CancelIcon} className="size-4" strokeWidth={2} />,
       })
       return false
     } finally {
+      window.clearInterval(timer)
       setProcessingKey(null)
       toast.dismiss(toastId)
     }

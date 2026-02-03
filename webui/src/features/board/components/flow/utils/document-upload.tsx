@@ -54,18 +54,26 @@ export const DocumentUploadDialog = ({
     if (!file || !boardId || submitting) return
 
     setSubmitting(true)
-    const id = toast("Parsing & Analyzing document…", { icon: <LoadingIcon />, duration: Infinity })
+    const startedAt = Date.now()
+    const formatElapsed = () => `${Math.max(0, Math.floor((Date.now() - startedAt) / 1000))}s`
+    const id = toast(`Parsing & Analyzing document… ${formatElapsed()}`, { icon: <LoadingIcon />, duration: Infinity })
+    const timer = window.setInterval(() => {
+      toast(`Parsing & Analyzing document… ${formatElapsed()}`, { id, icon: <LoadingIcon />, duration: Infinity })
+    }, 1000)
     onOpenChange(false)
     try {
       await parseDocumentAsync({ boardId, file })
+      window.clearInterval(timer)
       toast.dismiss(id)
       toast.success("Document parsed.", { icon: <SuccessIcon />, duration: 3000 })
       setFile(null)
     } catch (err) {
       console.error("Failed to parse document:", err)
+      window.clearInterval(timer)
       toast.dismiss(id)
       toast.error("Failed to parse document.", { icon: <ErrorIcon />, duration: 4000 })
     } finally {
+      window.clearInterval(timer)
       setSubmitting(false)
     }
   }

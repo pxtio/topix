@@ -20,7 +20,7 @@ export type AiSparkRunParams = {
 }
 
 const defaultActions: AiSparkAction[] = [
-  { key: "summarize", label: "Summarize (quick overview)", request: "Summarize the key points and structure concisely." },
+  { key: "summarize", label: "Write a summary", request: "Write a concise summary of the key points and structure." },
   { key: "mapify", label: "Mapify (generate mindmap)", request: "Generate a mindmap capturing the main ideas and relationships." },
   { key: "schemify", label: "Schemify (generate schema)", request: "Generate a structured schema of entities and relationships." },
   { key: "quizify", label: "Quizify (MCQ exercises)", request: "Generate multiple-choice exercises grouped by theme." },

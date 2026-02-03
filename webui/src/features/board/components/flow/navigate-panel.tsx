@@ -17,6 +17,7 @@ import {
 } from '@hugeicons/core-free-icons'
 import { BitcoinPresentationIcon } from '@hugeicons/core-free-icons'
 import clsx from 'clsx'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -59,6 +60,15 @@ export const NavigatePanel = memo(function NavigatePanel({
   onToggleSlidesPanel,
   slidesPanelOpen,
 }: NavigatePanelProps) {
+  const [small, setSmall] = useState(false)
+
+  useEffect(() => {
+    const check = () => setSmall(window.innerWidth < 640)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
   const normalButtonClass = `
     transition-colors
     text-card-foreground
@@ -75,32 +85,107 @@ export const NavigatePanel = memo(function NavigatePanel({
 
   const selectionModeButtonClass = enableSelection ? activeButtonClass : normalButtonClass
   const dragModeButtonClass = enableSelection ? normalButtonClass : activeButtonClass
+  const tooltipSide = small ? 'left' : 'bottom'
+
+  const tooltipCopy = {
+    pan: {
+      title: 'Pan mode',
+      description: 'Drag the canvas to move around.',
+      shortcut: 'P',
+    },
+    select: {
+      title: 'Selection mode',
+      description: 'Click and drag to select nodes.',
+      shortcut: 'V',
+    },
+    undo: {
+      title: 'Undo',
+      description: 'Revert the last change.',
+      shortcut: 'Z',
+    },
+    redo: {
+      title: 'Redo',
+      description: 'Reapply the last change.',
+      shortcut: 'Y',
+    },
+    zoomIn: {
+      title: 'Zoom in',
+      description: 'Zoom closer to the board.',
+      shortcut: '+',
+    },
+    zoomOut: {
+      title: 'Zoom out',
+      description: 'Zoom further from the board.',
+      shortcut: '-',
+    },
+    reset: {
+      title: 'Reset zoom',
+      description: 'Return to 100% zoom.',
+      shortcut: '0',
+    },
+    fit: {
+      title: 'Fit view',
+      description: 'Zoom to fit all content.',
+      shortcut: 'F',
+    },
+    lock: {
+      title: 'Lock canvas',
+      description: 'Disable edits and dragging.',
+      shortcut: 'L',
+    },
+    unlock: {
+      title: 'Unlock canvas',
+      description: 'Enable edits and dragging.',
+      shortcut: 'L',
+    },
+    slides: {
+      title: 'Slides',
+      description: 'Open the slides panel.',
+      shortcut: 'M',
+    },
+    graph: {
+      title: 'Graph view',
+      description: 'Switch to the visual canvas view.',
+    },
+    linear: {
+      title: 'Linear view',
+      description: 'Switch to the list-based view.',
+    },
+  }
+
+  const TooltipLabel = ({ title, description, shortcut }: { title: string; description: string; shortcut?: string }) => (
+    <div className='flex flex-col gap-0.5'>
+      <span className='text-xs font-semibold'>{title}</span>
+      <span className='text-[11px] text-primary-foreground/80'>
+        {description}
+        {shortcut ? ` Shortcut: ${shortcut}` : ''}
+      </span>
+    </div>
+  )
 
   const ModeButton = ({ mode, label, children }: { mode: ViewMode; label: string; children: React.ReactNode }) => {
     const active = viewMode === mode
-    const [small, setSmall] = useState(false)
-
-    useEffect(() => {
-      const check = () => setSmall(window.innerWidth < 640)
-      check()
-      window.addEventListener('resize', check)
-      return () => window.removeEventListener('resize', check)
-    }, [])
-
     const size = small ? 'icon' : 'default'
+    const tooltip = mode === 'graph' ? tooltipCopy.graph : tooltipCopy.linear
 
     return (
-      <Button
-        variant={null}
-        size={size}
-        onClick={() => setViewMode(mode)}
-        className={active ? activeButtonClass : normalButtonClass}
-        title={`${label} view`}
-        aria-label={`${label} view`}
-        aria-pressed={active}
-      >
-        {children}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant={null}
+            size={size}
+            onClick={() => setViewMode(mode)}
+            className={active ? activeButtonClass : normalButtonClass}
+            aria-label={`${label} view`}
+            aria-pressed={active}
+          >
+            {children}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side={tooltipSide} sideOffset={10}>
+          <TooltipLabel {...tooltip} />
+        </TooltipContent>
+      </Tooltip>
     )
   }
 
@@ -140,147 +225,207 @@ export const NavigatePanel = memo(function NavigatePanel({
 
       {viewMode === 'graph' && (
         <>
-          <Button
-            variant={null}
-            size='icon'
-            onClick={() => setEnableSelection(!enableSelection)}
-            className={dragModeButtonClass}
-            title='Pan mode'
-            aria-label='Pan mode'
-          >
-            <span className='relative inline-flex items-center justify-center'>
-              <HugeiconsIcon icon={Hold04Icon} className='size-4 shrink-0' />
-              <ShortcutHint label='P' />
-            </span>
-          </Button>
-          <Button
-            variant={null}
-            size='icon'
-            onClick={() => setEnableSelection(!enableSelection)}
-            className={selectionModeButtonClass}
-            title='Selection mode'
-            aria-label='Selection mode'
-          >
-            <span className='relative inline-flex items-center justify-center'>
-              <HugeiconsIcon icon={Cursor02Icon} className='size-4 shrink-0' strokeWidth={2} />
-              <ShortcutHint label='V' />
-            </span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                size='icon'
+                onClick={() => setEnableSelection(!enableSelection)}
+                className={dragModeButtonClass}
+                aria-label='Pan mode'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={Hold04Icon} className='size-4 shrink-0' />
+                  <ShortcutHint label='P' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide} sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.pan} />
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                size='icon'
+                onClick={() => setEnableSelection(!enableSelection)}
+                className={selectionModeButtonClass}
+                aria-label='Selection mode'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={Cursor02Icon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='V' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide} sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.select} />
+            </TooltipContent>
+          </Tooltip>
 
-          <Button
-            variant={null}
-            size='icon'
-            onClick={undo}
-            className={normalButtonClass}
-            title='Undo'
-            aria-label='Undo'
-            disabled={!canUndo}
-          >
-            <span className='relative inline-flex items-center justify-center'>
-              <HugeiconsIcon icon={Undo03Icon} className='size-4 shrink-0' strokeWidth={2} />
-              <ShortcutHint label='Z' />
-            </span>
-          </Button>
-          <Button
-            variant={null}
-            size='icon'
-            onClick={redo}
-            className={normalButtonClass}
-            title='Redo'
-            aria-label='Redo'
-            disabled={!canRedo}
-          >
-            <span className='relative inline-flex items-center justify-center'>
-              <HugeiconsIcon icon={Redo03Icon} className='size-4 shrink-0' strokeWidth={2} />
-              <ShortcutHint label='Y' />
-            </span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                size='icon'
+                onClick={undo}
+                className={normalButtonClass}
+                aria-label='Undo'
+                disabled={!canUndo}
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={Undo03Icon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='Z' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide} sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.undo} />
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                size='icon'
+                onClick={redo}
+                className={normalButtonClass}
+                aria-label='Redo'
+                disabled={!canRedo}
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={Redo03Icon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='Y' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide} sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.redo} />
+            </TooltipContent>
+          </Tooltip>
 
-          <Button
-            variant={null}
-            size='icon'
-            onClick={onZoomIn}
-            className={normalButtonClass}
-            title='Zoom in'
-            aria-label='Zoom in'
-          >
-            <span className='relative inline-flex items-center justify-center'>
-              <HugeiconsIcon icon={PlusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
-              <ShortcutHint label='+' />
-            </span>
-          </Button>
-          <Button
-            variant={null}
-            size='icon'
-            onClick={onZoomOut}
-            className={normalButtonClass}
-            title='Zoom out'
-            aria-label='Zoom out'
-          >
-            <span className='relative inline-flex items-center justify-center'>
-              <HugeiconsIcon icon={MinusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
-              <ShortcutHint label='-' />
-            </span>
-          </Button>
-          <Button
-            variant={null}
-            size='icon'
-            onClick={onResetZoom}
-            className={normalButtonClass}
-            title='Reset zoom to 100%'
-            aria-label='Reset zoom to 100%'
-          >
-            <span className='relative inline-flex items-center justify-center text-xs font-medium text-secondary'>
-              {Math.round((zoom || 1) * 100)}%
-              <ShortcutHint label='0' />
-            </span>
-          </Button>
-          <Button
-            variant={null}
-            size='icon'
-            onClick={onFitView}
-            className={normalButtonClass}
-            title='Fit view'
-            aria-label='Fit view'
-          >
-            <span className='relative inline-flex items-center justify-center'>
-              <HugeiconsIcon icon={FitToScreenIcon} className='size-4 shrink-0' strokeWidth={2} />
-              <ShortcutHint label='F' />
-            </span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                size='icon'
+                onClick={onZoomIn}
+                className={normalButtonClass}
+                aria-label='Zoom in'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={PlusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='+' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide} sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.zoomIn} />
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                size='icon'
+                onClick={onZoomOut}
+                className={normalButtonClass}
+                aria-label='Zoom out'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={MinusSignIcon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='-' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide} sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.zoomOut} />
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                size='icon'
+                onClick={onResetZoom}
+                className={normalButtonClass}
+                aria-label='Reset zoom to 100%'
+              >
+                <span className='relative inline-flex items-center justify-center text-xs font-medium text-secondary'>
+                  {Math.round((zoom || 1) * 100)}%
+                  <ShortcutHint label='0' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide} sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.reset} />
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                size='icon'
+                onClick={onFitView}
+                className={normalButtonClass}
+                aria-label='Fit view'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={FitToScreenIcon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='F' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide} sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.fit} />
+            </TooltipContent>
+          </Tooltip>
 
-          <Button
-            variant={null}
-            size='icon'
-            onClick={toggleLock}
-            className={isLocked ? activeButtonClass : normalButtonClass}
-            title={isLocked ? 'Unlock canvas' : 'Lock canvas'}
-            aria-pressed={isLocked}
-            aria-label={isLocked ? 'Unlock canvas' : 'Lock canvas'}
-          >
-            <span className='relative inline-flex items-center justify-center'>
-              {isLocked ? (
-                <HugeiconsIcon icon={SquareLock02Icon} className='size-4 shrink-0' strokeWidth={2} />
-              ) : (
-                <HugeiconsIcon icon={SquareUnlock02Icon} className='size-4 shrink-0' strokeWidth={2} />
-              )}
-              <ShortcutHint label='L' />
-            </span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                size='icon'
+                onClick={toggleLock}
+                className={isLocked ? activeButtonClass : normalButtonClass}
+                aria-pressed={isLocked}
+                aria-label={isLocked ? 'Unlock canvas' : 'Lock canvas'}
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  {isLocked ? (
+                    <HugeiconsIcon icon={SquareLock02Icon} className='size-4 shrink-0' strokeWidth={2} />
+                  ) : (
+                    <HugeiconsIcon icon={SquareUnlock02Icon} className='size-4 shrink-0' strokeWidth={2} />
+                  )}
+                  <ShortcutHint label='L' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide} sideOffset={10}>
+              <TooltipLabel {...(isLocked ? tooltipCopy.unlock : tooltipCopy.lock)} />
+            </TooltipContent>
+          </Tooltip>
 
-          <Button
-            variant={null}
-            size='icon'
-            onClick={onToggleSlidesPanel}
-            className={slidesPanelOpen ? activeButtonClass : normalButtonClass}
-            title='Slides'
-            aria-label='Slides'
-          >
-            <span className='relative inline-flex items-center justify-center'>
-              <HugeiconsIcon icon={BitcoinPresentationIcon} className='size-4 shrink-0' strokeWidth={2} />
-              <ShortcutHint label='M' />
-            </span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                size='icon'
+                onClick={onToggleSlidesPanel}
+                className={slidesPanelOpen ? activeButtonClass : normalButtonClass}
+                aria-label='Slides'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={BitcoinPresentationIcon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='M' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side={tooltipSide} sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.slides} />
+            </TooltipContent>
+          </Tooltip>
         </>
       )}
     </div>

@@ -3,7 +3,17 @@ import type { ReactFlowProps } from '@xyflow/react'
 
 import type { LinkEdge, NoteNode } from '../../types/flow'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { LayerBringForwardIcon, LayerBringToFrontIcon, LayerSendBackwardIcon, LayerSendToBackIcon } from '@hugeicons/core-free-icons'
+import {
+  Blockchain06Icon,
+  GitForkIcon,
+  Idea01Icon,
+  LayerBringForwardIcon,
+  LayerBringToFrontIcon,
+  LayerSendBackwardIcon,
+  LayerSendToBackIcon,
+  ParagraphBulletsPoint01Icon,
+  ReduceParagraphIcon,
+} from '@hugeicons/core-free-icons'
 import { Sparkles } from 'lucide-react'
 import { useGraphStore } from '../../store/graph-store'
 import { buildContextTextFromNodes } from '../../utils/context-text'
@@ -153,6 +163,14 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
     await runAction({ boardId, contextText, actionKey })
   }, [boardId, runAction, selectedNodes])
 
+  const aiActionIcons: Record<string, typeof ReduceParagraphIcon> = {
+    summarize: ReduceParagraphIcon,
+    mapify: GitForkIcon,
+    schemify: Blockchain06Icon,
+    quizify: ParagraphBulletsPoint01Icon,
+    explain: Idea01Icon,
+  }
+
   return (
     <>
       {children({
@@ -169,6 +187,9 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
           role='menu'
           data-graph-context-menu="true"
         >
+          <div className='px-3 py-1 text-xs font-medium text-muted-foreground'>
+            Position
+          </div>
           <button
             type='button'
             className='w-full px-3 py-2 text-left rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
@@ -219,6 +240,9 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
                   onClick={() => handleAiAction(action.key)}
                   disabled={!!processingKey}
                 >
+                  {aiActionIcons[action.key] ? (
+                    <HugeiconsIcon icon={aiActionIcons[action.key]} strokeWidth={2} className='size-4 text-secondary' />
+                  ) : null}
                   <span>{action.label}</span>
                 </button>
               ))}

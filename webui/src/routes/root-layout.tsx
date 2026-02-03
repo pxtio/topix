@@ -9,6 +9,7 @@ import { StyleDefaultsProvider } from '@/features/board/style-provider'
 import { useAppStore } from '@/store'
 import { clearTokens } from '@/features/signin/auth-storage'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useGraphStore } from '@/features/board/store/graph-store'
 import { useAuth } from '@/features/signin/hooks/auth'
 
 export function RootLayout() {
@@ -38,18 +39,29 @@ export function RootLayout() {
     [location.pathname]
   )
   const showShell = isAuthed && !onAuthPage
+  const presentationMode = useGraphStore(s => s.presentationMode)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const effectiveSidebarOpen = presentationMode ? false : sidebarOpen
+
+  useEffect(() => {
+    if (presentationMode) {
+      setSidebarOpen(false)
+    }
+  }, [presentationMode])
 
   return (
     <ThemeProvider>
       <StyleDefaultsProvider>
         <main>
           {showShell ? (
-            <SidebarProvider defaultOpen={false}>
-              <AppSidebar onLogout={onLogout} />
+            <SidebarProvider open={effectiveSidebarOpen} onOpenChange={setSidebarOpen}>
+              {!presentationMode && <AppSidebar onLogout={onLogout} />}
               <SidebarInset className='overflow-hidden'>
                 <header className="flex h-16 shrink-0 items-center gap-2 p-4 absolute top-0 inset-x-0 z-50">
-                  <SidebarTrigger className="-ml-1" />
-                  <div><SidebarLabel /></div>
+                  {!presentationMode && <SidebarTrigger className="-ml-1" />}
+                  {!presentationMode && (
+                    <div><SidebarLabel /></div>
+                  )}
                 </header>
 
                 <div className="flex flex-1 w-full min-w-0">

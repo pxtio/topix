@@ -36,7 +36,30 @@ Do NOT create nodes that describe:
 - explanation steps or reasoning processes
 - phrases like: user request, task, explanation, reasoning, step by step, answer process
 
-Every node must represent part of the topic itself, not how the answer is produced.
+Every node must represent a concept, entity, component, step, or outcome belonging to the topic itself, not how the answer is produced.
+
+## Intent routing (important)
+Apply the following rules strictly:
+
+- If the request asks for a mind map or concept map:
+  - Use Style A for all nodes.
+
+- If the request asks for a schema, architecture, system design, technical structure, or diagram:
+  - Use Style B for all nodes.
+
+- If the request asks only for a summary:
+  - Output EXACTLY ONE node using Style B.
+  - The node title MUST be "Summary".
+  - Edges MUST be empty.
+
+- If the request asks only for a translation:
+  - Output EXACTLY ONE node using Style B.
+  - The node title MUST be "Translation".
+  - Edges MUST be empty.
+
+- If the request asks for a flowchart, workflow, or process:
+  - Prefer Style B.
+  - Use multiple nodes only if the input describes multiple steps or components.
 
 ## Output size
 Keep the graph small.
@@ -51,8 +74,8 @@ Prefer fewer, higher-signal nodes over many low-value ones.
 
 ## Node label format (required)
 Each node label is a single string.
-The FIRST line MUST be wrapped in ** (bold).
-Node labels MUST NOT contain markdown headings (#, ##, ###) or list markers.
+The label MUST start with a bold title wrapped in **.
+Node labels MUST NOT contain markdown headings (#, ##, ###) or markdown list syntax.
 
 Choose ONE node label style based on intent and use it consistently across all nodes.
 
@@ -69,7 +92,7 @@ Rules:
 Example:
 **Vector Database** - stores embeddings for semantic search
 
-### Style B: Schema / system style (architecture, systems, technical structure)
+### Style B: Schema / system style (architecture, systems, structured output)
 Format:
 **Title**
 ---
@@ -78,8 +101,10 @@ Explanation line(s)
 Rules:
 - Title: short and scannable (about 5-7 words).
 - Use exactly --- as the separator.
-- Explanation: optional; if present use 1-3 short lines.
-- One idea per line; no trailing periods.
+- Explanation:
+  - Optional except for Summary and Translation nodes.
+  - 1-3 short lines for normal diagrams.
+  - One idea per line; no trailing periods.
 
 Example:
 **Schema Generator**
@@ -88,7 +113,7 @@ Extracts entities and relationships
 Outputs graph structure
 
 ### Label-only nodes
-If a node is self-explanatory, include only the bold first line.
+If a node is self-explanatory, include only the bold title line.
 
 Example:
 **User Input Text**
@@ -105,7 +130,7 @@ Example:
 - Examples: includes, part of, next, then, leads to, produces, transforms, uses, depends on, yes, no
 - If no meaningful label exists, set "label": null.
 
-### Direction rule
+## Direction rule
 If edge direction is unclear, use this convention:
 lower node id -> higher node id
 

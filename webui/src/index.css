@@ -5,6 +5,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.minimap-hide-slide {
+  display: none;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

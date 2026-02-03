@@ -81,7 +81,14 @@ export function NavigableMiniMap({ nodes, className, onNavigate, getCurrentViewp
       onClick={handleClick}
       className='minimap-wrapper absolute bottom-4 left-4 p-0 overflow-hidden rounded-md'
     >
-      <MiniMap className={minimapClass} />
+      <MiniMap
+        className={minimapClass}
+        nodeClassName={(node) =>
+          (node.data as { style?: { type?: string } } | undefined)?.style?.type === 'slide'
+            ? 'minimap-hide-slide'
+            : ''
+        }
+      />
     </div>
   )
 }

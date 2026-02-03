@@ -122,6 +122,13 @@ class ConvertToMindMapRequest(BaseModel):
     answer: str
 
 
+class TranslateTextRequest(BaseModel):
+    """Request model for translating text."""
+
+    text: str
+    target_language: str
+
+
 class WebPagePreviewRequest(BaseModel):
     """Request model for fetching a preview of a webpage."""
 

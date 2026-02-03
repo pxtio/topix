@@ -12,24 +12,6 @@ from topix.agents.datatypes.annotations import (
 )
 from topix.agents.mindmap.schemify.datatypes import SchemaOutput
 
-type ToolOutput = Union[
-    str,
-    CodeInterpreterOutput,
-    WebSearchOutput,
-    MemorySearchOutput,
-    NotifyOutput,
-    MapifyTheme,
-    TopicTracker,
-    NewsfeedOutput,
-    SchemaOutput,
-    TopicIllustratorOutput,
-    ImageDescriptionOutput,
-    DisplayStockWidgetOutput,
-    DisplayWeatherWidgetOutput,
-    DisplayImageSearchWidgetOutput,
-    ImageGenerationOutput,
-]
-
 
 class DisplayWeatherWidgetOutput(BaseModel):
     """Display Weather Widget Output."""
@@ -113,6 +95,12 @@ class NotifyOutput(BaseModel):
 
     title: str
     content: str
+
+
+class TranslateOutput(BaseModel):
+    """Translate Output."""
+
+    text: str
 
 
 class ImageDescriptionOutput(BaseModel):
@@ -213,3 +201,23 @@ class ImageGenerationOutput(BaseModel):
 
     type: Literal["image_generation"] = "image_generation"
     image_urls: list[str] = []
+
+
+type ToolOutput = Union[
+    str,
+    CodeInterpreterOutput,
+    WebSearchOutput,
+    MemorySearchOutput,
+    NotifyOutput,
+    MapifyTheme,
+    TopicTracker,
+    NewsfeedOutput,
+    SchemaOutput,
+    TranslateOutput,
+    TopicIllustratorOutput,
+    ImageDescriptionOutput,
+    DisplayStockWidgetOutput,
+    DisplayWeatherWidgetOutput,
+    DisplayImageSearchWidgetOutput,
+    ImageGenerationOutput,
+]

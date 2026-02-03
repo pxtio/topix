@@ -7,14 +7,17 @@ from fastapi import APIRouter, Body, Depends, Request, Response
 from topix.agents.datatypes.context import Context
 from topix.agents.mindmap.mapify import MapifyAgent, convert_mapify_output_to_notes_links
 from topix.agents.mindmap.notify import NotifyAgent, convert_notify_output_to_notes_links
+from topix.agents.mindmap.quizify.quizify import QuizifyAgent
 from topix.agents.mindmap.schemify.schemify import SchemifyAgent, convert_schemify_output_to_notes_links
 from topix.agents.mindmap.summify.summify import SummifyAgent
-from topix.agents.mindmap.quizify.quizify import QuizifyAgent
 from topix.agents.run import AgentRunner
-from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
+from topix.agents.translate.translate import TranslateAgent
+from topix.api.datatypes.requests import ConvertToMindMapRequest, TranslateTextRequest, WebPagePreviewRequest
 from topix.api.utils.decorators import with_standard_response
 from topix.api.utils.rate_limiter import rate_limiter
 from topix.api.utils.security import get_current_user_uid
+from topix.datatypes.note.note import Note
+from topix.datatypes.resource import RichText
 from topix.utils.web.preview import preview_webpage
 
 router = APIRouter(
@@ -146,3 +149,28 @@ async def link_preview(
     """Fetch a preview of the webpage at the given URL."""
     res = preview_webpage(body.url)
     return res.model_dump(exclude_none=True)
+
+
+@router.post("/text:translate/", include_in_schema=False)
+@router.post("/text:translate")
+@with_standard_response
+async def translate_text(
+    response: Response,
+    request: Request,
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    body: Annotated[TranslateTextRequest, Body(description="Text translation data")],
+    _: Annotated[None, Depends(rate_limiter)],
+):
+    """Translate a text into the target language and return notes/links."""
+    context = Context()
+    translate_agent = TranslateAgent(target_language=body.target_language)
+    res = await AgentRunner.run(translate_agent, body.text, context=context)
+
+    return {
+        "notes": [
+            Note(
+                label=RichText(markdown=res.text),
+            ).model_dump(exclude_none=True)
+        ],
+        "links": []
+    }

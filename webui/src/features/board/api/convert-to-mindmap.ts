@@ -18,7 +18,7 @@ import type { LinkEdge, NoteNode } from "../types/flow"
  */
 export async function convertToMindMap(
   answer: string,
-  toolType: "notify" | "mapify" | "schemify" | "summify"
+  toolType: "notify" | "mapify" | "schemify" | "summify" | "quizify"
 ): Promise<{ notes: Note[], links: Link[] }> {
   const res = await apiFetch<{ data: Record<string, unknown> }>({
     path: `/tools/mindmaps:${toolType}`,
@@ -46,7 +46,7 @@ export const useConvertToMindMap = () => {
     }: {
       boardId: string,
       answer: string,
-      toolType: "notify" | "mapify" | "schemify" | "summify",
+      toolType: "notify" | "mapify" | "schemify" | "summify" | "quizify",
       saveAsIs?: boolean,
       useAnchors?: boolean
     }): Promise<{ status: string }> => {

@@ -9,6 +9,7 @@ from topix.agents.mindmap.mapify import MapifyAgent, convert_mapify_output_to_no
 from topix.agents.mindmap.notify import NotifyAgent, convert_notify_output_to_notes_links
 from topix.agents.mindmap.schemify.schemify import SchemifyAgent, convert_schemify_output_to_notes_links
 from topix.agents.mindmap.summify.summify import SummifyAgent
+from topix.agents.mindmap.quizify.quizify import QuizifyAgent
 from topix.agents.run import AgentRunner
 from topix.api.datatypes.requests import ConvertToMindMapRequest, WebPagePreviewRequest
 from topix.api.utils.decorators import with_standard_response
@@ -103,6 +104,28 @@ async def summify(
     context = Context()
     summify_agent = SummifyAgent()
     res = await AgentRunner.run(summify_agent, body.answer, context=context)
+    notes, links = convert_schemify_output_to_notes_links(res)
+
+    return {
+        "notes": [note.model_dump(exclude_none=True) for note in notes],
+        "links": [link.model_dump(exclude_none=True) for link in links]
+    }
+
+
+@router.post("/mindmaps:quizify/", include_in_schema=False)
+@router.post("/mindmaps:quizify")
+@with_standard_response
+async def quizify(
+    response: Response,
+    request: Request,
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    body: Annotated[ConvertToMindMapRequest, Body(description="Mindmap conversion data")],
+    _: Annotated[None, Depends(rate_limiter)],
+):
+    """Convert a mindmap to a quiz graph using Quizify."""
+    context = Context()
+    quizify_agent = QuizifyAgent()
+    res = await AgentRunner.run(quizify_agent, body.answer, context=context)
     notes, links = convert_schemify_output_to_notes_links(res)
 
     return {

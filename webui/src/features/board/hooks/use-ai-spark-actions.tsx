@@ -23,6 +23,7 @@ const defaultActions: AiSparkAction[] = [
   { key: "summarize", label: "Summarize (quick overview)", request: "Summarize the key points and structure concisely." },
   { key: "mapify", label: "Mapify (generate mindmap)", request: "Generate a mindmap capturing the main ideas and relationships." },
   { key: "schemify", label: "Schemify (generate schema)", request: "Generate a structured schema of entities and relationships." },
+  { key: "quizify", label: "Quizify (MCQ exercises)", request: "Generate multiple-choice exercises grouped by theme." },
   { key: "explain", label: "Explain (more detail)", request: "Explain the content in more detail with clear, step-by-step reasoning." },
 ]
 
@@ -63,7 +64,8 @@ export const useAiSparkActions = () => {
     })
     try {
       const answer = `Request: ${request}\n---\nInput Text:\n${contextText.trim()}`
-      await convertToMindMapAsync({ boardId, answer, toolType: "summify", useAnchors })
+      const toolType = actionKey === "quizify" ? "quizify" : "summify"
+      await convertToMindMapAsync({ boardId, answer, toolType, useAnchors })
       toast.success("Added to board.", {
         id: toastId,
         icon: <HugeiconsIcon icon={CheckmarkCircle03Icon} className="size-4" strokeWidth={2} />,

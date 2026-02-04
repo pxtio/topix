@@ -6,12 +6,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import {
   ChartBubble02Icon,
   Cursor02Icon,
-  DragDropHorizontalIcon,
   FitToScreenIcon,
   GridIcon,
   Hold04Icon,
   LeftToRightListBulletIcon,
   MinusSignIcon,
+  More01Icon,
   PlusSignIcon,
   Redo03Icon,
   SquareLock02Icon,
@@ -553,7 +553,7 @@ export const NavigatePanel = memo(function NavigatePanel({
                     {option.value === 'lines' ? (
                       <HugeiconsIcon icon={GridIcon} className="size-4" strokeWidth={2} />
                     ) : option.value === 'dots' ? (
-                      <HugeiconsIcon icon={DragDropHorizontalIcon} className="size-4" strokeWidth={2} />
+                      <HugeiconsIcon icon={More01Icon} className="size-4" strokeWidth={2} />
                     ) : (
                       'None'
                     )}

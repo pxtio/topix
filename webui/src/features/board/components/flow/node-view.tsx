@@ -12,6 +12,7 @@ import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { useContentMinHeight } from '../../hooks/use-content-min-height'
 import { ShapeChrome } from './shape-chrome'
+import { getShapeContentScale } from '../../utils/shape-content-scale'
 import { Grip } from 'lucide-react'
 
 const CONNECTOR_GAP = 0
@@ -27,11 +28,8 @@ function NodeViewBase({ id, data, selected }: NodeProps<NoteNode>) {
   const viewSlides = useGraphStore(state => state.viewSlides)
 
   // measure content & drive minHeight
-  const { contentRef, computedMinH } = useContentMinHeight(
-    id,
-    0,
-    20,
-  )
+  const contentScale = getShapeContentScale(data.style.type)
+  const { contentRef, computedMinH } = useContentMinHeight(id, 0, 20, contentScale)
 
   const baseMinH = data.style.type === 'image' || data.style.type === 'icon' ? 50 : computedMinH
   const innerMinH = Math.max(20, baseMinH)

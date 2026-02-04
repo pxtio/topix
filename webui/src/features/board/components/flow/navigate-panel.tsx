@@ -500,7 +500,17 @@ export const NavigatePanel = memo(function NavigatePanel({
               </TooltipContent>
             </Tooltip>
             <PopoverContent side="top" align="center" className="w-auto p-2">
-              <div className='px-1 text-[11px] font-medium text-muted-foreground'>Color</div>
+              <div className='flex items-center justify-between px-1 text-[11px] font-medium text-muted-foreground'>
+                <span>Color</span>
+                <button
+                  type="button"
+                  className='text-[11px] font-medium text-muted-foreground hover:text-foreground disabled:opacity-50'
+                  onClick={onBoardBackgroundReset}
+                  disabled={!boardBackground}
+                >
+                  Reset
+                </button>
+              </div>
               <div className='mt-1 grid grid-cols-10 gap-1'>
                 {colorOptions.map(option => (
                   <button
@@ -514,7 +524,17 @@ export const NavigatePanel = memo(function NavigatePanel({
                   />
                 ))}
               </div>
-              <div className='mt-3 px-1 text-[11px] font-medium text-muted-foreground'>Texture</div>
+              <div className='mt-3 flex items-center justify-between px-1 text-[11px] font-medium text-muted-foreground'>
+                <span>Texture</span>
+                <button
+                  type="button"
+                  className='text-[11px] font-medium text-muted-foreground hover:text-foreground disabled:opacity-50'
+                  onClick={() => onBoardBackgroundTextureChange(null)}
+                  disabled={!boardBackgroundTexture}
+                >
+                  Reset
+                </button>
+              </div>
               <div className='mt-1 flex flex-wrap items-center justify-center gap-1'>
                 {textureOptions.map(option => (
                   <button
@@ -539,19 +559,6 @@ export const NavigatePanel = memo(function NavigatePanel({
                     )}
                   </button>
                 ))}
-              </div>
-              <div className='mt-2 flex justify-center'>
-                <button
-                  type="button"
-                  className='px-2 py-1 rounded-sm bg-muted text-xs font-medium hover:bg-muted/70 disabled:opacity-50'
-                  onClick={() => {
-                    onBoardBackgroundReset()
-                    onBoardBackgroundTextureChange(null)
-                  }}
-                  disabled={!boardBackground && !boardBackgroundTexture}
-                >
-                  Reset
-                </button>
               </div>
             </PopoverContent>
           </Popover>

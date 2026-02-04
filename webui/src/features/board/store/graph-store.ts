@@ -722,6 +722,8 @@ export interface GraphStore {
   setIsMoving: (moving: boolean) => void
   zoom: number
   setZoom: (zoom: number) => void
+  isRendered: boolean
+  setIsRendered: (rendered: boolean) => void
   boardBackground: string | null
   setBoardBackground: (color: string | null) => void
   boardBackgroundTexture: BoardBackgroundTexture | null
@@ -777,6 +779,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             presentationMode: false,
             activeSlideId: undefined,
             lastCursorPosition: undefined,
+            isRendered: false,
             boardBackground: getBoardBackground(boardId),
             boardBackgroundTexture: getBoardBackgroundTexture(boardId),
           }
@@ -816,6 +819,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   isSelectMode: false,
   isMoving: false,
   zoom: 1,
+  isRendered: false,
+  setIsRendered: (rendered) => set({ isRendered: rendered }),
   boardBackground: null,
   boardBackgroundTexture: null,
   setBoardBackground: (color) => {

@@ -14,7 +14,7 @@ import { useGetBoard } from "../api/get-board"
  * status combined with the graph store's isLoading to avoid local race conditions.
  */
 export const BoardView: React.FC = () => {
-  const { boardId, isLoading: storeLoading } = useGraphStore()
+  const { boardId, isLoading: storeLoading, isRendered } = useGraphStore()
   const { getBoardAsync, isPending, isSuccess, reset } = useGetBoard()
 
   useEffect(() => {
@@ -27,17 +27,17 @@ export const BoardView: React.FC = () => {
     () => !isSuccess || isPending || storeLoading,
     [isSuccess, isPending, storeLoading]
   )
+  const showLoadingWindow = loading || !isRendered
 
   return (
     <div className="absolute inset-0 h-full w-full overflow-hidden">
       <ReactFlowProvider>
         <div className="relative h-full w-full bg-background">
-          {loading ? (
+          {!loading && <GraphEditor />}
+          {showLoadingWindow && (
             <div className="absolute inset-0 bg-background flex items-center justify-center">
               <LoadingWindow message="Loading board" viewMode="compact" />
             </div>
-          ) : (
-            <GraphEditor />
           )}
         </div>
       </ReactFlowProvider>

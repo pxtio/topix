@@ -49,7 +49,7 @@ import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { applyBackgroundAlpha, type BoardBackgroundTexture } from '../../utils/board-background'
 
 import './graph-styles.css'
-import { saveThumbnailFromViewport } from '../../hooks/use-make-thumbnail'
+import { useSaveThumbnailOnUnmount } from '../../hooks/use-make-thumbnail'
 
 const proOptions = { hideAttribution: true }
 
@@ -251,7 +251,6 @@ export default function GraphEditor() {
   const activeSlideId = useGraphStore(state => state.activeSlideId)
   const setActiveSlideId = useGraphStore(state => state.setActiveSlideId)
   const setLastCursorPosition = useGraphStore(state => state.setLastCursorPosition)
-  const setIsRendered = useGraphStore(state => state.setIsRendered)
   const boardBackground = useGraphStore(state => state.boardBackground)
   const boardBackgroundTexture = useGraphStore(state => state.boardBackgroundTexture)
 
@@ -649,6 +648,9 @@ export default function GraphEditor() {
     }
   }, [])
 
+  // capture thumbnail of current graph view on unmount
+  useSaveThumbnailOnUnmount(boardId || '')
+
   const handleInit = (instance: ReactFlowInstance<NoteNode, LinkEdge>) => {
     rfInstanceRef.current = instance
     if (boardId) {
@@ -657,14 +659,6 @@ export default function GraphEditor() {
         // restore immediately, no animation
         instance.setViewport(saved, { duration: 0 })
       }
-    }
-    setIsRendered(true)
-    if (boardId) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          void saveThumbnailFromViewport(boardId)
-        })
-      })
     }
   }
 

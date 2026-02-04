@@ -129,6 +129,10 @@
   --sidebar-icon-4: #be185d;
 }
 
+.font-informal {
+  font-size-adjust: 0.52;
+}
+
 .dark {
   --background: oklch(0.22 0.012 260);
   --foreground: oklch(0.94 0.02 270);

@@ -40,7 +40,15 @@ import {
 } from "./viewport-store"
 import { clearRoughCanvasCache } from "@/components/rough/cache"
 import { generateUuid } from "@/lib/common"
-import { clearBoardBackground, getBoardBackground, setBoardBackground as persistBoardBackground } from "../utils/board-background"
+import {
+  clearBoardBackground,
+  clearBoardBackgroundTexture,
+  getBoardBackground,
+  getBoardBackgroundTexture,
+  setBoardBackground as persistBoardBackground,
+  setBoardBackgroundTexture as persistBoardBackgroundTexture,
+  type BoardBackgroundTexture,
+} from "../utils/board-background"
 
 // --- helpers ---
 
@@ -716,6 +724,8 @@ export interface GraphStore {
   setZoom: (zoom: number) => void
   boardBackground: string | null
   setBoardBackground: (color: string | null) => void
+  boardBackgroundTexture: BoardBackgroundTexture | null
+  setBoardBackgroundTexture: (texture: BoardBackgroundTexture | null) => void
 
   setNodes: (nodes: Updater<NoteNode[]>) => void
   setEdges: (edges: Updater<LinkEdge[]>) => void
@@ -768,8 +778,13 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             activeSlideId: undefined,
             lastCursorPosition: undefined,
             boardBackground: getBoardBackground(boardId),
+            boardBackgroundTexture: getBoardBackgroundTexture(boardId),
           }
-        : { boardId, boardBackground: getBoardBackground(boardId) }
+        : {
+            boardId,
+            boardBackground: getBoardBackground(boardId),
+            boardBackgroundTexture: getBoardBackgroundTexture(boardId),
+          }
     })
   },
 
@@ -802,6 +817,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   isMoving: false,
   zoom: 1,
   boardBackground: null,
+  boardBackgroundTexture: null,
   setBoardBackground: (color) => {
     const boardId = get().boardId
     if (!boardId) return
@@ -812,6 +828,17 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     }
     persistBoardBackground(boardId, color)
     set({ boardBackground: color })
+  },
+  setBoardBackgroundTexture: (texture) => {
+    const boardId = get().boardId
+    if (!boardId) return
+    if (!texture) {
+      clearBoardBackgroundTexture(boardId)
+      set({ boardBackgroundTexture: null })
+      return
+    }
+    persistBoardBackgroundTexture(boardId, texture)
+    set({ boardBackgroundTexture: texture })
   },
 
   // --- flexible setters ---

@@ -6,7 +6,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import {
   ChartBubble02Icon,
   Cursor02Icon,
+  DragDropHorizontalIcon,
   FitToScreenIcon,
+  GridIcon,
   Hold04Icon,
   LeftToRightListBulletIcon,
   MinusSignIcon,
@@ -22,7 +24,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { TAILWIND_50 } from '@/features/board/lib/colors/tailwind'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '@/features/board/lib/colors/dark-variants'
-import { applyBackgroundAlpha } from '@/features/board/utils/board-background'
+import { applyBackgroundAlpha, type BoardBackgroundTexture } from '@/features/board/utils/board-background'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -47,6 +49,8 @@ export interface NavigatePanelProps {
   onBoardBackgroundChange: (color: string) => void
   onBoardBackgroundReset: () => void
   boardBackground: string | null
+  boardBackgroundTexture: BoardBackgroundTexture | null
+  onBoardBackgroundTextureChange: (texture: BoardBackgroundTexture | null) => void
 }
 
 export const NavigatePanel = memo(function NavigatePanel({
@@ -70,6 +74,8 @@ export const NavigatePanel = memo(function NavigatePanel({
   onBoardBackgroundChange,
   onBoardBackgroundReset,
   boardBackground,
+  boardBackgroundTexture,
+  onBoardBackgroundTextureChange,
 }: NavigatePanelProps) {
   const [small, setSmall] = useState(false)
   const { resolvedTheme } = useTheme()
@@ -106,6 +112,14 @@ export const NavigatePanel = memo(function NavigatePanel({
         resolved: isDark ? darkModeDisplayHex(option.hex) || option.hex : option.hex
       })),
     [isDark]
+  )
+  const textureOptions: Array<{ value: BoardBackgroundTexture | null; label: string }> = useMemo(
+    () => [
+      { value: null, label: 'None' },
+      { value: 'lines', label: 'Lines' },
+      { value: 'dots', label: 'Dots' },
+    ],
+    [],
   )
 
   const tooltipCopy = {
@@ -486,7 +500,8 @@ export const NavigatePanel = memo(function NavigatePanel({
               </TooltipContent>
             </Tooltip>
             <PopoverContent side="top" align="center" className="w-auto p-2">
-              <div className='grid grid-cols-10 gap-1'>
+              <div className='px-1 text-[11px] font-medium text-muted-foreground'>Color</div>
+              <div className='mt-1 grid grid-cols-10 gap-1'>
                 {colorOptions.map(option => (
                   <button
                     key={option.name}
@@ -499,12 +514,41 @@ export const NavigatePanel = memo(function NavigatePanel({
                   />
                 ))}
               </div>
+              <div className='mt-3 px-1 text-[11px] font-medium text-muted-foreground'>Texture</div>
+              <div className='mt-1 flex flex-wrap items-center justify-center gap-1'>
+                {textureOptions.map(option => (
+                  <button
+                    key={option.label}
+                    type="button"
+                    className={clsx(
+                      'h-7 w-7 rounded-md text-[8px] font-medium transition-colors flex items-center justify-center',
+                      option.value === boardBackgroundTexture
+                        ? 'bg-sidebar-primary text-secondary'
+                        : 'bg-muted text-muted-foreground/50 hover:bg-muted/70'
+                    )}
+                    onClick={() => onBoardBackgroundTextureChange(option.value)}
+                    aria-label={option.label}
+                    title={option.label}
+                  >
+                    {option.value === 'lines' ? (
+                      <HugeiconsIcon icon={GridIcon} className="size-4" strokeWidth={2} />
+                    ) : option.value === 'dots' ? (
+                      <HugeiconsIcon icon={DragDropHorizontalIcon} className="size-4" strokeWidth={2} />
+                    ) : (
+                      'None'
+                    )}
+                  </button>
+                ))}
+              </div>
               <div className='mt-2 flex justify-center'>
                 <button
                   type="button"
                   className='px-2 py-1 rounded-sm bg-muted text-xs font-medium hover:bg-muted/70 disabled:opacity-50'
-                  onClick={onBoardBackgroundReset}
-                  disabled={!boardBackground}
+                  onClick={() => {
+                    onBoardBackgroundReset()
+                    onBoardBackgroundTextureChange(null)
+                  }}
+                  disabled={!boardBackground && !boardBackgroundTexture}
                 >
                   Reset
                 </button>

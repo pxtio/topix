@@ -1,6 +1,9 @@
 import { toBaseHex } from "../lib/colors/tailwind"
 
 const BOARD_BG_PREFIX = "board-bg:"
+const BOARD_BG_TEXTURE_PREFIX = "board-bg-texture:"
+
+export type BoardBackgroundTexture = "dots" | "lines"
 
 export const DEFAULT_BOARD_BG = ""
 
@@ -28,6 +31,36 @@ export const clearBoardBackground = (boardId: string | undefined) => {
   if (!boardId) return
   try {
     localStorage.removeItem(`${BOARD_BG_PREFIX}${boardId}`)
+  } catch {
+    // ignore storage failures
+  }
+}
+
+export const getBoardBackgroundTexture = (boardId?: string): BoardBackgroundTexture | null => {
+  if (!boardId) return null
+  try {
+    const raw = localStorage.getItem(`${BOARD_BG_TEXTURE_PREFIX}${boardId}`)
+    if (!raw) return null
+    if (raw === "dots" || raw === "lines") return raw
+    return null
+  } catch {
+    return null
+  }
+}
+
+export const setBoardBackgroundTexture = (boardId: string | undefined, texture: BoardBackgroundTexture) => {
+  if (!boardId) return
+  try {
+    localStorage.setItem(`${BOARD_BG_TEXTURE_PREFIX}${boardId}`, texture)
+  } catch {
+    // ignore storage failures
+  }
+}
+
+export const clearBoardBackgroundTexture = (boardId: string | undefined) => {
+  if (!boardId) return
+  try {
+    localStorage.removeItem(`${BOARD_BG_TEXTURE_PREFIX}${boardId}`)
   } catch {
     // ignore storage failures
   }

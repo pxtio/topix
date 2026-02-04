@@ -69,6 +69,8 @@ export const ActionPanel = memo(function ActionPanel({
   const presentationMode = useGraphStore(state => state.presentationMode)
   const boardBackground = useGraphStore(state => state.boardBackground)
   const setBoardBackground = useGraphStore(state => state.setBoardBackground)
+  const boardBackgroundTexture = useGraphStore(state => state.boardBackgroundTexture)
+  const setBoardBackgroundTexture = useGraphStore(state => state.setBoardBackgroundTexture)
   const zoom = useGraphStore(state => state.zoom ?? 1)
   const undo = useGraphStore(state => state.undo)
   const redo = useGraphStore(state => state.redo)
@@ -149,8 +151,10 @@ export const ActionPanel = memo(function ActionPanel({
             onToggleSlidesPanel={() => setOpenSlidesPanel(v => !v)}
             slidesPanelOpen={openSlidesPanel}
             boardBackground={boardBackground}
+            boardBackgroundTexture={boardBackgroundTexture}
             onBoardBackgroundChange={(color) => setBoardBackground(color)}
             onBoardBackgroundReset={() => setBoardBackground(null)}
+            onBoardBackgroundTextureChange={(texture) => setBoardBackgroundTexture(texture)}
           />
 
           <ToolPanel

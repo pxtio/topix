@@ -1,6 +1,8 @@
 import {
   ReactFlow,
   MarkerType,
+  Background,
+  BackgroundVariant,
   useReactFlow,
   SelectionMode,
   useOnViewportChange,
@@ -44,7 +46,7 @@ import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
 import { PresentationControls } from './presentation-controls'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
-import { applyBackgroundAlpha } from '../../utils/board-background'
+import { applyBackgroundAlpha, type BoardBackgroundTexture } from '../../utils/board-background'
 
 import './graph-styles.css'
 import { useSaveThumbnailOnUnmount } from '../../hooks/use-make-thumbnail'
@@ -250,6 +252,7 @@ export default function GraphEditor() {
   const setActiveSlideId = useGraphStore(state => state.setActiveSlideId)
   const setLastCursorPosition = useGraphStore(state => state.setLastCursorPosition)
   const boardBackground = useGraphStore(state => state.boardBackground)
+  const boardBackgroundTexture = useGraphStore(state => state.boardBackgroundTexture)
 
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
@@ -257,6 +260,21 @@ export default function GraphEditor() {
     isDark ? darkModeDisplayHex(boardBackground) || boardBackground : boardBackground,
     0.5
   ) || undefined
+  const backgroundVariant = useMemo(() => {
+    const texture = boardBackgroundTexture
+    if (!texture) return null
+    const variants: Record<BoardBackgroundTexture, BackgroundVariant> = {
+      dots: BackgroundVariant.Dots,
+      lines: BackgroundVariant.Lines,
+    }
+    return variants[texture]
+  }, [boardBackgroundTexture])
+  const backgroundColor = useMemo(() => {
+    if (!boardBackgroundTexture) return undefined
+    return boardBackgroundTexture === 'lines'
+      ? 'var(--muted)'
+      : 'var(--muted-foreground)'
+  }, [boardBackgroundTexture])
 
   const mindmaps = useMindMapStore(state => state.mindmaps)
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
@@ -704,6 +722,14 @@ export default function GraphEditor() {
                   onNodeContextMenu={onNodeContextMenu}
                   onEdgeDoubleClick={handleEdgeDoubleClick}
                 >
+                  {backgroundVariant && (
+                    <Background
+                      variant={backgroundVariant}
+                      gap={25}
+                      size={1}
+                      color={backgroundColor}
+                    />
+                  )}
                   <EdgeMarkerDefs edges={edges} />
                   {showMiniMap &&
                     !presentationMode &&

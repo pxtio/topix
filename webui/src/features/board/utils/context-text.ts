@@ -32,14 +32,22 @@ const pickNodeText = (node: NoteNode) => {
 
 /**
  * Build a plain-text context payload from a node list.
- * Each entry is prefixed with "node content:" and separated by a blank line.
+ * Each entry is prefixed with "node content:" and separated by a blank line
+ * unless `skipPrefix` is true.
  */
-export const buildContextTextFromNodes = (nodes: NoteNode[]) => {
+export const buildContextTextFromNodes = (
+  nodes: NoteNode[],
+  options: { skipPrefix?: boolean } = {}
+) => {
+  const { skipPrefix = false } = options
   const lines = nodes
     .filter((node) => (node.data as { kind?: string } | undefined)?.kind !== "point")
     .map((node) => pickNodeText(node))
     .filter((text) => text.length > 0)
 
   if (lines.length === 0) return ""
+  if (skipPrefix) {
+    return lines.join("\n\n")
+  }
   return lines.map((line) => `node content: ${line}`).join("\n\n")
 }

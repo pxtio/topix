@@ -4,6 +4,8 @@ import type { ReactFlowProps } from '@xyflow/react'
 import type { LinkEdge, NoteNode } from '../../types/flow'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
+  ArrowDown01Icon,
+  ArrowRight01Icon,
   Blockchain06Icon,
   ChatTranslateIcon,
   GitForkIcon,
@@ -41,6 +43,7 @@ type GraphContextMenuProps = {
 export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphContextMenuProps) {
   const [menuPosition, setMenuPosition] = useState<{ x: number, y: number } | null>(null)
   const [customLanguage, setCustomLanguage] = useState('')
+  const [translateOpen, setTranslateOpen] = useState(false)
 
   const stats = useMemo(() => {
     let globalMin = Number.POSITIVE_INFINITY
@@ -112,6 +115,7 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
       const target = event.target as HTMLElement | null
       if (target?.closest('[data-graph-context-menu="true"]')) return
       setMenuPosition(null)
+      setTranslateOpen(false)
     }
     const listenerOptions: AddEventListenerOptions = { capture: true }
     window.addEventListener('mousedown', close, listenerOptions)
@@ -185,12 +189,13 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
       toast.error("Select a board first.")
       return
     }
-    const contextText = buildContextTextFromNodes(selectedNodes)
+    const contextText = buildContextTextFromNodes(selectedNodes, { skipPrefix: true })
     if (!contextText) {
       toast.error("Select at least one node with content.")
       return
     }
     setMenuPosition(null)
+    setTranslateOpen(false)
     await runAction({
       boardId,
       contextText,
@@ -283,38 +288,53 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
                 </button>
               ))}
               <div className='my-1 h-px bg-border' />
-              <div className='px-3 py-1 text-xs font-medium text-muted-foreground flex items-center gap-2'>
-                <HugeiconsIcon icon={ChatTranslateIcon} strokeWidth={2} className='size-3 text-secondary' />
-                Translate
-              </div>
-              <div className='px-3 py-1 flex items-center gap-2'>
-                <input
-                  className='flex-1 h-7 rounded border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/30'
-                  placeholder='Custom language…'
-                  value={customLanguage}
-                  onChange={(event) => setCustomLanguage(event.target.value)}
-                  onMouseDown={(event) => event.stopPropagation()}
-                />
-                <button
-                  type='button'
-                  className='h-7 px-2 rounded-sm bg-muted text-xs hover:text-secondary font-medium bg-muted/70 border border-border'
-                  onClick={() => handleTranslate(customLanguage.trim() || 'English')}
-                >
-                  Go
-                </button>
-              </div>
-              <div className='px-3 pb-2 flex flex-wrap gap-2'>
-                {commonLanguages.map((language) => (
-                  <button
-                    key={language}
-                    type='button'
-                    className='px-2 py-1 rounded-full bg-muted text-xs font-medium hover:bg-muted/70'
-                    onClick={() => handleTranslate(language)}
-                  >
-                    {language}
-                  </button>
-                ))}
-              </div>
+              <button
+                type='button'
+                className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2'
+                onClick={() => setTranslateOpen((open) => !open)}
+              >
+                <HugeiconsIcon icon={ChatTranslateIcon} strokeWidth={2} className='size-4 text-secondary' />
+                <span>Translate</span>
+                <span className='ml-auto text-xs text-muted-foreground'>
+                  <HugeiconsIcon
+                    icon={translateOpen ? ArrowDown01Icon : ArrowRight01Icon}
+                    strokeWidth={2}
+                    className='size-3'
+                  />
+                </span>
+              </button>
+              {translateOpen && (
+                <div className='pl-3 pr-2 pb-2 pt-1 flex flex-col gap-2'>
+                  <div className='flex items-center gap-2'>
+                    <input
+                      className='flex-1 h-7 rounded border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/30'
+                      placeholder='Custom language…'
+                      value={customLanguage}
+                      onChange={(event) => setCustomLanguage(event.target.value)}
+                      onMouseDown={(event) => event.stopPropagation()}
+                    />
+                    <button
+                      type='button'
+                      className='h-7 px-2 rounded-sm bg-muted text-xs hover:text-secondary font-medium bg-muted/70 border border-border'
+                      onClick={() => handleTranslate(customLanguage.trim() || 'English')}
+                    >
+                      Go
+                    </button>
+                  </div>
+                  <div className='flex flex-wrap gap-2'>
+                    {commonLanguages.map((language) => (
+                      <button
+                        key={language}
+                        type='button'
+                        className='px-2 py-1 rounded-full bg-muted text-xs font-medium hover:bg-muted/70'
+                        onClick={() => handleTranslate(language)}
+                      >
+                        {language}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

@@ -42,6 +42,9 @@ import { useCopyPasteNodes } from '../../hooks/use-copy-paste'
 import { useCenterAroundParam } from '../../hooks/use-center-around'
 import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
 import { PresentationControls } from './presentation-controls'
+import { useTheme } from '@/components/theme-provider'
+import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
+import { applyBackgroundAlpha } from '../../utils/board-background'
 
 import './graph-styles.css'
 import { useSaveThumbnailOnUnmount } from '../../hooks/use-make-thumbnail'
@@ -246,6 +249,14 @@ export default function GraphEditor() {
   const activeSlideId = useGraphStore(state => state.activeSlideId)
   const setActiveSlideId = useGraphStore(state => state.setActiveSlideId)
   const setLastCursorPosition = useGraphStore(state => state.setLastCursorPosition)
+  const boardBackground = useGraphStore(state => state.boardBackground)
+
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+  const displayBoardBackground = applyBackgroundAlpha(
+    isDark ? darkModeDisplayHex(boardBackground) || boardBackground : boardBackground,
+    0.5
+  ) || undefined
 
   const mindmaps = useMindMapStore(state => state.mindmaps)
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
@@ -665,6 +676,7 @@ export default function GraphEditor() {
 
       <div
         className="relative w-full h-full"
+        style={{ backgroundColor: displayBoardBackground }}
         onDoubleClick={handlePaneDoubleClick}
         onMouseMove={handlePaneMouseMove}
       >

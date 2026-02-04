@@ -1,7 +1,8 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { HugeiconsIcon } from '@hugeicons/react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   ChartBubble02Icon,
   Cursor02Icon,
@@ -18,6 +19,10 @@ import {
 import { BitcoinPresentationIcon } from '@hugeicons/core-free-icons'
 import clsx from 'clsx'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { TAILWIND_50 } from '@/features/board/lib/colors/tailwind'
+import { useTheme } from '@/components/theme-provider'
+import { darkModeDisplayHex } from '@/features/board/lib/colors/dark-variants'
+import { applyBackgroundAlpha } from '@/features/board/utils/board-background'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -39,6 +44,9 @@ export interface NavigatePanelProps {
   canRedo: boolean
   onToggleSlidesPanel: () => void
   slidesPanelOpen: boolean
+  onBoardBackgroundChange: (color: string) => void
+  onBoardBackgroundReset: () => void
+  boardBackground: string | null
 }
 
 export const NavigatePanel = memo(function NavigatePanel({
@@ -59,8 +67,13 @@ export const NavigatePanel = memo(function NavigatePanel({
   canRedo,
   onToggleSlidesPanel,
   slidesPanelOpen,
+  onBoardBackgroundChange,
+  onBoardBackgroundReset,
+  boardBackground,
 }: NavigatePanelProps) {
   const [small, setSmall] = useState(false)
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
 
   useEffect(() => {
     const check = () => setSmall(window.innerWidth < 640)
@@ -73,7 +86,7 @@ export const NavigatePanel = memo(function NavigatePanel({
     transition-colors
     text-card-foreground
     hover:bg-sidebar-primary hover:text-sidebar-primary-foreground
-    p-4
+    p-2.5
     rounded-lg
     flex flex-row items-center justify-center gap-2
   `
@@ -86,6 +99,14 @@ export const NavigatePanel = memo(function NavigatePanel({
   const selectionModeButtonClass = enableSelection ? activeButtonClass : normalButtonClass
   const dragModeButtonClass = enableSelection ? normalButtonClass : activeButtonClass
   const tooltipSide = small ? 'left' : 'bottom'
+  const colorOptions = useMemo(
+    () =>
+      [{ name: 'white', hex: '#ffffff' }, ...TAILWIND_50].map(option => ({
+        ...option,
+        resolved: isDark ? darkModeDisplayHex(option.hex) || option.hex : option.hex
+      })),
+    [isDark]
+  )
 
   const tooltipCopy = {
     pan: {
@@ -142,6 +163,14 @@ export const NavigatePanel = memo(function NavigatePanel({
       title: 'Slides',
       description: 'Open the slides panel.',
       shortcut: 'M',
+    },
+    background: {
+      title: 'Board background',
+      description: 'Pick a background color for this board.',
+    },
+    backgroundReset: {
+      title: 'Reset background',
+      description: 'Restore the default background.',
     },
     graph: {
       title: 'Graph view',
@@ -426,6 +455,63 @@ export const NavigatePanel = memo(function NavigatePanel({
               <TooltipLabel {...tooltipCopy.slides} />
             </TooltipContent>
           </Tooltip>
+
+          <Popover>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={null}
+                    size='icon'
+                    type="button"
+                    className={`${normalButtonClass} relative`}
+                    aria-label="Board background"
+                  >
+                    <span className='relative inline-flex items-center justify-center'>
+                      <span
+                        className='w-4 h-4 rounded-full border-2 border-secondary/50'
+                        style={{
+                          backgroundColor: applyBackgroundAlpha(
+                            isDark ? darkModeDisplayHex(boardBackground) || boardBackground : boardBackground,
+                            0.5
+                          ) || 'transparent'
+                        }}
+                      />
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+              </TooltipTrigger>
+              <TooltipContent side={tooltipSide} sideOffset={10}>
+                <TooltipLabel {...tooltipCopy.background} />
+              </TooltipContent>
+            </Tooltip>
+            <PopoverContent side="top" align="center" className="w-auto p-2">
+              <div className='grid grid-cols-10 gap-1'>
+                {colorOptions.map(option => (
+                  <button
+                    key={option.name}
+                    type="button"
+                    className='h-5 w-5 rounded-full border border-border shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-secondary'
+                    style={{ backgroundColor: option.resolved }}
+                    title={`${option.name}-50`}
+                    aria-label={`${option.name}-50`}
+                    onClick={() => onBoardBackgroundChange(option.hex)}
+                  />
+                ))}
+              </div>
+              <div className='mt-2 flex justify-center'>
+                <button
+                  type="button"
+                  className='px-2 py-1 rounded-sm bg-muted text-xs font-medium hover:bg-muted/70 disabled:opacity-50'
+                  onClick={onBoardBackgroundReset}
+                  disabled={!boardBackground}
+                >
+                  Reset
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
         </>
       )}
     </div>

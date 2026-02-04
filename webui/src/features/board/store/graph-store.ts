@@ -40,6 +40,7 @@ import {
 } from "./viewport-store"
 import { clearRoughCanvasCache } from "@/components/rough/cache"
 import { generateUuid } from "@/lib/common"
+import { clearBoardBackground, getBoardBackground, setBoardBackground as persistBoardBackground } from "../utils/board-background"
 
 // --- helpers ---
 
@@ -713,6 +714,8 @@ export interface GraphStore {
   setIsMoving: (moving: boolean) => void
   zoom: number
   setZoom: (zoom: number) => void
+  boardBackground: string | null
+  setBoardBackground: (color: string | null) => void
 
   setNodes: (nodes: Updater<NoteNode[]>) => void
   setEdges: (edges: Updater<LinkEdge[]>) => void
@@ -764,8 +767,9 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             presentationMode: false,
             activeSlideId: undefined,
             lastCursorPosition: undefined,
+            boardBackground: getBoardBackground(boardId),
           }
-        : { boardId }
+        : { boardId, boardBackground: getBoardBackground(boardId) }
     })
   },
 
@@ -797,6 +801,18 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   isSelectMode: false,
   isMoving: false,
   zoom: 1,
+  boardBackground: null,
+  setBoardBackground: (color) => {
+    const boardId = get().boardId
+    if (!boardId) return
+    if (!color) {
+      clearBoardBackground(boardId)
+      set({ boardBackground: null })
+      return
+    }
+    persistBoardBackground(boardId, color)
+    set({ boardBackground: color })
+  },
 
   // --- flexible setters ---
 

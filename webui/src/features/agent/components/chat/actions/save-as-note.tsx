@@ -43,11 +43,18 @@ export interface SaveAsNoteProps {
   type: "notify" | "mapify" | "schemify"
   saveAsIs?: boolean
   boardId?: string
+  useAnchors?: boolean
 }
 
 
 // Button that generates a mind map from the given message.
-export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsNoteProps) => {
+export const SaveAsNote = ({
+  message,
+  type,
+  saveAsIs = false,
+  boardId,
+  useAnchors = false,
+}: SaveAsNoteProps) => {
   const [processing, setProcessing] = useState<boolean>(false)
 
   const { convertToMindMapAsync } = useConvertToMindMap()
@@ -88,7 +95,8 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
         boardId,
         answer: message,
         toolType: type,
-        saveAsIs
+        saveAsIs,
+        useAnchors
       })
       window.clearInterval(timer)
       const finalElapsed = formatElapsed()
@@ -142,7 +150,7 @@ export const SaveAsNote = ({ message, type, saveAsIs = false, boardId }: SaveAsN
     }, 1000)
     try {
       const boardId = await createBoardAsync()
-      await convertToMindMapAsync({ boardId, answer: message, toolType: type, saveAsIs })
+      await convertToMindMapAsync({ boardId, answer: message, toolType: type, saveAsIs, useAnchors })
       window.clearInterval(timer)
       const finalElapsed = formatElapsed()
       toast.success(

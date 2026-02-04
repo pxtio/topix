@@ -79,6 +79,7 @@ export const ShapeChrome = memo(({
 
   const baseWrapperClass = clsx('relative w-full h-full', frameClass, className)
   const shapeProps = {
+    rounded,
     roughness,
     fill: backgroundColor,
     fillStyle,
@@ -91,7 +92,6 @@ export const ShapeChrome = memo(({
   if (type === 'layered-rectangle') {
     return (
       <LayeredRectangle
-        rounded={rounded}
         wrapperClass={baseWrapperClass}
         wrapperStyle={wrapperStyle}
         {...shapeProps}

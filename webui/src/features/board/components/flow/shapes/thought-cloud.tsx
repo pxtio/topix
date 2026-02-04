@@ -5,6 +5,7 @@ import { RoughRect } from '@/components/rough/rect'
 import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 
 type ThoughtCloudProps = {
+  rounded: 'none' | 'rounded-2xl'
   wrapperClass: string
   wrapperStyle: CSSProperties
   roughness?: number
@@ -19,6 +20,7 @@ type ThoughtCloudProps = {
 }
 
 export const ThoughtCloud = memo(({
+  rounded,
   wrapperClass,
   wrapperStyle,
   roughness,
@@ -36,6 +38,7 @@ export const ThoughtCloud = memo(({
   const circleTop = -accentSize * 0.4
 
   const commonProps = {
+    rounded,
     roughness,
     fill,
     fillStyle,
@@ -54,7 +57,7 @@ export const ThoughtCloud = memo(({
         <RoughCircle {...commonProps} className='w-full h-full' />
       </div>
       <div className='relative w-full h-full z-10'>
-        <RoughRect {...commonProps} className='w-full h-full' rounded='rounded-2xl'>
+        <RoughRect {...commonProps} className='w-full h-full'>
           {children}
         </RoughRect>
       </div>

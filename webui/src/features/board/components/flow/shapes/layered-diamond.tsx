@@ -4,6 +4,7 @@ import { RoughDiamond } from '@/components/rough/diam'
 import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 
 type LayeredDiamondProps = {
+  rounded: 'none' | 'rounded-2xl'
   wrapperClass: string
   wrapperStyle: CSSProperties
   roughness?: number
@@ -17,6 +18,7 @@ type LayeredDiamondProps = {
 }
 
 export const LayeredDiamond = memo(({
+  rounded,
   wrapperClass,
   wrapperStyle,
   roughness,
@@ -38,7 +40,7 @@ export const LayeredDiamond = memo(({
     strokeStyle,
     strokeWidth,
     seed,
-    rounded: 'rounded-2xl' as const,
+    rounded,
     className: 'w-full h-full'
   }
 

@@ -5,6 +5,7 @@ import { RoughRect } from '@/components/rough/rect'
 import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 
 type CapsuleProps = {
+  rounded: 'none' | 'rounded-2xl'
   wrapperClass: string
   wrapperStyle: CSSProperties
   roughness?: number
@@ -18,6 +19,7 @@ type CapsuleProps = {
 }
 
 export const CapsuleShape = memo(({
+  rounded,
   wrapperClass,
   wrapperStyle,
   roughness,
@@ -33,6 +35,7 @@ export const CapsuleShape = memo(({
   const overlap = accentSize * 0.1
 
   const circleProps = {
+    rounded,
     roughness,
     fill,
     fillStyle,
@@ -53,7 +56,7 @@ export const CapsuleShape = memo(({
         </div>
       </div>
       <div className='relative flex-1 h-full' style={{ marginLeft: overlap }}>
-        <RoughRect {...circleProps} className='w-full h-full' rounded='rounded-2xl'>
+        <RoughRect {...circleProps} className='w-full h-full'>
           {children}
         </RoughRect>
       </div>

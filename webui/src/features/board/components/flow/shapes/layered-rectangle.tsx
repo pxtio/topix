@@ -34,6 +34,7 @@ export const LayeredRectangle = memo(({
   const offsetY = 12
 
   const commonProps = {
+    rounded,
     roughness,
     fill,
     fillStyle,

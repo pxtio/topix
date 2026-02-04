@@ -28,7 +28,7 @@ export const LayeredCircle = memo(({
   seed,
   children
 }: LayeredCircleProps) => {
-  const offset = 24
+  const offset = 12
 
   const commonProps = {
     roughness,

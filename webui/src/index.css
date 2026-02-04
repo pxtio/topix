@@ -130,7 +130,8 @@
 }
 
 .font-informal {
-  font-size-adjust: 0.52;
+  font-size-adjust: 0.5;
+  line-height: 1.25;
 }
 
 .dark {

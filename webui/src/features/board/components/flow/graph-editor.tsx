@@ -49,7 +49,7 @@ import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { applyBackgroundAlpha, type BoardBackgroundTexture } from '../../utils/board-background'
 
 import './graph-styles.css'
-import { useSaveThumbnailOnUnmount } from '../../hooks/use-make-thumbnail'
+import { useThumbnailCapture } from '../../hooks/use-thumbnail-capture'
 
 const proOptions = { hideAttribution: true }
 
@@ -648,8 +648,7 @@ export default function GraphEditor() {
     }
   }, [])
 
-  // capture thumbnail of current graph view on unmount
-  useSaveThumbnailOnUnmount(boardId || '')
+  const captureThumbnail = useThumbnailCapture(boardId || '')
 
   const handleInit = (instance: ReactFlowInstance<NoteNode, LinkEdge>) => {
     rfInstanceRef.current = instance
@@ -660,6 +659,7 @@ export default function GraphEditor() {
         instance.setViewport(saved, { duration: 0 })
       }
     }
+    captureThumbnail(instance)
   }
 
   return (

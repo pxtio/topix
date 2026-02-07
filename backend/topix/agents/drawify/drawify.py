@@ -8,7 +8,7 @@ from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.drawn_graph import DrawnEdge, DrawnGraph, DrawnNode
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
-from topix.datatypes.note.style import Arrowhead, FontSize, NodeType
+from topix.datatypes.note.style import Arrowhead, FontFamily, FontSize, NodeType
 from topix.datatypes.property import NumberProperty, PositionProperty, SizeProperty
 from topix.datatypes.resource import RichText
 
@@ -60,6 +60,10 @@ def _node_type_from_drawn(node_type: str) -> NodeType:
     return NodeType.RECTANGLE
 
 
+def _roundness_from_drawn(rounded: bool) -> float:
+    return 2 if rounded else 0
+
+
 def _arrowhead_from_label(kind: str) -> Arrowhead:
     return Arrowhead.ARROW_FILLED if kind == "arrow" else Arrowhead.NONE
 
@@ -70,6 +74,8 @@ def _convert_drawn_node(node: DrawnNode, z_index: int) -> Note:
     )
     note.style.type = _node_type_from_drawn(node.type)
     note.style.font_size = _font_size_from_label(node.font_size)
+    note.style.font_family = FontFamily.INFORMAL
+    note.style.roundness = _roundness_from_drawn(node.rounded)
 
     if node.background:
         note.style.background_color = node.background

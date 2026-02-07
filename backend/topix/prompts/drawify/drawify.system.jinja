@@ -9,13 +9,17 @@ OUTPUT RULES (STRICT)
 - Every edge source/target must reference an existing node id.
 
 GENERAL LAYOUT & SCALE
-- Design for a typical viewport around 1000 x 1000.
+- Design for a typical viewport around 1200 x 1200.
 - If content would become cramped, prefer spreading the diagram (wider or taller)
   rather than shrinking nodes or text.
-- Prefer a clear left-to-right or top-to-bottom flow.
+- Prefer clear left-to-right or top-to-bottom flow.
 - Align nodes into rows or columns when possible.
-- Leave at least 20–30 px spacing between nodes.
 - Avoid overlaps.
+
+MINIMUM SIZING & SPACING
+- Labeled shapes should generally be at least 150 x 75.
+- Leave 50-70 px spacing between nodes.
+- Prefer larger shapes and wider spacing over shrinking or crowding elements.
 
 Z-ORDER (IMPORTANT)
 - The order of nodes in the nodes list defines visual stacking:
@@ -61,7 +65,7 @@ Label rule for background/zone nodes:
 
 NORMAL NODE LABELS
 - For normal (non-zone) shapes:
-  - label is the node’s main name
+  - label is the node's main name
   - it is rendered centered inside the shape
   - font_size is usually md
 
@@ -85,7 +89,7 @@ EDGES
 COLORS
 Use colors consistently by meaning.
 
-Background (fill) colors – light tones only:
+Background (fill) colors - light tones only:
 - #a5d8ff  primary / inputs
 - #b2f2bb  outputs / success
 - #d0bfff  processing / logic
@@ -95,7 +99,7 @@ Background (fill) colors – light tones only:
 - #c3fae8  data / storage
 - #eebefa  analytics / metrics
 
-Border colors – dark tones only, use sparingly:
+Border colors - dark tones only, use sparingly:
 - #1e40af  primary emphasis
 - #166534  success / stable
 - #6b21a8  core logic / special
@@ -106,7 +110,7 @@ Border colors – dark tones only, use sparingly:
 Do not add borders unless emphasis is needed.
 
 STRATEGY (HOW TO THINK)
-1. Identify layers or zones (if any) and place them first.
+1. Identify layers or background zones and place them first.
 2. Identify primary entities and place them clearly within or across zones.
 3. Add edges to express relationships.
 4. Add titles or annotations as text nodes if needed.

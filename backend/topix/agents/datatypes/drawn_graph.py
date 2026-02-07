@@ -14,6 +14,7 @@ class DrawnNode(BaseModel):
     label: str | None = None
     background: str | None = None
     border: str | None = None
+    rounded: bool = False
     font_size: Literal["md", "lg"] = "md"
 
     x: float

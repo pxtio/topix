@@ -6,7 +6,6 @@ from agents import ModelSettings
 from topix.agents.base import BaseAgent
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.drawn_graph import DrawnEdge, DrawnGraph, DrawnNode
-from topix.agents.datatypes.model_enum import ModelEnum
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.datatypes.note.style import Arrowhead, FontSize, NodeType
@@ -19,7 +18,7 @@ class DrawifyAgent(BaseAgent):
 
     def __init__(
         self,
-        model: str = ModelEnum.OpenAI.GPT_5_1,
+        model: str = "openrouter/anthropic/claude-opus-4.6",
         instructions_template: str = "drawify/drawify.system.jinja",
         model_settings: ModelSettings | None = None,
     ):

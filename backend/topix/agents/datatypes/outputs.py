@@ -10,6 +10,7 @@ from topix.agents.datatypes.annotations import (
     RefAnnotation,
     SearchResult,
 )
+from topix.agents.datatypes.drawn_graph import DrawnGraph
 from topix.agents.mindmap.schemify.datatypes import SchemaOutput
 
 
@@ -220,4 +221,5 @@ type ToolOutput = Union[
     DisplayWeatherWidgetOutput,
     DisplayImageSearchWidgetOutput,
     ImageGenerationOutput,
+    DrawnGraph,
 ]

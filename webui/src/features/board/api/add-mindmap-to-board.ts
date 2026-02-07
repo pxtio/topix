@@ -78,6 +78,7 @@ export const useAddMindMapToBoard = () => {
           const startPoint: NoteNode = {
             id: startId,
             type: 'point',
+            zIndex: 1001,
             position: {
               x: sourceCenter.x - offset,
               y: sourceCenter.y - offset,
@@ -94,6 +95,7 @@ export const useAddMindMapToBoard = () => {
           const endPoint: NoteNode = {
             id: endId,
             type: 'point',
+            zIndex: 1001,
             position: {
               x: targetCenter.x - offset,
               y: targetCenter.y - offset,

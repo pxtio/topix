@@ -16,6 +16,7 @@ import {
   LayerSendToBackIcon,
   ParagraphBulletsPoint01Icon,
   ReduceParagraphIcon,
+  PaintBoardIcon,
 } from '@hugeicons/core-free-icons'
 import { Sparkles } from 'lucide-react'
 import { useGraphStore } from '../../store/graph-store'
@@ -209,6 +210,7 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
     mapify: GitForkIcon,
     schemify: Blockchain06Icon,
     quizify: ParagraphBulletsPoint01Icon,
+    drawify: PaintBoardIcon,
     explain: Idea01Icon,
   }
 
@@ -285,6 +287,11 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
                     <HugeiconsIcon icon={aiActionIcons[action.key]} strokeWidth={2} className='size-4 text-secondary' />
                   ) : null}
                   <span>{action.label}</span>
+                  {action.key === 'drawify' && (
+                    <span className='ml-auto text-[10px] uppercase tracking-wide text-muted-foreground border border-border rounded-full px-2 py-0.5'>
+                      Beta
+                    </span>
+                  )}
                 </button>
               ))}
               <div className='my-1 h-px bg-border' />

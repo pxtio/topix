@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Depends, Request, Response
 
 from topix.agents.datatypes.context import Context
+from topix.agents.drawify.drawify import DrawifyAgent, convert_drawify_output_to_notes_links
 from topix.agents.mindmap.mapify import MapifyAgent, convert_mapify_output_to_notes_links
 from topix.agents.mindmap.notify import NotifyAgent, convert_notify_output_to_notes_links
 from topix.agents.mindmap.quizify.quizify import QuizifyAgent
@@ -130,6 +131,28 @@ async def quizify(
     quizify_agent = QuizifyAgent()
     res = await AgentRunner.run(quizify_agent, body.answer, context=context)
     notes, links = convert_schemify_output_to_notes_links(res)
+
+    return {
+        "notes": [note.model_dump(exclude_none=True) for note in notes],
+        "links": [link.model_dump(exclude_none=True) for link in links]
+    }
+
+
+@router.post("/drawify/", include_in_schema=False)
+@router.post("/drawify")
+@with_standard_response
+async def drawify(
+    response: Response,
+    request: Request,
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    body: Annotated[ConvertToMindMapRequest, Body(description="Drawify conversion data")],
+    _: Annotated[None, Depends(rate_limiter)],
+):
+    """Convert a text prompt to a drawn diagram graph."""
+    context = Context()
+    drawify_agent = DrawifyAgent()
+    res = await AgentRunner.run(drawify_agent, body.answer, context=context)
+    notes, links = convert_drawify_output_to_notes_links(res)
 
     return {
         "notes": [note.model_dump(exclude_none=True) for note in notes],

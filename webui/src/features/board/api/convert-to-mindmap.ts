@@ -18,7 +18,7 @@ import type { LinkEdge, NoteNode } from "../types/flow"
  */
 export async function convertToMindMap(
   answer: string,
-  toolType: "notify" | "mapify" | "schemify" | "summify" | "quizify"
+  toolType: "notify" | "mapify" | "schemify" | "summify" | "quizify" | "drawify"
 ): Promise<{ notes: Note[], links: Link[] }> {
   const res = await apiFetch<{ data: Record<string, unknown> }>({
     path: `/tools/mindmaps:${toolType}`,
@@ -46,7 +46,7 @@ export const useConvertToMindMap = () => {
     }: {
       boardId: string,
       answer: string,
-      toolType: "notify" | "mapify" | "schemify" | "summify" | "quizify",
+      toolType: "notify" | "mapify" | "schemify" | "summify" | "quizify" | "drawify",
       saveAsIs?: boolean,
       useAnchors?: boolean
     }): Promise<{ status: string }> => {
@@ -76,6 +76,13 @@ export const useConvertToMindMap = () => {
           notes.forEach((note) => note.style.backgroundColor = pickRandomColorOfShade(200, undefined)?.hex || note.style.backgroundColor)
         }
       }
+      notes.forEach((note, index) => {
+        const z = note.properties?.nodeZIndex?.number
+        if (z === undefined || z === null) {
+          note.properties.nodeZIndex.number = index
+        }
+      })
+
       const rawNodes = notes.map(convertNoteToNode)
       const rawEdges = links.map(convertLinkToEdge)
 

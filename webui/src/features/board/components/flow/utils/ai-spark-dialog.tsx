@@ -100,7 +100,14 @@ export const AiSparkDialog = ({
               <SelectContent>
                 {availableActions.map((action) => (
                   <SelectItem key={action.key} value={action.key}>
-                    {action.label}
+                    <span className="flex items-center gap-2">
+                      <span>{action.label}</span>
+                      {action.key === "drawify" && (
+                        <span className="text-[10px] uppercase tracking-wide text-muted-foreground border border-border rounded-full px-2 py-0.5">
+                          Beta
+                        </span>
+                      )}
+                    </span>
                   </SelectItem>
                 ))}
                 <SelectItem value="custom">Custom action</SelectItem>

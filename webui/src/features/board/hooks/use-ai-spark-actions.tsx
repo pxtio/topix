@@ -4,6 +4,7 @@ import { CancelIcon, CheckmarkCircle03Icon, ReloadIcon } from "@hugeicons/core-f
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { useConvertToMindMap } from "@/features/board/api/convert-to-mindmap"
+import { useDrawify } from "@/features/board/api/drawify"
 import { useTranslateText } from "@/features/board/api/translate-text"
 import { useMindMapStore } from "@/features/agent/store/mindmap-store"
 import { createDefaultLinkStyle, createDefaultStyle } from "@/features/board/types/style"
@@ -35,12 +36,14 @@ const defaultActions: AiSparkAction[] = [
   { key: "mapify", label: "Mapify (generate mindmap)", request: "Generate a mindmap capturing the main ideas and relationships." },
   { key: "schemify", label: "Schemify (generate schema)", request: "Generate a structured schema of entities and relationships." },
   { key: "quizify", label: "Quizify (MCQ exercises)", request: "Generate multiple-choice exercises grouped by theme." },
+  { key: "drawify", label: "Draw (beta)", request: "Draw a clean diagram with clear layout and spacing." },
   { key: "translate", label: "Translate", request: "Translate the input to the target language." },
   { key: "explain", label: "Explain (more detail)", request: "Explain the content in more detail with clear, step-by-step reasoning." },
 ]
 
 export const useAiSparkActions = () => {
   const { convertToMindMapAsync } = useConvertToMindMap()
+  const { drawifyAsync } = useDrawify()
   const { translateTextAsync } = useTranslateText()
   const setMindMap = useMindMapStore(state => state.setMindMap)
   const [processingKey, setProcessingKey] = useState<string | null>(null)
@@ -52,35 +55,53 @@ export const useAiSparkActions = () => {
     notes,
     links,
     useAnchors,
+    preserveStyle = false,
+    layout = true,
   }: {
     boardId: string
     notes: Note[]
     links: Link[]
     useAnchors?: boolean
+    preserveStyle?: boolean
+    layout?: boolean
   }) => {
     notes.forEach(note => {
       note.graphUid = boardId
-      note.style = createDefaultStyle({ type: note.style.type })
+      note.style = preserveStyle
+        ? { ...createDefaultStyle({ type: note.style.type }), ...note.style }
+        : createDefaultStyle({ type: note.style.type })
     })
     links.forEach(link => {
       link.graphUid = boardId
-      link.style = createDefaultLinkStyle()
+      link.style = preserveStyle
+        ? { ...createDefaultLinkStyle(), ...link.style }
+        : createDefaultLinkStyle()
     })
     if (notes.length > 0) {
-      notes.forEach((note) => {
-        note.style.backgroundColor = pickRandomColorOfShade(200, undefined)?.hex || note.style.backgroundColor
-      })
+      if (!preserveStyle) {
+        notes.forEach((note) => {
+          note.style.backgroundColor = pickRandomColorOfShade(200, undefined)?.hex || note.style.backgroundColor
+        })
+      }
     }
+
+    notes.forEach((note, index) => {
+      const z = note.properties?.nodeZIndex?.number
+      if (z === undefined || z === null) {
+        note.properties.nodeZIndex.number = index
+      }
+    })
 
     const rawNodes = notes.map(convertNoteToNode)
     const rawEdges = links.map(convertLinkToEdge)
-
     const ns: NoteNode[] = []
     const es: LinkEdge[] = []
 
-    const { nodes, edges } = await autoLayout(rawNodes, rawEdges, defaultLayoutOptions)
-    ns.push(...nodes)
-    es.push(...edges)
+    const baseNodes = layout
+      ? (await autoLayout(rawNodes, rawEdges, defaultLayoutOptions)).nodes
+      : rawNodes
+    ns.push(...baseNodes)
+    es.push(...rawEdges)
 
     setMindMap(boardId, ns, es, useAnchors)
   }
@@ -131,6 +152,10 @@ export const useAiSparkActions = () => {
           targetLanguage
         })
         await storeMindMap({ boardId, notes, links, useAnchors })
+      } else if (actionKey === "drawify") {
+        const answer = `Request: ${request}\n---\nInput Text:\n${contextText.trim()}`
+        const { notes, links } = await drawifyAsync({ answer })
+        await storeMindMap({ boardId, notes, links, useAnchors, preserveStyle: true, layout: false })
       } else {
         const answer = `Request: ${request}\n---\nInput Text:\n${contextText.trim()}`
         const toolType = actionKey === "quizify" ? "quizify" : "summify"

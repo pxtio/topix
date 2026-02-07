@@ -101,6 +101,8 @@ def _convert_drawn_edge(edge: DrawnEdge, id_map: dict[str, str]) -> Link | None:
     )
     link.style.source_arrowhead = _arrowhead_from_label(edge.tail)
     link.style.target_arrowhead = _arrowhead_from_label(edge.head)
+    link.style.font_family = FontFamily.INFORMAL
+
     if edge.label:
         link.label = RichText(markdown=edge.label)
     return link

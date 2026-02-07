@@ -1,0 +1,416 @@
+import { memo, type ReactNode } from 'react'
+import { Button } from '@/components/ui/button'
+import { HugeiconsIcon } from '@hugeicons/react'
+import {
+  ArrowMoveDownRightIcon,
+  CircleIcon,
+  DiamondIcon,
+  GeometricShapes01Icon,
+  GoogleDocIcon,
+  Image02Icon,
+  LabelIcon,
+  Note02Icon,
+  SquareIcon,
+  Tag01Icon,
+  TextIcon,
+} from '@hugeicons/core-free-icons'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { BotMessageSquare, ChevronDown, Cloud, Layers, Sparkles } from 'lucide-react'
+import type { AddNoteNodeOptions } from '../../hooks/use-add-node'
+import type { NodeType } from '../../types/style'
+import clsx from 'clsx'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+
+type ViewMode = 'graph' | 'linear'
+
+export interface ToolPanelProps {
+  onAddNode: (options: AddNoteNodeOptions) => void
+  onAddLine: () => void
+  viewMode: ViewMode
+  openShapeMenu: boolean
+  setOpenShapeMenu: (open: boolean) => void
+  setOpenIconSearch: (open: boolean) => void
+  setOpenImageSearch: (open: boolean) => void
+  setOpenDocumentUpload: (open: boolean) => void
+  setOpenChatDialog: (open: boolean) => void
+  chatOpen: boolean
+  setOpenAiSpark: (open: boolean) => void
+  boardId?: string
+}
+
+export const ToolPanel = memo(function ToolPanel({
+  onAddNode,
+  onAddLine,
+  viewMode,
+  openShapeMenu,
+  setOpenShapeMenu,
+  setOpenIconSearch,
+  setOpenImageSearch,
+  setOpenDocumentUpload,
+  setOpenChatDialog,
+  chatOpen,
+  setOpenAiSpark,
+  boardId,
+}: ToolPanelProps) {
+  const handleAddShape = (nodeType: NodeType) => onAddNode({ nodeType })
+
+  const shapeOptions: { nodeType: NodeType, label: string, icon: ReactNode, shortcut?: string }[] = [
+    { nodeType: 'rectangle', label: 'Rectangle', icon: <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />, shortcut: 'R' },
+    { nodeType: 'layered-rectangle', label: 'Layered card', icon: <Layers className='w-4 h-4 shrink-0' /> },
+    { nodeType: 'ellipse', label: 'Ellipse', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} />, shortcut: 'O' },
+    { nodeType: 'diamond', label: 'Diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} />, shortcut: 'D' },
+    { nodeType: 'soft-diamond', label: 'Double diamond', icon: <HugeiconsIcon icon={DiamondIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'layered-diamond', label: 'Layered diamond', icon: <Layers className='w-4 h-4 shrink-0' /> },
+    { nodeType: 'layered-circle', label: 'Layered circle', icon: <HugeiconsIcon icon={CircleIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'tag', label: 'Tag', icon: <HugeiconsIcon icon={LabelIcon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'thought-cloud', label: 'Cloud', icon: <Cloud className='w-4 h-4 shrink-0' /> },
+    { nodeType: 'capsule', label: 'Capsule', icon: <HugeiconsIcon icon={Tag01Icon} className='size-4 shrink-0' strokeWidth={2} /> },
+  ]
+
+  const normalButtonClass = `
+    transition-colors
+    text-card-foreground
+    hover:bg-sidebar-primary hover:text-sidebar-primary-foreground
+    p-4
+    rounded-lg
+    flex flex-row items-center justify-center gap-2
+  `
+  const activeButtonClass = clsx(
+    normalButtonClass,
+    'bg-sidebar-primary text-secondary',
+  )
+
+  const tooltipCopy = {
+    note: {
+      title: 'Sticky note',
+      description: 'Drop a sticky note anywhere on the board.',
+      shortcut: 'N',
+    },
+    connector: {
+      title: 'Connector',
+      description: 'Connect any two points on the board.',
+      shortcut: 'A',
+    },
+    shape: {
+      title: 'Shapes',
+      description: 'Add a shape node to the board.',
+      shortcut: 'S',
+    },
+    text: {
+      title: 'Text',
+      description: 'Add a standalone text label.',
+      shortcut: 'T',
+    },
+    icons: {
+      title: 'Icons',
+      description: 'Search icons to insert.',
+      shortcut: 'G',
+    },
+    images: {
+      title: 'Images',
+      description: 'Search images to insert.',
+      shortcut: 'I',
+    },
+    document: {
+      title: 'Upload document',
+      description: 'Parse a PDF and add notes.',
+      shortcut: 'P',
+    },
+    copilot: {
+      title: 'Copilot',
+      description: 'Open the assistant panel.',
+      shortcut: 'C',
+    },
+    ai: {
+      title: 'AI Spark',
+      description: 'Run an AI action on selected context.',
+      shortcut: 'B',
+    },
+  }
+
+  const TooltipLabel = ({ title, description, shortcut }: { title: string; description: string; shortcut?: string }) => (
+    <div className='flex flex-col gap-0.5'>
+      <span className='text-xs font-semibold'>{title}</span>
+      <span className='text-[11px] text-primary-foreground/80'>
+        {description}
+        {shortcut ? ` Shortcut: ${shortcut}` : ''}
+      </span>
+    </div>
+  )
+
+  const MenuShortcutHint = ({ label }: { label?: string }) => {
+    if (!label) return null
+    return (
+      <span className='pointer-events-none absolute -bottom-1 -right-1 text-[9px] leading-none text-muted-foreground/80'>
+        {label}
+      </span>
+    )
+  }
+
+  const ShortcutHint = ({ label }: { label: string }) => (
+    <span className='pointer-events-none absolute -bottom-1 -right-1 text-[9px] leading-none text-muted-foreground/80'>
+      {label}
+    </span>
+  )
+
+  return (
+    <div
+      className={`
+        absolute z-50 border border-border shadow-md
+        backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/80 backdrop-saturate-150
+        bg-sidebar text-sidebar-foreground rounded-xl
+        p-1 flex gap-1
+        left-1/2 bottom-2 -translate-x-1/2
+        flex-row items-center
+      `}
+      role='toolbar'
+      aria-label='Tools'
+    >
+      {viewMode === 'graph' && (
+        <>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => onAddNode({ nodeType: 'sheet' })}
+                aria-label='Add Sticky Note'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='N' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.note} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={onAddLine}
+                aria-label='Add line'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={ArrowMoveDownRightIcon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='A' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.connector} />
+            </TooltipContent>
+          </Tooltip>
+
+          <DropdownMenu open={openShapeMenu} onOpenChange={setOpenShapeMenu}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant={null}
+                    className={normalButtonClass}
+                    size='icon'
+                    aria-label='Add shape'
+                  >
+                    <div className='flex flex-col items-center gap-0.5 relative'>
+                      <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />
+                      <ChevronDown className='absolute inset-x-0 -top-3.5 w-3 h-3 text-muted-foreground rotate-180' />
+                      <ShortcutHint label='S' />
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={10}>
+                <TooltipLabel {...tooltipCopy.shape} />
+              </TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent
+              align='center'
+              side='top'
+              sideOffset={8}
+              className='min-w-[180px]'
+              onKeyDown={(event) => {
+                const key = event.key.toLowerCase()
+                if (key === 'escape') {
+                  event.preventDefault()
+                  setOpenShapeMenu(false)
+                  return
+                }
+                if (key === 'r' || key === 'o' || key === 'd') {
+                  event.preventDefault()
+                  const nextType =
+                    key === 'r'
+                      ? 'rectangle'
+                      : key === 'o'
+                        ? 'ellipse'
+                        : 'diamond'
+                  handleAddShape(nextType)
+                  setOpenShapeMenu(false)
+                }
+              }}
+            >
+              {shapeOptions.map(option => (
+                <DropdownMenuItem
+                  key={option.nodeType}
+                  onSelect={() => handleAddShape(option.nodeType)}
+                  className='gap-2 text-sm'
+                >
+                  <span className='relative inline-flex items-center justify-center'>
+                    {option.icon}
+                    <MenuShortcutHint label={option.shortcut} />
+                  </span>
+                  <span>{option.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => onAddNode({ nodeType: 'text' })}
+                aria-label='Add Text'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={TextIcon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='T' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.text} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => setOpenIconSearch(true)}
+                aria-label='Search icons'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={GeometricShapes01Icon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='G' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.icons} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => setOpenImageSearch(true)}
+                aria-label='Search images'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={Image02Icon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='I' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.images} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => setOpenDocumentUpload(true)}
+                aria-label='Upload document'
+                disabled={!boardId}
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
+                  <ShortcutHint label='P' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.document} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={chatOpen ? activeButtonClass : normalButtonClass}
+                size='icon'
+                onClick={() => setOpenChatDialog(!chatOpen)}
+                aria-label='Open Chat'
+                disabled={!boardId}
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <BotMessageSquare className='size-4 shrink-0 text-sidebar-icon-4' strokeWidth={2} />
+                  <ShortcutHint label='C' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.copilot} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => setOpenAiSpark(true)}
+                aria-label='AI Spark'
+                disabled={!boardId}
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <Sparkles className='size-4 shrink-0 text-secondary' strokeWidth={2} />
+                  <ShortcutHint label='B' />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.ai} />
+            </TooltipContent>
+          </Tooltip>
+        </>
+      )}
+
+      {viewMode !== "graph" && (
+        <>
+          <Button
+            variant={null}
+            className={normalButtonClass}
+            size='icon'
+            onClick={() => onAddNode({ nodeType: 'sheet' })}
+            title='Add Sticky Note'
+            aria-label='Add Sticky Note'
+          >
+            <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
+          </Button>
+        </>
+      )}
+
+    </div>
+  )
+})

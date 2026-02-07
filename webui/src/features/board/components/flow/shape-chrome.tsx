@@ -79,6 +79,7 @@ export const ShapeChrome = memo(({
 
   const baseWrapperClass = clsx('relative w-full h-full', frameClass, className)
   const shapeProps = {
+    rounded,
     roughness,
     fill: backgroundColor,
     fillStyle,
@@ -91,8 +92,6 @@ export const ShapeChrome = memo(({
   if (type === 'layered-rectangle') {
     return (
       <LayeredRectangle
-        minHeight={minHeight}
-        rounded={rounded}
         wrapperClass={baseWrapperClass}
         wrapperStyle={wrapperStyle}
         {...shapeProps}
@@ -105,7 +104,6 @@ export const ShapeChrome = memo(({
   if (type === 'thought-cloud') {
     return (
       <ThoughtCloud
-        minHeight={minHeight}
         wrapperClass={baseWrapperClass}
         wrapperStyle={wrapperStyle}
         backgroundColor={backgroundColor}
@@ -119,7 +117,6 @@ export const ShapeChrome = memo(({
   if (type === 'capsule') {
     return (
       <CapsuleShape
-        minHeight={minHeight}
         wrapperClass={baseWrapperClass}
         wrapperStyle={wrapperStyle}
         {...shapeProps}
@@ -164,7 +161,6 @@ export const ShapeChrome = memo(({
   if (type === 'layered-diamond') {
     return (
       <LayeredDiamond
-        minHeight={minHeight}
         wrapperClass={baseWrapperClass}
         wrapperStyle={wrapperStyle}
         {...shapeProps}
@@ -177,7 +173,6 @@ export const ShapeChrome = memo(({
   if (type === 'layered-circle') {
     return (
       <LayeredCircle
-        minHeight={minHeight}
         wrapperClass={baseWrapperClass}
         wrapperStyle={wrapperStyle}
         {...shapeProps}

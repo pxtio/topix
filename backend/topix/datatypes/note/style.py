@@ -23,6 +23,7 @@ class NodeType(StrEnum):
     SOFT_DIAMOND = "soft-diamond"
     LAYERED_CIRCLE = "layered-circle"
     TAG = "tag"
+    SLIDE = "slide"
 
 
 class StrokeStyle(StrEnum):
@@ -92,22 +93,23 @@ class Style(BaseModel):
 
     """
 
+    # Defaults aligned with frontend createDefaultStyle() for rectangle nodes
     type: NodeType = NodeType.RECTANGLE
     angle: float = 0.0
-    stroke_color: str = "transparent"
-    stroke_width: float = 0.75
+    stroke_color: str = "#00000000"
+    stroke_width: float = 2
     stroke_style: StrokeStyle = StrokeStyle.SOLID
-    background_color: str = "#ffedd5"
+    background_color: str = "#dbeafe"
     fill_style: FillStyle = FillStyle.SOLID
-    roughness: float = 1.0
-    roundness: float = 0.0
+    roughness: float = 0.5
+    roundness: float = 2.0
     opacity: float = 100
     group_ids: list[str] = []
     font_size: FontSize = FontSize.M
     font_family: FontFamily = FontFamily.HANDWRITING
-    text_align: TextAlign = TextAlign.LEFT
+    text_align: TextAlign = TextAlign.CENTER
     text_color: str = "#000000"
-    text_style: str | None = None
+    text_style: str | None = "normal"
 
 
 class Arrowhead(StrEnum):
@@ -132,7 +134,23 @@ class LinkStyle(Style):
 
     type: Literal["arrow"] = "arrow"
 
+    # Defaults aligned with frontend createDefaultLinkStyle()
+    stroke_color: str = "#292524"
+    stroke_width: float = 2
+    stroke_style: StrokeStyle = StrokeStyle.SOLID
+    background_color: str = "#00000000"
+    fill_style: FillStyle = FillStyle.SOLID
+    roughness: float = 1
+    roundness: float = 0
+    opacity: float = 100
+    group_ids: list[str] = []
+    font_family: FontFamily = FontFamily.HANDWRITING
+    font_size: FontSize = FontSize.M
+    text_align: TextAlign = TextAlign.CENTER
+    text_color: str = "#000000"
+    text_style: str | None = "normal"
+
     source_arrowhead: Arrowhead = Arrowhead.NONE
-    target_arrowhead: Arrowhead = Arrowhead.ARROW
+    target_arrowhead: Arrowhead = Arrowhead.ARROW_FILLED
 
     path_style: PathStyle = PathStyle.BEZIER

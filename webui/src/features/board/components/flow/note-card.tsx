@@ -17,7 +17,7 @@ import { SheetUrl } from '@/routes'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { LinkSquare02Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
 
-export type NoteWithPin = Note & { pinned?: boolean }
+export type NoteWithPin = Note & { pinned?: boolean; autoEdit?: boolean }
 
 type NodeCardProps = {
   note: NoteWithPin
@@ -96,6 +96,18 @@ export const NodeCard = memo(({
       setDialogOpen(false)
     }
   }, [selected, setDialogOpen])
+
+  useEffect(() => {
+    if (!isText || !note.autoEdit) return
+    setLabelEditing(true)
+    setNodesPersist(nds =>
+      nds.map(n => {
+        if (n.id !== note.id) return n
+        const data = n.data as NoteNode['data']
+        return { ...n, data: { ...data, autoEdit: false } }
+      })
+    )
+  }, [isText, note.autoEdit, note.id, setNodesPersist])
 
   // focus and put caret at end when entering edit mode
   useEffect(() => {

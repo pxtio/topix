@@ -1,11 +1,11 @@
 import type {
-  AgentStreamMessage,
   AgentResponse,
   ReasoningStep,
   ToolExecutionState,
   ToolName
 } from "../../types/stream"
 import { RAW_MESSAGE, ToolNameDescription, isMainResponse } from "../../types/stream"
+import { simpleTransform } from "./transform"
 import type {
   WebSearchOutput,
   MemorySearchOutput,
@@ -108,7 +108,7 @@ const flushStep = (s: StepAccum) => {
 }
 
 export async function* buildResponse(
-  chunks: AsyncGenerator<AgentStreamMessage>,
+  chunks: AsyncGenerator<Record<string, unknown>>,
   opts: BuildResponseOptions = {}
 ): AsyncGenerator<{ response: AgentResponse, isStop: boolean }> {
   const {
@@ -202,7 +202,8 @@ export async function* buildResponse(
     return null
   }
 
-  for await (const chunk of chunks) {
+  for await (const rawChunk of chunks) {
+    const chunk = simpleTransform(rawChunk)
     const isRaw = isMainResponse(chunk.toolName)
 
     if (isRaw && chunk.content?.type === "status") continue

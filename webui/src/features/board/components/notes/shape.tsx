@@ -5,6 +5,7 @@ import type { NodeType } from '../../types/style'
 import { IconShape } from './icon-shape'
 import { ImageShape } from './image-shape'
 import { LiteMarkdown } from '@/components/markdown/lite-markdown'
+import { getShapeContentScale } from '../../utils/shape-content-scale'
 
 type TextAlign = 'left' | 'center' | 'right'
 
@@ -53,6 +54,8 @@ export const Shape = memo(function Shape({
   const isImageNode = nodeType === 'image'
   const isIconNode = nodeType === 'icon'
   const placeHolder = nodeType === 'text' ? 'Add text...' : isImageNode ? 'Add caption...' : ''
+  const contentScale = getShapeContentScale(nodeType)
+  const contentSize = contentScale < 1 ? `${contentScale * 100}%` : '100%'
 
   const notEditingSpanClass = value.trim() ? '' : 'text-muted-foreground/50'
 
@@ -121,10 +124,14 @@ export const Shape = memo(function Shape({
 
   return (
     <div className='w-full h-full flex items-center justify-center'>
-      <div className='w-full' ref={contentRef}>
+      <div
+        className='flex items-center justify-center'
+        style={{ width: contentSize }}
+        ref={contentRef}
+      >
         {labelEditing ? (
           <TextareaAutosize
-            className={`${base} nodrag nopan nowheel !-mb-2`}
+            className={`${base} nodrag nopan nowheel`}
             value={value}
             onChange={onChange}
             onKeyDown={handleTextareaKeyDown}

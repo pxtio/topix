@@ -33,7 +33,7 @@ export const AssistantMessage = ({
 
   const lastStepMessage = message.content ? (
     <div className={messageClass}>
-      <MarkdownView content={content.markdown} />
+      <MarkdownView content={content.markdown} isStreaming={message.streaming} />
     </div>
   ) : null
 

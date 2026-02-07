@@ -1,8 +1,6 @@
 """Convert a text/conversation to a schema."""
 from __future__ import annotations
 
-import random
-
 from agents import ModelSettings, function_tool
 
 from topix.agents.base import BaseAgent
@@ -11,11 +9,9 @@ from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.mindmap.schemify.datatypes import SchemaOutput, SNode
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
-from topix.datatypes.note.style import NodeType
-from topix.datatypes.property import IconProperty, ImageProperty, SizeProperty
 from topix.datatypes.resource import RichText
 from topix.utils.common import gen_uid
-from topix.utils.images.search import fetch_images, search_iconify_icons
+from topix.utils.images.search import search_iconify_icons
 
 
 @function_tool
@@ -71,41 +67,6 @@ async def icon_search_tool(query: str) -> list[dict]:
     return [icon.model_dump() for icon in res]
 
 
-@function_tool
-async def image_search_tool(query: str) -> list[dict]:
-    """Search for a neutral, generic image that clarifies one key node or concept.
-
-    Purpose:
-        Use this to retrieve at most one image for the entire schema when a single,
-        clear picture would improve understanding of the topic.
-
-    When to call:
-        - Only after selecting up to one node with type="image".
-        - One call per schema maximum.
-        - Avoid exploratory retries.
-
-    Input:
-        query (str): 4-8 tokens describing the visual subject.
-            Examples: "data pipeline", "ai agent", "human review process",
-                      "network security", "monitoring dashboard"
-
-    Output:
-        list[dict]: Ranked image candidates (best first). Each item typically includes
-        a direct or reference URL and may include title, source, or license.
-
-    Selection guidance:
-        - Prefer simple, neutral images that convey the main idea clearly.
-        - Avoid branding, faces, or text-heavy visuals.
-        - Choose generic representations suitable for infographics.
-
-    Failure policy:
-        - If no suitable result is returned, do not retry.
-        - Leave image_url unset or downgrade the node to a non-image type.
-    """
-    res = await fetch_images(query=query)
-    return res
-
-
 class SchemifyAgent(BaseAgent):
     """Schemify Agent for synthesizing and thematically analyzing text."""
 
@@ -126,8 +87,7 @@ class SchemifyAgent(BaseAgent):
             model=model,
             model_settings=model_settings,
             instructions=instructions,
-            output_type=SchemaOutput,
-            tools=[icon_search_tool, image_search_tool]
+            output_type=SchemaOutput
         )
         super().__post_init__()
 
@@ -154,35 +114,9 @@ class SchemifyAgent(BaseAgent):
 
 def _convert_snode_to_note(snode: SNode) -> Note:
     """Convert SNode to Note."""
-    note = Note(
+    return Note(
         label=RichText(markdown=snode.label),
     )
-
-    if snode.type == "rectangle":
-        note.style.type = NodeType.RECTANGLE
-
-    elif snode.type == "ellipse":
-        note.style.type = NodeType.ELLIPSE
-
-    elif snode.type == "diamond":
-        note.style.type = NodeType.DIAMOND
-
-    elif snode.type == "image" and snode.image_url:
-        note.style.type = NodeType.IMAGE
-        note.properties.image_url.image = ImageProperty.Image(url=snode.image_url)
-
-    elif snode.type == "icon" and snode.icon_name and ":" in snode.icon_name:
-        note.style.type = NodeType.ICON
-        note.properties.icon_data.icon = IconProperty.Icon(icon=snode.icon_name)
-        note.properties.node_size = SizeProperty(size=SizeProperty.Size(width=150, height=150))
-
-    else:
-        note.style.type = NodeType.RECTANGLE  # Default type
-
-    note.properties.node_position.position.x = snode.x * 200 + random.randint(0, 50)
-    note.properties.node_position.position.y = snode.y * 150 + random.randint(0, 25)
-
-    return note
 
 
 def convert_schemify_output_to_notes_links(
@@ -207,6 +141,7 @@ def convert_schemify_output_to_notes_links(
             links.append(Link(
                 source=id_to_note[link.source].id,
                 target=id_to_note[link.target].id,
+                label=RichText(markdown=link.label) if link.label else None,
             ))
 
     return notes, links

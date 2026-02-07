@@ -1,3 +1,4 @@
+import type { Document } from "./document"
 import type { Link } from "./link"
 import type { Note } from "./note"
 
@@ -9,7 +10,7 @@ export interface Graph {
   uid: string
   type: "graph"
   label?: string
-  nodes?: Note[]
+  nodes?: Array<Note | Document>
   edges?: Link[]
   readonly: boolean
   thumbnail?: string

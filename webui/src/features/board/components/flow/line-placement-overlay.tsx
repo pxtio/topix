@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type React from 'react'
 
-import type { CanvasPoint } from '../../hooks/add-node'
+import type { CanvasPoint } from '../../hooks/use-add-node'
 
 const MIN_DRAW_PIXELS = 6
 

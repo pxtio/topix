@@ -1,5 +1,10 @@
 """GraphStore for managing graph data in the database."""
 
+import asyncio
+import logging
+
+from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue
+
 from topix.datatypes.graph.graph import Graph
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
@@ -16,6 +21,8 @@ from topix.store.postgres.graph_user import (
 )
 from topix.store.postgres.pool import create_pool
 from topix.store.qdrant.store import ContentStore
+
+logger = logging.getLogger(__name__)
 
 
 class GraphStore:
@@ -42,6 +49,30 @@ class GraphStore:
     async def delete_node(self, node_id: str, hard_delete: bool = True):
         """Delete a node from the graph."""
         await self._content_store.delete([node_id], hard_delete=hard_delete)
+
+        # deleted associated chunks
+        def _log_task_result(task: asyncio.Task) -> None:
+            try:
+                task.result()
+            except Exception as e:
+                logger.exception("Background delete_by_filters to delete associated chunks failed", exc_info=e)
+
+        task = asyncio.create_task(self._content_store.delete_by_filters(
+            filters=Filter(
+                must=[
+                    FieldCondition(
+                        key="document_uid",
+                        match=MatchValue(value=node_id),
+                    ),
+                    FieldCondition(
+                        key="type",
+                        match=MatchValue(value="chunk"),
+                    ),
+                ]
+            ),
+            hard_delete=hard_delete
+        ))
+        task.add_done_callback(_log_task_result)
 
     async def get_nodes(self, node_ids: list[str]) -> list[Note]:
         """Retrieve nodes by their IDs."""
@@ -73,21 +104,33 @@ class GraphStore:
         if not graph:
             return None
         node_results = await self._content_store.filt(
-            filters={
-                "must": [
-                    {"key": "type", "match": {"value": "note"}},
-                    {"key": "graph_uid", "match": {"value": graph_uid}},
+            filters=Filter(
+                must=[
+                    FieldCondition(
+                        key="graph_uid",
+                        match=MatchValue(value=graph_uid),
+                    ),
+                    FieldCondition(
+                        key="type",
+                        match=MatchAny(any=["note", "document"]),
+                    ),
                 ]
-            }
+            )
         )
         graph.nodes = [result.resource for result in node_results]
         link_results = await self._content_store.filt(
-            filters={
-                "must": [
-                    {"key": "type", "match": {"value": "link"}},
-                    {"key": "graph_uid", "match": {"value": graph_uid}},
+            filters=Filter(
+                must=[
+                    FieldCondition(
+                        key="graph_uid",
+                        match=MatchValue(value=graph_uid),
+                    ),
+                    FieldCondition(
+                        key="type",
+                        match=MatchValue(value="link"),
+                    ),
                 ]
-            }
+            )
         )
         graph.edges = [result.resource for result in link_results]
         return graph

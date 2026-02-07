@@ -1,6 +1,7 @@
 import { uuidToNumber } from "@/lib/common"
 import type { LinkEdge, NoteNode } from "../types/flow"
 import { createDefaultLinkProperties, type Link } from "../types/link"
+import type { Document } from "../types/document"
 import { createDefaultNoteProperties, type Note } from "../types/note"
 import { createDefaultLinkStyle } from "../types/style"
 import { nodeCenter } from "./point-attach"
@@ -12,14 +13,36 @@ type PointPair = {
 }
 
 /**
- * Function to convert a Note to a NoteNode.
- * @param note - The note to convert.
- * @returns A NoteNode representation of the note.
+ * Function to convert a Note or Document to a NoteNode.
+ * @param note - The note or document to convert.
+ * @returns A NoteNode representation of the note or document.
  */
-export const convertNoteToNode = (note: Note): NoteNode => {
+export const convertNoteToNode = (note: Note | Document): NoteNode => {
   const position = note.properties?.nodePosition?.position || { x: 0, y: 0 }
   const size = note.properties?.nodeSize?.size || { width: 300, height: 100 }
-  const zIndex = note.properties?.nodeZIndex?.number || 0
+  const zIndex =
+    note.type === "note" ? note.properties?.nodeZIndex?.number || 0 : 0
+
+  const noteId = String(note.id)
+
+  if (note.type === "document") {
+    const width = size.width
+    const height = size.height
+    const roughSeed = uuidToNumber(noteId)
+
+    return {
+      id: noteId,
+      type: "document",
+      position,
+      data: { ...note, roughSeed } as unknown as NoteNode["data"],
+      selected: false,
+      draggable: true,
+      height: height,
+      width: width,
+      measured: { width: width, height: height },
+      zIndex: zIndex,
+    }
+  }
 
   const type = note.style.type
   const isSheet = type === 'sheet'
@@ -27,19 +50,19 @@ export const convertNoteToNode = (note: Note): NoteNode => {
   const width = !isSheet ? size.width : undefined
   const height = !isSheet ? size.height : undefined
 
-  const roughSeed = uuidToNumber(note.id)
+  const roughSeed = uuidToNumber(noteId)
 
   return {
-    id: note.id,
+    id: noteId,
     type: 'default',
     position,
-    data: { ...note, roughSeed },
+    data: { ...note, roughSeed } as unknown as NoteNode["data"],
     selected: false,
     draggable: true,
     height: height,
     width: width,
     measured: { width: width, height: height },
-    zIndex: zIndex
+    zIndex: type === 'slide' ? -1000 : zIndex
   }
 }
 
@@ -155,11 +178,11 @@ export const convertLinkToEdgeWithPoints = (
 /**
  * Function to convert a NoteNode back to a Note.
  */
-export const convertNodeToNote = (node: NoteNode): Note | null => {
+export const convertNodeToNote = (node: NoteNode): Note | Document | null => {
   if ((node.data as { kind?: string }).kind === 'point') {
     return null
   }
-  const note = { ...node.data }
+  const note = { ...node.data } as Note | Document
 
   const graphUid = note.graphUid ?? node.data?.graphUid
   if (!graphUid) {
@@ -167,9 +190,14 @@ export const convertNodeToNote = (node: NoteNode): Note | null => {
   }
   note.id = node.id
   note.graphUid = graphUid
-  note.properties = note.properties || createDefaultNoteProperties({ type: note.style.type })
+  if (note.type === "note") {
+    note.properties = note.properties || createDefaultNoteProperties({ type: note.style.type })
+  }
 
   if (node.position) {
+    note.properties = note.properties || (note.type === "note"
+      ? createDefaultNoteProperties({ type: note.style.type })
+      : note.properties)
     note.properties.nodePosition = {
       position: node.position,
       type: "position"
@@ -177,6 +205,9 @@ export const convertNodeToNote = (node: NoteNode): Note | null => {
   }
 
   if (node.measured) {
+    note.properties = note.properties || (note.type === "note"
+      ? createDefaultNoteProperties({ type: note.style.type })
+      : note.properties)
     note.properties.nodeSize = {
       size: { width: node.measured.width || 100, height: node.measured.height || 100 },
       type: "size",
@@ -184,9 +215,11 @@ export const convertNodeToNote = (node: NoteNode): Note | null => {
   }
 
   if (node.zIndex !== undefined) {
-    note.properties.nodeZIndex = {
-      number: node.zIndex,
-      type: "number",
+    if (note.type === "note") {
+      note.properties.nodeZIndex = {
+        number: node.zIndex,
+        type: "number",
+      }
     }
   }
 

@@ -23,8 +23,7 @@ from qdrant_client.models import (
 )
 
 from topix.config.config import Config, QdrantConfig
-from topix.datatypes.property import TextProperty
-from topix.datatypes.resource import Resource
+from topix.datatypes.resource import Resource, dict_to_embeddable
 from topix.nlp.embed import DIMENSIONS, OpenAIEmbedder
 from topix.store.qdrant.utils import (
     RetrieveOutput,
@@ -45,6 +44,8 @@ INDEX_FIELDS = [
     ("chat_uid", "keyword"),
     # note, link
     ("graph_uid", "keyword"),
+    # document
+    ("document_uid", "keyword"),
     # subscription
     ("user_uid", "keyword"),
     ("subscription_id", "keyword"),
@@ -100,6 +101,7 @@ class ContentStore:
         Supporting multiple vector storage
         """
         exists = await self.client.collection_exists(self.collection)
+
         if force_recreate and exists:
             await self.client.delete_collection(self.collection)
 
@@ -117,10 +119,10 @@ class ContentStore:
                     scalar=ScalarQuantizationConfig(
                         type="int8", quantile=0.99, always_ram=True
                     )
-                )
-                if quantized
-                else None,
+                ) if quantized else None,
+                on_disk_payload=True
             )
+
             for field_name, field_type in INDEX_FIELDS:
                 await self.client.create_payload_index(
                     collection_name=self.collection,
@@ -138,7 +140,10 @@ class ContentStore:
             logger.warning(f"Collection '{self.collection}' does not exist.")
 
     async def delete(
-        self, ids: list[str | int], hard_delete: bool = False, refresh: bool = True
+        self,
+        ids: list[str | int],
+        hard_delete: bool = False,
+        refresh: bool = True
     ) -> None:
         """Delete multiple data objects by their IDs."""
         if not hard_delete:
@@ -156,7 +161,10 @@ class ContentStore:
         logger.info(f"Successfully deleted {len(ids)} data from the collection.")
 
     async def delete_by_filters(
-        self, filters: Filter, hard_delete: bool = False, refresh: bool = True
+        self,
+        filters: Filter,
+        hard_delete: bool = False,
+        refresh: bool = True
     ) -> None:
         """Delete Entry objects based on a filter condition."""
         if not hard_delete:
@@ -190,35 +198,16 @@ class ContentStore:
         indices = []
         for i, entry in enumerate(entries):
             if isinstance(entry, dict):
-                if entry.get("content") and entry["content"].get("searchable"):
-                    searchable_texts.append(entry["content"]["markdown"])
-                    indices.append(i)
-                if entry.get("label") and entry["label"].get("searchable"):
-                    searchable_texts.append(entry["label"]["markdown"])
-                    indices.append(i)
-
-                for prop in entry.get("properties", {}).values():
-                    if isinstance(prop, dict):
-                        if prop.get("searchable") and prop.get("text"):
-                            searchable_texts.append(prop["text"])
-                            indices.append(i)
+                to_embed = dict_to_embeddable(entry)
             else:
-                # Get content and label
-                if entry.content and entry.content.searchable:
-                    searchable_texts.append(entry.content.markdown)
-                    indices.append(i)
-                if entry.label and entry.label.searchable:
-                    searchable_texts.append(entry.label.markdown)
-                    indices.append(i)
+                to_embed = entry.to_embeddable()
 
-                # Get all searchable text properties
-                for prop in entry.properties.__dict__.values():
-                    if isinstance(prop, TextProperty):
-                        if prop.searchable and prop.text:
-                            searchable_texts.append(prop.text)
-                            indices.append(i)
+            for text in to_embed:
+                indices.append(i)
+                searchable_texts.append(text)
 
         embeds = await self.embedder.embed(searchable_texts)
+
         # Create a list of embeddings with the same length as entries
         embeddings = [None] * len(entries)
         for idx, i in enumerate(indices):

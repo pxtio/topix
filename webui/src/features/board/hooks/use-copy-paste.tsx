@@ -105,13 +105,20 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
   }, [getSelectedNoteNodes, edges, nodes])
 
   /**
-   * Returns a cloned note with a shared jitter offset applied
+   * Returns a cloned note with a shared offset applied
    */
-  const cloneNoteWithJitter = useCallback((note: Note, jitter: Jitter): Note => {
+  const cloneNoteWithOffset = useCallback((note: Note, offset: Jitter): Note => {
     const ox = note.properties?.nodePosition?.position?.x ?? 0
     const oy = note.properties?.nodePosition?.position?.y ?? 0
-    const nx = ox + jitter.dx
-    const ny = oy + jitter.dy
+    const nx = ox + offset.dx
+    const ny = oy + offset.dy
+    const isSlide = note.style?.type === 'slide'
+    const slideName = note.properties?.slideName?.text
+    const nextSlideName = slideName
+      ? slideName.endsWith(' (copy)')
+        ? slideName
+        : `${slideName} (copy)`
+      : undefined
 
     const cloned: Note = {
       ...note,
@@ -123,10 +130,48 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
           type: 'position',
           position: { x: nx, y: ny },
         },
+        ...(isSlide && nextSlideName
+          ? {
+              slideName: {
+                ...(note.properties.slideName ?? { type: 'text' }),
+                type: 'text',
+                text: nextSlideName,
+              },
+            }
+          : {}),
       },
     }
 
     return cloned
+  }, [])
+
+  const computeSelectionCenter = useCallback((notes: Note[], pointNodes: NoteNode[]) => {
+    let minX = Number.POSITIVE_INFINITY
+    let minY = Number.POSITIVE_INFINITY
+    let maxX = Number.NEGATIVE_INFINITY
+    let maxY = Number.NEGATIVE_INFINITY
+
+    for (const note of notes) {
+      const pos = note.properties?.nodePosition?.position
+      if (!pos) continue
+      minX = Math.min(minX, pos.x)
+      minY = Math.min(minY, pos.y)
+      maxX = Math.max(maxX, pos.x)
+      maxY = Math.max(maxY, pos.y)
+    }
+
+    for (const node of pointNodes) {
+      minX = Math.min(minX, node.position.x)
+      minY = Math.min(minY, node.position.y)
+      maxX = Math.max(maxX, node.position.x)
+      maxY = Math.max(maxY, node.position.y)
+    }
+
+    if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+      return null
+    }
+
+    return { x: (minX + maxX) / 2, y: (minY + maxY) / 2 }
   }, [])
 
   /**
@@ -141,11 +186,18 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
 
     if ((!copiedNotes || !copiedNotes.length) && (!copiedPointNodes || !copiedPointNodes.length)) return
 
+    const lastCursor = useGraphStore.getState().lastCursorPosition
+    const selectionCenter = computeSelectionCenter(copiedNotes ?? [], copiedPointNodes ?? [])
+    const baseOffset = lastCursor && selectionCenter
+      ? { dx: lastCursor.x - selectionCenter.x, dy: lastCursor.y - selectionCenter.y }
+      : { dx: 0, dy: 0 }
+
     // one shared jitter per paste to preserve the internal structure
     const jitter = { dx: randJitter(), dy: randJitter() }
+    const pasteOffset = { dx: jitter.dx + baseOffset.dx, dy: jitter.dy + baseOffset.dy }
 
-    // clone notes with jitter
-    const clonedNotes = (copiedNotes ?? []).map(note => cloneNoteWithJitter(note, jitter))
+    // clone notes with offset
+    const clonedNotes = (copiedNotes ?? []).map(note => cloneNoteWithOffset(note, pasteOffset))
 
     // build node id mapping: original note id -> cloned note id
     const idMap = new Map<string, string>()
@@ -159,14 +211,19 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     // convert cloned notes to nodes
     const maxZ = nodes.reduce((acc, n) => {
       const kind = (n.data as { kind?: string }).kind
-      if (kind === 'point') return acc
+      const nodeType = (n.data as { style?: { type?: string } }).style?.type
+      if (kind === 'point' || nodeType === 'slide') return acc
       return Math.max(acc, n.zIndex ?? 0)
     }, 0)
     let zCursor = maxZ + 1
 
     const newNodes = clonedNotes
       .map(convertNoteToNode)
-      .map(n => ({ ...n, selected: true, zIndex: zCursor++ }))
+      .map(n => ({
+        ...n,
+        selected: true,
+        zIndex: (n.data as { style?: { type?: string } }).style?.type === 'slide' ? -1000 : zCursor++
+      }))
 
     const edgePlans = (copiedEdges ?? []).map(edge => {
       const sourceNode = pointNodes.find(n => n.id === edge.source)
@@ -194,8 +251,8 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
         id: newId,
         zIndex: 1001,
         position: {
-          x: node.position.x + jitter.dx,
-          y: node.position.y + jitter.dy,
+          x: node.position.x + pasteOffset.dx,
+          y: node.position.y + pasteOffset.dy,
         },
         selected: true,
         data: {
@@ -237,15 +294,15 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
                     startPoint: {
                       type: 'position' as const,
                       position: {
-                        x: (sourceNode?.position.x ?? 0) + jitter.dx,
-                        y: (sourceNode?.position.y ?? 0) + jitter.dy,
+                        x: (sourceNode?.position.x ?? 0) + pasteOffset.dx,
+                        y: (sourceNode?.position.y ?? 0) + pasteOffset.dy,
                       },
                     },
                     endPoint: {
                       type: 'position' as const,
                       position: {
-                        x: (targetNode?.position.x ?? 0) + jitter.dx,
-                        y: (targetNode?.position.y ?? 0) + jitter.dy,
+                        x: (targetNode?.position.x ?? 0) + pasteOffset.dx,
+                        y: (targetNode?.position.y ?? 0) + pasteOffset.dy,
                       },
                     },
                   }
@@ -281,7 +338,8 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     boardId,
     userId,
     randJitter,
-    cloneNoteWithJitter,
+    cloneNoteWithOffset,
+    computeSelectionCenter,
     setNodesPersist,
     setEdgesPersist,
     nodes

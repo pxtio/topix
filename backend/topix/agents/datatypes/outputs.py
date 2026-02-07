@@ -10,25 +10,8 @@ from topix.agents.datatypes.annotations import (
     RefAnnotation,
     SearchResult,
 )
+from topix.agents.datatypes.drawn_graph import DrawnGraph
 from topix.agents.mindmap.schemify.datatypes import SchemaOutput
-
-type ToolOutput = Union[
-    str,
-    CodeInterpreterOutput,
-    WebSearchOutput,
-    MemorySearchOutput,
-    NotifyOutput,
-    MapifyTheme,
-    TopicTracker,
-    NewsfeedOutput,
-    SchemaOutput,
-    TopicIllustratorOutput,
-    ImageDescriptionOutput,
-    DisplayStockWidgetOutput,
-    DisplayWeatherWidgetOutput,
-    DisplayImageSearchWidgetOutput,
-    ImageGenerationOutput,
-]
 
 
 class DisplayWeatherWidgetOutput(BaseModel):
@@ -115,6 +98,12 @@ class NotifyOutput(BaseModel):
     content: str
 
 
+class TranslateOutput(BaseModel):
+    """Translate Output."""
+
+    text: str
+
+
 class ImageDescriptionOutput(BaseModel):
     """Output of the image description agent."""
 
@@ -183,12 +172,29 @@ class MemorySearchOutput(BaseModel):
     """Output from memory search tool."""
 
     type: Literal["memory_search"] = "memory_search"
-    answer: str
+    answer: str = ""
     references: list[RefAnnotation] = []
 
     def __str__(self) -> str:
         """To string method."""
-        return self.answer
+        if self.answer:
+            return self.answer
+
+        # TODO: Voir pr document_label plus tard
+        formatted = "Memory search Results:\n\n"
+        for reference in self.references:
+            if reference.label or reference.content:
+                url = f"/{reference.ref_type}/{reference.ref_id[:5]}"
+                formatted += f"\n<Source\n  id=\"{reference.ref_id}\"\n  url=\"{url}\""
+                if reference.label:
+                    formatted += f"\n  label=\"{reference.label}\""
+                formatted += (
+                    f"\n  type=\"{reference.ref_type}\""
+                    "\n>"
+                    f"\n{reference.content or ""}\n"
+                    "\n</Source>\n"
+                )
+        return formatted
 
 
 class ImageGenerationOutput(BaseModel):
@@ -196,3 +202,24 @@ class ImageGenerationOutput(BaseModel):
 
     type: Literal["image_generation"] = "image_generation"
     image_urls: list[str] = []
+
+
+type ToolOutput = Union[
+    str,
+    CodeInterpreterOutput,
+    WebSearchOutput,
+    MemorySearchOutput,
+    NotifyOutput,
+    MapifyTheme,
+    TopicTracker,
+    NewsfeedOutput,
+    SchemaOutput,
+    TranslateOutput,
+    TopicIllustratorOutput,
+    ImageDescriptionOutput,
+    DisplayStockWidgetOutput,
+    DisplayWeatherWidgetOutput,
+    DisplayImageSearchWidgetOutput,
+    ImageGenerationOutput,
+    DrawnGraph,
+]

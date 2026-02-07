@@ -7,7 +7,7 @@ import { nodeCenter } from '../utils/point-attach'
 import { POINT_NODE_SIZE } from '../components/flow/point-node'
 import { generateUuid } from '@/lib/common'
 import type { LinkEdge, NoteNode } from '../types/flow'
-import { useFitNodes } from '../hooks/fit-nodes'
+import { useFitNodes } from '../hooks/use-fit-nodes'
 import { useShallow } from 'zustand/react/shallow'
 
 /**
@@ -36,16 +36,26 @@ export const useAddMindMapToBoard = () => {
       let nodes_ = [...nodes]
       let edges_ = [...edges]
 
+      const contextNodes = nodes.filter(
+        n => n.selected && (n.data as { kind?: string } | undefined)?.kind !== 'point'
+      )
+      let stackBase = contextNodes
+
       const newIds: string[] = []
 
       for (const mindMap of boardMindmaps) {
-        const { nodes: mindMapNodes, edges: mindMapEdges } = mindMap
+        const { nodes: mindMapNodes, edges: mindMapEdges, useAnchors } = mindMap
 
         // mark as new (frontend only)
         mindMapNodes.forEach(n => { n.data.isNew = true })
 
         // avoid overlap and merge into the board
-        const displacedMindMapNodes = displaceNodes(nodes_, mindMapNodes)
+        const displacedMindMapNodes = contextNodes.length > 0 && useAnchors !== false
+          ? displaceNodes(stackBase, mindMapNodes, contextNodes)
+          : displaceNodes(nodes_, mindMapNodes)
+        if (contextNodes.length > 0 && useAnchors !== false) {
+          stackBase = displacedMindMapNodes
+        }
         const displacedById = new Map(displacedMindMapNodes.map(node => [node.id, node]))
         const newPointNodes: NoteNode[] = []
         const convertedEdges: LinkEdge[] = []
@@ -68,6 +78,7 @@ export const useAddMindMapToBoard = () => {
           const startPoint: NoteNode = {
             id: startId,
             type: 'point',
+            zIndex: 1001,
             position: {
               x: sourceCenter.x - offset,
               y: sourceCenter.y - offset,
@@ -84,6 +95,7 @@ export const useAddMindMapToBoard = () => {
           const endPoint: NoteNode = {
             id: endId,
             type: 'point',
+            zIndex: 1001,
             position: {
               x: targetCenter.x - offset,
               y: targetCenter.y - offset,

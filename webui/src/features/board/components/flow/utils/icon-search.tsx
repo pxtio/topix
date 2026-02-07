@@ -2,11 +2,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSearchIcons } from "@/features/board/api/icon-search"
-import { useDebouncedValue } from "@/features/board/hooks/debounce"
+import { useDebouncedValue } from "@/features/board/hooks/use-debounce"
 import { useState } from "react"
 import { Icon } from "@iconify/react"
 import { cn } from "@/lib/utils"
-import { useAddNoteNode } from "@/features/board/hooks/add-node"
+import { useAddNoteNode } from "@/features/board/hooks/use-add-node"
 
 const ICON_NODE_SIZE = 220
 

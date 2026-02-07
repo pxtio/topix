@@ -38,12 +38,32 @@ export function getBounds(nodes: Node[]): Bounds {
 /**
  * Displaces a group of nodes vertically below another group.
  */
-export function displaceNodes(group1: NoteNode[], group2: NoteNode[]): NoteNode[] {
+export function displaceNodes(
+  group1: NoteNode[],
+  group2: NoteNode[],
+  anchorNodes?: NoteNode[],
+): NoteNode[] {
   const { minY: minY1, centerX: centerX1 } = getBounds(group1)
-  const { maxY: maxY2, centerX: centerX2 } = getBounds(group2)
+  const { maxY: maxY2, centerX: centerX2, minX: minX2, minY: minY2 } = getBounds(group2)
 
-  const deltaY = minY1 - maxY2 - 300 // Add some space between the groups
-  const deltaX = centerX1 - centerX2
+  let deltaY = minY1 - maxY2 - 300 // Add some space between the groups
+  let deltaX = centerX1 - centerX2
+
+  if (anchorNodes && anchorNodes.length > 0) {
+    const { minY: anchorMinY, maxX: anchorMaxX } = getBounds(anchorNodes)
+    const anchorIds = new Set(anchorNodes.map(n => n.id))
+    const group1IsAnchor = group1.length > 0 && group1.every(n => anchorIds.has(n.id))
+
+    deltaX = anchorMaxX + 300 - minX2
+    if (group1IsAnchor) {
+      // First placement: align tops with the anchor context
+      deltaY = anchorMinY - minY2
+    } else {
+      // Subsequent placements: stack below the previous mindmap
+      const { maxY: maxY1 } = getBounds(group1)
+      deltaY = maxY1 + 300 - minY2
+    }
+  }
 
   const displacedGroup2 = group2.map(node => ({
     ...node,

@@ -5,6 +5,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.minimap-hide-slide {
+  display: none;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -125,6 +129,11 @@
   --sidebar-icon-4: #be185d;
 }
 
+.font-informal {
+  font-size-adjust: 0.45;
+  line-height: 1.5;
+}
+
 .dark {
   --background: oklch(0.22 0.012 260);
   --foreground: oklch(0.94 0.02 270);
@@ -210,8 +219,8 @@
      WebKit/Blink (Chrome/Edge/Safari)
      ========================= */
   .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;   /* reserve space always */
-    height: 6px;
+    width: 4px;   /* reserve space always */
+    height: 4px;
     background: transparent;
   }
   .scrollbar-thin::-webkit-scrollbar-track {

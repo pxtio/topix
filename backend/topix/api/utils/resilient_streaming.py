@@ -1,14 +1,16 @@
 """Resilient streaming response decorator for FastAPI."""
 import asyncio
 import json
+import logging
 
 from functools import wraps
 from typing import Any, AsyncGenerator, Callable, TypeVar
 
 from fastapi import Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 
 T = TypeVar("T")
+logger = logging.getLogger(__name__)
 
 
 def _serialize_ndjson_str(item: Any) -> str:
@@ -89,6 +91,44 @@ def with_streaming_resilient_ndjson(  # noqa: C901
                     raise
 
             return StreamingResponse(gen(), media_type=media_type)
+
+        if hasattr(async_func, "dependant"):
+            wrapper.dependant = async_func.dependant  # type: ignore[attr-defined]
+        return wrapper
+
+    return decorator
+
+
+def with_resilient_request(
+    *,
+    continue_on_disconnect: bool = True,
+) -> Callable[[Callable[..., T]], Callable[..., T | Response]]:
+    """Keep non-streaming work running if the client disconnects.
+
+    The first argument of the endpoint must be `request: Request`.
+    If the client disconnects, the response is dropped but the task completes.
+    """
+    def decorator(async_func: Callable[..., T]) -> Callable[..., T | Response]:
+        """Wrap a non-streaming endpoint."""
+        @wraps(async_func)
+        async def wrapper(request: Request, *args, **kwargs) -> T | Response:
+            """Execute code (wrapped function)."""
+            task = asyncio.create_task(async_func(request, *args, **kwargs))
+            try:
+                return await asyncio.shield(task)
+            except asyncio.CancelledError:
+                if not continue_on_disconnect:
+                    task.cancel()
+                    raise
+
+                def _log_result(done_task: asyncio.Task) -> None:
+                    try:
+                        done_task.result()
+                    except Exception:
+                        logger.exception("Resilient request task failed")
+
+                task.add_done_callback(_log_result)
+                return Response(status_code=499)
 
         if hasattr(async_func, "dependant"):
             wrapper.dependant = async_func.dependant  # type: ignore[attr-defined]

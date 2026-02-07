@@ -63,7 +63,7 @@ def save_file(
         cat (Literal): The category of the file. Defaults to "files".
 
     Returns:
-        str: The relative path to the saved file.
+        str: The representative path starting with "file://" to the saved file.
 
     """
     match cat:

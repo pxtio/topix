@@ -23,6 +23,7 @@ import { useGraphStore } from '../../store/graph-store'
 import { buildContextTextFromNodes } from '../../utils/context-text'
 import { toast } from 'sonner'
 import { useAiSparkActions } from '../../hooks/use-ai-spark-actions'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 /**
  * Props for the GraphContextMenu component.
@@ -89,6 +90,20 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
     () => aiActions.filter(action => action.key !== 'translate'),
     [aiActions],
   )
+  const positionTooltips = useMemo(() => ({
+    sendBackward: "Move the selection one layer down.",
+    sendForward: "Move the selection one layer up.",
+    sendToBack: "Move the selection to the very back.",
+    sendToFront: "Move the selection to the very front.",
+  }), [])
+  const aiTooltips = useMemo(() => ({
+    summarize: "Write a concise summary of the selected content.",
+    mapify: "Generate a mindmap of key ideas and relationships.",
+    schemify: "Generate a structured schema of entities and links.",
+    quizify: "Generate grouped MCQ exercises from the content.",
+    drawify: "Draw a simple architecture/schema.",
+    explain: "Explain the content in more detail, step by step.",
+  }), [])
 
   const selectedNodes = useMemo(
     () => nodes.filter((node) => node.selected && (node.data as { kind?: string } | undefined)?.kind !== 'point'),
@@ -233,40 +248,68 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
           <div className='px-3 py-1 text-xs font-medium text-muted-foreground'>
             Position
           </div>
-          <button
-            type='button'
-            className='w-full px-3 py-2 text-left rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
-            onClick={handleSendBackward}
-            disabled={!canSendBackward}
-          >
-            <HugeiconsIcon icon={LayerSendBackwardIcon} strokeWidth={2} className='size-4' />
-            <span>Send backward</span>
-          </button>
-          <button
-            type='button'
-            className='w-full px-3 py-2 text-left rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
-            onClick={handleSendForward}
-            disabled={!canSendForward}
-          >
-            <HugeiconsIcon icon={LayerBringForwardIcon} strokeWidth={2} className='size-4' />
-            <span>Send forward</span>
-          </button>
-          <button
-            type='button'
-            className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2'
-            onClick={handleSendToBack}
-          >
-            <HugeiconsIcon icon={LayerSendToBackIcon} strokeWidth={2} className='size-4' />
-            <span>Send to back</span>
-          </button>
-          <button
-            type='button'
-            className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2'
-            onClick={handleSendToFront}
-          >
-            <HugeiconsIcon icon={LayerBringToFrontIcon} strokeWidth={2} className='size-4' />
-            <span>Send to front</span>
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type='button'
+                className='w-full px-3 py-2 text-left rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
+                onClick={handleSendBackward}
+                disabled={!canSendBackward}
+              >
+                <HugeiconsIcon icon={LayerSendBackwardIcon} strokeWidth={2} className='size-4' />
+                <span>Send backward</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
+              <div className="text-xs">{positionTooltips.sendBackward}</div>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type='button'
+                className='w-full px-3 py-2 text-left rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2'
+                onClick={handleSendForward}
+                disabled={!canSendForward}
+              >
+                <HugeiconsIcon icon={LayerBringForwardIcon} strokeWidth={2} className='size-4' />
+                <span>Send forward</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
+              <div className="text-xs">{positionTooltips.sendForward}</div>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type='button'
+                className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2'
+                onClick={handleSendToBack}
+              >
+                <HugeiconsIcon icon={LayerSendToBackIcon} strokeWidth={2} className='size-4' />
+                <span>Send to back</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
+              <div className="text-xs">{positionTooltips.sendToBack}</div>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type='button'
+                className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2'
+                onClick={handleSendToFront}
+              >
+                <HugeiconsIcon icon={LayerBringToFrontIcon} strokeWidth={2} className='size-4' />
+                <span>Send to front</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
+              <div className="text-xs">{positionTooltips.sendToFront}</div>
+            </TooltipContent>
+          </Tooltip>
 
           {hasSelection && (
             <>
@@ -276,23 +319,29 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
                 AI Spark
               </div>
               {aiMenuActions.map((action) => (
-                <button
-                  key={action.key}
-                  type='button'
-                  className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
-                  onClick={() => handleAiAction(action.key)}
-                  disabled={!!processingKey}
-                >
-                  {aiActionIcons[action.key] ? (
-                    <HugeiconsIcon icon={aiActionIcons[action.key]} strokeWidth={2} className='size-4 text-secondary' />
-                  ) : null}
-                  <span>{action.label}</span>
-                  {action.key === 'drawify' && (
-                    <span className='ml-auto text-[10px] uppercase tracking-wide text-muted-foreground border border-border rounded-full px-2 py-0.5'>
-                      Beta
-                    </span>
-                  )}
-                </button>
+                <Tooltip key={action.key}>
+                  <TooltipTrigger asChild>
+                    <button
+                      type='button'
+                      className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                      onClick={() => handleAiAction(action.key)}
+                      disabled={!!processingKey}
+                    >
+                      {aiActionIcons[action.key] ? (
+                        <HugeiconsIcon icon={aiActionIcons[action.key]} strokeWidth={2} className='size-4 text-secondary' />
+                      ) : null}
+                      <span>{action.label}</span>
+                      {action.key === 'drawify' && (
+                        <span className='ml-auto text-[10px] uppercase tracking-wide text-muted-foreground border border-border rounded-full px-2 py-0.5'>
+                          Beta
+                        </span>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8}>
+                    <div className="text-xs">{aiTooltips[action.key as keyof typeof aiTooltips] || action.request}</div>
+                  </TooltipContent>
+                </Tooltip>
               ))}
               <div className='my-1 h-px bg-border' />
               <button

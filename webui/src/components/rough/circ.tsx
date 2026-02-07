@@ -56,47 +56,32 @@ const SimplifiedCircleOverlay = memo(function SimplifiedCircleOverlay({
   const inset = 1
   const radius = viewBoxSize / 2 - inset
 
-  if (useSvgDash) {
-    return (
-      <svg
-        className='absolute pointer-events-none'
-        style={{
-          inset: visualInset,
-          zIndex: 10,
-          overflow: 'visible',
-          width: 'calc(100% - 0.375rem)',
-          height: 'calc(100% - 0.375rem)',
-        }}
-        viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
-        preserveAspectRatio="none"
-      >
-        <ellipse
-          cx={viewBoxSize / 2}
-          cy={viewBoxSize / 2}
-          rx={radius}
-          ry={radius}
-          fill={fill || 'transparent'}
-          stroke={stroke || 'transparent'}
-          strokeWidth={strokeWidth ?? 1}
-          strokeDasharray={dashArray}
-          strokeLinecap={lineCap}
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
-    )
-  }
-
   return (
-    <div
-      className='absolute rounded-full m-0.75 pointer-events-none'
+    <svg
+      className='absolute pointer-events-none'
       style={{
         inset: visualInset,
-        background: fill || 'transparent',
-        border: `${strokeWidth ?? 1}px solid ${stroke || 'transparent'}`,
-        borderStyle: strokeStyle === 'dashed' ? 'dashed' : strokeStyle === 'dotted' ? 'dotted' : 'solid',
         zIndex: 10,
+        overflow: 'visible',
+        width: 'calc(100% - 0.375rem)',
+        height: 'calc(100% - 0.375rem)',
       }}
-    />
+      viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
+      preserveAspectRatio="none"
+    >
+      <ellipse
+        cx={viewBoxSize / 2}
+        cy={viewBoxSize / 2}
+        rx={radius}
+        ry={radius}
+        fill={fill || 'transparent'}
+        stroke={stroke || 'transparent'}
+        strokeWidth={strokeWidth ?? 1}
+        strokeDasharray={useSvgDash ? dashArray : undefined}
+        strokeLinecap={lineCap}
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
   )
 })
 

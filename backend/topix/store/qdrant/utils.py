@@ -1,9 +1,11 @@
 """Utility functions for Qdrant."""
 
 from pydantic import BaseModel
-from qdrant_client.models import Record, ScoredPoint
+from qdrant_client.models import FieldCondition, Filter, MatchValue, Record, ScoredPoint
 
 from topix.datatypes.chat.chat import Message
+from topix.datatypes.file.chunk import Chunk
+from topix.datatypes.file.document import Document
 from topix.datatypes.newsfeed.newsfeed import Newsfeed
 from topix.datatypes.newsfeed.subscription import Subscription
 from topix.datatypes.note.link import Link
@@ -32,13 +34,13 @@ def payload_dict_to_field_list(payload_dict: dict, prefix: str = "") -> list[str
 class RetrieveOutput(BaseModel):
     """Output for all methods involving retrieval."""
 
-    id: str | int
+    id: str
     resource: Resource | None = None
     vector: list[list[float]] | None = None
     score: float | None = None
 
 
-def convert_point(
+def convert_point(  # noqa: C901
     point: ScoredPoint | Record,
 ) -> RetrieveOutput:
     """Convert a Qdrant point to a resource."""
@@ -62,6 +64,10 @@ def convert_point(
                 resource = Subscription.partial(**point.payload)
             case "newsfeed":
                 resource = Newsfeed.partial(**point.payload)
+            case "document":
+                resource = Document.partial(**point.payload)
+            case "chunk":
+                resource = Chunk.partial(**point.payload)
             case _:
                 raise ValueError(f"Unknown type: {type_}")
 
@@ -70,4 +76,29 @@ def convert_point(
         resource=resource,
         score=score,
         vector=point.vector
+    )
+
+
+def build_filter(
+    must: dict | None = None,
+    should: dict | None = None,
+    must_not: dict | None = None,
+) -> Filter | None:
+    """Build a Qdrant filter supporting must, should, must_not clauses from dicts."""
+    if not any([must, should, must_not]):
+        return None
+
+    def build_conditions(d):
+        if not d:
+            return []
+        return [FieldCondition(key=k, match=MatchValue(value=v)) for k, v in d.items()]
+
+    must_conditions = build_conditions(must)
+    should_conditions = build_conditions(should)
+    must_not_conditions = build_conditions(must_not)
+
+    return Filter(
+        must=must_conditions if must_conditions else None,
+        should=should_conditions if should_conditions else None,
+        must_not=must_not_conditions if must_not_conditions else None,
     )

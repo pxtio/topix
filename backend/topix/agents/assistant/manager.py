@@ -1,6 +1,8 @@
 """Main agent manager."""
+from __future__ import annotations
 
 import logging
+import re
 
 from collections.abc import AsyncGenerator
 
@@ -43,9 +45,18 @@ class AssistantManager:
         self.synthesis_agent = synthesis_agent
 
     @classmethod
-    def from_config(cls, content_store: ContentStore, config: AssistantManagerConfig):
+    def from_config(
+        cls,
+        content_store: ContentStore,
+        config: AssistantManagerConfig,
+        memory_filters: dict | None = None,
+    ) -> AssistantManager:
         """Create an instance of AssistantManager from configuration."""
-        plan_agent = Plan.from_config(content_store, config.plan)
+        plan_agent = Plan.from_config(
+            content_store,
+            config.plan,
+            memory_filters=memory_filters,
+        )
         query_rewrite_agent = QueryRewrite.from_config(config.query_rewrite)
         synthesis_agent = AnswerReformulate.from_config(config.synthesis)
 
@@ -76,18 +87,56 @@ class AssistantManager:
                 return [{"role": "user", "content": query}]
         return [{"role": "user", "content": query}]
 
-    async def _postprocess_answer(
+    async def _postprocess_answer(  # noqa: C901
         self,
         answer: str,
         context: ReasoningContext,
     ) -> str:
         """Post process the final answer from the synthesis agent."""
+        graph_uid: str | None
+        if context.memory_search_filter is not None:
+            graph_uid = context.memory_search_filter.get("graph_uid")
+        else:
+            graph_uid = None
+
+        short_ref_re = re.compile(r"\(/(?P<rtype>[a-z_]+)/(?P<prefix>[a-zA-Z0-9]{4,})\)")
+
         valid_urls = []
         for tool_call in context.tool_calls:
             if tool_call.name == AgentToolName.WEB_SEARCH:
                 search_results = tool_call.output.search_results
                 for result in search_results:
                     valid_urls.append(result.url)
+
+            # Correct shortened URLs in the answer by replacing shortened IDs with full IDs
+            elif tool_call.name == AgentToolName.MEMORY_SEARCH:
+                if graph_uid is not None:
+                    refs = tool_call.output.references
+
+                    # Each ref is a full ID; we match on any prefix the model emits.
+                    def replace_match(match: re.Match[str]) -> str:
+                        # Replace /:type/:prefix with the first matching full ID for that type.
+                        rtype = match.group("rtype")
+                        prefix = match.group("prefix")
+                        found = None
+
+                        for ref in refs:
+                            if ref.ref_type != rtype:
+                                continue
+                            if ref.ref_id.startswith(prefix):
+                                found = ref
+                                break
+
+                        if not found:
+                            return match.group(0)
+
+                        target_type = found.parent_type or found.ref_type
+                        target_id = found.parent_id or found.ref_id
+
+                        return f"(/boards/{graph_uid}/{target_type}s/{target_id})"
+
+                    answer = short_ref_re.sub(replace_match, answer)
+
         return post_process_url_citations(answer, valid_urls)
 
     async def run(

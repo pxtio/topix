@@ -52,7 +52,9 @@ export function computeAttachment(node: NoteNode, targetPoint: Point): { point: 
 }
 
 export function findAttachTarget(point: Point, nodes: NoteNode[]): NoteNode | null {
-  const ordered = [...nodes].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0))
+  const ordered = [...nodes]
+    .filter(n => (n.data as { style?: { type?: string } } | undefined)?.style?.type !== 'slide')
+    .sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0))
   for (const node of ordered) {
     if ((node.data as { kind?: string }).kind === 'point') continue
     if (pointInNoteNode(point, node)) return node

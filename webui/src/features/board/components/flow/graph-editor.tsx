@@ -1,6 +1,8 @@
 import {
   ReactFlow,
   MarkerType,
+  Background,
+  BackgroundVariant,
   useReactFlow,
   SelectionMode,
   useOnViewportChange,
@@ -12,11 +14,12 @@ import {
   type ReactFlowProps,
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/shallow'
 
-import NodeView from './node-view'
+import { NodeView } from './node-view'
 import { PointNode } from './point-node'
+import { DocumentNode } from './document-node'
 import { EdgeView } from './edge/edge-view'
 import { EdgeMarkerDefs } from './edge/edge-markers'
 import { GraphSidebar } from '../style-panel/panel'
@@ -32,19 +35,25 @@ import type { LinkEdge, NoteNode } from '../../types/flow'
 import type { NodeType } from '../../types/style'
 import type { Link } from '../../types/link'
 
-import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/add-node'
+import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/use-add-node'
 import { useDecoratedEdges } from '../../hooks/use-decorated-edges'
 import { usePlaceLine } from '../../hooks/use-place-line'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
-import { useCopyPasteNodes } from '../../hooks/copy-paste'
+import { useCopyPasteNodes } from '../../hooks/use-copy-paste'
+import { useCenterAroundParam } from '../../hooks/use-center-around'
+import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
+import { PresentationControls } from './presentation-controls'
+import { useTheme } from '@/components/theme-provider'
+import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
+import { applyBackgroundAlpha, type BoardBackgroundTexture } from '../../utils/board-background'
 
 import './graph-styles.css'
-import { useSaveThumbnailOnUnmount } from '../../hooks/make-thumbnail'
+import { useThumbnailCapture } from '../../hooks/use-thumbnail-capture'
 
 const proOptions = { hideAttribution: true }
 
-const nodeTypes = { default: NodeView, point: PointNode }
+const nodeTypes = { default: NodeView, point: PointNode, document: DocumentNode }
 const edgeTypes = { default: EdgeView }
 
 const defaultEdgeOptions = {
@@ -77,6 +86,7 @@ const drawableNodeTypes: NodeType[] = [
   'layered-rectangle',
   'thought-cloud',
   'capsule',
+  'slide',
 ]
 
 const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(nodeType)
@@ -210,6 +220,7 @@ export default function GraphEditor() {
     viewportInitialized,
     zoomTo,
     screenToFlowPosition,
+    setCenter,
   } = useReactFlow<NoteNode, LinkEdge>()
 
   const boardId = useGraphStore(state => state.boardId)
@@ -224,6 +235,8 @@ export default function GraphEditor() {
   const onNodesDelete = useGraphStore(state => state.onNodesDelete)
   const onEdgesDelete = useGraphStore(state => state.onEdgesDelete)
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const undo = useGraphStore(state => state.undo)
+  const redo = useGraphStore(state => state.redo)
 
   const isResizingNode = useGraphStore(state => state.isResizingNode)
   const isDragging = useGraphStore(state => state.isDragging)
@@ -233,6 +246,35 @@ export default function GraphEditor() {
   const setZoom = useGraphStore(state => state.setZoom)
   const graphViewports = useGraphStore(useShallow(state => state.graphViewports))
   const setGraphViewport = useGraphStore(state => state.setGraphViewport)
+  const presentationMode = useGraphStore(state => state.presentationMode)
+  const setPresentationMode = useGraphStore(state => state.setPresentationMode)
+  const activeSlideId = useGraphStore(state => state.activeSlideId)
+  const setActiveSlideId = useGraphStore(state => state.setActiveSlideId)
+  const setLastCursorPosition = useGraphStore(state => state.setLastCursorPosition)
+  const boardBackground = useGraphStore(state => state.boardBackground)
+  const boardBackgroundTexture = useGraphStore(state => state.boardBackgroundTexture)
+
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
+  const displayBoardBackground = applyBackgroundAlpha(
+    isDark ? darkModeDisplayHex(boardBackground) || boardBackground : boardBackground,
+    0.5
+  ) || undefined
+  const backgroundVariant = useMemo(() => {
+    const texture = boardBackgroundTexture
+    if (!texture) return null
+    const variants: Record<BoardBackgroundTexture, BackgroundVariant> = {
+      dots: BackgroundVariant.Dots,
+      lines: BackgroundVariant.Lines,
+    }
+    return variants[texture]
+  }, [boardBackgroundTexture])
+  const backgroundColor = useMemo(() => {
+    if (!boardBackgroundTexture) return undefined
+    return boardBackgroundTexture === 'lines'
+      ? 'var(--muted)'
+      : 'var(--muted-foreground)'
+  }, [boardBackgroundTexture])
 
   const mindmaps = useMindMapStore(state => state.mindmaps)
   const { addMindMapToBoardAsync } = useAddMindMapToBoard()
@@ -240,6 +282,17 @@ export default function GraphEditor() {
   useCopyPasteNodes({
     jitterMax: 40,
     shortcuts: true,
+  })
+
+  useCenterAroundParam({ setCenter })
+
+  useBoardShortcuts({
+    enabled: viewMode === 'graph',
+    shortcuts: [
+      { key: 'z', withMod: true, withShift: false, handler: undo },
+      { key: 'z', withMod: true, withShift: true, handler: redo },
+      { key: 'y', withMod: true, handler: redo },
+    ],
   })
 
   const addNoteNode = useAddNoteNode()
@@ -297,6 +350,16 @@ export default function GraphEditor() {
       addNoteNode({ nodeType: 'text', position: flowPoint })
     },
     [viewMode, screenToFlowPosition, addNoteNode],
+  )
+
+  const handlePaneMouseMove = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (viewMode !== 'graph') return
+      if (!screenToFlowPosition) return
+      const flowPoint = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      setLastCursorPosition(flowPoint)
+    },
+    [viewMode, screenToFlowPosition, setLastCursorPosition],
   )
 
   const handlePanelAddNode = useCallback(
@@ -392,6 +455,13 @@ export default function GraphEditor() {
   })
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)
+  const slides = useMemo(
+    () => (nodes as NoteNode[])
+      .filter(n => n.data?.style?.type === 'slide')
+      .sort((a, b) => (a.data.properties.slideNumber?.number ?? 0) - (b.data.properties.slideNumber?.number ?? 0)),
+    [nodes]
+  )
+  const slideIds = useMemo(() => slides.map(s => s.id), [slides])
 
   // Mindmap integration
   useEffect(() => {
@@ -453,12 +523,45 @@ export default function GraphEditor() {
   const handleSelectionEnd = useCallback(() => setIsSelecting(false), [])
   const handleSelectionDragStop = useCallback(() => setIsSelecting(false), [])
 
+  const activeSlideIndex = activeSlideId ? slideIds.indexOf(activeSlideId) : -1
+  const canPrev = activeSlideIndex > 0
+  const canNext = activeSlideIndex >= 0 && activeSlideIndex < slideIds.length - 1
+
+  const goToSlide = useCallback(async (index: number) => {
+    const node = slides[index]
+    if (!node) return
+    setActiveSlideId(node.id)
+    await fitView({ nodes: [node], padding: 0.2, duration: 250 })
+  }, [fitView, setActiveSlideId, slides])
+
+  const restoreViewport = useCallback(() => {
+    if (!boardId) return
+    const saved = graphViewports[boardId]
+    if (saved && rfInstanceRef.current?.setViewport) {
+      rfInstanceRef.current.setViewport(saved, { duration: 200 })
+    }
+  }, [boardId, graphViewports])
+
+  useBoardShortcuts({
+    enabled: presentationMode,
+    shortcuts: [
+      { key: 'arrowleft', handler: () => canPrev && goToSlide(activeSlideIndex - 1) },
+      { key: 'arrowright', handler: () => canNext && goToSlide(activeSlideIndex + 1) },
+      { key: 'escape', handler: () => {
+        setPresentationMode(false)
+        setActiveSlideId(undefined)
+        setEnableSelection(false)
+        restoreViewport()
+      } },
+    ],
+  })
+
   useOnViewportChange({
     onStart: () => {
       setIsMoving(true)
     },
     onEnd: vp => {
-      if (boardId) {
+      if (boardId && !presentationMode) {
         setGraphViewport(boardId, vp)
       }
       setZoom(vp.zoom)
@@ -545,8 +648,7 @@ export default function GraphEditor() {
     }
   }, [])
 
-  // capture thumbnail of current graph view on unmount
-  useSaveThumbnailOnUnmount(boardId || '')
+  const captureThumbnail = useThumbnailCapture(boardId || '')
 
   const handleInit = (instance: ReactFlowInstance<NoteNode, LinkEdge>) => {
     rfInstanceRef.current = instance
@@ -557,6 +659,7 @@ export default function GraphEditor() {
         instance.setViewport(saved, { duration: 0 })
       }
     }
+    captureThumbnail(instance)
   }
 
   return (
@@ -579,6 +682,7 @@ export default function GraphEditor() {
       {/* Graph-only sidebar (style controls) */}
       {viewMode === 'graph' &&
         showStylePanel &&
+        !presentationMode &&
         !isDragging &&
         !moving &&
         !isResizingNode &&
@@ -588,7 +692,12 @@ export default function GraphEditor() {
           </div>
         )}
 
-      <div className="relative w-full h-full" onDoubleClick={handlePaneDoubleClick}>
+      <div
+        className="relative w-full h-full"
+        style={{ backgroundColor: displayBoardBackground }}
+        onDoubleClick={handlePaneDoubleClick}
+        onMouseMove={handlePaneMouseMove}
+      >
         {viewMode === 'graph' ? (
           <GraphContextMenu nodes={nodes} setNodesPersist={setNodesPersist}>
             {({ onPaneContextMenu, onNodeContextMenu }) => (
@@ -613,8 +722,21 @@ export default function GraphEditor() {
                   onNodeContextMenu={onNodeContextMenu}
                   onEdgeDoubleClick={handleEdgeDoubleClick}
                 >
+                  {backgroundVariant && (
+                    <Background
+                      variant={backgroundVariant}
+                      gap={25}
+                      size={1}
+                      color={backgroundColor}
+                    />
+                  )}
                   <EdgeMarkerDefs edges={edges} />
-                  {showMiniMap && !moving && !isDragging && !isResizingNode && !isSelecting && (
+                  {showMiniMap &&
+                    !presentationMode &&
+                    !moving &&
+                    !isDragging &&
+                    !isResizingNode &&
+                    !isSelecting && (
                     <NavigableMiniMap
                       nodes={nodes}
                       onNavigate={handleMiniMapNavigate}
@@ -642,6 +764,21 @@ export default function GraphEditor() {
           <LinearView />
         )}
       </div>
+
+      {presentationMode && (
+        <PresentationControls
+          onPrev={() => canPrev && goToSlide(activeSlideIndex - 1)}
+          onNext={() => canNext && goToSlide(activeSlideIndex + 1)}
+          onStop={() => {
+            setPresentationMode(false)
+            setActiveSlideId(undefined)
+            setEnableSelection(false)
+            restoreViewport()
+          }}
+          disablePrev={!canPrev}
+          disableNext={!canNext}
+        />
+      )}
     </div>
   )
 }

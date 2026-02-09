@@ -49,6 +49,14 @@ export function useAddNoteNode() {
     if (icon) {
       newNote.properties.iconData = { type: 'icon', icon: { type: 'icon', icon } }
     }
+
+    if (nodeType === 'slide') {
+      const slideCount = nodes.filter(n => (n.data as { style?: { type?: string } }).style?.type === 'slide').length
+      const index = slideCount + 1
+      const letter = index <= 26 ? String.fromCharCode(64 + index) : String(index)
+      newNote.properties.slideName = { type: 'text', text: `Slide ${letter}` }
+      newNote.properties.slideNumber = { type: 'number', number: index }
+    }
     const jitter = () => Math.random() * 100 - 50
 
     const container = document.querySelector('.react-flow__viewport')?.getBoundingClientRect()
@@ -74,12 +82,16 @@ export function useAddNoteNode() {
       newNote.properties.nodeSize = { size, type: 'size' }
     }
     const node = convertNoteToNode(newNote)
+    if (nodeType === 'text') {
+      node.data = { ...node.data, autoEdit: true }
+    }
     const maxZ = nodes.reduce((acc, n) => {
       const kind = (n.data as { kind?: string }).kind
-      if (kind === 'point') return acc
+      const nodeType = (n.data as { style?: { type?: string } }).style?.type
+      if (kind === 'point' || nodeType === 'slide') return acc
       return Math.max(acc, n.zIndex ?? 0)
     }, 0)
-    node.zIndex = maxZ + 1
+    node.zIndex = nodeType === 'slide' ? -1000 : maxZ + 1
     const newNodes = nodes.map(n => ({ ...n, selected: false }))
     node.selected = true
     setNodesPersist([...newNodes, node])

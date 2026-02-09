@@ -42,6 +42,7 @@ export const buildPalette = (shade: TailwindShade) =>
     return hex ? [{ name, hex }] : []
   })
 
+export const TAILWIND_50 = buildPalette(50)
 export const TAILWIND_200 = buildPalette(200)
 
 /**

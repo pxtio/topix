@@ -4,6 +4,7 @@ type BoardShortcut = {
   key: string
   handler: () => void
   withMod?: boolean
+  withShift?: boolean
   preventDefault?: boolean
 }
 
@@ -24,6 +25,8 @@ const isMatch = (event: KeyboardEvent, shortcut: BoardShortcut) => {
   const mod = event.metaKey || event.ctrlKey
   if (shortcut.withMod && !mod) return false
   if (!shortcut.withMod && (mod || event.altKey)) return false
+  if (shortcut.withShift === true && !event.shiftKey) return false
+  if (shortcut.withShift === false && event.shiftKey) return false
   return key === shortcut.key.toLowerCase()
 }
 

@@ -6,8 +6,8 @@ import { create } from "zustand"
  * Store for managing mind maps/notes converted from text answers.
  */
 export interface MindMapStore {
-  mindmaps: Map<string, { nodes: NoteNode[], edges: LinkEdge[] }[]>
-  setMindMap: (boardId: string, nodes: NoteNode[], edges: LinkEdge[]) => void
+  mindmaps: Map<string, { nodes: NoteNode[], edges: LinkEdge[], useAnchors?: boolean }[]>
+  setMindMap: (boardId: string, nodes: NoteNode[], edges: LinkEdge[], useAnchors?: boolean) => void
   clearMindMap: (boardId: string) => void
 }
 
@@ -18,11 +18,11 @@ export interface MindMapStore {
 export const useMindMapStore = create<MindMapStore>((set) => ({
   mindmaps: new Map(),
 
-  setMindMap: (boardId, nodes, edges) => set((state) => {
+  setMindMap: (boardId, nodes, edges, useAnchors) => set((state) => {
     const newMindmaps = new Map(state.mindmaps)
     newMindmaps.set(
       boardId,
-      [...(newMindmaps.get(boardId) || []), { nodes, edges }]
+      [...(newMindmaps.get(boardId) || []), { nodes, edges, useAnchors }]
     )
     return { mindmaps: newMindmaps }
   }),

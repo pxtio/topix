@@ -165,7 +165,7 @@ async def update_note(
     user_id: Annotated[str, Depends(get_current_user_uid)],
     body: Annotated[NoteUpdateRequest, Body(description="Note update data")]
 ):
-    """Update a note in a graph."""
+    """Update a note or document node in a graph."""
     store: GraphStore = request.app.graph_store
 
     await store.update_node(node_id=note_id, data=body.data)

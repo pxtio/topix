@@ -13,6 +13,18 @@ import type { Note } from "../types/note"
 
 import { convertEdgeToLinkWithPoints, convertNodeToNote } from "../utils/graph"
 import { computeAttachment, findAttachTarget, nodeCenter } from "../utils/point-attach"
+import {
+  applyEdgePatches,
+  applyNodePatches,
+  diffEdges,
+  diffEdgesById,
+  diffNodes,
+  diffNodesById,
+  hasPatchContent,
+  sanitizeEdges,
+  sanitizeNodes,
+  type Patch,
+} from "../utils/history"
 import { POINT_NODE_SIZE } from "../components/flow/point-node"
 import { DEBOUNCE_DELAY } from "../const"
 
@@ -27,6 +39,16 @@ import {
   saveViewportToStorage,
 } from "./viewport-store"
 import { clearRoughCanvasCache } from "@/components/rough/cache"
+import { generateUuid } from "@/lib/common"
+import {
+  clearBoardBackground,
+  clearBoardBackgroundTexture,
+  getBoardBackground,
+  getBoardBackgroundTexture,
+  setBoardBackground as persistBoardBackground,
+  setBoardBackgroundTexture as persistBoardBackgroundTexture,
+  type BoardBackgroundTexture,
+} from "../utils/board-background"
 
 // --- helpers ---
 
@@ -683,13 +705,27 @@ export interface GraphStore {
   isResizingNode: boolean
   isDragging: boolean
   setIsDragging: (dragging: boolean) => void
+  isDraggingNodes: boolean
+  draggingNodeIds: Set<string>
   draggingPointId?: string
+  lastCursorPosition?: { x: number; y: number }
+  setLastCursorPosition: (position?: { x: number; y: number }) => void
+  viewSlides: boolean
+  setViewSlides: (enabled: boolean) => void
+  presentationMode: boolean
+  setPresentationMode: (enabled: boolean) => void
+  activeSlideId?: string
+  setActiveSlideId: (id?: string) => void
   isSelectMode: boolean
   setIsSelectMode: (enabled: boolean) => void
   isMoving: boolean
   setIsMoving: (moving: boolean) => void
   zoom: number
   setZoom: (zoom: number) => void
+  boardBackground: string | null
+  setBoardBackground: (color: string | null) => void
+  boardBackgroundTexture: BoardBackgroundTexture | null
+  setBoardBackgroundTexture: (texture: BoardBackgroundTexture | null) => void
 
   setNodes: (nodes: Updater<NoteNode[]>) => void
   setEdges: (edges: Updater<LinkEdge[]>) => void
@@ -708,6 +744,15 @@ export interface GraphStore {
 
   graphViewports: Record<string, Viewport>
   setGraphViewport: (boardId: string, viewport: Viewport) => void
+
+  historyPast: Patch[]
+  historyFuture: Patch[]
+  historyLimit: number
+  historyRecording: boolean
+  dragSnapshotNodes: NoteNode[] | null
+  pushPatch: (patch: Patch) => void
+  undo: () => void
+  redo: () => void
 }
 
 export const useGraphStore = create<GraphStore>((set, get) => ({
@@ -723,7 +768,23 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       if (state.boardId !== boardId) {
         clearRoughCanvasCache()
       }
-      return { boardId }
+      return state.boardId !== boardId
+        ? {
+            boardId,
+            historyPast: [],
+            historyFuture: [],
+            dragSnapshotNodes: null,
+            presentationMode: false,
+            activeSlideId: undefined,
+            lastCursorPosition: undefined,
+            boardBackground: getBoardBackground(boardId),
+            boardBackgroundTexture: getBoardBackgroundTexture(boardId),
+          }
+        : {
+            boardId,
+            boardBackground: getBoardBackground(boardId),
+            boardBackgroundTexture: getBoardBackgroundTexture(boardId),
+          }
     })
   },
 
@@ -741,10 +802,44 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   isResizingNode: false,
   isDragging: false,
+  isDraggingNodes: false,
+  draggingNodeIds: new Set(),
   draggingPointId: undefined,
+  lastCursorPosition: undefined,
+  setLastCursorPosition: (position) => set({ lastCursorPosition: position }),
+  viewSlides: true,
+  setViewSlides: (enabled) => set({ viewSlides: enabled }),
+  presentationMode: false,
+  setPresentationMode: (enabled) => set({ presentationMode: enabled }),
+  activeSlideId: undefined,
+  setActiveSlideId: (id) => set({ activeSlideId: id }),
   isSelectMode: false,
   isMoving: false,
   zoom: 1,
+  boardBackground: null,
+  boardBackgroundTexture: null,
+  setBoardBackground: (color) => {
+    const boardId = get().boardId
+    if (!boardId) return
+    if (!color) {
+      clearBoardBackground(boardId)
+      set({ boardBackground: null })
+      return
+    }
+    persistBoardBackground(boardId, color)
+    set({ boardBackground: color })
+  },
+  setBoardBackgroundTexture: (texture) => {
+    const boardId = get().boardId
+    if (!boardId) return
+    if (!texture) {
+      clearBoardBackgroundTexture(boardId)
+      set({ boardBackgroundTexture: null })
+      return
+    }
+    persistBoardBackgroundTexture(boardId, texture)
+    set({ boardBackgroundTexture: texture })
+  },
 
   // --- flexible setters ---
 
@@ -766,6 +861,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   // --- set + background diff + debounced persist ---
 
   setNodesPersist: (nodesOrUpdater) => {
+    const recording = get().historyRecording
     const boardId = get().boardId
     const prevNodes = get().nodes
 
@@ -780,6 +876,18 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       attachedPointIdsByNode: buildAttachedPointIdsByNode(nextNodes),
     })
 
+    if (recording) {
+      const patches = diffNodes(sanitizeNodes(prevNodes), sanitizeNodes(nextNodes))
+      if (patches.length > 0) {
+        get().pushPatch({
+          id: generateUuid(),
+          ts: Date.now(),
+          source: "ui",
+          nodes: patches,
+        })
+      }
+    }
+
     scheduleNodePersistFromDiff(prevNodes, nextNodes, boardId, () => ({
       boardId: get().boardId,
       nodes: get().nodes,
@@ -787,6 +895,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   },
 
   setEdgesPersist: (edgesOrUpdater) => {
+    const recording = get().historyRecording
     const boardId = get().boardId
     const prevEdges = get().edges
 
@@ -796,6 +905,18 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         : edgesOrUpdater
 
     set({ edges: nextEdges })
+
+    if (recording) {
+      const patches = diffEdges(sanitizeEdges(prevEdges), sanitizeEdges(nextEdges))
+      if (patches.length > 0) {
+        get().pushPatch({
+          id: generateUuid(),
+          ts: Date.now(),
+          source: "ui",
+          edges: patches,
+        })
+      }
+    }
 
     scheduleEdgePersistFromDiff(prevEdges, nextEdges, boardId, () => ({
       boardId: get().boardId,
@@ -810,10 +931,36 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const boardId = get().boardId
     if (!boardId) return
 
+    const recording = get().historyRecording
     const prevNodes = get().nodes
     const prevNodesById = get().nodesById
+    const touchedNodeIds = new Set<string>()
+    for (const ch of changes) {
+      if (typeof (ch as { id?: unknown }).id === 'string') {
+        touchedNodeIds.add((ch as { id: string }).id)
+      }
+    }
+    const hasDragStart = changes.some(
+      (ch) => ch.type === "position" && ch.dragging === true,
+    )
+    const hasDragEnd = changes.some(
+      (ch) => ch.type === "position" && ch.dragging === false,
+    )
+    const dragSnapshot = recording
+      ? get().dragSnapshotNodes ?? (hasDragStart ? sanitizeNodes(prevNodes) : null)
+      : null
+
     let attachedIndex = get().attachedPointIdsByNode
     let attachedIndexDirty = false
+    let draggingNodeIds = get().draggingNodeIds
+    let draggingDirty = false
+
+    const ensureDraggingIds = () => {
+      if (!draggingDirty) {
+        draggingNodeIds = new Set(draggingNodeIds)
+        draggingDirty = true
+      }
+    }
 
     const ensureAttachedIndex = () => {
       if (!attachedIndexDirty) {
@@ -863,6 +1010,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       if (updated !== node) {
         nextById.set(id, updated)
         nodesChanged = true
+        touchedNodeIds.add(id)
       }
     }
 
@@ -870,6 +1018,17 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       ch: NodeChange<NoteNode>,
     ): ch is NodeChange<NoteNode> & { id: string; dragging?: boolean } =>
       ch.type === "position" && typeof (ch as { id?: unknown }).id === "string"
+
+    for (const ch of changes) {
+      if (!isPositionChangeWithId(ch)) continue
+      if (ch.dragging === true) {
+        ensureDraggingIds()
+        draggingNodeIds.add(ch.id)
+      } else if (ch.dragging === false) {
+        ensureDraggingIds()
+        draggingNodeIds.delete(ch.id)
+      }
+    }
 
     for (const ch of changes) {
       if (ch.type === "add" && ch.item && isPointNode(ch.item)) {
@@ -1001,6 +1160,40 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       attachedPointIdsByNode: attachedIndexDirty ? attachedIndex : get().attachedPointIdsByNode,
     })
 
+    if (draggingDirty) {
+      set({
+        draggingNodeIds,
+        isDraggingNodes: draggingNodeIds.size > 0,
+      })
+    }
+
+    if (recording) {
+      if (hasDragEnd && dragSnapshot) {
+        const patches = diffNodesById(dragSnapshot, sanitizeNodes(nextNodes), touchedNodeIds)
+        if (patches.length > 0) {
+          get().pushPatch({
+            id: generateUuid(),
+            ts: Date.now(),
+            source: "ui",
+            nodes: patches,
+          })
+        }
+        set({ dragSnapshotNodes: null })
+      } else if (hasDragStart && dragSnapshot) {
+        set({ dragSnapshotNodes: dragSnapshot })
+      } else if (!hasDragStart && !hasDragEnd) {
+        const patches = diffNodesById(sanitizeNodes(prevNodes), sanitizeNodes(nextNodes), touchedNodeIds)
+        if (patches.length > 0) {
+          get().pushPatch({
+            id: generateUuid(),
+            ts: Date.now(),
+            source: "ui",
+            nodes: patches,
+          })
+        }
+      }
+    }
+
     if (onlyTransient) return
 
     const isResizingAtTime = get().isResizingNode
@@ -1128,8 +1321,15 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const boardId = get().boardId
     if (!boardId) return
 
+    const recording = get().historyRecording
     const prevEdges = get().edges
     const prevNodes = get().nodes
+    const touchedEdgeIds = new Set<string>()
+    for (const ch of changes) {
+      if (typeof (ch as { id?: unknown }).id === 'string') {
+        touchedEdgeIds.add((ch as { id: string }).id)
+      }
+    }
 
     // fast path: selection-only
     const onlySelect = changes.every((ch) => ch.type === "select")
@@ -1168,6 +1368,18 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         set({ nodes: nextNodes, nodesById: buildNodesById(nextNodes) })
       }
       return
+    }
+
+    if (recording) {
+      const patches = diffEdgesById(sanitizeEdges(prevEdges), sanitizeEdges(updatedEdges), touchedEdgeIds)
+      if (patches.length > 0) {
+        get().pushPatch({
+          id: generateUuid(),
+          ts: Date.now(),
+          source: "ui",
+          edges: patches,
+        })
+      }
     }
 
     scheduleEdgePersistFromChanges(
@@ -1300,4 +1512,99 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       saveViewportToStorage(boardId, vp)
       return { graphViewports: next }
     }),
+
+  historyPast: [],
+  historyFuture: [],
+  historyLimit: 80,
+  historyRecording: true,
+  dragSnapshotNodes: null,
+
+  pushPatch: (patch) =>
+    set((state) => {
+      if (!hasPatchContent(patch)) return {}
+      const past = [...state.historyPast, patch]
+      if (past.length > state.historyLimit) {
+        past.splice(0, past.length - state.historyLimit)
+      }
+      return {
+        historyPast: past,
+        historyFuture: [],
+      }
+    }),
+
+  undo: () => {
+    const state = get()
+    const patch = state.historyPast[state.historyPast.length - 1]
+    if (!patch) return
+
+    const prevNodes = state.nodes
+    const prevEdges = state.edges
+
+    const nextNodes = patch.nodes
+      ? applyNodePatches(state.nodes, patch.nodes, "undo")
+      : state.nodes
+    const nextEdges = patch.edges
+      ? applyEdgePatches(state.edges, patch.edges, "undo")
+      : state.edges
+
+    set({
+      historyRecording: false,
+      historyPast: state.historyPast.slice(0, -1),
+      historyFuture: [patch, ...state.historyFuture],
+      nodes: nextNodes,
+      edges: nextEdges,
+      nodesById: buildNodesById(nextNodes),
+      attachedPointIdsByNode: buildAttachedPointIdsByNode(nextNodes),
+    })
+
+    scheduleNodePersistFromDiff(prevNodes, nextNodes, state.boardId, () => ({
+      boardId: get().boardId,
+      nodes: get().nodes,
+    }))
+    scheduleEdgePersistFromDiff(prevEdges, nextEdges, state.boardId, () => ({
+      boardId: get().boardId,
+      edges: get().edges,
+      nodes: get().nodes,
+    }))
+
+    setTimeout(() => set({ historyRecording: true }), 0)
+  },
+
+  redo: () => {
+    const state = get()
+    const patch = state.historyFuture[0]
+    if (!patch) return
+
+    const prevNodes = state.nodes
+    const prevEdges = state.edges
+
+    const nextNodes = patch.nodes
+      ? applyNodePatches(state.nodes, patch.nodes, "redo")
+      : state.nodes
+    const nextEdges = patch.edges
+      ? applyEdgePatches(state.edges, patch.edges, "redo")
+      : state.edges
+
+    set({
+      historyRecording: false,
+      historyPast: [...state.historyPast, patch],
+      historyFuture: state.historyFuture.slice(1),
+      nodes: nextNodes,
+      edges: nextEdges,
+      nodesById: buildNodesById(nextNodes),
+      attachedPointIdsByNode: buildAttachedPointIdsByNode(nextNodes),
+    })
+
+    scheduleNodePersistFromDiff(prevNodes, nextNodes, state.boardId, () => ({
+      boardId: get().boardId,
+      nodes: get().nodes,
+    }))
+    scheduleEdgePersistFromDiff(prevEdges, nextEdges, state.boardId, () => ({
+      boardId: get().boardId,
+      edges: get().edges,
+      nodes: get().nodes,
+    }))
+
+    setTimeout(() => set({ historyRecording: true }), 0)
+  },
 }))

@@ -78,6 +78,12 @@ class LinkUpdateRequest(BaseModel):
     data: dict
 
 
+class DocumentUpdateRequest(BaseModel):
+    """Request model for updating a document."""
+
+    data: dict
+
+
 class SubscriptionUpdateRequest(BaseModel):
     """Request model for updating a subscription."""
 
@@ -114,6 +120,13 @@ class ConvertToMindMapRequest(BaseModel):
     """Request model for converting a graph to a mind map."""
 
     answer: str
+
+
+class TranslateTextRequest(BaseModel):
+    """Request model for translating text."""
+
+    text: str
+    target_language: str
 
 
 class WebPagePreviewRequest(BaseModel):

@@ -1,6 +1,6 @@
 import { generateUuid, uuidToNumber } from "@/lib/common"
 import { createDefaultStyle, type NodeType, type Style } from "./style"
-import type { BooleanProperty, IconProperty, ImageProperty, NumberProperty, PositionProperty, SizeProperty, URLProperty } from "@/features/newsfeed/types/properties"
+import type { BooleanProperty, IconProperty, ImageProperty, NumberProperty, PositionProperty, SizeProperty, URLProperty, TextProperty, KeywordProperty } from "@/features/newsfeed/types/properties"
 
 
 /**
@@ -16,6 +16,11 @@ export interface NoteProperties {
   url: URLProperty
   imageUrl: ImageProperty
   iconData: IconProperty
+  slideName?: TextProperty
+  slideNumber?: NumberProperty
+  mimeType?: TextProperty
+  status?: KeywordProperty
+  summary?: TextProperty
 }
 
 
@@ -32,7 +37,7 @@ export interface RichText {
  */
 export interface Note extends Record<string, unknown> {
   id: string
-  type: "note"
+  type: "note" | "document"
   version: number
 
   createdAt?: string
@@ -65,6 +70,9 @@ export const DEFAULT_TEXT_NOTE_HEIGHT = 20
 export const DEFAULT_STICKY_NOTE_WIDTH = 300
 export const DEFAULT_STICKY_NOTE_HEIGHT = 300
 
+export const DEFAULT_SLIDE_WIDTH = 960
+export const DEFAULT_SLIDE_HEIGHT = 540
+
 
 /**
  * Function to create default properties for a note.
@@ -75,6 +83,8 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     { width: DEFAULT_STICKY_NOTE_WIDTH, height: DEFAULT_STICKY_NOTE_HEIGHT }
     : type === 'text' ?
     { width: DEFAULT_TEXT_NOTE_WIDTH, height: DEFAULT_TEXT_NOTE_HEIGHT }
+    : type === 'slide' ?
+    { width: DEFAULT_SLIDE_WIDTH, height: DEFAULT_SLIDE_HEIGHT }
     : { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT }
 
   return {
@@ -104,7 +114,9 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     },
     url: { type: "url" },
     imageUrl: { type: "image" },
-    iconData: { type: "icon" }
+    iconData: { type: "icon" },
+    slideName: { type: "text" },
+    slideNumber: { type: "number" },
   }
 }
 

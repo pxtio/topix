@@ -8,7 +8,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
-from topix.datatypes.property import DataProperty
+from topix.datatypes.property import DataProperty, TextProperty
 from topix.utils.common import gen_uid
 
 logger = logging.getLogger(__name__)
@@ -81,3 +81,24 @@ class Resource(BaseModel):
         }
         all_values["id"] = id
         return cls.model_construct(**all_values)
+
+    def to_embeddable(self) -> list[str]:
+        """Convert the resource to a string that can be embedded in a vector database."""
+        to_embed = []
+        if self.label and self.label.markdown and self.label.searchable:
+            to_embed.append(self.label.markdown)
+
+        if self.content and self.content.markdown and self.content.searchable:
+            to_embed.append(self.content.markdown)
+
+        # Get all searchable text properties
+        for prop in self.properties.__dict__.values():
+            if isinstance(prop, TextProperty) and prop.searchable and prop.text:
+                to_embed.append(prop.text)
+
+        return to_embed
+
+
+def dict_to_embeddable(dct: dict) -> list[str]:
+    """Convert a dict representation of a resource to a list of embeddable strings."""
+    return Resource.model_validate(dct).to_embeddable()

@@ -5,12 +5,18 @@ import { useParams, useSearch } from "@tanstack/react-router"
 // Chat screen component
 export const ChatScreen = () => {
   const chatParams = useParams({ from: ChatUrl, shouldThrow: false })
-  const initialBoardId = useSearch({
+  const newChatBoardId = useSearch({
     from: NewChatUrl,
-    // keeps good types without an assertion
     select: (s: { board_id?: string }) => s.board_id,
     shouldThrow: false
   })
+  const existingChatBoardId = useSearch({
+    from: ChatUrl,
+    select: (s: { board_id?: string }) => s.board_id,
+    shouldThrow: false
+  })
+
+  const initialBoardId = existingChatBoardId ?? newChatBoardId
 
   const chatId = chatParams?.id
 

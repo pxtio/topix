@@ -27,5 +27,7 @@ backups/
 notebooks.exclude/
 .ruff_cache/
 *.pyc
-SKILL.md
+
+# Ignore Codex files
+.codex/
 AGENTS.md

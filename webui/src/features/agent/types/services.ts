@@ -39,6 +39,8 @@ export type ServiceName = typeof SERVICE_NAMES[number]
  */
 export const defaultServices: () => Services = () => ({
   llm: [
+    { name: "openai/gpt-5.2", available: false, provider: "openai" },
+    { name: "openai/gpt-5.2-chat", available: false, provider: "openai" },
     { name: "openai/gpt-5.1", available: false, provider: "openai" },
     { name: "openai/gpt-5.1-chat-latest", available: false, provider: "openai" },
     { name: "openai/gpt-5", available: false, provider: "openai" },
@@ -46,6 +48,7 @@ export const defaultServices: () => Services = () => ({
     { name: "openai/gpt-5-nano", available: false, provider: "openai" },
     { name: "openai/gpt-4.1", available: false, provider: "openai" },
     { name: "openai/gpt-4o", available: false, provider: "openai" },
+    { name: "openrouter/anthropic/claude-opus-4.6", available: false, provider: "openrouter" },
     { name: "openrouter/anthropic/claude-opus-4.5", available: false, provider: "openrouter" },
     { name: "openrouter/anthropic/claude-opus-4.1", available: false, provider: "openrouter" },
     { name: "openrouter/anthropic/claude-sonnet-4.5", available: false, provider: "openrouter" },

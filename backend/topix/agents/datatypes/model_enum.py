@@ -15,6 +15,8 @@ class OpenAIModel(str, Enum):
     GPT_5_NANO = "openai/gpt-5-nano"
     GPT_5_1_CHAT = "openai/gpt-5.1-chat-latest"
     GPT_5_1 = "openai/gpt-5.1"
+    GPT_5_2 = "openai/gpt-5.2"
+    GPT_5_2_CHAT = "openai/gpt-5.2-chat"
 
 
 class GeminiModel(str, Enum):
@@ -28,6 +30,8 @@ class GeminiModel(str, Enum):
 class OpenRouterModel(str, Enum):
     """Anthropic Models."""
 
+    CLAUDE_OPUS_4_6 = "openrouter/anthropic/claude-opus-4.6"
+    CLAUDE_OPUS_4_5 = "openrouter/anthropic/claude-opus-4.5"
     CLAUDE_SONNET_4 = "openrouter/anthropic/claude-sonnet-4.5"
     CLAUDE_OPUS_4_1 = "openrouter/anthropic/claude-opus-4.1"
     CLAUDE_HAIKU = "openrouter/anthropic/claude-3.5-haiku"

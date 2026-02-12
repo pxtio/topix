@@ -8,6 +8,7 @@ from topix.agents.datatypes.outputs import NewsfeedArticle, NewsfeedOutput, Topi
 from topix.agents.newsfeed.collector import NewsfeedCollector, NewsfeedCollectorInput, NewsfeedSynthesizer
 from topix.agents.newsfeed.config import NewsfeedPipelineConfig
 from topix.agents.newsfeed.context import NewsfeedContext
+from topix.agents.newsfeed.default_seed_sources import DefaultSeedSources
 from topix.agents.newsfeed.topic_tracker import TopicSetup, TopicSetupInput
 from topix.agents.run import AgentRunner
 from topix.agents.websearch.utils import pretty_date
@@ -16,6 +17,7 @@ from topix.datatypes.newsfeed.subscription import Subscription, SubscriptionProp
 from topix.datatypes.property import MultiSourceProperty, MultiTextProperty, TextProperty
 from topix.datatypes.resource import RichText
 from topix.store.qdrant.store import ContentStore
+from topix.utils.web.common import get_domain
 from topix.utils.web.favicon import fetch_meta_images_batch
 
 COLLECTOR_MAX_TURNS = 50
@@ -49,7 +51,7 @@ class NewsfeedPipeline:
     @staticmethod
     def _convert_topic_to_subscription(label: str, raw_description: str, topic: TopicTracker) -> Subscription:
         """Convert Topic to Subscription."""
-        return Subscription(
+        subscription = Subscription(
             label=RichText(markdown=label),
             properties=SubscriptionProperties(
                 raw_description=TextProperty(text=raw_description),
@@ -59,6 +61,17 @@ class NewsfeedPipeline:
                 seed_sources=MultiTextProperty(texts=topic.seed_sources)
             )
         )
+        default_seed_sources = DefaultSeedSources.model_fields.get(subscription.label.markdown)
+        if default_seed_sources:
+            for dsource in default_seed_sources:
+                # get domain name
+                domain = get_domain(dsource)
+
+                # only add if not already present
+                if not any(domain in sub_source for sub_source in subscription.properties.seed_sources.texts):
+                    subscription.properties.seed_sources.texts.append(dsource)
+
+        return subscription
 
     async def create_subscription(self, topic: str, raw_description: str = "") -> Subscription:
         """Run the newsfeed pipeline."""
@@ -76,7 +89,7 @@ class NewsfeedPipeline:
 
     def _convert_newsfeed_output_to_markdown(self, output: NewsfeedOutput) -> str:
         """Convert NewsfeedOutput to markdown string."""
-        summary = ""
+        summary = f"# {output.title}\n\n"
         for section in output.sections:
             if not section.articles:
                 continue
@@ -86,9 +99,10 @@ class NewsfeedPipeline:
                 if article.published_at:
                     pretty_date_str = pretty_date(article.published_at)
                     if pretty_date_str:
-                        article_title = f"{article.title} ({pretty_date_str})"
+                        article_title = f"{article_title} ({pretty_date_str})"
                 summary += f"### {article_title} [→]({article.url})\n\n"
-                summary += f"{article.summary}\n\n"
+                if article.summary:
+                    summary += f"{article.summary}\n\n"
         return summary
 
     def _convert_newsfeed_article_to_search_result(self, article: NewsfeedArticle) -> SearchResult:
@@ -100,7 +114,6 @@ class NewsfeedPipeline:
             published_at=article.published_at,
             source_domain=article.source_domain,
             tags=article.tags,
-            score=article.score
         )
 
     async def _add_articles_annotations(self, hits: list[SearchResult]) -> list[SearchResult]:

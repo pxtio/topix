@@ -1,6 +1,7 @@
 """Subscription datatype."""
 from pydantic import Field
 
+from topix.datatypes.lang import LangCodeEnum
 from topix.datatypes.property import BooleanProperty, DataProperty, IconProperty, MultiTextProperty, TextProperty
 from topix.datatypes.resource import Resource, ResourceProperties, RichText
 
@@ -40,6 +41,10 @@ class SubscriptionProperties(ResourceProperties):
 
     collection_running: BooleanProperty = Field(
         default_factory=lambda: BooleanProperty(default=False)
+    )
+
+    lang: LangCodeEnum = Field(
+        default_factory=lambda: LangCodeEnum.ENGLISH
     )
 
 

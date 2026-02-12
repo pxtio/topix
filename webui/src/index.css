@@ -129,10 +129,21 @@
   --sidebar-icon-4: #be185d;
 }
 
-.font-informal {
-  font-size-adjust: 0.45;
-  line-height: 1.5;
-}
+.font-informal { line-height: 1.5; }
+
+.font-informal.text-xs, .font-informal .text-xs { font-size: 0.825rem; }
+.font-informal.text-sm, .font-informal .text-sm { font-size: 0.9625rem; }
+.font-informal.text-base, .font-informal .text-base { font-size: 1.1rem; }
+.font-informal.text-lg, .font-informal .text-lg { font-size: 1.2375rem; }
+.font-informal.text-xl, .font-informal .text-xl { font-size: 1.375rem; }
+.font-informal.text-2xl, .font-informal .text-2xl { font-size: 1.65rem; }
+.font-informal.text-3xl, .font-informal .text-3xl { font-size: 2.0625rem; }
+.font-informal.text-4xl, .font-informal .text-4xl { font-size: 2.475rem; }
+.font-informal.text-5xl, .font-informal .text-5xl { font-size: 3.3rem; }
+.font-informal.text-6xl, .font-informal .text-6xl { font-size: 4.125rem; }
+.font-informal.text-7xl, .font-informal .text-7xl { font-size: 4.95rem; }
+.font-informal.text-8xl, .font-informal .text-8xl { font-size: 6.6rem; }
+.font-informal.text-9xl, .font-informal .text-9xl { font-size: 8.8rem; }
 
 .dark {
   --background: oklch(0.22 0.012 260);

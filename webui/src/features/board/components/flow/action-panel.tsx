@@ -3,7 +3,6 @@ import type { AddNoteNodeOptions } from '../../hooks/use-add-node'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { Chat } from '@/features/agent/components/chat-view'
 import { useGraphStore } from '../../store/graph-store'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
@@ -11,11 +10,8 @@ import { DocumentUploadDialog } from './utils/document-upload'
 import { AiSparkDialog } from './utils/ai-spark-dialog'
 import { NavigatePanel } from './navigate-panel'
 import { ToolPanel } from './tool-panel'
-import { Button } from '@/components/ui/button'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { LinkSquare01Icon } from '@hugeicons/core-free-icons'
-import { BotMessageSquare, ChevronRight } from 'lucide-react'
 import { SlidePanel } from './slide-panel'
+import { CopilotSheet } from './copilot-sheet'
 
 
 type ViewMode = 'graph' | 'linear'
@@ -194,63 +190,33 @@ export const ActionPanel = memo(function ActionPanel({
           <SlidePanel onClose={() => setOpenSlidesPanel(false)} />
         </SheetContent>
       </Sheet>
-      <Sheet open={openChatDialog} onOpenChange={setOpenChatDialog} modal={false}>
-        <SheetContent
-          side="right"
-          showOverlay={false}
-          showClose={false}
-          onInteractOutside={(event) => event.preventDefault()}
-          className="w-[420px] max-w-[92vw] bg-sidebar text-sidebar-foreground border-l border-border p-0"
-        >
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-3 bg-sidebar">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <BotMessageSquare className="size-4 text-sidebar-icon-4" strokeWidth={2} />
-              Board Copilot
-            </div>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setOpenChatDialog(false)
-                  if (currentChatId) {
-                    navigate({ to: "/chats/$id", params: { id: currentChatId } })
-                  } else {
-                    navigate({ to: "/chats" })
-                  }
-                }}
-                title="Open full chat view"
-                aria-label="Open full chat view"
-              >
-                <HugeiconsIcon icon={LinkSquare01Icon} className="size-4" strokeWidth={2} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setOpenChatDialog(false)}
-                title="Close"
-                aria-label="Close"
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          </div>
-          <div className="flex-1 relative bg-sidebar overflow-y-auto scrollbar-thin">
-            {boardId ? (
-              <Chat
-                initialBoardId={boardId}
-                className="relative"
-                showHistoricalChats
-                chatId={currentChatId}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
-                Select a board to start a conversation.
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+      <CopilotSheet
+        open={openChatDialog}
+        onOpenChange={setOpenChatDialog}
+        boardId={boardId}
+        currentChatId={currentChatId}
+        onOpenFullChat={(chatId) => {
+          setOpenChatDialog(false)
+          if (chatId) {
+            navigate({
+              to: "/chats/$id",
+              params: { id: chatId },
+              search: (prev: Record<string, unknown>) => ({
+                ...prev,
+                board_id: boardId || undefined,
+              }),
+            })
+          } else {
+            navigate({
+              to: "/chats",
+              search: (prev: Record<string, unknown>) => ({
+                ...prev,
+                board_id: boardId || undefined,
+              }),
+            })
+          }
+        }}
+      />
     </>
   )
 })

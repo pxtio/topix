@@ -42,7 +42,7 @@ export function MarkdownLink({ children, href, ...rest }: MarkdownLinkProps) {
       href={href}
       target={target}
       rel={rel}
-      className="transition-all inline-block leading-none align-text-bottom p-1 text-muted-foreground text-[10px] font-mono font-medium bg-card hover:bg-accent rounded-lg"
+      className="transition-all inline-block leading-none align-text-bottom p-1 text-muted-foreground text-xs font-mono font-medium bg-card hover:bg-accent rounded-lg"
       onClick={onClick}
       {...rest}
     >

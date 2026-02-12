@@ -27,3 +27,5 @@ backups/
 notebooks.exclude/
 .ruff_cache/
 *.pyc
+SKILL.md
+AGENTS.md

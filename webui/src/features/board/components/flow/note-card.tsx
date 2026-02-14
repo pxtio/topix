@@ -19,6 +19,9 @@ import { LinkSquare02Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
 
 export type NoteWithPin = Note & { pinned?: boolean; autoEdit?: boolean }
 
+/**
+ * Props for the root node card renderer used inside a flow node.
+ */
 type NodeCardProps = {
   note: NoteWithPin
   selected: boolean
@@ -28,6 +31,146 @@ type NodeCardProps = {
   contentRef: React.RefObject<HTMLDivElement | null>
 }
 
+/**
+ * Shared wrapper props for the note label container.
+ */
+type LabelContainerProps = {
+  className: string
+  textColor?: string
+  onDoubleClick: () => void
+  onPointerDown: (e: React.PointerEvent) => void
+  children: React.ReactNode
+}
+
+/**
+ * Generic label wrapper used by both sheet and non-sheet node content.
+ */
+const LabelContainer = memo(function LabelContainer({
+  className,
+  textColor,
+  onDoubleClick,
+  onPointerDown,
+  children,
+}: LabelContainerProps) {
+  return (
+    <div
+      className={className}
+      onDoubleClick={onDoubleClick}
+      onPointerDown={onPointerDown}
+      style={{ color: textColor || 'inherit' }}
+    >
+      {children}
+    </div>
+  )
+})
+
+/**
+ * Props for rendering non-sheet note display content.
+ */
+type NoteDisplayContentProps = {
+  note: NoteWithPin
+  labelEditing: boolean
+  labelDraft: string
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>
+  onLabelChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void
+  contentRef: React.RefObject<HTMLDivElement | null>
+}
+
+/**
+ * Display-only renderer for note content (shape + label markdown or editor).
+ */
+const NoteDisplayContent = memo(function NoteDisplayContent({
+  note,
+  labelEditing,
+  labelDraft,
+  textareaRef,
+  onLabelChange,
+  contentRef,
+}: NoteDisplayContentProps) {
+  const fontFamily = note.style.type === 'sheet' ? 'sans-serif' : note.style.fontFamily
+  const icon = note.properties.iconData?.type === "icon" && note.properties.iconData.icon?.type === "icon"
+    ? note.properties.iconData.icon.icon
+    : undefined
+  const imageUrl = note.properties.imageUrl?.image?.url
+
+  return (
+    <Shape
+      nodeType={note.style.type}
+      value={labelEditing ? labelDraft : (note.label?.markdown || '')}
+      labelEditing={labelEditing}
+      onChange={onLabelChange}
+      textareaRef={textareaRef}
+      textAlign={note.style.textAlign}
+      styleHelpers={{
+        text: textStyleToTwClass(note.style.textStyle),
+        font: fontFamilyToTwClass(fontFamily),
+        size: fontSizeToTwClass(note.style.fontSize)
+      }}
+      contentRef={contentRef}
+      icon={icon}
+      imageUrl={imageUrl}
+    />
+  )
+})
+
+/**
+ * Props for the sheet modal content area.
+ */
+type SheetDialogContentProps = {
+  value: string
+  onSave: (markdown: string) => void
+  onOpenFullView: () => void
+  onClose: () => void
+}
+
+/**
+ * Sheet dialog body with toolbar actions and editor content.
+ */
+const SheetDialogContent = memo(function SheetDialogContent({
+  value,
+  onSave,
+  onOpenFullView,
+  onClose,
+}: SheetDialogContentProps) {
+  return (
+    <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2' showCloseButton={false}>
+      <div className='w-full flex items-center justify-end gap-2 px-2 pt-1'>
+        <DialogTitle className="sr-only">Sheet</DialogTitle>
+        <Button
+          variant={'ghost'}
+          size='icon-sm'
+          onClick={onOpenFullView}
+          title='Open full view'
+          aria-label='Open full view'
+        >
+          <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" strokeWidth={2} />
+        </Button>
+        <Button
+          variant='ghost'
+          size='icon-sm'
+          onClick={onClose}
+          title='Close'
+          aria-label='Close'
+        >
+          <HugeiconsIcon icon={Cancel01Icon} className="size-4" strokeWidth={2} />
+        </Button>
+      </div>
+
+      <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
+        <div className='h-full w-full min-w-0 overflow-y-auto overflow-x-hidden scrollbar-thin'>
+          <SheetEditor
+            value={value}
+            onSave={onSave}
+          />
+        </div>
+      </div>
+    </DialogContent>
+  )
+})
+
+/**
+ * NodeCard: orchestrates note rendering, in-place editing, and sheet dialog behavior.
+ */
 export const NodeCard = memo(({
   note,
   selected,
@@ -38,7 +181,6 @@ export const NodeCard = memo(({
 }: NodeCardProps) => {
   const isSheet = note.style.type === 'sheet'
   const isText = note.style.type === 'text'
-
   const navigate = useNavigate()
 
   const [internalOpen, setInternalOpen] = useState(false)
@@ -57,9 +199,7 @@ export const NodeCard = memo(({
   const selRef = useRef<{ start: number; end: number } | null>(null)
 
   const textColor = isDark ? darkModeDisplayHex(note.style.textColor) || undefined : note.style.textColor
-
   const isPinned = note.properties.pinned.boolean === true
-
   const fontFamily = note.style.type === 'sheet' ? 'sans-serif' : note.style.fontFamily
 
   const labelClass = useMemo(
@@ -237,50 +377,33 @@ export const NodeCard = memo(({
     updateStyle({ backgroundColor: hex })
   }, [updateStyle])
 
-  const icon = useMemo(() => {
-    if (note.properties.iconData?.type === "icon" && note.properties.iconData.icon?.type === "icon") {
-      return note.properties.iconData.icon.icon
-    }
-    return undefined
-  }, [note.properties.iconData])
-
-  const imageUrl = note.properties.imageUrl?.image?.url
-
   if (!isSheet) {
     return (
-      <div
+      <LabelContainer
         className={labelClass}
+        textColor={textColor}
         onDoubleClick={onDoubleClick}
         onPointerDown={stopDragging}
-        style={{ color: textColor || 'inherit' }}
       >
-        <Shape
-          nodeType={note.style.type}
-          value={labelEditing ? labelDraft : (note.label?.markdown || '')}
+        <NoteDisplayContent
+          note={note}
           labelEditing={labelEditing}
-          onChange={handleLabelChange}
+          labelDraft={labelDraft}
+          onLabelChange={handleLabelChange}
           textareaRef={textareaRef}
-          textAlign={note.style.textAlign}
-          styleHelpers={{
-            text: textStyleToTwClass(note.style.textStyle),
-            font: fontFamilyToTwClass(fontFamily),
-            size: fontSizeToTwClass(note.style.fontSize)
-          }}
           contentRef={contentRef}
-          icon={icon}
-          imageUrl={imageUrl}
         />
-      </div>
+      </LabelContainer>
     )
   }
 
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <div
+      <LabelContainer
         className={labelClass}
+        textColor={textColor}
         onDoubleClick={onDoubleClick}
         onPointerDown={stopDragging}
-        style={{ color: textColor || 'inherit' }}
       >
         <SheetNodeView
           note={note}
@@ -291,41 +414,14 @@ export const NodeCard = memo(({
           onDelete={onDelete}
           onOpenSticky={openDialogFromSticky}
         />
-      </div>
+      </LabelContainer>
 
-      {/* DIALOG CONTENT */}
-      <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2' showCloseButton={false}>
-        <div className='w-full flex items-center justify-end gap-2 px-2 pt-1'>
-          <DialogTitle className="sr-only">Sheet</DialogTitle>
-          <Button
-            variant={'ghost'}
-            size='icon-sm'
-            onClick={handleOpenFullView}
-            title='Open full view'
-            aria-label='Open full view'
-          >
-            <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" strokeWidth={2} />
-          </Button>
-          <Button
-            variant='ghost'
-            size='icon-sm'
-            onClick={() => setDialogOpen(false)}
-            title='Close'
-            aria-label='Close'
-          >
-            <HugeiconsIcon icon={Cancel01Icon} className="size-4" strokeWidth={2} />
-          </Button>
-        </div>
-
-        <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
-          <div className='h-full w-full min-w-0 overflow-y-auto overflow-x-hidden scrollbar-thin'>
-            <SheetEditor
-              value={note.content?.markdown || ''}
-              onSave={handleNoteChange}
-            />
-          </div>
-        </div>
-      </DialogContent>
+      <SheetDialogContent
+        value={note.content?.markdown || ''}
+        onSave={handleNoteChange}
+        onOpenFullView={handleOpenFullView}
+        onClose={() => setDialogOpen(false)}
+      />
     </Dialog>
   )
 })

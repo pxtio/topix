@@ -7,8 +7,13 @@ import { ImageShape } from './image-shape'
 import { LiteMarkdown } from '@/components/markdown/lite-markdown'
 import { getShapeContentScale } from '../../utils/shape-content-scale'
 
+
 type TextAlign = 'left' | 'center' | 'right'
 
+
+/**
+ * Props for the shape renderer used by note content.
+ */
 interface ShapeProps {
   nodeType: NodeType
   value: string
@@ -28,7 +33,204 @@ interface ShapeProps {
 
 
 /**
- * Component representing a shape with editable text.
+ * Shared props for editable textarea inputs used inside shapes.
+ */
+type TextareaInputProps = {
+  className: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  onKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void
+  placeholder: string
+  textareaRef?: RefObject<HTMLTextAreaElement | null>
+  minRows?: number
+  readOnly?: boolean
+}
+
+
+/**
+ * Reusable autosizing textarea wrapper for shape editing surfaces.
+ */
+const TextareaInput = memo(function TextareaInput({
+  className,
+  value,
+  onChange,
+  onKeyDown,
+  placeholder,
+  textareaRef,
+  minRows,
+  readOnly,
+}: TextareaInputProps) {
+  return (
+    <TextareaAutosize
+      className={className}
+      value={value}
+      onChange={onChange}
+      onKeyDown={onKeyDown}
+      placeholder={placeholder}
+      ref={textareaRef}
+      minRows={minRows}
+      readOnly={readOnly}
+    />
+  )
+})
+
+
+/**
+ * Props for rendering image node content with optional caption overlay.
+ */
+type ImageNodeViewProps = {
+  imageUrl?: string
+  value: string
+  labelEditing: boolean
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  onKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void
+  placeholder: string
+  textareaRef?: RefObject<HTMLTextAreaElement | null>
+}
+
+
+/**
+ * Image node renderer that overlays editable markdown caption content.
+ */
+const ImageNodeView = memo(function ImageNodeView({
+  imageUrl,
+  value,
+  labelEditing,
+  onChange,
+  onKeyDown,
+  placeholder,
+  textareaRef,
+}: ImageNodeViewProps) {
+  const hasLabel = value.trim().length > 0
+
+  return (
+    <div className='relative w-full h-full rounded-md'>
+      <div className='absolute inset-0 flex items-center justify-center'>
+        {imageUrl ? (
+          <ImageShape imageUrl={imageUrl} className="w-full h-full" />
+        ) : (
+          <div className='w-full h-full flex items-center justify-center text-sm text-muted-foreground/60'>
+            No image selected
+          </div>
+        )}
+      </div>
+
+      <div className={`absolute left-3 right-3 -bottom-4 transform translate-y-1/2 flex justify-center z-10 ${labelEditing ? '' : 'pointer-events-none'}`}>
+        {labelEditing ? (
+          <TextareaInput
+            className='nodrag nopan nowheel w-full border border-border rounded-md bg-background/90 text-sm text-center shadow-sm px-3 py-2'
+            value={value}
+            onChange={onChange}
+            onKeyDown={onKeyDown}
+            placeholder={placeholder}
+            textareaRef={textareaRef}
+            minRows={1}
+          />
+        ) : hasLabel ? (
+          <LiteMarkdown
+            text={value}
+            className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
+          />
+        ) : (
+          <div className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-muted-foreground/70'>
+            {placeholder}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+})
+
+
+/**
+ * Props for rendering icon-only node content.
+ */
+type IconNodeViewProps = {
+  icon?: string
+  contentRef: RefObject<HTMLDivElement | null>
+}
+
+
+/**
+ * Icon node renderer with centered icon preview.
+ */
+const IconNodeView = memo(function IconNodeView({ icon, contentRef }: IconNodeViewProps) {
+  return (
+    <div className='w-full h-full flex items-center justify-center'>
+      <div className='w-full' ref={contentRef}>
+        {icon && <IconShape iconName={icon} />}
+      </div>
+    </div>
+  )
+})
+
+
+/**
+ * Props for rendering standard text-like shape content.
+ */
+type TextNodeViewProps = {
+  value: string
+  labelEditing: boolean
+  contentRef: RefObject<HTMLDivElement | null>
+  contentSize: string
+  baseClassName: string
+  notEditingSpanClass: string
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  onKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void
+  placeholder: string
+  textareaRef?: RefObject<HTMLTextAreaElement | null>
+}
+
+
+/**
+ * Text shape renderer for markdown display and textarea editing modes.
+ */
+const TextNodeView = memo(function TextNodeView({
+  value,
+  labelEditing,
+  contentRef,
+  contentSize,
+  baseClassName,
+  notEditingSpanClass,
+  onChange,
+  onKeyDown,
+  placeholder,
+  textareaRef,
+}: TextNodeViewProps) {
+  return (
+    <div className='w-full h-full flex items-center justify-center'>
+      <div
+        className='flex items-center justify-center'
+        style={{ width: contentSize }}
+        ref={contentRef}
+      >
+        {labelEditing ? (
+          <TextareaInput
+            className={`${baseClassName} nodrag nopan nowheel`}
+            value={value}
+            onChange={onChange}
+            onKeyDown={onKeyDown}
+            placeholder={placeholder}
+            textareaRef={textareaRef}
+            readOnly={!labelEditing}
+          />
+        ) : (
+          <div className={`${baseClassName} whitespace-pre-wrap`}>
+            {value.trim() ? (
+              <LiteMarkdown text={value} className='block' />
+            ) : (
+              <span className={notEditingSpanClass}>{placeholder}</span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+})
+
+
+/**
+ * Shape: top-level content renderer for image/icon/text-like note variants.
  */
 export const Shape = memo(function Shape({
   nodeType,
@@ -56,7 +258,6 @@ export const Shape = memo(function Shape({
   const placeHolder = nodeType === 'text' ? 'Add text...' : isImageNode ? 'Add caption...' : ''
   const contentScale = getShapeContentScale(nodeType)
   const contentSize = contentScale < 1 ? `${contentScale * 100}%` : '100%'
-
   const notEditingSpanClass = value.trim() ? '' : 'text-muted-foreground/50'
 
   const handleTextareaKeyDown = useCallback((event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
@@ -72,83 +273,35 @@ export const Shape = memo(function Shape({
   }, [])
 
   if (isImageNode) {
-    const hasLabel = value.trim().length > 0
-
     return (
-      <div className='relative w-full h-full rounded-md'>
-        <div className='absolute inset-0 flex items-center justify-center'>
-          {imageUrl ? (
-            <ImageShape imageUrl={imageUrl} className="w-full h-full" />
-          ) : (
-            <div className='w-full h-full flex items-center justify-center text-sm text-muted-foreground/60'>
-              No image selected
-            </div>
-          )}
-        </div>
-
-        <div className={`absolute left-3 right-3 -bottom-4 transform translate-y-1/2 flex justify-center z-10 ${labelEditing ? '' : 'pointer-events-none'}`}>
-          {labelEditing ? (
-            <TextareaAutosize
-              className='nodrag nopan nowheel w-full border border-border rounded-md bg-background/90 text-sm text-center shadow-sm px-3 py-2'
-              value={value}
-              onChange={onChange}
-              onKeyDown={handleTextareaKeyDown}
-              placeholder={placeHolder}
-              ref={textareaRef}
-              minRows={1}
-            />
-          ) : hasLabel ? (
-            <LiteMarkdown
-              text={value}
-              className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
-            />
-          ) : (
-            <div className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-muted-foreground/70'>
-              {placeHolder}
-            </div>
-          )}
-        </div>
-      </div>
+      <ImageNodeView
+        imageUrl={imageUrl}
+        value={value}
+        labelEditing={labelEditing}
+        onChange={onChange}
+        onKeyDown={handleTextareaKeyDown}
+        placeholder={placeHolder}
+        textareaRef={textareaRef}
+      />
     )
   }
 
   if (isIconNode) {
-    return (
-      <div className='w-full h-full flex items-center justify-center'>
-        <div className='w-full' ref={contentRef}>
-          {icon && <IconShape iconName={icon} />}
-        </div>
-      </div>
-    )
+    return <IconNodeView icon={icon} contentRef={contentRef} />
   }
 
   return (
-    <div className='w-full h-full flex items-center justify-center'>
-      <div
-        className='flex items-center justify-center'
-        style={{ width: contentSize }}
-        ref={contentRef}
-      >
-        {labelEditing ? (
-          <TextareaAutosize
-            className={`${base} nodrag nopan nowheel`}
-            value={value}
-            onChange={onChange}
-            onKeyDown={handleTextareaKeyDown}
-            placeholder={placeHolder}
-            ref={textareaRef}
-            readOnly={!labelEditing}
-          />
-        ) : (
-          <div className={`${base} whitespace-pre-wrap`}>
-            {value.trim() ? (
-              <LiteMarkdown text={value} className='block' />
-            ) : (
-              <span className={notEditingSpanClass}>{placeHolder}</span>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+    <TextNodeView
+      value={value}
+      labelEditing={labelEditing}
+      contentRef={contentRef}
+      contentSize={contentSize}
+      baseClassName={base}
+      notEditingSpanClass={notEditingSpanClass}
+      onChange={onChange}
+      onKeyDown={handleTextareaKeyDown}
+      placeholder={placeHolder}
+      textareaRef={textareaRef}
+    />
   )
 })

@@ -1,6 +1,8 @@
 import { OpenAI, Gemini, Anthropic, DeepSeek, Mistral, Moonshot } from '@lobehub/icons'
 
 export const LlmModels = [
+  "openai/gpt-5.2",
+  "openai/gpt-5.2-chat",
   "openai/gpt-5.1",
   "openai/gpt-5.1-chat-latest",
   "openai/gpt-4o",
@@ -8,6 +10,7 @@ export const LlmModels = [
   "openai/gpt-5",
   "openai/gpt-5-mini",
   "openai/gpt-5-nano",
+  "openrouter/anthropic/claude-opus-4.6",
   "openrouter/anthropic/claude-opus-4.5",
   "openrouter/anthropic/claude-opus-4.1",
   "openrouter/anthropic/claude-sonnet-4.5",
@@ -25,6 +28,8 @@ export const LlmModels = [
 export type LlmModel = typeof LlmModels[number]
 
 export const LlmName: Record<LlmModel, string> = {
+  "openai/gpt-5.2": "GPT-5.2",
+  "openai/gpt-5.2-chat": "GPT-5.2 Chat",
   "openai/gpt-5.1-chat-latest": "GPT-5.1 Chat",
   "openai/gpt-5.1": "GPT-5.1",
   "openai/gpt-4o": "GPT-4o",
@@ -35,6 +40,7 @@ export const LlmName: Record<LlmModel, string> = {
   "openrouter/google/gemini-3-pro-preview": "Gemini 3 Pro Preview",
   "openrouter/google/gemini-2.5-pro": "Gemini 2.5 Pro",
   "openrouter/google/gemini-2.5-flash": "Gemini 2.5 Flash",
+  "openrouter/anthropic/claude-opus-4.6": "Claude Opus 4.6",
   "openrouter/anthropic/claude-opus-4.5": "Claude Opus 4.5",
   "openrouter/anthropic/claude-opus-4.1": "Claude Opus 4.1",
   "openrouter/anthropic/claude-sonnet-4.5": "Claude Sonnet 4.5",
@@ -47,6 +53,8 @@ export const LlmName: Record<LlmModel, string> = {
 }
 
 export const LlmDescription: Record<LlmModel, string> = {
+  "openai/gpt-5.2": "Next-generation model offering advanced reasoning and broader skill coverage",
+  "openai/gpt-5.2-chat": "Latest GPT-5.2 model optimized for chat applications with enhanced capabilities",
   "openai/gpt-5.1": "Next-generation model offering advanced reasoning and broader skill coverage",
   "openai/gpt-5.1-chat-latest": "Latest GPT-5.1 model optimized for chat applications with enhanced capabilities",
   "openai/gpt-4o": "High-quality, fast, and capable model with strong reasoning and low latency",
@@ -57,6 +65,7 @@ export const LlmDescription: Record<LlmModel, string> = {
   "openrouter/google/gemini-3-pro-preview": "Cutting-edge Gemini model with advanced reasoning and multimodal capabilities",
   "openrouter/google/gemini-2.5-pro": "Powerful Gemini model designed for professional applications with enhanced understanding",
   "openrouter/google/gemini-2.5-flash": "Lightweight Gemini variant optimized for speed and efficiency",
+  "openrouter/anthropic/claude-opus-4.6": "Top-tier Claude model known for its long-context reasoning and safety alignment",
   "openrouter/anthropic/claude-opus-4.5": "Top-tier Claude model known for its long-context reasoning and safety alignment",
   "openrouter/anthropic/claude-opus-4.1": "Top-tier Claude model known for its long-context reasoning and safety alignment",
   "openrouter/anthropic/claude-sonnet-4.5": "Balanced Claude model combining speed with nuanced understanding",
@@ -74,6 +83,8 @@ export type LlmTier = typeof LlmTiers[number]
 
 
 export const LlmBadge: Record<LlmModel, LlmTier> = {
+  "openai/gpt-5.2": "Elite",
+  "openai/gpt-5.2-chat": "Elite",
   "openai/gpt-5.1-chat-latest": "Elite",
   "openai/gpt-5.1": "Elite",
   "openai/gpt-4o": "Balanced",
@@ -84,6 +95,7 @@ export const LlmBadge: Record<LlmModel, LlmTier> = {
   "openrouter/google/gemini-3-pro-preview": "Elite",
   "openrouter/google/gemini-2.5-pro": "Elite",
   "openrouter/google/gemini-2.5-flash": "Rapid",
+  "openrouter/anthropic/claude-opus-4.6": "Elite",
   "openrouter/anthropic/claude-opus-4.5": "Elite",
   "openrouter/anthropic/claude-opus-4.1": "Elite",
   "openrouter/anthropic/claude-sonnet-4.5": "Balanced",
@@ -107,6 +119,8 @@ export const LlmFamilies = [
 export type LlmFamily = typeof LlmFamilies[number]
 
 export const LlmFamilyMap: Record<LlmModel, LlmFamily> = {
+  "openai/gpt-5.2": "openai",
+  "openai/gpt-5.2-chat": "openai",
   "openai/gpt-5.1-chat-latest": "openai",
   "openai/gpt-5.1": "openai",
   "openai/gpt-4o": "openai",
@@ -117,6 +131,7 @@ export const LlmFamilyMap: Record<LlmModel, LlmFamily> = {
   "openrouter/google/gemini-3-pro-preview": "google",
   "openrouter/google/gemini-2.5-pro": "google",
   "openrouter/google/gemini-2.5-flash": "google",
+  "openrouter/anthropic/claude-opus-4.6": "anthropic",
   "openrouter/anthropic/claude-opus-4.5": "anthropic",
   "openrouter/anthropic/claude-opus-4.1": "anthropic",
   "openrouter/anthropic/claude-sonnet-4.5": "anthropic",

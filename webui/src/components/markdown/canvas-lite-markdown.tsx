@@ -102,6 +102,66 @@ let isQueueRunning = false
 const measureCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null
 const measureCtx = measureCanvas?.getContext('2d') ?? null
 const widthCache = new Map<string, number>()
+const fontEpochListeners = new Set<(epoch: number) => void>()
+let fontEpoch = 0
+let fontTrackingInitialized = false
+
+const clearRenderCache = () => {
+  for (const entry of renderCache.values()) {
+    URL.revokeObjectURL(entry.url)
+  }
+  renderCache.clear()
+}
+
+const clearMeasureCache = () => {
+  widthCache.clear()
+}
+
+const emitFontEpoch = () => {
+  for (const listener of fontEpochListeners) {
+    listener(fontEpoch)
+  }
+}
+
+const bumpFontEpoch = () => {
+  fontEpoch += 1
+  clearRenderCache()
+  clearMeasureCache()
+  emitFontEpoch()
+}
+
+const subscribeFontEpoch = (listener: (epoch: number) => void) => {
+  fontEpochListeners.add(listener)
+  return () => {
+    fontEpochListeners.delete(listener)
+  }
+}
+
+const initFontTracking = () => {
+  if (fontTrackingInitialized) return
+  fontTrackingInitialized = true
+
+  if (typeof document === 'undefined' || !('fonts' in document)) return
+  const fontSet = document.fonts
+  let didSettleInitialFonts = false
+
+  fontSet.ready
+    .then(() => {
+      if (didSettleInitialFonts) return
+      didSettleInitialFonts = true
+      bumpFontEpoch()
+    })
+    .catch(() => {
+      // ignore
+    })
+
+  fontSet.addEventListener?.('loadingdone', () => {
+    if (!didSettleInitialFonts) {
+      didSettleInitialFonts = true
+    }
+    bumpFontEpoch()
+  })
+}
 
 /**
  * Buckets zoom to avoid cache churn from tiny floating-point zoom deltas.
@@ -798,6 +858,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   textStyle = 'normal',
   textColor = '#1f2937',
 }: CanvasLiteMarkdownProps) {
+  const [fontEpochState, setFontEpochState] = useState(() => fontEpoch)
   const resolvedWidth = Math.max(40, Math.floor(width ?? 280))
   const resolvedHeight = Math.max(40, Math.floor(height ?? 140))
   const normalizedText = text.trim()
@@ -814,11 +875,16 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   const textHash = useMemo(() => hashText(text), [text])
 
   const cacheKey = useMemo(
-    () => `${textHash}:${text.length}:${resolvedWidth}:${resolvedHeight}:${quantizedZoom}:${dprBucket}:${effectiveRenderScale}:${align}:${fontFamily}:${fontSize}:${textStyle}:${textColor}`,
-    [textHash, text.length, resolvedWidth, resolvedHeight, quantizedZoom, dprBucket, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor]
+    () => `${fontEpochState}:${textHash}:${text.length}:${resolvedWidth}:${resolvedHeight}:${quantizedZoom}:${dprBucket}:${effectiveRenderScale}:${align}:${fontFamily}:${fontSize}:${textStyle}:${textColor}`,
+    [fontEpochState, textHash, text.length, resolvedWidth, resolvedHeight, quantizedZoom, dprBucket, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor]
   )
 
   const [renderUrl, setRenderUrl] = useState<string>(() => renderCache.get(cacheKey)?.url ?? '')
+
+  useEffect(() => {
+    initFontTracking()
+    return subscribeFontEpoch(setFontEpochState)
+  }, [])
 
   /**
    * Requests a rendered bitmap for current props and updates local image URL

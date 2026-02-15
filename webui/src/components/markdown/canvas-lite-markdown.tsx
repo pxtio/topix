@@ -37,6 +37,7 @@ type RenderOptions = {
   width: number
   height: number
   renderScale: number
+  dpr: number
   align: TextAlign
   fontFamily: FontFamily
   fontSize: FontSize
@@ -84,6 +85,8 @@ const MAX_CACHE_SIZE = 700
 const MAX_WIDTH_CACHE_SIZE = 5000
 const MIN_RENDER_SCALE = 0.15
 const MAX_RENDER_SCALE = 1.5
+const MAX_RENDER_WIDTH = 1600
+const MAX_RENDER_HEIGHT = 900
 
 const renderCache = new Map<string, CacheEntry>()
 const pendingTasks = new Map<string, QueueTask>()
@@ -100,6 +103,15 @@ const widthCache = new Map<string, number>()
 const quantizeZoom = (value: number): number => {
   if (!Number.isFinite(value)) return 1
   return Math.max(0.1, Math.round(value * 10) / 10)
+}
+
+/**
+ * Buckets DPR to keep cache keys stable across tiny devicePixelRatio variance.
+ */
+const quantizeDpr = (value: number): number => {
+  if (!Number.isFinite(value)) return 1
+  const clamped = Math.max(1, Math.min(3, value))
+  return Math.round(clamped * 4) / 4
 }
 
 /**
@@ -127,8 +139,8 @@ const resolveRenderScale = (baseScale: number, zoom: number, isMoving: boolean):
   )
 
   if (isMoving) {
-    const movingScale = Math.max(MIN_RENDER_SCALE, Math.min(0.55, clampedBase * 0.75))
-    return Math.min(movingScale, idleScale)
+    const movingScale = idleScale * 0.75
+    return Math.max(MIN_RENDER_SCALE, Math.min(0.55, movingScale))
   }
 
   return idleScale
@@ -596,13 +608,21 @@ const drawToCanvas = (ctx: CanvasRenderingContext2D, opts: RenderOptions, lines:
  */
 const renderToObjectUrl = async (opts: RenderOptions): Promise<string> => {
   const renderScale = Math.max(MIN_RENDER_SCALE, Math.min(MAX_RENDER_SCALE, opts.renderScale))
+  const dprScale = Math.max(1, Math.min(3, opts.dpr))
+  const baseScale = renderScale * dprScale
+  const limiter = Math.min(
+    1,
+    MAX_RENDER_WIDTH / (opts.width * baseScale),
+    MAX_RENDER_HEIGHT / (opts.height * baseScale)
+  )
+  const effectiveScale = baseScale * limiter
   const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.floor(opts.width * renderScale))
-  canvas.height = Math.max(1, Math.floor(opts.height * renderScale))
+  canvas.width = Math.max(1, Math.floor(opts.width * effectiveScale))
+  canvas.height = Math.max(1, Math.floor(opts.height * effectiveScale))
 
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas context unavailable')
-  ctx.scale(renderScale, renderScale)
+  ctx.scale(effectiveScale, effectiveScale)
 
   const lines = layoutTokens(tokenize(opts.text), opts)
   drawToCanvas(ctx, opts, lines)
@@ -767,6 +787,10 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   const resolvedHeight = Math.max(40, Math.floor(height ?? 140))
   const normalizedText = text.trim()
   const quantizedZoom = useMemo(() => quantizeZoom(zoom), [zoom])
+  const dprBucket = useMemo(() => {
+    if (typeof window === 'undefined') return 1
+    return quantizeDpr(window.devicePixelRatio || 1)
+  }, [])
   const effectiveRenderScale = useMemo(
     () => resolveRenderScale(renderScale, quantizedZoom, isMoving),
     [renderScale, quantizedZoom, isMoving]
@@ -775,8 +799,8 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   const textHash = useMemo(() => hashText(text), [text])
 
   const cacheKey = useMemo(
-    () => `${textHash}:${text.length}:${resolvedWidth}:${resolvedHeight}:${quantizedZoom}:${effectiveRenderScale}:${align}:${fontFamily}:${fontSize}:${textStyle}:${textColor}`,
-    [textHash, text.length, resolvedWidth, resolvedHeight, quantizedZoom, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor]
+    () => `${textHash}:${text.length}:${resolvedWidth}:${resolvedHeight}:${quantizedZoom}:${dprBucket}:${effectiveRenderScale}:${align}:${fontFamily}:${fontSize}:${textStyle}:${textColor}`,
+    [textHash, text.length, resolvedWidth, resolvedHeight, quantizedZoom, dprBucket, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor]
   )
 
   const [renderUrl, setRenderUrl] = useState<string>(() => renderCache.get(cacheKey)?.url ?? '')
@@ -800,6 +824,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
         width: resolvedWidth,
         height: resolvedHeight,
         renderScale: effectiveRenderScale,
+        dpr: dprBucket,
         align,
         fontFamily,
         fontSize,
@@ -815,7 +840,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
     return () => {
       cancelled = true
     }
-  }, [cacheKey, normalizedText, text, resolvedWidth, resolvedHeight, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor])
+  }, [cacheKey, normalizedText, text, resolvedWidth, resolvedHeight, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor, dprBucket])
 
   if (!normalizedText) return null
 

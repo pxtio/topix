@@ -91,6 +91,9 @@ const measureCtx = measureCanvas?.getContext('2d') ?? null
 const widthCache = new Map<string, number>()
 
 
+/**
+ * Normalizes quick symbol shorthand to unicode glyphs before tokenization.
+ */
 const transformSymbols = (value: string) =>
   value.replace(/<=>|<->|<-|->|\[\]|\[[vx]\]/gi, match => {
     const normalized = match.toLowerCase()
@@ -105,6 +108,10 @@ const transformSymbols = (value: string) =>
   })
 
 
+/**
+ * Splits one line into inline markdown tokens.
+ * This parser intentionally supports a small markdown subset for fast rendering.
+ */
 function tokenizeInline(segment: string): Token[] {
   if (!segment) return []
   const tokens: Token[] = []
@@ -147,6 +154,9 @@ function tokenizeInline(segment: string): Token[] {
 }
 
 
+/**
+ * Tokenizes multi-line markdown while preserving line breaks and rule lines.
+ */
 function tokenize(input: string): Token[] {
   if (!input) return []
   const tokens: Token[] = []
@@ -170,27 +180,43 @@ function tokenize(input: string): Token[] {
 }
 
 
+/**
+ * Breaks text into words/spaces so wrapping logic can preserve spacing.
+ */
 const splitChunks = (text: string): string[] => text.split(/(\s+)/g).filter(Boolean)
 
 
+/**
+ * Resolves effective font weight from inline token style plus node text style.
+ */
 const getFontWeight = (type: InlineType, textStyle: TextStyle): string => {
   if (type === 'bold' || textStyle === 'bold') return '700'
   return '400'
 }
 
 
+/**
+ * Resolves effective font style from inline token style plus node text style.
+ */
 const getFontStyle = (type: InlineType, textStyle: TextStyle): string => {
   if (type === 'italic' || textStyle === 'italic') return 'italic'
   return 'normal'
 }
 
 
+/**
+ * Chooses font family for each token type.
+ * Inline code always uses monospace regardless of node font family.
+ */
 const getFontFamily = (type: InlineType, fontFamily: FontFamily): string => {
   if (type === 'code') return FONT_FAMILY_MAP.monospace
   return FONT_FAMILY_MAP[fontFamily]
 }
 
 
+/**
+ * Builds a canvas font string used by both text measurement and draw calls.
+ */
 const getCanvasFont = ({
   type,
   fontFamily,
@@ -204,6 +230,10 @@ const getCanvasFont = ({
 }) => `${getFontStyle(type, textStyle)} ${getFontWeight(type, textStyle)} ${FONT_SIZE_MAP[fontSize]}px ${getFontFamily(type, fontFamily)}`
 
 
+/**
+ * Measures text width with memoization to avoid repeated canvas measurements.
+ * Cache key includes both text and full font descriptor.
+ */
 const measureText = ({
   text,
   type,
@@ -232,6 +262,10 @@ const measureText = ({
 }
 
 
+/**
+ * Performs text wrapping/layout and converts tokens into drawable lines.
+ * Output lines are consumed by the canvas draw pass.
+ */
 function layoutTokens(tokens: Token[], opts: RenderOptions): LayoutLine[] {
   const maxWidth = Math.max(40, opts.width - H_PADDING * 2)
 
@@ -345,6 +379,9 @@ function layoutTokens(tokens: Token[], opts: RenderOptions): LayoutLine[] {
 }
 
 
+/**
+ * Computes horizontal starting x for one line based on node text alignment.
+ */
 const getTextX = (opts: RenderOptions, lineWidth: number): number => {
   if (opts.align === 'center') return Math.floor((opts.width - lineWidth) / 2)
   if (opts.align === 'right') return Math.max(H_PADDING, opts.width - H_PADDING - lineWidth)
@@ -352,6 +389,9 @@ const getTextX = (opts: RenderOptions, lineWidth: number): number => {
 }
 
 
+/**
+ * Draws underline/strikethrough decorations after the text run is painted.
+ */
 const drawRunDecoration = ({
   ctx,
   x,
@@ -387,6 +427,10 @@ const drawRunDecoration = ({
 }
 
 
+/**
+ * Paints the laid-out markdown lines into the target canvas context.
+ * Includes vertical centering, background chips (code/highlight), and decorations.
+ */
 const drawToCanvas = (ctx: CanvasRenderingContext2D, opts: RenderOptions, lines: LayoutLine[]) => {
   ctx.clearRect(0, 0, opts.width, opts.height)
   ctx.textBaseline = 'alphabetic'
@@ -395,7 +439,10 @@ const drawToCanvas = (ctx: CanvasRenderingContext2D, opts: RenderOptions, lines:
 
   const fontSizePx = FONT_SIZE_MAP[opts.fontSize]
   const lineHeight = Math.ceil(fontSizePx * 1.35)
-  let y = V_PADDING + fontSizePx
+  const contentHeight = Math.max(lineHeight, lines.length * lineHeight)
+  const centeredTop = Math.floor((opts.height - contentHeight) / 2)
+  const startBaseline = Math.max(V_PADDING + fontSizePx, centeredTop + fontSizePx)
+  let y = startBaseline
 
   for (const line of lines) {
     if (y > opts.height - V_PADDING) break
@@ -482,6 +529,10 @@ const drawToCanvas = (ctx: CanvasRenderingContext2D, opts: RenderOptions, lines:
 }
 
 
+/**
+ * End-to-end renderer for one markdown payload:
+ * layout -> draw to canvas -> encode PNG blob -> return object URL.
+ */
 const renderToObjectUrl = async (opts: RenderOptions): Promise<string> => {
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(40, Math.floor(opts.width))
@@ -507,6 +558,9 @@ const renderToObjectUrl = async (opts: RenderOptions): Promise<string> => {
 }
 
 
+/**
+ * Marks a cache entry as recently used for LRU-style eviction ordering.
+ */
 const touchCache = (key: string) => {
   const entry = renderCache.get(key)
   if (!entry) return
@@ -514,6 +568,10 @@ const touchCache = (key: string) => {
 }
 
 
+/**
+ * Evicts least recently used rendered images when cache size exceeds cap.
+ * Revokes object URLs on eviction to release browser memory.
+ */
 const evictIfNeeded = () => {
   if (renderCache.size <= MAX_CACHE_SIZE) return
 
@@ -529,6 +587,10 @@ const evictIfNeeded = () => {
 }
 
 
+/**
+ * Inserts or replaces a rendered image in cache.
+ * Replacing an entry revokes old object URL to prevent leaks.
+ */
 const setCache = (key: string, url: string) => {
   const existing = renderCache.get(key)
   if (existing) {
@@ -540,6 +602,10 @@ const setCache = (key: string, url: string) => {
 }
 
 
+/**
+ * Sequentially processes render tasks from the queue.
+ * Each completed task notifies all listeners waiting on the same key.
+ */
 const runQueue = async () => {
   if (isQueueRunning) return
   isQueueRunning = true
@@ -569,6 +635,11 @@ const runQueue = async () => {
 }
 
 
+/**
+ * Adds a render request to queue with de-duplication:
+ * - immediate callback on cache hit
+ * - coalesced listeners when same key is already pending.
+ */
 const enqueueRender = (key: string, opts: RenderOptions, listener: (url: string) => void) => {
   const cached = renderCache.get(key)
   if (cached) {
@@ -633,6 +704,10 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
 
   const [renderUrl, setRenderUrl] = useState<string>(() => renderCache.get(cacheKey)?.url ?? '')
 
+  /**
+   * Requests a rendered bitmap for current props and updates local image URL
+   * when queue processing finishes.
+   */
   useEffect(() => {
     let cancelled = false
 

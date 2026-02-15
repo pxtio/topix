@@ -12,6 +12,7 @@ import { useGraphStore } from '../../store/graph-store'
 
 type TextAlign = 'left' | 'center' | 'right'
 const MARKDOWN_RENDER_SCALE = 1
+const hasMathSyntax = (value: string) => value.includes('$$')
 
 
 /**
@@ -129,6 +130,7 @@ const ImageNodeView = memo(function ImageNodeView({
   isMoving,
 }: ImageNodeViewProps) {
   const hasLabel = value.trim().length > 0
+  const renderMathWithDom = hasMathSyntax(value)
 
   return (
     <div className='relative w-full h-full rounded-md'>
@@ -160,6 +162,12 @@ const ImageNodeView = memo(function ImageNodeView({
             className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
           />
         ) : hasLabel ? (
+          renderMathWithDom ? (
+            <LiteMarkdown
+              text={value}
+              className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
+            />
+          ) : (
           <CanvasLiteMarkdown
             text={value}
             className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
@@ -174,6 +182,7 @@ const ImageNodeView = memo(function ImageNodeView({
             fontSize={renderFontSize}
             textStyle={renderTextStyle}
           />
+          )
         ) : (
           <div className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-muted-foreground/70'>
             {placeholder}
@@ -260,6 +269,7 @@ const TextNodeView = memo(function TextNodeView({
   zoom,
   isMoving,
 }: TextNodeViewProps) {
+  const renderMathWithDom = hasMathSyntax(value)
   return (
     <div className='w-full h-full flex items-center justify-center'>
       <div
@@ -288,20 +298,24 @@ const TextNodeView = memo(function TextNodeView({
         ) : (
           <div className={`${baseClassName} whitespace-pre-wrap`}>
             {value.trim() ? (
-              <CanvasLiteMarkdown
-                text={value}
-                className='block'
-                width={renderWidth}
-                height={renderHeight}
-                renderScale={MARKDOWN_RENDER_SCALE}
-                zoom={zoom}
-                isMoving={isMoving}
-                align={textAlign}
-                textColor={renderTextColor}
-                fontFamily={renderFontFamily}
-                fontSize={renderFontSize}
-                textStyle={renderTextStyle}
-              />
+              renderMathWithDom ? (
+                <LiteMarkdown text={value} className='block' />
+              ) : (
+                <CanvasLiteMarkdown
+                  text={value}
+                  className='block'
+                  width={renderWidth}
+                  height={renderHeight}
+                  renderScale={MARKDOWN_RENDER_SCALE}
+                  zoom={zoom}
+                  isMoving={isMoving}
+                  align={textAlign}
+                  textColor={renderTextColor}
+                  fontFamily={renderFontFamily}
+                  fontSize={renderFontSize}
+                  textStyle={renderTextStyle}
+                />
+              )
             ) : (
               <span className={notEditingSpanClass}>{placeholder}</span>
             )}

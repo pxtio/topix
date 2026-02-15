@@ -2,6 +2,10 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import { useUpdateNodeInternals } from '@xyflow/react'
 
 
+type UseContentMinHeightOptions = {
+  enabled?: boolean
+}
+
 /**
  * Custom hook to manage and set the minimum height of a node based on its content.
  * It uses a ResizeObserver to monitor changes in the content's height and updates
@@ -11,9 +15,18 @@ import { useUpdateNodeInternals } from '@xyflow/react'
  * @param nodeId - The ID of the node to manage.
  * @param extra - Additional pixels to add to the content height for padding (default is 24).
  * @param floor - Minimum height floor value (default is 100).
+ * @param scale - Divider used when content is visually scaled down in the node.
+ * @param options - Optional controls for enabling/disabling measurement work.
  * @returns An object containing a ref to attach to the content element and the computed minimum height.
  */
-export function useContentMinHeight(nodeId: string, extra = 0, floor = 100, scale = 1) {
+export function useContentMinHeight(
+  nodeId: string,
+  extra = 0,
+  floor = 100,
+  scale = 1,
+  options: UseContentMinHeightOptions = {},
+) {
+  const { enabled = true } = options
   const updateNodeInternals = useUpdateNodeInternals()
   const contentRef = useRef<HTMLDivElement | null>(null)
   const [contentH, setContentH] = useState(0)
@@ -22,21 +35,23 @@ export function useContentMinHeight(nodeId: string, extra = 0, floor = 100, scal
 
   // measure content
   useLayoutEffect(() => {
+    if (!enabled) return
     if (!contentRef.current) return
     const ro = new ResizeObserver(([entry]) => {
       setContentH(Math.ceil(entry.contentRect.height))
     })
     ro.observe(contentRef.current)
     return () => ro.disconnect()
-  }, [])
+  }, [enabled])
 
   // set wrapper's minHeight imperatively + notify RF
   useLayoutEffect(() => {
+    if (!enabled) return
     const sel = `.react-flow__node[data-id="${CSS?.escape ? CSS.escape(nodeId) : nodeId}"]`
     const el = document.querySelector<HTMLElement>(sel)
     if (el) el.style.minHeight = `${computedMinH}px`
     updateNodeInternals(nodeId)
-  }, [nodeId, computedMinH, updateNodeInternals])
+  }, [enabled, nodeId, computedMinH, updateNodeInternals])
 
   return { contentRef, computedMinH }
 }

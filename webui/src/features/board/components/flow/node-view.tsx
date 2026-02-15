@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import {
   type ControlPosition,
   type NodeProps,
@@ -118,15 +118,28 @@ const SlideFrame = memo(function SlideFrame({ slideName }: SlideFrameProps) {
 function NodeViewBase({ id, data, selected }: NodeProps<NoteNode>) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
+  const [isEditing, setIsEditing] = useState(false)
+  const [isResizingLocal, setIsResizingLocal] = useState(false)
 
   const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
   const viewSlides = useGraphStore(state => state.viewSlides)
 
-  // measure content & drive minHeight
-  const contentScale = getShapeContentScale(data.style.type)
-  const { contentRef, computedMinH } = useContentMinHeight(id, 0, 20, contentScale)
+  const nodeType = data.style.type
+  const isVisualNode = nodeType === 'image' || nodeType === 'icon' || nodeType === 'slide'
+  const shouldMeasureMinHeight = !isVisualNode && (isEditing || isResizingLocal)
 
-  const baseMinH = data.style.type === 'image' || data.style.type === 'icon' ? 50 : computedMinH
+  // measure content & drive minHeight only while editing or resizing
+  const contentScale = getShapeContentScale(nodeType)
+  const { contentRef, computedMinH } = useContentMinHeight(id, 0, 20, contentScale, {
+    enabled: shouldMeasureMinHeight,
+  })
+
+  const persistedHeight = data.properties.nodeSize?.size?.height
+  const baseMinH = isVisualNode
+    ? 50
+    : shouldMeasureMinHeight
+    ? computedMinH
+    : Math.max(20, persistedHeight ?? computedMinH)
   const innerMinH = Math.max(20, baseMinH)
 
   const isPinned = data.properties.pinned.boolean
@@ -139,10 +152,14 @@ function NodeViewBase({ id, data, selected }: NodeProps<NoteNode>) {
   const strokeColor = isDark ? darkModeDisplayHex(data.style.strokeColor) || undefined : data.style.strokeColor
   const textColor = isDark ? darkModeDisplayHex(data.style.textColor) || undefined : data.style.textColor
 
-  const nodeType = data.style.type
-  const handleResizeStart = () => setIsResizingNode(true)
-  const handleResizeEnd = () => setIsResizingNode(false)
-  const isVisualNode = nodeType === 'image' || nodeType === 'icon' || nodeType === 'slide'
+  const handleResizeStart = () => {
+    setIsResizingLocal(true)
+    setIsResizingNode(true)
+  }
+  const handleResizeEnd = () => {
+    setIsResizingLocal(false)
+    setIsResizingNode(false)
+  }
   const resizeMinWidth = isVisualNode ? 80 : 20
   const resizeMinHeight = isVisualNode ? 80 : innerMinH
 
@@ -167,7 +184,13 @@ function NodeViewBase({ id, data, selected }: NodeProps<NoteNode>) {
 
   const content = (
     <div className={nodeClass}>
-      <NodeCard note={data} selected={selected} isDark={isDark} contentRef={contentRef} />
+      <NodeCard
+        note={data}
+        selected={selected}
+        isDark={isDark}
+        contentRef={contentRef}
+        onLabelEditingChange={setIsEditing}
+      />
       <NodeStatusOverlay selected={selected} nodeType={nodeType} isNew={data.isNew} />
     </div>
   )

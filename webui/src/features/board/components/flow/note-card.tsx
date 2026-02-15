@@ -27,6 +27,7 @@ type NodeCardProps = {
   selected: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  onLabelEditingChange?: (editing: boolean) => void
   isDark: boolean
   contentRef: React.RefObject<HTMLDivElement | null>
 }
@@ -176,6 +177,7 @@ export const NodeCard = memo(({
   selected,
   open,
   onOpenChange,
+  onLabelEditingChange,
   isDark,
   contentRef
 }: NodeCardProps) => {
@@ -228,6 +230,11 @@ export const NodeCard = memo(({
   useEffect(() => {
     if (!labelEditing) setLabelDraft(note.label?.markdown || '')
   }, [labelEditing, note.label?.markdown])
+
+  // notify parent when label edit mode changes
+  useEffect(() => {
+    onLabelEditingChange?.(labelEditing)
+  }, [labelEditing, onLabelEditingChange])
 
   // leave editing state if deselected or dialog is closed by selection change
   useEffect(() => {

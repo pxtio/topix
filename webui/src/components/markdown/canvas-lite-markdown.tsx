@@ -16,6 +16,7 @@ type InlineType =
 
 type Token =
   | { type: InlineType; content: string }
+  | { type: 'code-block'; content: string }
   | { type: 'br' }
   | { type: 'hr' }
   | { type: 'hr-double' }
@@ -29,6 +30,7 @@ type StyledRun = {
 
 type LayoutLine =
   | { kind: 'text'; runs: StyledRun[] }
+  | { kind: 'code-block'; runs: StyledRun[]; isFirst: boolean; isLast: boolean }
   | { kind: 'rule'; double: boolean }
 
 
@@ -87,6 +89,8 @@ const INFORMAL_FONT_SIZE_MAP: Record<FontSize, number> = {
 
 const H_PADDING = 8
 const V_PADDING = 8
+const CODE_BLOCK_PADDING_X = 6
+const CODE_BLOCK_MARGIN_Y = 4
 const MAX_CACHE_SIZE = 700
 const MAX_WIDTH_CACHE_SIZE = 5000
 const MIN_RENDER_SCALE = 0.15
@@ -188,13 +192,13 @@ const resolveRenderScale = (baseScale: number, zoom: number, isMoving: boolean):
   const clampedBase = Math.max(MIN_RENDER_SCALE, Math.min(MAX_RENDER_SCALE, baseScale))
   let idleScale = clampedBase
   if (zoom <= 0.4) {
-    idleScale = 0.3
+    idleScale = 0.35
   } else if (zoom <= 0.7) {
-    idleScale = 0.55
+    idleScale = 0.65
   } else if (zoom <= 1) {
-    idleScale = 0.85
+    idleScale = 1
   } else if (zoom <= 1.8) {
-    idleScale = 1.1
+    idleScale = 1.2
   } else {
     idleScale = 1 + (zoom - 1.8) * 0.2
   }
@@ -295,24 +299,66 @@ function tokenizeInline(segment: string): Token[] {
 /**
  * Tokenizes multi-line markdown while preserving line breaks and rule lines.
  */
+function tokenizeLine(line: string): Token[] {
+  if (DOUBLE_HR_LINE_PATTERN.test(line)) return [{ type: 'hr-double' }]
+  if (HR_LINE_PATTERN.test(line)) return [{ type: 'hr' }]
+  return tokenizeInline(line)
+}
+
+
+/**
+ * Tokenizes plain text sections (outside fenced code blocks) line by line.
+ */
+function tokenizeTextBlock(block: string): Token[] {
+  if (!block) return []
+  const tokens: Token[] = []
+  const lines = block.split('\n')
+
+  lines.forEach((line, index) => {
+    tokens.push(...tokenizeLine(line))
+    if (index < lines.length - 1) tokens.push({ type: 'br' })
+  })
+
+  return tokens
+}
+
+
+/**
+ * Tokenizes full markdown input, with support for fenced code blocks.
+ * Code blocks are display-only (no language badge / syntax highlighting).
+ */
 function tokenize(input: string): Token[] {
   if (!input) return []
   const tokens: Token[] = []
-  const lines = input.split('\n')
+  let cursor = 0
 
-  lines.forEach((line, index) => {
-    if (DOUBLE_HR_LINE_PATTERN.test(line)) {
-      tokens.push({ type: 'hr-double' })
-    } else if (HR_LINE_PATTERN.test(line)) {
-      tokens.push({ type: 'hr' })
-    } else {
-      tokens.push(...tokenizeInline(line))
+  while (cursor < input.length) {
+    const fenceStart = input.indexOf('```', cursor)
+    if (fenceStart === -1) {
+      tokens.push(...tokenizeTextBlock(input.slice(cursor)))
+      break
     }
 
-    if (index < lines.length - 1) {
-      tokens.push({ type: 'br' })
+    if (fenceStart > cursor) {
+      tokens.push(...tokenizeTextBlock(input.slice(cursor, fenceStart)))
     }
-  })
+
+    const fenceEnd = input.indexOf('```', fenceStart + 3)
+    if (fenceEnd === -1) {
+      tokens.push(...tokenizeTextBlock(input.slice(fenceStart)))
+      break
+    }
+
+    const fenceContent = input.slice(fenceStart + 3, fenceEnd)
+    const delimiterIndex = fenceContent.search(/[\r\n]/)
+    let codeContent = fenceContent
+    if (delimiterIndex >= 0) {
+      codeContent = fenceContent.slice(delimiterIndex).replace(/^\r?\n/, '')
+    }
+
+    tokens.push({ type: 'code-block', content: codeContent.replace(/\r\n/g, '\n') })
+    cursor = fenceEnd + 3
+  }
 
   return tokens
 }
@@ -414,6 +460,40 @@ const measureText = ({
 
 
 /**
+ * Wraps one code line by character width using monospace metrics.
+ * This preserves whitespace and guarantees fit within available width.
+ */
+const wrapCodeLine = (line: string, opts: RenderOptions, maxWidth: number): string[] => {
+  const normalized = line.replace(/\t/g, '  ')
+  if (!normalized) return ['']
+
+  const wrapped: string[] = []
+  let part = ''
+
+  for (const ch of normalized) {
+    const next = part + ch
+    const nextWidth = measureText({
+      text: next,
+      type: 'code',
+      fontFamily: opts.fontFamily,
+      fontSize: opts.fontSize,
+      textStyle: 'normal',
+    })
+
+    if (part && nextWidth > maxWidth) {
+      wrapped.push(part)
+      part = ch
+    } else {
+      part = next
+    }
+  }
+
+  if (part) wrapped.push(part)
+  return wrapped
+}
+
+
+/**
  * Performs text wrapping/layout and converts tokens into drawable lines.
  * Output lines are consumed by the canvas draw pass.
  */
@@ -433,6 +513,33 @@ function layoutTokens(tokens: Token[], opts: RenderOptions): LayoutLine[] {
   const pushRule = (double: boolean) => {
     if (currentRuns.length > 0) pushLine()
     lines.push({ kind: 'rule', double })
+  }
+
+  const pushCodeBlock = (content: string) => {
+    if (currentRuns.length > 0) pushLine()
+    const rawLines = content.split('\n')
+    const visualRuns: StyledRun[][] = []
+    const codeMaxWidth = Math.max(20, maxWidth - CODE_BLOCK_PADDING_X * 2)
+
+    rawLines.forEach(raw => {
+      wrapCodeLine(raw, opts, codeMaxWidth).forEach(part => {
+        visualRuns.push([{ text: part, type: 'code' }])
+      })
+    })
+
+    if (visualRuns.length === 0) {
+      lines.push({ kind: 'code-block', runs: [], isFirst: true, isLast: true })
+      return
+    }
+
+    visualRuns.forEach((runs, index) => {
+      lines.push({
+        kind: 'code-block',
+        runs,
+        isFirst: index === 0,
+        isLast: index === visualRuns.length - 1,
+      })
+    })
   }
 
   const pushChunk = (chunk: string, type: InlineType) => {
@@ -504,6 +611,11 @@ function layoutTokens(tokens: Token[], opts: RenderOptions): LayoutLine[] {
   }
 
   tokens.forEach(token => {
+    if (token.type === 'code-block') {
+      pushCodeBlock(token.content)
+      return
+    }
+
     if (token.type === 'br') {
       pushLine()
       return
@@ -537,6 +649,18 @@ const getTextX = (opts: RenderOptions, lineWidth: number): number => {
   if (opts.align === 'center') return Math.floor((opts.width - lineWidth) / 2)
   if (opts.align === 'right') return Math.max(H_PADDING, opts.width - H_PADDING - lineWidth)
   return H_PADDING
+}
+
+
+/**
+ * Returns vertical advance for one layout line, including code-block margins.
+ */
+const getLineAdvance = (line: LayoutLine, lineHeight: number): number => {
+  if (line.kind !== 'code-block') return lineHeight
+  let advance = lineHeight
+  if (line.isFirst) advance += CODE_BLOCK_MARGIN_Y
+  if (line.isLast) advance += CODE_BLOCK_MARGIN_Y
+  return advance
 }
 
 
@@ -590,13 +714,73 @@ const drawToCanvas = (ctx: CanvasRenderingContext2D, opts: RenderOptions, lines:
 
   const fontSizePx = getFontSizePx(opts.fontSize, opts.fontFamily)
   const lineHeight = Math.ceil(fontSizePx * 1.35)
-  const contentHeight = Math.max(lineHeight, lines.length * lineHeight)
+  const contentHeight = Math.max(
+    lineHeight,
+    lines.reduce((sum, line) => sum + getLineAdvance(line, lineHeight), 0)
+  )
   const centeredTop = Math.floor((opts.height - contentHeight) / 2)
   const startBaseline = Math.max(V_PADDING + fontSizePx, centeredTop + fontSizePx)
   let y = startBaseline
 
   for (const line of lines) {
     if (y > opts.height - V_PADDING) break
+
+    if (line.kind === 'code-block') {
+      if (line.isFirst) y += CODE_BLOCK_MARGIN_Y
+
+      let lineWidth = 0
+      line.runs.forEach(run => {
+        lineWidth += measureText({
+          text: run.text,
+          type: run.type,
+          fontFamily: opts.fontFamily,
+          fontSize: opts.fontSize,
+          textStyle: 'normal',
+        })
+      })
+
+      const blockX = H_PADDING
+      const blockY = y - fontSizePx + 2
+      const blockWidth = Math.max(10, opts.width - H_PADDING * 2)
+      const blockHeight = lineHeight
+
+      ctx.save()
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.18)'
+      ctx.fillRect(blockX, blockY, blockWidth, blockHeight)
+      ctx.restore()
+
+      let x = blockX + CODE_BLOCK_PADDING_X
+      if (opts.align === 'center') {
+        x = blockX + Math.max(CODE_BLOCK_PADDING_X, Math.floor((blockWidth - lineWidth) / 2))
+      } else if (opts.align === 'right') {
+        x = blockX + Math.max(CODE_BLOCK_PADDING_X, blockWidth - CODE_BLOCK_PADDING_X - lineWidth)
+      }
+
+      for (const run of line.runs) {
+        const runWidth = measureText({
+          text: run.text,
+          type: run.type,
+          fontFamily: opts.fontFamily,
+          fontSize: opts.fontSize,
+          textStyle: 'normal',
+        })
+
+        ctx.font = getCanvasFont({
+          type: run.type,
+          fontFamily: opts.fontFamily,
+          fontSize: opts.fontSize,
+          textStyle: 'normal',
+        })
+        ctx.fillStyle = opts.textColor
+        ctx.strokeStyle = opts.textColor
+        ctx.fillText(run.text, x, y)
+        x += runWidth
+      }
+
+      y += lineHeight
+      if (line.isLast) y += CODE_BLOCK_MARGIN_Y
+      continue
+    }
 
     if (line.kind === 'rule') {
       ctx.save()

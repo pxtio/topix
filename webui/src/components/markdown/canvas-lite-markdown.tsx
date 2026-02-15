@@ -95,8 +95,9 @@ const MAX_CACHE_SIZE = 700
 const MAX_WIDTH_CACHE_SIZE = 5000
 const MIN_RENDER_SCALE = 0.15
 const MAX_RENDER_SCALE = 1.5
-const MAX_RENDER_WIDTH = 1600
-const MAX_RENDER_HEIGHT = 900
+const MAX_RENDER_WIDTH = 2000
+const MAX_RENDER_HEIGHT = 1200
+const FONT_SIZE_COMPENSATION = 1.08
 
 const renderCache = new Map<string, CacheEntry>()
 const pendingTasks = new Map<string, QueueTask>()
@@ -192,13 +193,13 @@ const resolveRenderScale = (baseScale: number, zoom: number, isMoving: boolean):
   const clampedBase = Math.max(MIN_RENDER_SCALE, Math.min(MAX_RENDER_SCALE, baseScale))
   let idleScale = clampedBase
   if (zoom <= 0.4) {
-    idleScale = 0.35
+    idleScale = 0.45
   } else if (zoom <= 0.7) {
-    idleScale = 0.65
+    idleScale = 0.85
   } else if (zoom <= 1) {
-    idleScale = 1
+    idleScale = 1.15
   } else if (zoom <= 1.8) {
-    idleScale = 1.2
+    idleScale = 1.35
   } else {
     idleScale = 1 + (zoom - 1.8) * 0.2
   }
@@ -209,11 +210,13 @@ const resolveRenderScale = (baseScale: number, zoom: number, isMoving: boolean):
   )
 
   if (isMoving) {
-    let movingScale = idleScale * 0.6
-    if (zoom <= 0.7) {
+    let movingScale = idleScale * (zoom >= 0.4 ? 0.72 : 0.6)
+    if (zoom < 0.4) {
       movingScale = Math.min(movingScale, 0.22)
+    } else if (zoom <= 0.7) {
+      movingScale = Math.min(movingScale, 0.4)
     }
-    return Math.max(MIN_RENDER_SCALE, Math.min(0.45, movingScale))
+    return Math.max(MIN_RENDER_SCALE, Math.min(0.65, movingScale))
   }
 
   return idleScale
@@ -402,8 +405,10 @@ const getFontFamily = (type: InlineType, fontFamily: FontFamily): string => {
  * Informal uses a custom scale to match CSS adjustments in index.css.
  */
 const getFontSizePx = (fontSize: FontSize, fontFamily: FontFamily): number => {
-  if (fontFamily === 'informal') return INFORMAL_FONT_SIZE_MAP[fontSize]
-  return FONT_SIZE_MAP[fontSize]
+  const baseSize = fontFamily === 'informal'
+    ? INFORMAL_FONT_SIZE_MAP[fontSize]
+    : FONT_SIZE_MAP[fontSize]
+  return baseSize * FONT_SIZE_COMPENSATION
 }
 
 

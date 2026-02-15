@@ -1,4 +1,4 @@
-import { memo, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import {
   type ControlPosition,
   type NodeProps,
@@ -120,13 +120,14 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   const isDark = resolvedTheme === 'dark'
   const [isEditing, setIsEditing] = useState(false)
   const [isResizingLocal, setIsResizingLocal] = useState(false)
+  const [resizeGrace, setResizeGrace] = useState(false)
 
   const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
   const viewSlides = useGraphStore(state => state.viewSlides)
 
   const nodeType = data.style.type
   const isVisualNode = nodeType === 'image' || nodeType === 'icon' || nodeType === 'slide'
-  const shouldMeasureMinHeight = !isVisualNode && (isEditing || isResizingLocal)
+  const shouldMeasureMinHeight = !isVisualNode && (isEditing || isResizingLocal || resizeGrace)
 
   // measure content & drive minHeight only while editing or resizing
   const contentScale = getShapeContentScale(nodeType)
@@ -135,11 +136,12 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   })
 
   const persistedHeight = data.properties.nodeSize?.size?.height
+  const liveHeight = typeof height === 'number' && Number.isFinite(height) ? height : undefined
   const baseMinH = isVisualNode
     ? 50
     : shouldMeasureMinHeight
     ? computedMinH
-    : Math.max(20, persistedHeight ?? computedMinH)
+    : Math.max(20, liveHeight ?? persistedHeight ?? computedMinH)
   const innerMinH = Math.max(20, baseMinH)
 
   const isPinned = data.properties.pinned.boolean
@@ -153,15 +155,23 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   const textColor = isDark ? darkModeDisplayHex(data.style.textColor) || undefined : data.style.textColor
 
   const handleResizeStart = () => {
+    setResizeGrace(false)
     setIsResizingLocal(true)
     setIsResizingNode(true)
   }
   const handleResizeEnd = () => {
     setIsResizingLocal(false)
     setIsResizingNode(false)
+    setResizeGrace(true)
   }
   const resizeMinWidth = isVisualNode ? 80 : 20
   const resizeMinHeight = isVisualNode ? 80 : innerMinH
+
+  useEffect(() => {
+    if (!resizeGrace) return
+    const t = window.setTimeout(() => setResizeGrace(false), 220)
+    return () => window.clearTimeout(t)
+  }, [resizeGrace])
 
   if (nodeType === 'slide') {
     if (!viewSlides) return null

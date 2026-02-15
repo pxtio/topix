@@ -53,5 +53,14 @@ export function useContentMinHeight(
     updateNodeInternals(nodeId)
   }, [enabled, nodeId, computedMinH, updateNodeInternals])
 
+  // clear stale inline minHeight when measurement is disabled
+  useLayoutEffect(() => {
+    if (enabled) return
+    const sel = `.react-flow__node[data-id="${CSS?.escape ? CSS.escape(nodeId) : nodeId}"]`
+    const el = document.querySelector<HTMLElement>(sel)
+    if (el) el.style.minHeight = ''
+    updateNodeInternals(nodeId)
+  }, [enabled, nodeId, updateNodeInternals])
+
   return { contentRef, computedMinH }
 }

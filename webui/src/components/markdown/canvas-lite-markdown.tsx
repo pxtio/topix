@@ -879,8 +879,8 @@ const renderToObjectUrl = async (opts: RenderOptions): Promise<string> => {
   )
   const effectiveScale = baseScale * limiter
   const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.floor(opts.width * effectiveScale))
-  canvas.height = Math.max(1, Math.floor(opts.height * effectiveScale))
+  canvas.width = Math.max(1, Math.ceil(opts.width * effectiveScale))
+  canvas.height = Math.max(1, Math.ceil(opts.height * effectiveScale))
 
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas context unavailable')
@@ -1046,8 +1046,8 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   textColor = '#1f2937',
 }: CanvasLiteMarkdownProps) {
   const [fontEpochState, setFontEpochState] = useState(() => fontEpoch)
-  const resolvedWidth = Math.max(40, Math.floor(width ?? 280))
-  const resolvedHeight = Math.max(40, Math.floor(height ?? 140))
+  const resolvedWidth = Math.max(40, Math.ceil(width ?? 280))
+  const resolvedHeight = Math.max(40, Math.ceil(height ?? 140))
   const normalizedText = text.trim()
   const quantizedZoom = useMemo(() => quantizeZoom(zoom), [zoom])
   const dprBucket = useMemo(() => {

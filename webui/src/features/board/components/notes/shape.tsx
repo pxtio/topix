@@ -1,10 +1,10 @@
 import TextareaAutosize from 'react-textarea-autosize'
 import { memo, useCallback } from 'react'
 import type { RefObject, KeyboardEvent as ReactKeyboardEvent } from 'react'
-import type { NodeType } from '../../types/style'
+import type { FontFamily, FontSize, NodeType, TextStyle } from '../../types/style'
 import { IconShape } from './icon-shape'
 import { ImageShape } from './image-shape'
-import { LiteMarkdown } from '@/components/markdown/lite-markdown'
+import { CanvasLiteMarkdown } from '@/components/markdown/canvas-lite-markdown'
 import { getShapeContentScale } from '../../utils/shape-content-scale'
 
 
@@ -29,6 +29,12 @@ interface ShapeProps {
   contentRef: RefObject<HTMLDivElement | null>
   icon?: string
   imageUrl?: string
+  renderWidth?: number
+  renderHeight?: number
+  renderTextColor?: string
+  renderFontFamily: FontFamily
+  renderFontSize: FontSize
+  renderTextStyle: TextStyle
 }
 
 
@@ -86,6 +92,12 @@ type ImageNodeViewProps = {
   onKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void
   placeholder: string
   textareaRef?: RefObject<HTMLTextAreaElement | null>
+  renderWidth?: number
+  renderHeight?: number
+  renderTextColor?: string
+  renderFontFamily: FontFamily
+  renderFontSize: FontSize
+  renderTextStyle: TextStyle
 }
 
 
@@ -100,6 +112,12 @@ const ImageNodeView = memo(function ImageNodeView({
   onKeyDown,
   placeholder,
   textareaRef,
+  renderWidth,
+  renderHeight,
+  renderTextColor,
+  renderFontFamily,
+  renderFontSize,
+  renderTextStyle,
 }: ImageNodeViewProps) {
   const hasLabel = value.trim().length > 0
 
@@ -127,9 +145,16 @@ const ImageNodeView = memo(function ImageNodeView({
             minRows={1}
           />
         ) : hasLabel ? (
-          <LiteMarkdown
+          <CanvasLiteMarkdown
             text={value}
             className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
+            width={renderWidth ? Math.max(60, renderWidth - 24) : 280}
+            height={renderHeight ? Math.max(40, Math.floor(renderHeight * 0.35)) : 90}
+            align='center'
+            textColor={renderTextColor}
+            fontFamily={renderFontFamily}
+            fontSize={renderFontSize}
+            textStyle={renderTextStyle}
           />
         ) : (
           <div className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-muted-foreground/70'>
@@ -179,6 +204,13 @@ type TextNodeViewProps = {
   onKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void
   placeholder: string
   textareaRef?: RefObject<HTMLTextAreaElement | null>
+  renderWidth?: number
+  renderHeight?: number
+  textAlign: TextAlign
+  renderTextColor?: string
+  renderFontFamily: FontFamily
+  renderFontSize: FontSize
+  renderTextStyle: TextStyle
 }
 
 
@@ -196,6 +228,13 @@ const TextNodeView = memo(function TextNodeView({
   onKeyDown,
   placeholder,
   textareaRef,
+  renderWidth,
+  renderHeight,
+  textAlign,
+  renderTextColor,
+  renderFontFamily,
+  renderFontSize,
+  renderTextStyle,
 }: TextNodeViewProps) {
   return (
     <div className='w-full h-full flex items-center justify-center'>
@@ -217,7 +256,17 @@ const TextNodeView = memo(function TextNodeView({
         ) : (
           <div className={`${baseClassName} whitespace-pre-wrap`}>
             {value.trim() ? (
-              <LiteMarkdown text={value} className='block' />
+              <CanvasLiteMarkdown
+                text={value}
+                className='block'
+                width={renderWidth}
+                height={renderHeight}
+                align={textAlign}
+                textColor={renderTextColor}
+                fontFamily={renderFontFamily}
+                fontSize={renderFontSize}
+                textStyle={renderTextStyle}
+              />
             ) : (
               <span className={notEditingSpanClass}>{placeholder}</span>
             )}
@@ -242,7 +291,13 @@ export const Shape = memo(function Shape({
   styleHelpers,
   contentRef,
   icon,
-  imageUrl
+  imageUrl,
+  renderWidth,
+  renderHeight,
+  renderTextColor,
+  renderFontFamily,
+  renderFontSize,
+  renderTextStyle,
 }: ShapeProps) {
   const paddingClass = nodeType === 'text' ? 'p-0' : 'p-2'
   const base = `
@@ -282,6 +337,12 @@ export const Shape = memo(function Shape({
         onKeyDown={handleTextareaKeyDown}
         placeholder={placeHolder}
         textareaRef={textareaRef}
+        renderWidth={renderWidth}
+        renderHeight={renderHeight}
+        renderTextColor={renderTextColor}
+        renderFontFamily={renderFontFamily}
+        renderFontSize={renderFontSize}
+        renderTextStyle={renderTextStyle}
       />
     )
   }
@@ -302,6 +363,13 @@ export const Shape = memo(function Shape({
       onKeyDown={handleTextareaKeyDown}
       placeholder={placeHolder}
       textareaRef={textareaRef}
+      renderWidth={renderWidth ? Math.floor(renderWidth * Math.min(1, contentScale)) : undefined}
+      renderHeight={renderHeight}
+      textAlign={textAlign}
+      renderTextColor={renderTextColor}
+      renderFontFamily={renderFontFamily}
+      renderFontSize={renderFontSize}
+      renderTextStyle={renderTextStyle}
     />
   )
 })

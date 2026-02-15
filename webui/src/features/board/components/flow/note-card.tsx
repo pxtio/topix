@@ -75,6 +75,7 @@ type NoteDisplayContentProps = {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   onLabelChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void
   contentRef: React.RefObject<HTMLDivElement | null>
+  textColor?: string
 }
 
 /**
@@ -87,12 +88,15 @@ const NoteDisplayContent = memo(function NoteDisplayContent({
   textareaRef,
   onLabelChange,
   contentRef,
+  textColor,
 }: NoteDisplayContentProps) {
   const fontFamily = note.style.type === 'sheet' ? 'sans-serif' : note.style.fontFamily
   const icon = note.properties.iconData?.type === "icon" && note.properties.iconData.icon?.type === "icon"
     ? note.properties.iconData.icon.icon
     : undefined
   const imageUrl = note.properties.imageUrl?.image?.url
+  const renderWidth = note.properties.nodeSize?.size?.width
+  const renderHeight = note.properties.nodeSize?.size?.height
 
   return (
     <Shape
@@ -110,6 +114,12 @@ const NoteDisplayContent = memo(function NoteDisplayContent({
       contentRef={contentRef}
       icon={icon}
       imageUrl={imageUrl}
+      renderWidth={renderWidth}
+      renderHeight={renderHeight}
+      renderTextColor={textColor}
+      renderFontFamily={note.style.fontFamily}
+      renderFontSize={note.style.fontSize}
+      renderTextStyle={note.style.textStyle}
     />
   )
 })
@@ -399,6 +409,7 @@ export const NodeCard = memo(({
           onLabelChange={handleLabelChange}
           textareaRef={textareaRef}
           contentRef={contentRef}
+          textColor={textColor}
         />
       </LabelContainer>
     )

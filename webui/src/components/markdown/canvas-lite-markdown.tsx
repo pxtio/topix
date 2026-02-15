@@ -78,6 +78,12 @@ const FONT_SIZE_MAP: Record<FontSize, number> = {
   L: 24,
   XL: 36,
 }
+const INFORMAL_FONT_SIZE_MAP: Record<FontSize, number> = {
+  S: 15.4,
+  M: 17.6,
+  L: 26.4,
+  XL: 39.6,
+}
 
 const H_PADDING = 8
 const V_PADDING = 8
@@ -282,6 +288,15 @@ const getFontFamily = (type: InlineType, fontFamily: FontFamily): string => {
   return FONT_FAMILY_MAP[fontFamily]
 }
 
+/**
+ * Resolves pixel font size for renderer layout and drawing.
+ * Informal uses a custom scale to match CSS adjustments in index.css.
+ */
+const getFontSizePx = (fontSize: FontSize, fontFamily: FontFamily): number => {
+  if (fontFamily === 'informal') return INFORMAL_FONT_SIZE_MAP[fontSize]
+  return FONT_SIZE_MAP[fontSize]
+}
+
 
 /**
  * Builds a canvas font string used by both text measurement and draw calls.
@@ -296,7 +311,7 @@ const getCanvasFont = ({
   fontFamily: FontFamily
   fontSize: FontSize
   textStyle: TextStyle
-}) => `${getFontStyle(type, textStyle)} ${getFontWeight(type, textStyle)} ${FONT_SIZE_MAP[fontSize]}px ${getFontFamily(type, fontFamily)}`
+}) => `${getFontStyle(type, textStyle)} ${getFontWeight(type, textStyle)} ${getFontSizePx(fontSize, fontFamily)}px ${getFontFamily(type, fontFamily)}`
 
 
 /**
@@ -322,7 +337,7 @@ const measureText = ({
   const cached = widthCache.get(key)
   if (cached !== undefined) return cached
 
-  if (!measureCtx) return text.length * FONT_SIZE_MAP[fontSize] * 0.55
+  if (!measureCtx) return text.length * getFontSizePx(fontSize, fontFamily) * 0.55
 
   measureCtx.font = font
   const width = measureCtx.measureText(text).width
@@ -510,7 +525,7 @@ const drawToCanvas = (ctx: CanvasRenderingContext2D, opts: RenderOptions, lines:
   ctx.fillStyle = opts.textColor
   ctx.strokeStyle = opts.textColor
 
-  const fontSizePx = FONT_SIZE_MAP[opts.fontSize]
+  const fontSizePx = getFontSizePx(opts.fontSize, opts.fontFamily)
   const lineHeight = Math.ceil(fontSizePx * 1.35)
   const contentHeight = Math.max(lineHeight, lines.length * lineHeight)
   const centeredTop = Math.floor((opts.height - contentHeight) / 2)

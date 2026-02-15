@@ -4,6 +4,7 @@ import type { RefObject, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { FontFamily, FontSize, NodeType, TextStyle } from '../../types/style'
 import { IconShape } from './icon-shape'
 import { ImageShape } from './image-shape'
+import { LiteMarkdown } from '@/components/markdown/lite-markdown'
 import { CanvasLiteMarkdown } from '@/components/markdown/canvas-lite-markdown'
 import { getShapeContentScale } from '../../utils/shape-content-scale'
 import { useGraphStore } from '../../store/graph-store'
@@ -90,6 +91,7 @@ type ImageNodeViewProps = {
   imageUrl?: string
   value: string
   labelEditing: boolean
+  isResizingNode: boolean
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   onKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void
   placeholder: string
@@ -112,6 +114,7 @@ const ImageNodeView = memo(function ImageNodeView({
   imageUrl,
   value,
   labelEditing,
+  isResizingNode,
   onChange,
   onKeyDown,
   placeholder,
@@ -149,6 +152,12 @@ const ImageNodeView = memo(function ImageNodeView({
             placeholder={placeholder}
             textareaRef={textareaRef}
             minRows={1}
+            readOnly={false}
+          />
+        ) : isResizingNode && hasLabel ? (
+          <LiteMarkdown
+            text={value}
+            className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
           />
         ) : hasLabel ? (
           <CanvasLiteMarkdown
@@ -205,6 +214,7 @@ const IconNodeView = memo(function IconNodeView({ icon, contentRef }: IconNodeVi
 type TextNodeViewProps = {
   value: string
   labelEditing: boolean
+  isResizingNode: boolean
   contentRef: RefObject<HTMLDivElement | null>
   contentSize: string
   baseClassName: string
@@ -231,6 +241,7 @@ type TextNodeViewProps = {
 const TextNodeView = memo(function TextNodeView({
   value,
   labelEditing,
+  isResizingNode,
   contentRef,
   contentSize,
   baseClassName,
@@ -264,8 +275,16 @@ const TextNodeView = memo(function TextNodeView({
             onKeyDown={onKeyDown}
             placeholder={placeholder}
             textareaRef={textareaRef}
-            readOnly={!labelEditing}
+            readOnly={false}
           />
+        ) : isResizingNode ? (
+          <div className={`${baseClassName} whitespace-pre-wrap`}>
+            {value.trim() ? (
+              <LiteMarkdown text={value} className='block' />
+            ) : (
+              <span className={notEditingSpanClass}>{placeholder}</span>
+            )}
+          </div>
         ) : (
           <div className={`${baseClassName} whitespace-pre-wrap`}>
             {value.trim() ? (
@@ -317,6 +336,7 @@ export const Shape = memo(function Shape({
 }: ShapeProps) {
   const zoom = useGraphStore(state => state.zoom ?? 1)
   const isMoving = useGraphStore(state => state.isMoving)
+  const isResizingNode = useGraphStore(state => state.isResizingNode)
   const paddingClass = nodeType === 'text' ? 'p-0' : 'p-2'
   const base = `
     w-full ${paddingClass} border-none resize-none
@@ -351,6 +371,7 @@ export const Shape = memo(function Shape({
         imageUrl={imageUrl}
         value={value}
         labelEditing={labelEditing}
+        isResizingNode={isResizingNode}
         onChange={onChange}
         onKeyDown={handleTextareaKeyDown}
         placeholder={placeHolder}
@@ -375,6 +396,7 @@ export const Shape = memo(function Shape({
     <TextNodeView
       value={value}
       labelEditing={labelEditing}
+      isResizingNode={isResizingNode}
       contentRef={contentRef}
       contentSize={contentSize}
       baseClassName={base}

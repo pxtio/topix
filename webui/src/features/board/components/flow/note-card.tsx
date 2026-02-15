@@ -30,6 +30,8 @@ type NodeCardProps = {
   onLabelEditingChange?: (editing: boolean) => void
   isDark: boolean
   contentRef: React.RefObject<HTMLDivElement | null>
+  nodeWidth?: number
+  nodeHeight?: number
 }
 
 /**
@@ -76,6 +78,8 @@ type NoteDisplayContentProps = {
   onLabelChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void
   contentRef: React.RefObject<HTMLDivElement | null>
   textColor?: string
+  nodeWidth?: number
+  nodeHeight?: number
 }
 
 /**
@@ -89,14 +93,16 @@ const NoteDisplayContent = memo(function NoteDisplayContent({
   onLabelChange,
   contentRef,
   textColor,
+  nodeWidth,
+  nodeHeight,
 }: NoteDisplayContentProps) {
   const fontFamily = note.style.type === 'sheet' ? 'sans-serif' : note.style.fontFamily
   const icon = note.properties.iconData?.type === "icon" && note.properties.iconData.icon?.type === "icon"
     ? note.properties.iconData.icon.icon
     : undefined
   const imageUrl = note.properties.imageUrl?.image?.url
-  const renderWidth = note.properties.nodeSize?.size?.width
-  const renderHeight = note.properties.nodeSize?.size?.height
+  const renderWidth = nodeWidth ?? note.properties.nodeSize?.size?.width
+  const renderHeight = nodeHeight ?? note.properties.nodeSize?.size?.height
 
   return (
     <Shape
@@ -189,7 +195,9 @@ export const NodeCard = memo(({
   onOpenChange,
   onLabelEditingChange,
   isDark,
-  contentRef
+  contentRef,
+  nodeWidth,
+  nodeHeight,
 }: NodeCardProps) => {
   const isSheet = note.style.type === 'sheet'
   const isText = note.style.type === 'text'
@@ -410,6 +418,8 @@ export const NodeCard = memo(({
           textareaRef={textareaRef}
           contentRef={contentRef}
           textColor={textColor}
+          nodeWidth={nodeWidth}
+          nodeHeight={nodeHeight}
         />
       </LabelContainer>
     )

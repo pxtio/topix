@@ -36,6 +36,7 @@ type RenderOptions = {
   text: string
   width: number
   height: number
+  renderScale: number
   align: TextAlign
   fontFamily: FontFamily
   fontSize: FontSize
@@ -80,6 +81,7 @@ const FONT_SIZE_MAP: Record<FontSize, number> = {
 const H_PADDING = 8
 const V_PADDING = 8
 const MAX_CACHE_SIZE = 700
+const MAX_WIDTH_CACHE_SIZE = 5000
 
 const renderCache = new Map<string, CacheEntry>()
 const pendingTasks = new Map<string, QueueTask>()
@@ -89,6 +91,19 @@ let isQueueRunning = false
 const measureCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null
 const measureCtx = measureCanvas?.getContext('2d') ?? null
 const widthCache = new Map<string, number>()
+
+
+/**
+ * Fast non-cryptographic hash used to avoid building huge cache keys from full text.
+ */
+const hashText = (value: string): string => {
+  let hash = 2166136261
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return (hash >>> 0).toString(36)
+}
 
 
 /**
@@ -258,6 +273,10 @@ const measureText = ({
   measureCtx.font = font
   const width = measureCtx.measureText(text).width
   widthCache.set(key, width)
+  if (widthCache.size > MAX_WIDTH_CACHE_SIZE) {
+    const oldestKey = widthCache.keys().next().value
+    if (oldestKey) widthCache.delete(oldestKey)
+  }
   return width
 }
 
@@ -534,12 +553,14 @@ const drawToCanvas = (ctx: CanvasRenderingContext2D, opts: RenderOptions, lines:
  * layout -> draw to canvas -> encode PNG blob -> return object URL.
  */
 const renderToObjectUrl = async (opts: RenderOptions): Promise<string> => {
+  const renderScale = Math.max(0.25, Math.min(1, opts.renderScale))
   const canvas = document.createElement('canvas')
-  canvas.width = Math.max(40, Math.floor(opts.width))
-  canvas.height = Math.max(40, Math.floor(opts.height))
+  canvas.width = Math.max(1, Math.floor(opts.width * renderScale))
+  canvas.height = Math.max(1, Math.floor(opts.height * renderScale))
 
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas context unavailable')
+  ctx.scale(renderScale, renderScale)
 
   const lines = layoutTokens(tokenize(opts.text), opts)
   drawToCanvas(ctx, opts, lines)
@@ -671,6 +692,7 @@ export type CanvasLiteMarkdownProps = {
   className?: string
   width?: number
   height?: number
+  renderScale?: number
   align?: TextAlign
   fontFamily?: FontFamily
   fontSize?: FontSize
@@ -688,6 +710,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   className,
   width,
   height,
+  renderScale = 0.75,
   align = 'left',
   fontFamily = 'handwriting',
   fontSize = 'M',
@@ -696,10 +719,13 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
 }: CanvasLiteMarkdownProps) {
   const resolvedWidth = Math.max(40, Math.floor(width ?? 280))
   const resolvedHeight = Math.max(40, Math.floor(height ?? 140))
+  const normalizedText = text.trim()
+
+  const textHash = useMemo(() => hashText(text), [text])
 
   const cacheKey = useMemo(
-    () => JSON.stringify({ text, resolvedWidth, resolvedHeight, align, fontFamily, fontSize, textStyle, textColor }),
-    [text, resolvedWidth, resolvedHeight, align, fontFamily, fontSize, textStyle, textColor]
+    () => `${textHash}:${text.length}:${resolvedWidth}:${resolvedHeight}:${renderScale}:${align}:${fontFamily}:${fontSize}:${textStyle}:${textColor}`,
+    [textHash, text.length, resolvedWidth, resolvedHeight, renderScale, align, fontFamily, fontSize, textStyle, textColor]
   )
 
   const [renderUrl, setRenderUrl] = useState<string>(() => renderCache.get(cacheKey)?.url ?? '')
@@ -709,6 +735,11 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
    * when queue processing finishes.
    */
   useEffect(() => {
+    if (!normalizedText) {
+      setRenderUrl('')
+      return
+    }
+
     let cancelled = false
 
     enqueueRender(
@@ -717,6 +748,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
         text,
         width: resolvedWidth,
         height: resolvedHeight,
+        renderScale,
         align,
         fontFamily,
         fontSize,
@@ -732,9 +764,9 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
     return () => {
       cancelled = true
     }
-  }, [cacheKey, text, resolvedWidth, resolvedHeight, align, fontFamily, fontSize, textStyle, textColor])
+  }, [cacheKey, normalizedText, text, resolvedWidth, resolvedHeight, renderScale, align, fontFamily, fontSize, textStyle, textColor])
 
-  if (!text.trim()) return null
+  if (!normalizedText) return null
 
   if (!renderUrl) {
     return (

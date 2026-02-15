@@ -9,6 +9,7 @@ import { getShapeContentScale } from '../../utils/shape-content-scale'
 
 
 type TextAlign = 'left' | 'center' | 'right'
+const MARKDOWN_RENDER_SCALE = 0.75
 
 
 /**
@@ -150,6 +151,7 @@ const ImageNodeView = memo(function ImageNodeView({
             className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
             width={renderWidth ? Math.max(60, renderWidth - 24) : 280}
             height={renderHeight ? Math.max(40, Math.floor(renderHeight * 0.35)) : 90}
+            renderScale={MARKDOWN_RENDER_SCALE}
             align='center'
             textColor={renderTextColor}
             fontFamily={renderFontFamily}
@@ -261,6 +263,7 @@ const TextNodeView = memo(function TextNodeView({
                 className='block'
                 width={renderWidth}
                 height={renderHeight}
+                renderScale={MARKDOWN_RENDER_SCALE}
                 align={textAlign}
                 textColor={renderTextColor}
                 fontFamily={renderFontFamily}

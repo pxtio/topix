@@ -128,13 +128,13 @@ const resolveRenderScale = (baseScale: number, zoom: number, isMoving: boolean):
   const clampedBase = Math.max(MIN_RENDER_SCALE, Math.min(MAX_RENDER_SCALE, baseScale))
   let idleScale = clampedBase
   if (zoom <= 0.4) {
-    idleScale = 0.25
+    idleScale = 0.3
   } else if (zoom <= 0.7) {
-    idleScale = 0.45
+    idleScale = 0.55
   } else if (zoom <= 1) {
-    idleScale = 0.7
+    idleScale = 0.85
   } else if (zoom <= 1.8) {
-    idleScale = 1
+    idleScale = 1.1
   } else {
     idleScale = 1 + (zoom - 1.8) * 0.2
   }

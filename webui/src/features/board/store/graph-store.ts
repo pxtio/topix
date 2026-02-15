@@ -121,6 +121,9 @@ function shouldPersistNodeChange(
     case "position":
       return ch.dragging === false
     case "dimensions":
+      if (typeof ch.resizing === "boolean") {
+        return ch.resizing === false
+      }
       return !isResizing
     default:
       return true

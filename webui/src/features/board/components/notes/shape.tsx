@@ -1,14 +1,18 @@
 import TextareaAutosize from 'react-textarea-autosize'
 import { memo, useCallback } from 'react'
 import type { RefObject, KeyboardEvent as ReactKeyboardEvent } from 'react'
-import type { NodeType } from '../../types/style'
+import type { FontFamily, FontSize, NodeType, TextStyle } from '../../types/style'
 import { IconShape } from './icon-shape'
 import { ImageShape } from './image-shape'
 import { LiteMarkdown } from '@/components/markdown/lite-markdown'
+import { CanvasLiteMarkdown } from '@/components/markdown/canvas-lite-markdown'
 import { getShapeContentScale } from '../../utils/shape-content-scale'
+import { useGraphStore } from '../../store/graph-store'
 
 
 type TextAlign = 'left' | 'center' | 'right'
+const MARKDOWN_RENDER_SCALE = 1
+const hasMathSyntax = (value: string) => value.includes('$$')
 
 
 /**
@@ -29,6 +33,12 @@ interface ShapeProps {
   contentRef: RefObject<HTMLDivElement | null>
   icon?: string
   imageUrl?: string
+  renderWidth?: number
+  renderHeight?: number
+  renderTextColor?: string
+  renderFontFamily: FontFamily
+  renderFontSize: FontSize
+  renderTextStyle: TextStyle
 }
 
 
@@ -82,10 +92,19 @@ type ImageNodeViewProps = {
   imageUrl?: string
   value: string
   labelEditing: boolean
+  isResizingNode: boolean
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
   onKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void
   placeholder: string
   textareaRef?: RefObject<HTMLTextAreaElement | null>
+  renderWidth?: number
+  renderHeight?: number
+  renderTextColor?: string
+  renderFontFamily: FontFamily
+  renderFontSize: FontSize
+  renderTextStyle: TextStyle
+  zoom: number
+  isMoving: boolean
 }
 
 
@@ -96,12 +115,22 @@ const ImageNodeView = memo(function ImageNodeView({
   imageUrl,
   value,
   labelEditing,
+  isResizingNode,
   onChange,
   onKeyDown,
   placeholder,
   textareaRef,
+  renderWidth,
+  renderHeight,
+  renderTextColor,
+  renderFontFamily,
+  renderFontSize,
+  renderTextStyle,
+  zoom,
+  isMoving,
 }: ImageNodeViewProps) {
   const hasLabel = value.trim().length > 0
+  const renderMathWithDom = hasMathSyntax(value)
 
   return (
     <div className='relative w-full h-full rounded-md'>
@@ -125,12 +154,35 @@ const ImageNodeView = memo(function ImageNodeView({
             placeholder={placeholder}
             textareaRef={textareaRef}
             minRows={1}
+            readOnly={false}
           />
-        ) : hasLabel ? (
+        ) : isResizingNode && hasLabel ? (
           <LiteMarkdown
             text={value}
             className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
           />
+        ) : hasLabel ? (
+          renderMathWithDom ? (
+            <LiteMarkdown
+              text={value}
+              className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
+            />
+          ) : (
+          <CanvasLiteMarkdown
+            text={value}
+            className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-card-foreground'
+            width={renderWidth ? Math.max(60, renderWidth - 24) : 280}
+            height={renderHeight ? Math.max(40, Math.floor(renderHeight * 0.35)) : 90}
+            renderScale={MARKDOWN_RENDER_SCALE}
+            zoom={zoom}
+            isMoving={isMoving}
+            align='center'
+            textColor={renderTextColor}
+            fontFamily={renderFontFamily}
+            fontSize={renderFontSize}
+            textStyle={renderTextStyle}
+          />
+          )
         ) : (
           <div className='px-3 py-1 rounded-md text-sm text-center bg-background/70 backdrop-blur shadow-sm text-muted-foreground/70'>
             {placeholder}
@@ -171,6 +223,7 @@ const IconNodeView = memo(function IconNodeView({ icon, contentRef }: IconNodeVi
 type TextNodeViewProps = {
   value: string
   labelEditing: boolean
+  isResizingNode: boolean
   contentRef: RefObject<HTMLDivElement | null>
   contentSize: string
   baseClassName: string
@@ -179,6 +232,15 @@ type TextNodeViewProps = {
   onKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void
   placeholder: string
   textareaRef?: RefObject<HTMLTextAreaElement | null>
+  renderWidth?: number
+  renderHeight?: number
+  textAlign: TextAlign
+  renderTextColor?: string
+  renderFontFamily: FontFamily
+  renderFontSize: FontSize
+  renderTextStyle: TextStyle
+  zoom: number
+  isMoving: boolean
 }
 
 
@@ -188,6 +250,7 @@ type TextNodeViewProps = {
 const TextNodeView = memo(function TextNodeView({
   value,
   labelEditing,
+  isResizingNode,
   contentRef,
   contentSize,
   baseClassName,
@@ -196,7 +259,17 @@ const TextNodeView = memo(function TextNodeView({
   onKeyDown,
   placeholder,
   textareaRef,
+  renderWidth,
+  renderHeight,
+  textAlign,
+  renderTextColor,
+  renderFontFamily,
+  renderFontSize,
+  renderTextStyle,
+  zoom,
+  isMoving,
 }: TextNodeViewProps) {
+  const renderMathWithDom = hasMathSyntax(value)
   return (
     <div className='w-full h-full flex items-center justify-center'>
       <div
@@ -212,12 +285,37 @@ const TextNodeView = memo(function TextNodeView({
             onKeyDown={onKeyDown}
             placeholder={placeholder}
             textareaRef={textareaRef}
-            readOnly={!labelEditing}
+            readOnly={false}
           />
-        ) : (
+        ) : isResizingNode ? (
           <div className={`${baseClassName} whitespace-pre-wrap`}>
             {value.trim() ? (
               <LiteMarkdown text={value} className='block' />
+            ) : (
+              <span className={notEditingSpanClass}>{placeholder}</span>
+            )}
+          </div>
+        ) : (
+          <div className={`${baseClassName} whitespace-pre-wrap`}>
+            {value.trim() ? (
+              renderMathWithDom ? (
+                <LiteMarkdown text={value} className='block' />
+              ) : (
+                <CanvasLiteMarkdown
+                  text={value}
+                  className='block'
+                  width={renderWidth}
+                  height={renderHeight}
+                  renderScale={MARKDOWN_RENDER_SCALE}
+                  zoom={zoom}
+                  isMoving={isMoving}
+                  align={textAlign}
+                  textColor={renderTextColor}
+                  fontFamily={renderFontFamily}
+                  fontSize={renderFontSize}
+                  textStyle={renderTextStyle}
+                />
+              )
             ) : (
               <span className={notEditingSpanClass}>{placeholder}</span>
             )}
@@ -242,8 +340,17 @@ export const Shape = memo(function Shape({
   styleHelpers,
   contentRef,
   icon,
-  imageUrl
+  imageUrl,
+  renderWidth,
+  renderHeight,
+  renderTextColor,
+  renderFontFamily,
+  renderFontSize,
+  renderTextStyle,
 }: ShapeProps) {
+  const zoom = useGraphStore(state => state.zoom ?? 1)
+  const isMoving = useGraphStore(state => state.isMoving)
+  const isResizingNode = useGraphStore(state => state.isResizingNode)
   const paddingClass = nodeType === 'text' ? 'p-0' : 'p-2'
   const base = `
     w-full ${paddingClass} border-none resize-none
@@ -278,10 +385,19 @@ export const Shape = memo(function Shape({
         imageUrl={imageUrl}
         value={value}
         labelEditing={labelEditing}
+        isResizingNode={isResizingNode}
         onChange={onChange}
         onKeyDown={handleTextareaKeyDown}
         placeholder={placeHolder}
         textareaRef={textareaRef}
+        renderWidth={renderWidth}
+        renderHeight={renderHeight}
+        renderTextColor={renderTextColor}
+        renderFontFamily={renderFontFamily}
+        renderFontSize={renderFontSize}
+        renderTextStyle={renderTextStyle}
+        zoom={zoom}
+        isMoving={isMoving}
       />
     )
   }
@@ -294,6 +410,7 @@ export const Shape = memo(function Shape({
     <TextNodeView
       value={value}
       labelEditing={labelEditing}
+      isResizingNode={isResizingNode}
       contentRef={contentRef}
       contentSize={contentSize}
       baseClassName={base}
@@ -302,6 +419,15 @@ export const Shape = memo(function Shape({
       onKeyDown={handleTextareaKeyDown}
       placeholder={placeHolder}
       textareaRef={textareaRef}
+      renderWidth={renderWidth ? Math.floor(renderWidth * Math.min(1, contentScale)) : undefined}
+      renderHeight={renderHeight}
+      textAlign={textAlign}
+      renderTextColor={renderTextColor}
+      renderFontFamily={renderFontFamily}
+      renderFontSize={renderFontSize}
+      renderTextStyle={renderTextStyle}
+      zoom={zoom}
+      isMoving={isMoving}
     />
   )
 })

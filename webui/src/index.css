@@ -129,8 +129,6 @@
   --sidebar-icon-4: #be185d;
 }
 
-.font-informal { line-height: 1.5; }
-
 .font-informal.text-xs, .font-informal .text-xs { font-size: 0.825rem; }
 .font-informal.text-sm, .font-informal .text-sm { font-size: 0.9625rem; }
 .font-informal.text-base, .font-informal .text-base { font-size: 1.1rem; }

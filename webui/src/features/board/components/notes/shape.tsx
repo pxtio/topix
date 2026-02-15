@@ -6,10 +6,11 @@ import { IconShape } from './icon-shape'
 import { ImageShape } from './image-shape'
 import { CanvasLiteMarkdown } from '@/components/markdown/canvas-lite-markdown'
 import { getShapeContentScale } from '../../utils/shape-content-scale'
+import { useGraphStore } from '../../store/graph-store'
 
 
 type TextAlign = 'left' | 'center' | 'right'
-const MARKDOWN_RENDER_SCALE = 0.75
+const MARKDOWN_RENDER_SCALE = 1
 
 
 /**
@@ -99,6 +100,8 @@ type ImageNodeViewProps = {
   renderFontFamily: FontFamily
   renderFontSize: FontSize
   renderTextStyle: TextStyle
+  zoom: number
+  isMoving: boolean
 }
 
 
@@ -119,6 +122,8 @@ const ImageNodeView = memo(function ImageNodeView({
   renderFontFamily,
   renderFontSize,
   renderTextStyle,
+  zoom,
+  isMoving,
 }: ImageNodeViewProps) {
   const hasLabel = value.trim().length > 0
 
@@ -152,6 +157,8 @@ const ImageNodeView = memo(function ImageNodeView({
             width={renderWidth ? Math.max(60, renderWidth - 24) : 280}
             height={renderHeight ? Math.max(40, Math.floor(renderHeight * 0.35)) : 90}
             renderScale={MARKDOWN_RENDER_SCALE}
+            zoom={zoom}
+            isMoving={isMoving}
             align='center'
             textColor={renderTextColor}
             fontFamily={renderFontFamily}
@@ -213,6 +220,8 @@ type TextNodeViewProps = {
   renderFontFamily: FontFamily
   renderFontSize: FontSize
   renderTextStyle: TextStyle
+  zoom: number
+  isMoving: boolean
 }
 
 
@@ -237,6 +246,8 @@ const TextNodeView = memo(function TextNodeView({
   renderFontFamily,
   renderFontSize,
   renderTextStyle,
+  zoom,
+  isMoving,
 }: TextNodeViewProps) {
   return (
     <div className='w-full h-full flex items-center justify-center'>
@@ -264,6 +275,8 @@ const TextNodeView = memo(function TextNodeView({
                 width={renderWidth}
                 height={renderHeight}
                 renderScale={MARKDOWN_RENDER_SCALE}
+                zoom={zoom}
+                isMoving={isMoving}
                 align={textAlign}
                 textColor={renderTextColor}
                 fontFamily={renderFontFamily}
@@ -302,6 +315,8 @@ export const Shape = memo(function Shape({
   renderFontSize,
   renderTextStyle,
 }: ShapeProps) {
+  const zoom = useGraphStore(state => state.zoom ?? 1)
+  const isMoving = useGraphStore(state => state.isMoving)
   const paddingClass = nodeType === 'text' ? 'p-0' : 'p-2'
   const base = `
     w-full ${paddingClass} border-none resize-none
@@ -346,6 +361,8 @@ export const Shape = memo(function Shape({
         renderFontFamily={renderFontFamily}
         renderFontSize={renderFontSize}
         renderTextStyle={renderTextStyle}
+        zoom={zoom}
+        isMoving={isMoving}
       />
     )
   }
@@ -373,6 +390,8 @@ export const Shape = memo(function Shape({
       renderFontFamily={renderFontFamily}
       renderFontSize={renderFontSize}
       renderTextStyle={renderTextStyle}
+      zoom={zoom}
+      isMoving={isMoving}
     />
   )
 })

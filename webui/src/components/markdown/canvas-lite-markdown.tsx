@@ -82,6 +82,7 @@ const H_PADDING = 8
 const V_PADDING = 8
 const MAX_CACHE_SIZE = 700
 const MAX_WIDTH_CACHE_SIZE = 5000
+const MAX_RENDER_SCALE = 1.5
 
 const renderCache = new Map<string, CacheEntry>()
 const pendingTasks = new Map<string, QueueTask>()
@@ -91,6 +92,32 @@ let isQueueRunning = false
 const measureCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null
 const measureCtx = measureCanvas?.getContext('2d') ?? null
 const widthCache = new Map<string, number>()
+
+/**
+ * Buckets zoom to avoid cache churn from tiny floating-point zoom deltas.
+ */
+const quantizeZoom = (value: number): number => {
+  if (!Number.isFinite(value)) return 1
+  return Math.max(0.1, Math.round(value * 10) / 10)
+}
+
+/**
+ * Chooses a render scale from base scale + viewport context.
+ * While moving, prefer a lower quality snapshot for throughput.
+ */
+const resolveRenderScale = (baseScale: number, zoom: number, isMoving: boolean): number => {
+  const clampedBase = Math.max(0.25, Math.min(MAX_RENDER_SCALE, baseScale))
+  if (isMoving) {
+    return Math.max(0.45, Math.min(0.65, clampedBase * 0.85))
+  }
+  if (zoom < 0.8) {
+    return Math.max(0.5, Math.min(MAX_RENDER_SCALE, clampedBase * 0.9))
+  }
+  if (zoom > 1.8) {
+    return Math.max(0.55, Math.min(MAX_RENDER_SCALE, clampedBase + Math.min(0.25, (zoom - 1.8) * 0.15)))
+  }
+  return clampedBase
+}
 
 
 /**
@@ -553,7 +580,7 @@ const drawToCanvas = (ctx: CanvasRenderingContext2D, opts: RenderOptions, lines:
  * layout -> draw to canvas -> encode PNG blob -> return object URL.
  */
 const renderToObjectUrl = async (opts: RenderOptions): Promise<string> => {
-  const renderScale = Math.max(0.25, Math.min(1, opts.renderScale))
+  const renderScale = Math.max(0.25, Math.min(MAX_RENDER_SCALE, opts.renderScale))
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(1, Math.floor(opts.width * renderScale))
   canvas.height = Math.max(1, Math.floor(opts.height * renderScale))
@@ -693,6 +720,8 @@ export type CanvasLiteMarkdownProps = {
   width?: number
   height?: number
   renderScale?: number
+  zoom?: number
+  isMoving?: boolean
   align?: TextAlign
   fontFamily?: FontFamily
   fontSize?: FontSize
@@ -710,7 +739,9 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   className,
   width,
   height,
-  renderScale = 0.75,
+  renderScale = 1,
+  zoom = 1,
+  isMoving = false,
   align = 'left',
   fontFamily = 'handwriting',
   fontSize = 'M',
@@ -720,12 +751,17 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   const resolvedWidth = Math.max(40, Math.floor(width ?? 280))
   const resolvedHeight = Math.max(40, Math.floor(height ?? 140))
   const normalizedText = text.trim()
+  const quantizedZoom = useMemo(() => quantizeZoom(zoom), [zoom])
+  const effectiveRenderScale = useMemo(
+    () => resolveRenderScale(renderScale, quantizedZoom, isMoving),
+    [renderScale, quantizedZoom, isMoving]
+  )
 
   const textHash = useMemo(() => hashText(text), [text])
 
   const cacheKey = useMemo(
-    () => `${textHash}:${text.length}:${resolvedWidth}:${resolvedHeight}:${renderScale}:${align}:${fontFamily}:${fontSize}:${textStyle}:${textColor}`,
-    [textHash, text.length, resolvedWidth, resolvedHeight, renderScale, align, fontFamily, fontSize, textStyle, textColor]
+    () => `${textHash}:${text.length}:${resolvedWidth}:${resolvedHeight}:${quantizedZoom}:${effectiveRenderScale}:${align}:${fontFamily}:${fontSize}:${textStyle}:${textColor}`,
+    [textHash, text.length, resolvedWidth, resolvedHeight, quantizedZoom, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor]
   )
 
   const [renderUrl, setRenderUrl] = useState<string>(() => renderCache.get(cacheKey)?.url ?? '')
@@ -748,7 +784,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
         text,
         width: resolvedWidth,
         height: resolvedHeight,
-        renderScale,
+        renderScale: effectiveRenderScale,
         align,
         fontFamily,
         fontSize,
@@ -764,7 +800,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
     return () => {
       cancelled = true
     }
-  }, [cacheKey, normalizedText, text, resolvedWidth, resolvedHeight, renderScale, align, fontFamily, fontSize, textStyle, textColor])
+  }, [cacheKey, normalizedText, text, resolvedWidth, resolvedHeight, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor])
 
   if (!normalizedText) return null
 

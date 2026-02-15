@@ -82,6 +82,7 @@ const H_PADDING = 8
 const V_PADDING = 8
 const MAX_CACHE_SIZE = 700
 const MAX_WIDTH_CACHE_SIZE = 5000
+const MIN_RENDER_SCALE = 0.15
 const MAX_RENDER_SCALE = 1.5
 
 const renderCache = new Map<string, CacheEntry>()
@@ -106,17 +107,31 @@ const quantizeZoom = (value: number): number => {
  * While moving, prefer a lower quality snapshot for throughput.
  */
 const resolveRenderScale = (baseScale: number, zoom: number, isMoving: boolean): number => {
-  const clampedBase = Math.max(0.25, Math.min(MAX_RENDER_SCALE, baseScale))
+  const clampedBase = Math.max(MIN_RENDER_SCALE, Math.min(MAX_RENDER_SCALE, baseScale))
+  let idleScale = clampedBase
+  if (zoom <= 0.4) {
+    idleScale = 0.25
+  } else if (zoom <= 0.7) {
+    idleScale = 0.45
+  } else if (zoom <= 1) {
+    idleScale = 0.7
+  } else if (zoom <= 1.8) {
+    idleScale = 1
+  } else {
+    idleScale = 1 + (zoom - 1.8) * 0.2
+  }
+
+  idleScale = Math.max(
+    MIN_RENDER_SCALE,
+    Math.min(MAX_RENDER_SCALE, idleScale)
+  )
+
   if (isMoving) {
-    return Math.max(0.45, Math.min(0.65, clampedBase * 0.85))
+    const movingScale = Math.max(MIN_RENDER_SCALE, Math.min(0.55, clampedBase * 0.75))
+    return Math.min(movingScale, idleScale)
   }
-  if (zoom < 0.8) {
-    return Math.max(0.5, Math.min(MAX_RENDER_SCALE, clampedBase * 0.9))
-  }
-  if (zoom > 1.8) {
-    return Math.max(0.55, Math.min(MAX_RENDER_SCALE, clampedBase + Math.min(0.25, (zoom - 1.8) * 0.15)))
-  }
-  return clampedBase
+
+  return idleScale
 }
 
 
@@ -580,7 +595,7 @@ const drawToCanvas = (ctx: CanvasRenderingContext2D, opts: RenderOptions, lines:
  * layout -> draw to canvas -> encode PNG blob -> return object URL.
  */
 const renderToObjectUrl = async (opts: RenderOptions): Promise<string> => {
-  const renderScale = Math.max(0.25, Math.min(MAX_RENDER_SCALE, opts.renderScale))
+  const renderScale = Math.max(MIN_RENDER_SCALE, Math.min(MAX_RENDER_SCALE, opts.renderScale))
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(1, Math.floor(opts.width * renderScale))
   canvas.height = Math.max(1, Math.floor(opts.height * renderScale))

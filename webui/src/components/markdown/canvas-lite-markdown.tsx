@@ -205,8 +205,11 @@ const resolveRenderScale = (baseScale: number, zoom: number, isMoving: boolean):
   )
 
   if (isMoving) {
-    const movingScale = idleScale * 0.75
-    return Math.max(MIN_RENDER_SCALE, Math.min(0.55, movingScale))
+    let movingScale = idleScale * 0.6
+    if (zoom <= 0.7) {
+      movingScale = Math.min(movingScale, 0.22)
+    }
+    return Math.max(MIN_RENDER_SCALE, Math.min(0.45, movingScale))
   }
 
   return idleScale

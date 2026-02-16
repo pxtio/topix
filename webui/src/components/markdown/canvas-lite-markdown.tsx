@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import type { FontFamily, FontSize, TextAlign, TextStyle } from '@/features/board/types/style'
 
@@ -1051,6 +1051,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   textColor = '#1f2937',
 }: CanvasLiteMarkdownProps) {
   const [fontEpochState, setFontEpochState] = useState(() => fontEpoch)
+  const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
   const resolvedWidth = Math.max(40, Math.ceil(width ?? 280))
   const resolvedHeight = Math.max(40, Math.ceil(height ?? 140))
   const normalizedText = text.trim()
@@ -1115,13 +1116,49 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
     }
   }, [cacheKey, normalizedText, text, resolvedWidth, resolvedHeight, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor, dprBucket])
 
+  /**
+   * Draws a quick local canvas preview while queued image rendering is pending.
+   * This avoids displaying raw text before the cached image becomes available.
+   */
+  useEffect(() => {
+    if (!normalizedText || renderUrl) return
+    const canvas = previewCanvasRef.current
+    if (!canvas) return
+
+    if (canvas.width !== resolvedWidth) canvas.width = resolvedWidth
+    if (canvas.height !== resolvedHeight) canvas.height = resolvedHeight
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const previewOpts: RenderOptions = {
+      text,
+      width: resolvedWidth,
+      height: resolvedHeight,
+      renderScale: 0.45,
+      dpr: 1,
+      align,
+      fontFamily,
+      fontSize,
+      textStyle,
+      textColor,
+    }
+
+    const lines = layoutTokens(tokenize(text), previewOpts)
+    drawToCanvas(ctx, previewOpts, lines)
+  }, [renderUrl, normalizedText, text, resolvedWidth, resolvedHeight, align, fontFamily, fontSize, textStyle, textColor])
+
   if (!normalizedText) return null
 
   if (!renderUrl) {
     return (
-      <span className={clsx('whitespace-pre-wrap break-words', className)}>
-        {text}
-      </span>
+      <canvas
+        ref={previewCanvasRef}
+        className={clsx('block w-full h-full select-none pointer-events-none', className)}
+        style={{
+          imageRendering: 'auto',
+        }}
+      />
     )
   }
 

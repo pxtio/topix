@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import {
   type ControlPosition,
   type NodeProps,
@@ -14,7 +14,6 @@ import { useContentMinHeight } from '../../hooks/use-content-min-height'
 import { ShapeChrome } from './shape-chrome'
 import { getShapeContentScale } from '../../utils/shape-content-scale'
 import { Grip } from 'lucide-react'
-import { estimateMarkdownContentHeight } from '@/components/markdown/canvas-lite-markdown'
 
 const CONNECTOR_GAP = 0
 type ResizeHandle = {
@@ -130,7 +129,6 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
 
   const nodeType = data.style.type
   const isVisualNode = nodeType === 'image' || nodeType === 'icon' || nodeType === 'slide'
-  const markdown = data.label?.markdown ?? ''
   const shouldMeasureMinHeight = !isVisualNode && (isEditing || isResizingLocal || resizeGrace)
 
   // Measure content with ResizeObserver only while editing/resizing.
@@ -139,45 +137,15 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
     enabled: shouldMeasureMinHeight,
   })
 
-  const persistedWidth = data.properties.nodeSize?.size?.width
-  const liveWidth = typeof width === 'number' && Number.isFinite(width) ? width : undefined
   const persistedHeight = data.properties.nodeSize?.size?.height
   const liveHeight = typeof height === 'number' && Number.isFinite(height) ? height : undefined
   const currentNodeHeight = liveHeight ?? persistedHeight
-  const estimatedDisplayMinH = useMemo(() => {
-    if (isVisualNode) return 50
-    if (!markdown.trim()) return 20
-    if (markdown.includes('$$')) return 20
-
-    const displayWidth = liveWidth ?? persistedWidth ?? 280
-    const contentWidth = Math.max(40, Math.floor(displayWidth * Math.min(1, contentScale)))
-    const estimatedContentH = estimateMarkdownContentHeight({
-      text: markdown,
-      width: contentWidth,
-      fontFamily: data.style.fontFamily,
-      fontSize: data.style.fontSize,
-      textStyle: data.style.textStyle,
-    })
-    const contentPaddingY = nodeType === 'text' ? 0 : 16
-    const scaledMinH = Math.ceil((estimatedContentH + contentPaddingY) / contentScale)
-    return Math.max(20, scaledMinH)
-  }, [
-    isVisualNode,
-    markdown,
-    liveWidth,
-    persistedWidth,
-    contentScale,
-    data.style.fontFamily,
-    data.style.fontSize,
-    data.style.textStyle,
-    nodeType,
-  ])
 
   const baseMinH = isVisualNode
     ? 50
     : shouldMeasureMinHeight
     ? computedMinH
-    : Math.max(20, currentNodeHeight ?? 20, estimatedDisplayMinH)
+    : Math.max(20, currentNodeHeight ?? 20)
   const innerMinH = Math.max(20, baseMinH)
 
   const isPinned = data.properties.pinned.boolean
@@ -205,7 +173,7 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
 
   // Keep React Flow wrapper minHeight in sync in display mode so AI-created nodes
   // can expand without requiring edit/resize observer work.
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (isVisualNode) return
     if (shouldMeasureMinHeight) return
 

@@ -29,6 +29,8 @@ export function useContentMinHeight(
   const { enabled = true } = options
   const updateNodeInternals = useUpdateNodeInternals()
   const contentRef = useRef<HTMLDivElement | null>(null)
+  const nodeRef = useRef<HTMLElement | null>(null)
+  const lastAppliedMinH = useRef<number | null>(null)
   const [contentH, setContentH] = useState(0)
 
   const computedMinH = Math.max(floor, Math.ceil(contentH / scale + extra))
@@ -47,15 +49,24 @@ export function useContentMinHeight(
   // set wrapper's minHeight imperatively + notify RF
   useLayoutEffect(() => {
     if (!enabled) return
-    const sel = `.react-flow__node[data-id="${CSS?.escape ? CSS.escape(nodeId) : nodeId}"]`
-    const el = document.querySelector<HTMLElement>(sel)
+    const previousMinH = lastAppliedMinH.current
+    if (previousMinH !== null && Math.abs(previousMinH - computedMinH) < 2) return
+
+    if (!nodeRef.current) {
+      const sel = `.react-flow__node[data-id="${CSS?.escape ? CSS.escape(nodeId) : nodeId}"]`
+      nodeRef.current = document.querySelector<HTMLElement>(sel)
+    }
+    const el = nodeRef.current
     if (el) el.style.minHeight = `${computedMinH}px`
+    lastAppliedMinH.current = computedMinH
     updateNodeInternals(nodeId)
   }, [enabled, nodeId, computedMinH, updateNodeInternals])
 
   // clear stale inline minHeight when measurement is disabled
   useLayoutEffect(() => {
     if (enabled) return
+    nodeRef.current = null
+    lastAppliedMinH.current = null
     updateNodeInternals(nodeId)
   }, [enabled, nodeId, updateNodeInternals])
 

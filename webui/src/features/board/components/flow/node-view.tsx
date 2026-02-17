@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import {
   type ControlPosition,
   type NodeProps,
@@ -14,6 +14,7 @@ import { useContentMinHeight } from '../../hooks/use-content-min-height'
 import { ShapeChrome } from './shape-chrome'
 import { getShapeContentScale } from '../../utils/shape-content-scale'
 import { Grip } from 'lucide-react'
+import { estimateMarkdownContentHeight } from '@/components/markdown/canvas-lite-markdown'
 
 const CONNECTOR_GAP = 0
 type ResizeHandle = {
@@ -121,9 +122,6 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   const [isEditing, setIsEditing] = useState(false)
   const [isResizingLocal, setIsResizingLocal] = useState(false)
   const [resizeGrace, setResizeGrace] = useState(false)
-  // Tracks whether CanvasLiteMarkdown has produced a bitmap for current content/style.
-  // While false, we keep min-height measurement enabled to avoid stale collapsed nodes.
-  const [isCanvasReady, setIsCanvasReady] = useState(true)
 
   const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
   const viewSlides = useGraphStore(state => state.viewSlides)
@@ -131,31 +129,52 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   const nodeType = data.style.type
   const isVisualNode = nodeType === 'image' || nodeType === 'icon' || nodeType === 'slide'
   const markdown = data.label?.markdown ?? ''
-  // Only wait on canvas readiness for text-like, non-math markdown display mode.
-  // Math currently renders through LiteMarkdown and doesn't need canvas readiness gating.
-  const shouldAwaitCanvasReady =
-    !isVisualNode &&
-    !isEditing &&
-    !isResizingLocal &&
-    markdown.trim().length > 0 &&
-    !markdown.includes('$$')
-  // Keep content measurement alive until canvas render is ready.
-  // This closes the gap for AI-created nodes that start with content without entering edit mode.
-  const shouldMeasureMinHeight = !isVisualNode && (isEditing || isResizingLocal || resizeGrace || !isCanvasReady)
+  const shouldMeasureMinHeight = !isVisualNode && (isEditing || isResizingLocal || resizeGrace)
 
-  // measure content & drive minHeight only while editing or resizing
+  // Measure content with ResizeObserver only while editing/resizing.
   const contentScale = getShapeContentScale(nodeType)
   const { contentRef, computedMinH } = useContentMinHeight(id, 0, 20, contentScale, {
     enabled: shouldMeasureMinHeight,
   })
 
+  const persistedWidth = data.properties.nodeSize?.size?.width
+  const liveWidth = typeof width === 'number' && Number.isFinite(width) ? width : undefined
   const persistedHeight = data.properties.nodeSize?.size?.height
   const liveHeight = typeof height === 'number' && Number.isFinite(height) ? height : undefined
+  const estimatedDisplayMinH = useMemo(() => {
+    if (isVisualNode) return 50
+    if (!markdown.trim()) return 20
+    if (markdown.includes('$$')) return 20
+
+    const displayWidth = liveWidth ?? persistedWidth ?? 280
+    const contentWidth = Math.max(40, Math.floor(displayWidth * Math.min(1, contentScale)))
+    const estimatedContentH = estimateMarkdownContentHeight({
+      text: markdown,
+      width: contentWidth,
+      fontFamily: data.style.fontFamily,
+      fontSize: data.style.fontSize,
+      textStyle: data.style.textStyle,
+    })
+    const contentPaddingY = nodeType === 'text' ? 0 : 16
+    const scaledMinH = Math.ceil((estimatedContentH + contentPaddingY) / contentScale)
+    return Math.max(20, scaledMinH)
+  }, [
+    isVisualNode,
+    markdown,
+    liveWidth,
+    persistedWidth,
+    contentScale,
+    data.style.fontFamily,
+    data.style.fontSize,
+    data.style.textStyle,
+    nodeType,
+  ])
+
   const baseMinH = isVisualNode
     ? 50
     : shouldMeasureMinHeight
     ? computedMinH
-    : Math.max(20, liveHeight ?? persistedHeight ?? computedMinH)
+    : Math.max(20, liveHeight ?? persistedHeight ?? estimatedDisplayMinH)
   const innerMinH = Math.max(20, baseMinH)
 
   const isPinned = data.properties.pinned.boolean
@@ -180,16 +199,6 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   }
   const resizeMinWidth = isVisualNode ? 80 : 20
   const resizeMinHeight = isVisualNode ? 80 : innerMinH
-
-  // Reset readiness whenever content/style/size inputs that affect canvas output change.
-  // CanvasLiteMarkdown will flip this back to true once the queued render resolves.
-  useEffect(() => {
-    if (shouldAwaitCanvasReady) {
-      setIsCanvasReady(false)
-      return
-    }
-    setIsCanvasReady(true)
-  }, [shouldAwaitCanvasReady, markdown, data.style.fontFamily, data.style.fontSize, data.style.textStyle, data.style.textAlign, data.style.textColor, width, height])
 
   useEffect(() => {
     if (!resizeGrace) return
@@ -224,7 +233,6 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
         isDark={isDark}
         contentRef={contentRef}
         onLabelEditingChange={setIsEditing}
-        onCanvasRenderReadyChange={setIsCanvasReady}
         nodeWidth={width}
         nodeHeight={height}
       />

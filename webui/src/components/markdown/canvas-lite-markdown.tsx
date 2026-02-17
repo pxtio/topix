@@ -318,8 +318,10 @@ function tokenizeTextBlock(block: string): Token[] {
   const lines = block.split('\n')
 
   lines.forEach((line, index) => {
-    tokens.push(...tokenizeLine(line))
-    if (index < lines.length - 1) tokens.push({ type: 'br' })
+    const lineTokens = tokenizeLine(line)
+    tokens.push(...lineTokens)
+    const isRuleLine = lineTokens.length === 1 && (lineTokens[0]?.type === 'hr' || lineTokens[0]?.type === 'hr-double')
+    if (index < lines.length - 1 && !isRuleLine) tokens.push({ type: 'br' })
   })
 
   return tokens
@@ -1029,6 +1031,8 @@ export type CanvasLiteMarkdownProps = {
   fontSize?: FontSize
   textStyle?: TextStyle
   textColor?: string
+  // Optional lifecycle signal used by parent layout logic (e.g. min-height gating).
+  onRenderReadyChange?: (ready: boolean) => void
 }
 
 
@@ -1049,6 +1053,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   fontSize = 'M',
   textStyle = 'normal',
   textColor = '#1f2937',
+  onRenderReadyChange,
 }: CanvasLiteMarkdownProps) {
   const [fontEpochState, setFontEpochState] = useState(() => fontEpoch)
   const resolvedWidth = Math.max(40, Math.ceil(width ?? 280))
@@ -1077,6 +1082,11 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
     initFontTracking()
     return subscribeFontEpoch(setFontEpochState)
   }, [])
+
+  useEffect(() => {
+    const ready = !normalizedText || Boolean(renderUrl)
+    onRenderReadyChange?.(ready)
+  }, [normalizedText, renderUrl, onRenderReadyChange])
 
   /**
    * Requests a rendered bitmap for current props and updates local image URL

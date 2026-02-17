@@ -1,5 +1,5 @@
 import TextareaAutosize from 'react-textarea-autosize'
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useEffect } from 'react'
 import type { RefObject, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { FontFamily, FontSize, NodeType, TextStyle } from '../../types/style'
 import { IconShape } from './icon-shape'
@@ -39,6 +39,8 @@ interface ShapeProps {
   renderFontFamily: FontFamily
   renderFontSize: FontSize
   renderTextStyle: TextStyle
+  // Reports whether display canvas is ready for current input, used by NodeView min-height gating.
+  onCanvasRenderReadyChange?: (ready: boolean) => void
 }
 
 
@@ -105,6 +107,7 @@ type ImageNodeViewProps = {
   renderTextStyle: TextStyle
   zoom: number
   isMoving: boolean
+  onCanvasRenderReadyChange?: (ready: boolean) => void
 }
 
 
@@ -128,9 +131,18 @@ const ImageNodeView = memo(function ImageNodeView({
   renderTextStyle,
   zoom,
   isMoving,
+  onCanvasRenderReadyChange,
 }: ImageNodeViewProps) {
   const hasLabel = value.trim().length > 0
   const renderMathWithDom = hasMathSyntax(value)
+  const usesCanvas = !labelEditing && !isResizingNode && hasLabel && !renderMathWithDom
+
+  // Non-canvas branches should not block min-height flow in parent.
+  useEffect(() => {
+    if (!usesCanvas) {
+      onCanvasRenderReadyChange?.(true)
+    }
+  }, [usesCanvas, onCanvasRenderReadyChange])
 
   return (
     <div className='relative w-full h-full rounded-md'>
@@ -181,6 +193,7 @@ const ImageNodeView = memo(function ImageNodeView({
             fontFamily={renderFontFamily}
             fontSize={renderFontSize}
             textStyle={renderTextStyle}
+            onRenderReadyChange={onCanvasRenderReadyChange}
           />
           )
         ) : (
@@ -241,6 +254,7 @@ type TextNodeViewProps = {
   renderTextStyle: TextStyle
   zoom: number
   isMoving: boolean
+  onCanvasRenderReadyChange?: (ready: boolean) => void
 }
 
 
@@ -268,8 +282,19 @@ const TextNodeView = memo(function TextNodeView({
   renderTextStyle,
   zoom,
   isMoving,
+  onCanvasRenderReadyChange,
 }: TextNodeViewProps) {
   const renderMathWithDom = hasMathSyntax(value)
+  const hasText = value.trim().length > 0
+  const usesCanvas = !labelEditing && !isResizingNode && hasText && !renderMathWithDom
+
+  // If display path is DOM/textarea, we consider canvas phase complete.
+  useEffect(() => {
+    if (!usesCanvas) {
+      onCanvasRenderReadyChange?.(true)
+    }
+  }, [usesCanvas, onCanvasRenderReadyChange])
+
   return (
     <div className='w-full h-full flex items-center justify-center'>
       <div
@@ -314,6 +339,7 @@ const TextNodeView = memo(function TextNodeView({
                   fontFamily={renderFontFamily}
                   fontSize={renderFontSize}
                   textStyle={renderTextStyle}
+                  onRenderReadyChange={onCanvasRenderReadyChange}
                 />
               )
             ) : (
@@ -347,6 +373,7 @@ export const Shape = memo(function Shape({
   renderFontFamily,
   renderFontSize,
   renderTextStyle,
+  onCanvasRenderReadyChange,
 }: ShapeProps) {
   const zoom = useGraphStore(state => state.zoom ?? 1)
   const isMoving = useGraphStore(state => state.isMoving)
@@ -398,6 +425,7 @@ export const Shape = memo(function Shape({
         renderTextStyle={renderTextStyle}
         zoom={zoom}
         isMoving={isMoving}
+        onCanvasRenderReadyChange={onCanvasRenderReadyChange}
       />
     )
   }
@@ -428,6 +456,7 @@ export const Shape = memo(function Shape({
       renderTextStyle={renderTextStyle}
       zoom={zoom}
       isMoving={isMoving}
+      onCanvasRenderReadyChange={onCanvasRenderReadyChange}
     />
   )
 })

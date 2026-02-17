@@ -314,11 +314,11 @@ export const LiteMarkdown = memo(function LiteMarkdown({ text, className }: Lite
         }
 
         if (token.type === 'hr') {
-          return <hr key={index} className='my-2 border-t border-current' />
+          return <hr key={index} className='my-0 border-t border-current' />
         }
 
         if (token.type === 'hr-double') {
-          return <div key={index} className='my-2 border-t-2 border-b-2 border-current' />
+          return <div key={index} className='my-0 border-t-2 border-b-2 border-current' />
         }
 
         return <Fragment key={index}>{token.content}</Fragment>

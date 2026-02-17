@@ -318,8 +318,10 @@ function tokenizeTextBlock(block: string): Token[] {
   const lines = block.split('\n')
 
   lines.forEach((line, index) => {
-    tokens.push(...tokenizeLine(line))
-    if (index < lines.length - 1) tokens.push({ type: 'br' })
+    const lineTokens = tokenizeLine(line)
+    tokens.push(...lineTokens)
+    const isRuleLine = lineTokens.length === 1 && (lineTokens[0]?.type === 'hr' || lineTokens[0]?.type === 'hr-double')
+    if (index < lines.length - 1 && !isRuleLine) tokens.push({ type: 'br' })
   })
 
   return tokens

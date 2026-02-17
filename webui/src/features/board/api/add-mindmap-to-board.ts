@@ -9,6 +9,60 @@ import { generateUuid } from '@/lib/common'
 import type { LinkEdge, NoteNode } from '../types/flow'
 import { useFitNodes } from '../hooks/use-fit-nodes'
 import { useShallow } from 'zustand/react/shallow'
+import { estimateMarkdownContentHeight } from '../utils/markdown-height-estimate'
+import { getShapeContentScale } from '../utils/shape-content-scale'
+
+const isAutoSizedTextNode = (node: NoteNode) => {
+  const kind = (node.data as { kind?: string }).kind
+  if (kind === 'point') return false
+  const nodeType = node.data.style.type
+  if (nodeType === 'image' || nodeType === 'icon' || nodeType === 'slide') return false
+  return true
+}
+
+const applyAutoHeightForMindMapNodes = (nodes: NoteNode[]) =>
+  nodes.map(node => {
+    if (!isAutoSizedTextNode(node)) return node
+
+    const markdown = node.data.label?.markdown ?? ''
+    if (!markdown.trim()) return node
+    if (markdown.includes('$$')) return node
+
+    const nodeType = node.data.style.type
+    const contentScale = getShapeContentScale(nodeType)
+    const persistedSize = node.data.properties.nodeSize.size
+    const width = typeof node.width === 'number' && Number.isFinite(node.width)
+      ? node.width
+      : persistedSize?.width ?? 280
+    const currentHeight = typeof node.height === 'number' && Number.isFinite(node.height)
+      ? node.height
+      : persistedSize?.height ?? 20
+
+    const contentWidth = Math.max(40, Math.floor(width * Math.min(1, contentScale)))
+    const estimatedContentH = estimateMarkdownContentHeight({
+      text: markdown,
+      width: contentWidth,
+      fontFamily: node.data.style.fontFamily,
+      fontSize: node.data.style.fontSize,
+      textStyle: node.data.style.textStyle,
+    })
+    const contentPaddingY = nodeType === 'text' ? 0 : 16
+    const estimatedNodeH = Math.max(20, Math.ceil((estimatedContentH + contentPaddingY) / contentScale))
+    if (estimatedNodeH <= currentHeight) return node
+
+    node.height = estimatedNodeH
+    node.measured = {
+      ...node.measured,
+      width,
+      height: estimatedNodeH,
+    }
+    node.data.properties.nodeSize.size = {
+      ...(persistedSize ?? { width, height: currentHeight }),
+      height: estimatedNodeH,
+    }
+
+    return node
+  })
 
 /**
  * A hook to add all mind map nodes/edges from the mind map store
@@ -56,7 +110,8 @@ export const useAddMindMapToBoard = () => {
         if (contextNodes.length > 0 && useAnchors !== false) {
           stackBase = displacedMindMapNodes
         }
-        const displacedById = new Map(displacedMindMapNodes.map(node => [node.id, node]))
+        const preparedMindMapNodes = applyAutoHeightForMindMapNodes(displacedMindMapNodes)
+        const displacedById = new Map(preparedMindMapNodes.map(node => [node.id, node]))
         const newPointNodes: NoteNode[] = []
         const convertedEdges: LinkEdge[] = []
 
@@ -121,7 +176,7 @@ export const useAddMindMapToBoard = () => {
           })
         }
         mindMapEdges.forEach(attachPointPair)
-        nodes_ = [...displacedMindMapNodes, ...newPointNodes, ...nodes_]
+        nodes_ = [...preparedMindMapNodes, ...newPointNodes, ...nodes_]
         edges_ = [...convertedEdges, ...edges_]
 
         // update stores (drives React Flow)
@@ -129,7 +184,7 @@ export const useAddMindMapToBoard = () => {
         setEdgesPersist(edges_)
 
         // fit the camera to just-added nodes (waits until measured)
-        displacedMindMapNodes.forEach(n => newIds.push(n.id))
+        preparedMindMapNodes.forEach(n => newIds.push(n.id))
       }
 
       // fit view to new nodes

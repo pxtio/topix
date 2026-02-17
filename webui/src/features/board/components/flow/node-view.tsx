@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import {
   type ControlPosition,
   type NodeProps,
@@ -121,29 +121,17 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   const [isEditing, setIsEditing] = useState(false)
   const [isResizingLocal, setIsResizingLocal] = useState(false)
   const [resizeGrace, setResizeGrace] = useState(false)
-  // Tracks whether CanvasLiteMarkdown has produced a bitmap for current content/style.
-  // While false, we keep min-height measurement enabled to avoid stale collapsed nodes.
-  const [isCanvasReady, setIsCanvasReady] = useState(true)
+  const wrapperRef = useRef<HTMLElement | null>(null)
+  const lastAppliedWrapperMinH = useRef<number | null>(null)
 
   const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
   const viewSlides = useGraphStore(state => state.viewSlides)
 
   const nodeType = data.style.type
   const isVisualNode = nodeType === 'image' || nodeType === 'icon' || nodeType === 'slide'
-  const markdown = data.label?.markdown ?? ''
-  // Only wait on canvas readiness for text-like, non-math markdown display mode.
-  // Math currently renders through LiteMarkdown and doesn't need canvas readiness gating.
-  const shouldAwaitCanvasReady =
-    !isVisualNode &&
-    !isEditing &&
-    !isResizingLocal &&
-    markdown.trim().length > 0 &&
-    !markdown.includes('$$')
-  // Keep content measurement alive until canvas render is ready.
-  // This closes the gap for AI-created nodes that start with content without entering edit mode.
-  const shouldMeasureMinHeight = !isVisualNode && (isEditing || isResizingLocal || resizeGrace || !isCanvasReady)
+  const shouldMeasureMinHeight = !isVisualNode && (isEditing || isResizingLocal || resizeGrace)
 
-  // measure content & drive minHeight only while editing or resizing
+  // Measure content with ResizeObserver only while editing/resizing.
   const contentScale = getShapeContentScale(nodeType)
   const { contentRef, computedMinH } = useContentMinHeight(id, 0, 20, contentScale, {
     enabled: shouldMeasureMinHeight,
@@ -151,11 +139,13 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
 
   const persistedHeight = data.properties.nodeSize?.size?.height
   const liveHeight = typeof height === 'number' && Number.isFinite(height) ? height : undefined
+  const currentNodeHeight = liveHeight ?? persistedHeight
+
   const baseMinH = isVisualNode
     ? 50
     : shouldMeasureMinHeight
     ? computedMinH
-    : Math.max(20, liveHeight ?? persistedHeight ?? computedMinH)
+    : Math.max(20, currentNodeHeight ?? 20)
   const innerMinH = Math.max(20, baseMinH)
 
   const isPinned = data.properties.pinned.boolean
@@ -181,15 +171,31 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   const resizeMinWidth = isVisualNode ? 80 : 20
   const resizeMinHeight = isVisualNode ? 80 : innerMinH
 
-  // Reset readiness whenever content/style/size inputs that affect canvas output change.
-  // CanvasLiteMarkdown will flip this back to true once the queued render resolves.
+  // Keep React Flow wrapper minHeight in sync in display mode so AI-created nodes
+  // can expand without requiring edit/resize observer work.
   useEffect(() => {
-    if (shouldAwaitCanvasReady) {
-      setIsCanvasReady(false)
-      return
+    if (isVisualNode) return
+    if (shouldMeasureMinHeight) return
+
+    const measuredHeight = typeof height === 'number' && Number.isFinite(height) ? height : currentNodeHeight ?? 0
+    if (measuredHeight >= innerMinH - 2) return
+
+    const nextMinH = innerMinH
+    const prevMinH = lastAppliedWrapperMinH.current
+    if (prevMinH !== null && Math.abs(prevMinH - nextMinH) < 2) return
+
+    if (!wrapperRef.current) {
+      const sel = `.react-flow__node[data-id="${CSS?.escape ? CSS.escape(id) : id}"]`
+      wrapperRef.current = document.querySelector<HTMLElement>(sel)
     }
-    setIsCanvasReady(true)
-  }, [shouldAwaitCanvasReady, markdown, data.style.fontFamily, data.style.fontSize, data.style.textStyle, data.style.textAlign, data.style.textColor, width, height])
+    const el = wrapperRef.current
+    if (el) {
+      // Display-mode auto sizing: rely on React Flow's observer rather than forcing
+      // updateNodeInternals on every mount burst.
+      el.style.minHeight = `${nextMinH}px`
+      lastAppliedWrapperMinH.current = nextMinH
+    }
+  }, [id, innerMinH, isVisualNode, shouldMeasureMinHeight, height, currentNodeHeight])
 
   useEffect(() => {
     if (!resizeGrace) return
@@ -224,7 +230,6 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
         isDark={isDark}
         contentRef={contentRef}
         onLabelEditingChange={setIsEditing}
-        onCanvasRenderReadyChange={setIsCanvasReady}
         nodeWidth={width}
         nodeHeight={height}
       />

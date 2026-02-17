@@ -48,6 +48,14 @@ type RenderOptions = {
 }
 
 
+type LayoutOptions = {
+  width: number
+  fontFamily: FontFamily
+  fontSize: FontSize
+  textStyle: TextStyle
+}
+
+
 type CacheEntry = {
   url: string
   lastUsed: number
@@ -91,6 +99,7 @@ const H_PADDING = 8
 const V_PADDING = 8
 const CODE_BLOCK_PADDING_X = 6
 const CODE_BLOCK_MARGIN_Y = 4
+const CONTENT_HEIGHT_BUFFER = 4
 const MAX_CACHE_SIZE = 700
 const MAX_WIDTH_CACHE_SIZE = 5000
 const MIN_RENDER_SCALE = 0.15
@@ -414,6 +423,10 @@ const getFontSizePx = (fontSize: FontSize, fontFamily: FontFamily): number => {
 }
 
 
+const getLineHeightPx = (fontSize: FontSize, fontFamily: FontFamily): number =>
+  Math.ceil(getFontSizePx(fontSize, fontFamily) * 1.35)
+
+
 /**
  * Builds a canvas font string used by both text measurement and draw calls.
  */
@@ -470,7 +483,7 @@ const measureText = ({
  * Wraps one code line by character width using monospace metrics.
  * This preserves whitespace and guarantees fit within available width.
  */
-const wrapCodeLine = (line: string, opts: RenderOptions, maxWidth: number): string[] => {
+const wrapCodeLine = (line: string, opts: LayoutOptions, maxWidth: number): string[] => {
   const normalized = line.replace(/\t/g, '  ')
   if (!normalized) return ['']
 
@@ -504,7 +517,7 @@ const wrapCodeLine = (line: string, opts: RenderOptions, maxWidth: number): stri
  * Performs text wrapping/layout and converts tokens into drawable lines.
  * Output lines are consumed by the canvas draw pass.
  */
-function layoutTokens(tokens: Token[], opts: RenderOptions): LayoutLine[] {
+function layoutTokens(tokens: Token[], opts: LayoutOptions): LayoutLine[] {
   const maxWidth = Math.max(40, opts.width - H_PADDING * 2)
 
   const lines: LayoutLine[] = []
@@ -671,6 +684,50 @@ const getLineAdvance = (line: LayoutLine, lineHeight: number): number => {
 }
 
 
+const getContentHeight = (lines: LayoutLine[], lineHeight: number): number =>
+  Math.max(
+    lineHeight,
+    lines.reduce((sum, line) => sum + getLineAdvance(line, lineHeight), 0)
+  )
+
+
+export type MarkdownHeightEstimateOptions = {
+  text: string
+  width: number
+  fontFamily?: FontFamily
+  fontSize?: FontSize
+  textStyle?: TextStyle
+}
+
+
+/**
+ * Estimates rendered markdown content height (without outer container padding).
+ * This mirrors the same tokenize + layout logic used by the canvas renderer.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export const estimateMarkdownContentHeight = ({
+  text,
+  width,
+  fontFamily = 'handwriting',
+  fontSize = 'M',
+  textStyle = 'normal',
+}: MarkdownHeightEstimateOptions): number => {
+  const normalizedText = text.trim()
+  if (!normalizedText) return 0
+
+  const resolvedWidth = Math.max(40, Math.ceil(width))
+  const layoutOpts: LayoutOptions = {
+    width: resolvedWidth,
+    fontFamily,
+    fontSize,
+    textStyle,
+  }
+  const lines = layoutTokens(tokenize(text), layoutOpts)
+  const lineHeight = getLineHeightPx(fontSize, fontFamily)
+  return getContentHeight(lines, lineHeight) + CONTENT_HEIGHT_BUFFER
+}
+
+
 /**
  * Draws underline/strikethrough decorations after the text run is painted.
  */
@@ -720,11 +777,8 @@ const drawToCanvas = (ctx: CanvasRenderingContext2D, opts: RenderOptions, lines:
   ctx.strokeStyle = opts.textColor
 
   const fontSizePx = getFontSizePx(opts.fontSize, opts.fontFamily)
-  const lineHeight = Math.ceil(fontSizePx * 1.35)
-  const contentHeight = Math.max(
-    lineHeight,
-    lines.reduce((sum, line) => sum + getLineAdvance(line, lineHeight), 0)
-  )
+  const lineHeight = getLineHeightPx(opts.fontSize, opts.fontFamily)
+  const contentHeight = getContentHeight(lines, lineHeight)
   const centeredTop = Math.floor((opts.height - contentHeight) / 2)
   const startBaseline = Math.max(V_PADDING + fontSizePx, centeredTop + fontSizePx)
   let y = startBaseline

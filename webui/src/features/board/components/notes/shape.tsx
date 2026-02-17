@@ -378,7 +378,7 @@ export const Shape = memo(function Shape({
   const zoom = useGraphStore(state => state.zoom ?? 1)
   const isMoving = useGraphStore(state => state.isMoving)
   const isResizingNode = useGraphStore(state => state.isResizingNode)
-  const paddingClass = nodeType === 'text' ? 'p-0' : 'p-2'
+  const paddingClass = nodeType === 'text' ? 'px-0 py-2' : 'p-2'
   const base = `
     w-full ${paddingClass} border-none resize-none
     focus:outline-none focus:ring-0 focus:border-none

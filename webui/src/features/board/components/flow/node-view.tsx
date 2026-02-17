@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   type ControlPosition,
   type NodeProps,
@@ -122,6 +122,8 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   const [isEditing, setIsEditing] = useState(false)
   const [isResizingLocal, setIsResizingLocal] = useState(false)
   const [resizeGrace, setResizeGrace] = useState(false)
+  const wrapperRef = useRef<HTMLElement | null>(null)
+  const lastAppliedWrapperMinH = useRef<number | null>(null)
 
   const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
   const viewSlides = useGraphStore(state => state.viewSlides)
@@ -141,6 +143,7 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   const liveWidth = typeof width === 'number' && Number.isFinite(width) ? width : undefined
   const persistedHeight = data.properties.nodeSize?.size?.height
   const liveHeight = typeof height === 'number' && Number.isFinite(height) ? height : undefined
+  const currentNodeHeight = liveHeight ?? persistedHeight
   const estimatedDisplayMinH = useMemo(() => {
     if (isVisualNode) return 50
     if (!markdown.trim()) return 20
@@ -174,7 +177,7 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
     ? 50
     : shouldMeasureMinHeight
     ? computedMinH
-    : Math.max(20, liveHeight ?? persistedHeight ?? estimatedDisplayMinH)
+    : Math.max(20, currentNodeHeight ?? 20, estimatedDisplayMinH)
   const innerMinH = Math.max(20, baseMinH)
 
   const isPinned = data.properties.pinned.boolean
@@ -199,6 +202,32 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   }
   const resizeMinWidth = isVisualNode ? 80 : 20
   const resizeMinHeight = isVisualNode ? 80 : innerMinH
+
+  // Keep React Flow wrapper minHeight in sync in display mode so AI-created nodes
+  // can expand without requiring edit/resize observer work.
+  useLayoutEffect(() => {
+    if (isVisualNode) return
+    if (shouldMeasureMinHeight) return
+
+    const measuredHeight = typeof height === 'number' && Number.isFinite(height) ? height : currentNodeHeight ?? 0
+    if (measuredHeight >= innerMinH - 2) return
+
+    const nextMinH = innerMinH
+    const prevMinH = lastAppliedWrapperMinH.current
+    if (prevMinH !== null && Math.abs(prevMinH - nextMinH) < 2) return
+
+    if (!wrapperRef.current) {
+      const sel = `.react-flow__node[data-id="${CSS?.escape ? CSS.escape(id) : id}"]`
+      wrapperRef.current = document.querySelector<HTMLElement>(sel)
+    }
+    const el = wrapperRef.current
+    if (el) {
+      // Display-mode auto sizing: rely on React Flow's observer rather than forcing
+      // updateNodeInternals on every mount burst.
+      el.style.minHeight = `${nextMinH}px`
+      lastAppliedWrapperMinH.current = nextMinH
+    }
+  }, [id, innerMinH, isVisualNode, shouldMeasureMinHeight, height, currentNodeHeight])
 
   useEffect(() => {
     if (!resizeGrace) return

@@ -97,6 +97,7 @@ const INFORMAL_FONT_SIZE_MAP: Record<FontSize, number> = {
 
 const H_PADDING = 8
 const V_PADDING = 8
+const CONTENT_HEIGHT_BUFFER = 4
 const CODE_BLOCK_PADDING_X = 6
 const CODE_BLOCK_MARGIN_Y = 4
 const MAX_CACHE_SIZE = 700
@@ -723,7 +724,7 @@ export const estimateMarkdownContentHeight = ({
   }
   const lines = layoutTokens(tokenize(text), layoutOpts)
   const lineHeight = getLineHeightPx(fontSize, fontFamily)
-  return getContentHeight(lines, lineHeight)
+  return getContentHeight(lines, lineHeight) + CONTENT_HEIGHT_BUFFER
 }
 
 

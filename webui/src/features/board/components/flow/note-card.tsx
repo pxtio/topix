@@ -32,6 +32,8 @@ type NodeCardProps = {
   contentRef: React.RefObject<HTMLDivElement | null>
   nodeWidth?: number
   nodeHeight?: number
+  // Bubble up canvas render readiness so NodeView can gate min-height measurement.
+  onCanvasRenderReadyChange?: (ready: boolean) => void
 }
 
 /**
@@ -80,6 +82,7 @@ type NoteDisplayContentProps = {
   textColor?: string
   nodeWidth?: number
   nodeHeight?: number
+  onCanvasRenderReadyChange?: (ready: boolean) => void
 }
 
 /**
@@ -95,6 +98,7 @@ const NoteDisplayContent = memo(function NoteDisplayContent({
   textColor,
   nodeWidth,
   nodeHeight,
+  onCanvasRenderReadyChange,
 }: NoteDisplayContentProps) {
   const fontFamily = note.style.type === 'sheet' ? 'sans-serif' : note.style.fontFamily
   const icon = note.properties.iconData?.type === "icon" && note.properties.iconData.icon?.type === "icon"
@@ -126,6 +130,7 @@ const NoteDisplayContent = memo(function NoteDisplayContent({
       renderFontFamily={note.style.fontFamily}
       renderFontSize={note.style.fontSize}
       renderTextStyle={note.style.textStyle}
+      onCanvasRenderReadyChange={onCanvasRenderReadyChange}
     />
   )
 })
@@ -198,6 +203,7 @@ export const NodeCard = memo(({
   contentRef,
   nodeWidth,
   nodeHeight,
+  onCanvasRenderReadyChange,
 }: NodeCardProps) => {
   const isSheet = note.style.type === 'sheet'
   const isText = note.style.type === 'text'
@@ -420,6 +426,7 @@ export const NodeCard = memo(({
           textColor={textColor}
           nodeWidth={nodeWidth}
           nodeHeight={nodeHeight}
+          onCanvasRenderReadyChange={onCanvasRenderReadyChange}
         />
       </LabelContainer>
     )

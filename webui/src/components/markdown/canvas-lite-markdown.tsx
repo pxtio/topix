@@ -1029,6 +1029,8 @@ export type CanvasLiteMarkdownProps = {
   fontSize?: FontSize
   textStyle?: TextStyle
   textColor?: string
+  // Optional lifecycle signal used by parent layout logic (e.g. min-height gating).
+  onRenderReadyChange?: (ready: boolean) => void
 }
 
 
@@ -1049,6 +1051,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   fontSize = 'M',
   textStyle = 'normal',
   textColor = '#1f2937',
+  onRenderReadyChange,
 }: CanvasLiteMarkdownProps) {
   const [fontEpochState, setFontEpochState] = useState(() => fontEpoch)
   const resolvedWidth = Math.max(40, Math.ceil(width ?? 280))
@@ -1077,6 +1080,11 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
     initFontTracking()
     return subscribeFontEpoch(setFontEpochState)
   }, [])
+
+  useEffect(() => {
+    const ready = !normalizedText || Boolean(renderUrl)
+    onRenderReadyChange?.(ready)
+  }, [normalizedText, renderUrl, onRenderReadyChange])
 
   /**
    * Requests a rendered bitmap for current props and updates local image URL

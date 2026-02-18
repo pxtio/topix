@@ -1,6 +1,7 @@
 import { memo, type CSSProperties, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { RoughDiamond } from '@/components/rough/diam'
+import { darkerDisplayHex } from '../../../lib/colors/dark-variants'
 import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 
 type LayeredDiamondProps = {
@@ -44,13 +45,16 @@ export const LayeredDiamond = memo(({
     className: 'w-full h-full'
   }
 
+  const backFill = darkerDisplayHex(fill) ?? fill
+  const backStroke = darkerDisplayHex(stroke) ?? stroke
+
   return (
     <div className={clsx(wrapperClass)} style={wrapperStyle}>
       <div
         className='absolute inset-0 pointer-events-none'
-        style={{ transform: `translate(0px, ${offsetY}px)`, filter: 'brightness(0.75)' }}
+        style={{ transform: `translate(0px, ${offsetY}px)` }}
       >
-        <RoughDiamond {...commonProps} />
+        <RoughDiamond {...commonProps} fill={backFill} stroke={backStroke} />
       </div>
       <div className='relative w-full h-full'>
         <RoughDiamond {...commonProps}>

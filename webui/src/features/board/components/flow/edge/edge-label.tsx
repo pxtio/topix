@@ -13,6 +13,7 @@ type EdgeLabelProps = {
   labelColor?: string
   labelDraft: string
   isEditing: boolean
+  observeSize?: boolean
   fontFamily?: FontFamily
   onChange?: (value: string) => void
   onSizeChange?: (size: { width: number; height: number }) => void
@@ -31,6 +32,7 @@ export const EdgeLabel = memo(function EdgeLabel({
   labelColor,
   labelDraft,
   isEditing,
+  observeSize = true,
   fontFamily,
   onChange,
   onSizeChange,
@@ -46,18 +48,36 @@ export const EdgeLabel = memo(function EdgeLabel({
     const node = wrapperRef.current
     if (!node || !onSizeChange) return
 
+    let frame: number | null = null
     const reportSize = () => {
       const width = node.offsetWidth
       const height = node.offsetHeight
       onSizeChange({ width, height })
     }
 
-    reportSize()
-    const observer = new ResizeObserver(reportSize)
+    const scheduleReport = () => {
+      if (frame !== null) cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        frame = null
+        reportSize()
+      })
+    }
+
+    scheduleReport()
+    if (!observeSize) {
+      return () => {
+        if (frame !== null) cancelAnimationFrame(frame)
+      }
+    }
+
+    const observer = new ResizeObserver(() => scheduleReport())
     observer.observe(node)
 
-    return () => observer.disconnect()
-  }, [onSizeChange])
+    return () => {
+      observer.disconnect()
+      if (frame !== null) cancelAnimationFrame(frame)
+    }
+  }, [onSizeChange, observeSize, labelText, labelDraft, isEditing, fontFamilyClass])
 
   return (
     <EdgeLabelRenderer>

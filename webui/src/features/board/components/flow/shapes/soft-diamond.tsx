@@ -1,6 +1,8 @@
 import { memo, type CSSProperties, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { RoughDiamond } from '@/components/rough/diam'
+import { useTheme } from '@/components/theme-provider'
+import { darkerDisplayHex, lighterDisplayHex } from '../../../lib/colors/dark-variants'
 import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 
 type SoftDiamondProps = {
@@ -30,6 +32,8 @@ export const SoftDiamond = memo(({
   seed,
   children
 }: SoftDiamondProps) => {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const offset = 0
 
   const commonProps = {
@@ -44,6 +48,9 @@ export const SoftDiamond = memo(({
     className: 'w-full h-full'
   }
 
+  const backFill = isDark ? lighterDisplayHex(fill) ?? fill : darkerDisplayHex(fill) ?? fill
+  const backStroke = isDark ? lighterDisplayHex(stroke) ?? stroke : darkerDisplayHex(stroke) ?? stroke
+
   return (
     <div className={clsx('relative w-full h-full', wrapperClass)} style={wrapperStyle}>
       <div className='absolute inset-0 pointer-events-none flex items-center justify-center'>
@@ -52,11 +59,10 @@ export const SoftDiamond = memo(({
             width: '100%',
             height: '100%',
             transform: `translate(${offset}px, ${offset}px) scale(1.08)`,
-            transformOrigin: 'center',
-            filter: 'brightness(0.75)'
+            transformOrigin: 'center'
           }}
         >
-          <RoughDiamond {...commonProps} />
+          <RoughDiamond {...commonProps} fill={backFill} stroke={backStroke} />
         </div>
       </div>
       <div className='relative w-full h-full flex items-center justify-center'>

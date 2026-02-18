@@ -1,7 +1,8 @@
 import { memo, type CSSProperties, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { RoughRect } from '@/components/rough/rect'
-import { darkerDisplayHex } from '../../../lib/colors/dark-variants'
+import { useTheme } from '@/components/theme-provider'
+import { darkerDisplayHex, lighterDisplayHex } from '../../../lib/colors/dark-variants'
 import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 
 type LayeredRectangleProps = {
@@ -31,6 +32,8 @@ export const LayeredRectangle = memo(({
   seed,
   children
 }: LayeredRectangleProps) => {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const offsetX = 12
   const offsetY = 12
 
@@ -45,8 +48,8 @@ export const LayeredRectangle = memo(({
     seed
   }
 
-  const backFill = darkerDisplayHex(fill) ?? fill
-  const backStroke = darkerDisplayHex(stroke) ?? stroke
+  const backFill = isDark ? lighterDisplayHex(fill) ?? fill : darkerDisplayHex(fill) ?? fill
+  const backStroke = isDark ? lighterDisplayHex(stroke) ?? stroke : darkerDisplayHex(stroke) ?? stroke
 
   return (
     <div className={clsx(wrapperClass)} style={wrapperStyle}>

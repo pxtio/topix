@@ -1,7 +1,8 @@
 import { memo, type CSSProperties, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { RoughDiamond } from '@/components/rough/diam'
-import { darkerDisplayHex } from '../../../lib/colors/dark-variants'
+import { useTheme } from '@/components/theme-provider'
+import { darkerDisplayHex, lighterDisplayHex } from '../../../lib/colors/dark-variants'
 import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 
 type LayeredDiamondProps = {
@@ -31,6 +32,8 @@ export const LayeredDiamond = memo(({
   seed,
   children
 }: LayeredDiamondProps) => {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const offsetY = 24
 
   const commonProps = {
@@ -45,8 +48,8 @@ export const LayeredDiamond = memo(({
     className: 'w-full h-full'
   }
 
-  const backFill = darkerDisplayHex(fill) ?? fill
-  const backStroke = darkerDisplayHex(stroke) ?? stroke
+  const backFill = isDark ? lighterDisplayHex(fill) ?? fill : darkerDisplayHex(fill) ?? fill
+  const backStroke = isDark ? lighterDisplayHex(stroke) ?? stroke : darkerDisplayHex(stroke) ?? stroke
 
   return (
     <div className={clsx(wrapperClass)} style={wrapperStyle}>

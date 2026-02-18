@@ -1,7 +1,8 @@
 import { memo, type CSSProperties, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { RoughCircle } from '@/components/rough/circ'
-import { darkerDisplayHex } from '../../../lib/colors/dark-variants'
+import { useTheme } from '@/components/theme-provider'
+import { darkerDisplayHex, lighterDisplayHex } from '../../../lib/colors/dark-variants'
 import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 
 type LayeredCircleProps = {
@@ -29,6 +30,8 @@ export const LayeredCircle = memo(({
   seed,
   children
 }: LayeredCircleProps) => {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const offset = 12
 
   const commonProps = {
@@ -41,8 +44,8 @@ export const LayeredCircle = memo(({
     seed
   }
 
-  const backFill = darkerDisplayHex(fill) ?? fill
-  const backStroke = darkerDisplayHex(stroke) ?? stroke
+  const backFill = isDark ? lighterDisplayHex(fill) ?? fill : darkerDisplayHex(fill) ?? fill
+  const backStroke = isDark ? lighterDisplayHex(stroke) ?? stroke : darkerDisplayHex(stroke) ?? stroke
 
   return (
     <div className={clsx(wrapperClass)} style={wrapperStyle}>

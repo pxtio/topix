@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react'
+import { memo, useRef } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 import { EdgeLabelRenderer } from '@xyflow/react'
 import { LiteMarkdown } from '@/components/markdown/lite-markdown'
@@ -13,10 +13,8 @@ type EdgeLabelProps = {
   labelColor?: string
   labelDraft: string
   isEditing: boolean
-  observeSize?: boolean
   fontFamily?: FontFamily
   onChange?: (value: string) => void
-  onSizeChange?: (size: { width: number; height: number }) => void
   labelInputRef: React.RefObject<HTMLTextAreaElement | null>
   transformStyle: { transform: string }
   handleLabelBlur: () => void
@@ -32,10 +30,8 @@ export const EdgeLabel = memo(function EdgeLabel({
   labelColor,
   labelDraft,
   isEditing,
-  observeSize = true,
   fontFamily,
   onChange,
-  onSizeChange,
   labelInputRef,
   transformStyle,
   handleLabelBlur,
@@ -43,41 +39,6 @@ export const EdgeLabel = memo(function EdgeLabel({
 }: EdgeLabelProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const fontFamilyClass = fontFamilyToTwClass(fontFamily)
-
-  useEffect(() => {
-    const node = wrapperRef.current
-    if (!node || !onSizeChange) return
-
-    let frame: number | null = null
-    const reportSize = () => {
-      const width = node.offsetWidth
-      const height = node.offsetHeight
-      onSizeChange({ width, height })
-    }
-
-    const scheduleReport = () => {
-      if (frame !== null) cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(() => {
-        frame = null
-        reportSize()
-      })
-    }
-
-    scheduleReport()
-    if (!observeSize) {
-      return () => {
-        if (frame !== null) cancelAnimationFrame(frame)
-      }
-    }
-
-    const observer = new ResizeObserver(() => scheduleReport())
-    observer.observe(node)
-
-    return () => {
-      observer.disconnect()
-      if (frame !== null) cancelAnimationFrame(frame)
-    }
-  }, [onSizeChange, observeSize, labelText, labelDraft, isEditing, fontFamilyClass])
 
   return (
     <EdgeLabelRenderer>
@@ -95,7 +56,7 @@ export const EdgeLabel = memo(function EdgeLabel({
             onBlur={handleLabelBlur}
             onKeyDown={handleLabelKeyDown}
             placeholder='Add label...'
-            className={`text-center text-base px-2 py-1 bg-transparent focus:outline-none min-w-[160px] resize-none max-w-[240px] ${fontFamilyClass}`}
+            className={`text-center text-base px-2 py-1 bg-transparent rounded-md border-2 border-secondary focus:outline-none min-w-[160px] resize-none max-w-[240px] ${fontFamilyClass}`}
             minRows={1}
             maxRows={4}
             style={{ color: labelColor ?? 'inherit' }}

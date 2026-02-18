@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react'
+import { memo, useRef } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 import { EdgeLabelRenderer } from '@xyflow/react'
 import { LiteMarkdown } from '@/components/markdown/lite-markdown'
@@ -15,7 +15,6 @@ type EdgeLabelProps = {
   isEditing: boolean
   fontFamily?: FontFamily
   onChange?: (value: string) => void
-  onSizeChange?: (size: { width: number; height: number }) => void
   labelInputRef: React.RefObject<HTMLTextAreaElement | null>
   transformStyle: { transform: string }
   handleLabelBlur: () => void
@@ -33,7 +32,6 @@ export const EdgeLabel = memo(function EdgeLabel({
   isEditing,
   fontFamily,
   onChange,
-  onSizeChange,
   labelInputRef,
   transformStyle,
   handleLabelBlur,
@@ -41,23 +39,6 @@ export const EdgeLabel = memo(function EdgeLabel({
 }: EdgeLabelProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const fontFamilyClass = fontFamilyToTwClass(fontFamily)
-
-  useEffect(() => {
-    const node = wrapperRef.current
-    if (!node || !onSizeChange) return
-
-    const reportSize = () => {
-      const width = node.offsetWidth
-      const height = node.offsetHeight
-      onSizeChange({ width, height })
-    }
-
-    reportSize()
-    const observer = new ResizeObserver(reportSize)
-    observer.observe(node)
-
-    return () => observer.disconnect()
-  }, [onSizeChange])
 
   return (
     <EdgeLabelRenderer>
@@ -75,14 +56,14 @@ export const EdgeLabel = memo(function EdgeLabel({
             onBlur={handleLabelBlur}
             onKeyDown={handleLabelKeyDown}
             placeholder='Add label...'
-            className={`text-center text-base px-2 py-1 bg-transparent focus:outline-none min-w-[160px] resize-none max-w-[240px] ${fontFamilyClass}`}
+            className={`text-center text-base px-2 py-1 bg-card rounded-md border-2 border-secondary focus:outline-none min-w-[160px] resize-none max-w-[200px] overflow-y-hidden ${fontFamilyClass}`}
             minRows={1}
             maxRows={4}
             style={{ color: labelColor ?? 'inherit' }}
           />
         ) : (
           <div
-            className={`text-center px-2 py-1 bg-transparent text-base text-card-foreground max-w-[240px] ${fontFamilyClass}`}
+            className={`text-center px-2 py-1 bg-transparent text-base text-card-foreground max-w-[200px] ${fontFamilyClass}`}
             style={{ color: labelColor ?? 'inherit' }}
           >
             <LiteMarkdown text={labelText} />

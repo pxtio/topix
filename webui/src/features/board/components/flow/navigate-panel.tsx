@@ -264,10 +264,9 @@ export const NavigatePanel = memo(function NavigatePanel({
         <span className='text-xs font-medium sr-only sm:not-sr-only'>List</span>
       </ModeButton>
 
-      <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
-
       {viewMode === 'graph' && (
         <>
+          <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

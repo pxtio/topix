@@ -1,15 +1,16 @@
 import {
   BaseEdge,
-  useInternalNode,
   useReactFlow,
   type EdgeProps
 } from '@xyflow/react'
 import type { CSSProperties, ReactElement } from 'react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { useShallow } from 'zustand/shallow'
 import type { LinkEdge } from '../../../types/flow'
 import type { Link } from '../../../types/link'
 import type { ArrowheadType, LinkStyle } from '../../../types/style'
 import { useTheme } from '@/components/theme-provider'
+import { useGraphStore } from '../../../store/graph-store'
 import { darkModeDisplayHex } from '../../../lib/colors/dark-variants'
 import { EdgeLabel } from './edge-label'
 import {
@@ -28,6 +29,8 @@ import {
   BASE_X_FACTOR,
   getMarkerId,
 } from './edge-markers'
+import { selectEdgeNodeSlice } from '../../../utils/edge-node-geometry'
+import { estimateEdgeLabelSize } from '../../../utils/edge-label-estimate'
 
 const ARROW_CLEARANCE_FACTOR = 0.5 // pull heads farther from node surface
 
@@ -44,6 +47,7 @@ type EdgeLabelEditingData = {
 }
 
 type EdgeRenderData = Link & EdgeLabelEditingData & EdgeControlPointHandlers
+
 
 function isFinitePoint(point: Partial<Point> | null | undefined): point is Point {
   return Boolean(
@@ -68,14 +72,17 @@ export const EdgeView = memo(function EdgeView({
   const isDark = resolvedTheme === 'dark'
   const { screenToFlowPosition } = useReactFlow()
 
-  const sourceNode = useInternalNode(source)
-  const targetNode = useInternalNode(target)
-  const attachedSourceId = (sourceNode?.data as { attachedToNodeId?: string } | undefined)?.attachedToNodeId
-  const attachedTargetId = (targetNode?.data as { attachedToNodeId?: string } | undefined)?.attachedToNodeId
-  const attachedSourceNode = useInternalNode(attachedSourceId || '')
-  const attachedTargetNode = useInternalNode(attachedTargetId || '')
+  const sourceNodeSlice = useGraphStore(useShallow(selectEdgeNodeSlice(source)))
+  const targetNodeSlice = useGraphStore(useShallow(selectEdgeNodeSlice(target)))
+  const attachedSourceId = sourceNodeSlice?.attachedToNodeId
+  const attachedTargetId = targetNodeSlice?.attachedToNodeId
+  const attachedSourceNodeSlice = useGraphStore(useShallow(
+    attachedSourceId ? selectEdgeNodeSlice(attachedSourceId) : () => null,
+  ))
+  const attachedTargetNodeSlice = useGraphStore(useShallow(
+    attachedTargetId ? selectEdgeNodeSlice(attachedTargetId) : () => null,
+  ))
   const [bendPointDrag, setBendPointDrag] = useState<Point | null>(null)
-  const [labelSize, setLabelSize] = useState<{ width: number; height: number } | null>(null)
 
   const edgeExtras = (data ?? {}) as EdgeRenderData
 
@@ -139,10 +146,10 @@ export const EdgeView = memo(function EdgeView({
     displayBendPoint,
     isInvalid
   } = useEdgeGeometry({
-    sourceNode,
-    targetNode,
-    sourceClipNode: attachedSourceNode || undefined,
-    targetClipNode: attachedTargetNode || undefined,
+    sourceGeom: sourceNodeSlice,
+    targetGeom: targetNodeSlice,
+    sourceClipGeom: attachedSourceNodeSlice,
+    targetClipGeom: attachedTargetNodeSlice,
     linkStyle,
     startKind,
     endKind,
@@ -175,6 +182,15 @@ export const EdgeView = memo(function EdgeView({
   const hasLabel = Boolean(labelText)
   const isLabelEditing = Boolean(edgeData.labelEditing)
   const labelDraft = isLabelEditing ? edgeData.labelDraft ?? '' : labelText
+  const effectiveLabelText = isLabelEditing ? labelDraft : labelText
+  const estimatedLabelSize = useMemo(
+    () => estimateEdgeLabelSize({
+      text: effectiveLabelText,
+      fontFamily: linkStyle?.fontFamily,
+      maxWidth: 200,
+    }),
+    [effectiveLabelText, linkStyle?.fontFamily],
+  )
   const labelInputRef = useRef<HTMLTextAreaElement | null>(null)
   const skipSaveRef = useRef(false)
 
@@ -229,13 +245,14 @@ export const EdgeView = memo(function EdgeView({
 
   const labelGapPaths = useMemo(() => {
     if (!pathData || !bezierPoints) return null
-    if (!labelSize || (!hasLabel && !isLabelEditing)) return null
+    if (!hasLabel && !isLabelEditing) return null
+    if (isLabelEditing) return null
 
     const padding = 6
-    const rectX = pathData.labelX - labelSize.width / 2 - padding
-    const rectY = pathData.labelY - labelSize.height / 2 - padding
-    const rectW = labelSize.width + padding * 2
-    const rectH = labelSize.height + padding * 2
+    const rectX = pathData.labelX - estimatedLabelSize.width / 2 - padding
+    const rectY = pathData.labelY - estimatedLabelSize.height / 2 - padding
+    const rectW = estimatedLabelSize.width + padding * 2
+    const rectH = estimatedLabelSize.height + padding * 2
 
     const inside = (p: Point) =>
       p.x >= rectX && p.x <= rectX + rectW && p.y >= rectY && p.y <= rectY + rectH
@@ -271,7 +288,7 @@ export const EdgeView = memo(function EdgeView({
       first: first?.path ?? null,
       second: second?.path ?? null
     }
-  }, [pathData, bezierPoints, labelSize, hasLabel, isLabelEditing])
+  }, [pathData, bezierPoints, estimatedLabelSize, hasLabel, isLabelEditing])
 
   if (!geom || !pathData || !renderedStart || !renderedEnd || !labelTransformStyle || isInvalid) {
     return null
@@ -363,7 +380,6 @@ export const EdgeView = memo(function EdgeView({
           isEditing={isLabelEditing}
           fontFamily={linkStyle?.fontFamily}
           onChange={edgeData.onLabelChange}
-          onSizeChange={setLabelSize}
           labelInputRef={labelInputRef}
           transformStyle={labelTransformStyle}
           handleLabelBlur={handleLabelBlur}

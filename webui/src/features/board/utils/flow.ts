@@ -12,11 +12,20 @@ export type NodeGeometry = {
   shape: ShapeType
 }
 
+
+type NodeShapeData = {
+  data?: {
+    style?: {
+      type?: string
+    }
+  }
+}
+
 /**
  * Read the visual shape of a node from node.data.style.type.
  * Treat 'sheet' and 'text' as rectangles.
  */
-function getNodeShape(node: InternalNode<Node>): ShapeType {
+function getNodeShape(node: NodeShapeData): ShapeType {
   const t = (node.data?.style as { type?: string } | undefined)?.type
   if (t === 'ellipse' || t === 'layered-circle') return 'ellipse'
   if (t === 'diamond' || t === 'soft-diamond' || t === 'layered-diamond') return 'diamond'
@@ -35,6 +44,7 @@ export function toNodeGeometry(node: InternalNode<Node>): NodeGeometry {
     shape: getNodeShape(node),
   }
 }
+
 
 function nodeRect(n: InternalNode<Node>): Rect {
   const pos = n.internals.positionAbsolute

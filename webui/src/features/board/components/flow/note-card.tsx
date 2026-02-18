@@ -213,6 +213,7 @@ export const NodeCard = memo(({
   const dialogOpen = isSheet ? (typeof open === 'boolean' ? open : internalOpen) : false
 
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const updateNodeByIdPersist = useGraphStore(state => state.updateNodeByIdPersist)
   const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -220,6 +221,7 @@ export const NodeCard = memo(({
 
   // local draft that controls the textarea while editing
   const [labelDraft, setLabelDraft] = useState<string>(note.label?.markdown || '')
+  const [debouncedLabelDraft, setDebouncedLabelDraft] = useState<string>(labelDraft)
 
   // selection cache for resilient caret restore if remounts happen
   const selRef = useRef<{ start: number; end: number } | null>(null)
@@ -255,6 +257,14 @@ export const NodeCard = memo(({
     if (!labelEditing) setLabelDraft(note.label?.markdown || '')
   }, [labelEditing, note.label?.markdown])
 
+  useEffect(() => {
+    if (!labelEditing) return
+    const t = window.setTimeout(() => {
+      setDebouncedLabelDraft(labelDraft)
+    }, 300)
+    return () => window.clearTimeout(t)
+  }, [labelDraft, labelEditing])
+
   // notify parent when label edit mode changes
   useEffect(() => {
     onLabelEditingChange?.(labelEditing)
@@ -271,14 +281,11 @@ export const NodeCard = memo(({
   useEffect(() => {
     if (!isText || !note.autoEdit) return
     setLabelEditing(true)
-    setNodesPersist(nds =>
-      nds.map(n => {
-        if (n.id !== note.id) return n
-        const data = n.data as NoteNode['data']
-        return { ...n, data: { ...data, autoEdit: false } }
-      })
-    )
-  }, [isText, note.autoEdit, note.id, setNodesPersist])
+    updateNodeByIdPersist(note.id, (node) => {
+      const data = node.data as NoteNode['data']
+      return { ...node, data: { ...data, autoEdit: false } }
+    })
+  }, [isText, note.autoEdit, note.id, updateNodeByIdPersist])
 
   // focus and put caret at end when entering edit mode
   useEffect(() => {
@@ -314,6 +321,30 @@ export const NodeCard = memo(({
     return () => cancelAnimationFrame(id)
   }, [labelDraft, labelEditing])
 
+  useEffect(() => {
+    if (!labelEditing) return
+    if (debouncedLabelDraft === (note.label?.markdown || '')) return
+    updateNodeByIdPersist(note.id, (node) => {
+      const data = node.data as NoteNode['data']
+      return {
+        ...node,
+        data: { ...data, label: { markdown: debouncedLabelDraft } }
+      }
+    })
+  }, [debouncedLabelDraft, labelEditing, note.id, note.label?.markdown, updateNodeByIdPersist])
+
+  useEffect(() => {
+    if (labelEditing) return
+    if (labelDraft === (note.label?.markdown || '')) return
+    updateNodeByIdPersist(note.id, (node) => {
+      const data = node.data as NoteNode['data']
+      return {
+        ...node,
+        data: { ...data, label: { markdown: labelDraft } }
+      }
+    })
+  }, [labelEditing, labelDraft, note.id, note.label?.markdown, updateNodeByIdPersist])
+
   // handlers
   const handleLabelChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const next = event.target.value
@@ -326,29 +357,14 @@ export const NodeCard = memo(({
 
     // 1) update draft so the textarea stays stable
     setLabelDraft(next)
-
-    // 2) also update the graph so other parts of the app see changes live
-    setNodesPersist(nds =>
-      nds.map(n => {
-        if (n.id !== note.id) return n
-        const data = n.data as NoteNode['data']
-        return {
-          ...n,
-          data: { ...data, label: { markdown: next } }
-        }
-      })
-    )
-  }, [note.id, setNodesPersist])
+  }, [])
 
   const handleNoteChange = useCallback((markdown: string) => {
-    setNodesPersist(nds =>
-      nds.map(n => {
-        if (n.id !== note.id) return n
-        const data = n.data as NoteNode['data']
-        return { ...n, data: { ...data, content: { markdown } } }
-      })
-    )
-  }, [note.id, setNodesPersist])
+    updateNodeByIdPersist(note.id, (node) => {
+      const data = node.data as NoteNode['data']
+      return { ...node, data: { ...data, content: { markdown } } }
+    })
+  }, [note.id, updateNodeByIdPersist])
 
   const handleOpenFullView = useCallback(() => {
     if (!note.graphUid) return
@@ -356,15 +372,12 @@ export const NodeCard = memo(({
   }, [navigate, note.graphUid, note.id])
 
   const updateStyle = useCallback((next: Partial<Note['style']>) => {
-    setNodesPersist(nds =>
-      nds.map(n => {
-        if (n.id !== note.id) return n
-        const data = n.data as NoteNode['data']
-        const prevStyle = data.style as Note['style']
-        return { ...n, data: { ...data, style: { ...prevStyle, ...next } } }
-      })
-    )
-  }, [note.id, setNodesPersist])
+    updateNodeByIdPersist(note.id, (node) => {
+      const data = node.data as NoteNode['data']
+      const prevStyle = data.style as Note['style']
+      return { ...node, data: { ...data, style: { ...prevStyle, ...next } } }
+    })
+  }, [note.id, updateNodeByIdPersist])
 
   const stopDragging = useCallback((e: React.PointerEvent) => {
     if (labelEditing) e.stopPropagation()
@@ -381,22 +394,19 @@ export const NodeCard = memo(({
 
   const onTogglePin = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
-    setNodesPersist(nds =>
-      nds.map(n => {
-        if (n.id !== note.id) return n
-        const data = n.data as NoteNode['data']
-        const props = data.properties as NoteProperties
-        const nextPinned = !isPinned
-        return {
-          ...n,
-          data: {
-            ...data,
-            properties: { ...props, pinned: { type: 'boolean', boolean: nextPinned } }
-          }
+    updateNodeByIdPersist(note.id, (node) => {
+      const data = node.data as NoteNode['data']
+      const props = data.properties as NoteProperties
+      const nextPinned = !isPinned
+      return {
+        ...node,
+        data: {
+          ...data,
+          properties: { ...props, pinned: { type: 'boolean', boolean: nextPinned } }
         }
-      })
-    )
-  }, [isPinned, note.id, setNodesPersist])
+      }
+    })
+  }, [isPinned, note.id, updateNodeByIdPersist])
 
   const onDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -442,6 +452,7 @@ export const NodeCard = memo(({
       >
         <SheetNodeView
           note={note}
+          selected={selected}
           isDark={isDark}
           isPinned={isPinned}
           onPickPalette={onPickPalette}

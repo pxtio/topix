@@ -734,7 +734,19 @@ export interface GraphStore {
   setEdges: (edges: Updater<LinkEdge[]>) => void
 
   setNodesPersist: (nodes: Updater<NoteNode[]>) => void
+  /**
+   * Persist-scoped single node mutation.
+   * Mirrors setNodesPersist semantics (history + debounced persistence),
+   * but updates only one node by id.
+   */
+  updateNodeByIdPersist: (id: string, updater: (node: NoteNode) => NoteNode) => void
   setEdgesPersist: (edges: Updater<LinkEdge[]>) => void
+  /**
+   * Persist-scoped single edge mutation.
+   * Mirrors setEdgesPersist semantics (history + debounced persistence),
+   * but updates only one edge by id.
+   */
+  updateEdgeByIdPersist: (id: string, updater: (edge: LinkEdge) => LinkEdge) => void
 
   onNodesChange: (changes: NodeChange<NoteNode>[]) => void
   onEdgesChange: (changes: EdgeChange<LinkEdge>[]) => void
@@ -897,6 +909,84 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     }))
   },
 
+  /**
+   * Targeted node update path for hot UI interactions (typing/style toggles).
+   * Keeps persistence behavior aligned with setNodesPersist while avoiding
+   * repeated full-list scans in callsites.
+   */
+  updateNodeByIdPersist: (id, updater) => {
+    const recording = get().historyRecording
+    const prevNodes = get().nodes
+    const prevNodesById = get().nodesById
+    const prevNode = prevNodesById.get(id)
+    if (!prevNode) return
+
+    const nextNode = updater(prevNode)
+    if (nextNode === prevNode) return
+
+    // Keep array state for React Flow while replacing only the touched node.
+    const nextNodes = prevNodes.map((node) => (node.id === id ? nextNode : node))
+    const nextNodesById = new Map(prevNodesById)
+    nextNodesById.set(id, nextNode)
+
+    let nextAttached = get().attachedPointIdsByNode
+    const prevAttachedTo = isPointNode(prevNode)
+      ? (prevNode.data as { attachedToNodeId?: string }).attachedToNodeId
+      : undefined
+    const nextAttachedTo = isPointNode(nextNode)
+      ? (nextNode.data as { attachedToNodeId?: string }).attachedToNodeId
+      : undefined
+    // Re-index point attachment only when attachment linkage changed.
+    if (prevAttachedTo !== nextAttachedTo) {
+      nextAttached = cloneAttachedPointIdsByNode(nextAttached)
+      if (prevAttachedTo) {
+        const prevSet = nextAttached.get(prevAttachedTo)
+        if (prevSet) {
+          prevSet.delete(id)
+          if (prevSet.size === 0) nextAttached.delete(prevAttachedTo)
+        }
+      }
+      if (nextAttachedTo) {
+        let nextSet = nextAttached.get(nextAttachedTo)
+        if (!nextSet) {
+          nextSet = new Set<string>()
+          nextAttached.set(nextAttachedTo, nextSet)
+        }
+        nextSet.add(id)
+      }
+    }
+
+    set({
+      nodes: nextNodes,
+      nodesById: nextNodesById,
+      attachedPointIdsByNode: nextAttached,
+    })
+
+    // Keep undo/redo parity with setNodesPersist by recording scoped node patches.
+    if (recording) {
+      const touchedIds = new Set([id])
+      const patches = diffNodesById(sanitizeNodes(prevNodes), sanitizeNodes(nextNodes), touchedIds)
+      if (patches.length > 0) {
+        get().pushPatch({
+          id: generateUuid(),
+          ts: Date.now(),
+          source: "ui",
+          nodes: patches,
+        })
+      }
+    }
+
+    // Queue persistence for exactly this node id through existing debounced pipeline.
+    queueNodesForPersistence(
+      () => ({
+        boardId: get().boardId,
+        nodes: get().nodes,
+      }),
+      new Set(),
+      new Set([id]),
+    )
+  },
+
   setEdgesPersist: (edgesOrUpdater) => {
     const recording = get().historyRecording
     const boardId = get().boardId
@@ -926,6 +1016,48 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       edges: get().edges,
       nodes: get().nodes,
     }))
+  },
+
+  /**
+   * Targeted edge update path for hot edge interactions (label/control point).
+   * Keeps persistence behavior aligned with setEdgesPersist while avoiding
+   * repeated full-list scans in callsites.
+   */
+  updateEdgeByIdPersist: (id, updater) => {
+    const recording = get().historyRecording
+    const prevEdges = get().edges
+    const prevEdge = prevEdges.find((edge) => edge.id === id)
+    if (!prevEdge) return
+
+    const nextEdge = updater(prevEdge)
+    if (nextEdge === prevEdge) return
+
+    const nextEdges = prevEdges.map((edge) => (edge.id === id ? nextEdge : edge))
+
+    set({ edges: nextEdges })
+
+    if (recording) {
+      const touchedIds = new Set([id])
+      const patches = diffEdgesById(sanitizeEdges(prevEdges), sanitizeEdges(nextEdges), touchedIds)
+      if (patches.length > 0) {
+        get().pushPatch({
+          id: generateUuid(),
+          ts: Date.now(),
+          source: "ui",
+          edges: patches,
+        })
+      }
+    }
+
+    queueEdgesForPersistence(
+      () => ({
+        boardId: get().boardId,
+        edges: get().edges,
+        nodes: get().nodes,
+      }),
+      new Set(),
+      new Set([id]),
+    )
   },
 
   // --- ReactFlow-driven changes (background diff + persist) ---

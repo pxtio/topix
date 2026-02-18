@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon } from '@hugeicons/core-free-icons'
+import clsx from 'clsx'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 import { StickyNote } from '../notes/sticky-note'
@@ -16,6 +17,7 @@ const MAX_HEIGHT = 400
 
 type SheetNodeViewProps = {
   note: NoteWithPin
+  selected: boolean
   isDark: boolean
   isPinned: boolean
   onPickPalette: (hex: string) => void
@@ -28,6 +30,7 @@ const COLOR_OPTIONS = [{ name: 'white', hex: '#ffffff' }, ...TAILWIND_200]
 
 export const SheetNodeView = memo(function SheetNodeView({
   note,
+  selected,
   isDark,
   isPinned,
   onPickPalette,
@@ -145,9 +148,13 @@ export const SheetNodeView = memo(function SheetNodeView({
 
 
   return (
-    <>
+    <div className='group w-full h-full'>
       <div
-        className='absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end rounded-t-sm shadow-sm bg-background/40'
+        className={clsx(
+          'absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end rounded-t-sm border-b border-foreground/30 transition-opacity',
+          'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto',
+          selected && 'opacity-100 pointer-events-auto',
+        )}
       >
         <Popover>
           <PopoverTrigger asChild>
@@ -211,6 +218,6 @@ export const SheetNodeView = memo(function SheetNodeView({
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 })

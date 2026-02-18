@@ -1,5 +1,4 @@
 import { Position, type InternalNode, type Node } from '@xyflow/react'
-import type { NoteNode } from '../types/flow'
 
 type Point = { x: number; y: number }
 type Rect = { x: number; y: number; w: number; h: number }
@@ -46,18 +45,6 @@ export function toNodeGeometry(node: InternalNode<Node>): NodeGeometry {
   }
 }
 
-
-export function toNodeGeometryFromNoteNode(node: NoteNode): NodeGeometry {
-  const w = node.measured?.width ?? node.width ?? 1
-  const h = node.measured?.height ?? node.height ?? 1
-  return {
-    x: node.position.x,
-    y: node.position.y,
-    w,
-    h,
-    shape: getNodeShape(node),
-  }
-}
 
 function nodeRect(n: InternalNode<Node>): Rect {
   const pos = n.internals.positionAbsolute

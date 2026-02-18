@@ -5,6 +5,7 @@ import {
 } from '@xyflow/react'
 import type { CSSProperties, ReactElement } from 'react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { useShallow } from 'zustand/shallow'
 import type { LinkEdge } from '../../../types/flow'
 import type { Link } from '../../../types/link'
 import type { ArrowheadType, LinkStyle } from '../../../types/style'
@@ -28,7 +29,7 @@ import {
   BASE_X_FACTOR,
   getMarkerId,
 } from './edge-markers'
-import { toNodeGeometryFromNoteNode } from '../../../utils/flow'
+import { selectEdgeNodeSlice } from '../../../utils/edge-node-geometry'
 
 const ARROW_CLEARANCE_FACTOR = 0.5 // pull heads farther from node surface
 
@@ -45,6 +46,7 @@ type EdgeLabelEditingData = {
 }
 
 type EdgeRenderData = Link & EdgeLabelEditingData & EdgeControlPointHandlers
+
 
 function isFinitePoint(point: Partial<Point> | null | undefined): point is Point {
   return Boolean(
@@ -69,35 +71,18 @@ export const EdgeView = memo(function EdgeView({
   const isDark = resolvedTheme === 'dark'
   const { screenToFlowPosition } = useReactFlow()
 
-  const sourceNode = useGraphStore(state => state.nodesById.get(source))
-  const targetNode = useGraphStore(state => state.nodesById.get(target))
-  const attachedSourceId = (sourceNode?.data as { attachedToNodeId?: string } | undefined)?.attachedToNodeId
-  const attachedTargetId = (targetNode?.data as { attachedToNodeId?: string } | undefined)?.attachedToNodeId
-  const attachedSourceNode = useGraphStore(state => (
-    attachedSourceId ? state.nodesById.get(attachedSourceId) : undefined
+  const sourceNodeSlice = useGraphStore(useShallow(selectEdgeNodeSlice(source)))
+  const targetNodeSlice = useGraphStore(useShallow(selectEdgeNodeSlice(target)))
+  const attachedSourceId = sourceNodeSlice?.attachedToNodeId
+  const attachedTargetId = targetNodeSlice?.attachedToNodeId
+  const attachedSourceNodeSlice = useGraphStore(useShallow(
+    attachedSourceId ? selectEdgeNodeSlice(attachedSourceId) : () => null,
   ))
-  const attachedTargetNode = useGraphStore(state => (
-    attachedTargetId ? state.nodesById.get(attachedTargetId) : undefined
+  const attachedTargetNodeSlice = useGraphStore(useShallow(
+    attachedTargetId ? selectEdgeNodeSlice(attachedTargetId) : () => null,
   ))
   const [bendPointDrag, setBendPointDrag] = useState<Point | null>(null)
   const [labelSize, setLabelSize] = useState<{ width: number; height: number } | null>(null)
-
-  const sourceGeom = useMemo(
-    () => (sourceNode ? toNodeGeometryFromNoteNode(sourceNode) : null),
-    [sourceNode],
-  )
-  const targetGeom = useMemo(
-    () => (targetNode ? toNodeGeometryFromNoteNode(targetNode) : null),
-    [targetNode],
-  )
-  const sourceClipGeom = useMemo(
-    () => (attachedSourceNode ? toNodeGeometryFromNoteNode(attachedSourceNode) : null),
-    [attachedSourceNode],
-  )
-  const targetClipGeom = useMemo(
-    () => (attachedTargetNode ? toNodeGeometryFromNoteNode(attachedTargetNode) : null),
-    [attachedTargetNode],
-  )
 
   const edgeExtras = (data ?? {}) as EdgeRenderData
 
@@ -161,10 +146,10 @@ export const EdgeView = memo(function EdgeView({
     displayBendPoint,
     isInvalid
   } = useEdgeGeometry({
-    sourceGeom,
-    targetGeom,
-    sourceClipGeom,
-    targetClipGeom,
+    sourceGeom: sourceNodeSlice,
+    targetGeom: targetNodeSlice,
+    sourceClipGeom: attachedSourceNodeSlice,
+    targetClipGeom: attachedTargetNodeSlice,
     linkStyle,
     startKind,
     endKind,

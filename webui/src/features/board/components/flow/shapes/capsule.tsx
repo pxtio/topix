@@ -62,7 +62,7 @@ export const CapsuleShape = memo(({
       <div className='relative flex-1 h-full' style={{ marginLeft: overlap }}>
         <RoughRect
           {...circleProps}
-          widthPx={typeof widthPx === 'number' ? Math.max(1, widthPx - accentSize + overlap) : undefined}
+          widthPx={typeof widthPx === 'number' ? Math.max(1, widthPx - accentSize - overlap) : undefined}
           heightPx={heightPx}
           className='w-full h-full'
         >

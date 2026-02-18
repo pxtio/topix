@@ -56,14 +56,14 @@ export const EdgeLabel = memo(function EdgeLabel({
             onBlur={handleLabelBlur}
             onKeyDown={handleLabelKeyDown}
             placeholder='Add label...'
-            className={`text-center text-base px-2 py-1 bg-card rounded-md border-2 border-secondary focus:outline-none min-w-[160px] resize-none max-w-[240px] ${fontFamilyClass}`}
+            className={`text-center text-base px-2 py-1 bg-card rounded-md border-2 border-secondary focus:outline-none min-w-[160px] resize-none max-w-[200px] overflow-y-hidden ${fontFamilyClass}`}
             minRows={1}
             maxRows={4}
             style={{ color: labelColor ?? 'inherit' }}
           />
         ) : (
           <div
-            className={`text-center px-2 py-1 bg-transparent text-base text-card-foreground max-w-[240px] ${fontFamilyClass}`}
+            className={`text-center px-2 py-1 bg-transparent text-base text-card-foreground max-w-[200px] ${fontFamilyClass}`}
             style={{ color: labelColor ?? 'inherit' }}
           >
             <LiteMarkdown text={labelText} />

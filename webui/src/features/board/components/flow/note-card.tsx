@@ -452,6 +452,7 @@ export const NodeCard = memo(({
       >
         <SheetNodeView
           note={note}
+          selected={selected}
           isDark={isDark}
           isPinned={isPinned}
           onPickPalette={onPickPalette}

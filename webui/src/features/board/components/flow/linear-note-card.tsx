@@ -86,20 +86,20 @@ export function LinearNoteCard({ node }: Props) {
   }, [boardId, navigate, node.data.graphUid, node.id])
 
   const cardClass = clsx(
-    'transition rounded-xl relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group shadow-md',
+    'transition rounded-sm relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group shadow-md border-2 border-border',
     isPinned
-      ? 'ring-2 ring-secondary/60 border border-transparent shadow-md'
-      : 'border border-transparent rounded-none hover:ring-2 hover:ring-secondary/40 hover:border-transparent hover:shadow-lg'
+      ? 'ring-2 ring-secondary/60 shadow-md'
+      : 'rounded-none hover:ring-2 hover:ring-secondary/40 hover:shadow-lg'
   )
 
   const CardBody = useMemo(() => (
     <div className={cardClass} style={{ backgroundColor: color }}>
       {/* hover toolbar */}
       <div
-        className='absolute top-0 inset-x-0  z-20 rounded-t-xl shadow-xs backdrop-blur-lg transition-opacity'
+        className='absolute top-0 inset-x-0 z-20 rounded-t-sm border-b border-foreground/30 pointer-events-none transition-opacity opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto'
         style={{ backgroundColor: color}}
       >
-        <div className='px-1.5 py-1 w-full h-full flex items-center justify-end gap-1 bg-background/20'>
+        <div className='px-1.5 py-1 w-full h-full flex items-center justify-end gap-1'>
           <div className='flex flex-row items-center gap-2 px-1'>
             {timeAgo && fullDate && (
               <div className=''>

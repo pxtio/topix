@@ -86,7 +86,7 @@ const NodeStatusOverlay = memo(function NodeStatusOverlay({
     return <div className='absolute inset-1 border border-secondary pointer-events-none rounded z-10' />
   }
   if (selected && nodeType === 'sheet') {
-    return <div className='absolute inset-0 border-2 border-secondary pointer-events-none rounded z-10 rounded-2xl' />
+    return <div className='absolute inset-0 border-2 border-secondary pointer-events-none z-10 rounded-sm' />
   }
   if (!selected && isNew) {
     return <div className='absolute inset-0 border-2 border-dashed border-secondary pointer-events-none rounded z-10' />

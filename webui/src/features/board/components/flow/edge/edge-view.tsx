@@ -246,6 +246,7 @@ export const EdgeView = memo(function EdgeView({
   const labelGapPaths = useMemo(() => {
     if (!pathData || !bezierPoints) return null
     if (!hasLabel && !isLabelEditing) return null
+    if (isLabelEditing) return null
 
     const padding = 6
     const rectX = pathData.labelX - estimatedLabelSize.width / 2 - padding

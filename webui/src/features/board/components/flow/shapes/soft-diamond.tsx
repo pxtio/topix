@@ -9,6 +9,8 @@ type SoftDiamondProps = {
   rounded: 'none' | 'rounded-2xl'
   wrapperClass: string
   wrapperStyle: CSSProperties
+  widthPx?: number
+  heightPx?: number
   roughness?: number
   fill?: string
   fillStyle?: FillStyle
@@ -23,6 +25,8 @@ export const SoftDiamond = memo(({
   rounded,
   wrapperClass,
   wrapperStyle,
+  widthPx,
+  heightPx,
   roughness,
   fill,
   fillStyle,
@@ -62,7 +66,7 @@ export const SoftDiamond = memo(({
             transformOrigin: 'center'
           }}
         >
-          <RoughDiamond {...commonProps} fill={backFill} stroke={backStroke} />
+          <RoughDiamond {...commonProps} widthPx={widthPx} heightPx={heightPx} fill={backFill} stroke={backStroke} />
         </div>
       </div>
       <div className='relative w-full h-full flex items-center justify-center'>
@@ -74,7 +78,7 @@ export const SoftDiamond = memo(({
             transformOrigin: 'center'
           }}
         >
-          <RoughDiamond {...commonProps}>
+          <RoughDiamond {...commonProps} widthPx={widthPx} heightPx={heightPx}>
             {children}
           </RoughDiamond>
         </div>

@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import { RoughCanvas } from 'roughjs/bin/canvas'
 import type { Options as RoughOptions } from 'roughjs/bin/core'
 import clsx from 'clsx'
@@ -18,6 +18,8 @@ type RoughShapeProps = {
   fillStyle?: RoughOptions['fillStyle']
   className?: string
   seed?: number
+  widthPx?: number
+  heightPx?: number
 }
 
 type RoughDiamondProps = RoughShapeProps & {
@@ -270,7 +272,9 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
   fill,
   fillStyle = 'solid',
   className,
-  seed = 1337
+  seed = 1337,
+  widthPx,
+  heightPx
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -280,13 +284,14 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
   const isMoving = useGraphStore(state => state.isMoving)
   const isResizing = useGraphStore(state => state.isResizingNode)
   const effectiveZoom = quantizeZoom(viewportZoom || 1)
-  const [overlaySize, setOverlaySize] = useState({ width: 0, height: 0 })
+  const resolvedWidth = Math.max(1, Math.floor(widthPx ?? 1))
+  const resolvedHeight = Math.max(1, Math.floor(heightPx ?? 1))
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     if (isMoving && !isResizing) return
     const rect = wrapper.getBoundingClientRect()
-    const cssW = Math.max(1, wrapper.clientWidth || Math.floor(rect.width))
-    const cssH = Math.max(1, wrapper.clientHeight || Math.floor(rect.height))
+    const cssW = Math.max(1, (widthPx ?? wrapper.clientWidth) || Math.floor(rect.width))
+    const cssH = Math.max(1, (heightPx ?? wrapper.clientHeight) || Math.floor(rect.height))
     if (cssW === 0 || cssH === 0) return
 
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
@@ -419,7 +424,7 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     ctx.drawImage(offscreen, 0, 0)
 
     lastConfigRef.current = config
-  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle, isMoving, isResizing])
+  }, [rounded, roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle, isMoving, isResizing, widthPx, heightPx])
 
   const scheduleRedraw = useCallback(() => {
     if (rafRef.current !== null) return
@@ -433,48 +438,31 @@ export const RoughDiamond: React.FC<RoughDiamondProps> = ({
     })
   }, [draw])
 
-  useEffect(() => {
-    const wrapper = wrapperRef.current
-    const canvas = canvasRef.current
-    if (!wrapper || !canvas) return
-
-    const handleResize = () => {
-      const width = wrapper.clientWidth
-      const height = wrapper.clientHeight
-      setOverlaySize(prev => (
-        prev.width === width && prev.height === height ? prev : { width, height }
-      ))
-      scheduleRedraw()
-    }
-    const ro = new ResizeObserver(handleResize)
-    ro.observe(wrapper)
-
-    handleResize()
-
-    return () => {
-      ro.disconnect()
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current)
-        rafRef.current = null
-      }
-    }
-  }, [scheduleRedraw])
-
   const isSimplified = isMoving && !isResizing
   const mainDivClass = clsx('relative', className || '')
   const overlayViewBox = useMemo(() => {
     const inset = 6
     return {
-      width: Math.max(1, overlaySize.width - inset),
-      height: Math.max(1, overlaySize.height - inset),
+      width: Math.max(1, resolvedWidth - inset),
+      height: Math.max(1, resolvedHeight - inset),
     }
-  }, [overlaySize.height, overlaySize.width])
+  }, [resolvedHeight, resolvedWidth])
 
   useEffect(() => {
     if (!isSimplified) {
+      lastConfigRef.current = null
       scheduleRedraw()
     }
-  }, [isSimplified, scheduleRedraw])
+  }, [isSimplified, scheduleRedraw, widthPx, heightPx])
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+    }
+  }, [])
 
   return (
     <div ref={wrapperRef} className={mainDivClass}>

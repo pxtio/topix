@@ -7,6 +7,8 @@ type TagShapeProps = {
   minHeight: number
   wrapperClass: string
   wrapperStyle: CSSProperties
+  widthPx?: number
+  heightPx?: number
   roughness?: number
   fill?: string
   fillStyle?: FillStyle
@@ -21,6 +23,8 @@ export const TagShape = memo(({
   minHeight,
   wrapperClass,
   wrapperStyle,
+  widthPx,
+  heightPx,
   roughness,
   fill,
   fillStyle,
@@ -40,6 +44,8 @@ export const TagShape = memo(({
         strokeStyle={strokeStyle}
         strokeWidth={strokeWidth}
         seed={seed}
+        widthPx={widthPx}
+        heightPx={heightPx}
         className='w-full h-full'
       >
         <div

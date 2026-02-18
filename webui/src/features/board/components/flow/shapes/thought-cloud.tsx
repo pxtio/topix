@@ -8,6 +8,8 @@ type ThoughtCloudProps = {
   rounded: 'none' | 'rounded-2xl'
   wrapperClass: string
   wrapperStyle: CSSProperties
+  widthPx?: number
+  heightPx?: number
   roughness?: number
   fill?: string
   fillStyle?: FillStyle
@@ -23,6 +25,8 @@ export const ThoughtCloud = memo(({
   rounded,
   wrapperClass,
   wrapperStyle,
+  widthPx,
+  heightPx,
   roughness,
   fill,
   fillStyle,
@@ -54,10 +58,10 @@ export const ThoughtCloud = memo(({
         className='absolute pointer-events-none'
         style={{ width: accentSize, height: accentSize, left: circleLeft, top: circleTop, zIndex: 5 }}
       >
-        <RoughCircle {...commonProps} className='w-full h-full' />
+        <RoughCircle {...commonProps} widthPx={accentSize} heightPx={accentSize} className='w-full h-full' />
       </div>
       <div className='relative w-full h-full z-10'>
-        <RoughRect {...commonProps} className='w-full h-full'>
+        <RoughRect {...commonProps} widthPx={widthPx} heightPx={heightPx} className='w-full h-full'>
           {children}
         </RoughRect>
       </div>

@@ -9,6 +9,8 @@ type LayeredDiamondProps = {
   rounded: 'none' | 'rounded-2xl'
   wrapperClass: string
   wrapperStyle: CSSProperties
+  widthPx?: number
+  heightPx?: number
   roughness?: number
   fill?: string
   fillStyle?: FillStyle
@@ -23,6 +25,8 @@ export const LayeredDiamond = memo(({
   rounded,
   wrapperClass,
   wrapperStyle,
+  widthPx,
+  heightPx,
   roughness,
   fill,
   fillStyle,
@@ -57,10 +61,10 @@ export const LayeredDiamond = memo(({
         className='absolute inset-0 pointer-events-none'
         style={{ transform: `translate(0px, ${offsetY}px)` }}
       >
-        <RoughDiamond {...commonProps} fill={backFill} stroke={backStroke} />
+        <RoughDiamond {...commonProps} widthPx={widthPx} heightPx={heightPx} fill={backFill} stroke={backStroke} />
       </div>
       <div className='relative w-full h-full'>
-        <RoughDiamond {...commonProps}>
+        <RoughDiamond {...commonProps} widthPx={widthPx} heightPx={heightPx}>
           {children}
         </RoughDiamond>
       </div>

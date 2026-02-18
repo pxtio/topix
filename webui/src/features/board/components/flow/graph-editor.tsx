@@ -33,10 +33,9 @@ import { NavigableMiniMap } from './navigable-minimap'
 import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
 import type { NodeType } from '../../types/style'
-import type { Link } from '../../types/link'
 
 import { useAddNoteNode, type AddNoteNodeOptions } from '../../hooks/use-add-node'
-import { useDecoratedEdges } from '../../hooks/use-decorated-edges'
+import { useEdgeLabelEdit } from '../../hooks/use-edge-label-edit'
 import { usePlaceLine } from '../../hooks/use-place-line'
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
 import { useAddMindMapToBoard } from '../../api/add-mindmap-to-board'
@@ -90,7 +89,6 @@ const drawableNodeTypes: NodeType[] = [
 ]
 
 const isDrawableNodeType = (nodeType: NodeType) => drawableNodeTypes.includes(nodeType)
-const ensureLinkData = (edge: LinkEdge): Link => edge.data as Link
 
 type ViewMode = 'graph' | 'linear'
 
@@ -208,8 +206,6 @@ export default function GraphEditor() {
     cancel: cancelLinePlacement,
     place: handlePlaceLine,
   } = usePlaceLine()
-  const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null)
-  const [edgeLabelDraft, setEdgeLabelDraft] = useState<string>('')
   const [showMiniMap, setShowMiniMap] = useState<boolean>(true)
   const [showStylePanel, setShowStylePanel] = useState<boolean>(true)
 
@@ -229,7 +225,6 @@ export default function GraphEditor() {
   const edges = useGraphStore(useShallow(state => state.edges))
 
   const setNodes = useGraphStore(state => state.setNodes)
-  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
   const onNodesChange = useGraphStore(state => state.onNodesChange)
   const onEdgesChange = useGraphStore(state => state.onEdgesChange)
   const onNodesDelete = useGraphStore(state => state.onNodesDelete)
@@ -325,20 +320,7 @@ export default function GraphEditor() {
     if (viewMode !== 'graph' && pendingLinePlacement) {
       cancelLinePlacement()
     }
-    if (viewMode !== 'graph' && editingEdgeId) {
-      setEditingEdgeId(null)
-      setEdgeLabelDraft('')
-    }
-  }, [viewMode, pendingPlacement, pendingLinePlacement, cancelPlacement, cancelLinePlacement, editingEdgeId])
-
-  useEffect(() => {
-    if (!editingEdgeId) return
-    const stillExists = edges.some(edge => edge.id === editingEdgeId)
-    if (!stillExists) {
-      setEditingEdgeId(null)
-      setEdgeLabelDraft('')
-    }
-  }, [edges, editingEdgeId])
+  }, [viewMode, pendingPlacement, pendingLinePlacement, cancelPlacement, cancelLinePlacement])
 
   const handlePaneDoubleClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -378,80 +360,12 @@ export default function GraphEditor() {
     beginLinePlacement()
   }, [beginLinePlacement])
 
-  const handleEdgeDoubleClick = useCallback<NonNullable<ReactFlowProps<NoteNode, LinkEdge>['onEdgeDoubleClick']>>(
-    (event, edge) => {
-      event.preventDefault()
-      event.stopPropagation()
-      setEditingEdgeId(edge.id)
-      setEdgeLabelDraft(edge.data?.label?.markdown ?? '')
-    },
-    [],
-  )
-
-  const handleEdgeLabelChange = useCallback((value: string) => {
-    setEdgeLabelDraft(value)
-  }, [])
-
-  const handleEdgeLabelCancel = useCallback(() => {
-    setEditingEdgeId(null)
-    setEdgeLabelDraft('')
-  }, [])
-
-  const handleEdgeControlPointChange = useCallback(
-    (edgeId: string, position: { x: number; y: number }) => {
-      if (!boardId) return
-      setEdgesPersist(prev =>
-        prev.map(edge => {
-          if (edge.id !== edgeId) return edge
-          const linkData = ensureLinkData(edge)
-          const nextLink: Link = {
-            ...linkData,
-            properties: {
-              ...linkData.properties,
-              edgeControlPoint: { type: 'position', position },
-            },
-          }
-          return {
-            ...edge,
-            data: nextLink,
-          }
-        }),
-      )
-    },
-    [boardId, setEdgesPersist],
-  )
-
-  const handleEdgeLabelSave = useCallback(() => {
-    if (!editingEdgeId) return
-    setEdgesPersist(prev =>
-      prev.map(edge =>
-        edge.id === editingEdgeId
-          ? {
-              ...edge,
-              data: {
-                ...ensureLinkData(edge),
-                label: edgeLabelDraft.trim()
-                  ? { markdown: edgeLabelDraft }
-                  : undefined,
-              } as Link,
-            }
-          : edge,
-      ),
-    )
-    setEditingEdgeId(null)
-    setEdgeLabelDraft('')
-  }, [editingEdgeId, edgeLabelDraft, setEdgesPersist])
-
-  const edgesForRender = useDecoratedEdges({
+  const {
+    edgesForRender,
+    handleEdgeDoubleClick,
+  } = useEdgeLabelEdit({
     edges,
-    editingEdgeId,
-    edgeLabelDraft,
-    onControlPointChange: handleEdgeControlPointChange,
-    labelHandlers: {
-      onLabelChange: handleEdgeLabelChange,
-      onLabelSave: handleEdgeLabelSave,
-      onLabelCancel: handleEdgeLabelCancel,
-    },
+    isGraphView: viewMode === 'graph',
   })
 
   const rfInstanceRef = useRef<ReactFlowInstance<NoteNode, LinkEdge> | null>(null)

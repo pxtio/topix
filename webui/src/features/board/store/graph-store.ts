@@ -741,6 +741,12 @@ export interface GraphStore {
    */
   updateNodeByIdPersist: (id: string, updater: (node: NoteNode) => NoteNode) => void
   setEdgesPersist: (edges: Updater<LinkEdge[]>) => void
+  /**
+   * Persist-scoped single edge mutation.
+   * Mirrors setEdgesPersist semantics (history + debounced persistence),
+   * but updates only one edge by id.
+   */
+  updateEdgeByIdPersist: (id: string, updater: (edge: LinkEdge) => LinkEdge) => void
 
   onNodesChange: (changes: NodeChange<NoteNode>[]) => void
   onEdgesChange: (changes: EdgeChange<LinkEdge>[]) => void
@@ -1010,6 +1016,48 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       edges: get().edges,
       nodes: get().nodes,
     }))
+  },
+
+  /**
+   * Targeted edge update path for hot edge interactions (label/control point).
+   * Keeps persistence behavior aligned with setEdgesPersist while avoiding
+   * repeated full-list scans in callsites.
+   */
+  updateEdgeByIdPersist: (id, updater) => {
+    const recording = get().historyRecording
+    const prevEdges = get().edges
+    const prevEdge = prevEdges.find((edge) => edge.id === id)
+    if (!prevEdge) return
+
+    const nextEdge = updater(prevEdge)
+    if (nextEdge === prevEdge) return
+
+    const nextEdges = prevEdges.map((edge) => (edge.id === id ? nextEdge : edge))
+
+    set({ edges: nextEdges })
+
+    if (recording) {
+      const touchedIds = new Set([id])
+      const patches = diffEdgesById(sanitizeEdges(prevEdges), sanitizeEdges(nextEdges), touchedIds)
+      if (patches.length > 0) {
+        get().pushPatch({
+          id: generateUuid(),
+          ts: Date.now(),
+          source: "ui",
+          edges: patches,
+        })
+      }
+    }
+
+    queueEdgesForPersistence(
+      () => ({
+        boardId: get().boardId,
+        edges: get().edges,
+        nodes: get().nodes,
+      }),
+      new Set(),
+      new Set([id]),
+    )
   },
 
   // --- ReactFlow-driven changes (background diff + persist) ---

@@ -138,8 +138,11 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   })
 
   const persistedHeight = data.properties.nodeSize?.size?.height
+  const persistedWidth = data.properties.nodeSize?.size?.width
   const liveHeight = typeof height === 'number' && Number.isFinite(height) ? height : undefined
+  const liveWidth = typeof width === 'number' && Number.isFinite(width) ? width : undefined
   const currentNodeHeight = liveHeight ?? persistedHeight
+  const currentNodeWidth = liveWidth ?? persistedWidth
 
   const baseMinH = isVisualNode
     ? 50
@@ -243,6 +246,8 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
         <ShapeChrome
           type={nodeType}
           minHeight={computedMinH}
+          widthPx={currentNodeWidth}
+          heightPx={currentNodeHeight}
           rounded={rounded}
           frameClass={frameClass}
           textColor={textColor}
@@ -274,6 +279,8 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
         <ShapeChrome
           type={nodeType}
           minHeight={innerMinH}
+          widthPx={currentNodeWidth}
+          heightPx={currentNodeHeight}
           rounded={rounded}
           frameClass={frameClass}
           textColor={textColor}

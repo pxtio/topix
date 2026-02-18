@@ -15,6 +15,8 @@ import type { FillStyle, NodeType, StrokeStyle, StrokeWidth } from '../../types/
 type ShapeChromeProps = {
   type: NodeType
   minHeight: number
+  widthPx?: number
+  heightPx?: number
   rounded?: 'none' | 'rounded-2xl'
   frameClass?: string
   textColor?: string
@@ -32,6 +34,8 @@ type ShapeChromeProps = {
 export const ShapeChrome = memo(({
   type,
   minHeight,
+  widthPx,
+  heightPx,
   rounded = 'none',
   frameClass,
   textColor,
@@ -86,7 +90,9 @@ export const ShapeChrome = memo(({
     stroke: strokeColor,
     strokeStyle,
     strokeWidth,
-    seed
+    seed,
+    widthPx,
+    heightPx
   }
 
   if (type === 'layered-rectangle') {

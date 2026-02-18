@@ -16,6 +16,8 @@ type RoughShapeProps = {
   fillStyle?: RoughOptions['fillStyle']
   className?: string
   seed?: number
+  widthPx?: number
+  heightPx?: number
 }
 
 type DrawConfig = {
@@ -160,10 +162,11 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   fill,
   fillStyle = 'solid',
   className,
-  seed = 1337
+  seed = 1337,
+  widthPx,
+  heightPx
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null)
-  const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const lastConfigRef = useRef<DrawConfig | null>(null)
   const rafRef = useRef<number | null>(null)
@@ -175,8 +178,8 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
 
   const draw = useCallback((wrapper: HTMLDivElement, canvas: HTMLCanvasElement) => {
     const rect = wrapper.getBoundingClientRect()
-    const cssW = Math.max(1, wrapper.clientWidth || Math.floor(rect.width))
-    const cssH = Math.max(1, wrapper.clientHeight || Math.floor(rect.height))
+    const cssW = Math.max(1, (widthPx ?? wrapper.clientWidth) || Math.floor(rect.width))
+    const cssH = Math.max(1, (heightPx ?? wrapper.clientHeight) || Math.floor(rect.height))
     if (cssW === 0 || cssH === 0) return
 
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
@@ -305,7 +308,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     ctx.drawImage(offscreen, 0, 0)
 
     lastConfigRef.current = config
-  }, [roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle])
+  }, [roughness, stroke, strokeWidth, fill, fillStyle, effectiveZoom, seed, strokeStyle, widthPx, heightPx])
 
   const scheduleRedraw = useCallback(() => {
     if (isMoving) return
@@ -321,38 +324,6 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   }, [draw, isMoving])
 
   useEffect(() => {
-    if (isMoving) return
-    const handleResize = () => scheduleRedraw()
-    resizeObserverRef.current = new ResizeObserver(handleResize)
-
-    const wrapper = wrapperRef.current
-    if (wrapper) {
-      resizeObserverRef.current.observe(wrapper)
-      scheduleRedraw()
-    }
-
-    return () => {
-      resizeObserverRef.current?.disconnect()
-      resizeObserverRef.current = null
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current)
-        rafRef.current = null
-      }
-    }
-  }, [isMoving, scheduleRedraw])
-
-  const setWrapperRef = useCallback((node: HTMLDivElement | null) => {
-    if (wrapperRef.current === node) return
-    wrapperRef.current = node
-    if (!resizeObserverRef.current || isMoving) return
-    resizeObserverRef.current.disconnect()
-    if (node) {
-      resizeObserverRef.current.observe(node)
-      scheduleRedraw()
-    }
-  }, [isMoving, scheduleRedraw])
-
-  useEffect(() => {
     if (isSimplified) {
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current)
@@ -362,7 +333,16 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
     }
     lastConfigRef.current = null
     scheduleRedraw()
-  }, [isSimplified, scheduleRedraw])
+  }, [isSimplified, scheduleRedraw, widthPx, heightPx])
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+    }
+  }, [])
 
   const mainDivClass = clsx('relative', className || '')
   const hairlineInset = (strokeWidth ?? 1) <= 1.5 ? 0.5 : 0
@@ -389,7 +369,7 @@ export const RoughCircle: React.FC<RoughShapeProps> = ({
   }
 
   return (
-    <div ref={setWrapperRef} className={mainDivClass}>
+    <div ref={wrapperRef} className={mainDivClass}>
       <canvas
         ref={canvasRef}
         className='absolute pointer-events-none'

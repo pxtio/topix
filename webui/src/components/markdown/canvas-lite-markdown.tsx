@@ -45,6 +45,7 @@ type RenderOptions = {
   fontSize: FontSize
   textStyle: TextStyle
   textColor: string
+  highlightColor: string
 }
 
 
@@ -176,6 +177,7 @@ const initFontTracking = () => {
     bumpFontEpoch()
   })
 }
+
 
 /**
  * Buckets zoom to avoid cache churn from tiny floating-point zoom deltas.
@@ -887,7 +889,7 @@ const drawToCanvas = (ctx: CanvasRenderingContext2D, opts: RenderOptions, lines:
 
       if (run.type === 'highlight') {
         ctx.save()
-        ctx.fillStyle = 'rgba(253, 224, 71, 0.8)'
+        ctx.fillStyle = opts.highlightColor
         ctx.fillRect(x - 1, y - fontSizePx + 2, runWidth + 2, fontSizePx + 2)
         ctx.restore()
       }
@@ -1085,6 +1087,7 @@ export type CanvasLiteMarkdownProps = {
   fontSize?: FontSize
   textStyle?: TextStyle
   textColor?: string
+  resolvedTheme?: string
   // Optional lifecycle signal used by parent layout logic (e.g. min-height gating).
   onRenderReadyChange?: (ready: boolean) => void
 }
@@ -1107,6 +1110,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   fontSize = 'M',
   textStyle = 'normal',
   textColor = '#1f2937',
+  resolvedTheme,
   onRenderReadyChange,
 }: CanvasLiteMarkdownProps) {
   const [fontEpochState, setFontEpochState] = useState(() => fontEpoch)
@@ -1124,10 +1128,11 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
   )
 
   const textHash = useMemo(() => hashText(text), [text])
+  const highlightColor = resolvedTheme === 'dark' ? '#6b5a23' : '#fde047'
 
   const cacheKey = useMemo(
-    () => `${fontEpochState}:${textHash}:${text.length}:${resolvedWidth}:${resolvedHeight}:${quantizedZoom}:${dprBucket}:${effectiveRenderScale}:${align}:${fontFamily}:${fontSize}:${textStyle}:${textColor}`,
-    [fontEpochState, textHash, text.length, resolvedWidth, resolvedHeight, quantizedZoom, dprBucket, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor]
+    () => `${fontEpochState}:${textHash}:${text.length}:${resolvedWidth}:${resolvedHeight}:${quantizedZoom}:${dprBucket}:${effectiveRenderScale}:${align}:${fontFamily}:${fontSize}:${textStyle}:${textColor}:${highlightColor}`,
+    [fontEpochState, textHash, text.length, resolvedWidth, resolvedHeight, quantizedZoom, dprBucket, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor, highlightColor]
   )
 
   const [renderUrl, setRenderUrl] = useState<string>(() => renderCache.get(cacheKey)?.url ?? '')
@@ -1167,6 +1172,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
         fontSize,
         textStyle,
         textColor,
+        highlightColor,
       },
       url => {
         if (cancelled) return
@@ -1177,7 +1183,7 @@ export const CanvasLiteMarkdown = memo(function CanvasLiteMarkdown({
     return () => {
       cancelled = true
     }
-  }, [cacheKey, normalizedText, text, resolvedWidth, resolvedHeight, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor, dprBucket])
+  }, [cacheKey, normalizedText, text, resolvedWidth, resolvedHeight, effectiveRenderScale, align, fontFamily, fontSize, textStyle, textColor, highlightColor, dprBucket])
 
   if (!normalizedText) return null
 

@@ -8,6 +8,8 @@ import type { FillStyle, StrokeStyle, StrokeWidth } from '../../../types/style'
 type LayeredCircleProps = {
   wrapperClass: string
   wrapperStyle: CSSProperties
+  widthPx?: number
+  heightPx?: number
   roughness?: number
   fill?: string
   fillStyle?: FillStyle
@@ -21,6 +23,8 @@ type LayeredCircleProps = {
 export const LayeredCircle = memo(({
   wrapperClass,
   wrapperStyle,
+  widthPx,
+  heightPx,
   roughness,
   fill,
   fillStyle,
@@ -53,10 +57,10 @@ export const LayeredCircle = memo(({
         className='absolute inset-0 pointer-events-none'
         style={{ transform: `translate(${offset}px, ${offset}px)` }}
       >
-        <RoughCircle {...commonProps} fill={backFill} stroke={backStroke} className='w-full h-full' />
+        <RoughCircle {...commonProps} fill={backFill} stroke={backStroke} widthPx={widthPx} heightPx={heightPx} className='w-full h-full' />
       </div>
       <div className='relative w-full h-full'>
-        <RoughCircle {...commonProps} className='w-full h-full'>
+        <RoughCircle {...commonProps} widthPx={widthPx} heightPx={heightPx} className='w-full h-full'>
           {children}
         </RoughCircle>
       </div>

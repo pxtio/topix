@@ -9,6 +9,8 @@ type LayeredRectangleProps = {
   rounded: 'none' | 'rounded-2xl'
   wrapperClass: string
   wrapperStyle: CSSProperties
+  widthPx?: number
+  heightPx?: number
   roughness?: number
   fill?: string
   fillStyle?: FillStyle
@@ -23,6 +25,8 @@ export const LayeredRectangle = memo(({
   rounded,
   wrapperClass,
   wrapperStyle,
+  widthPx,
+  heightPx,
   roughness,
   fill,
   fillStyle,
@@ -57,10 +61,10 @@ export const LayeredRectangle = memo(({
         className='absolute inset-0 pointer-events-none'
         style={{ transform: `translate(${offsetX}px, ${offsetY}px)` }}
       >
-        <RoughRect {...commonProps} fill={backFill} stroke={backStroke} className='w-full h-full' rounded={rounded} />
+        <RoughRect {...commonProps} fill={backFill} stroke={backStroke} widthPx={widthPx} heightPx={heightPx} className='w-full h-full' rounded={rounded} />
       </div>
       <div className='relative w-full h-full'>
-        <RoughRect {...commonProps} className='w-full h-full' rounded={rounded}>
+        <RoughRect {...commonProps} widthPx={widthPx} heightPx={heightPx} className='w-full h-full' rounded={rounded}>
           {children}
         </RoughRect>
       </div>

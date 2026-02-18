@@ -8,6 +8,7 @@ import { LiteMarkdown } from '@/components/markdown/lite-markdown'
 import { CanvasLiteMarkdown } from '@/components/markdown/canvas-lite-markdown'
 import { getShapeContentScale } from '../../utils/shape-content-scale'
 import { useGraphStore } from '../../store/graph-store'
+import { useTheme } from '@/components/theme-provider'
 
 
 type TextAlign = 'left' | 'center' | 'right'
@@ -133,6 +134,7 @@ const ImageNodeView = memo(function ImageNodeView({
   isMoving,
   onCanvasRenderReadyChange,
 }: ImageNodeViewProps) {
+  const { resolvedTheme } = useTheme()
   const hasLabel = value.trim().length > 0
   const renderMathWithDom = hasMathSyntax(value)
   const usesCanvas = !labelEditing && !isResizingNode && hasLabel && !renderMathWithDom
@@ -193,6 +195,7 @@ const ImageNodeView = memo(function ImageNodeView({
             fontFamily={renderFontFamily}
             fontSize={renderFontSize}
             textStyle={renderTextStyle}
+            resolvedTheme={resolvedTheme}
             onRenderReadyChange={onCanvasRenderReadyChange}
           />
           )
@@ -284,6 +287,7 @@ const TextNodeView = memo(function TextNodeView({
   isMoving,
   onCanvasRenderReadyChange,
 }: TextNodeViewProps) {
+  const { resolvedTheme } = useTheme()
   const renderMathWithDom = hasMathSyntax(value)
   const hasText = value.trim().length > 0
   const usesCanvas = !labelEditing && !isResizingNode && hasText && !renderMathWithDom
@@ -339,6 +343,7 @@ const TextNodeView = memo(function TextNodeView({
                   fontFamily={renderFontFamily}
                   fontSize={renderFontSize}
                   textStyle={renderTextStyle}
+                  resolvedTheme={resolvedTheme}
                   onRenderReadyChange={onCanvasRenderReadyChange}
                 />
               )

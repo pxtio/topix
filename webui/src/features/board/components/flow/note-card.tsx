@@ -220,6 +220,7 @@ export const NodeCard = memo(({
 
   // local draft that controls the textarea while editing
   const [labelDraft, setLabelDraft] = useState<string>(note.label?.markdown || '')
+  const [debouncedLabelDraft, setDebouncedLabelDraft] = useState<string>(labelDraft)
 
   // selection cache for resilient caret restore if remounts happen
   const selRef = useRef<{ start: number; end: number } | null>(null)
@@ -254,6 +255,14 @@ export const NodeCard = memo(({
   useEffect(() => {
     if (!labelEditing) setLabelDraft(note.label?.markdown || '')
   }, [labelEditing, note.label?.markdown])
+
+  useEffect(() => {
+    if (!labelEditing) return
+    const t = window.setTimeout(() => {
+      setDebouncedLabelDraft(labelDraft)
+    }, 300)
+    return () => window.clearTimeout(t)
+  }, [labelDraft, labelEditing])
 
   // notify parent when label edit mode changes
   useEffect(() => {
@@ -314,6 +323,36 @@ export const NodeCard = memo(({
     return () => cancelAnimationFrame(id)
   }, [labelDraft, labelEditing])
 
+  useEffect(() => {
+    if (!labelEditing) return
+    if (debouncedLabelDraft === (note.label?.markdown || '')) return
+    setNodesPersist(nds =>
+      nds.map(n => {
+        if (n.id !== note.id) return n
+        const data = n.data as NoteNode['data']
+        return {
+          ...n,
+          data: { ...data, label: { markdown: debouncedLabelDraft } }
+        }
+      })
+    )
+  }, [debouncedLabelDraft, labelEditing, note.id, note.label?.markdown, setNodesPersist])
+
+  useEffect(() => {
+    if (labelEditing) return
+    if (labelDraft === (note.label?.markdown || '')) return
+    setNodesPersist(nds =>
+      nds.map(n => {
+        if (n.id !== note.id) return n
+        const data = n.data as NoteNode['data']
+        return {
+          ...n,
+          data: { ...data, label: { markdown: labelDraft } }
+        }
+      })
+    )
+  }, [labelEditing, labelDraft, note.id, note.label?.markdown, setNodesPersist])
+
   // handlers
   const handleLabelChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const next = event.target.value
@@ -326,19 +365,7 @@ export const NodeCard = memo(({
 
     // 1) update draft so the textarea stays stable
     setLabelDraft(next)
-
-    // 2) also update the graph so other parts of the app see changes live
-    setNodesPersist(nds =>
-      nds.map(n => {
-        if (n.id !== note.id) return n
-        const data = n.data as NoteNode['data']
-        return {
-          ...n,
-          data: { ...data, label: { markdown: next } }
-        }
-      })
-    )
-  }, [note.id, setNodesPersist])
+  }, [])
 
   const handleNoteChange = useCallback((markdown: string) => {
     setNodesPersist(nds =>

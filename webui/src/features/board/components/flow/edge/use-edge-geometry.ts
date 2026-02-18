@@ -17,9 +17,8 @@ import {
 import {
   getEdgeParamsFromGeometry,
   nodeCenterFromGeometry,
-  toNodeGeometry
+  type NodeGeometry
 } from '../../../utils/flow'
-import type { Node, InternalNode } from '@xyflow/react'
 
 type GeometryResult = {
   geom: {
@@ -41,10 +40,10 @@ type GeometryResult = {
 }
 
 type Params = {
-  sourceNode: InternalNode<Node> | undefined
-  targetNode: InternalNode<Node> | undefined
-  sourceClipNode?: InternalNode<Node>
-  targetClipNode?: InternalNode<Node>
+  sourceGeom: NodeGeometry | null
+  targetGeom: NodeGeometry | null
+  sourceClipGeom?: NodeGeometry | null
+  targetClipGeom?: NodeGeometry | null
   linkStyle: LinkStyle | undefined
   startKind: ArrowheadType
   endKind: ArrowheadType
@@ -55,10 +54,10 @@ type Params = {
 }
 
 export function useEdgeGeometry({
-  sourceNode,
-  targetNode,
-  sourceClipNode,
-  targetClipNode,
+  sourceGeom,
+  targetGeom,
+  sourceClipGeom,
+  targetClipGeom,
   linkStyle,
   startKind,
   endKind,
@@ -67,23 +66,6 @@ export function useEdgeGeometry({
   bendPointDrag,
   storedBendPoint
 }: Params): GeometryResult {
-  const sourceGeom = useMemo(
-    () => (sourceNode ? toNodeGeometry(sourceNode) : null),
-    [sourceNode],
-  )
-  const targetGeom = useMemo(
-    () => (targetNode ? toNodeGeometry(targetNode) : null),
-    [targetNode],
-  )
-  const sourceClipGeom = useMemo(
-    () => (sourceClipNode ? toNodeGeometry(sourceClipNode) : null),
-    [sourceClipNode],
-  )
-  const targetClipGeom = useMemo(
-    () => (targetClipNode ? toNodeGeometry(targetClipNode) : null),
-    [targetClipNode],
-  )
-
   const geom = useMemo(() => {
     if (!sourceGeom || !targetGeom) return null
     const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParamsFromGeometry(sourceGeom, targetGeom)

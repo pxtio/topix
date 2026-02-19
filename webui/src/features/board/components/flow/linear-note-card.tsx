@@ -86,10 +86,10 @@ export function LinearNoteCard({ node }: Props) {
   }, [boardId, navigate, node.data.graphUid, node.id])
 
   const cardClass = clsx(
-    'transition rounded-sm relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group shadow-md border-2 border-border',
+    'transition rounded-md relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group shadow-md border-2 border-foreground/30',
     isPinned
       ? 'ring-2 ring-secondary/60 shadow-md'
-      : 'rounded-none hover:ring-2 hover:ring-secondary/40 hover:shadow-lg'
+      : 'hover:ring-2 hover:ring-secondary/40 hover:shadow-lg'
   )
 
   const CardBody = useMemo(() => (

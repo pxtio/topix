@@ -765,6 +765,7 @@ export interface GraphStore {
   historyLimit: number
   historyRecording: boolean
   dragSnapshotNodes: NoteNode[] | null
+  resizeSnapshotNodes: NoteNode[] | null
   pushPatch: (patch: Patch) => void
   undo: () => void
   redo: () => void
@@ -789,6 +790,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             historyPast: [],
             historyFuture: [],
             dragSnapshotNodes: null,
+            resizeSnapshotNodes: null,
             presentationMode: false,
             activeSlideId: undefined,
             lastCursorPosition: undefined,
@@ -1081,8 +1083,17 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const hasDragEnd = changes.some(
       (ch) => ch.type === "position" && ch.dragging === false,
     )
+    const hasResizeStart = changes.some(
+      (ch) => ch.type === "dimensions" && ch.resizing === true,
+    )
+    const hasResizeEnd = changes.some(
+      (ch) => ch.type === "dimensions" && ch.resizing === false,
+    )
     const dragSnapshot = recording
       ? get().dragSnapshotNodes ?? (hasDragStart ? sanitizeNodes(prevNodes) : null)
+      : null
+    const resizeSnapshot = recording
+      ? get().resizeSnapshotNodes ?? (hasResizeStart ? sanitizeNodes(prevNodes) : null)
       : null
 
     let attachedIndex = get().attachedPointIdsByNode
@@ -1316,7 +1327,20 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         set({ dragSnapshotNodes: null })
       } else if (hasDragStart && dragSnapshot) {
         set({ dragSnapshotNodes: dragSnapshot })
-      } else if (!hasDragStart && !hasDragEnd) {
+      } else if (hasResizeEnd && resizeSnapshot) {
+        const patches = diffNodesById(resizeSnapshot, sanitizeNodes(nextNodes), touchedNodeIds)
+        if (patches.length > 0) {
+          get().pushPatch({
+            id: generateUuid(),
+            ts: Date.now(),
+            source: "ui",
+            nodes: patches,
+          })
+        }
+        set({ resizeSnapshotNodes: null })
+      } else if (hasResizeStart && resizeSnapshot) {
+        set({ resizeSnapshotNodes: resizeSnapshot })
+      } else if (!hasDragStart && !hasDragEnd && !hasResizeStart && !hasResizeEnd) {
         const patches = diffNodesById(sanitizeNodes(prevNodes), sanitizeNodes(nextNodes), touchedNodeIds)
         if (patches.length > 0) {
           get().pushPatch({
@@ -1506,14 +1530,17 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     }
 
     if (recording) {
-      const patches = diffEdgesById(sanitizeEdges(prevEdges), sanitizeEdges(updatedEdges), touchedEdgeIds)
-      if (patches.length > 0) {
-        get().pushPatch({
-          id: generateUuid(),
-          ts: Date.now(),
-          source: "ui",
-          edges: patches,
-        })
+      const skipDerivedEdgeHistory = get().isDraggingNodes || get().isResizingNode
+      if (!skipDerivedEdgeHistory) {
+        const patches = diffEdgesById(sanitizeEdges(prevEdges), sanitizeEdges(updatedEdges), touchedEdgeIds)
+        if (patches.length > 0) {
+          get().pushPatch({
+            id: generateUuid(),
+            ts: Date.now(),
+            source: "ui",
+            edges: patches,
+          })
+        }
       }
     }
 
@@ -1653,6 +1680,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   historyLimit: 80,
   historyRecording: true,
   dragSnapshotNodes: null,
+  resizeSnapshotNodes: null,
 
   pushPatch: (patch) =>
     set((state) => {

@@ -47,6 +47,8 @@ class SendMessageRequest(BaseModel):
     reasoning_effort: Literal["low", "medium", "high"] | None = None
     use_deep_research: bool = False
 
+    message_context: str | None = None
+
 
 class ChatUpdateRequest(BaseModel):
     """Request model for updating a chat."""

@@ -204,7 +204,8 @@ async def send_message(
             query=body.query,
             context=ReasoningContext(),
             session=session,
-            message_id=body.message_id
+            message_id=body.message_id,
+            message_context=body.message_context
         ):
             yield data
 

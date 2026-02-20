@@ -22,7 +22,7 @@ from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
 from topix.agents.utils.text import post_process_url_citations
 from topix.datatypes.chat.chat import Message
-from topix.datatypes.property import ReasoningProperty
+from topix.datatypes.property import ReasoningProperty, TextProperty
 from topix.datatypes.resource import RichText
 from topix.store.qdrant.store import ContentStore
 from topix.utils.common import gen_uid
@@ -68,7 +68,14 @@ class AssistantManager:
         query: str,
         session: AssistantSession | None = None,
         rephrase_query: bool = False,
+        message_context: str | None = None,
     ) -> list[dict[str, str]]:
+        if message_context is not None and message_context.strip() != "":
+            query = (
+                "<MessageContext>\n\n"
+                f"{message_context}\n\n"
+                f"</MessageContext>\n\n{query}"
+            )
         if session:
             history = await session.get_items()
             if history:
@@ -147,32 +154,38 @@ class AssistantManager:
         message_id: str | None = None,
         max_turns: int = 5,
         rephrase_query: bool = False,
+        message_context: str | None = None
     ) -> str:
         """Run the assistant agent with the provided context and query."""
-        input = await self._compose_input(
-            context, query, session, rephrase_query=rephrase_query
+        agent_input = await self._compose_input(
+            context,
+            query,
+            session,
+            rephrase_query=rephrase_query,
+            message_context=message_context
         )
 
         if session:
-            await session.add_items(
-                [
-                    {
-                        "id": message_id or gen_uid(),
-                        "role": "user",
-                        "content": {"markdown": query},
-                    }
-                ]
+            user_message = Message(
+                id=message_id or gen_uid(),
+                role="user",
+                content=RichText(markdown=query)
             )
+            if message_context is not None and message_context.strip() != "":
+                user_message.properties.context = TextProperty(text=message_context)
+
+            await session.add_items([user_message])
+
         # launch plan:
         try:
             res = await AgentRunner.run(
-                self.plan_agent, input=input, context=context, max_turns=max_turns
+                self.plan_agent, input=agent_input, context=context, max_turns=max_turns
             )
         except Exception:
             logger.info(f"Max turns exceeded: {max_turns}", exc_info=True)
 
         # launch synthesis:
-        res = await AgentRunner.run(self.synthesis_agent, input=query, context=context)
+        res = await AgentRunner.run(self.synthesis_agent, input=agent_input, context=context)
 
         if session:
             await session.add_items(
@@ -191,6 +204,7 @@ class AssistantManager:
         message_id: str | None = None,
         max_turns: int = 8,
         rephrase_query: bool = False,
+        message_context: str | None = None
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Run the assistant agent with the provided context and query.
 
@@ -203,19 +217,22 @@ class AssistantManager:
         """
         # Notify the start of the agent stream
         agent_input = await self._compose_input(
-            context, query, session, rephrase_query=rephrase_query
+            context,
+            query,
+            session,
+            rephrase_query=rephrase_query,
+            message_context=message_context
         )
 
         if session:
-            await session.add_items(
-                [
-                    Message(
-                        id=message_id or gen_uid(),
-                        role="user",
-                        content=RichText(markdown=query),
-                    )
-                ]
+            user_message = Message(
+                id=message_id or gen_uid(),
+                role="user",
+                content=RichText(markdown=query)
             )
+            if message_context is not None and message_context.strip() != "":
+                user_message.properties.context = TextProperty(text=message_context)
+            await session.add_items([user_message])
 
         # launch plan:
         try:
@@ -235,7 +252,7 @@ class AssistantManager:
         # Launch the synthesis agent:
         res = AgentRunner.run_streamed(
             self.synthesis_agent,
-            input=query,
+            input=agent_input,
             context=context,
             name=AgentToolName.ANSWER_REFORMULATE
         )

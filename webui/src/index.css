@@ -273,6 +273,14 @@
     background: transparent !important;
   }
 
+  .sticky-note-shadow {
+    box-shadow: 0 2px 0 hsl(0 0% 100% / 0.25), 0 8px 18px hsl(32 28% 30% / 0.22);
+  }
+
+  .dark .sticky-note-shadow {
+    box-shadow: 0 1px 0 hsl(0 0% 100% / 0.1), 0 10px 20px hsl(0 0% 0% / 0.32);
+  }
+
   /* Motion safety */
   @media (prefers-reduced-motion: reduce) {
     .scrollbar-thin::-webkit-scrollbar-thumb {

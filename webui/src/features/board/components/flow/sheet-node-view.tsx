@@ -152,8 +152,8 @@ export const SheetNodeView = memo(function SheetNodeView({
     <div className='group w-full h-full'>
       <div
         className={clsx(
-          'relative w-full h-full rounded-md border-2 border-foreground/30 overflow-hidden',
-          isPinned && 'ring-2 ring-secondary'
+          'relative w-full h-full rounded-lg border-1 border-foreground/50 overflow-hidden sticky-note-shadow',
+          isPinned && 'ring-2 ring-secondary sticky-note-shadow border-secondary',
         )}
         style={{ backgroundColor }}
       >

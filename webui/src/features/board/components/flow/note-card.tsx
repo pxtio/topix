@@ -139,6 +139,13 @@ const NoteDisplayContent = memo(function NoteDisplayContent({
  * Props for the sheet modal content area.
  */
 type SheetDialogContentProps = {
+  titleEditing: boolean
+  titleDraft: string
+  displayTitle: string
+  titleInputRef: React.RefObject<HTMLInputElement | null>
+  onTitleDraftChange: (value: string) => void
+  onStopTitleEdit: (save: boolean) => void
+  onStartTitleEdit: () => void
   value: string
   onSave: (markdown: string) => void
   onOpenFullView: () => void
@@ -149,6 +156,13 @@ type SheetDialogContentProps = {
  * Sheet dialog body with toolbar actions and editor content.
  */
 const SheetDialogContent = memo(function SheetDialogContent({
+  titleEditing,
+  titleDraft,
+  displayTitle,
+  titleInputRef,
+  onTitleDraftChange,
+  onStopTitleEdit,
+  onStartTitleEdit,
   value,
   onSave,
   onOpenFullView,
@@ -156,26 +170,59 @@ const SheetDialogContent = memo(function SheetDialogContent({
 }: SheetDialogContentProps) {
   return (
     <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2' showCloseButton={false}>
-      <div className='w-full flex items-center justify-end gap-2 px-2 pt-1'>
-        <DialogTitle className="sr-only">Sheet</DialogTitle>
-        <Button
-          variant={'ghost'}
-          size='icon-sm'
-          onClick={onOpenFullView}
-          title='Open full view'
-          aria-label='Open full view'
-        >
-          <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" strokeWidth={2} />
-        </Button>
-        <Button
-          variant='ghost'
-          size='icon-sm'
-          onClick={onClose}
-          title='Close'
-          aria-label='Close'
-        >
-          <HugeiconsIcon icon={Cancel01Icon} className="size-4" strokeWidth={2} />
-        </Button>
+      <div className='w-full flex items-center justify-between gap-2 px-2 pt-1'>
+        <div className='min-w-0 flex-1 pr-2'>
+          {titleEditing ? (
+            <input
+              ref={titleInputRef}
+              value={titleDraft}
+              onChange={e => onTitleDraftChange(e.target.value)}
+              onBlur={() => onStopTitleEdit(true)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  onStopTitleEdit(true)
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  onStopTitleEdit(false)
+                }
+              }}
+              className='w-full bg-transparent text-sm font-semibold text-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
+              placeholder='Untitled note'
+            />
+          ) : (
+            <button
+              type='button'
+              onClick={onStartTitleEdit}
+              className='block max-w-full truncate text-left text-sm font-semibold text-foreground hover:underline'
+              title={displayTitle}
+            >
+              {displayTitle}
+            </button>
+          )}
+          <DialogTitle className="sr-only">Sheet</DialogTitle>
+        </div>
+        <div className='flex items-center gap-2'>
+          <Button
+            variant={'ghost'}
+            size='icon-sm'
+            onClick={onOpenFullView}
+            title='Open full view'
+            aria-label='Open full view'
+          >
+            <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" strokeWidth={2} />
+          </Button>
+          <Button
+            variant='ghost'
+            size='icon-sm'
+            onClick={onClose}
+            title='Close'
+            aria-label='Close'
+          >
+            <HugeiconsIcon icon={Cancel01Icon} className="size-4" strokeWidth={2} />
+          </Button>
+        </div>
       </div>
 
       <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
@@ -526,6 +573,13 @@ export const NodeCard = memo(({
       </LabelContainer>
 
       <SheetDialogContent
+        titleEditing={labelEditing}
+        titleDraft={labelDraft}
+        displayTitle={displayTitle}
+        titleInputRef={sheetTitleInputRef}
+        onTitleDraftChange={setLabelDraft}
+        onStopTitleEdit={stopSheetTitleEdit}
+        onStartTitleEdit={startSheetTitleEdit}
         value={note.content?.markdown || ''}
         onSave={handleNoteChange}
         onOpenFullView={handleOpenFullView}

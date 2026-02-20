@@ -30,7 +30,7 @@ export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardPro
   const value = attachedId ?? "-1"
   const label = attachedId
     ? boards.find((b) => b.uid === attachedId)?.label || UNTITLED_LABEL
-    : "Add Context"
+    : "Attach Board"
 
   const handleSelectBoard = (boardId: string) => {
     const finalId = boardId === "-1" ? undefined : boardId

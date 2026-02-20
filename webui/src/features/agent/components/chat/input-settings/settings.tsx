@@ -1,11 +1,8 @@
 import { useListAvailableServices } from "@/features/agent/api/list-available-services"
-import { CodeInterpreterChoiceMenu } from "./code-interpreter"
 import { DeepResearchChoiceMenu } from "./deep-research"
-import { MemorySearchChoiceMenu } from "./memory-search"
 import { ModelChoiceMenu } from "./model-card"
-import { SearchEngineChoiceMenu } from "./web-search"
-import { ImageGenMenu } from "./image-gen"
 import { MessageBoardContextChoiceMenu } from "./message-board-context"
+import { ToolsMenu } from "./tools-menu"
 
 
 interface InputSettingsProps {
@@ -22,12 +19,9 @@ export const InputSettings = ({ showBoardContextOption = false }: InputSettingsP
   return (
     <>
       <ModelChoiceMenu />
-      {showBoardContextOption && <MessageBoardContextChoiceMenu />}
-      <SearchEngineChoiceMenu />
-      <MemorySearchChoiceMenu />
-      <CodeInterpreterChoiceMenu />
-      <ImageGenMenu />
+      <ToolsMenu />
       <DeepResearchChoiceMenu />
+      {showBoardContextOption && <MessageBoardContextChoiceMenu />}
     </>
   )
 }

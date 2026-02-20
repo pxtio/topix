@@ -20,6 +20,7 @@ import { Grip } from 'lucide-react'
 import { useGraphStore } from '../../store/graph-store'
 import type { NoteNode } from '../../types/flow'
 import { LinearNoteCard } from './linear-note-card'
+import { LinearDocumentCard } from './linear-document-card'
 import { useUpdateNote } from '../../api/update-note'
 import type { NumberProperty } from '@/features/newsfeed/types/properties'
 import { useAppStore } from '@/store'
@@ -78,7 +79,7 @@ export function LinearView({
   const { updateNote } = useUpdateNote()
 
   const sortedNodes = useSortedNodes(
-    (nodes as NoteNode[]).filter(n => n.data?.style?.type === 'sheet')
+    (nodes as NoteNode[]).filter(n => n.data?.style?.type === 'sheet' || n.data?.type === 'document')
   )
   const ids = useMemo(() => sortedNodes.map(n => n.id), [sortedNodes])
 
@@ -193,7 +194,11 @@ function SortableNoteCard({ node }: SortableNoteCardProps) {
         <Grip className='size-4' />
       </button>
 
-      <LinearNoteCard node={node} />
+      {node.data?.type === 'document' ? (
+        <LinearDocumentCard node={node} />
+      ) : (
+        <LinearNoteCard node={node} />
+      )}
     </div>
   )
 }

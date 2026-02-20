@@ -398,16 +398,76 @@ export const ToolPanel = memo(function ToolPanel({
 
       {viewMode !== "graph" && (
         <>
-          <Button
-            variant={null}
-            className={normalButtonClass}
-            size='icon'
-            onClick={() => onAddNode({ nodeType: 'sheet' })}
-            title='Add Sticky Note'
-            aria-label='Add Sticky Note'
-          >
-            <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => onAddNode({ nodeType: 'sheet' })}
+                aria-label='Add Sticky Note'
+              >
+                <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.note} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => setOpenDocumentUpload(true)}
+                aria-label='Upload document'
+                disabled={!boardId}
+              >
+                <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.document} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={chatOpen ? activeButtonClass : normalButtonClass}
+                size='icon'
+                onClick={() => setOpenChatDialog(!chatOpen)}
+                aria-label='Open Chat'
+                disabled={!boardId}
+              >
+                <BotMessageSquare className='size-4 shrink-0 text-sidebar-icon-4' strokeWidth={2} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.copilot} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => setOpenAiSpark(true)}
+                aria-label='AI Spark'
+                disabled={!boardId}
+              >
+                <Sparkles className='size-4 shrink-0 text-secondary' strokeWidth={2} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.ai} />
+            </TooltipContent>
+          </Tooltip>
         </>
       )}
 

@@ -20,6 +20,10 @@ export interface ChatMessage {
       type: "reasoning",
       reasoning: ReasoningStep[]
     }
+    context?: {
+      type: "text"
+      text: string
+    }
   }
   streaming?: boolean
   isDeepResearch?: boolean

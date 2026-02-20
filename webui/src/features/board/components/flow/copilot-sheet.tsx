@@ -72,6 +72,7 @@ export function CopilotSheet({
               className="relative"
               showHistoricalChats
               chatId={currentChatId}
+              enableSelectionContext
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">

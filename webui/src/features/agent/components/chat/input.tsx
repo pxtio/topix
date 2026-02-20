@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react'
+import { useMemo, useState, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import { useChatStore } from '../../store/chat-store'
 import { useSendMessage } from '../../api/send-message'
@@ -15,6 +15,10 @@ import { useDescribeChat } from '../../api/describe-chat'
 import type { SendMessageRequestPayload } from '../../api/types'
 import { WelcomeMessage } from './welcome-message'
 import { InputSettings } from './input-settings/settings'
+import { useGraphStore } from '@/features/board/store/graph-store'
+import { useShallow } from 'zustand/shallow'
+import type { NoteNode } from '@/features/board/types/flow'
+import { buildContextTextFromNodes } from '@/features/board/utils/context-text'
 
 // shadcn/ui
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
@@ -25,7 +29,12 @@ export interface InputBarProps {
   attachedBoardId?: string
   layout?: "floating" | "docked"
   preferChatRoute?: boolean
+  enableSelectionContext?: boolean
 }
+
+
+const EMPTY_SELECTED_NODES: NoteNode[] = []
+const MAX_MESSAGE_CONTEXT_CHARS = 12000
 
 /**
  * Input bar with Deep Research confirmation using ONLY `input` state.
@@ -38,6 +47,7 @@ export const InputBar = ({
   attachedBoardId,
   layout = "floating",
   preferChatRoute = false,
+  enableSelectionContext = false,
 }: InputBarProps) => {
   const { chatId, setChatId } = useChat()
 
@@ -49,8 +59,33 @@ export const InputBar = ({
   const enabledTools = useChatStore((state) => state.enabledTools)
   const useDeepResearch = useChatStore((state) => state.useDeepResearch)
   const setUseDeepResearch = useChatStore((state) => state.setUseDeepResearch)
+  const enableMessageBoardContextSelection = useChatStore((state) => state.enableMessageBoardContextSelection)
 
   const [input, setInput] = useState<string>('')
+
+  const selectedNodes = useGraphStore(
+    useShallow((state) => {
+      if (!enableSelectionContext) {
+        return EMPTY_SELECTED_NODES
+      }
+      return state.nodes.filter((node) => (
+        node.selected &&
+        (node.data as { kind?: string } | undefined)?.kind !== "point"
+      ))
+    })
+  )
+
+  const selectedNodeCount = selectedNodes.length
+  const messageContext = useMemo(() => {
+    if (!enableSelectionContext || !enableMessageBoardContextSelection || selectedNodeCount === 0) {
+      return undefined
+    }
+    const contextText = buildContextTextFromNodes(selectedNodes, { skipPrefix: true }).trim()
+    if (!contextText) {
+      return undefined
+    }
+    return contextText.slice(0, MAX_MESSAGE_CONTEXT_CHARS)
+  }, [enableSelectionContext, enableMessageBoardContextSelection, selectedNodeCount, selectedNodes])
 
   // Deep Research dialog state
   const [showDRDialog, setShowDRDialog] = useState(false)
@@ -107,6 +142,7 @@ export const InputBar = ({
       webSearchEngine,
       enabledTools,
       useDeepResearch,
+      messageContext,
     }
 
     // clear input right before launching search
@@ -182,7 +218,7 @@ export const InputBar = ({
       )}>
         <div className="relative w-full max-w-[800px] mx-auto">
           <div className="absolute -top-9 left-0 transform flex flex-row items-center gap-1">
-            <InputSettings />
+            <InputSettings showBoardContextOption={enableSelectionContext} />
           </div>
 
           <div

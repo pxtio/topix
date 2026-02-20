@@ -32,6 +32,10 @@ interface ListMessagesResponse {
             arguments?: { input: unknown }
           }[]
         }
+        context?: {
+          type: "text"
+          text: string
+        }
       }
     }>
   }

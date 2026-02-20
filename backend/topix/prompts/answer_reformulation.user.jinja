@@ -14,6 +14,7 @@ Response reminders (high priority):
 - Answer the **user question directly and succinctly**. Start with the core answer.
 - Do **not** mention tools, tool names, planners, traces, or internal steps.
 - Ignore widget calls entirely; do not cite or reference them.
+- If the question includes `<MessageContext>...</MessageContext>`, treat it as supplemental grounding and use only the parts directly relevant to the user question.
 - Image generation:
   - If a generated filename/path exists, briefly confirm that you generated an image.
   - If not, briefly say there was an issue generating the image.

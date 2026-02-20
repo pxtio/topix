@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from topix.datatypes.property import DataProperty, ReasoningProperty
+from topix.datatypes.property import DataProperty, ReasoningProperty, TextProperty
 from topix.datatypes.resource import Resource, ResourceProperties
 from topix.utils.common import gen_uid
 
@@ -28,6 +28,9 @@ class MessageProperties(ResourceProperties):
 
     reasoning: ReasoningProperty = Field(
         default_factory=lambda: ReasoningProperty()
+    )
+    context: TextProperty = Field(
+        default_factory=lambda: TextProperty()
     )
 
 
@@ -52,6 +55,12 @@ class Message(Resource):
                 content = self.content.get("markdown", "")
             else:
                 content = self.content.markdown if self.content else ""
+
+        # If there is message-level context, prepend it to the content in a special format
+        if self.role == MessageRole.USER and self.properties.context.text:
+            content = (
+                f"<MessageContext>\n\n{self.properties.context.text}\n\n</MessageContext>\n\n{content}"
+            )
         return {
             "role": self.role,
             "content": content

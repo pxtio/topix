@@ -18,7 +18,7 @@ from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession, Message
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.api.utils.common import iso_to_clear_date
-from topix.datatypes.property import ReasoningProperty
+from topix.datatypes.property import ReasoningProperty, TextProperty
 from topix.datatypes.resource import RichText
 from topix.utils.common import gen_uid
 
@@ -160,23 +160,35 @@ class DeepResearch:
         session: AssistantSession | None = None,
         message_id: str | None = None,
         max_turn: int = 8,
+        message_context: str | None = None
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Run deep research in stream mode."""
-        if session:
-            await session.add_items(
-                [
-                    Message(
-                        id=message_id or gen_uid(),
-                        role="user",
-                        content=RichText(markdown=query),
-                    )
-                ]
+        agent_input: str
+        if message_context is not None and message_context.strip() != "":
+            agent_input = (
+                "<MessageContext>\n\n"
+                f"{message_context}\n\n"
+                f"</MessageContext>\n\n{query}"
             )
+
+        else:
+            agent_input = query
+
+        if session:
+            user_message = Message(
+                id=message_id or gen_uid(),
+                role="user",
+                content=RichText(markdown=query)
+            )
+            if message_context is not None and message_context.strip() != "":
+                user_message.properties.context = TextProperty(text=message_context)
+
+            await session.add_items([user_message])
 
         # Generate outline in non streaming mode
         messages = AgentRunner.run_streamed(
             starting_agent=self.outline_generator,
-            input=query,
+            input=agent_input,
             context=context,
             name=AgentToolName.OUTLINE_GENERATOR,
         )

@@ -1,26 +1,27 @@
 import { useListAvailableServices } from "@/features/agent/api/list-available-services"
-import { CodeInterpreterChoiceMenu } from "./code-interpreter"
 import { DeepResearchChoiceMenu } from "./deep-research"
-import { MemorySearchChoiceMenu } from "./memory-search"
 import { ModelChoiceMenu } from "./model-card"
-import { SearchEngineChoiceMenu } from "./web-search"
-import { ImageGenMenu } from "./image-gen"
+import { MessageBoardContextChoiceMenu } from "./message-board-context"
+import { ToolsMenu } from "./tools-menu"
+
+
+interface InputSettingsProps {
+  showBoardContextOption?: boolean
+}
 
 
 /**
  * Component that renders input settings options for a chat interface.
  */
-export const InputSettings = () => {
+export const InputSettings = ({ showBoardContextOption = false }: InputSettingsProps) => {
   useListAvailableServices()
 
   return (
     <>
       <ModelChoiceMenu />
-      <SearchEngineChoiceMenu />
-      <MemorySearchChoiceMenu />
-      <CodeInterpreterChoiceMenu />
-      <ImageGenMenu />
+      <ToolsMenu />
       <DeepResearchChoiceMenu />
+      {showBoardContextOption && <MessageBoardContextChoiceMenu />}
     </>
   )
 }

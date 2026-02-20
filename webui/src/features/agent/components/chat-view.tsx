@@ -24,6 +24,7 @@ type ChatProps = {
   className?: string
   showHistoricalChats?: boolean
   preferChatRoute?: boolean
+  enableSelectionContext?: boolean
 }
 
 const formatChatDate = (value?: string) => {
@@ -158,6 +159,7 @@ const ChatBody = ({
   className,
   showHistoricalChats = false,
   preferChatRoute = false,
+  enableSelectionContext = false,
 }: ChatProps) => {
   const { chatId, setChatId } = useChat()
   const { data: chatList = [] } = useListChats({ graphUid: initialBoardId })
@@ -244,6 +246,7 @@ const ChatBody = ({
         attachedBoardId={attachedBoardId}
         layout={showHistoricalChats ? "docked" : "floating"}
         preferChatRoute={preferChatRoute}
+        enableSelectionContext={enableSelectionContext}
       />
     </div>
   )

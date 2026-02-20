@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { ChatMessage } from "../../types/chat"
-import { CopyIcon, Tick01Icon } from "@hugeicons/core-free-icons"
+import { AiChipIcon, CopyIcon, Tick01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { toast } from "sonner"
+import { Badge } from "@/components/ui/badge"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 /**
  * UserMessage component displays a message sent by the user in the chat interface.
@@ -10,6 +12,7 @@ import { toast } from "sonner"
 export const UserMessage = ({ message, isLatest }: { message: ChatMessage, isLatest: boolean }) => {
   const ref = useRef<HTMLDivElement>(null)
   const text = message.content.markdown
+  const contextText = message.properties.context?.text?.trim()
 
   const sentLabel = useMemo(() => {
     const timestamp = message.createdAt || message.sentAt
@@ -29,7 +32,7 @@ export const UserMessage = ({ message, isLatest }: { message: ChatMessage, isLat
   return (
     <>
       <div className="h-4" ref={ref} />
-      <div className="relative group w-auto max-w-[75%] min-w-0 ml-auto pb-6">
+      <div className={`relative group w-auto max-w-[75%] min-w-0 ml-auto ${contextText ? "pb-8" : "pb-6"}`}>
         <span className="absolute -top-8 right-0 block min-w-[150px] text-right text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity p-2">
           {sentLabel}
         </span>
@@ -50,6 +53,30 @@ export const UserMessage = ({ message, isLatest }: { message: ChatMessage, isLat
         >
           {text}
         </div>
+        {contextText && (
+          <div className="absolute -bottom-1 right-1">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="opacity-70 hover:opacity-100 transition-opacity"
+                  aria-label="Show message context"
+                >
+                  <Badge variant="secondary" className="text-[10px] flex items-center gap-1 px-2 py-0.5">
+                    <HugeiconsIcon icon={AiChipIcon} className="size-3 shrink-0" strokeWidth={2} />
+                    <span>Context</span>
+                  </Badge>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-96 max-w-[80vw]">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Context used</p>
+                <pre className="text-xs whitespace-pre-wrap break-words max-h-64 overflow-auto scrollbar-thin">
+                  {contextText}
+                </pre>
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
       </div>
     </>
   )

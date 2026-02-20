@@ -14,6 +14,7 @@ export interface SendMessageRequestPayload {
   webSearchEngine: WebSearchEngine
   enabledTools?: ToolName[]
   useDeepResearch?: boolean
+  messageContext?: string
 }
 
 

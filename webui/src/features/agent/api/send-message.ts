@@ -87,7 +87,14 @@ export const useSendMessage = () => {
         role: "user",
         content: { markdown: payload.query },
         chatUid: chatId,
-        properties: {}
+        properties: payload.messageContext
+          ? {
+            context: {
+              type: "text",
+              text: payload.messageContext
+            }
+          }
+          : {}
       } as ChatMessage
 
       const tmpId = "placeholder-" + Date.now().toString()

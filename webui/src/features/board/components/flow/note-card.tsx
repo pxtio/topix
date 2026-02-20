@@ -394,18 +394,6 @@ export const NodeCard = memo(({
     })
   }, [debouncedLabelDraft, labelEditing, note.id, note.label?.markdown, updateNodeByIdPersist])
 
-  useEffect(() => {
-    if (labelEditing) return
-    if (labelDraft === (note.label?.markdown || '')) return
-    updateNodeByIdPersist(note.id, (node) => {
-      const data = node.data as NoteNode['data']
-      return {
-        ...node,
-        data: { ...data, label: { markdown: labelDraft } }
-      }
-    })
-  }, [labelEditing, labelDraft, note.id, note.label?.markdown, updateNodeByIdPersist])
-
   // handlers
   const handleLabelChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const next = event.target.value

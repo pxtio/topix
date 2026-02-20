@@ -23,6 +23,8 @@ import {
   hasPatchContent,
   sanitizeEdges,
   sanitizeNodes,
+  type EdgePatch,
+  type NodePatch,
   type Patch,
 } from "../utils/history"
 import { POINT_NODE_SIZE } from "../components/flow/point-node"
@@ -140,6 +142,80 @@ function shouldPersistEdgeChange(ch: EdgeChange<LinkEdge>): boolean {
   }
 }
 
+const HISTORY_COALESCE_DELAY = 350
+
+const samePatchValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
+
+const mergeNodePatches = (base: NodePatch[] = [], incoming: NodePatch[] = []): NodePatch[] => {
+  const merged = new Map<string, NodePatch>()
+  for (const patch of base) {
+    merged.set(patch.id, patch)
+  }
+  for (const patch of incoming) {
+    const previous = merged.get(patch.id)
+    if (!previous) {
+      merged.set(patch.id, patch)
+      continue
+    }
+    merged.set(patch.id, {
+      id: patch.id,
+      before: previous.before,
+      after: patch.after,
+    })
+  }
+  return Array.from(merged.values()).filter((patch) => !samePatchValue(patch.before, patch.after))
+}
+
+const mergeEdgePatches = (base: EdgePatch[] = [], incoming: EdgePatch[] = []): EdgePatch[] => {
+  const merged = new Map<string, EdgePatch>()
+  for (const patch of base) {
+    merged.set(patch.id, patch)
+  }
+  for (const patch of incoming) {
+    const previous = merged.get(patch.id)
+    if (!previous) {
+      merged.set(patch.id, patch)
+      continue
+    }
+    merged.set(patch.id, {
+      id: patch.id,
+      before: previous.before,
+      after: patch.after,
+    })
+  }
+  return Array.from(merged.values()).filter((patch) => !samePatchValue(patch.before, patch.after))
+}
+
+const collectPatchIds = (patches: { id: string }[] | undefined): Set<string> =>
+  new Set((patches ?? []).map((patch) => patch.id))
+
+const setsOverlap = (a: Set<string>, b: Set<string>): boolean => {
+  for (const value of a) {
+    if (b.has(value)) return true
+  }
+  return false
+}
+
+const canCoalescePatches = (pending: Patch, incoming: Patch): boolean => {
+  if (pending.source !== "ui" || incoming.source !== "ui") return false
+  const pendingNodeIds = collectPatchIds(pending.nodes)
+  const incomingNodeIds = collectPatchIds(incoming.nodes)
+  if (pendingNodeIds.size > 0 && incomingNodeIds.size > 0 && setsOverlap(pendingNodeIds, incomingNodeIds)) {
+    return true
+  }
+  const pendingEdgeIds = collectPatchIds(pending.edges)
+  const incomingEdgeIds = collectPatchIds(incoming.edges)
+  return pendingEdgeIds.size > 0 && incomingEdgeIds.size > 0 && setsOverlap(pendingEdgeIds, incomingEdgeIds)
+}
+
+const mergePatches = (pending: Patch, incoming: Patch): Patch => ({
+  ...pending,
+  id: incoming.id,
+  ts: incoming.ts,
+  nodes: mergeNodePatches(pending.nodes, incoming.nodes),
+  edges: mergeEdgePatches(pending.edges, incoming.edges),
+})
+
 // --- debounced persistence state (module-level singletons) ---
 
 // Nodes: separate queues for new vs updated, share one timer
@@ -151,6 +227,8 @@ let nodePersistTimeout: ReturnType<typeof setTimeout> | null = null
 const pendingNewEdges = new Map<string, LinkEdge>()
 const pendingUpdatedEdges = new Map<string, LinkEdge>()
 let edgePersistTimeout: ReturnType<typeof setTimeout> | null = null
+let historyCoalesceTimeout: ReturnType<typeof setTimeout> | null = null
+let pendingHistoryPatch: Patch | null = null
 
 // --- debounced flushes (conversion happens here, not on hot path) ---
 
@@ -765,6 +843,9 @@ export interface GraphStore {
   historyLimit: number
   historyRecording: boolean
   dragSnapshotNodes: NoteNode[] | null
+  resizeSnapshotNodes: NoteNode[] | null
+  enqueuePatch: (patch: Patch, options?: { coalesce?: boolean }) => void
+  flushPendingPatch: () => void
   pushPatch: (patch: Patch) => void
   undo: () => void
   redo: () => void
@@ -774,6 +855,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   boardId: undefined,
 
   setBoardId: (boardId) => {
+    get().flushPendingPatch()
     // optional: clear/flush pending when board changes
     // pendingNewNodes.clear()
     // pendingUpdatedNodes.clear()
@@ -789,6 +871,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             historyPast: [],
             historyFuture: [],
             dragSnapshotNodes: null,
+            resizeSnapshotNodes: null,
             presentationMode: false,
             activeSlideId: undefined,
             lastCursorPosition: undefined,
@@ -894,7 +977,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     if (recording) {
       const patches = diffNodes(sanitizeNodes(prevNodes), sanitizeNodes(nextNodes))
       if (patches.length > 0) {
-        get().pushPatch({
+        get().enqueuePatch({
           id: generateUuid(),
           ts: Date.now(),
           source: "ui",
@@ -967,7 +1050,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       const touchedIds = new Set([id])
       const patches = diffNodesById(sanitizeNodes(prevNodes), sanitizeNodes(nextNodes), touchedIds)
       if (patches.length > 0) {
-        get().pushPatch({
+        get().enqueuePatch({
           id: generateUuid(),
           ts: Date.now(),
           source: "ui",
@@ -1002,7 +1085,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     if (recording) {
       const patches = diffEdges(sanitizeEdges(prevEdges), sanitizeEdges(nextEdges))
       if (patches.length > 0) {
-        get().pushPatch({
+        get().enqueuePatch({
           id: generateUuid(),
           ts: Date.now(),
           source: "ui",
@@ -1040,7 +1123,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       const touchedIds = new Set([id])
       const patches = diffEdgesById(sanitizeEdges(prevEdges), sanitizeEdges(nextEdges), touchedIds)
       if (patches.length > 0) {
-        get().pushPatch({
+        get().enqueuePatch({
           id: generateUuid(),
           ts: Date.now(),
           source: "ui",
@@ -1081,8 +1164,17 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const hasDragEnd = changes.some(
       (ch) => ch.type === "position" && ch.dragging === false,
     )
+    const hasResizeStart = changes.some(
+      (ch) => ch.type === "dimensions" && ch.resizing === true,
+    )
+    const hasResizeEnd = changes.some(
+      (ch) => ch.type === "dimensions" && ch.resizing === false,
+    )
     const dragSnapshot = recording
       ? get().dragSnapshotNodes ?? (hasDragStart ? sanitizeNodes(prevNodes) : null)
+      : null
+    const resizeSnapshot = recording
+      ? get().resizeSnapshotNodes ?? (hasResizeStart ? sanitizeNodes(prevNodes) : null)
       : null
 
     let attachedIndex = get().attachedPointIdsByNode
@@ -1306,20 +1398,33 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       if (hasDragEnd && dragSnapshot) {
         const patches = diffNodesById(dragSnapshot, sanitizeNodes(nextNodes), touchedNodeIds)
         if (patches.length > 0) {
-          get().pushPatch({
+          get().enqueuePatch({
             id: generateUuid(),
             ts: Date.now(),
             source: "ui",
             nodes: patches,
-          })
+          }, { coalesce: false })
         }
         set({ dragSnapshotNodes: null })
       } else if (hasDragStart && dragSnapshot) {
         set({ dragSnapshotNodes: dragSnapshot })
-      } else if (!hasDragStart && !hasDragEnd) {
+      } else if (hasResizeEnd && resizeSnapshot) {
+        const patches = diffNodesById(resizeSnapshot, sanitizeNodes(nextNodes), touchedNodeIds)
+        if (patches.length > 0) {
+          get().enqueuePatch({
+            id: generateUuid(),
+            ts: Date.now(),
+            source: "ui",
+            nodes: patches,
+          }, { coalesce: false })
+        }
+        set({ resizeSnapshotNodes: null })
+      } else if (hasResizeStart && resizeSnapshot) {
+        set({ resizeSnapshotNodes: resizeSnapshot })
+      } else if (!hasDragStart && !hasDragEnd && !hasResizeStart && !hasResizeEnd) {
         const patches = diffNodesById(sanitizeNodes(prevNodes), sanitizeNodes(nextNodes), touchedNodeIds)
         if (patches.length > 0) {
-          get().pushPatch({
+          get().enqueuePatch({
             id: generateUuid(),
             ts: Date.now(),
             source: "ui",
@@ -1506,14 +1611,17 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     }
 
     if (recording) {
-      const patches = diffEdgesById(sanitizeEdges(prevEdges), sanitizeEdges(updatedEdges), touchedEdgeIds)
-      if (patches.length > 0) {
-        get().pushPatch({
-          id: generateUuid(),
-          ts: Date.now(),
-          source: "ui",
-          edges: patches,
-        })
+      const skipDerivedEdgeHistory = get().isDraggingNodes || get().isResizingNode
+      if (!skipDerivedEdgeHistory) {
+        const patches = diffEdgesById(sanitizeEdges(prevEdges), sanitizeEdges(updatedEdges), touchedEdgeIds)
+        if (patches.length > 0) {
+          get().enqueuePatch({
+            id: generateUuid(),
+            ts: Date.now(),
+            source: "ui",
+            edges: patches,
+          })
+        }
       }
     }
 
@@ -1653,6 +1761,46 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   historyLimit: 80,
   historyRecording: true,
   dragSnapshotNodes: null,
+  resizeSnapshotNodes: null,
+
+  enqueuePatch: (patch, options) => {
+    if (!hasPatchContent(patch)) return
+    const coalesce = options?.coalesce !== false
+
+    if (!coalesce) {
+      get().flushPendingPatch()
+      get().pushPatch(patch)
+      return
+    }
+
+    if (!pendingHistoryPatch) {
+      pendingHistoryPatch = patch
+    } else if (canCoalescePatches(pendingHistoryPatch, patch)) {
+      pendingHistoryPatch = mergePatches(pendingHistoryPatch, patch)
+    } else {
+      get().flushPendingPatch()
+      pendingHistoryPatch = patch
+    }
+
+    if (historyCoalesceTimeout !== null) {
+      clearTimeout(historyCoalesceTimeout)
+    }
+    historyCoalesceTimeout = setTimeout(() => {
+      historyCoalesceTimeout = null
+      get().flushPendingPatch()
+    }, HISTORY_COALESCE_DELAY)
+  },
+
+  flushPendingPatch: () => {
+    if (historyCoalesceTimeout !== null) {
+      clearTimeout(historyCoalesceTimeout)
+      historyCoalesceTimeout = null
+    }
+    if (!pendingHistoryPatch) return
+    const patch = pendingHistoryPatch
+    pendingHistoryPatch = null
+    get().pushPatch(patch)
+  },
 
   pushPatch: (patch) =>
     set((state) => {
@@ -1668,6 +1816,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     }),
 
   undo: () => {
+    get().flushPendingPatch()
     const state = get()
     const patch = state.historyPast[state.historyPast.length - 1]
     if (!patch) return
@@ -1706,6 +1855,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   },
 
   redo: () => {
+    get().flushPendingPatch()
     const state = get()
     const patch = state.historyFuture[0]
     if (!patch) return

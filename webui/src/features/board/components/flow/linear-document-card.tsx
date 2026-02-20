@@ -1,9 +1,10 @@
-import { memo } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 
 import type { NoteNode } from '../../types/flow'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
+import { useGraphStore } from '../../store/graph-store'
 
 
 type Props = {
@@ -62,6 +63,10 @@ const PdfIcon = ({ pageFill, panelFill, outline, textFill, scribble }: PdfIconPr
 export const LinearDocumentCard = memo(function LinearDocumentCard({ node }: Props) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
+  const updateNodeByIdPersist = useGraphStore(state => state.updateNodeByIdPersist)
+  const [labelEditing, setLabelEditing] = useState(false)
+  const [labelDraft, setLabelDraft] = useState(node.data.label?.markdown || '')
+  const inputRef = useRef<HTMLInputElement | null>(null)
   const label = node.data.label?.markdown?.trim()
   const displayLabel = label || 'Untitled document'
 
@@ -70,6 +75,39 @@ export const LinearDocumentCard = memo(function LinearDocumentCard({ node }: Pro
   const outline = isDark ? darkModeDisplayHex('#000000') || '#000000' : '#000000'
   const textFill = outline
   const scribble = outline
+
+  useEffect(() => {
+    if (labelEditing) return
+    setLabelDraft(node.data.label?.markdown || '')
+  }, [labelEditing, node.data.label?.markdown])
+
+  useEffect(() => {
+    if (!labelEditing) return
+    const frame = requestAnimationFrame(() => {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [labelEditing])
+
+  const commitLabel = useCallback((nextRaw: string) => {
+    const next = nextRaw.trim()
+    const prev = node.data.label?.markdown?.trim() || ''
+    if (next === prev) return
+    updateNodeByIdPersist(node.id, prevNode => ({
+      ...prevNode,
+      data: {
+        ...prevNode.data,
+        label: next ? { markdown: next } : undefined,
+      },
+    }))
+  }, [node.data.label?.markdown, node.id, updateNodeByIdPersist])
+
+  const stopLabelEdit = useCallback((save: boolean) => {
+    if (save) commitLabel(labelDraft)
+    else setLabelDraft(node.data.label?.markdown || '')
+    setLabelEditing(false)
+  }, [commitLabel, labelDraft, node.data.label?.markdown])
 
   return (
     <div className='group relative w-full min-w-0'>
@@ -87,9 +125,41 @@ export const LinearDocumentCard = memo(function LinearDocumentCard({ node }: Pro
       </div>
 
       <div className='mt-2 px-2'>
-        <span className='block text-center text-sm font-semibold text-card-foreground truncate' title={displayLabel}>
-          {displayLabel}
-        </span>
+        {labelEditing ? (
+          <input
+            ref={inputRef}
+            value={labelDraft}
+            onChange={event => setLabelDraft(event.target.value)}
+            onBlur={() => stopLabelEdit(true)}
+            onKeyDown={event => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                stopLabelEdit(true)
+              }
+              if (event.key === 'Escape') {
+                event.preventDefault()
+                stopLabelEdit(false)
+              }
+            }}
+            onMouseDown={event => event.stopPropagation()}
+            onClick={event => event.stopPropagation()}
+            className='w-full bg-transparent text-center text-sm font-semibold text-card-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
+            placeholder='Untitled document'
+          />
+        ) : (
+          <button
+            type='button'
+            onMouseDown={event => event.stopPropagation()}
+            onClick={event => {
+              event.stopPropagation()
+              setLabelEditing(true)
+            }}
+            className='block w-full truncate text-center text-sm font-semibold text-card-foreground hover:underline'
+            title={displayLabel}
+          >
+            {displayLabel}
+          </button>
+        )}
       </div>
     </div>
   )

@@ -75,13 +75,13 @@ export const LinearDocumentCard = memo(function LinearDocumentCard({ node }: Pro
     <div className='group relative w-full min-w-0'>
       <div
         className={clsx(
-          'w-full aspect-[4/3] rounded-md border-2 border-transparent',
+          'w-full min-h-[100px] max-h-[225px] rounded-md border-2 border-transparent',
           'bg-transparent transition-colors',
           'group-hover:bg-accent group-hover:border-border',
           'flex items-center justify-center p-3',
         )}
       >
-        <div className='w-full max-w-[110px] aspect-square'>
+        <div className='w-full max-w-[84px] aspect-square'>
           <PdfIcon pageFill={pageFill} panelFill={panelFill} outline={outline} textFill={textFill} scribble={scribble} />
         </div>
       </div>

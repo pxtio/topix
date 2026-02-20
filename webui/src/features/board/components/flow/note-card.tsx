@@ -218,6 +218,7 @@ export const NodeCard = memo(({
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const [labelEditing, setLabelEditing] = useState(false)
+  const sheetTitleInputRef = useRef<HTMLInputElement | null>(null)
 
   // local draft that controls the textarea while editing
   const [labelDraft, setLabelDraft] = useState<string>(note.label?.markdown || '')
@@ -227,15 +228,19 @@ export const NodeCard = memo(({
   const selRef = useRef<{ start: number; end: number } | null>(null)
 
   const textColor = isDark ? darkModeDisplayHex(note.style.textColor) || undefined : note.style.textColor
+  const sheetBackgroundColor = isDark
+    ? darkModeDisplayHex(note.style.backgroundColor) || note.style.backgroundColor
+    : note.style.backgroundColor
   const isPinned = note.properties.pinned.boolean === true
   const fontFamily = note.style.type === 'sheet' ? 'sans-serif' : note.style.fontFamily
+  const displayTitle = note.label?.markdown?.trim() || 'Untitled note'
 
   const labelClass = useMemo(
     () =>
       clsx(
         'relative bg-transparent overflow-visible flex items-center justify-center',
         isSheet
-          ? `w-[360px] ${fontFamilyToTwClass(fontFamily)} p-2 pt-8`
+          ? `w-[360px] ${fontFamilyToTwClass(fontFamily)}`
           : isText
           ? 'w-full h-full p-0'
           : 'w-full h-full p-1'
@@ -300,6 +305,15 @@ export const NodeCard = memo(({
       console.warn('Failed to set selection range')
     }
   }, [labelEditing])
+
+  useEffect(() => {
+    if (!isSheet || !labelEditing) return
+    const id = requestAnimationFrame(() => {
+      sheetTitleInputRef.current?.focus()
+      sheetTitleInputRef.current?.select()
+    })
+    return () => cancelAnimationFrame(id)
+  }, [isSheet, labelEditing])
 
   // robust caret restore in case the node remounts while typing
   useLayoutEffect(() => {
@@ -392,6 +406,18 @@ export const NodeCard = memo(({
     setDialogOpen(true)
   }, [setDialogOpen])
 
+  const startSheetTitleEdit = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    setLabelEditing(true)
+  }, [])
+
+  const stopSheetTitleEdit = useCallback((save: boolean) => {
+    if (!save) {
+      setLabelDraft(note.label?.markdown || '')
+    }
+    setLabelEditing(false)
+  }, [note.label?.markdown])
+
   const onTogglePin = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     updateNodeByIdPersist(note.id, (node) => {
@@ -450,16 +476,53 @@ export const NodeCard = memo(({
         onDoubleClick={onDoubleClick}
         onPointerDown={stopDragging}
       >
-        <SheetNodeView
-          note={note}
-          selected={selected}
-          isDark={isDark}
-          isPinned={isPinned}
-          onPickPalette={onPickPalette}
-          onTogglePin={onTogglePin}
-          onDelete={onDelete}
-          onOpenSticky={openDialogFromSticky}
-        />
+        <div className='relative w-full h-full'>
+          <SheetNodeView
+            note={note}
+            selected={selected}
+            isDark={isDark}
+            isPinned={isPinned}
+            backgroundColor={sheetBackgroundColor}
+            onPickPalette={onPickPalette}
+            onTogglePin={onTogglePin}
+            onDelete={onDelete}
+            onOpenSticky={openDialogFromSticky}
+          />
+          <div className='absolute left-1/2 top-full mt-4 w-full -translate-x-1/2 px-2'>
+            {labelEditing ? (
+              <input
+                ref={sheetTitleInputRef}
+                value={labelDraft}
+                onChange={e => setLabelDraft(e.target.value)}
+                onBlur={() => stopSheetTitleEdit(true)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    stopSheetTitleEdit(true)
+                  }
+                  if (e.key === 'Escape') {
+                    e.preventDefault()
+                    stopSheetTitleEdit(false)
+                  }
+                }}
+                onMouseDown={e => e.stopPropagation()}
+                onClick={e => e.stopPropagation()}
+                className='w-full bg-transparent text-center text-sm font-semibold text-card-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
+                placeholder='Untitled note'
+              />
+            ) : (
+              <button
+                type='button'
+                onMouseDown={e => e.stopPropagation()}
+                onClick={startSheetTitleEdit}
+                className='block w-full truncate text-center text-sm font-semibold text-card-foreground hover:underline'
+                title={displayTitle}
+              >
+                {displayTitle}
+              </button>
+            )}
+          </div>
+        </div>
       </LabelContainer>
 
       <SheetDialogContent

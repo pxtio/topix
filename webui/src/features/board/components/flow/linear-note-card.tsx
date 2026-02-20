@@ -1,5 +1,5 @@
 // components/flow/linear-note-card.tsx
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { NoteNode } from '../../types/flow'
 import { MarkdownView } from '@/components/markdown/markdown-view'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -23,11 +23,15 @@ type Props = { node: NoteNode }
 
 export function LinearNoteCard({ node }: Props) {
   const [open, setOpen] = useState(false)
+  const [titleEditing, setTitleEditing] = useState(false)
+  const [titleDraft, setTitleDraft] = useState(node.data.label?.markdown || '')
+  const titleInputRef = useRef<HTMLInputElement | null>(null)
 
   const boardId = useGraphStore(state => state.boardId)
   const navigate = useNavigate()
 
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const updateNodeByIdPersist = useGraphStore(state => state.updateNodeByIdPersist)
   const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
 
   // dark mode support
@@ -37,7 +41,43 @@ export function LinearNoteCard({ node }: Props) {
   const color = isDark ? darkModeDisplayHex(node.data.style.backgroundColor) ?? '#a5c9ff' : node.data.style.backgroundColor
   const isPinned = node.data.properties.pinned.boolean
   const isSheet = node.data.style.type === 'sheet'
+  const title = node.data.label?.markdown?.trim() || ''
+  const displayTitle = title || 'Untitled note'
   const { text: timeAgo, tooltip: fullDate } = formatDistanceToNow(node.data.updatedAt)
+
+  useEffect(() => {
+    if (titleEditing) return
+    setTitleDraft(node.data.label?.markdown || '')
+  }, [node.data.label?.markdown, titleEditing])
+
+  const onSaveTitle = useCallback((nextTitle: string) => {
+    if (!boardId) return
+    const normalizedTitle = nextTitle.trim()
+    updateNodeByIdPersist(node.id, prev => ({
+      ...prev,
+      data: {
+        ...prev.data,
+        label: normalizedTitle ? { markdown: normalizedTitle } : undefined,
+        updatedAt: new Date().toISOString(),
+      },
+    }))
+  }, [boardId, node.id, updateNodeByIdPersist])
+
+  const startTitleEdit = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    setTitleDraft(node.data.label?.markdown || '')
+    setTitleEditing(true)
+    requestAnimationFrame(() => {
+      titleInputRef.current?.focus()
+      titleInputRef.current?.select()
+    })
+  }, [node.data.label?.markdown])
+
+  const stopTitleEdit = useCallback((save: boolean) => {
+    if (save) onSaveTitle(titleDraft)
+    else setTitleDraft(node.data.label?.markdown || '')
+    setTitleEditing(false)
+  }, [node.data.label?.markdown, onSaveTitle, titleDraft])
 
   const onPickColor = useCallback((hex: string) => {
     if (!boardId) return
@@ -160,14 +200,25 @@ export function LinearNoteCard({ node }: Props) {
       {/* content area */}
       <div
         className='p-4 pt-8 md:p-6 md:pt-10 min-h-[100px] max-h-[225px] overflow-x-hidden overflow-y-auto scrollbar-thin text-foreground relative z-10 space-y-1'
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen(true)}
       >
         <div className='prose dark:prose-invert max-w-none min-w-0 origin-top-left scale-[0.8] w-[125%]'>
           <MarkdownView content={node.data.content?.markdown || ''} />
         </div>
       </div>
     </div>
-  ), [cardClass, isPinned, onTogglePin, onDelete, node.data.content?.markdown, color, isDark, onPickColor, open, timeAgo, fullDate])
+  ), [
+    cardClass,
+    color,
+    fullDate,
+    isDark,
+    isPinned,
+    node.data.content?.markdown,
+    onDelete,
+    onPickColor,
+    onTogglePin,
+    timeAgo,
+  ])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -175,12 +226,76 @@ export function LinearNoteCard({ node }: Props) {
         <div>
           {CardBody}
         </div>
+        <div className='mt-2 px-2'>
+          {titleEditing ? (
+            <input
+              ref={titleInputRef}
+              value={titleDraft}
+              onChange={e => setTitleDraft(e.target.value)}
+              onBlur={() => stopTitleEdit(true)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  stopTitleEdit(true)
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  stopTitleEdit(false)
+                }
+              }}
+              onClick={e => e.stopPropagation()}
+              className='w-full bg-transparent text-center text-sm font-semibold text-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
+              placeholder='Untitled note'
+            />
+          ) : (
+            <button
+              type='button'
+              onClick={startTitleEdit}
+              className='block w-full truncate text-center text-sm font-semibold text-foreground hover:underline'
+              title={displayTitle}
+            >
+              {displayTitle}
+            </button>
+          )}
+        </div>
       </div>
 
       <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2' showCloseButton={!isSheet}>
         {isSheet ? (
-          <div className='w-full flex items-center justify-end gap-2 px-2 pt-1'>
-            <DialogTitle className="sr-only">Sheet</DialogTitle>
+          <div className='w-full flex items-center justify-between gap-2 px-2 pt-1'>
+            <div className='min-w-0 flex-1 pr-2'>
+              {titleEditing ? (
+                <input
+                  ref={titleInputRef}
+                  value={titleDraft}
+                  onChange={e => setTitleDraft(e.target.value)}
+                  onBlur={() => stopTitleEdit(true)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      stopTitleEdit(true)
+                    }
+                    if (e.key === 'Escape') {
+                      e.preventDefault()
+                      stopTitleEdit(false)
+                    }
+                  }}
+                  className='w-full bg-transparent text-sm font-semibold text-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
+                  placeholder='Untitled note'
+                />
+              ) : (
+                <button
+                  type='button'
+                  onClick={startTitleEdit}
+                  className='block max-w-full truncate text-left text-sm font-semibold text-foreground hover:underline'
+                  title={displayTitle}
+                >
+                  {displayTitle}
+                </button>
+              )}
+              <DialogTitle className="sr-only">Sheet</DialogTitle>
+            </div>
+            <div className='flex items-center gap-2'>
             <Button
               variant='ghost'
               size='icon-sm'
@@ -200,6 +315,7 @@ export function LinearNoteCard({ node }: Props) {
             >
               <HugeiconsIcon icon={Cancel01Icon} className='size-4' strokeWidth={2} />
             </Button>
+            </div>
           </div>
         ) : (
           <DialogHeader className='hidden'>

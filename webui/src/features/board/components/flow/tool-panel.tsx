@@ -451,23 +451,6 @@ export const ToolPanel = memo(function ToolPanel({
             </TooltipContent>
           </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={null}
-                className={normalButtonClass}
-                size='icon'
-                onClick={() => setOpenAiSpark(true)}
-                aria-label='AI Spark'
-                disabled={!boardId}
-              >
-                <Sparkles className='size-4 shrink-0 text-secondary' strokeWidth={2} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" sideOffset={10}>
-              <TooltipLabel {...tooltipCopy.ai} />
-            </TooltipContent>
-          </Tooltip>
         </>
       )}
 

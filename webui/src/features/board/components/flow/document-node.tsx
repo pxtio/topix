@@ -1,4 +1,4 @@
-import { memo } from "react"
+import { memo, useCallback, useEffect, useRef, useState } from "react"
 import type { NodeProps } from "@xyflow/react"
 import type { NoteNode } from "../../types/flow"
 import type { DocumentProperties } from "../../types/document"
@@ -7,6 +7,7 @@ import type { Style } from "../../types/style"
 import { cn } from "@/lib/utils"
 import { useTheme } from "@/components/theme-provider"
 import { darkModeDisplayHex } from "../../lib/colors/dark-variants"
+import { useGraphStore } from "../../store/graph-store"
 
 
 /**
@@ -62,9 +63,13 @@ const PdfIcon = ({ pageFill, panelFill, outline, textFill, scribble }: PdfIconPr
 /**
  * A React component that renders a document node within a flow board.
  */
-export const DocumentNode = memo(function DocumentNode({ data, selected }: NodeProps<NoteNode>) {
+export const DocumentNode = memo(function DocumentNode({ id, data, selected }: NodeProps<NoteNode>) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === "dark"
+  const updateNodeByIdPersist = useGraphStore(state => state.updateNodeByIdPersist)
+  const [labelEditing, setLabelEditing] = useState(false)
+  const [labelDraft, setLabelDraft] = useState(data.label?.markdown || '')
+  const inputRef = useRef<HTMLInputElement | null>(null)
   const label = data.label?.markdown?.trim()
   const summary = (data.properties as DocumentProperties)?.summary?.text?.trim()
   const displayLabel = label || "Untitled document"
@@ -76,6 +81,39 @@ export const DocumentNode = memo(function DocumentNode({ data, selected }: NodeP
   const outline = isDark ? darkModeDisplayHex("#000000") || "#000000" : "#000000"
   const textFill = outline
   const scribble = outline
+
+  useEffect(() => {
+    if (labelEditing) return
+    setLabelDraft(data.label?.markdown || '')
+  }, [data.label?.markdown, labelEditing])
+
+  useEffect(() => {
+    if (!labelEditing) return
+    const frame = requestAnimationFrame(() => {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [labelEditing])
+
+  const commitLabel = useCallback((nextRaw: string) => {
+    const next = nextRaw.trim()
+    const prev = data.label?.markdown?.trim() || ''
+    if (next === prev) return
+    updateNodeByIdPersist(id, prevNode => ({
+      ...prevNode,
+      data: {
+        ...prevNode.data,
+        label: next ? { markdown: next } : undefined,
+      },
+    }))
+  }, [data.label?.markdown, id, updateNodeByIdPersist])
+
+  const stopLabelEdit = useCallback((save: boolean) => {
+    if (save) commitLabel(labelDraft)
+    else setLabelDraft(data.label?.markdown || '')
+    setLabelEditing(false)
+  }, [commitLabel, data.label?.markdown, labelDraft])
 
   const className = cn(
     "w-full h-full p-3 text-card-foreground border-2 border-dashed flex flex-col items-center text-center",
@@ -91,9 +129,41 @@ export const DocumentNode = memo(function DocumentNode({ data, selected }: NodeP
       </div>
       </div>
       <div className="absolute left-1/2 top-full mt-2 w-full -translate-x-1/2 text-sm font-medium line-clamp-2 break-words max-w-[220px] overflow-ellipsis text-center text-card-foreground">
-        <span className="block" title={displayLabel} aria-label={displayLabel}>
-          {displayLabel}
-        </span>
+        {labelEditing ? (
+          <input
+            ref={inputRef}
+            value={labelDraft}
+            onChange={event => setLabelDraft(event.target.value)}
+            onBlur={() => stopLabelEdit(true)}
+            onKeyDown={event => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                stopLabelEdit(true)
+              }
+              if (event.key === 'Escape') {
+                event.preventDefault()
+                stopLabelEdit(false)
+              }
+            }}
+            onMouseDown={event => event.stopPropagation()}
+            onClick={event => event.stopPropagation()}
+            className='w-full bg-transparent text-center text-sm font-medium text-card-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
+            placeholder='Untitled document'
+          />
+        ) : (
+          <button
+            type='button'
+            onClick={event => {
+              event.stopPropagation()
+              setLabelEditing(true)
+            }}
+            className='block w-full truncate text-center text-sm font-medium text-card-foreground hover:underline'
+            title={displayLabel}
+            aria-label={displayLabel}
+          >
+            {displayLabel}
+          </button>
+        )}
       </div>
     </div>
   )

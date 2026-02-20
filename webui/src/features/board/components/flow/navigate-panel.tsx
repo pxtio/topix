@@ -191,7 +191,7 @@ export const NavigatePanel = memo(function NavigatePanel({
       description: 'Switch to the visual canvas view.',
     },
     linear: {
-      title: 'Linear view',
+      title: 'Files view',
       description: 'Switch to the list-based view.',
     },
   }
@@ -259,9 +259,9 @@ export const NavigatePanel = memo(function NavigatePanel({
         <span className='text-xs font-medium sr-only sm:not-sr-only'>Graph</span>
       </ModeButton>
 
-      <ModeButton mode='linear' label='Linear'>
+      <ModeButton mode='linear' label='Files'>
         <HugeiconsIcon icon={LeftToRightListBulletIcon} className='size-4 shrink-0' strokeWidth={2} />
-        <span className='text-xs font-medium sr-only sm:not-sr-only'>List</span>
+        <span className='text-xs font-medium sr-only sm:not-sr-only'>Files</span>
       </ModeButton>
 
       {viewMode === 'graph' && (

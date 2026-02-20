@@ -20,6 +20,7 @@ type SheetNodeViewProps = {
   selected: boolean
   isDark: boolean
   isPinned: boolean
+  backgroundColor?: string
   onPickPalette: (hex: string) => void
   onTogglePin: (e: MouseEvent<HTMLButtonElement>) => void
   onDelete: (e: MouseEvent<HTMLButtonElement>) => void
@@ -33,6 +34,7 @@ export const SheetNodeView = memo(function SheetNodeView({
   selected,
   isDark,
   isPinned,
+  backgroundColor,
   onPickPalette,
   onTogglePin,
   onDelete,
@@ -146,77 +148,84 @@ export const SheetNodeView = memo(function SheetNodeView({
     onPickPalette(hex)
   }, [onPickPalette])
 
-
   return (
     <div className='group w-full h-full'>
       <div
         className={clsx(
-          'absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end rounded-t-sm border-b border-foreground/30 transition-opacity',
-          'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto',
-          selected && 'opacity-100 pointer-events-auto',
+          'relative w-full h-full rounded-md border-2 border-foreground/30 overflow-hidden',
+          isPinned && 'ring-2 ring-secondary'
         )}
+        style={{ backgroundColor }}
       >
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className='p-1 text-foreground/60 hover:text-foreground transition-colors'
-              onClick={e => e.stopPropagation()}
-              aria-label='Background color'
-              title='Background color'
-            >
-              <HugeiconsIcon icon={PaintBoardIcon} className='size-4 shrink-0' strokeWidth={2} />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align='end' className='w-auto p-2'>
-            <div className='grid grid-cols-10 gap-1'>
-              {paletteOptions.map(c => (
-                <button
-                  key={c.name}
-                  className='h-6 w-6 rounded-full border border-border shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-secondary'
-                  style={{ backgroundColor: c.resolved }}
-                  title={`${c.name}-200`}
-                  aria-label={`${c.name}-200`}
-                  onClick={() => handlePaletteClick(c.hex)}
-                />
-              ))}
+        <div
+          className={clsx(
+            'absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end rounded-t-sm border-b border-foreground/30 transition-opacity',
+            'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto',
+            selected && 'opacity-100 pointer-events-auto',
+          )}
+        >
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className='p-1 text-foreground/60 hover:text-foreground transition-colors'
+                onClick={e => e.stopPropagation()}
+                aria-label='Background color'
+                title='Background color'
+              >
+                <HugeiconsIcon icon={PaintBoardIcon} className='size-4 shrink-0' strokeWidth={2} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align='end' className='w-auto p-2'>
+              <div className='grid grid-cols-10 gap-1'>
+                {paletteOptions.map(c => (
+                  <button
+                    key={c.name}
+                    className='h-6 w-6 rounded-full border border-border shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-secondary'
+                    style={{ backgroundColor: c.resolved }}
+                    title={`${c.name}-200`}
+                    aria-label={`${c.name}-200`}
+                    onClick={() => handlePaletteClick(c.hex)}
+                  />
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <button
+            className='p-1 text-foreground/60 hover:text-foreground transition-colors'
+            onClick={onTogglePin}
+            aria-label='Toggle pin'
+            title='Pin/Unpin'
+          >
+            {isPinned
+              ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={2} />
+              : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={2} />
+            }
+          </button>
+
+          <button
+            className='p-1 text-foreground/60 hover:text-destructive transition-colors'
+            onClick={onDelete}
+            aria-label='Delete note'
+            title='Delete'
+          >
+            <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4' strokeWidth={2} />
+          </button>
+        </div>
+
+        <div
+          className='w-full overflow-y-auto scrollbar-thin cursor-pointer mt-7'
+          style={{ minHeight: MIN_HEIGHT, maxHeight: MAX_HEIGHT, height: targetHeight }}
+          onClick={onOpenSticky}
+        >
+          {hidden || !contentReady ? (
+            <div className='w-full h-full' aria-hidden='true' />
+          ) : (
+            <div ref={contentRef}>
+              <StickyNote content={note.content?.markdown || ''} />
             </div>
-          </PopoverContent>
-        </Popover>
-
-        <button
-          className='p-1 text-foreground/60 hover:text-foreground transition-colors'
-          onClick={onTogglePin}
-          aria-label='Toggle pin'
-          title='Pin/Unpin'
-        >
-          {isPinned
-            ? <HugeiconsIcon icon={PinIcon} className='w-4 h-4 text-secondary' strokeWidth={2} />
-            : <HugeiconsIcon icon={PinOffIcon} className='w-4 h-4' strokeWidth={2} />
-          }
-        </button>
-
-        <button
-          className='p-1 text-foreground/60 hover:text-destructive transition-colors'
-          onClick={onDelete}
-          aria-label='Delete note'
-          title='Delete'
-        >
-          <HugeiconsIcon icon={Delete02Icon} className='w-4 h-4' strokeWidth={2} />
-        </button>
-      </div>
-
-      <div
-        className='w-full overflow-y-auto scrollbar-thin cursor-pointer'
-        style={{ minHeight: MIN_HEIGHT, maxHeight: MAX_HEIGHT, height: targetHeight }}
-        onClick={onOpenSticky}
-      >
-        {hidden || !contentReady ? (
-          <div className='w-full h-full' aria-hidden='true' />
-        ) : (
-          <div ref={contentRef}>
-            <StickyNote content={note.content?.markdown || ''} />
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

@@ -21,7 +21,7 @@ export const ImageGenMenu = () => {
   const tooltipText = isEnabled ? "Disable Image Generation" : "Enable Image Generation"
 
   const buttonClass = clsx(
-    "transition-all shrink-0 my-icon p-2 rounded-full hover:bg-accent dark:bg-input/30 dark:hover:bg-accent/50 shadow-sm border-input",
+    "transition-all shrink-0 my-icon p-2 rounded-full hover:bg-accent dark:bg-input/30 dark:hover:bg-accent/50 border border-transparent hover:border-border transition-colors",
     isEnabled ? '!text-secondary' : 'text-muted-foreground'
   )
 

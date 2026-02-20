@@ -98,7 +98,7 @@ export const ModelChoiceMenu = () => {
   return (
     <Select onValueChange={handleModelChange} value={llmModel}>
       <Tooltip delayDuration={400}>
-        <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 shadow-sm border-input">
+        <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 border border-transparent hover:border-border transition-colors">
           <TooltipTrigger asChild>
             <SelectTrigger className="w-auto rounded-full text-xs px-3 py-2 shadow-none border-none" size="sm">
               <div className="flex items-center gap-2">

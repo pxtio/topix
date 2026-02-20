@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from 'react'
+import { useMemo, useState, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import { useChatStore } from '../../store/chat-store'
 import { useSendMessage } from '../../api/send-message'
@@ -19,7 +19,6 @@ import { useGraphStore } from '@/features/board/store/graph-store'
 import { useShallow } from 'zustand/shallow'
 import type { NoteNode } from '@/features/board/types/flow'
 import { buildContextTextFromNodes } from '@/features/board/utils/context-text'
-import { Toggle } from '@/components/ui/toggle'
 
 // shadcn/ui
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
@@ -60,13 +59,9 @@ export const InputBar = ({
   const enabledTools = useChatStore((state) => state.enabledTools)
   const useDeepResearch = useChatStore((state) => state.useDeepResearch)
   const setUseDeepResearch = useChatStore((state) => state.setUseDeepResearch)
+  const enableMessageBoardContextSelection = useChatStore((state) => state.enableMessageBoardContextSelection)
 
   const [input, setInput] = useState<string>('')
-  const [useSelectionContext, setUseSelectionContext] = useState(enableSelectionContext)
-
-  useEffect(() => {
-    setUseSelectionContext(enableSelectionContext)
-  }, [enableSelectionContext])
 
   const selectedNodes = useGraphStore(
     useShallow((state) => {
@@ -82,7 +77,7 @@ export const InputBar = ({
 
   const selectedNodeCount = selectedNodes.length
   const messageContext = useMemo(() => {
-    if (!enableSelectionContext || !useSelectionContext || selectedNodeCount === 0) {
+    if (!enableSelectionContext || !enableMessageBoardContextSelection || selectedNodeCount === 0) {
       return undefined
     }
     const contextText = buildContextTextFromNodes(selectedNodes, { skipPrefix: true }).trim()
@@ -90,7 +85,7 @@ export const InputBar = ({
       return undefined
     }
     return contextText.slice(0, MAX_MESSAGE_CONTEXT_CHARS)
-  }, [enableSelectionContext, useSelectionContext, selectedNodeCount, selectedNodes])
+  }, [enableSelectionContext, enableMessageBoardContextSelection, selectedNodeCount, selectedNodes])
 
   // Deep Research dialog state
   const [showDRDialog, setShowDRDialog] = useState(false)
@@ -223,22 +218,8 @@ export const InputBar = ({
       )}>
         <div className="relative w-full max-w-[800px] mx-auto">
           <div className="absolute -top-9 left-0 transform flex flex-row items-center gap-1">
-            <InputSettings />
+            <InputSettings showBoardContextOption={enableSelectionContext} />
           </div>
-          {enableSelectionContext && (
-            <div className="absolute -top-9 right-0 transform flex flex-row items-center gap-1">
-              <Toggle
-                variant="outline"
-                size="sm"
-                pressed={useSelectionContext}
-                onPressedChange={setUseSelectionContext}
-                aria-label="Toggle selected nodes context"
-                className="rounded-full px-3 text-xs h-8 bg-card/70 border-border/60"
-              >
-                {selectedNodeCount > 0 ? `Context (${selectedNodeCount})` : "Context"}
-              </Toggle>
-            </div>
-          )}
 
           <div
             className={inboxClass}

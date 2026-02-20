@@ -20,12 +20,14 @@ export interface ChatStore {
   webSearchEngine: WebSearchEngine
   enabledTools: ToolName[]
   useDeepResearch: boolean
+  enableMessageBoardContextSelection: boolean
   services: Services
   setLlmModel: (model: LlmModel) => void
   setWebSearchEngine: (engine: WebSearchEngine) => void
   setEnabledTools: (tools: ToolName[]) => void
   setIsStreaming: (isStreaming: boolean) => void
   setUseDeepResearch: (useDeepResearch: boolean) => void
+  setEnableMessageBoardContextSelection: (enabled: boolean) => void
   syncDefaults: (availableServices: Services) => void
 }
 
@@ -55,6 +57,8 @@ export const useChatStore = create<ChatStore>((set) => ({
 
   useDeepResearch: false,
 
+  enableMessageBoardContextSelection: true,
+
   services: defaultServices(),
 
   setLlmModel: (model) => set({ llmModel: model }),
@@ -66,6 +70,10 @@ export const useChatStore = create<ChatStore>((set) => ({
   setIsStreaming: (isStreaming) => set({ isStreaming }),
 
   setUseDeepResearch: (useDeepResearch) => set({ useDeepResearch }),
+
+  setEnableMessageBoardContextSelection: (enableMessageBoardContextSelection) => (
+    set({ enableMessageBoardContextSelection })
+  ),
 
   syncDefaults: (services: Services) => {
     const firstAvailableLlm = services.llm.find((service) => service.available)

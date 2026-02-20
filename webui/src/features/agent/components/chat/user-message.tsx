@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import type { ChatMessage } from "../../types/chat"
-import { AiChipIcon, CopyIcon, Tick01Icon } from "@hugeicons/core-free-icons"
+import { CopyIcon, CursorMagicSelection04Icon, Tick01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
@@ -32,7 +32,7 @@ export const UserMessage = ({ message, isLatest }: { message: ChatMessage, isLat
   return (
     <>
       <div className="h-4" ref={ref} />
-      <div className={`relative group w-auto max-w-[75%] min-w-0 ml-auto ${contextText ? "pb-8" : "pb-6"}`}>
+      <div className={`relative group w-auto max-w-[75%] min-w-0 ml-auto ${contextText ? "pb-9" : "pb-6"}`}>
         <span className="absolute -top-8 right-0 block min-w-[150px] text-right text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity p-2">
           {sentLabel}
         </span>
@@ -54,16 +54,16 @@ export const UserMessage = ({ message, isLatest }: { message: ChatMessage, isLat
           {text}
         </div>
         {contextText && (
-          <div className="absolute -bottom-1 right-1">
+          <div className="absolute bottom-3 left-1">
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="opacity-70 hover:opacity-100 transition-opacity"
+                  className="opacity-80 hover:opacity-100 transition-opacity"
                   aria-label="Show message context"
                 >
-                  <Badge variant="secondary" className="text-[10px] flex items-center gap-1 px-2 py-0.5">
-                    <HugeiconsIcon icon={AiChipIcon} className="size-3 shrink-0" strokeWidth={2} />
+                  <Badge variant="secondary" className="text-[10px] bg-muted text-muted-foreground flex items-center gap-1 px-1.5 py-0.5">
+                    <HugeiconsIcon icon={CursorMagicSelection04Icon} className="size-3 shrink-0" strokeWidth={2} />
                     <span>Context</span>
                   </Badge>
                 </button>

@@ -10,13 +10,10 @@ from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 
 
-class UserSignupRequest(BaseModel):
-    """Request model for user signup."""
+class GoogleSigninRequest(BaseModel):
+    """Request model for Google OAuth sign-in."""
 
-    email: str
-    password: str
-    name: str
-    username: str
+    id_token: str
 
 
 class RefreshRequest(BaseModel):

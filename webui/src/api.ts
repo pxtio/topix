@@ -11,7 +11,7 @@ let isRedirecting = false
 
 function isAuthPage() {
   const p = location.pathname
-  return p === "/signin" || p === "/signup"
+  return p === "/signin"
 }
 
 function isBrowserAsset(reqUrl: string) {
@@ -204,56 +204,27 @@ export async function apiFetch<TResponse = unknown, TBody = unknown>(
 ---------------------------- */
 
 /**
- * Sign in a user and store the returned tokens.
+ * Exchange a Google ID token for backend JWT tokens.
  */
-export async function signin(username: string, password: string): Promise<TokenPayload> {
-  const url = new URL("/users/signin", API_URL)
-  const form = new URLSearchParams()
-  form.set("username", username)
-  form.set("password", password)
+export async function googleSignin(idToken: string): Promise<TokenPayload> {
+  const url = new URL("/users/google-signin", API_URL)
 
   const res = await fetch(url.toString(), {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: form.toString(),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id_token: idToken }),
   })
 
   if (!res.ok) {
     const text = await res.text()
-    throw new Error(`Signin failed: ${text}`)
+    throw new Error(`Google sign-in failed: ${text}`)
   }
 
   const json: unknown = await res.json()
   const token = (json as { data?: { token?: TokenPayload }; token?: TokenPayload }).data?.token
     ?? (json as { token?: TokenPayload }).token
 
-  if (!token?.access_token) throw new Error("Wrong password or username.")
-
-  setAccessToken(token.access_token)
-  if (token.refresh_token) setRefreshToken(token.refresh_token)
-
-  return token
-}
-
-
-/**
- * Sign up a new user and store the returned tokens.
- */
-export async function signup(body: {
-  email: string
-  password: string
-  name: string
-  username: string
-}): Promise<TokenPayload> {
-  const tokenWrap = await apiFetch<{ data: { token: TokenPayload } }>({
-    path: "/users/signup",
-    method: "POST",
-    body,
-    noAuth: true,
-  })
-
-  const token = tokenWrap?.data?.token
-  if (!token?.access_token) throw new Error("Bad signup payload")
+  if (!token?.access_token) throw new Error("Google sign-in failed")
 
   setAccessToken(token.access_token)
   if (token.refresh_token) setRefreshToken(token.refresh_token)

@@ -1,20 +1,26 @@
 # syntax=docker/dockerfile:1.7
-FROM --platform=linux/amd64 node:25
+
+# --- Build stage ---
+FROM --platform=linux/arm64 node:25 AS build
 
 WORKDIR /app
-
-ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max_old_space_size=4096
 
-# Install deps first for caching
 COPY webui/package.json webui/package-lock.json* ./
 RUN npm ci
 
-# Copy source and build
 COPY webui/ ./
 RUN npm run build   # outputs to /app/dist
 
-# Add runtime config template + entrypoint script
+# --- Production stage ---
+FROM --platform=linux/arm64 node:25-slim
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./
 COPY webui/config.template.js /app/dist/config.template.js
 COPY webui/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh

@@ -1,24 +1,24 @@
 """Users API Router."""
 import logging
+import os
 
 from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
-from fastapi.security import OAuth2PasswordRequestForm
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
 
-from topix.api.datatypes.requests import RefreshRequest, UserSignupRequest
+from topix.api.datatypes.requests import GoogleSigninRequest, RefreshRequest
 from topix.api.utils.decorators import with_standard_response
 from topix.api.utils.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     REFRESH_TOKEN_EXPIRE_DAYS,
     Token,
-    authenticate_user,
     create_access_token,
     create_refresh_token,
     decode_and_validate_token,
     get_current_user_uid,
-    get_password_hash,
 )
 from topix.datatypes.user import User
 from topix.store.user import UserStore
@@ -33,23 +33,8 @@ router = APIRouter(
 ROTATE_REFRESH_TOKENS = True  # set False if you prefer not to rotate
 
 
-@router.post("/signin")
-@with_standard_response
-async def login_for_access_token(
-    request: Request,
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-):
-    """Signin for the user and return tokens."""
-    user_store: UserStore = request.app.user_store
-    user = await authenticate_user(user_store, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+def _issue_tokens(user: User) -> dict:
+    """Issue access and refresh JWT tokens for a user."""
     access_token = create_access_token(
         data={
             "sub": user.uid,
@@ -57,7 +42,7 @@ async def login_for_access_token(
             "name": user.name,
             "username": user.username,
         },
-        expires_delta=access_token_expires,
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
     refresh_token = create_refresh_token(
         data={"sub": user.uid},
@@ -67,56 +52,64 @@ async def login_for_access_token(
         "token": Token(
             access_token=access_token,
             token_type="bearer",
-            refresh_token=refresh_token
+            refresh_token=refresh_token,
         ).model_dump(exclude_none=True)
     }
 
 
-@router.post("/signup")
+@router.post("/google-signin")
 @with_standard_response
-async def create_user(
+async def google_signin(
     request: Request,
-    body: Annotated[UserSignupRequest, Body(description="User signup data")],
+    body: Annotated[GoogleSigninRequest, Body(description="Google OAuth ID token")],
 ):
-    """Create a user in postgres database."""
-    user_store: UserStore = request.app.user_store
-    pw_hash = get_password_hash(body.password)
-    new_user = User(
-        email=body.email,
-        password_hash=pw_hash,
-        name=body.name,
-        username=body.username,
-    )
-    try:
-        await user_store.add_user(new_user)
-    except Exception as e:
-        logging.info(e)
+    """Verify a Google ID token and return JWT tokens.
+
+    If the user does not exist yet, a new account is created automatically.
+    """
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    if not client_id:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Error when creating user",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google OAuth is not configured",
         )
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={
-            "sub": new_user.uid,
-            "email": new_user.email,
-            "name": new_user.name,
-            "username": new_user.username,
-        },
-        expires_delta=access_token_expires,
-    )
-    refresh_token = create_refresh_token(
-        data={"sub": new_user.uid},
-        expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
-    )
-    return {
-        "token": Token(
-            access_token=access_token,
-            token_type="bearer",
-            refresh_token=refresh_token
-        ).model_dump(exclude_none=True)
-    }
+    try:
+        idinfo = google_id_token.verify_oauth2_token(
+            body.id_token, google_requests.Request(), client_id
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google ID token",
+        )
+
+    email = idinfo.get("email")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Google token does not contain an email",
+        )
+
+    user_store: UserStore = request.app.user_store
+    user = await user_store.get_user_by_email(email)
+
+    if not user:
+        # Auto-create user on first Google sign-in
+        username = email.split("@")[0]
+        name = idinfo.get("name") or username
+        new_user = User(email=email, username=username, name=name)
+        try:
+            await user_store.add_user(new_user)
+        except Exception as e:
+            logging.error(f"Error creating user from Google sign-in: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Error when creating user",
+            )
+        user = new_user
+
+    return _issue_tokens(user)
 
 
 @router.post("/refresh")

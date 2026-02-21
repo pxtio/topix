@@ -35,7 +35,7 @@ export function RootLayout() {
 
   // do not show shell on auth pages (prevents flicker / overlap)
   const onAuthPage = useMemo(
-    () => location.pathname === '/signin' || location.pathname === '/signup',
+    () => location.pathname === '/signin',
     [location.pathname]
   )
   const showShell = isAuthed && !onAuthPage

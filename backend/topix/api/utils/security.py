@@ -4,7 +4,6 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
-import bcrypt
 import jwt
 
 from fastapi import Depends, HTTPException, Path, Request, status
@@ -12,7 +11,6 @@ from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 
 from topix.config.config import Config
-from topix.datatypes.user import User
 from topix.store.chat import ChatStore
 from topix.store.user import UserStore
 
@@ -23,7 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/signin")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/google-signin")
 
 
 class Token(BaseModel):
@@ -31,31 +29,8 @@ class Token(BaseModel):
 
     access_token: str
     token_type: str
-    # include refresh_token so signin/signup can return it as well
+    # include refresh_token so signin can return it as well
     refresh_token: str | None = None
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Check that the plain password corresponds to hashed DB password."""
-    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
-
-
-def get_password_hash(password: str) -> str:
-    """Hash a password."""
-    password_bytes = password.encode("utf-8")
-    hashed = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
-    hashed_str = hashed.decode("utf-8")
-    return hashed_str
-
-
-async def authenticate_user(user_store: UserStore, email: str, password: str) -> User | None:
-    """Verify that the user exist and that the password corresponds to the email."""
-    user = await user_store.get_user_by_email(email=email)
-    if not user:
-        return None
-    if not verify_password(password, user.password_hash):
-        return None
-    return user
 
 
 def _encode_jwt(claims: dict, *, minutes: int | None = None, days: int | None = None) -> str:

@@ -246,6 +246,7 @@ services:
     environment:
       # Used by FE runtime (see Dockerfile entrypoint template) to call API
       API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8081}}
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     depends_on:
       - backend-local
     ports:
@@ -287,6 +288,7 @@ services:
     profiles: ["dev"]
     environment:
       API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8081}}
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     depends_on:
       - backend-dev
     ports:
@@ -326,6 +328,7 @@ services:
     profiles: ["test"]
     environment:
       API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8082}}
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     depends_on:
       - backend-test
     ports:
@@ -365,6 +368,7 @@ services:
     profiles: ["staging"]
     environment:
       API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8083}}
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     depends_on:
       - backend-staging
     ports:
@@ -404,6 +408,7 @@ services:
     profiles: ["prod"]
     environment:
       API_ORIGIN: ${API_ORIGIN:-http://localhost:${API_PORT:-8084}}
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     depends_on:
       - backend-prod
     ports:

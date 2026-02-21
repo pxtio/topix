@@ -9,7 +9,6 @@ import { RootLayout } from "./root-layout"
 import { ChatScreen } from "@/features/agent/screens/chat-screen"
 import { BoardScreen } from "@/features/board/screens/board-screen"
 import { SigninPage } from "@/features/signin/screens/sign-in"
-import { SignupPage } from "@/features/signin/screens/sign-up"
 import { clearTokens, getAccessToken } from "@/features/signin/auth-storage"
 import { decodeJwt } from "@/lib/decode-jwt"
 import { SubscriptionsScreen } from "@/features/newsfeed/screens/subscriptions"
@@ -47,12 +46,6 @@ const signinRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/signin",
   component: SigninPage,
-})
-
-const signupRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/signup",
-  component: SignupPage,
 })
 
 const indexRoute = createRoute({
@@ -145,7 +138,6 @@ const newsfeedDetailRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   signinRoute,
-  signupRoute,
   indexRoute,
   homeRoute,
   chatsIndexRoute,

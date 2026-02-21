@@ -50,6 +50,7 @@ export interface Note extends Record<string, unknown> {
   content?: RichText
 
   graphUid: string
+  parentId?: string
   style: Style
 
   minWidth?: number

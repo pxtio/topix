@@ -7,6 +7,7 @@
  */
 export type NodeType =
   | "rectangle"
+  | "folder"
   | "text"
   | "sheet"
   | "slide"
@@ -190,6 +191,7 @@ export const createDefaultStyle = ({
 
   switch (type) {
     case "rectangle":
+    case "folder":
     case "layered-rectangle":
     case "layered-circle":
     case "tag":

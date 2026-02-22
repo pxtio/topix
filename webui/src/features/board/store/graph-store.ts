@@ -66,6 +66,9 @@ const resolveUpdater = <T>(updater: Updater<T>, prev: T): T =>
 const isPointNode = (node: NoteNode | undefined) =>
   Boolean(node && (node.data as { kind?: string }).kind === "point")
 
+const isFolderNode = (node: NoteNode | undefined) =>
+  Boolean(node && node.data?.style?.type === "folder")
+
 const buildNodesById = (nodes: NoteNode[]) =>
   new Map(nodes.map((n) => [n.id, n]))
 
@@ -330,10 +333,18 @@ function queueNodesForPersistence(
   if (addedIds.size === 0 && updatedIds.size === 0) return
 
   const byId = new Map(nodes.map((n) => [n.id, n]))
+  const immediateFolderSaves: Promise<unknown>[] = []
 
   for (const id of addedIds) {
     const node = byId.get(id)
     if (!node || isPointNode(node)) continue
+    if (isFolderNode(node)) {
+      const note = convertNodeToNote(node)
+      if (note) {
+        immediateFolderSaves.push(addNotes(boardId, [note]))
+      }
+      continue
+    }
     pendingNewNodes.set(id, node)
     pendingUpdatedNodes.delete(id)
   }
@@ -343,6 +354,12 @@ function queueNodesForPersistence(
     const node = byId.get(id)
     if (!node || isPointNode(node)) continue
     pendingUpdatedNodes.set(id, node)
+  }
+
+  if (immediateFolderSaves.length > 0) {
+    void Promise.all(immediateFolderSaves).catch((err) => {
+      console.error("Failed to persist folder nodes", err)
+    })
   }
 
   scheduleNodeFlush()

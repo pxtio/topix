@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { useNavigate } from "@tanstack/react-router"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { useGetNotePath } from "../../api/get-note-path"
+import { useGraphStore } from "../../store/graph-store"
 
 
 const normalizeLabel = (markdown?: string) => {
@@ -22,6 +23,8 @@ export function FolderBreadcrumb({
   boardLabel?: string
 }) {
   const navigate = useNavigate()
+  const setCurrentFolderDepth = useGraphStore(state => state.setCurrentFolderDepth)
+  const setFolderDepthFromPathLength = useGraphStore(state => state.setFolderDepthFromPathLength)
   const { data: path = [] } = useGetNotePath({ boardId, noteId: rootId, enabled: !!rootId })
 
   const crumbs = useMemo(
@@ -32,6 +35,14 @@ export function FolderBreadcrumb({
       })),
     [path],
   )
+
+  useEffect(() => {
+    if (!rootId) {
+      setCurrentFolderDepth(0)
+      return
+    }
+    setFolderDepthFromPathLength(path.length)
+  }, [path.length, rootId, setCurrentFolderDepth, setFolderDepthFromPathLength])
 
   if (!boardId || !rootId) return null
 

@@ -21,6 +21,7 @@ import type { AddNoteNodeOptions } from '../../hooks/use-add-node'
 import type { NodeType } from '../../types/style'
 import clsx from 'clsx'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useGraphStore } from '../../store/graph-store'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -54,6 +55,9 @@ export const ToolPanel = memo(function ToolPanel({
   boardId,
 }: ToolPanelProps) {
   const handleAddShape = (nodeType: NodeType) => onAddNode({ nodeType })
+  const currentFolderDepth = useGraphStore(state => state.currentFolderDepth)
+  const maxFolderDepth = useGraphStore(state => state.maxFolderDepth)
+  const isAtMaxFolderDepth = currentFolderDepth < 0 || currentFolderDepth >= maxFolderDepth
 
   const shapeOptions: { nodeType: NodeType, label: string, icon: ReactNode, shortcut?: string }[] = [
     { nodeType: 'rectangle', label: 'Rectangle', icon: <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />, shortcut: 'R' },
@@ -119,7 +123,11 @@ export const ToolPanel = memo(function ToolPanel({
     },
     folder: {
       title: 'Folder',
-      description: 'Create a folder node.',
+      description: isAtMaxFolderDepth
+        ? (currentFolderDepth < 0
+          ? 'Resolving folder depth...'
+          : `Max folder depth reached (${maxFolderDepth}).`)
+        : 'Create a folder node.',
     },
     copilot: {
       title: 'Copilot',
@@ -197,9 +205,13 @@ export const ToolPanel = memo(function ToolPanel({
             <TooltipTrigger asChild>
               <Button
                 variant={null}
-                className={normalButtonClass}
+                className={clsx(normalButtonClass, isAtMaxFolderDepth && 'opacity-50')}
                 size='icon'
-                onClick={() => onAddNode({ nodeType: 'folder' })}
+                aria-disabled={isAtMaxFolderDepth}
+                onClick={() => {
+                  if (isAtMaxFolderDepth) return
+                  onAddNode({ nodeType: 'folder' })
+                }}
                 aria-label='Add folder'
               >
                 <span className='relative inline-flex items-center justify-center'>

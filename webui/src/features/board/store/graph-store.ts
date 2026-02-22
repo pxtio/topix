@@ -799,6 +799,10 @@ function scheduleEdgePersistFromChanges(
 export interface GraphStore {
   boardId?: string
   rootId?: string
+  currentFolderDepth: number
+  maxFolderDepth: number
+  setCurrentFolderDepth: (depth: number) => void
+  setFolderDepthFromPathLength: (pathLength: number) => void
   setGraphScope: (scope: { boardId?: string; rootId?: string }) => void
 
   isLoading: boolean
@@ -883,6 +887,15 @@ export interface GraphStore {
 export const useGraphStore = create<GraphStore>((set, get) => ({
   boardId: undefined,
   rootId: undefined,
+  currentFolderDepth: -1,
+  maxFolderDepth: 4,
+  setCurrentFolderDepth: (depth) => {
+    const next = Number.isFinite(depth) ? Math.floor(depth) : -1
+    set({ currentFolderDepth: next })
+  },
+  setFolderDepthFromPathLength: (pathLength) => set({
+    currentFolderDepth: Math.max(0, Math.floor(pathLength) - 1),
+  }),
 
   setGraphScope: ({ boardId, rootId }) => {
     get().flushPendingPatch()
@@ -896,6 +909,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         ? {
             boardId,
             rootId,
+            currentFolderDepth: rootId ? -1 : 0,
             historyPast: [],
             historyFuture: [],
             dragSnapshotNodes: null,
@@ -909,6 +923,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         : {
             boardId,
             rootId,
+            currentFolderDepth: rootId ? -1 : 0,
             boardBackground: getBoardBackground(boardId),
             boardBackgroundTexture: getBoardBackgroundTexture(boardId),
           }

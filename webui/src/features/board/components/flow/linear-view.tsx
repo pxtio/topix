@@ -21,6 +21,7 @@ import { useGraphStore } from '../../store/graph-store'
 import type { NoteNode } from '../../types/flow'
 import { LinearNoteCard } from './linear-note-card'
 import { LinearDocumentCard } from './linear-document-card'
+import { LinearFolderCard } from './linear-folder-card'
 import { useUpdateNote } from '../../api/update-note'
 import type { NumberProperty } from '@/features/newsfeed/types/properties'
 import { useAppStore } from '@/store'
@@ -79,7 +80,7 @@ export function LinearView({
   const { updateNote } = useUpdateNote()
 
   const sortedNodes = useSortedNodes(
-    (nodes as NoteNode[]).filter(n => n.data?.style?.type === 'sheet' || n.data?.type === 'document')
+    (nodes as NoteNode[]).filter(n => n.data?.style?.type === 'sheet' || n.data?.type === 'document' || n.data?.style?.type === 'folder')
   )
   const ids = useMemo(() => sortedNodes.map(n => n.id), [sortedNodes])
 
@@ -194,7 +195,9 @@ function SortableNoteCard({ node }: SortableNoteCardProps) {
         <Grip className='size-4' />
       </button>
 
-      {node.data?.type === 'document' ? (
+      {node.data?.style?.type === 'folder' ? (
+        <LinearFolderCard node={node} />
+      ) : node.data?.type === 'document' ? (
         <LinearDocumentCard node={node} />
       ) : (
         <LinearNoteCard node={node} />

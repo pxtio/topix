@@ -455,17 +455,20 @@ export const ToolPanel = memo(function ToolPanel({
             <TooltipTrigger asChild>
               <Button
                 variant={null}
-                className={normalButtonClass}
+                className={clsx(normalButtonClass, isAtMaxFolderDepth && 'opacity-50')}
                 size='icon'
-                onClick={() => setOpenDocumentUpload(true)}
-                aria-label='Upload document'
-                disabled={!boardId}
+                aria-disabled={isAtMaxFolderDepth}
+                onClick={() => {
+                  if (isAtMaxFolderDepth) return
+                  onAddNode({ nodeType: 'folder' })
+                }}
+                aria-label='Add folder'
               >
-                <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
+                <HugeiconsIcon icon={FolderAddIcon} className='size-4 shrink-0' strokeWidth={2} />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={10}>
-              <TooltipLabel {...tooltipCopy.document} />
+              <TooltipLabel {...tooltipCopy.folder} />
             </TooltipContent>
           </Tooltip>
 
@@ -484,6 +487,24 @@ export const ToolPanel = memo(function ToolPanel({
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={10}>
               <TooltipLabel {...tooltipCopy.copilot} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => setOpenDocumentUpload(true)}
+                aria-label='Upload document'
+                disabled={!boardId}
+              >
+                <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.document} />
             </TooltipContent>
           </Tooltip>
 

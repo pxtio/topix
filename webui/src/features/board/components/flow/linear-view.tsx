@@ -68,7 +68,7 @@ function useEffectiveCols(cols: number, breakpointPx: number) {
 }
 
 export function LinearView({
-  cols = 3,
+  cols = 4,
   gapPx = 16,
   mobileBreakpointPx = 640,
   maxWidthPx = 1000

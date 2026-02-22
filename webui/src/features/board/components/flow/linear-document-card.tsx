@@ -1,5 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Delete02Icon } from '@hugeicons/core-free-icons'
 
 import type { NoteNode } from '../../types/flow'
 import { useTheme } from '@/components/theme-provider'
@@ -63,6 +65,9 @@ const PdfIcon = ({ pageFill, panelFill, outline, textFill, scribble }: PdfIconPr
 export const LinearDocumentCard = memo(function LinearDocumentCard({ node }: Props) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
+  const boardId = useGraphStore(state => state.boardId)
+  const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
   const updateNodeByIdPersist = useGraphStore(state => state.updateNodeByIdPersist)
   const [labelEditing, setLabelEditing] = useState(false)
   const [labelDraft, setLabelDraft] = useState(node.data.label?.markdown || '')
@@ -109,8 +114,25 @@ export const LinearDocumentCard = memo(function LinearDocumentCard({ node }: Pro
     setLabelEditing(false)
   }, [commitLabel, labelDraft, node.data.label?.markdown])
 
+  const onDelete = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation()
+    if (!boardId) return
+    setNodesPersist(nodes => nodes.filter(n => n.id !== node.id))
+    setEdgesPersist(edges => edges.filter(e => e.source !== node.id && e.target !== node.id))
+  }, [boardId, node.id, setEdgesPersist, setNodesPersist])
+
   return (
     <div className='group relative w-full min-w-0'>
+      <button
+        type='button'
+        onClick={onDelete}
+        className='absolute right-2 top-2 z-20 p-1 rounded-md text-foreground/60 hover:text-destructive transition-colors opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'
+        aria-label='Delete document'
+        title='Delete'
+      >
+        <HugeiconsIcon icon={Delete02Icon} className='size-4' strokeWidth={2} />
+      </button>
+
       <div
         className={clsx(
           'w-full min-h-[100px] max-h-[225px] rounded-md border-2 border-transparent',
@@ -143,7 +165,7 @@ export const LinearDocumentCard = memo(function LinearDocumentCard({ node }: Pro
             }}
             onMouseDown={event => event.stopPropagation()}
             onClick={event => event.stopPropagation()}
-            className='w-full bg-transparent text-center text-sm font-semibold text-card-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
+            className='w-full bg-transparent text-center text-sm font-sans font-semibold text-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
             placeholder='Untitled document'
           />
         ) : (
@@ -154,7 +176,7 @@ export const LinearDocumentCard = memo(function LinearDocumentCard({ node }: Pro
               event.stopPropagation()
               setLabelEditing(true)
             }}
-            className='block w-full truncate text-center text-sm font-semibold text-card-foreground hover:underline'
+            className='block w-full truncate text-center text-sm font-sans font-semibold text-foreground hover:underline'
             title={displayLabel}
           >
             {displayLabel}

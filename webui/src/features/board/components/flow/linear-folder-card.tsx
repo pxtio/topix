@@ -1,11 +1,12 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Delete02Icon } from '@hugeicons/core-free-icons'
 
 import type { NoteNode } from '../../types/flow'
 import { useGraphStore } from '../../store/graph-store'
 import { useTheme } from '@/components/theme-provider'
 import { darkModeDisplayHex, darkerDisplayHex, lighterDisplayHex } from '../../lib/colors/dark-variants'
-import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from '../../types/style'
 import { isTransparent } from '../../lib/colors/tailwind'
 
 
@@ -55,6 +56,8 @@ export const LinearFolderCard = memo(function LinearFolderCard({ node }: Props) 
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const boardId = useGraphStore(state => state.boardId)
+  const setNodesPersist = useGraphStore(state => state.setNodesPersist)
+  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
   const updateNodeByIdPersist = useGraphStore(state => state.updateNodeByIdPersist)
 
   const [labelEditing, setLabelEditing] = useState(false)
@@ -62,10 +65,6 @@ export const LinearFolderCard = memo(function LinearFolderCard({ node }: Props) 
   const inputRef = useRef<HTMLInputElement | null>(null)
 
   const displayLabel = normalizeLabel(node.data.label?.markdown)
-  const textAlignClass = node.data.style.textAlign === 'left' ? 'text-left' : node.data.style.textAlign === 'right' ? 'text-right' : 'text-center'
-  const fontClass = fontFamilyToTwClass(node.data.style.fontFamily)
-  const sizeClass = fontSizeToTwClass(node.data.style.fontSize)
-  const textStyleClass = textStyleToTwClass(node.data.style.textStyle)
 
   const displayBackground = isDark
     ? darkModeDisplayHex(node.data.style.backgroundColor) ?? '#dbeafe'
@@ -74,12 +73,9 @@ export const LinearFolderCard = memo(function LinearFolderCard({ node }: Props) 
     ? lighterDisplayHex(displayBackground) ?? displayBackground
     : darkerDisplayHex(displayBackground) ?? displayBackground
   const iconFrontFill = displayBackground
-  const displayTextColor = isDark
-    ? darkModeDisplayHex(node.data.style.textColor) ?? '#e4e4e7'
-    : node.data.style.textColor
   const displayStrokeColor = !isTransparent(node.data.style.strokeColor)
     ? (isDark ? darkModeDisplayHex(node.data.style.strokeColor) ?? '#1e1e1e' : node.data.style.strokeColor)
-    : displayTextColor
+    : (isDark ? '#e4e4e7' : '#1e1e1e')
 
   useEffect(() => {
     if (labelEditing) return
@@ -114,8 +110,25 @@ export const LinearFolderCard = memo(function LinearFolderCard({ node }: Props) 
     setLabelEditing(false)
   }, [commitLabel, labelDraft, node.data.label?.markdown])
 
+  const onDelete = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation()
+    if (!boardId) return
+    setNodesPersist(nodes => nodes.filter(n => n.id !== node.id))
+    setEdgesPersist(edges => edges.filter(e => e.source !== node.id && e.target !== node.id))
+  }, [boardId, node.id, setEdgesPersist, setNodesPersist])
+
   return (
     <div className='group relative w-full min-w-0'>
+      <button
+        type='button'
+        onClick={onDelete}
+        className='absolute right-2 top-2 z-20 p-1 rounded-md text-foreground/60 hover:text-destructive transition-colors opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'
+        aria-label='Delete folder'
+        title='Delete'
+      >
+        <HugeiconsIcon icon={Delete02Icon} className='size-4' strokeWidth={2} />
+      </button>
+
       <button
         type='button'
         onClick={() => {
@@ -156,8 +169,7 @@ export const LinearFolderCard = memo(function LinearFolderCard({ node }: Props) 
             }}
             onMouseDown={event => event.stopPropagation()}
             onClick={event => event.stopPropagation()}
-            className={`w-full bg-transparent border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5 ${textAlignClass} ${fontClass} ${sizeClass} ${textStyleClass}`}
-            style={{ color: displayTextColor }}
+            className='w-full bg-transparent text-center text-sm font-sans font-semibold text-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
             placeholder='Untitled folder'
           />
         ) : (
@@ -168,8 +180,7 @@ export const LinearFolderCard = memo(function LinearFolderCard({ node }: Props) 
               event.stopPropagation()
               setLabelEditing(true)
             }}
-            className={`block w-full truncate hover:underline ${textAlignClass} ${fontClass} ${sizeClass} ${textStyleClass}`}
-            style={{ color: displayTextColor }}
+            className='block w-full truncate text-center text-sm font-sans font-semibold text-foreground hover:underline'
             title={displayLabel}
           >
             {displayLabel}

@@ -203,17 +203,23 @@ export const SidebarLabel = () => {
     if (boardRootId) {
       return (
         <div className={`${wrapClass} flex-1 min-w-0`}>
-          <FolderBreadcrumb boardId={active.id} rootId={boardRootId} />
+          <FolderBreadcrumb
+            boardId={active.id}
+            rootId={boardRootId}
+            inline
+            boardLabel={label || UNTITLED_LABEL}
+          />
         </div>
       )
     }
+
     return (
       <div className={`${wrapClass} flex-1 min-w-0`}>
         <LabelEditor
           key={`board:${active.id}`}
           initialLabel={label}
           onSave={handleSaveEdit}
-          className='flex-1 min-w-0'
+          className='min-w-0'
         />
       </div>
     )

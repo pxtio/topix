@@ -197,12 +197,63 @@ class GraphStore:
         return path
 
     async def get_node_descendants(self, node_id: str) -> list[Note]:
-        """Return all descendants for a node.
+        """Return all descendants for a node using BFS on parent_id."""
+        # TODO(folder): validate root type is note/document and graph_uid is present.
+        # If root is malformed or not a traversable node, return [] (or raise) explicitly.
+        root_nodes = await self.get_nodes([node_id])
+        if not root_nodes:
+            return []
 
-        TODO(folder): implement recursive subtree retrieval (BFS/DFS) using parent_id.
-        Needed for cascade delete, copy/paste subtree, and move validation.
-        """
-        raise NotImplementedError("get_node_descendants is not implemented yet")
+        root = root_nodes[0]
+        graph_uid = root.graph_uid
+
+        descendants: list[Note] = []
+        visited: set[str] = {node_id}
+        frontier: list[str] = [node_id]
+
+        while frontier:
+            # TODO(folder): exclude soft-deleted descendants by adding deleted_at == null
+            # in this filter once null filtering is standardized in the Qdrant layer.
+            # TODO(folder): chunk large frontiers (e.g. 200-500 ids) and query per chunk
+            # to avoid oversized MatchAny filters on very wide/deep subtrees.
+            results = await self._content_store.filt(
+                filters=Filter(
+                    must=[
+                        FieldCondition(
+                            key="graph_uid",
+                            match=MatchValue(value=graph_uid),
+                        ),
+                        FieldCondition(
+                            key="type",
+                            match=MatchAny(any=["note", "document"]),
+                        ),
+                        FieldCondition(
+                            key="parent_id",
+                            match=MatchAny(any=frontier),
+                        ),
+                    ]
+                )
+            )
+
+            level_nodes: list[Note] = []
+            next_frontier: list[str] = []
+            for result in results:
+                node = result.resource
+                if not isinstance(node, Note):
+                    continue
+                if node.id in visited:
+                    continue
+                visited.add(node.id)
+                level_nodes.append(node)
+                next_frontier.append(node.id)
+
+            if not level_nodes:
+                break
+
+            descendants.extend(level_nodes)
+            frontier = next_frontier
+
+        return descendants
 
     async def add_graph(self, graph: Graph, user_uid: str) -> Graph:
         """Create a new graph."""

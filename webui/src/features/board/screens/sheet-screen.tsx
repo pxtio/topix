@@ -10,11 +10,11 @@ import { useGraphStore } from "../store/graph-store"
 
 export const SheetScreen = () => {
   const { id: boardId, noteId } = useParams({ from: SheetUrl }) as { id: string; noteId: string }
-  const setBoardId = useGraphStore(state => state.setBoardId)
+  const setGraphScope = useGraphStore(state => state.setGraphScope)
 
   useEffect(() => {
-    setBoardId(boardId)
-  }, [boardId, setBoardId])
+    setGraphScope({ boardId, rootId: undefined })
+  }, [boardId, setGraphScope])
 
   const { data: note, isLoading } = useGetNote({ boardId, noteId })
 

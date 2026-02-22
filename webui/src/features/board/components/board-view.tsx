@@ -14,14 +14,14 @@ import { useGetBoard } from "../api/get-board"
  * status combined with the graph store's isLoading to avoid local race conditions.
  */
 export const BoardView: React.FC = () => {
-  const { boardId, isLoading: storeLoading } = useGraphStore()
+  const { boardId, rootId, isLoading: storeLoading } = useGraphStore()
   const { getBoardAsync, isPending, isSuccess, reset } = useGetBoard()
 
   useEffect(() => {
     if (!boardId) return
     reset()
     void getBoardAsync()
-  }, [boardId, getBoardAsync, reset])
+  }, [boardId, rootId, getBoardAsync, reset])
 
   const loading = useMemo(
     () => !isSuccess || isPending || storeLoading,

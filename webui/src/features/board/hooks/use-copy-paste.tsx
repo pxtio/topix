@@ -36,6 +36,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
   const userId = useAppStore(state => state.userId)
 
   const boardId = useGraphStore(state => state.boardId)
+  const rootId = useGraphStore(state => state.rootId)
   const nodes = useGraphStore(useShallow(state => state.nodes))
   const edges = useGraphStore(useShallow(state => state.edges))
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
@@ -123,6 +124,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     const cloned: Note = {
       ...note,
       id: generateUuid(),
+      parentId: rootId,
       properties: {
         ...note.properties,
         nodePosition: {
@@ -143,7 +145,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
     }
 
     return cloned
-  }, [])
+  }, [rootId])
 
   const computeSelectionCenter = useCallback((notes: Note[], pointNodes: NoteNode[]) => {
     let minX = Number.POSITIVE_INFINITY

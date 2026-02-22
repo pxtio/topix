@@ -55,6 +55,10 @@ import {
 // --- helpers ---
 
 type Updater<T> = T | ((prev: T) => T)
+type GraphScope = {
+  boardId?: string
+  rootId?: string
+}
 
 const resolveUpdater = <T>(updater: Updater<T>, prev: T): T =>
   typeof updater === "function" ? (updater as (p: T) => T)(prev) : updater
@@ -83,6 +87,9 @@ const buildAttachedPointIdsByNode = (nodes: NoteNode[]) => {
 
 const cloneAttachedPointIdsByNode = (source: Map<string, Set<string>>) =>
   new Map(Array.from(source.entries()).map(([id, set]) => [id, new Set(set)]))
+
+const getScopeKey = ({ boardId, rootId }: GraphScope) =>
+  boardId ? `${boardId}:${rootId ?? "root"}` : undefined
 
 // Incrementally update node index for small change sets to avoid full rebuilds.
 const updateNodesById = (
@@ -230,6 +237,22 @@ let edgePersistTimeout: ReturnType<typeof setTimeout> | null = null
 let historyCoalesceTimeout: ReturnType<typeof setTimeout> | null = null
 let pendingHistoryPatch: Patch | null = null
 
+const clearPendingPersistenceQueues = () => {
+  pendingNewNodes.clear()
+  pendingUpdatedNodes.clear()
+  pendingNewEdges.clear()
+  pendingUpdatedEdges.clear()
+
+  if (nodePersistTimeout !== null) {
+    clearTimeout(nodePersistTimeout)
+    nodePersistTimeout = null
+  }
+  if (edgePersistTimeout !== null) {
+    clearTimeout(edgePersistTimeout)
+    edgePersistTimeout = null
+  }
+}
+
 // --- debounced flushes (conversion happens here, not on hot path) ---
 
 function scheduleNodeFlush() {
@@ -298,7 +321,7 @@ function scheduleNodeFlush() {
 }
 
 function queueNodesForPersistence(
-  get: () => { boardId?: string; nodes: NoteNode[] },
+  get: () => { boardId?: string; rootId?: string; nodes: NoteNode[] },
   addedIds: Set<string>,
   updatedIds: Set<string>,
 ) {
@@ -326,7 +349,7 @@ function queueNodesForPersistence(
 }
 
 function scheduleEdgeFlush(
-  get: () => { boardId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
+  get: () => { boardId?: string; rootId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
 ) {
   if (edgePersistTimeout !== null) {
     clearTimeout(edgePersistTimeout)
@@ -390,7 +413,7 @@ function scheduleEdgeFlush(
 }
 
 function queueEdgesForPersistence(
-  get: () => { boardId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
+  get: () => { boardId?: string; rootId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
   addedIds: Set<string>,
   updatedIds: Set<string>,
 ) {
@@ -422,14 +445,14 @@ function queueEdgesForPersistence(
 function scheduleNodePersistFromDiff(
   prevNodes: NoteNode[],
   nextNodes: NoteNode[],
-  boardIdAtTime: string | undefined,
-  get: () => { boardId?: string; nodes: NoteNode[] },
+  scopeKeyAtTime: string | undefined,
+  get: () => { boardId?: string; rootId?: string; nodes: NoteNode[] },
 ) {
-  if (!boardIdAtTime) return
+  if (!scopeKeyAtTime) return
 
   setTimeout(() => {
-    const { boardId, nodes } = get()
-    if (!boardId || boardId !== boardIdAtTime) return
+    const { boardId, rootId, nodes } = get()
+    if (!boardId || getScopeKey({ boardId, rootId }) !== scopeKeyAtTime) return
 
     const prevIds = new Set(prevNodes.map((n) => n.id))
     const nextIds = new Set(nextNodes.map((n) => n.id))
@@ -486,6 +509,7 @@ function scheduleNodePersistFromDiff(
       queueNodesForPersistence(
         () => ({
           boardId: get().boardId,
+          rootId: get().rootId,
           nodes,
         }),
         addedIds,
@@ -498,14 +522,14 @@ function scheduleNodePersistFromDiff(
 function scheduleEdgePersistFromDiff(
   prevEdges: LinkEdge[],
   nextEdges: LinkEdge[],
-  boardIdAtTime: string | undefined,
-  get: () => { boardId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
+  scopeKeyAtTime: string | undefined,
+  get: () => { boardId?: string; rootId?: string; edges: LinkEdge[]; nodes: NoteNode[] },
 ) {
-  if (!boardIdAtTime) return
+  if (!scopeKeyAtTime) return
 
   setTimeout(() => {
-    const { boardId, edges } = get()
-    if (!boardId || boardId !== boardIdAtTime) return
+    const { boardId, rootId, edges } = get()
+    if (!boardId || getScopeKey({ boardId, rootId }) !== scopeKeyAtTime) return
 
     const prevIds = new Set(prevEdges.map((e) => e.id))
     const nextIds = new Set(nextEdges.map((e) => e.id))
@@ -546,6 +570,7 @@ function scheduleEdgePersistFromDiff(
       queueEdgesForPersistence(
         () => ({
           boardId: get().boardId,
+          rootId: get().rootId,
           edges,
           nodes: get().nodes,
         }),
@@ -560,17 +585,17 @@ function scheduleEdgePersistFromDiff(
 function scheduleNodePersistFromChanges(
   prevNodes: NoteNode[],
   nextNodes: NoteNode[],
-  boardIdAtTime: string | undefined,
+  scopeKeyAtTime: string | undefined,
   changes: NodeChange<NoteNode>[],
   isResizingAtTime: boolean,
-  get: () => { boardId?: string; nodes: NoteNode[]; deletedNodes: NoteNode[] },
+  get: () => { boardId?: string; rootId?: string; nodes: NoteNode[]; deletedNodes: NoteNode[] },
   set: (
     partial:
       | Partial<GraphStore>
       | ((state: GraphStore) => Partial<GraphStore>),
   ) => void,
 ) {
-  if (!boardIdAtTime) return
+  if (!scopeKeyAtTime) return
   const onlyTransient = changes.every((ch) => {
     if (ch.type === "select") return true
     if (ch.type === "position" && ch.dragging) return true
@@ -581,7 +606,7 @@ function scheduleNodePersistFromChanges(
   setTimeout(() => {
     const state = get()
     const boardId = state.boardId
-    if (!boardId || boardId !== boardIdAtTime) return
+    if (!boardId || getScopeKey({ boardId, rootId: state.rootId }) !== scopeKeyAtTime) return
 
     const { nodes } = state
 
@@ -651,6 +676,7 @@ function scheduleNodePersistFromChanges(
       queueNodesForPersistence(
         () => ({
           boardId: get().boardId,
+          rootId: get().rootId,
           nodes,
         }),
         addedIds,
@@ -663,10 +689,11 @@ function scheduleNodePersistFromChanges(
 function scheduleEdgePersistFromChanges(
   prevEdges: LinkEdge[],
   nextEdges: LinkEdge[],
-  boardIdAtTime: string | undefined,
+  scopeKeyAtTime: string | undefined,
   changes: EdgeChange<LinkEdge>[],
   get: () => {
     boardId?: string
+    rootId?: string
     edges: LinkEdge[]
     nodes: NoteNode[]
     deletedEdges: LinkEdge[]
@@ -677,13 +704,13 @@ function scheduleEdgePersistFromChanges(
       | ((state: GraphStore) => Partial<GraphStore>),
   ) => void,
 ) {
-  if (!boardIdAtTime) return
+  if (!scopeKeyAtTime) return
   if (changes.every((ch) => ch.type === "select")) return
 
   setTimeout(() => {
     const state = get()
     const boardId = state.boardId
-    if (!boardId || boardId !== boardIdAtTime) return
+    if (!boardId || getScopeKey({ boardId, rootId: state.rootId }) !== scopeKeyAtTime) return
 
     const { edges } = state
 
@@ -756,6 +783,7 @@ function scheduleEdgePersistFromChanges(
       queueEdgesForPersistence(
         () => ({
           boardId: get().boardId,
+          rootId: get().rootId,
           edges,
           nodes: get().nodes,
         }),
@@ -770,7 +798,8 @@ function scheduleEdgePersistFromChanges(
 
 export interface GraphStore {
   boardId?: string
-  setBoardId: (boardId: string | undefined) => void
+  rootId?: string
+  setGraphScope: (scope: { boardId?: string; rootId?: string }) => void
 
   isLoading: boolean
   setIsLoading: (loading: boolean) => void
@@ -853,21 +882,20 @@ export interface GraphStore {
 
 export const useGraphStore = create<GraphStore>((set, get) => ({
   boardId: undefined,
+  rootId: undefined,
 
-  setBoardId: (boardId) => {
+  setGraphScope: ({ boardId, rootId }) => {
     get().flushPendingPatch()
-    // optional: clear/flush pending when board changes
-    // pendingNewNodes.clear()
-    // pendingUpdatedNodes.clear()
-    // pendingNewEdges.clear()
-    // pendingUpdatedEdges.clear()
+    clearPendingPersistenceQueues()
     set((state) => {
-      if (state.boardId !== boardId) {
+      const changed = state.boardId !== boardId || state.rootId !== rootId
+      if (changed) {
         clearRoughCanvasCache()
       }
-      return state.boardId !== boardId
+      return changed
         ? {
             boardId,
+            rootId,
             historyPast: [],
             historyFuture: [],
             dragSnapshotNodes: null,
@@ -880,6 +908,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
           }
         : {
             boardId,
+            rootId,
             boardBackground: getBoardBackground(boardId),
             boardBackgroundTexture: getBoardBackgroundTexture(boardId),
           }
@@ -960,7 +989,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   setNodesPersist: (nodesOrUpdater) => {
     const recording = get().historyRecording
-    const boardId = get().boardId
+    const scopeKey = getScopeKey(get())
     const prevNodes = get().nodes
 
     const nextNodes =
@@ -986,8 +1015,9 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       }
     }
 
-    scheduleNodePersistFromDiff(prevNodes, nextNodes, boardId, () => ({
+    scheduleNodePersistFromDiff(prevNodes, nextNodes, scopeKey, () => ({
       boardId: get().boardId,
+      rootId: get().rootId,
       nodes: get().nodes,
     }))
   },
@@ -1063,6 +1093,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     queueNodesForPersistence(
       () => ({
         boardId: get().boardId,
+        rootId: get().rootId,
         nodes: get().nodes,
       }),
       new Set(),
@@ -1072,7 +1103,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   setEdgesPersist: (edgesOrUpdater) => {
     const recording = get().historyRecording
-    const boardId = get().boardId
+    const scopeKey = getScopeKey(get())
     const prevEdges = get().edges
 
     const nextEdges =
@@ -1094,8 +1125,9 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       }
     }
 
-    scheduleEdgePersistFromDiff(prevEdges, nextEdges, boardId, () => ({
+    scheduleEdgePersistFromDiff(prevEdges, nextEdges, scopeKey, () => ({
       boardId: get().boardId,
+      rootId: get().rootId,
       edges: get().edges,
       nodes: get().nodes,
     }))
@@ -1135,6 +1167,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     queueEdgesForPersistence(
       () => ({
         boardId: get().boardId,
+        rootId: get().rootId,
         edges: get().edges,
         nodes: get().nodes,
       }),
@@ -1147,6 +1180,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   onNodesChange: (changes) => {
     const boardId = get().boardId
+    const scopeKey = getScopeKey(get())
     if (!boardId) return
 
     const recording = get().historyRecording
@@ -1367,6 +1401,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
           queueEdgesForPersistence(
             () => ({
               boardId: get().boardId,
+              rootId: get().rootId,
               edges: get().edges,
               nodes: get().nodes,
             }),
@@ -1398,7 +1433,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       if (hasDragEnd && dragSnapshot) {
         const patches = diffNodesById(dragSnapshot, sanitizeNodes(nextNodes), touchedNodeIds)
         if (patches.length > 0) {
-          get().enqueuePatch({
+      get().enqueuePatch({
             id: generateUuid(),
             ts: Date.now(),
             source: "ui",
@@ -1441,11 +1476,12 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     scheduleNodePersistFromChanges(
       prevNodes,
       nextNodes,
-      boardId,
+      scopeKey,
       changes,
       isResizingAtTime,
       () => ({
         boardId: get().boardId,
+        rootId: get().rootId,
         nodes: get().nodes,
         deletedNodes: get().deletedNodes,
       }),
@@ -1486,6 +1522,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
           queueEdgesForPersistence(
             () => ({
               boardId: get().boardId,
+              rootId: get().rootId,
               edges: get().edges,
               nodes: get().nodes,
             }),
@@ -1559,6 +1596,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   onEdgesChange: (changes) => {
     const boardId = get().boardId
+    const scopeKey = getScopeKey(get())
     if (!boardId) return
 
     const recording = get().historyRecording
@@ -1628,10 +1666,11 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     scheduleEdgePersistFromChanges(
       prevEdges,
       updatedEdges,
-      boardId,
+      scopeKey,
       changes,
       () => ({
         boardId: get().boardId,
+        rootId: get().rootId,
         edges: get().edges,
         nodes: get().nodes,
         deletedEdges: get().deletedEdges,
@@ -1841,12 +1880,15 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       attachedPointIdsByNode: buildAttachedPointIdsByNode(nextNodes),
     })
 
-    scheduleNodePersistFromDiff(prevNodes, nextNodes, state.boardId, () => ({
+    const scopeKey = getScopeKey(state)
+    scheduleNodePersistFromDiff(prevNodes, nextNodes, scopeKey, () => ({
       boardId: get().boardId,
+      rootId: get().rootId,
       nodes: get().nodes,
     }))
-    scheduleEdgePersistFromDiff(prevEdges, nextEdges, state.boardId, () => ({
+    scheduleEdgePersistFromDiff(prevEdges, nextEdges, scopeKey, () => ({
       boardId: get().boardId,
+      rootId: get().rootId,
       edges: get().edges,
       nodes: get().nodes,
     }))
@@ -1880,12 +1922,15 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       attachedPointIdsByNode: buildAttachedPointIdsByNode(nextNodes),
     })
 
-    scheduleNodePersistFromDiff(prevNodes, nextNodes, state.boardId, () => ({
+    const scopeKey = getScopeKey(state)
+    scheduleNodePersistFromDiff(prevNodes, nextNodes, scopeKey, () => ({
       boardId: get().boardId,
+      rootId: get().rootId,
       nodes: get().nodes,
     }))
-    scheduleEdgePersistFromDiff(prevEdges, nextEdges, state.boardId, () => ({
+    scheduleEdgePersistFromDiff(prevEdges, nextEdges, scopeKey, () => ({
       boardId: get().boardId,
+      rootId: get().rootId,
       edges: get().edges,
       nodes: get().nodes,
     }))

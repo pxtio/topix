@@ -14,6 +14,7 @@ import { useContentMinHeight } from '../../hooks/use-content-min-height'
 import { ShapeChrome } from './shape-chrome'
 import { getShapeContentScale } from '../../utils/shape-content-scale'
 import { Grip } from 'lucide-react'
+import { FolderNode } from './folder-node'
 
 const CONNECTOR_GAP = 0
 type ResizeHandle = {
@@ -261,6 +262,34 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
         >
           {content}
         </ShapeChrome>
+      </div>
+    )
+  }
+
+  if (nodeType === 'folder') {
+    return (
+      <div className='border-none relative bg-transparent overflow-visible w-full h-full p-0'>
+        <div
+          className='absolute inset-0'
+          style={{
+            top: CONNECTOR_GAP,
+            right: CONNECTOR_GAP,
+            bottom: CONNECTOR_GAP,
+            left: CONNECTOR_GAP,
+          }}
+        >
+          <FolderNode id={id} data={data} />
+          <NodeStatusOverlay selected={selected} nodeType={nodeType} isNew={data.isNew} />
+        </div>
+
+        <ResizeHandles
+          selected={selected}
+          minHeight={resizeMinHeight}
+          minWidth={resizeMinWidth}
+          keepAspectRatio={isVisualNode}
+          onResizeStart={handleResizeStart}
+          onResizeEnd={handleResizeEnd}
+        />
       </div>
     )
   }

@@ -6,10 +6,8 @@ import logging
 from qdrant_client.models import (
     FieldCondition,
     Filter,
-    IsNullCondition,
     MatchAny,
     MatchValue,
-    PayloadField,
 )
 
 from topix.datatypes.graph.graph import Graph
@@ -116,6 +114,15 @@ class GraphStore:
             graph = await get_graph_by_uid(conn, graph_uid)
         if not graph:
             return None
+
+        if root_id is not None:
+            root_nodes = await self.get_nodes([root_id])
+            if not root_nodes:
+                raise ValueError("root node not found")
+            root_node = root_nodes[0]
+            if root_node.graph_uid != graph_uid:
+                raise ValueError("root node does not belong to graph")
+
         node_must_filters: list[FieldCondition] = [
             FieldCondition(
                 key="graph_uid",
@@ -126,23 +133,17 @@ class GraphStore:
                 match=MatchAny(any=["note", "document"]),
             ),
         ]
-        if root_id is None:
-            node_must_filters.append(
-                IsNullCondition(is_null=PayloadField(key="parent_id"))
-            )
-        else:
-            node_must_filters.append(
-                FieldCondition(
-                    key="parent_id",
-                    match=MatchValue(value=root_id),
-                )
-            )
         node_results = await self._content_store.filt(
             filters=Filter(
                 must=node_must_filters
             )
         )
-        graph.nodes = [result.resource for result in node_results]
+        graph.nodes = [
+            node
+            for node in (result.resource for result in node_results)
+            if (root_id is None and node.parent_id is None)
+            or (root_id is not None and node.parent_id == root_id)
+        ]
 
         node_ids = {node.id for node in graph.nodes}
         link_results = await self._content_store.filt(
@@ -171,7 +172,7 @@ class GraphStore:
 
         return graph
 
-    async def get_node_path(self, node_id: str) -> list[Note]:
+    async def get_node_path(self, graph_uid: str, node_id: str) -> list[Note]:
         """Return node path from root to the target node (inclusive)."""
         path: list[Note] = []
         current_id: str | None = node_id
@@ -187,6 +188,8 @@ class GraphStore:
             if not nodes:
                 break
             node = nodes[0]
+            if node.graph_uid != graph_uid:
+                return []
             path.append(node)
             current_id = node.parent_id
 

@@ -15,6 +15,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { useShallow } from 'zustand/shallow'
 
 import { NodeView } from './node-view'
@@ -49,6 +50,7 @@ import { applyBackgroundAlpha, type BoardBackgroundTexture } from '../../utils/b
 
 import './graph-styles.css'
 import { useThumbnailCapture } from '../../hooks/use-thumbnail-capture'
+import { FolderBreadcrumb } from './folder-breadcrumb'
 
 const proOptions = { hideAttribution: true }
 
@@ -111,6 +113,7 @@ type GraphViewProps = {
   onPaneContextMenu?: ReactFlowProps<NoteNode, LinkEdge>['onPaneContextMenu']
   onNodeContextMenu?: ReactFlowProps<NoteNode, LinkEdge>['onNodeContextMenu']
   onEdgeDoubleClick?: ReactFlowProps<NoteNode, LinkEdge>['onEdgeDoubleClick']
+  onNodeDoubleClick?: ReactFlowProps<NoteNode, LinkEdge>['onNodeDoubleClick']
   children?: React.ReactNode
 }
 
@@ -136,6 +139,7 @@ function GraphView({
   onPaneContextMenu,
   onNodeContextMenu,
   onEdgeDoubleClick,
+  onNodeDoubleClick,
   children,
 }: GraphViewProps) {
   return (
@@ -163,6 +167,7 @@ function GraphView({
       onPaneContextMenu={onPaneContextMenu}
       onNodeContextMenu={onNodeContextMenu}
       onEdgeDoubleClick={onEdgeDoubleClick}
+      onNodeDoubleClick={onNodeDoubleClick}
       nodesDraggable={!isLocked}
       nodesConnectable={false}
       elementsSelectable={!isLocked}
@@ -220,6 +225,9 @@ export default function GraphEditor() {
   } = useReactFlow<NoteNode, LinkEdge>()
 
   const boardId = useGraphStore(state => state.boardId)
+  const rootId = useGraphStore(state => state.rootId)
+  const scopeViewportKey = boardId ? `${boardId}:${rootId ?? 'root'}` : undefined
+  const navigate = useNavigate()
 
   const nodes = useGraphStore(useShallow(state => state.nodes))
   const edges = useGraphStore(useShallow(state => state.edges))
@@ -344,6 +352,25 @@ export default function GraphEditor() {
     [viewMode, screenToFlowPosition, setLastCursorPosition],
   )
 
+  const handleNodeDoubleClick = useCallback<NonNullable<ReactFlowProps<NoteNode, LinkEdge>['onNodeDoubleClick']>>(
+    (event, node) => {
+      if (!boardId) return
+      const nodeType = node.data?.style?.type
+      if (nodeType !== 'folder') return
+      const target = event.target as HTMLElement | null
+      if (target?.closest('[data-folder-label-edit="true"]')) return
+      navigate({
+        to: "/boards/$id",
+        params: { id: boardId },
+        search: (prev: Record<string, unknown>) => ({
+          ...prev,
+          root_id: node.id,
+        }),
+      })
+    },
+    [boardId, navigate],
+  )
+
   const handlePanelAddNode = useCallback(
     (options: AddNoteNodeOptions) => {
       const nodeType = options.nodeType ?? 'rectangle'
@@ -397,10 +424,10 @@ export default function GraphEditor() {
   // Initial viewport / restore saved viewport
   useEffect(() => {
     if (!viewportInitialized) return
-    if (!boardId || !graphViewports[boardId]) {
+    if (!scopeViewportKey || !graphViewports[scopeViewportKey]) {
       fitView({ padding: 0.2, maxZoom: 1 })
     }
-  }, [viewportInitialized, fitView, boardId, graphViewports])
+  }, [viewportInitialized, fitView, scopeViewportKey, graphViewports])
 
   const handleZoomIn = useCallback(() => zoomIn({ duration: 200 }), [zoomIn])
   const handleZoomOut = useCallback(() => zoomOut({ duration: 200 }), [zoomOut])
@@ -449,12 +476,12 @@ export default function GraphEditor() {
   }, [fitView, setActiveSlideId, slides])
 
   const restoreViewport = useCallback(() => {
-    if (!boardId) return
-    const saved = graphViewports[boardId]
+    if (!scopeViewportKey) return
+    const saved = graphViewports[scopeViewportKey]
     if (saved && rfInstanceRef.current?.setViewport) {
       rfInstanceRef.current.setViewport(saved, { duration: 200 })
     }
-  }, [boardId, graphViewports])
+  }, [scopeViewportKey, graphViewports])
 
   useBoardShortcuts({
     enabled: presentationMode,
@@ -475,8 +502,8 @@ export default function GraphEditor() {
       setIsMoving(true)
     },
     onEnd: vp => {
-      if (boardId && !presentationMode) {
-        setGraphViewport(boardId, vp)
+      if (scopeViewportKey && !presentationMode) {
+        setGraphViewport(scopeViewportKey, vp)
       }
       setZoom(vp.zoom)
       setIsMoving(false)
@@ -566,8 +593,8 @@ export default function GraphEditor() {
 
   const handleInit = (instance: ReactFlowInstance<NoteNode, LinkEdge>) => {
     rfInstanceRef.current = instance
-    if (boardId) {
-      const saved = graphViewports[boardId]
+    if (scopeViewportKey) {
+      const saved = graphViewports[scopeViewportKey]
       if (saved) {
         // restore immediately, no animation
         instance.setViewport(saved, { duration: 0 })
@@ -635,6 +662,7 @@ export default function GraphEditor() {
                   onPaneContextMenu={onPaneContextMenu}
                   onNodeContextMenu={onNodeContextMenu}
                   onEdgeDoubleClick={handleEdgeDoubleClick}
+                  onNodeDoubleClick={handleNodeDoubleClick}
                 >
                   {backgroundVariant && (
                     <Background
@@ -678,6 +706,8 @@ export default function GraphEditor() {
           <LinearView />
         )}
       </div>
+
+      {viewMode === 'graph' && <FolderBreadcrumb boardId={boardId} rootId={rootId} />}
 
       {presentationMode && (
         <PresentationControls

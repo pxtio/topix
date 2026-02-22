@@ -79,7 +79,10 @@ async def get_graph(
     """Get a graph by its ID."""
     store: GraphStore = request.app.graph_store
 
-    graph = await store.get_graph(graph_uid=graph_id, root_id=root_id)
+    try:
+        graph = await store.get_graph(graph_uid=graph_id, root_id=root_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     if not graph:
         raise HTTPException(status_code=404, detail="Graph not found")
 
@@ -155,8 +158,8 @@ async def get_note(
     return {"note": notes[0].model_dump(exclude_none=True)}
 
 
-@router.get("/{graph_id}/notes/{note_id}:path", include_in_schema=False)
-@router.get("/{graph_id}/notes/{note_id}:path")
+@router.get("/{graph_id}/notes/{note_id}/path", include_in_schema=False)
+@router.get("/{graph_id}/notes/{note_id}/path")
 @with_standard_response
 async def get_note_path(
     response: Response,
@@ -168,8 +171,7 @@ async def get_note_path(
     """Get full path from root to a note."""
     store: GraphStore = request.app.graph_store
 
-    path = await store.get_node_path(node_id=note_id)
-    path = [node for node in path if node.graph_uid == graph_id]
+    path = await store.get_node_path(graph_uid=graph_id, node_id=note_id)
     if not path:
         raise HTTPException(status_code=404, detail="Note path not found")
 

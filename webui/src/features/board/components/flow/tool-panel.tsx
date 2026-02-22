@@ -5,6 +5,7 @@ import {
   ArrowMoveDownRightIcon,
   CircleIcon,
   DiamondIcon,
+  FolderAddIcon,
   GeometricShapes01Icon,
   GoogleDocIcon,
   Image02Icon,
@@ -116,6 +117,10 @@ export const ToolPanel = memo(function ToolPanel({
       description: 'Parse a PDF and add notes.',
       shortcut: 'P',
     },
+    folder: {
+      title: 'Folder',
+      description: 'Create a folder node.',
+    },
     copilot: {
       title: 'Copilot',
       description: 'Open the assistant panel.',
@@ -185,6 +190,25 @@ export const ToolPanel = memo(function ToolPanel({
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={10}>
               <TooltipLabel {...tooltipCopy.note} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => onAddNode({ nodeType: 'folder' })}
+                aria-label='Add folder'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={FolderAddIcon} className='size-4 shrink-0' strokeWidth={2} />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.folder} />
             </TooltipContent>
           </Tooltip>
 

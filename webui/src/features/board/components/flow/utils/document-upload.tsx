@@ -45,6 +45,7 @@ export const DocumentUploadDialog = ({
   onOpenChange,
 }: DocumentUploadDialogProps) => {
   const boardId = useGraphStore(state => state.boardId)
+  const rootId = useGraphStore(state => state.rootId)
   const [file, setFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const { parseDocumentAsync } = useParseDocument()
@@ -62,7 +63,7 @@ export const DocumentUploadDialog = ({
     }, 1000)
     onOpenChange(false)
     try {
-      await parseDocumentAsync({ boardId, file })
+      await parseDocumentAsync({ boardId, file, rootId })
       window.clearInterval(timer)
       toast.dismiss(id)
       const finalElapsed = formatElapsed()

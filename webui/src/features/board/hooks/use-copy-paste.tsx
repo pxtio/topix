@@ -30,6 +30,8 @@ type CopyPasteOptions = {
 
 type Jitter = { dx: number, dy: number }
 
+const isFolderNode = (node: NoteNode) => node.data?.style?.type === 'folder'
+
 export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
   const { jitterMax = 30, shortcuts = true, isCopyableNode } = opts
 
@@ -54,7 +56,8 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
 
   const getSelectedNoteNodes = useCallback((): NoteNode[] => {
     const selected = nodes.filter(n => n.selected) as NoteNode[]
-    return isCopyableNode ? selected.filter(isCopyableNode) : selected
+    const nonFolderSelected = selected.filter(node => !isFolderNode(node))
+    return isCopyableNode ? nonFolderSelected.filter(isCopyableNode) : nonFolderSelected
   }, [nodes, isCopyableNode])
 
   /**
@@ -82,7 +85,7 @@ export function useCopyPasteNodes(opts: CopyPasteOptions = {}) {
 
     const notes = selectedWithEdges
       .map(n => (n.data?.note ?? n.data) as Note | undefined)
-      .filter((v): v is Note => v?.type === 'note')
+      .filter((v): v is Note => v?.type === 'note' && v.style?.type !== 'folder')
 
     const pointNodes = selectedWithEdges.filter(
       n => (n.data as { kind?: string }).kind === 'point'

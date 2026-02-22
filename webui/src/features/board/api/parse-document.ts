@@ -54,7 +54,16 @@ export const useParseDocument = () => {
       file: File
       rootId?: string
     }): Promise<ParseDocumentResponse> => parseDocument(boardId, file, rootId),
-    onSuccess: ({ notes, links }) => {
+    onSuccess: ({ notes, links }, { boardId, rootId }) => {
+      const firstNote = notes[0]
+      if (firstNote) {
+        const expectedParentId = rootId ?? undefined
+        const firstParentId = firstNote.parentId ?? undefined
+        if (firstNote.graphUid !== boardId || firstParentId !== expectedParentId) {
+          return
+        }
+      }
+
       const nodes = notes.map(convertNoteToNode)
       const nodesById = new Map(nodes.map(node => [node.id, node]))
       const edges: LinkEdge[] = []

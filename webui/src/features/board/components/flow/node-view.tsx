@@ -286,7 +286,7 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
           selected={selected}
           minHeight={resizeMinHeight}
           minWidth={resizeMinWidth}
-          keepAspectRatio={isVisualNode}
+          keepAspectRatio
           onResizeStart={handleResizeStart}
           onResizeEnd={handleResizeEnd}
         />

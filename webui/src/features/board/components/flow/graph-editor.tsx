@@ -50,7 +50,6 @@ import { applyBackgroundAlpha, type BoardBackgroundTexture } from '../../utils/b
 
 import './graph-styles.css'
 import { useThumbnailCapture } from '../../hooks/use-thumbnail-capture'
-import { FolderBreadcrumb } from './folder-breadcrumb'
 
 const proOptions = { hideAttribution: true }
 
@@ -706,8 +705,6 @@ export default function GraphEditor() {
           <LinearView />
         )}
       </div>
-
-      {viewMode === 'graph' && <FolderBreadcrumb boardId={boardId} rootId={rootId} />}
 
       {presentationMode && (
         <PresentationControls

@@ -32,7 +32,7 @@ export function FolderBreadcrumb({
   if (!boardId || !rootId) return null
 
   return (
-    <div className="absolute top-14 left-2 z-40 max-w-[60vw] rounded-lg border border-border bg-sidebar/90 backdrop-blur px-2 py-1.5 flex items-center gap-1 overflow-x-auto">
+    <div className="max-w-[60vw] rounded-lg border border-border bg-sidebar/90 backdrop-blur px-2 py-1.5 flex items-center gap-1 overflow-x-auto">
       <Button
         variant="ghost"
         size="sm"
@@ -54,6 +54,7 @@ export function FolderBreadcrumb({
 
       {crumbs.map((crumb, index) => {
         const isLast = index === crumbs.length - 1
+        const crumbLabel = isLast ? crumb.label : "..."
         return (
           <div key={crumb.id} className="flex items-center gap-1">
             <span className="text-muted-foreground text-xs">/</span>
@@ -73,7 +74,7 @@ export function FolderBreadcrumb({
                 })
               }
             >
-              {crumb.label}
+              {crumbLabel}
             </Button>
           </div>
         )

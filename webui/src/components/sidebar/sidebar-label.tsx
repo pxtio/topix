@@ -12,6 +12,7 @@ import { UNTITLED_LABEL } from "@/features/board/const"
 import { useGraphStore } from "@/features/board/store/graph-store"
 import { useGetNote } from "@/features/board/api/get-note"
 import { useUpdateNote } from "@/features/board/api/update-note"
+import { FolderBreadcrumb } from "@/features/board/components/flow/folder-breadcrumb"
 
 export const SidebarLabel = () => {
   const navigate = useNavigate()
@@ -24,6 +25,11 @@ export const SidebarLabel = () => {
   const subscriptionParams = useParams({ from: "/subscriptions/$id", shouldThrow: false })
   const chatId  = chatParams?.id
   const boardId = boardParams?.id
+  const boardRootId = useSearch({
+    from: "/boards/$id",
+    select: (s: { root_id?: string }) => s.root_id,
+    shouldThrow: false,
+  })
   const sheetBoardId = sheetParams?.id
   const sheetNoteId = sheetParams?.noteId
   const subscriptionId = subscriptionParams?.id
@@ -194,6 +200,13 @@ export const SidebarLabel = () => {
 
   // BOARD
   if (active.view === "board" && active.id) {
+    if (boardRootId) {
+      return (
+        <div className={`${wrapClass} flex-1 min-w-0`}>
+          <FolderBreadcrumb boardId={active.id} rootId={boardRootId} />
+        </div>
+      )
+    }
     return (
       <div className={`${wrapClass} flex-1 min-w-0`}>
         <LabelEditor

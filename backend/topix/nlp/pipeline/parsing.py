@@ -191,12 +191,15 @@ class ParsingPipeline:
     async def get_graph_nodes(
         self,
         graph_uid: str,
+        root_id: str | None = None,
         limit: int = 1000,
     ) -> list[Note | Document]:
         """Retrieve graph nodes (notes and documents) by graph UID.
 
         Args:
             graph_uid (str): Graph UID to filter by.
+            root_id (str | None): Optional root node ID to filter sub-graph nodes that
+                are direct children of the specified root (None means first-level nodes).
             limit (int): Maximum number of nodes to retrieve.
 
         Returns:
@@ -220,7 +223,13 @@ class ParsingPipeline:
             include=True,
             limit=limit,
         )
-        return [result.resource for result in results]
+        nodes = [result.resource for result in results]
+        return [
+            node
+            for node in nodes
+            if (root_id is None and node.parent_id is None)
+            or (root_id is not None and node.parent_id == root_id)
+        ]
 
     def apply_layout_to_document_mindmap(
         self,
@@ -283,6 +292,7 @@ class ParsingPipeline:
         vgap: float = 400,
         gap: float = 100.0,
         limit: int = 1000,
+        root_id: str | None = None,
     ) -> list[Note | Document]:
         """Layout a document mindmap and position it outside existing nodes.
 
@@ -295,6 +305,8 @@ class ParsingPipeline:
             vgap (float): Vertical gap for layout.
             gap (float): Vertical gap between existing nodes and new layout.
             limit (int): Maximum number of existing nodes to consider.
+            root_id (str | None): Optional root node ID to filter sub-graph nodes that
+                are direct children of the specified root (None means first-level nodes).
 
         Returns:
             list[Note | Document]
@@ -315,6 +327,7 @@ class ParsingPipeline:
 
         existing_nodes = await self.get_graph_nodes(
             graph_uid=graph_uid,
+            root_id=root_id,
             limit=limit,
         )
         if not existing_nodes:
@@ -336,7 +349,8 @@ class ParsingPipeline:
         document: Document,
         chunks: list[Chunk],
         notes: list[Note],
-        links: list[Link]
+        links: list[Link],
+        root_id: str | None = None,
     ) -> tuple[Document, list[Note], list[Link]]:
         """Save document and chunks to vector store.
 
@@ -346,12 +360,14 @@ class ParsingPipeline:
             chunks (list[Chunk]): The chunks to save.
             notes (list[Note]): The notes to save.
             links (list[Link]): The links to save.
+            root_id (str | None): Optional root node ID to assign as parent_id for all nodes.
 
         """
         document.properties.status.value = DocumentStatusEnum.COMPLETED
         nodes = notes + [document]
         displaced_nodes = await self.place_document_mindmap_outside_graph(
             graph_uid=graph_uid,
+            root_id=root_id,
             nodes=nodes,
             links=links,
         )
@@ -359,6 +375,9 @@ class ParsingPipeline:
 
         for element in elements:
             element.graph_uid = graph_uid
+            if isinstance(element, (Note, Document)):
+                # TODO(folder): validate root_id belongs to graph_uid before assigning parent_id.
+                element.parent_id = root_id
 
         await self.vector_store.add(elements)
 

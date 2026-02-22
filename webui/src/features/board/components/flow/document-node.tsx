@@ -149,7 +149,7 @@ export const DocumentNode = memo(function DocumentNode({ id, data, selected }: N
   const content = (
     <div className="relative w-full h-full">
       <div className={className}>
-        <div className="w-full max-w-[110px] aspect-square">
+        <div className="w-full h-full">
           <PdfIcon pageFill={pageFill} panelFill={panelFill} outline={outline} textFill={textFill} scribble={scribble} />
         </div>
       </div>

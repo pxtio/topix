@@ -5,6 +5,7 @@ import {
   ArrowMoveDownRightIcon,
   CircleIcon,
   DiamondIcon,
+  FolderAddIcon,
   GeometricShapes01Icon,
   GoogleDocIcon,
   Image02Icon,
@@ -20,6 +21,7 @@ import type { AddNoteNodeOptions } from '../../hooks/use-add-node'
 import type { NodeType } from '../../types/style'
 import clsx from 'clsx'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useGraphStore } from '../../store/graph-store'
 
 type ViewMode = 'graph' | 'linear'
 
@@ -53,6 +55,9 @@ export const ToolPanel = memo(function ToolPanel({
   boardId,
 }: ToolPanelProps) {
   const handleAddShape = (nodeType: NodeType) => onAddNode({ nodeType })
+  const currentFolderDepth = useGraphStore(state => state.currentFolderDepth)
+  const maxFolderDepth = useGraphStore(state => state.maxFolderDepth)
+  const isAtMaxFolderDepth = currentFolderDepth < 0 || currentFolderDepth >= maxFolderDepth
 
   const shapeOptions: { nodeType: NodeType, label: string, icon: ReactNode, shortcut?: string }[] = [
     { nodeType: 'rectangle', label: 'Rectangle', icon: <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} />, shortcut: 'R' },
@@ -115,6 +120,14 @@ export const ToolPanel = memo(function ToolPanel({
       title: 'Upload document',
       description: 'Parse a PDF and add notes.',
       shortcut: 'P',
+    },
+    folder: {
+      title: 'Folder',
+      description: isAtMaxFolderDepth
+        ? (currentFolderDepth < 0
+          ? 'Resolving folder depth...'
+          : `Max folder depth reached (${maxFolderDepth}).`)
+        : 'Create a folder node.',
     },
     copilot: {
       title: 'Copilot',
@@ -185,6 +198,29 @@ export const ToolPanel = memo(function ToolPanel({
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={10}>
               <TooltipLabel {...tooltipCopy.note} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={clsx(normalButtonClass, isAtMaxFolderDepth && 'opacity-50')}
+                size='icon'
+                aria-disabled={isAtMaxFolderDepth}
+                onClick={() => {
+                  if (isAtMaxFolderDepth) return
+                  onAddNode({ nodeType: 'folder' })
+                }}
+                aria-label='Add folder'
+              >
+                <span className='relative inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={FolderAddIcon} className='size-4 shrink-0' strokeWidth={2} />
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.folder} />
             </TooltipContent>
           </Tooltip>
 
@@ -419,17 +455,20 @@ export const ToolPanel = memo(function ToolPanel({
             <TooltipTrigger asChild>
               <Button
                 variant={null}
-                className={normalButtonClass}
+                className={clsx(normalButtonClass, isAtMaxFolderDepth && 'opacity-50')}
                 size='icon'
-                onClick={() => setOpenDocumentUpload(true)}
-                aria-label='Upload document'
-                disabled={!boardId}
+                aria-disabled={isAtMaxFolderDepth}
+                onClick={() => {
+                  if (isAtMaxFolderDepth) return
+                  onAddNode({ nodeType: 'folder' })
+                }}
+                aria-label='Add folder'
               >
-                <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
+                <HugeiconsIcon icon={FolderAddIcon} className='size-4 shrink-0' strokeWidth={2} />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={10}>
-              <TooltipLabel {...tooltipCopy.document} />
+              <TooltipLabel {...tooltipCopy.folder} />
             </TooltipContent>
           </Tooltip>
 
@@ -448,6 +487,24 @@ export const ToolPanel = memo(function ToolPanel({
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={10}>
               <TooltipLabel {...tooltipCopy.copilot} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => setOpenDocumentUpload(true)}
+                aria-label='Upload document'
+                disabled={!boardId}
+              >
+                <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={10}>
+              <TooltipLabel {...tooltipCopy.document} />
             </TooltipContent>
           </Tooltip>
 

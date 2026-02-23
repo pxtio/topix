@@ -26,6 +26,7 @@ export function useAddNoteNode() {
   const { getViewport } = useReactFlow()
 
   const boardId = useGraphStore(state => state.boardId)
+  const rootId = useGraphStore(state => state.rootId)
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
   const nodes = useGraphStore(useShallow(state => state.nodes))
 
@@ -41,6 +42,7 @@ export function useAddNoteNode() {
     if (!boardId) return
 
     const newNote = createDefaultNote({ boardId, nodeType })
+    newNote.parentId = rootId
     newNote.style = applyDefaultNodeStyle(nodeType)
 
     if (imageUrl) {
@@ -95,5 +97,5 @@ export function useAddNoteNode() {
     const newNodes = nodes.map(n => ({ ...n, selected: false }))
     node.selected = true
     setNodesPersist([...newNodes, node])
-  }, [boardId, getViewport, setNodesPersist, nodes, applyDefaultNodeStyle])
+  }, [boardId, rootId, getViewport, setNodesPersist, nodes, applyDefaultNodeStyle])
 }

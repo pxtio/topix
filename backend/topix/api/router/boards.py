@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from fastapi.params import Body, Path
 
 from topix.api.datatypes.requests import AddLinksRequest, AddNotesRequest, GraphUpdateRequest, LinkUpdateRequest, NoteUpdateRequest
@@ -73,12 +73,16 @@ async def get_graph(
     response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
-    user_id: Annotated[str, Depends(get_current_user_uid)]
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    root_id: Annotated[str | None, Query(description="Root node ID for subgraph (direct children only)")] = None,
 ):
     """Get a graph by its ID."""
     store: GraphStore = request.app.graph_store
 
-    graph = await store.get_graph(graph_uid=graph_id)
+    try:
+        graph = await store.get_graph(graph_uid=graph_id, root_id=root_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     if not graph:
         raise HTTPException(status_code=404, detail="Graph not found")
 
@@ -152,6 +156,26 @@ async def get_note(
         raise HTTPException(status_code=404, detail="Note not found")
 
     return {"note": notes[0].model_dump(exclude_none=True)}
+
+
+@router.get("/{graph_id}/notes/{note_id}/path", include_in_schema=False)
+@router.get("/{graph_id}/notes/{note_id}/path")
+@with_standard_response
+async def get_note_path(
+    response: Response,
+    request: Request,
+    graph_id: Annotated[str, Path(description="Graph ID")],
+    note_id: Annotated[str, Path(description="Note ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)]
+):
+    """Get full path from root to a note."""
+    store: GraphStore = request.app.graph_store
+
+    path = await store.get_node_path(graph_uid=graph_id, node_id=note_id)
+    if not path:
+        raise HTTPException(status_code=404, detail="Note path not found")
+
+    return {"path": [node.model_dump(exclude_none=True) for node in path]}
 
 
 @router.patch("/{graph_id}/notes/{note_id}/", include_in_schema=False)

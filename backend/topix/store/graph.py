@@ -3,7 +3,12 @@
 import asyncio
 import logging
 
-from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue
+from qdrant_client.models import (
+    FieldCondition,
+    Filter,
+    MatchAny,
+    MatchValue,
+)
 
 from topix.datatypes.graph.graph import Graph
 from topix.datatypes.note.link import Link
@@ -39,15 +44,21 @@ class GraphStore:
 
     async def add_notes(self, nodes: list[Note]):
         """Add nodes to the graph."""
+        # TODO(folder): validate parent_id exists and belongs to the same graph.
+        # TODO(folder): reject invalid parent assignments and cycles on create.
         await self._content_store.add(nodes)
 
     async def update_node(self, node_id: str, data: dict):
         """Update a node in the graph."""
+        # TODO(folder): validate parent_id exists and belongs to the same graph.
+        # TODO(folder): reject self-parent and cyclic reparent operations.
         data["id"] = node_id
         await self._content_store.update([data])
 
     async def delete_node(self, node_id: str, hard_delete: bool = True):
         """Delete a node from the graph."""
+        # TODO(folder): cascade-delete descendants when folder/subtree semantics are enabled.
+        # For now this deletes only the requested node.
         await self._content_store.delete([node_id], hard_delete=hard_delete)
 
         # deleted associated chunks
@@ -97,27 +108,44 @@ class GraphStore:
         results = await self._content_store.get(link_ids)
         return [result.resource for result in results]
 
-    async def get_graph(self, graph_uid: str) -> Graph | None:
+    async def get_graph(self, graph_uid: str, root_id: str | None = None) -> Graph | None:
         """Retrieve the entire graph by its UID."""
         async with self._pg_pool.acquire() as conn:
             graph = await get_graph_by_uid(conn, graph_uid)
         if not graph:
             return None
+
+        if root_id is not None:
+            root_nodes = await self.get_nodes([root_id])
+            if not root_nodes:
+                raise ValueError("root node not found")
+            root_node = root_nodes[0]
+            if root_node.graph_uid != graph_uid:
+                raise ValueError("root node does not belong to graph")
+
+        node_must_filters: list[FieldCondition] = [
+            FieldCondition(
+                key="graph_uid",
+                match=MatchValue(value=graph_uid),
+            ),
+            FieldCondition(
+                key="type",
+                match=MatchAny(any=["note", "document"]),
+            ),
+        ]
         node_results = await self._content_store.filt(
             filters=Filter(
-                must=[
-                    FieldCondition(
-                        key="graph_uid",
-                        match=MatchValue(value=graph_uid),
-                    ),
-                    FieldCondition(
-                        key="type",
-                        match=MatchAny(any=["note", "document"]),
-                    ),
-                ]
+                must=node_must_filters
             )
         )
-        graph.nodes = [result.resource for result in node_results]
+        graph.nodes = [
+            node
+            for node in (result.resource for result in node_results)
+            if (root_id is None and node.parent_id is None)
+            or (root_id is not None and node.parent_id == root_id)
+        ]
+
+        node_ids = {node.id for node in graph.nodes}
         link_results = await self._content_store.filt(
             filters=Filter(
                 must=[
@@ -132,8 +160,100 @@ class GraphStore:
                 ]
             )
         )
-        graph.edges = [result.resource for result in link_results]
+        graph.edges = [
+            result.resource
+            for result in link_results
+            # Only include links where both source
+            # and target nodes are in the retrieved node set.
+            if isinstance(result.resource, Link)
+            and result.resource.source in node_ids
+            and result.resource.target in node_ids
+        ]
+
         return graph
+
+    async def get_node_path(self, graph_uid: str, node_id: str) -> list[Note]:
+        """Return node path from root to the target node (inclusive)."""
+        path: list[Note] = []
+        current_id: str | None = node_id
+        visited: set[str] = set()
+
+        while current_id:
+            if current_id in visited:
+                # Safety against corrupted cyclic parent chains.
+                break
+            visited.add(current_id)
+
+            nodes = await self.get_nodes([current_id])
+            if not nodes:
+                break
+            node = nodes[0]
+            if node.graph_uid != graph_uid:
+                return []
+            path.append(node)
+            current_id = node.parent_id
+
+        path.reverse()
+        return path
+
+    async def get_node_descendants(self, node_id: str) -> list[Note]:
+        """Return all descendants for a node using BFS on parent_id."""
+        # TODO(folder): validate root type is note/document and graph_uid is present.
+        # If root is malformed or not a traversable node, return [] (or raise) explicitly.
+        root_nodes = await self.get_nodes([node_id])
+        if not root_nodes:
+            return []
+
+        root = root_nodes[0]
+        graph_uid = root.graph_uid
+
+        descendants: list[Note] = []
+        visited: set[str] = {node_id}
+        frontier: list[str] = [node_id]
+
+        while frontier:
+            # TODO(folder): exclude soft-deleted descendants by adding deleted_at == null
+            # in this filter once null filtering is standardized in the Qdrant layer.
+            # TODO(folder): chunk large frontiers (e.g. 200-500 ids) and query per chunk
+            # to avoid oversized MatchAny filters on very wide/deep subtrees.
+            results = await self._content_store.filt(
+                filters=Filter(
+                    must=[
+                        FieldCondition(
+                            key="graph_uid",
+                            match=MatchValue(value=graph_uid),
+                        ),
+                        FieldCondition(
+                            key="type",
+                            match=MatchAny(any=["note", "document"]),
+                        ),
+                        FieldCondition(
+                            key="parent_id",
+                            match=MatchAny(any=frontier),
+                        ),
+                    ]
+                )
+            )
+
+            level_nodes: list[Note] = []
+            next_frontier: list[str] = []
+            for result in results:
+                node = result.resource
+                if not isinstance(node, Note):
+                    continue
+                if node.id in visited:
+                    continue
+                visited.add(node.id)
+                level_nodes.append(node)
+                next_frontier.append(node.id)
+
+            if not level_nodes:
+                break
+
+            descendants.extend(level_nodes)
+            frontier = next_frontier
+
+        return descendants
 
     async def add_graph(self, graph: Graph, user_uid: str) -> Graph:
         """Create a new graph."""

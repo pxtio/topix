@@ -1,12 +1,13 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
-import clsx from 'clsx'
+import { useNavigate } from '@tanstack/react-router'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon } from '@hugeicons/core-free-icons'
 
 import type { NoteNode } from '../../types/flow'
-import { useTheme } from '@/components/theme-provider'
-import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import { useGraphStore } from '../../store/graph-store'
+import { useTheme } from '@/components/theme-provider'
+import { darkModeDisplayHex, darkerDisplayHex, lighterDisplayHex } from '../../lib/colors/dark-variants'
+import { isTransparent } from '../../lib/colors/tailwind'
 
 
 type Props = {
@@ -14,72 +15,67 @@ type Props = {
 }
 
 
-type PdfIconProps = {
-  pageFill: string
-  panelFill: string
-  outline: string
-  textFill: string
-  scribble: string
+const normalizeLabel = (markdown?: string) => {
+  const text = (markdown ?? '').replace(/\s+/g, ' ').trim()
+  return text || 'Untitled folder'
 }
 
 
-const PdfIcon = ({ pageFill, panelFill, outline, textFill, scribble }: PdfIconProps) => (
+type FolderIconProps = {
+  backFill: string
+  frontFill: string
+  strokeColor: string
+}
+
+
+const FolderIcon = ({ backFill, frontFill, strokeColor }: FolderIconProps) => (
   <svg
-    viewBox='0 0 117.67525151090831 139.73315199366107'
+    viewBox='0 0 176.34001148055313 139.78787752716778'
     className='w-full h-full'
     aria-hidden='true'
   >
-    <rect x='0' y='0' width='117.67525151090831' height='139.73315199366107' fill='transparent' />
-    <g strokeLinecap='round' transform='translate(10 10) rotate(0 43.92912551591962 59.866575996830534)'>
-      <path d='M0.54 -1.78 L86.22 0.99 L86.6 119.57 L0.87 120.15' stroke='none' strokeWidth='0' fill={pageFill} />
-      <path d='M0 0 C21.44 1.96, 41.81 -1.09, 87.86 0 M0 0 C18.48 -0.07, 38.75 0.23, 87.86 0 M87.86 0 C89.68 42.54, 87.63 83.03, 87.86 119.73 M87.86 0 C85.87 27.27, 87.11 54.65, 87.86 119.73 M87.86 119.73 C53.64 120.77, 21.81 121.28, 0 119.73 M87.86 119.73 C66.32 120, 46.93 119.62, 0 119.73 M0 119.73 C0.97 89.37, 1.54 60.61, 0 0 M0 119.73 C0.06 79.48, 1.44 38.03, 0 0' stroke={outline} strokeWidth='4' fill='none' />
-    </g>
-    <g strokeLinecap='round' transform='translate(49.33931401090831 24.4825232163912) rotate(0 29.16796875 15.000000000000227)'>
-      <path d='M-1.63 0.99 L57.08 -0.17 L59.21 30.41 L1.57 30.28' stroke='none' strokeWidth='0' fill={panelFill} />
-      <path d='M0 0 C10.9 -2.17, 23.84 1.28, 58.34 0 M0 0 C14.94 0.1, 29.96 0.85, 58.34 0 M58.34 0 C57.61 10.52, 57.15 21.32, 58.34 30 M58.34 0 C58.28 8.21, 58.91 17.61, 58.34 30 M58.34 30 C43.52 31.98, 23.45 31.13, 0 30 M58.34 30 C43.44 30.54, 26.94 30.43, 0 30 M0 30 C1.49 20.31, 0.63 10.74, 0 0 M0 30 C0.79 23.32, 0.52 16.5, 0 0' stroke={outline} strokeWidth='4' fill='none' />
-    </g>
-    <g transform='translate(58.629823331121315 28.904475129760613) rotate(0 21.389984130859375 12.5)'>
-      <text
-        x='0'
-        y='17.62'
-        fontFamily='var(--font-handwriting)'
-        fontSize='20px'
-        fill={textFill}
-        textAnchor='start'
-        style={{ whiteSpace: 'pre' }}
-        direction='ltr'
-        dominantBaseline='alphabetic'
-      >
-        PDF
-      </text>
+    <rect x='0' y='0' width='176.34001148055313' height='139.78787752716778' fill='transparent' />
+    <g strokeLinecap='round'>
+      <g transform='translate(10.909074119042202 10.141056228623995) rotate(0 77.26093162123442 59.75288253495998)' fillRule='evenodd'>
+        <path d='M-0.76 0.91 L60.29 -1.3 L85.75 21.46 L155.52 21.28 L152.85 119.91 L0.73 118.99 L-1.63 0.6' stroke='none' strokeWidth='0' fill={backFill} fillRule='evenodd' />
+        <path d='M0 0 C17.53 -0.66, 33.72 1.27, 62.03 0 M0 0 C22.67 1.01, 44.88 1.39, 62.03 0 M62.03 0 C70 8.26, 78.24 17.45, 84.35 21.12 M62.03 0 C69.8 7.43, 76.96 14.93, 84.35 21.12 M84.35 21.12 C104.23 20.29, 123.92 20.16, 154.18 21.12 M84.35 21.12 C100.53 21.64, 115.05 21.4, 154.18 21.12 M154.18 21.12 C156.03 43.66, 155.66 66.44, 154.18 117.99 M154.18 21.12 C154.42 46.34, 153.85 70.99, 154.18 117.99 M154.18 117.99 C105.71 120.39, 57.4 120, 0 117.99 M154.18 117.99 C99.57 118.72, 44.44 118.88, 0 117.99 M0 117.99 C-2.07 73.13, 0.06 25.53, 0 0 M0 117.99 C-1.11 88.05, -0.32 58.66, 0 0 M0 0 C0 0, 0 0, 0 0 M0 0 C0 0, 0 0, 0 0' stroke={strokeColor} strokeWidth='4' fill='none' />
+      </g>
     </g>
     <g strokeLinecap='round'>
-      <g transform='translate(54.5149032563254 81.57018826929334) rotate(351.57439371648013 -0.5603504143064129 13.724938776018462)'>
-        <path d='M0 0 C-1.93 5.22, -7.64 26.96, -11.57 31.32 C-15.51 35.69, -29.2 27.93, -23.61 26.2 C-18.03 24.46, 15.99 20.49, 21.93 20.9 C27.88 21.31, 18.39 32.73, 12.04 28.63 C5.69 24.54, -14.18 1.12, -16.19 -3.65 C-18.2 -8.42, -2.7 -0.61, 0 0 M0 0 C-1.93 5.22, -7.64 26.96, -11.57 31.32 C-15.51 35.69, -29.2 27.93, -23.61 26.2 C-18.03 24.46, 15.99 20.49, 21.93 20.9 C27.88 21.31, 18.39 32.73, 12.04 28.63 C5.69 24.54, -14.18 1.12, -16.19 -3.65 C-18.2 -8.42, -2.7 -0.61, 0 0' stroke={scribble} strokeWidth='4' fill='none' />
+      <g transform='translate(165.44143002981946 31.259407577093214) rotate(0 -77.63307152033497 48.34282544496588)' fillRule='evenodd'>
+        <path d='M-1.76 -1.67 L-153.54 0.46 L-155.29 95.6 L-0.3 95.44 L-1.32 -0.23' stroke='none' strokeWidth='0' fill={frontFill} fillRule='evenodd' />
+        <path d='M0 0 C-50.46 0.94, -96.36 -1.91, -154.53 0 M0 0 C-36.76 1.95, -72.04 1.43, -154.53 0 M-154.53 0 C-156.39 31.51, -154.07 60.1, -154.53 96.54 M-154.53 0 C-154.67 25.04, -154.45 50.2, -154.53 96.54 M-154.53 96.54 C-102.96 96.29, -51.57 98.51, -1.06 96.54 M-154.53 96.54 C-106.28 95.97, -58.46 96.49, -1.06 96.54 M-1.06 96.54 C-0.55 62.57, -1.68 27.93, 0 0 M-1.06 96.54 C-1.38 73.13, -0.02 48.15, 0 0 M0 0 C0 0, 0 0, 0 0 M0 0 C0 0, 0 0, 0 0' stroke={strokeColor} strokeWidth='4' fill='none' />
       </g>
     </g>
   </svg>
 )
 
 
-export const LinearDocumentCard = memo(function LinearDocumentCard({ node }: Props) {
+export const LinearFolderCard = memo(function LinearFolderCard({ node }: Props) {
+  const navigate = useNavigate()
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const boardId = useGraphStore(state => state.boardId)
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
   const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
   const updateNodeByIdPersist = useGraphStore(state => state.updateNodeByIdPersist)
+
   const [labelEditing, setLabelEditing] = useState(false)
   const [labelDraft, setLabelDraft] = useState(node.data.label?.markdown || '')
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const label = node.data.label?.markdown?.trim()
-  const displayLabel = label || 'Untitled document'
 
-  const pageFill = isDark ? darkModeDisplayHex('#f48284') || '#f48284' : '#f48284'
-  const panelFill = isDark ? darkModeDisplayHex('#ffffff') || '#ffffff' : '#ffffff'
-  const outline = isDark ? darkModeDisplayHex('#000000') || '#000000' : '#000000'
-  const textFill = outline
-  const scribble = outline
+  const displayLabel = normalizeLabel(node.data.label?.markdown)
+
+  const displayBackground = isDark
+    ? darkModeDisplayHex(node.data.style.backgroundColor) ?? '#dbeafe'
+    : node.data.style.backgroundColor
+  const iconBackFill = isDark
+    ? lighterDisplayHex(displayBackground) ?? displayBackground
+    : darkerDisplayHex(displayBackground) ?? displayBackground
+  const iconFrontFill = displayBackground
+  const displayStrokeColor = !isTransparent(node.data.style.strokeColor)
+    ? (isDark ? darkModeDisplayHex(node.data.style.strokeColor) ?? '#1e1e1e' : node.data.style.strokeColor)
+    : (isDark ? '#e4e4e7' : '#1e1e1e')
 
   useEffect(() => {
     if (labelEditing) return
@@ -127,24 +123,32 @@ export const LinearDocumentCard = memo(function LinearDocumentCard({ node }: Pro
         type='button'
         onClick={onDelete}
         className='absolute right-2 top-2 z-20 p-1 rounded-md text-foreground/60 hover:text-destructive transition-colors opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'
-        aria-label='Delete document'
+        aria-label='Delete folder'
         title='Delete'
       >
         <HugeiconsIcon icon={Delete02Icon} className='size-4' strokeWidth={2} />
       </button>
 
-      <div
-        className={clsx(
-          'w-full min-h-[100px] max-h-[225px] rounded-md border-2 border-transparent',
-          'bg-transparent transition-colors',
-          'group-hover:bg-accent group-hover:border-border',
-          'flex items-center justify-center p-3',
-        )}
+      <button
+        type='button'
+        onClick={() => {
+          if (!boardId) return
+          navigate({
+            to: '/boards/$id',
+            params: { id: boardId },
+            search: (prev: Record<string, unknown>) => ({ ...prev, root_id: node.id }),
+          })
+        }}
+        className='w-full min-h-[100px] max-h-[225px] rounded-md border-2 border-transparent bg-transparent transition-colors group-hover:bg-accent group-hover:border-border flex items-center justify-center p-3'
       >
         <div className='w-full max-w-[84px] aspect-square'>
-          <PdfIcon pageFill={pageFill} panelFill={panelFill} outline={outline} textFill={textFill} scribble={scribble} />
+          <FolderIcon
+            backFill={iconBackFill}
+            frontFill={iconFrontFill}
+            strokeColor={displayStrokeColor}
+          />
         </div>
-      </div>
+      </button>
 
       <div className='mt-2 px-2'>
         {labelEditing ? (
@@ -166,7 +170,7 @@ export const LinearDocumentCard = memo(function LinearDocumentCard({ node }: Pro
             onMouseDown={event => event.stopPropagation()}
             onClick={event => event.stopPropagation()}
             className='w-full bg-transparent text-center text-sm font-sans font-semibold text-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
-            placeholder='Untitled document'
+            placeholder='Untitled folder'
           />
         ) : (
           <button

@@ -17,7 +17,7 @@ import {
   LabelIcon,
   LeftToRightListBulletIcon,
   Note02Icon,
-  MoreVerticalIcon,
+  MoreHorizontalIcon,
   SquareIcon,
   Tag01Icon,
   TextIcon,
@@ -248,7 +248,7 @@ export const TopBar = memo(function TopBar({
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
                   <Button variant={null} className={normalButtonClass} size='icon' aria-label='More actions'>
-                    <HugeiconsIcon icon={MoreVerticalIcon} className='size-4 shrink-0' strokeWidth={2} />
+                    <HugeiconsIcon icon={MoreHorizontalIcon} className='size-4 shrink-0' strokeWidth={2} />
                   </Button>
                 </DropdownMenuTrigger>
               </TooltipTrigger>

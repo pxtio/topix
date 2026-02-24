@@ -115,7 +115,7 @@ export const TopBar = memo(function TopBar({
 
   return (
     <div
-      className='absolute z-50 border border-border shadow-md backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/80 backdrop-saturate-150 bg-sidebar text-sidebar-foreground rounded-xl p-1 flex gap-1 left-1/2 top-2 -translate-x-1/2 flex-row items-center'
+      className='absolute z-50 border border-border shadow-md backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/80 backdrop-saturate-150 bg-sidebar text-sidebar-foreground rounded-xl p-1 flex gap-1 right-2 top-1/2 -translate-y-1/2 flex-col items-center max-h-[82vh] overflow-y-auto md:left-1/2 md:right-auto md:top-2 md:-translate-x-1/2 md:-translate-y-0 md:flex-row md:items-center md:max-h-none md:overflow-visible'
       role='toolbar'
       aria-label='Board top bar'
     >
@@ -123,7 +123,7 @@ export const TopBar = memo(function TopBar({
         <TooltipTrigger asChild>
           <Button variant={null} size='default' onClick={() => setViewMode('graph')} className={viewMode === 'graph' ? activeButtonClass : normalButtonClass}>
             <HugeiconsIcon icon={ChartBubble02Icon} className='size-4 shrink-0' strokeWidth={2} />
-            <span className='text-xs font-medium'>Graph</span>
+            <span className='text-[10px] sr-only md:not-sr-only'>Graph</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={10}>{tooltipCopy.graph}</TooltipContent>
@@ -132,7 +132,7 @@ export const TopBar = memo(function TopBar({
         <TooltipTrigger asChild>
           <Button variant={null} size='default' onClick={() => setViewMode('linear')} className={viewMode === 'linear' ? activeButtonClass : normalButtonClass}>
             <HugeiconsIcon icon={LeftToRightListBulletIcon} className='size-4 shrink-0' strokeWidth={2} />
-            <span className='text-xs font-medium'>Files</span>
+            <span className='text-[10px] sr-only md:not-sr-only'>Files</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side='bottom' sideOffset={10}>{tooltipCopy.files}</TooltipContent>

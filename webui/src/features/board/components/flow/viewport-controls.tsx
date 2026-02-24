@@ -7,6 +7,7 @@ import type { Viewport } from '@xyflow/react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTheme } from '@/components/theme-provider'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 import type { NoteNode } from '../../types/flow'
 import { NavigableMiniMap } from './navigable-minimap'
@@ -54,6 +55,7 @@ export const ViewportControls = memo(function ViewportControls({
   onBoardBackgroundTextureChange,
 }: Props) {
   const { resolvedTheme } = useTheme()
+  const isMobile = useIsMobile()
   const isDark = resolvedTheme === 'dark'
   const controlButtonClass = 'transition-colors text-card-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground p-2 rounded-md'
   const textureOptions: Array<{ value: BoardBackgroundTexture | null; label: string }> = [
@@ -68,12 +70,14 @@ export const ViewportControls = memo(function ViewportControls({
 
   return (
     <div className='absolute bottom-2 left-2 z-50 flex flex-col gap-0'>
-      <NavigableMiniMap
-        nodes={nodes}
-        wrapperClassName='relative'
-        onNavigate={onNavigate}
-        getCurrentViewport={getCurrentViewport}
-      />
+      {!isMobile && (
+        <NavigableMiniMap
+          nodes={nodes}
+          wrapperClassName='relative'
+          onNavigate={onNavigate}
+          getCurrentViewport={getCurrentViewport}
+        />
+      )}
       <div className='rounded-lg p-0.5 flex justify-center items-center gap-0.5'>
         <Tooltip>
           <TooltipTrigger asChild>

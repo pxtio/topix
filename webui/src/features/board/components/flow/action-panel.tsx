@@ -8,8 +8,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
 import { DocumentUploadDialog } from './utils/document-upload'
 import { AiSparkDialog } from './utils/ai-spark-dialog'
-import { NavigatePanel } from './navigate-panel'
-import { ToolPanel } from './tool-panel'
+import { TopBar } from './top-bar'
 import { SlidePanel } from './slide-panel'
 import { CopilotSheet } from './copilot-sheet'
 
@@ -25,9 +24,7 @@ interface ActionPanelProps {
   // React Flow controls
   onZoomIn: () => void
   onZoomOut: () => void
-  onFitView: () => void
   onResetZoom: () => void
-  isLocked: boolean
   toggleLock: () => void
 
   viewMode: ViewMode
@@ -44,9 +41,7 @@ export const ActionPanel = memo(function ActionPanel({
   setEnableSelection,
   onZoomIn,
   onZoomOut,
-  onFitView,
   onResetZoom,
-  isLocked,
   toggleLock,
   viewMode,
   setViewMode
@@ -63,15 +58,6 @@ export const ActionPanel = memo(function ActionPanel({
   const setNodes = useGraphStore(state => state.setNodes)
   const setViewSlides = useGraphStore(state => state.setViewSlides)
   const presentationMode = useGraphStore(state => state.presentationMode)
-  const boardBackground = useGraphStore(state => state.boardBackground)
-  const setBoardBackground = useGraphStore(state => state.setBoardBackground)
-  const boardBackgroundTexture = useGraphStore(state => state.boardBackgroundTexture)
-  const setBoardBackgroundTexture = useGraphStore(state => state.setBoardBackgroundTexture)
-  const zoom = useGraphStore(state => state.zoom ?? 1)
-  const undo = useGraphStore(state => state.undo)
-  const redo = useGraphStore(state => state.redo)
-  const canUndo = useGraphStore(state => state.historyPast.length > 0)
-  const canRedo = useGraphStore(state => state.historyFuture.length > 0)
   const navigate = useNavigate()
   const boardSearch = useSearch({
     from: "/boards/$id",
@@ -115,7 +101,6 @@ export const ActionPanel = memo(function ActionPanel({
       { key: 'p', handler: () => setEnableSelection(false) },
       { key: 'v', handler: () => setEnableSelection(!enableSelection) },
       { key: 'l', handler: toggleLock },
-      { key: 'f', handler: onFitView },
       { key: '=', handler: onZoomIn },
       { key: '+', handler: onZoomIn },
       { key: '-', handler: onZoomOut },
@@ -127,47 +112,25 @@ export const ActionPanel = memo(function ActionPanel({
   return (
     <>
       {!presentationMode && (
-        <>
-          <NavigatePanel
-            enableSelection={enableSelection}
-            setEnableSelection={setEnableSelection}
-            onZoomIn={onZoomIn}
-            onZoomOut={onZoomOut}
-            onFitView={onFitView}
-            onResetZoom={onResetZoom}
-            isLocked={isLocked}
-            toggleLock={toggleLock}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            zoom={zoom}
-            undo={undo}
-            redo={redo}
-            canUndo={canUndo}
-            canRedo={canRedo}
-            onToggleSlidesPanel={() => setOpenSlidesPanel(v => !v)}
-            slidesPanelOpen={openSlidesPanel}
-            boardBackground={boardBackground}
-            boardBackgroundTexture={boardBackgroundTexture}
-            onBoardBackgroundChange={(color) => setBoardBackground(color)}
-            onBoardBackgroundReset={() => setBoardBackground(null)}
-            onBoardBackgroundTextureChange={(texture) => setBoardBackgroundTexture(texture)}
-          />
-
-          <ToolPanel
-            onAddNode={onAddNode}
-            onAddLine={onAddLine}
-            viewMode={viewMode}
-            openShapeMenu={openShapeMenu}
-            setOpenShapeMenu={setOpenShapeMenu}
-            setOpenIconSearch={setOpenIconSearch}
-            setOpenImageSearch={setOpenImageSearch}
-            setOpenDocumentUpload={setOpenDocumentUpload}
-            setOpenChatDialog={setOpenChatDialog}
-            chatOpen={openChatDialog}
-            setOpenAiSpark={setOpenAiSpark}
-            boardId={boardId}
-          />
-        </>
+        <TopBar
+          onAddNode={onAddNode}
+          onAddLine={onAddLine}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          enableSelection={enableSelection}
+          setEnableSelection={setEnableSelection}
+          openShapeMenu={openShapeMenu}
+          setOpenShapeMenu={setOpenShapeMenu}
+          setOpenIconSearch={setOpenIconSearch}
+          setOpenImageSearch={setOpenImageSearch}
+          setOpenDocumentUpload={setOpenDocumentUpload}
+          setOpenChatDialog={setOpenChatDialog}
+          chatOpen={openChatDialog}
+          setOpenAiSpark={setOpenAiSpark}
+          onToggleSlidesPanel={() => setOpenSlidesPanel(v => !v)}
+          slidesPanelOpen={openSlidesPanel}
+          boardId={boardId}
+        />
       )}
 
       <ImageSearchDialog openImageSearch={openImageSearch} setOpenImageSearch={setOpenImageSearch} />

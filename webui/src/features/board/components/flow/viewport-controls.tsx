@@ -67,14 +67,14 @@ export const ViewportControls = memo(function ViewportControls({
   }))
 
   return (
-    <div className='absolute bottom-4 left-4 z-50 flex flex-col gap-2'>
+    <div className='absolute bottom-2 left-2 z-50 flex flex-col gap-0'>
       <NavigableMiniMap
         nodes={nodes}
         wrapperClassName='relative'
         onNavigate={onNavigate}
         getCurrentViewport={getCurrentViewport}
       />
-      <div className='rounded-lg bg-sidebar/90 backdrop-blur-md p-1 flex items-center gap-1'>
+      <div className='rounded-lg p-0.5 flex justify-center items-center gap-0.5'>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

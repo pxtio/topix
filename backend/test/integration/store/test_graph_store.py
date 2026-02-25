@@ -73,7 +73,7 @@ async def test_graph_crud_lifecycle(config, init_collection):
         assert any(e.id == link.id for e in graph_with_data.edges)
 
         # 8. Update a node
-        await store.update_node(node1.id, {"label": {"markdown": "First Node Updated"}})
+        await store.update_node(node1.id, {"type": "note", "label": {"markdown": "First Node Updated"}})
         updated_nodes = await store.get_nodes([node1.id])
         assert updated_nodes[0].label.markdown == "First Node Updated"
 

@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from 'react'
 import type { AddNoteNodeOptions } from '../../hooks/use-add-node'
 import { ImageSearchDialog } from './utils/image-search'
 import { IconSearchDialog } from './utils/icon-search'
-import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useGraphStore } from '../../store/graph-store'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useBoardShortcuts } from '../../hooks/use-board-shortcuts'
@@ -150,6 +150,9 @@ export const ActionPanel = memo(function ActionPanel({
           onInteractOutside={(event) => event.preventDefault()}
           className="w-[360px] max-w-[92vw] bg-sidebar text-sidebar-foreground border-l border-border p-0"
         >
+          <SheetHeader className='sr-only'>
+            <SheetTitle>Slides</SheetTitle>
+          </SheetHeader>
           <SlidePanel onClose={() => setOpenSlidesPanel(false)} />
         </SheetContent>
       </Sheet>

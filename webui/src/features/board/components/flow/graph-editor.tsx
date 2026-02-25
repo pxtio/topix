@@ -29,7 +29,7 @@ import { DefaultBoardView } from '../default-view'
 import { NodePlacementOverlay } from './node-placement-overlay'
 import { LinePlacementOverlay } from './line-placement-overlay'
 import { GraphContextMenu } from './graph-context-menu'
-import { NavigableMiniMap } from './navigable-minimap'
+import { ViewportControls } from './viewport-controls'
 
 import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
@@ -239,6 +239,9 @@ export default function GraphEditor() {
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
   const undo = useGraphStore(state => state.undo)
   const redo = useGraphStore(state => state.redo)
+  const canUndo = useGraphStore(state => state.historyPast.length > 0)
+  const canRedo = useGraphStore(state => state.historyFuture.length > 0)
+  const zoom = useGraphStore(state => state.zoom ?? 1)
 
   const isResizingNode = useGraphStore(state => state.isResizingNode)
   const isDragging = useGraphStore(state => state.isDragging)
@@ -254,7 +257,9 @@ export default function GraphEditor() {
   const setActiveSlideId = useGraphStore(state => state.setActiveSlideId)
   const setLastCursorPosition = useGraphStore(state => state.setLastCursorPosition)
   const boardBackground = useGraphStore(state => state.boardBackground)
+  const setBoardBackground = useGraphStore(state => state.setBoardBackground)
   const boardBackgroundTexture = useGraphStore(state => state.boardBackgroundTexture)
+  const setBoardBackgroundTexture = useGraphStore(state => state.setBoardBackgroundTexture)
 
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
@@ -430,10 +435,6 @@ export default function GraphEditor() {
 
   const handleZoomIn = useCallback(() => zoomIn({ duration: 200 }), [zoomIn])
   const handleZoomOut = useCallback(() => zoomOut({ duration: 200 }), [zoomOut])
-  const handleFitView = useCallback(
-    () => fitView({ padding: 0.2, duration: 250 }),
-    [fitView],
-  )
   const handleResetZoom = useCallback(() => {
     zoomTo(1)
   }, [zoomTo])
@@ -611,9 +612,7 @@ export default function GraphEditor() {
         setEnableSelection={setEnableSelection}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
-        onFitView={handleFitView}
         onResetZoom={handleResetZoom}
-        isLocked={isLocked}
         toggleLock={handleToggleLock}
         viewMode={viewMode}
         setViewMode={setViewMode}
@@ -678,8 +677,21 @@ export default function GraphEditor() {
                     !isDragging &&
                     !isResizingNode &&
                     !isSelecting && (
-                    <NavigableMiniMap
+                    <ViewportControls
                       nodes={nodes}
+                      onResetZoom={handleResetZoom}
+                      zoom={zoom}
+                      undo={undo}
+                      redo={redo}
+                      canUndo={canUndo}
+                      canRedo={canRedo}
+                      isLocked={isLocked}
+                      toggleLock={handleToggleLock}
+                      boardBackground={boardBackground}
+                      boardBackgroundTexture={boardBackgroundTexture}
+                      onBoardBackgroundChange={setBoardBackground}
+                      onBoardBackgroundReset={() => setBoardBackground(null)}
+                      onBoardBackgroundTextureChange={setBoardBackgroundTexture}
                       onNavigate={handleMiniMapNavigate}
                       getCurrentViewport={getCurrentViewport}
                     />

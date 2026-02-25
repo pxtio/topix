@@ -106,7 +106,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   )
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <Sidebar variant="inset" collapsible="offcanvas">
       <ScrollArea ref={handleScrollAreaRef} className="h-full w-full flex flex-row">
         <SidebarContent className="w-[calc(var(--sidebar-width)-theme(spacing.2)*2)]">
 

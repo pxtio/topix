@@ -5,6 +5,8 @@ from topix.store.postgres.pool import create_pool
 from topix.store.postgres.user_billing import (
     create_user_billing,
     delete_user_billing_by_uid,
+    get_user_billing_by_customer_id,
+    get_user_billing_by_subscription_id,
     get_user_billing_by_uid,
     update_user_billing_by_uid,
     upsert_user_billing_by_uid,
@@ -31,6 +33,16 @@ class UserBillingStore:
         """Retrieve user billing by user UID."""
         async with self._pg_pool.acquire() as conn:
             return await get_user_billing_by_uid(conn, user_uid)
+
+    async def get_user_billing_by_stripe_customer_id(self, stripe_customer_id: str) -> UserBilling | None:
+        """Retrieve user billing by Stripe customer ID."""
+        async with self._pg_pool.acquire() as conn:
+            return await get_user_billing_by_customer_id(conn, stripe_customer_id)
+
+    async def get_user_billing_by_stripe_subscription_id(self, stripe_subscription_id: str) -> UserBilling | None:
+        """Retrieve user billing by Stripe subscription ID."""
+        async with self._pg_pool.acquire() as conn:
+            return await get_user_billing_by_subscription_id(conn, stripe_subscription_id)
 
     async def update_user_billing(self, user_uid: str, data: dict):
         """Update user billing by user UID."""

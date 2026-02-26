@@ -61,6 +61,60 @@ async def get_user_billing_by_uid(
     )
 
 
+async def get_user_billing_by_customer_id(
+    conn: asyncpg.Connection,
+    stripe_customer_id: str,
+) -> UserBilling | None:
+    """Fetch a user billing record by Stripe customer ID."""
+    query = (
+        "SELECT user_uid, plan, status, stripe_customer_id, stripe_subscription_id, "
+        "current_period_start, current_period_end, cancel_at_period_end, created_at, updated_at "
+        "FROM user_billing WHERE stripe_customer_id = $1"
+    )
+    row = await conn.fetchrow(query, stripe_customer_id)
+    if not row:
+        return None
+    return UserBilling(
+        user_uid=row["user_uid"],
+        plan=row["plan"],
+        status=row["status"],
+        stripe_customer_id=row["stripe_customer_id"],
+        stripe_subscription_id=row["stripe_subscription_id"],
+        current_period_start=row["current_period_start"].isoformat() if row["current_period_start"] else None,
+        current_period_end=row["current_period_end"].isoformat() if row["current_period_end"] else None,
+        cancel_at_period_end=row["cancel_at_period_end"],
+        created_at=row["created_at"].isoformat() if row["created_at"] else None,
+        updated_at=row["updated_at"].isoformat() if row["updated_at"] else None,
+    )
+
+
+async def get_user_billing_by_subscription_id(
+    conn: asyncpg.Connection,
+    stripe_subscription_id: str,
+) -> UserBilling | None:
+    """Fetch a user billing record by Stripe subscription ID."""
+    query = (
+        "SELECT user_uid, plan, status, stripe_customer_id, stripe_subscription_id, "
+        "current_period_start, current_period_end, cancel_at_period_end, created_at, updated_at "
+        "FROM user_billing WHERE stripe_subscription_id = $1"
+    )
+    row = await conn.fetchrow(query, stripe_subscription_id)
+    if not row:
+        return None
+    return UserBilling(
+        user_uid=row["user_uid"],
+        plan=row["plan"],
+        status=row["status"],
+        stripe_customer_id=row["stripe_customer_id"],
+        stripe_subscription_id=row["stripe_subscription_id"],
+        current_period_start=row["current_period_start"].isoformat() if row["current_period_start"] else None,
+        current_period_end=row["current_period_end"].isoformat() if row["current_period_end"] else None,
+        cancel_at_period_end=row["cancel_at_period_end"],
+        created_at=row["created_at"].isoformat() if row["created_at"] else None,
+        updated_at=row["updated_at"].isoformat() if row["updated_at"] else None,
+    )
+
+
 async def update_user_billing_by_uid(
     conn: asyncpg.Connection,
     user_uid: str,

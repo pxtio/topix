@@ -11,7 +11,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from topix.api.router import boards, chats, documents, files, finance, subscriptions, tools, users, utils
+from topix.api.router import billing, boards, chats, documents, files, finance, subscriptions, tools, users, utils
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
 from topix.nlp.pipeline.parsing import ParsingPipeline
@@ -77,6 +77,7 @@ def create_app(stage: StageEnum):
     app.include_router(tools.router)
     app.include_router(users.router)
     app.include_router(subscriptions.router)
+    app.include_router(billing.router)
     app.include_router(utils.router)
     app.include_router(finance.router)
     app.include_router(files.router)

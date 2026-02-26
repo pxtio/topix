@@ -19,6 +19,8 @@ import { HomePage } from "@/features/home/screens/home"
 import { SheetScreen } from "@/features/board/screens/sheet-screen"
 import { DashboardScreen } from "@/features/board/screens/dashboard-screen"
 import { NotFoundPage } from "@/components/not-found"
+import { SettingsScreen } from "@/features/user-settings/screens/settings-screen"
+import { BillingScreen } from "@/features/user-settings/screens/billing-screen"
 
 
 export const rootRoute = createRootRoute({
@@ -143,6 +145,22 @@ const newsfeedDetailRoute = createRoute({
   component: NewsfeedLinearPage
 })
 
+export const SettingsUrl = "/settings"
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: SettingsUrl,
+  beforeLoad: requireAuth,
+  component: SettingsScreen,
+})
+
+export const SettingsBillingUrl = "/settings/billing"
+const settingsBillingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: SettingsBillingUrl,
+  beforeLoad: requireAuth,
+  component: BillingScreen,
+})
+
 const routeTree = rootRoute.addChildren([
   signinRoute,
   signupRoute,
@@ -156,6 +174,8 @@ const routeTree = rootRoute.addChildren([
   subscriptionsRoute,
   newsfeedsRoute,
   newsfeedDetailRoute,
+  settingsRoute,
+  settingsBillingRoute,
 ])
 
 export const router = createRouter({ routeTree })

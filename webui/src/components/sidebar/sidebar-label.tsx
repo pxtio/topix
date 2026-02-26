@@ -47,6 +47,8 @@ export const SidebarLabel = () => {
   const isDashboard = pathname === "/boards"
   const isNewChat = pathname === "/chats"
   const isSubscriptionsRoot = pathname === "/subscriptions"
+  const isSettings = pathname === "/settings"
+  const isSettingsBilling = pathname === "/settings/billing"
 
   const active = useMemo(() => {
     if (sheetBoardId && sheetNoteId) return { view: "sheet" as const, id: sheetNoteId, boardId: sheetBoardId }
@@ -57,8 +59,10 @@ export const SidebarLabel = () => {
     if (isNewChat) return { view: "new-chat" as const, id: undefined }
     if (isDashboard) return { view: "dashboard" as const, id: undefined }
     if (isSubscriptionsRoot) return { view: "subscriptions" as const, id: undefined }
+    if (isSettings) return { view: "settings" as const, id: undefined }
+    if (isSettingsBilling) return { view: "settings-billing" as const, id: undefined }
     return { view: "unknown" as const, id: undefined }
-  }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptionsRoot, isHome, sheetBoardId, sheetNoteId])
+  }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptionsRoot, isHome, sheetBoardId, sheetNoteId, isSettings, isSettingsBilling])
 
   // data
   const { data: chatList }  = useListChats({ graphUid: null })
@@ -101,6 +105,14 @@ export const SidebarLabel = () => {
     if (active.view === "sheet") {
       const sheetLabel = sheetNode?.data?.label?.markdown ?? fetchedSheet?.label?.markdown
       setLabel(sheetLabel ?? "Sheet")
+      return
+    }
+    if (active.view === "settings") {
+      setLabel("Settings")
+      return
+    }
+    if (active.view === "settings-billing") {
+      setLabel("Billing")
       return
     }
     setLabel("")
@@ -173,6 +185,12 @@ export const SidebarLabel = () => {
   // DASHBOARD
   if (active.view === "dashboard")
     return <div className={wrapClass}>Dashboard</div>
+
+  if (active.view === "settings")
+    return <div className={wrapClass}>Settings</div>
+
+  if (active.view === "settings-billing")
+    return <div className={wrapClass}>Billing</div>
 
   // SUBSCRIPTIONS
   if (active.view === "subscriptions") {

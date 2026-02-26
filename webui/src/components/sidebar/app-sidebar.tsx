@@ -34,6 +34,7 @@ import { SubscriptionsMenuItem } from './subscription'
 import { ModeToggle } from '@/components/mode-toggle'
 import { HomeMenuItem } from './home'
 import { useCheckEleInView } from '@/hooks/use-check-ele-in-view'
+import { useNavigate } from '@tanstack/react-router'
 
 
 /**
@@ -52,6 +53,7 @@ type AppSidebarProps = {
 const CHAT_HISTORY_PAGE_SIZE = 50
 
 export function AppSidebar({ onLogout }: AppSidebarProps) {
+  const navigate = useNavigate()
   const userEmail = useAppStore(s => s.userEmail)
 
   const initials = useMemo(() => {
@@ -132,12 +134,18 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                           </span>
                         </SidebarMenuButton>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" side="right" className="w-56">
-                        <DropdownMenuItem disabled className='text-xs'>
+                        <DropdownMenuContent align="start" side="right" className="w-56">
+                        <DropdownMenuItem
+                          className='text-xs'
+                          onClick={() => navigate({ to: "/settings" })}
+                        >
                           <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" strokeWidth={2} />
                           <span>Profile</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem disabled className='text-xs'>
+                        <DropdownMenuItem
+                          className='text-xs'
+                          onClick={() => navigate({ to: "/settings/billing" })}
+                        >
                           <HugeiconsIcon icon={Settings01Icon} className="mr-2 h-4 w-4" strokeWidth={2} />
                           <span>Settings</span>
                         </DropdownMenuItem>

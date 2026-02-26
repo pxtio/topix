@@ -97,18 +97,24 @@ async def test_user_billing_upsert_insert_then_update(conn: asyncpg.Connection):
 
     try:
         # UPSERT INSERT
+        period_start = datetime.now()
+        period_end = datetime.now()
         await upsert_user_billing_by_uid(
             conn,
             user_uid,
             {
                 "plan": "free",
                 "status": "active",
+                "current_period_start": period_start,
+                "current_period_end": period_end,
             }
         )
         inserted = await get_user_billing_by_uid(conn, user_uid)
         assert inserted is not None
         assert inserted.plan == "free"
         assert inserted.status == "active"
+        assert inserted.current_period_start is not None
+        assert inserted.current_period_end is not None
 
         # UPSERT UPDATE
         await upsert_user_billing_by_uid(

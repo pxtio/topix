@@ -15,8 +15,8 @@ async def create_user_billing(
     query = (
         "INSERT INTO user_billing ("
         "user_uid, plan, status, stripe_customer_id, stripe_subscription_id, "
-        "current_period_end, cancel_at_period_end, created_at, updated_at"
-        ") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+        "current_period_start, current_period_end, cancel_at_period_end, created_at, updated_at"
+        ") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
     )
     await conn.execute(
         query,
@@ -25,6 +25,7 @@ async def create_user_billing(
         billing.status,
         billing.stripe_customer_id,
         billing.stripe_subscription_id,
+        billing.current_period_start,
         billing.current_period_end,
         billing.cancel_at_period_end,
         billing.created_at,
@@ -40,7 +41,7 @@ async def get_user_billing_by_uid(
     """Fetch a user billing record by user UID."""
     query = (
         "SELECT user_uid, plan, status, stripe_customer_id, stripe_subscription_id, "
-        "current_period_end, cancel_at_period_end, created_at, updated_at "
+        "current_period_start, current_period_end, cancel_at_period_end, created_at, updated_at "
         "FROM user_billing WHERE user_uid = $1"
     )
     row = await conn.fetchrow(query, user_uid)
@@ -52,6 +53,7 @@ async def get_user_billing_by_uid(
         status=row["status"],
         stripe_customer_id=row["stripe_customer_id"],
         stripe_subscription_id=row["stripe_subscription_id"],
+        current_period_start=row["current_period_start"].isoformat() if row["current_period_start"] else None,
         current_period_end=row["current_period_end"].isoformat() if row["current_period_end"] else None,
         cancel_at_period_end=row["cancel_at_period_end"],
         created_at=row["created_at"].isoformat() if row["created_at"] else None,
@@ -92,6 +94,7 @@ async def upsert_user_billing_by_uid(
         "status",
         "stripe_customer_id",
         "stripe_subscription_id",
+        "current_period_start",
         "current_period_end",
         "cancel_at_period_end",
     }

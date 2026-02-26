@@ -62,6 +62,7 @@ CREATE TABLE user_billing (
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'trialing', 'past_due', 'canceled', 'incomplete')),
     stripe_customer_id TEXT UNIQUE,
     stripe_subscription_id TEXT UNIQUE,
+    current_period_start TIMESTAMP,
     current_period_end TIMESTAMP,
     cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),

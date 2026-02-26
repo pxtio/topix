@@ -5,7 +5,6 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-
 BillingPlan = Literal["free", "plus"]
 BillingStatus = Literal["active", "trialing", "past_due", "canceled", "incomplete"]
 
@@ -18,6 +17,7 @@ class UserBilling(BaseModel):
     status: BillingStatus = "active"
     stripe_customer_id: str | None = None
     stripe_subscription_id: str | None = None
+    current_period_start: datetime | None = None
     current_period_end: datetime | None = None
     cancel_at_period_end: bool = False
 

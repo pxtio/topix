@@ -21,6 +21,7 @@ from topix.store.graph import GraphStore
 from topix.store.redis.store import RedisStore
 from topix.store.subscription import SubscriptionStore
 from topix.store.user import UserStore
+from topix.store.user_billing import UserBillingStore
 from topix.utils.logging import logging_config
 
 logging_config()
@@ -39,6 +40,8 @@ def create_app(stage: StageEnum):
         await app.user_store.open()
         app.chat_store = ChatStore()
         await app.chat_store.open()
+        app.user_billing_store = UserBillingStore()
+        await app.user_billing_store.open()
         app.subscription_store = SubscriptionStore()
         await app.subscription_store.open()
         app.parser_pipeline = ParsingPipeline()
@@ -52,6 +55,7 @@ def create_app(stage: StageEnum):
         await app.graph_store.close()
         await app.user_store.close()
         await app.chat_store.close()
+        await app.user_billing_store.close()
         await app.subscription_store.close()
         # Close Redis
         await app.redis_store.close()

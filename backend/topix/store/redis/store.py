@@ -1,6 +1,9 @@
 """Redis store manager for handling data in Redis."""
 import time
 
+from datetime import datetime, timedelta, timezone
+from typing import Literal
+
 from redis.asyncio import Redis
 
 from topix.config.config import Config, RedisConfig
@@ -86,3 +89,51 @@ class RedisStore:
         request_count = results[1]
 
         return request_count < max_requests
+
+    @staticmethod
+    def _seconds_until_utc_reset(period: Literal["minute", "day", "month"]) -> int:
+        """Return seconds until the next UTC boundary for the selected period."""
+        now = datetime.now(timezone.utc)
+        if period == "minute":
+            next_boundary = now.replace(second=0, microsecond=0) + timedelta(minutes=1)
+        elif period == "day":
+            next_boundary = datetime(
+                year=now.year,
+                month=now.month,
+                day=now.day,
+                tzinfo=timezone.utc,
+            ) + timedelta(days=1)
+        else:
+            year = now.year + (1 if now.month == 12 else 0)
+            month = 1 if now.month == 12 else now.month + 1
+            next_boundary = datetime(year=year, month=month, day=1, tzinfo=timezone.utc)
+
+        return max(int((next_boundary - now).total_seconds()), 1)
+
+    @staticmethod
+    def _utc_period_bucket(period: Literal["minute", "day", "month"]) -> str:
+        """Return UTC bucket key fragment for a fixed period."""
+        now = datetime.now(timezone.utc)
+        if period == "minute":
+            return now.strftime("%Y%m%d%H%M")
+        if period == "day":
+            return now.strftime("%Y%m%d")
+        return now.strftime("%Y%m")
+
+    async def check_fixed_window_quota(
+        self,
+        user_id: str,
+        limit: int,
+        period: Literal["minute", "day", "month"],
+        scope: str = "tier_usage",
+    ) -> tuple[bool, int]:
+        """Check and increment a UTC fixed-window quota."""
+        bucket = self._utc_period_bucket(period)
+        key = f"quota:{scope}:{period}:{bucket}:{user_id}"
+        retry_after = self._seconds_until_utc_reset(period)
+
+        current = await self.redis.incr(key)
+        if current == 1:
+            await self.redis.expire(key, retry_after)
+
+        return current <= limit, retry_after

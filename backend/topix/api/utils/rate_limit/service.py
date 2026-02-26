@@ -15,15 +15,30 @@ async def enforce_rate_limit(request: Request, user_uid: str) -> None:
     rules = build_rate_limit_rules(entitlement)
 
     for rule in rules:
-        if rule.kind != "fixed_utc":
-            # Reserved for cycle-window implementation.
-            continue
+        if rule.kind == "fixed_utc":
+            allowed, retry_after = await redis.check_fixed_window_quota(
+                user_id=user_uid,
+                limit=rule.limit,
+                period=rule.period,
+                scope=rule.scope,
+            )
+        else:
+            if entitlement.cycle is None:
+                # Defensive fallback if cycle rule appears without cycle bounds.
+                allowed, retry_after = await redis.check_fixed_window_quota(
+                    user_id=user_uid,
+                    limit=rule.limit,
+                    period=rule.period,
+                    scope=rule.scope,
+                )
+            else:
+                allowed, retry_after = await redis.check_cycle_window_quota(
+                    user_id=user_uid,
+                    limit=rule.limit,
+                    cycle_start=entitlement.cycle.start,
+                    cycle_end=entitlement.cycle.end,
+                    scope=rule.scope,
+                )
 
-        allowed, retry_after = await redis.check_fixed_window_quota(
-            user_id=user_uid,
-            limit=rule.limit,
-            period=rule.period,
-            scope=rule.scope,
-        )
         if not allowed:
             raise_rate_limit_exceeded(rule, entitlement.plan, retry_after)

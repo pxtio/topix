@@ -1,4 +1,8 @@
-"""Rate limit policy definitions."""
+"""Rate limit policy definitions.
+
+Minute/day rules use UTC fixed windows. Monthly switches to billing-cycle windows
+when entitlement contains cycle bounds; otherwise it falls back to UTC month.
+"""
 
 from topix.api.utils.rate_limit.types import EntitlementContext, PlanType, RateLimitRule
 
@@ -22,6 +26,8 @@ def build_rate_limit_rules(entitlement: EntitlementContext) -> list[RateLimitRul
     """Build ordered rules for the given entitlement."""
     plan = entitlement.plan
 
+    monthly_kind = "cycle" if entitlement.cycle is not None else "fixed_utc"
+
     return [
         RateLimitRule(
             name="minute",
@@ -41,7 +47,7 @@ def build_rate_limit_rules(entitlement: EntitlementContext) -> list[RateLimitRul
             name="month",
             period="month",
             limit=MONTHLY_UTC_LIMITS.get(plan, MONTHLY_UTC_LIMITS["free"]),
-            kind="fixed_utc",
+            kind=monthly_kind,
             scope="tier_usage",
         ),
     ]

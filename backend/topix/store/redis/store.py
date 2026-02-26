@@ -137,3 +137,27 @@ class RedisStore:
             await self.redis.expire(key, retry_after)
 
         return current <= limit, retry_after
+
+    async def check_cycle_window_quota(
+        self,
+        user_id: str,
+        limit: int,
+        cycle_start: datetime,
+        cycle_end: datetime,
+        scope: str = "tier_usage",
+    ) -> tuple[bool, int]:
+        """Check and increment a quota scoped to an explicit billing cycle."""
+        start = cycle_start.astimezone(timezone.utc) if cycle_start.tzinfo else cycle_start.replace(tzinfo=timezone.utc)
+        end = cycle_end.astimezone(timezone.utc) if cycle_end.tzinfo else cycle_end.replace(tzinfo=timezone.utc)
+
+        now = datetime.now(timezone.utc)
+        retry_after = max(int((end - now).total_seconds()), 1)
+        start_key = start.strftime("%Y%m%dT%H%M%SZ")
+        end_key = end.strftime("%Y%m%dT%H%M%SZ")
+        key = f"quota:{scope}:cycle:{start_key}:{end_key}:{user_id}"
+
+        current = await self.redis.incr(key)
+        if current == 1:
+            await self.redis.expire(key, retry_after)
+
+        return current <= limit, retry_after

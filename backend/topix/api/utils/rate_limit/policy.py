@@ -4,9 +4,12 @@ Minute/day rules use UTC fixed windows. Monthly switches to billing-cycle window
 when entitlement contains cycle bounds; otherwise it falls back to UTC month.
 """
 
+import logging
 import os
 
 from topix.api.utils.rate_limit.types import EntitlementContext, PlanType, RateLimitRule
+
+logger = logging.getLogger(__name__)
 
 MINUTE_BURST_LIMITS: dict[PlanType, int] = {
     "free": 10,
@@ -39,6 +42,8 @@ def resolve_tier_limits(plan: PlanType) -> dict[str, int]:
     When billing is disabled (default), free and plus both get plus limits.
     """
     billing_enabled = _is_truthy(os.getenv(BILLING_ENABLED_ENV))
+
+    logger.info(f"Activating billing mode: {billing_enabled}")
 
     if not billing_enabled:
         return {

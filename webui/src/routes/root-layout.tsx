@@ -23,13 +23,15 @@ export function RootLayout() {
   const userId = useAppStore(s => s.userId)
   const setUserId = useAppStore(s => s.setUserId)
   const setUserEmail = useAppStore(s => s.setUserEmail)
+  const setUserPlan = useAppStore(s => s.setUserPlan)
 
   const onLogout = useCallback(() => {
     clearTokens()
     setUserId('root')
     setUserEmail('root@localhost')
+    setUserPlan('free')
     navigate({ to: '/signin', replace: true })
-  }, [navigate, setUserEmail, setUserId])
+  }, [navigate, setUserEmail, setUserId, setUserPlan])
 
   const isAuthed = userId !== 'root'
 

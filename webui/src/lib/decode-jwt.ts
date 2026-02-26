@@ -4,7 +4,11 @@ export type JwtPayload = Record<string, unknown> & {
   name?: string
   username?: string
   exp?: number
+  plan?: BillingPlan
 }
+
+export type BillingPlan = "free" | "plus"
+
 
 function base64UrlDecode(input: string): string {
   const base64 = input.replace(/-/g, "+").replace(/_/g, "/")
@@ -22,4 +26,9 @@ export function decodeJwt<T extends JwtPayload = JwtPayload>(token: string): T {
   if (parts.length !== 3) throw new Error("Invalid JWT")
   const payloadStr = base64UrlDecode(parts[1])
   return JSON.parse(payloadStr) as T
+}
+
+
+export function resolveBillingPlan(payload: Pick<JwtPayload, "plan">): BillingPlan {
+  return payload.plan === "plus" ? "plus" : "free"
 }

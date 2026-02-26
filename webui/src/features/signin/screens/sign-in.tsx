@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useMutation } from "@tanstack/react-query"
 import { useNavigate, Link } from "@tanstack/react-router"
-import { decodeJwt } from "@/lib/decode-jwt"
+import { decodeJwt, resolveBillingPlan } from "@/lib/decode-jwt"
 import { useAppStore } from "@/store"
 import { signin } from "@/api"
 
@@ -20,6 +20,7 @@ export function SigninPage() {
   const navigate = useNavigate()
   const setUserId = useAppStore(s => s.setUserId)
   const setUserEmail = useAppStore(s => s.setUserEmail)
+  const setUserPlan = useAppStore(s => s.setUserPlan)
 
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
@@ -30,6 +31,7 @@ export function SigninPage() {
       const p = decodeJwt(token.access_token)
       if (p.sub) setUserId(String(p.sub))
       if (typeof p.email === "string") setUserEmail(p.email)
+      setUserPlan(resolveBillingPlan(p))
       navigate({ to: "/chats", replace: true })
     }
   })

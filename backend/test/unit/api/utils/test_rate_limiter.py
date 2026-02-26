@@ -8,7 +8,12 @@ import pytest
 from fastapi import HTTPException, status
 
 from topix.api.utils.rate_limit.dependency import rate_limiter
-from topix.api.utils.rate_limit.policy import DAILY_UTC_LIMITS, MINUTE_BURST_LIMITS, MONTHLY_UTC_LIMITS
+from topix.api.utils.rate_limit.policy import (
+    BILLING_ENABLED_ENV,
+    DAILY_UTC_LIMITS,
+    MINUTE_BURST_LIMITS,
+    MONTHLY_UTC_LIMITS,
+)
 
 
 class _FakeRedisStore:
@@ -111,8 +116,9 @@ def _build_request(
 
 
 @pytest.mark.asyncio
-async def test_rate_limiter_uses_free_limits_when_billing_missing():
+async def test_rate_limiter_uses_free_limits_when_billing_missing(monkeypatch):
     """Should apply free limits when no billing row exists."""
+    monkeypatch.setenv(BILLING_ENABLED_ENV, "true")
     fake_store = _FakeRedisStore()
     request = _build_request(fake_store, plan=None)
 
@@ -142,8 +148,9 @@ async def test_rate_limiter_uses_free_limits_when_billing_missing():
 
 
 @pytest.mark.asyncio
-async def test_rate_limiter_uses_plus_limits():
+async def test_rate_limiter_uses_plus_limits(monkeypatch):
     """Should apply plus daily/monthly limits and shared minute cap."""
+    monkeypatch.setenv(BILLING_ENABLED_ENV, "true")
     fake_store = _FakeRedisStore()
     cycle_start = datetime.now(timezone.utc) - timedelta(days=3)
     cycle_end = datetime.now(timezone.utc) + timedelta(days=27)
@@ -170,8 +177,9 @@ async def test_rate_limiter_uses_plus_limits():
 
 
 @pytest.mark.asyncio
-async def test_rate_limiter_raises_on_minute_limit():
+async def test_rate_limiter_raises_on_minute_limit(monkeypatch):
     """Should raise 429 when minute quota is exceeded."""
+    monkeypatch.setenv(BILLING_ENABLED_ENV, "true")
     fake_store = _FakeRedisStore(minute_allowed=False)
     request = _build_request(fake_store, plan="free")
 
@@ -184,8 +192,9 @@ async def test_rate_limiter_raises_on_minute_limit():
 
 
 @pytest.mark.asyncio
-async def test_rate_limiter_raises_on_daily_limit():
+async def test_rate_limiter_raises_on_daily_limit(monkeypatch):
     """Should raise 429 when daily quota is exceeded."""
+    monkeypatch.setenv(BILLING_ENABLED_ENV, "true")
     fake_store = _FakeRedisStore(day_allowed=False)
     request = _build_request(fake_store, plan="free")
 
@@ -198,8 +207,9 @@ async def test_rate_limiter_raises_on_daily_limit():
 
 
 @pytest.mark.asyncio
-async def test_rate_limiter_raises_on_monthly_limit():
+async def test_rate_limiter_raises_on_monthly_limit(monkeypatch):
     """Should raise 429 when monthly quota is exceeded."""
+    monkeypatch.setenv(BILLING_ENABLED_ENV, "true")
     fake_store = _FakeRedisStore(month_allowed=False)
     cycle_start = datetime.now(timezone.utc) - timedelta(days=3)
     cycle_end = datetime.now(timezone.utc) + timedelta(days=27)
@@ -211,3 +221,17 @@ async def test_rate_limiter_raises_on_monthly_limit():
     assert exc.value.status_code == status.HTTP_429_TOO_MANY_REQUESTS
     assert "Limit: 5000 requests/month" in exc.value.detail
     assert exc.value.headers == {"Retry-After": "7200"}
+
+
+@pytest.mark.asyncio
+async def test_rate_limiter_unifies_limits_when_billing_disabled(monkeypatch):
+    """Should apply plus limits to free users when billing mode is disabled."""
+    monkeypatch.delenv(BILLING_ENABLED_ENV, raising=False)
+    fake_store = _FakeRedisStore()
+    request = _build_request(fake_store, plan="free")
+
+    await rate_limiter(request=request, user_id="user-123")
+
+    assert fake_store.fixed_calls[0]["limit"] == MINUTE_BURST_LIMITS["plus"]
+    assert fake_store.fixed_calls[1]["limit"] == DAILY_UTC_LIMITS["plus"]
+    assert fake_store.fixed_calls[2]["limit"] == MONTHLY_UTC_LIMITS["plus"]

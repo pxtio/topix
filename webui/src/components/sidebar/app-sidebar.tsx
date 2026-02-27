@@ -35,6 +35,7 @@ import { ModeToggle } from '@/components/mode-toggle'
 import { HomeMenuItem } from './home'
 import { useCheckEleInView } from '@/hooks/use-check-ele-in-view'
 import { useNavigate } from '@tanstack/react-router'
+import { BILLING_ENABLED } from '@/config/billing'
 
 
 /**
@@ -142,13 +143,15 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                           <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" strokeWidth={2} />
                           <span>Profile</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className='text-xs'
-                          onClick={() => navigate({ to: "/settings/billing" })}
-                        >
-                          <HugeiconsIcon icon={Settings01Icon} className="mr-2 h-4 w-4" strokeWidth={2} />
-                          <span>Settings</span>
-                        </DropdownMenuItem>
+                        {BILLING_ENABLED ? (
+                          <DropdownMenuItem
+                            className='text-xs'
+                            onClick={() => navigate({ to: "/settings/billing" })}
+                          >
+                            <HugeiconsIcon icon={Settings01Icon} className="mr-2 h-4 w-4" strokeWidth={2} />
+                            <span>Settings</span>
+                          </DropdownMenuItem>
+                        ) : null}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={onLogout} className='text-xs'>
                           <HugeiconsIcon icon={LogoutSquareIcon} className="mr-2 h-4 w-4" strokeWidth={2} />

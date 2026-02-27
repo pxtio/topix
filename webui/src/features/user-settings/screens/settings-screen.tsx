@@ -1,9 +1,9 @@
 import { useNavigate } from "@tanstack/react-router"
-import { Crown } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { BILLING_ENABLED } from "@/config/billing"
+import { TierBadge } from "@/features/user-settings/components/tier-badge"
 import { useAppStore } from "@/store"
 
 
@@ -25,35 +25,28 @@ export function SettingsScreen() {
               <span className="text-sm text-muted-foreground">Email</span>
               <span className="text-sm font-medium">{userEmail}</span>
             </div>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm text-muted-foreground">Current plan</span>
-              <Badge
-                variant="outline"
-                className={[
-                  "font-mono font-medium uppercase tracking-wide",
-                  userPlan === "plus"
-                    ? "border-secondary bg-secondary/10 text-foreground"
-                    : "border-border bg-muted text-foreground",
-                ].join(" ")}
-              >
-                {userPlan === "plus" ? <Crown className="h-3.5 w-3.5" /> : null}
-                <span>{userPlan === "plus" ? "plus" : "free"}</span>
-              </Badge>
-            </div>
+            {BILLING_ENABLED ? (
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">Current plan</span>
+                <TierBadge plan={userPlan} />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Billing</CardTitle>
-            <CardDescription>Manage subscription and usage limits</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => navigate({ to: "/settings/billing" })}>
-              Open billing
-            </Button>
-          </CardContent>
-        </Card>
+        {BILLING_ENABLED ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Billing</CardTitle>
+              <CardDescription>Manage subscription and usage limits</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate({ to: "/settings/billing" })}>
+                Open billing
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </div>
   )

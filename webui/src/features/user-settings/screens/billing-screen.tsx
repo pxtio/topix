@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Crown } from "lucide-react"
 
 import { refresh } from "@/api"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BILLING_ENABLED } from "@/config/billing"
-import { createCheckoutSession, createPortalSession } from "@/features/user-settings/api/billing"
+import { TierBadge } from "@/features/user-settings/components/tier-badge"
+import { createCheckoutSession, createPortalSession, getBillingSummary, type BillingSummary } from "@/features/user-settings/api/billing"
 import { getAccessToken } from "@/features/signin/auth-storage"
 import { decodeJwt, resolveBillingPlan } from "@/lib/decode-jwt"
 import { useAppStore } from "@/store"
@@ -17,9 +16,23 @@ export function BillingScreen() {
   const setUserPlan = useAppStore(s => s.setUserPlan)
   const [busyAction, setBusyAction] = useState<"upgrade" | "manage" | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [billingSummary, setBillingSummary] = useState<BillingSummary | null>(null)
   const refreshedAfterReturn = useRef(false)
 
   const searchParams = useMemo(() => new URLSearchParams(window.location.search), [])
+
+  useEffect(() => {
+    if (!BILLING_ENABLED) return
+
+    void (async () => {
+      try {
+        const summary = await getBillingSummary()
+        setBillingSummary(summary)
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Could not load billing status.")
+      }
+    })()
+  }, [])
 
   useEffect(() => {
     if (!BILLING_ENABLED) return
@@ -34,6 +47,8 @@ export function BillingScreen() {
         if (!token) return
         const payload = decodeJwt(token)
         setUserPlan(resolveBillingPlan(payload))
+        const summary = await getBillingSummary()
+        setBillingSummary(summary)
       } catch {
         setErrorMessage("Could not refresh billing plan after checkout.")
       }
@@ -74,8 +89,15 @@ export function BillingScreen() {
     }
   }
 
+  const formattedPeriodEnd =
+    billingSummary?.current_period_end
+      ? new Date(billingSummary.current_period_end).toLocaleDateString()
+      : null
+
+  if (!BILLING_ENABLED) return null
+
   return (
-    <div className="absolute inset-0 overflow-y-auto scrollbar-thin bg-sidebar">
+    <div className="absolute inset-0 overflow-y-auto scrollbar-thin bg-background">
       <div className="mx-auto w-full max-w-5xl px-6 py-20 space-y-6">
         <div className="space-y-2">
           <h1 className="text-5xl leading-none">Billing Plans</h1>
@@ -93,83 +115,70 @@ export function BillingScreen() {
           </CardHeader>
           <CardContent className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Current plan</span>
-            <Badge
-              variant="outline"
-              className={[
-                "font-mono font-medium uppercase tracking-wide",
-                userPlan === "plus"
-                  ? "border-secondary bg-secondary/10 text-foreground"
-                  : "border-border bg-muted text-foreground",
-              ].join(" ")}
-            >
-              {userPlan === "plus" ? <Crown className="h-3.5 w-3.5" /> : null}
-              <span>{userPlan === "plus" ? "plus" : "free"}</span>
-            </Badge>
+            <TierBadge plan={userPlan} />
           </CardContent>
+
+          {billingSummary?.cancel_at_period_end ? (
+            <CardContent className="pt-0">
+              <p className="text-sm text-muted-foreground">
+                Subscription is set to cancel at period end
+                {formattedPeriodEnd ? ` (${formattedPeriodEnd})` : ""}.
+              </p>
+            </CardContent>
+          ) : null}
         </Card>
 
-        {!BILLING_ENABLED ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Billing unavailable</CardTitle>
-              <CardDescription>
-                This deployment has billing disabled.
-              </CardDescription>
+              <CardTitle className="text-4xl font-informal">Free</CardTitle>
+              <CardDescription>Starter usage for personal testing</CardDescription>
             </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p className="text-3xl font-semibold text-foreground">Free</p>
+              <p>10 requests / minute</p>
+              <p>10 requests / day</p>
+              <p>100 requests / month</p>
+              <p>1 board maximum</p>
+            </CardContent>
           </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-4xl font-informal">Free</CardTitle>
-                <CardDescription>Starter usage for personal testing</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm text-muted-foreground">
-                <p className="text-3xl font-semibold text-foreground">Free</p>
-                <p>10 requests / minute</p>
-                <p>10 requests / day</p>
-                <p>100 requests / month</p>
-                <p>1 board maximum</p>
-              </CardContent>
-            </Card>
 
-            <Card className="border-secondary/60 bg-gradient-to-br from-secondary/20 via-secondary/10 to-card">
-              <CardHeader>
-                <CardTitle className="text-4xl font-informal">Plus</CardTitle>
-                <CardDescription>Higher daily and monthly limits</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-end gap-2">
-                  <span className="text-3xl font-semibold text-foreground">€10</span>
-                  <span className="text-sm text-muted-foreground">/ month</span>
-                </div>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>Unlimited requests</p>
-                  <p>Unlimited boards</p>
-                </div>
+          <Card className="border-secondary/60 bg-gradient-to-br from-secondary/20 via-secondary/10 to-card">
+            <CardHeader>
+              <CardTitle className="text-4xl font-informal">Plus</CardTitle>
+              <CardDescription>Higher daily and monthly limits</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-end gap-2">
+                <span className="text-3xl font-semibold text-foreground">€10</span>
+                <span className="text-sm text-muted-foreground">/ month</span>
+              </div>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>Unlimited requests</p>
+                <p>Unlimited boards</p>
+              </div>
 
-                {userPlan === "plus" ? (
-                  <Button
-                    variant="outline"
-                    onClick={onManage}
-                    disabled={busyAction !== null}
-                    className="w-full"
-                  >
-                    {busyAction === "manage" ? "Opening portal..." : "Manage billing"}
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={onUpgrade}
-                    disabled={busyAction !== null}
-                    className="w-full"
-                  >
-                    {busyAction === "upgrade" ? "Redirecting..." : "Upgrade to Plus"}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
+              {userPlan === "plus" ? (
+                <Button
+                  variant="outline"
+                  onClick={onManage}
+                  disabled={busyAction !== null}
+                  className="w-full"
+                >
+                  {busyAction === "manage" ? "Opening portal..." : "Manage Subscription"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={onUpgrade}
+                  disabled={busyAction !== null}
+                  className="w-full"
+                >
+                  {busyAction === "upgrade" ? "Redirecting..." : "Upgrade to Plus"}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {errorMessage ? (
           <p className="text-sm text-destructive">{errorMessage}</p>

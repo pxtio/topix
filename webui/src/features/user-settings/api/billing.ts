@@ -17,6 +17,14 @@ type PortalSessionData = {
   portal_url?: string
 }
 
+export type BillingSummary = {
+  plan: "free" | "plus"
+  status: "active" | "trialing" | "past_due" | "canceled" | "incomplete"
+  cancel_at_period_end: boolean
+  current_period_start: string | null
+  current_period_end: string | null
+}
+
 
 export async function createCheckoutSession(body?: {
   success_url?: string
@@ -38,6 +46,15 @@ export async function createPortalSession(body?: {
     path: "/billing/portal-session",
     method: "POST",
     body,
+  })
+  return res.data
+}
+
+
+export async function getBillingSummary(): Promise<BillingSummary> {
+  const res = await apiFetch<StandardResponse<BillingSummary>>({
+    path: "/billing/me",
+    method: "GET",
   })
   return res.data
 }

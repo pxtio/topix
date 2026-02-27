@@ -264,6 +264,16 @@ async def handle_stripe_webhook(request: Request):
         stripe_customer_id = data_object.get("customer")
         stripe_subscription_id = data_object.get("id")
         status_value = _resolve_status(data_object.get("status", "incomplete"))
+        cancel_at = data_object.get("cancel_at")
+        cancel_at_period_end = bool(data_object.get("cancel_at_period_end", False))
+
+        item_period_start = None
+        item_period_end = None
+        items = (data_object.get("items") or {}).get("data") or []
+        if items:
+            first_item = items[0] or {}
+            item_period_start = first_item.get("current_period_start")
+            item_period_end = first_item.get("current_period_end")
 
         user_uid = data_object.get("metadata", {}).get("user_uid")
         if not user_uid and stripe_subscription_id:
@@ -285,9 +295,9 @@ async def handle_stripe_webhook(request: Request):
                 "status": status_value,
                 "stripe_customer_id": stripe_customer_id,
                 "stripe_subscription_id": stripe_subscription_id,
-                "current_period_start": _timestamp_to_datetime(data_object.get("current_period_start")),
-                "current_period_end": _timestamp_to_datetime(data_object.get("current_period_end")),
-                "cancel_at_period_end": bool(data_object.get("cancel_at_period_end", False)),
+                "current_period_start": _timestamp_to_datetime(data_object.get("current_period_start") or item_period_start),
+                "current_period_end": _timestamp_to_datetime(data_object.get("current_period_end") or item_period_end or cancel_at),
+                "cancel_at_period_end": cancel_at_period_end or cancel_at is not None,
             },
         )
         return {"processed": True, "event_type": event_type}

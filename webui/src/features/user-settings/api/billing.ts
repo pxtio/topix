@@ -25,6 +25,15 @@ export type BillingSummary = {
   current_period_end: string | null
 }
 
+export type BillingPublicConfig = {
+  billing_enabled: boolean
+  plus_price?: {
+    unit_amount: number | null
+    currency: string | null
+    interval: string | null
+  }
+}
+
 
 export async function createCheckoutSession(body?: {
   success_url?: string
@@ -54,6 +63,15 @@ export async function createPortalSession(body?: {
 export async function getBillingSummary(): Promise<BillingSummary> {
   const res = await apiFetch<StandardResponse<BillingSummary>>({
     path: "/billing/me",
+    method: "GET",
+  })
+  return res.data
+}
+
+
+export async function getBillingPublicConfig(): Promise<BillingPublicConfig> {
+  const res = await apiFetch<StandardResponse<BillingPublicConfig>>({
+    path: "/billing/public-config",
     method: "GET",
   })
   return res.data

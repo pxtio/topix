@@ -5,7 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BILLING_ENABLED } from "@/config/billing"
 import { TierBadge } from "@/features/user-settings/components/tier-badge"
-import { createCheckoutSession, createPortalSession, getBillingSummary, type BillingSummary } from "@/features/user-settings/api/billing"
+import {
+  createCheckoutSession,
+  createPortalSession,
+  getBillingPublicConfig,
+  getBillingSummary,
+  type BillingPublicConfig,
+  type BillingSummary
+} from "@/features/user-settings/api/billing"
 import { getAccessToken } from "@/features/signin/auth-storage"
 import { decodeJwt, resolveBillingPlan } from "@/lib/decode-jwt"
 import { useAppStore } from "@/store"
@@ -17,6 +24,7 @@ export function BillingScreen() {
   const [busyAction, setBusyAction] = useState<"upgrade" | "manage" | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [billingSummary, setBillingSummary] = useState<BillingSummary | null>(null)
+  const [billingPublicConfig, setBillingPublicConfig] = useState<BillingPublicConfig | null>(null)
   const refreshedAfterReturn = useRef(false)
 
   const searchParams = useMemo(() => new URLSearchParams(window.location.search), [])
@@ -26,6 +34,8 @@ export function BillingScreen() {
 
     void (async () => {
       try {
+        const publicConfig = await getBillingPublicConfig()
+        setBillingPublicConfig(publicConfig)
         const summary = await getBillingSummary()
         setBillingSummary(summary)
       } catch (error) {
@@ -94,6 +104,24 @@ export function BillingScreen() {
       ? new Date(billingSummary.current_period_end).toLocaleDateString()
       : null
 
+  const plusPriceLabel = useMemo(() => {
+    const rawAmount = billingPublicConfig?.plus_price?.unit_amount
+    const rawCurrency = billingPublicConfig?.plus_price?.currency
+    if (typeof rawAmount !== "number" || !rawCurrency) return "€12"
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: rawCurrency.toUpperCase(),
+      minimumFractionDigits: rawAmount % 100 === 0 ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).format(rawAmount / 100)
+  }, [billingPublicConfig])
+
+  const plusIntervalLabel = useMemo(() => {
+    const interval = billingPublicConfig?.plus_price?.interval
+    if (!interval) return "month"
+    return interval
+  }, [billingPublicConfig])
+
   if (!BILLING_ENABLED) return null
 
   return (
@@ -150,8 +178,8 @@ export function BillingScreen() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-end gap-2">
-                <span className="text-3xl font-semibold text-foreground">€10</span>
-                <span className="text-sm text-muted-foreground">/ month</span>
+                <span className="text-3xl font-semibold text-foreground">{plusPriceLabel}</span>
+                <span className="text-sm text-muted-foreground">/ {plusIntervalLabel}</span>
               </div>
               <div className="space-y-2 text-sm text-muted-foreground">
                 <p>Unlimited requests</p>

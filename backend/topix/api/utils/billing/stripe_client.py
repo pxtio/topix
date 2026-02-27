@@ -21,10 +21,11 @@ class StripeClient:
         self._secret_key = secret_key
         self._base_url = "https://api.stripe.com/v1"
 
-    async def _post(self, path: str, data: dict) -> dict:
+    async def _request(self, method: str, path: str, *, data: dict | None = None) -> dict:
         headers = {"Authorization": f"Bearer {self._secret_key}"}
         async with httpx.AsyncClient(timeout=20.0) as client:
-            response = await client.post(
+            response = await client.request(
+                method,
                 f"{self._base_url}{path}",
                 headers=headers,
                 data=data,
@@ -41,6 +42,9 @@ class StripeClient:
             message = payload.get("error", {}).get("message", "Stripe request failed")
             raise StripeApiError(message=message, status_code=response.status_code, payload=payload)
         return payload
+
+    async def _post(self, path: str, data: dict) -> dict:
+        return await self._request("POST", path, data=data)
 
     async def create_customer(
         self,
@@ -89,3 +93,7 @@ class StripeClient:
             "return_url": return_url,
         }
         return await self._post("/billing_portal/sessions", data=data)
+
+    async def get_price(self, price_id: str) -> dict:
+        """Fetch Stripe price object by price id."""
+        return await self._request("GET", f"/prices/{price_id}")

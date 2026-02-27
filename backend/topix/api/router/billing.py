@@ -1,6 +1,7 @@
 """Billing API router for Stripe checkout, portal, and webhook."""
 
 import logging
+import os
 
 from datetime import datetime
 from typing import Annotated
@@ -25,6 +26,12 @@ router = APIRouter(
     tags=["billing"],
     responses={404: {"description": "Not found"}},
 )
+
+
+def _is_truthy(value: str | None) -> bool:
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _resolve_status(value: str) -> BillingStatus:
@@ -124,6 +131,33 @@ async def create_checkout_session(
     return {
         "checkout_url": session.get("url"),
         "session_id": session.get("id"),
+    }
+
+
+@router.get("/public-config")
+@with_standard_response
+async def get_public_billing_config():
+    """Return public billing pricing metadata for UI rendering."""
+    billing_enabled = _is_truthy(os.getenv("VITE_BILLING_ENABLED"))
+    if not billing_enabled:
+        return {"billing_enabled": False}
+
+    config = get_stripe_config()
+    stripe_client = StripeClient(secret_key=config.secret_key)
+
+    try:
+        stripe_price = await stripe_client.get_price(config.plus_monthly_price_id)
+    except StripeApiError as exc:
+        logger.error("Stripe price fetch failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+    return {
+        "billing_enabled": True,
+        "plus_price": {
+            "unit_amount": stripe_price.get("unit_amount"),
+            "currency": stripe_price.get("currency"),
+            "interval": (stripe_price.get("recurring") or {}).get("interval"),
+        },
     }
 
 

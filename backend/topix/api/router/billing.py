@@ -127,6 +127,33 @@ async def create_checkout_session(
     }
 
 
+@router.get("/me")
+@with_standard_response
+async def get_billing_state(
+    request: Request,
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+):
+    """Return billing state used by the settings UI."""
+    user_billing_store: UserBillingStore = request.app.user_billing_store
+    billing = await user_billing_store.get_user_billing(user_id)
+    if billing is None:
+        return {
+            "plan": "free",
+            "status": "active",
+            "cancel_at_period_end": False,
+            "current_period_start": None,
+            "current_period_end": None,
+        }
+
+    return {
+        "plan": billing.plan,
+        "status": billing.status,
+        "cancel_at_period_end": billing.cancel_at_period_end,
+        "current_period_start": billing.current_period_start,
+        "current_period_end": billing.current_period_end,
+    }
+
+
 @router.post("/portal-session")
 @with_standard_response
 async def create_portal_session(

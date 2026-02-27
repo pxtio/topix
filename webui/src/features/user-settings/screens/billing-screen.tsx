@@ -163,7 +163,7 @@ export function BillingScreen() {
                   variant="outline"
                   onClick={onManage}
                   disabled={busyAction !== null}
-                  className="w-full"
+                  className="w-full bg-background/30 border-foreground/40"
                 >
                   {busyAction === "manage" ? "Opening portal..." : "Manage Subscription"}
                 </Button>

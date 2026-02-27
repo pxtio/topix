@@ -1,8 +1,8 @@
-import { Crown } from "lucide-react"
-
 import { Badge } from "@/components/ui/badge"
 import { BILLING_ENABLED } from "@/config/billing"
 import type { BillingPlan } from "@/lib/decode-jwt"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Crown03Icon } from "@hugeicons/core-free-icons"
 
 
 type TierBadgeProps = {
@@ -23,7 +23,9 @@ export function TierBadge({ plan }: TierBadgeProps) {
           : "border-border bg-muted text-foreground",
       ].join(" ")}
     >
-      {plan === "plus" ? <Crown className="h-3.5 w-3.5" /> : null}
+      {plan === "plus" ? <HugeiconsIcon
+        icon={Crown03Icon}
+        className="h-3.5 w-3.5 text-secondary" /> : null}
       <span>{plan === "plus" ? "plus" : "free"}</span>
     </Badge>
   )

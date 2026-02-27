@@ -108,7 +108,7 @@ export const SidebarLabel = () => {
       return
     }
     if (active.view === "settings") {
-      setLabel("Settings")
+      setLabel("Profile")
       return
     }
     if (active.view === "settings-billing") {
@@ -187,7 +187,7 @@ export const SidebarLabel = () => {
     return <div className={wrapClass}>Dashboard</div>
 
   if (active.view === "settings")
-    return <div className={wrapClass}>Settings</div>
+    return <div className={wrapClass}>Profile</div>
 
   if (active.view === "settings-billing")
     return <div className={wrapClass}>Billing</div>

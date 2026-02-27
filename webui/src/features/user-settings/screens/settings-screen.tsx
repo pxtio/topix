@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router"
+import { Crown } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,8 +27,17 @@ export function SettingsScreen() {
             </div>
             <div className="flex items-center justify-between gap-4">
               <span className="text-sm text-muted-foreground">Current plan</span>
-              <Badge variant={userPlan === "plus" ? "default" : "secondary"}>
-                {userPlan === "plus" ? "Plus" : "Free"}
+              <Badge
+                variant="outline"
+                className={[
+                  "font-mono font-medium uppercase tracking-wide",
+                  userPlan === "plus"
+                    ? "border-secondary bg-secondary/10 text-foreground"
+                    : "border-border bg-muted text-foreground",
+                ].join(" ")}
+              >
+                {userPlan === "plus" ? <Crown className="h-3.5 w-3.5" /> : null}
+                <span>{userPlan === "plus" ? "plus" : "free"}</span>
               </Badge>
             </div>
           </CardContent>

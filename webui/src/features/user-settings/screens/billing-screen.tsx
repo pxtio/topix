@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { Crown } from "lucide-react"
 
 import { refresh } from "@/api"
 import { Badge } from "@/components/ui/badge"
@@ -74,19 +75,35 @@ export function BillingScreen() {
   }
 
   return (
-    <div className="absolute inset-0 overflow-y-auto scrollbar-thin">
-      <div className="mx-auto w-full max-w-5xl px-6 py-24 space-y-6">
+    <div className="absolute inset-0 overflow-y-auto scrollbar-thin bg-sidebar">
+      <div className="mx-auto w-full max-w-5xl px-6 py-20 space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-5xl leading-none">Billing Plans</h1>
+          <p className="text-sm text-muted-foreground">
+            Pick the plan that matches your workspace needs
+          </p>
+        </div>
+
         <Card>
           <CardHeader>
-            <CardTitle>Billing</CardTitle>
+            <CardTitle className="text-3xl">Current subscription</CardTitle>
             <CardDescription>
               Choose your plan and manage your subscription
             </CardDescription>
           </CardHeader>
           <CardContent className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Current plan</span>
-            <Badge variant={userPlan === "plus" ? "default" : "secondary"}>
-              {userPlan === "plus" ? "Plus" : "Free"}
+            <Badge
+              variant="outline"
+              className={[
+                "font-mono font-medium uppercase tracking-wide",
+                userPlan === "plus"
+                  ? "border-secondary bg-secondary/10 text-foreground"
+                  : "border-border bg-muted text-foreground",
+              ].join(" ")}
+            >
+              {userPlan === "plus" ? <Crown className="h-3.5 w-3.5" /> : null}
+              <span>{userPlan === "plus" ? "plus" : "free"}</span>
             </Badge>
           </CardContent>
         </Card>
@@ -104,26 +121,31 @@ export function BillingScreen() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Free</CardTitle>
+                <CardTitle className="text-4xl font-informal">Free</CardTitle>
                 <CardDescription>Starter usage for personal testing</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-muted-foreground">
+                <p className="text-3xl font-semibold text-foreground">Free</p>
                 <p>10 requests / minute</p>
                 <p>10 requests / day</p>
                 <p>100 requests / month</p>
+                <p>1 board maximum</p>
               </CardContent>
             </Card>
 
-            <Card className="border-primary/50">
+            <Card className="border-secondary/60 bg-gradient-to-br from-secondary/20 via-secondary/10 to-card">
               <CardHeader>
-                <CardTitle>Plus</CardTitle>
+                <CardTitle className="text-4xl font-informal">Plus</CardTitle>
                 <CardDescription>Higher daily and monthly limits</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="flex items-end gap-2">
+                  <span className="text-3xl font-semibold text-foreground">€10</span>
+                  <span className="text-sm text-muted-foreground">/ month</span>
+                </div>
                 <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>10 requests / minute</p>
-                  <p>200 requests / day</p>
-                  <p>5000 requests / month</p>
+                  <p>Unlimited requests</p>
+                  <p>Unlimited boards</p>
                 </div>
 
                 {userPlan === "plus" ? (

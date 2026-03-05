@@ -179,10 +179,10 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <div className="flex items-start gap-2 w-full">
+                <div className="flex items-center gap-2 w-full">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <SidebarMenuButton className="h-auto py-2 flex items-start gap-2 font-medium text-xs min-w-0 flex-1">
+                      <SidebarMenuButton className="h-auto py-2 flex items-center gap-2 font-medium text-xs min-w-0 flex-1">
                         <Avatar className="h-8 w-8 -ml-2 shrink-0">
                           <AvatarImage alt={userEmail} />
                           <AvatarFallback>{initials}</AvatarFallback>

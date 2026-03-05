@@ -9,6 +9,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from topix.api.datatypes.requests import RefreshRequest, UserSignupRequest
 from topix.api.utils.decorators import with_standard_response
+from topix.api.utils.rate_limit.token_plan import resolve_plan_for_token
 from topix.api.utils.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     REFRESH_TOKEN_EXPIRE_DAYS,
@@ -50,12 +51,14 @@ async def login_for_access_token(
         )
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    plan = await resolve_plan_for_token(request, user.uid)
     access_token = create_access_token(
         data={
             "sub": user.uid,
             "email": user.email,
             "name": user.name,
             "username": user.username,
+            "plan": plan,
         },
         expires_delta=access_token_expires,
     )
@@ -97,12 +100,14 @@ async def create_user(
         )
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    plan = await resolve_plan_for_token(request, new_user.uid)
     access_token = create_access_token(
         data={
             "sub": new_user.uid,
             "email": new_user.email,
             "name": new_user.name,
             "username": new_user.username,
+            "plan": plan,
         },
         expires_delta=access_token_expires,
     )
@@ -142,12 +147,14 @@ async def refresh_access_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or inactive")
 
     # 2) Issue new access token (short-lived)
+    plan = await resolve_plan_for_token(request, user.uid)
     access_token = create_access_token(
         data={
             "sub": user.uid,
             "email": user.email,
             "name": user.name,
             "username": user.username,
+            "plan": plan,
         },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )

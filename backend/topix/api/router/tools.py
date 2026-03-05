@@ -15,7 +15,7 @@ from topix.agents.run import AgentRunner
 from topix.agents.translate.translate import TranslateAgent
 from topix.api.datatypes.requests import ConvertToMindMapRequest, TranslateTextRequest, WebPagePreviewRequest
 from topix.api.utils.decorators import with_standard_response
-from topix.api.utils.rate_limiter import rate_limiter
+from topix.api.utils.rate_limit.dependency import rate_limiter
 from topix.api.utils.security import get_current_user_uid
 from topix.datatypes.note.note import Note
 from topix.datatypes.resource import RichText

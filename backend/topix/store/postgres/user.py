@@ -87,7 +87,7 @@ async def update_user_by_uid(conn: asyncpg.Connection, uid: str, updated_data: d
         return
 
     # Build dynamic query with positional parameters
-    set_clauses = [f"{k} = ${i+1}" for i, k in enumerate(data.keys())]
+    set_clauses = [f"{k} = ${i + 1}" for i, k in enumerate(data.keys())]
     set_clause = ', '.join(set_clauses)
     values = list(data.values())
 

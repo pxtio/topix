@@ -25,6 +25,19 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class BillingCheckoutRequest(BaseModel):
+    """Request model for creating a Stripe checkout session."""
+
+    success_url: str | None = None
+    cancel_url: str | None = None
+
+
+class BillingPortalRequest(BaseModel):
+    """Request model for creating a Stripe customer portal session."""
+
+    return_url: str | None = None
+
+
 class SendMessageRequest(BaseModel):
     """Request model for sending a message to a chat."""
 

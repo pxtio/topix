@@ -1,7 +1,7 @@
 import { useAppStore } from "@/store"
 import { clearTokens, getAccessToken } from "../auth-storage"
 import { useEffect } from "react"
-import { decodeJwt } from "@/lib/decode-jwt"
+import { decodeJwt, resolveBillingPlan } from "@/lib/decode-jwt"
 
 
 /**
@@ -10,6 +10,7 @@ import { decodeJwt } from "@/lib/decode-jwt"
 export function useAuth() {
   const setUserId = useAppStore(s => s.setUserId)
   const setUserEmail = useAppStore(s => s.setUserEmail)
+  const setUserPlan = useAppStore(s => s.setUserPlan)
 
   // run once on mount
   useEffect(() => {
@@ -24,9 +25,10 @@ export function useAuth() {
       }
       if (payload.sub) setUserId(payload.sub)
       if (typeof payload.email === "string") setUserEmail(payload.email)
+      setUserPlan(resolveBillingPlan(payload))
     } catch {
       // bad token -> clear
       clearTokens()
     }
-  }, [setUserEmail, setUserId])
+  }, [setUserEmail, setUserId, setUserPlan])
 }

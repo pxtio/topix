@@ -70,6 +70,9 @@ export const SidebarLabel = () => {
   const { data: subscriptionList } = useListSubscriptions()
   const { updateBoard } = useUpdateBoard()
   const { updateChat }  = useUpdateChat()
+  const boardCanEdit = useGraphStore(state => state.boardCanEdit)
+  const boardLabel = useGraphStore(state => state.boardLabel)
+  const setBoardLabel = useGraphStore(state => state.setBoardLabel)
   const sheetNode = useGraphStore(state =>
     sheetNoteId ? state.nodes.find(n => n.id === sheetNoteId) : undefined
   )
@@ -85,7 +88,7 @@ export const SidebarLabel = () => {
   useEffect(() => {
     if (active.view === "board" && active.id) {
       const b = boardList?.find((x) => x.uid === active.id)
-      setLabel(b?.label ?? "")
+      setLabel(b?.label ?? boardLabel ?? "")
       return
     }
     if (active.view === "chat" && active.id) {
@@ -116,11 +119,12 @@ export const SidebarLabel = () => {
       return
     }
     setLabel("")
-  }, [active.view, active.id, boardList, chatList, subscriptionList, sheetNode, fetchedSheet])
+  }, [active.view, active.id, boardList, boardLabel, chatList, subscriptionList, sheetNode, fetchedSheet])
 
   const handleSaveEdit = (newLabel: string) => {
     setLabel(newLabel)
     if (active.view === "board" && active.id) {
+      setBoardLabel(newLabel)
       updateBoard({ boardId: active.id, graphData: { label: newLabel } })
     }
     if (active.view === "chat" && active.id) {
@@ -233,12 +237,18 @@ export const SidebarLabel = () => {
 
     return (
       <div className={`${wrapClass} flex-1 min-w-0`}>
-        <LabelEditor
-          key={`board:${active.id}`}
-          initialLabel={label}
-          onSave={handleSaveEdit}
-          className='min-w-0'
-        />
+        {boardCanEdit ? (
+          <LabelEditor
+            key={`board:${active.id}`}
+            initialLabel={label}
+            onSave={handleSaveEdit}
+            className='min-w-0'
+          />
+        ) : (
+          <span className='flex-1 min-w-0 truncate sm:max-w-[24rem] max-w-[12.5rem]' title={label.trim() || UNTITLED_LABEL}>
+            {label.trim() || UNTITLED_LABEL}
+          </span>
+        )}
       </div>
     )
   }

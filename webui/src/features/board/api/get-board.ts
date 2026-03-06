@@ -44,6 +44,7 @@ export const useGetBoard = () => {
         setEdges,
         setBoardVisibility,
         setBoardCanEdit,
+        setBoardLabel,
         isLoading,
         setIsLoading,
       } = useGraphStore.getState()
@@ -70,6 +71,7 @@ export const useGetBoard = () => {
         setEdges(edges)
         setBoardVisibility(visibility ?? "private")
         setBoardCanEdit(canEdit)
+        setBoardLabel(graph.label ?? "")
         return true
       } finally {
         setIsLoading(false)

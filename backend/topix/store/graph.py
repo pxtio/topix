@@ -291,6 +291,11 @@ class GraphStore:
         async with self._pg_pool.acquire() as conn:
             return await get_graph_role_by_user_uid(conn, graph_uid, user_uid)
 
+    async def get_graph_metadata(self, graph_uid: str) -> Graph | None:
+        """Return graph metadata without loading nodes/edges from Qdrant."""
+        async with self._pg_pool.acquire() as conn:
+            return await get_graph_by_uid(conn, graph_uid)
+
     async def close(self):
         """Close the database connection pool."""
         if self._pg_pool:

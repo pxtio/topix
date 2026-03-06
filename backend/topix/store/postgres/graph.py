@@ -13,9 +13,9 @@ async def create_graph(
 ) -> Graph:
     """Insert a graph and return it with id set."""
     query = (
-        "INSERT INTO graphs (uid, label, format_version, readonly, "
+        "INSERT INTO graphs (uid, label, format_version, readonly, visibility, "
         "created_at, updated_at, deleted_at) "
-        "VALUES ($1, $2, $3, $4, $5, $6, $7) "
+        "VALUES ($1, $2, $3, $4, $5, $6, $7, $8) "
         "RETURNING id"
     )
     graph_id = await conn.fetchval(
@@ -24,6 +24,7 @@ async def create_graph(
         graph.label,
         graph.format_version,
         graph.readonly,
+        graph.visibility,
         datetime.fromisoformat(graph.created_at) if graph.created_at else None,
         datetime.fromisoformat(graph.updated_at) if graph.updated_at else None,
         datetime.fromisoformat(graph.deleted_at) if graph.deleted_at else None,
@@ -47,7 +48,7 @@ async def get_graph_by_uid(
 ) -> Graph | None:
     """Fetch a graph by UID."""
     query = (
-        "SELECT id, uid, label, format_version, readonly, thumbnail, "
+        "SELECT id, uid, label, format_version, readonly, visibility, thumbnail, "
         "created_at, updated_at, deleted_at "
         "FROM graphs WHERE uid = $1"
     )
@@ -60,6 +61,7 @@ async def get_graph_by_uid(
         label=row['label'],
         format_version=row['format_version'],
         readonly=row['readonly'],
+        visibility=row['visibility'],
         thumbnail=row['thumbnail'],
         created_at=row['created_at'].isoformat() if row['created_at'] else None,
         updated_at=row['updated_at'].isoformat() if row['updated_at'] else None,
@@ -74,7 +76,7 @@ async def update_graph_by_uid(
 ):
     """Update non-date fields of a graph by UID."""
     # Only allow certain fields
-    allowed_fields = {"label", "format_version", "readonly", "thumbnail"}
+    allowed_fields = {"label", "format_version", "readonly", "visibility", "thumbnail"}
 
     # Build SET clause with positional parameters
     set_clauses = []

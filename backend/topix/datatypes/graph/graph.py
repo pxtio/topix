@@ -24,6 +24,7 @@ class Graph(BaseModel):
 
     format_version: int = 1
     readonly: bool = False
+    visibility: Literal["private", "public"] = "private"
 
     thumbnail: str | None = None
 

@@ -11,6 +11,7 @@ import { AiSparkDialog } from './utils/ai-spark-dialog'
 import { TopBar } from './top-bar'
 import { SlidePanel } from './slide-panel'
 import { CopilotSheet } from './copilot-sheet'
+import { updateBoard } from '../../api/update-board'
 
 
 type ViewMode = 'graph' | 'linear'
@@ -54,8 +55,10 @@ export const ActionPanel = memo(function ActionPanel({
   const [openAiSpark, setOpenAiSpark] = useState(false)
   const [openSlidesPanel, setOpenSlidesPanel] = useState(false)
   const boardId = useGraphStore(state => state.boardId)
+  const boardVisibility = useGraphStore(state => state.boardVisibility)
   const nodes = useGraphStore(state => state.nodes)
   const setNodes = useGraphStore(state => state.setNodes)
+  const setBoardVisibility = useGraphStore(state => state.setBoardVisibility)
   const setViewSlides = useGraphStore(state => state.setViewSlides)
   const presentationMode = useGraphStore(state => state.presentationMode)
   const navigate = useNavigate()
@@ -109,6 +112,12 @@ export const ActionPanel = memo(function ActionPanel({
     ],
   })
 
+  const handleUpdateVisibility = async (visibility: 'private' | 'public') => {
+    if (!boardId) return
+    await updateBoard(boardId, { visibility })
+    setBoardVisibility(visibility)
+  }
+
   return (
     <>
       {!presentationMode && (
@@ -130,6 +139,8 @@ export const ActionPanel = memo(function ActionPanel({
           onToggleSlidesPanel={() => setOpenSlidesPanel(v => !v)}
           slidesPanelOpen={openSlidesPanel}
           boardId={boardId}
+          boardVisibility={boardVisibility}
+          onUpdateVisibility={handleUpdateVisibility}
         />
       )}
 

@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -19,6 +19,7 @@ import {
   Note02Icon,
   MoreHorizontalIcon,
   SquareIcon,
+  Share08Icon,
   Tag01Icon,
   TextIcon,
 } from '@hugeicons/core-free-icons'
@@ -26,6 +27,7 @@ import { BotMessageSquare, ChevronDown, Cloud, Layers, Sparkles } from 'lucide-r
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import clsx from 'clsx'
 
 import type { AddNoteNodeOptions } from '../../hooks/use-add-node'
@@ -54,6 +56,8 @@ type Props = {
   onToggleSlidesPanel: () => void
   slidesPanelOpen: boolean
   boardId?: string
+  boardVisibility: 'private' | 'public'
+  onUpdateVisibility: (visibility: 'private' | 'public') => Promise<void>
 }
 
 
@@ -75,12 +79,17 @@ export const TopBar = memo(function TopBar({
   onToggleSlidesPanel,
   slidesPanelOpen,
   boardId,
+  boardVisibility,
+  onUpdateVisibility,
 }: Props) {
   const currentFolderDepth = useGraphStore(state => state.currentFolderDepth)
   const maxFolderDepth = useGraphStore(state => state.maxFolderDepth)
   const isAtMaxFolderDepth = currentFolderDepth < 0 || currentFolderDepth >= maxFolderDepth
   const normalButtonClass = 'transition-colors text-card-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground p-2.5 rounded-lg flex items-center justify-center gap-2'
   const activeButtonClass = clsx(normalButtonClass, 'bg-sidebar-primary text-secondary')
+  const [openShareDialog, setOpenShareDialog] = useState(false)
+  const [isUpdatingSharing, setIsUpdatingSharing] = useState(false)
+  const [shareError, setShareError] = useState<string | null>(null)
 
   const shapeOptions: { nodeType: NodeType; label: string; icon: React.ReactNode }[] = [
     { nodeType: 'rectangle', label: 'Rectangle', icon: <HugeiconsIcon icon={SquareIcon} className='size-4 shrink-0' strokeWidth={2} /> },
@@ -110,7 +119,33 @@ export const TopBar = memo(function TopBar({
     text: 'Text',
     assistant: 'Assistant',
     slides: 'Slides',
+    share: 'Share board',
     more: 'More actions',
+  }
+
+  const isPublicShared = boardVisibility === 'public'
+
+  const handleTogglePublicShare = async () => {
+    if (!boardId || isUpdatingSharing) return
+    setShareError(null)
+    setIsUpdatingSharing(true)
+    try {
+      await onUpdateVisibility(isPublicShared ? 'private' : 'public')
+    } catch (error) {
+      setShareError(error instanceof Error ? error.message : 'Could not update sharing')
+    } finally {
+      setIsUpdatingSharing(false)
+    }
+  }
+
+  const handleCopyShareLink = async () => {
+    if (!boardId) return
+    const url = `${window.location.origin}/boards/${boardId}`
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch (error) {
+      setShareError(error instanceof Error ? error.message : 'Could not copy link')
+    }
   }
 
   return (
@@ -337,6 +372,61 @@ export const TopBar = memo(function TopBar({
           </Tooltip>
         </>
       )}
+
+      <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant={null}
+            className={isPublicShared ? activeButtonClass : normalButtonClass}
+            size='icon'
+            onClick={() => setOpenShareDialog(true)}
+            aria-label='Share board'
+            disabled={!boardId}
+          >
+            <HugeiconsIcon icon={Share08Icon} className='size-4 shrink-0' strokeWidth={2} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side='bottom' sideOffset={10}>{tooltipCopy.share}</TooltipContent>
+      </Tooltip>
+
+      <Dialog open={openShareDialog} onOpenChange={setOpenShareDialog}>
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Share board</DialogTitle>
+            <DialogDescription>
+              Public sharing lets anyone with the link view this board.
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-3'>
+            <Button
+              variant={isPublicShared ? 'outline' : 'default'}
+              className='w-full'
+              onClick={handleTogglePublicShare}
+              disabled={!boardId || isUpdatingSharing}
+            >
+              {isUpdatingSharing
+                ? 'Updating...'
+                : isPublicShared
+                  ? 'Disable public sharing'
+                  : 'Enable public sharing'}
+            </Button>
+            {isPublicShared ? (
+              <Button
+                variant='outline'
+                className='w-full'
+                onClick={handleCopyShareLink}
+              >
+                Copy public link
+              </Button>
+            ) : null}
+            {shareError ? (
+              <p className='text-xs text-destructive'>{shareError}</p>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 })

@@ -10,6 +10,7 @@ interface ListBoardsResponse {
       type: "graph"
       label?: string
       readonly: boolean
+      visibility: "private" | "public"
       thumbnail?: string
       created_at: string
       updated_at?: string

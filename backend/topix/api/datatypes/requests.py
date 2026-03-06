@@ -81,6 +81,12 @@ class GraphUpdateRequest(BaseModel):
     data: dict
 
 
+class BoardVisibilityUpdateRequest(BaseModel):
+    """Request model for updating board visibility."""
+
+    visibility: Literal["private", "public"]
+
+
 class NoteUpdateRequest(BaseModel):
     """Request model for updating a note."""
 

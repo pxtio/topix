@@ -23,6 +23,7 @@ CREATE TABLE graphs (
     label TEXT,
     format_version INT NOT NULL DEFAULT 1,
     readonly BOOLEAN NOT NULL DEFAULT FALSE,
+    visibility TEXT NOT NULL DEFAULT 'private' CHECK (visibility IN ('private', 'public')),
     thumbnail TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP,

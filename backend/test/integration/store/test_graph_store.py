@@ -7,8 +7,12 @@ from topix.datatypes.graph.graph import Graph
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
 from topix.datatypes.resource import RichText
+from topix.datatypes.user import User
 from topix.store.graph import GraphStore
+from topix.store.postgres.graph_user import add_user_to_graph_by_uid
 from topix.store.qdrant.store import ContentStore
+from topix.store.user import UserStore
+from topix.utils.common import gen_uid
 
 
 @pytest_asyncio.fixture(scope="module", loop_scope="module")
@@ -98,4 +102,71 @@ async def test_graph_crud_lifecycle(config, init_collection):
         hard_deleted_graph = await store.get_graph(graph.uid)
         assert hard_deleted_graph is None
     finally:
+        await store.close()
+
+
+@pytest.mark.asyncio
+async def test_graph_role_lookup(config, init_collection):
+    """Test GraphStore role lookup for owner/member/non-member."""
+    graph_store = GraphStore()
+    user_store = UserStore()
+    await graph_store.open()
+    await user_store.open()
+
+    owner_uid = "root"
+    member_uid = gen_uid()
+
+    try:
+        graph = Graph(label="Role Lookup Graph")
+        await graph_store.add_graph(graph, user_uid=owner_uid)
+
+        owner_role = await graph_store.get_graph_role(graph.uid, owner_uid)
+        assert owner_role == "owner"
+
+        member = User(
+            uid=member_uid,
+            email=f"{member_uid}@test.com",
+            username=member_uid,
+            password_hash="hashed_password",
+        )
+        await user_store.add_user(member)
+
+        async with graph_store._pg_pool.acquire() as conn:
+            added = await add_user_to_graph_by_uid(conn, graph.uid, member_uid, "member")
+        assert added is True
+
+        member_role = await graph_store.get_graph_role(graph.uid, member_uid)
+        assert member_role == "member"
+
+        no_role = await graph_store.get_graph_role(graph.uid, gen_uid())
+        assert no_role is None
+    finally:
+        await graph_store.delete_graph(graph.uid, hard_delete=True)
+        await user_store.delete_user(member_uid, hard_delete=True)
+        await graph_store.close()
+        await user_store.close()
+
+
+@pytest.mark.asyncio
+async def test_graph_visibility_defaults_and_updates(config, init_collection):
+    """Test graph visibility defaults to private and can be updated."""
+    store = GraphStore()
+    await store.open()
+    user_uid = "root"
+
+    try:
+        graph = Graph(label="Visibility Graph")
+        await store.add_graph(graph, user_uid=user_uid)
+
+        stored_graph = await store.get_graph(graph.uid)
+        assert stored_graph is not None
+        assert stored_graph.visibility == "private"
+
+        await store.update_graph(graph.uid, {"visibility": "public"})
+
+        updated_graph = await store.get_graph(graph.uid)
+        assert updated_graph is not None
+        assert updated_graph.visibility == "public"
+    finally:
+        await store.delete_graph(graph.uid, hard_delete=True)
         await store.close()

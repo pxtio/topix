@@ -8,6 +8,7 @@ import {
   ArrowRight01Icon,
   Blockchain06Icon,
   ChatTranslateIcon,
+  ClipboardIcon,
   GitForkIcon,
   Idea01Icon,
   LayerBringForwardIcon,
@@ -23,6 +24,7 @@ import { useGraphStore } from '../../store/graph-store'
 import { buildContextTextFromNodes } from '../../utils/context-text'
 import { toast } from 'sonner'
 import { useAiSparkActions } from '../../hooks/use-ai-spark-actions'
+import { useExportSelectionPng } from '../../hooks/use-export-selection-png'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 /**
@@ -46,6 +48,7 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
   const [menuPosition, setMenuPosition] = useState<{ x: number, y: number } | null>(null)
   const [customLanguage, setCustomLanguage] = useState('')
   const [translateOpen, setTranslateOpen] = useState(false)
+  const [exportTransparentBackground, setExportTransparentBackground] = useState(false)
 
   const stats = useMemo(() => {
     let globalMin = Number.POSITIVE_INFINITY
@@ -85,6 +88,9 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
   const canSendBackward = hasSelection && selectedMin > globalMin
   const canSendForward = hasSelection && selectedMax < globalMax
   const boardId = useGraphStore(state => state.boardId)
+  const edges = useGraphStore(state => state.edges)
+  const setNodes = useGraphStore(state => state.setNodes)
+  const setEdges = useGraphStore(state => state.setEdges)
   const { actions: aiActions, processingKey, runAction } = useAiSparkActions()
   const aiMenuActions = useMemo(
     () => aiActions.filter(action => action.key !== 'translate'),
@@ -110,10 +116,14 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
     [nodes],
   )
 
+  const openMenuAt = useCallback((x: number, y: number) => {
+    setMenuPosition({ x, y })
+  }, [])
+
   const openMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault()
-    setMenuPosition({ x: event.clientX, y: event.clientY })
-  }, [])
+    openMenuAt(event.clientX, event.clientY)
+  }, [openMenuAt])
 
   const handlePaneContextMenu = useCallback<NonNullable<ReactFlowProps<NoteNode, LinkEdge>['onPaneContextMenu']>>((event) => {
     if (!hasSelection) return
@@ -132,11 +142,29 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
       if (target?.closest('[data-graph-context-menu="true"]')) return
       setMenuPosition(null)
       setTranslateOpen(false)
+      setExportTransparentBackground(false)
     }
     const listenerOptions: AddEventListenerOptions = { capture: true }
     window.addEventListener('mousedown', close, listenerOptions)
     return () => window.removeEventListener('mousedown', close, listenerOptions)
   }, [menuPosition])
+
+  useEffect(() => {
+    const onSelectionContextMenu = (event: MouseEvent) => {
+      if (!hasSelection) return
+      const target = event.target as HTMLElement | null
+      const selectionTarget = target?.closest(
+        '.react-flow__selection, .react-flow__selectionpane, .react-flow__nodesselection, .react-flow__nodesselection-rect, .react-flow__pane.selection',
+      )
+      if (!selectionTarget) return
+      event.preventDefault()
+      event.stopPropagation()
+      openMenuAt(event.clientX, event.clientY)
+    }
+    const listenerOptions: AddEventListenerOptions = { capture: true }
+    window.addEventListener('contextmenu', onSelectionContextMenu, listenerOptions)
+    return () => window.removeEventListener('contextmenu', onSelectionContextMenu, listenerOptions)
+  }, [hasSelection, openMenuAt])
 
   const applyToSelected = useCallback((updater: (z: number) => number) => {
     if (selectedSet.size === 0) return
@@ -229,6 +257,18 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
     explain: Idea01Icon,
   }
 
+  const { exportSelectionPng } = useExportSelectionPng({
+    nodes,
+    edges,
+    selectedNodes,
+    setNodes,
+    setEdges,
+    onSuccess: () => {
+      setMenuPosition(null)
+      setExportTransparentBackground(false)
+    },
+  })
+
   return (
     <>
       {children({
@@ -310,6 +350,37 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
               <div className="text-xs">{positionTooltips.sendToFront}</div>
             </TooltipContent>
           </Tooltip>
+          <div className='my-1 h-px bg-border' />
+          <div className='px-3 py-1 text-xs font-medium text-muted-foreground'>
+            Export
+          </div>
+          <button
+            type='button'
+            className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2'
+            onClick={() => void exportSelectionPng(exportTransparentBackground)}
+          >
+            <HugeiconsIcon icon={ClipboardIcon} strokeWidth={2} className='size-4' />
+            <span>Copy selected as PNG</span>
+          </button>
+          <div className='px-3 py-1.5 flex items-center justify-between gap-2 text-xs text-muted-foreground'>
+            <span>Transparent background</span>
+            <div className='inline-flex items-center rounded-md border border-border bg-background p-0.5'>
+              <button
+                type='button'
+                className={`h-6 px-2 rounded-sm transition-colors ${exportTransparentBackground ? 'text-muted-foreground hover:text-foreground' : 'bg-muted text-foreground'}`}
+                onClick={() => setExportTransparentBackground(false)}
+              >
+                No
+              </button>
+              <button
+                type='button'
+                className={`h-6 px-2 rounded-sm transition-colors ${exportTransparentBackground ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                onClick={() => setExportTransparentBackground(true)}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
 
           {hasSelection && (
             <>

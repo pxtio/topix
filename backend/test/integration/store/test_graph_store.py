@@ -145,3 +145,28 @@ async def test_graph_role_lookup(config, init_collection):
         await user_store.delete_user(member_uid, hard_delete=True)
         await graph_store.close()
         await user_store.close()
+
+
+@pytest.mark.asyncio
+async def test_graph_visibility_defaults_and_updates(config, init_collection):
+    """Test graph visibility defaults to private and can be updated."""
+    store = GraphStore()
+    await store.open()
+    user_uid = "root"
+
+    try:
+        graph = Graph(label="Visibility Graph")
+        await store.add_graph(graph, user_uid=user_uid)
+
+        stored_graph = await store.get_graph(graph.uid)
+        assert stored_graph is not None
+        assert stored_graph.visibility == "private"
+
+        await store.update_graph(graph.uid, {"visibility": "public"})
+
+        updated_graph = await store.get_graph(graph.uid)
+        assert updated_graph is not None
+        assert updated_graph.visibility == "public"
+    finally:
+        await store.delete_graph(graph.uid, hard_delete=True)
+        await store.close()

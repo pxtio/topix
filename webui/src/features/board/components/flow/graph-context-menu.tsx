@@ -8,7 +8,7 @@ import {
   ArrowRight01Icon,
   Blockchain06Icon,
   ChatTranslateIcon,
-  ClipboardCopy,
+  ClipboardIcon,
   GitForkIcon,
   Idea01Icon,
   LayerBringForwardIcon,
@@ -359,7 +359,7 @@ export function GraphContextMenu({ nodes, setNodesPersist, children }: GraphCont
             className='w-full px-3 py-2 text-left rounded hover:bg-muted flex items-center gap-2'
             onClick={() => void exportSelectionPng(exportTransparentBackground)}
           >
-            <HugeiconsIcon icon={ClipboardCopy} strokeWidth={2} className='size-4' />
+            <HugeiconsIcon icon={ClipboardIcon} strokeWidth={2} className='size-4' />
             <span>Copy selected as PNG</span>
           </button>
           <div className='px-3 py-1.5 flex items-center justify-between gap-2 text-xs text-muted-foreground'>

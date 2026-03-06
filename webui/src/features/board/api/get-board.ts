@@ -16,14 +16,17 @@ import { apiFetch } from "@/api"
 export async function getBoard(
   boardId: string,
   rootId?: string,
-): Promise<Graph> {
+): Promise<{ graph: Graph; canEdit: boolean }> {
   const res = await apiFetch<{ data: Record<string, unknown> }>({
     path: `/boards/${boardId}`,
     method: "GET",
     params: { root_id: rootId },
   })
   const data = camelcaseKeys(res.data, { deep: true })
-  return data.graph as Graph
+  return {
+    graph: data.graph as Graph,
+    canEdit: data.canEdit !== false,
+  }
 }
 
 
@@ -34,12 +37,22 @@ export const useGetBoard = () => {
   // no selectors here → no subscription
   const mutation = useMutation({
     mutationFn: async (): Promise<boolean> => {
-      const { boardId, rootId, setNodes, setEdges, isLoading, setIsLoading } = useGraphStore.getState()
+      const {
+        boardId,
+        rootId,
+        setNodes,
+        setEdges,
+        setBoardVisibility,
+        setBoardCanEdit,
+        isLoading,
+        setIsLoading,
+      } = useGraphStore.getState()
       if (!boardId) return false
       if (isLoading) return false
       setIsLoading(true)
       try {
-        const { nodes: notes, edges: links } = await getBoard(boardId, rootId)
+        const { graph, canEdit } = await getBoard(boardId, rootId)
+        const { nodes: notes, edges: links, visibility } = graph
         const nodes = (notes ?? []).map(convertNoteToNode)
         const nodesById = new Map(nodes.map(node => [node.id, node]))
         const edges: LinkEdge[] = []
@@ -55,6 +68,8 @@ export const useGetBoard = () => {
 
         setNodes([...nodes, ...pointNodes])
         setEdges(edges)
+        setBoardVisibility(visibility ?? "private")
+        setBoardCanEdit(canEdit)
         return true
       } finally {
         setIsLoading(false)

@@ -74,6 +74,7 @@ def test_public_board_read_allowed_for_non_member():
     payload = response.json()
     assert payload["status"] == "success"
     assert payload["data"]["graph"]["uid"] == graph_uid
+    assert payload["data"]["can_edit"] is False
 
 
 def test_non_member_write_denied_even_when_public():
@@ -106,3 +107,21 @@ def test_member_can_update_visibility():
     assert payload["status"] == "success"
     assert payload["data"]["message"] == "Board visibility updated successfully"
     assert store.updated == [(graph_uid, {"visibility": "public"})]
+
+
+def test_member_board_read_has_can_edit_true():
+    """Member read response should indicate edit capability."""
+    store = _FakeGraphStore()
+    graph_uid = "g-member"
+    user_uid = "member-1"
+    store.roles[(graph_uid, user_uid)] = "member"
+    store.metadata[graph_uid] = Graph(uid=graph_uid, label="Member", visibility="private")
+    store.graphs[graph_uid] = Graph(uid=graph_uid, label="Member", visibility="private")
+    client = _build_client(store, user_uid=user_uid)
+
+    response = client.get(f"/boards/{graph_uid}")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "success"
+    assert payload["data"]["can_edit"] is True

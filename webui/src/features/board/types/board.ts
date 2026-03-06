@@ -13,6 +13,7 @@ export interface Graph {
   nodes?: Array<Note | Document>
   edges?: Link[]
   readonly: boolean
+  visibility: "private" | "public"
   thumbnail?: string
   createdAt: string
   updatedAt?: string
@@ -31,5 +32,6 @@ export const createDefaultGraph = (uid: string): Graph => ({
   nodes: [],
   edges: [],
   readonly: false,
+  visibility: "private",
   createdAt: new Date().toISOString()
 })

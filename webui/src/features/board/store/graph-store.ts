@@ -857,6 +857,10 @@ export interface GraphStore {
   setBoardBackground: (color: string | null) => void
   boardBackgroundTexture: BoardBackgroundTexture | null
   setBoardBackgroundTexture: (texture: BoardBackgroundTexture | null) => void
+  boardVisibility: "private" | "public"
+  setBoardVisibility: (visibility: "private" | "public") => void
+  boardCanEdit: boolean
+  setBoardCanEdit: (canEdit: boolean) => void
 
   setNodes: (nodes: Updater<NoteNode[]>) => void
   setEdges: (edges: Updater<LinkEdge[]>) => void
@@ -936,6 +940,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             lastCursorPosition: undefined,
             boardBackground: getBoardBackground(boardId),
             boardBackgroundTexture: getBoardBackgroundTexture(boardId),
+            boardVisibility: "private",
+            boardCanEdit: true,
           }
         : {
             boardId,
@@ -977,6 +983,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   zoom: 1,
   boardBackground: null,
   boardBackgroundTexture: null,
+  boardVisibility: "private",
+  boardCanEdit: true,
   setBoardBackground: (color) => {
     const boardId = get().boardId
     if (!boardId) return
@@ -999,6 +1007,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     persistBoardBackgroundTexture(boardId, texture)
     set({ boardBackgroundTexture: texture })
   },
+  setBoardVisibility: (visibility) => set({ boardVisibility: visibility }),
+  setBoardCanEdit: (canEdit) => set({ boardCanEdit: canEdit }),
 
   // --- flexible setters ---
 

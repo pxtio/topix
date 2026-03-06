@@ -224,6 +224,7 @@ export default function GraphEditor() {
   } = useReactFlow<NoteNode, LinkEdge>()
 
   const boardId = useGraphStore(state => state.boardId)
+  const boardCanEdit = useGraphStore(state => state.boardCanEdit)
   const rootId = useGraphStore(state => state.rootId)
   const scopeViewportKey = boardId ? `${boardId}:${rootId ?? 'root'}` : undefined
   const navigate = useNavigate()
@@ -260,6 +261,7 @@ export default function GraphEditor() {
   const setBoardBackground = useGraphStore(state => state.setBoardBackground)
   const boardBackgroundTexture = useGraphStore(state => state.boardBackgroundTexture)
   const setBoardBackgroundTexture = useGraphStore(state => state.setBoardBackgroundTexture)
+  const effectiveIsLocked = isLocked || !boardCanEdit
 
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
@@ -440,8 +442,15 @@ export default function GraphEditor() {
   }, [zoomTo])
 
   const handleToggleLock = useCallback(() => {
+    if (!boardCanEdit) return
     setIsLocked(value => !value)
-  }, [setIsLocked])
+  }, [boardCanEdit, setIsLocked])
+
+  useEffect(() => {
+    if (!boardCanEdit) {
+      setIsLocked(true)
+    }
+  }, [boardCanEdit])
 
   const getCurrentViewport = useCallback(() => {
     return rfInstanceRef.current?.getViewport?.() ?? null
@@ -605,18 +614,20 @@ export default function GraphEditor() {
 
   return (
     <div className="w-full h-full relative">
-      <ActionPanel
-        onAddNode={handlePanelAddNode}
-        onAddLine={handleAddLine}
-        enableSelection={enableSelection}
-        setEnableSelection={setEnableSelection}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onResetZoom={handleResetZoom}
-        toggleLock={handleToggleLock}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-      />
+      {boardCanEdit ? (
+        <ActionPanel
+          onAddNode={handlePanelAddNode}
+          onAddLine={handleAddLine}
+          enableSelection={enableSelection}
+          setEnableSelection={setEnableSelection}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onResetZoom={handleResetZoom}
+          toggleLock={handleToggleLock}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+        />
+      ) : null}
 
       {/* Graph-only sidebar (style controls) */}
       {viewMode === 'graph' &&
@@ -625,7 +636,8 @@ export default function GraphEditor() {
         !isDragging &&
         !moving &&
         !isResizingNode &&
-        !isSelecting && (
+        !isSelecting &&
+        boardCanEdit && (
           <div className="absolute top-16 left-1 w-auto max-w-[300px] h-auto z-50">
             <GraphSidebar />
           </div>
@@ -649,7 +661,7 @@ export default function GraphEditor() {
                   onNodesDelete={onNodesDelete}
                   onEdgesDelete={onEdgesDelete}
                   enableSelection={enableSelection}
-                  isLocked={isLocked}
+                  isLocked={effectiveIsLocked}
                   onNodeDragStart={handleDragStart}
                   onNodeDragStop={handleDragStop}
                   onSelectionStart={handleSelectionStart}
@@ -685,7 +697,7 @@ export default function GraphEditor() {
                       redo={redo}
                       canUndo={canUndo}
                       canRedo={canRedo}
-                      isLocked={isLocked}
+                      isLocked={effectiveIsLocked}
                       toggleLock={handleToggleLock}
                       boardBackground={boardBackground}
                       boardBackgroundTexture={boardBackgroundTexture}

@@ -103,7 +103,13 @@ async def get_graph(
     if graph.thumbnail and graph.thumbnail.startswith("file://"):
         graph.thumbnail = load_png_as_data_url(graph.thumbnail)
 
-    return {"graph": graph.model_dump(exclude_none=True)}
+    role = await store.get_graph_role(graph_uid=graph_id, user_uid=user_id)
+    can_edit = role in {"owner", "member"}
+
+    return {
+        "graph": graph.model_dump(exclude_none=True),
+        "can_edit": can_edit,
+    }
 
 
 @router.get("/", include_in_schema=False)

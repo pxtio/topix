@@ -339,13 +339,15 @@ export default function GraphEditor() {
   const handlePaneDoubleClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       if (viewMode !== 'graph') return
+      // if user can't edit, dont allow adding nodes via double click
+      if (!boardCanEdit) return
       if (!screenToFlowPosition) return
       if ((event.target as HTMLElement | null)?.closest('.react-flow__node')) return
       if ((event.target as HTMLElement | null)?.closest('.react-flow__edge')) return
       const flowPoint = screenToFlowPosition({ x: event.clientX, y: event.clientY })
       addNoteNode({ nodeType: 'text', position: flowPoint })
     },
-    [viewMode, screenToFlowPosition, addNoteNode],
+    [viewMode, boardCanEdit, screenToFlowPosition, addNoteNode],
   )
 
   const handlePaneMouseMove = useCallback(

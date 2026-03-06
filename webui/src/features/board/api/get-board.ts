@@ -67,7 +67,16 @@ export const useGetBoard = () => {
           }
         }
 
-        setNodes([...nodes, ...pointNodes])
+        const loadedNodes = [...nodes, ...pointNodes]
+        const readonlyNodes = canEdit
+          ? loadedNodes
+          : loadedNodes.map(node => ({
+              ...node,
+              draggable: false,
+              selectable: false,
+            }))
+
+        setNodes(readonlyNodes)
         setEdges(edges)
         setBoardVisibility(visibility ?? "private")
         setBoardCanEdit(canEdit)

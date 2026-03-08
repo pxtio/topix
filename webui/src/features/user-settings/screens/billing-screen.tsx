@@ -6,6 +6,7 @@ import {
   Award04Icon,
   ChatTranslateIcon,
   Crown03Icon,
+  DocumentAttachmentIcon,
   Idea01Icon,
   PaintBoardIcon,
   SparklesIcon,
@@ -238,6 +239,7 @@ export function BillingScreen() {
               <p className="text-3xl font-semibold text-foreground">Free</p>
               <FeatureRow icon={Idea01Icon} label="10 AI requests / day" />
               <FeatureRow icon={PaintBoardIcon} label="1 board maximum" />
+              <FeatureRow icon={DocumentAttachmentIcon} label="1 document upload / board" />
               <FeatureRow icon={ChatTranslateIcon} label="Basic AI actions" />
               <FeatureRow icon={Award04Icon} label="Community support" />
               <p className="pt-2 text-xs leading-relaxed text-muted-foreground/80">
@@ -267,6 +269,7 @@ export function BillingScreen() {
               <div className="space-y-2.5 text-sm text-muted-foreground">
                 <FeatureRow icon={Idea01Icon} label="Unlimited AI requests" />
                 <FeatureRow icon={PaintBoardIcon} label="Unlimited boards" />
+                <FeatureRow icon={DocumentAttachmentIcon} label="Unlimited document uploads" />
                 <FeatureRow icon={SparklesIcon} label="Advanced AI actions" />
                 <FeatureRow icon={Award04Icon} label="Priority support" />
               </div>

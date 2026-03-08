@@ -20,7 +20,6 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Label } from '@/components/ui/label'
 import { useGraphStore } from '../../store/graph-store'
 import { AlignCenter, AlignLeft, AlignRight } from 'lucide-react'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ColorGrid } from './color-panel'
 import { useStyleDefaults } from '../../style-provider'
@@ -506,9 +505,9 @@ export function StylePanel<T extends StyleLike>({
   }
 
   return (
-    <Card className={cn('w-full bg-sidebar backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 shadow-md border border-border rounded-lg', className)}>
+    <Card className={cn('w-full bg-sidebar backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 shadow-md border border-border rounded-lg py-0 px-0', className)}>
       <CardContent className='p-0 h-[420px]'>
-        <ScrollArea className='h-full p-2 overflow-y-auto scrollbar-thin'>
+        <div className='h-full p-1 overflow-y-auto scrollbar-thin'>
           <div className='space-y-0 pr-1'>
             {settingKeys.map(key => (
               <Popover key={key}>
@@ -531,7 +530,7 @@ export function StylePanel<T extends StyleLike>({
               </Popover>
             ))}
           </div>
-        </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   )

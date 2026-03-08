@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label'
 import { useGraphStore } from '../../store/graph-store'
 import { AlignCenter, AlignLeft, AlignRight } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ColorGrid } from './color-panel'
 import { useStyleDefaults } from '../../style-provider'
 
@@ -511,24 +511,24 @@ export function StylePanel<T extends StyleLike>({
         <ScrollArea className='h-full p-2 overflow-y-auto scrollbar-thin'>
           <div className='space-y-0 pr-1'>
             {settingKeys.map(key => (
-              <HoverCard key={key} openDelay={80} closeDelay={120}>
-                <HoverCardTrigger asChild>
+              <Popover key={key}>
+                <PopoverTrigger asChild>
                   <div>
                     <RailButton
                       title={settingTitle[key]}
                       indicator={settingIndicator[key]}
                     />
                   </div>
-                </HoverCardTrigger>
-                <HoverCardContent
+                </PopoverTrigger>
+                <PopoverContent
                   side='right'
                   align='start'
                   sideOffset={10}
-                  className='w-[320px] p-3'
+                  className='w-[240px] max-h-[60vh] overflow-y-auto scrollbar-thin p-3'
                 >
                   {settingContent[key]}
-                </HoverCardContent>
-              </HoverCard>
+                </PopoverContent>
+              </Popover>
             ))}
           </div>
         </ScrollArea>

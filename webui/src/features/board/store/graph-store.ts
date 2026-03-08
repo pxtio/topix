@@ -911,7 +911,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   boardId: undefined,
   rootId: undefined,
   currentFolderDepth: -1,
-  maxFolderDepth: 4,
+  maxFolderDepth: 2,
   setCurrentFolderDepth: (depth) => {
     const next = Number.isFinite(depth) ? Math.floor(depth) : -1
     set({ currentFolderDepth: next })

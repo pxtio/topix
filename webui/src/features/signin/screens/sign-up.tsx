@@ -15,6 +15,8 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { Mail01Icon, UserIcon, UserSquareIcon, LockIcon } from "@hugeicons/core-free-icons"
 import { Loader2 } from "lucide-react"
 import { PasswordInput } from "../components/password-input"
+import { PasswordStrengthMeter } from "../components/password-strength-meter"
+import { getPasswordStrength } from "../lib/password-strength"
 
 export function SignupPage() {
   const navigate = useNavigate()
@@ -26,6 +28,9 @@ export function SignupPage() {
   const [username, setUsername] = React.useState("")
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
+  const [passwordError, setPasswordError] = React.useState<string | null>(null)
+  const passwordStrength = React.useMemo(() => getPasswordStrength(password), [password])
+  const canSubmit = passwordStrength.isValid
 
   const mut = useMutation({
     mutationFn: () => signup({ email, password, name, username }),
@@ -52,6 +57,11 @@ export function SignupPage() {
             className="space-y-5"
             onSubmit={e => {
               e.preventDefault()
+              if (!passwordStrength.isValid) {
+                setPasswordError("Please choose a stronger password before continuing.")
+                return
+              }
+              setPasswordError(null)
               mut.mutate()
             }}
           >
@@ -134,7 +144,12 @@ export function SignupPage() {
                   strokeWidth={2}
                 />
               </div>
+              <PasswordStrengthMeter password={password} />
             </div>
+
+            {passwordError ? (
+              <p className="text-sm text-destructive">{passwordError}</p>
+            ) : null}
 
             {mut.isError ? (
               <p className="text-sm text-destructive">
@@ -142,7 +157,7 @@ export function SignupPage() {
               </p>
             ) : null}
 
-            <Button type="submit" className="w-full" disabled={mut.isPending}>
+            <Button type="submit" className="w-full" disabled={mut.isPending || !canSubmit}>
               {mut.isPending ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />

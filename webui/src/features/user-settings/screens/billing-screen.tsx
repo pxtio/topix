@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { AlertTriangle } from "lucide-react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Crown03Icon } from "@hugeicons/core-free-icons"
+import type { IconSvgElement } from "@hugeicons/react"
+import {
+  Award04Icon,
+  ChatTranslateIcon,
+  Crown03Icon,
+  DocumentAttachmentIcon,
+  Idea01Icon,
+  PaintBoardIcon,
+  SparklesIcon,
+} from "@hugeicons/core-free-icons"
 
 import { refresh } from "@/api"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +29,22 @@ import {
 import { getAccessToken } from "@/features/signin/auth-storage"
 import { decodeJwt, resolveBillingPlan } from "@/lib/decode-jwt"
 import { useAppStore } from "@/store"
+
+
+type FeatureRowProps = {
+  icon: IconSvgElement
+  label: string
+}
+
+
+function FeatureRow({ icon, label }: FeatureRowProps) {
+  return (
+    <div className="flex items-center gap-2">
+      <HugeiconsIcon icon={icon} className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} />
+      <span>{label}</span>
+    </div>
+  )
+}
 
 
 export function BillingScreen() {
@@ -208,14 +233,18 @@ export function BillingScreen() {
                   </Badge>
                 ) : null}
               </div>
-              <CardDescription>Starter usage for personal testing</CardDescription>
+              <CardDescription>Starter plan for personal exploration</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p className="text-3xl font-semibold text-foreground">Free</p>
-              <p>10 requests / minute</p>
-              <p>10 requests / day</p>
-              <p>100 requests / month</p>
-              <p>1 board maximum</p>
+              <FeatureRow icon={Idea01Icon} label="10 AI requests / day" />
+              <FeatureRow icon={PaintBoardIcon} label="1 board maximum" />
+              <FeatureRow icon={DocumentAttachmentIcon} label="1 document upload / board" />
+              <FeatureRow icon={ChatTranslateIcon} label="Basic AI actions" />
+              <FeatureRow icon={Award04Icon} label="Community support" />
+              <p className="pt-2 text-xs leading-relaxed text-muted-foreground/80">
+                Free is currently limited while we run on a small budget. We plan to make the free plan more usable over time.
+              </p>
             </CardContent>
           </Card>
 
@@ -230,16 +259,19 @@ export function BillingScreen() {
                   </Badge>
                 ) : null}
               </div>
-              <CardDescription>Unlimited limits</CardDescription>
+              <CardDescription>Best for active daily workflows</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-end gap-2">
                 <span className="text-3xl font-semibold text-foreground">{plusPriceLabel}</span>
                 <span className="text-sm text-muted-foreground">/ {plusIntervalLabel}</span>
               </div>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>Unlimited requests</p>
-                <p>Unlimited boards</p>
+              <div className="space-y-2.5 text-sm text-muted-foreground">
+                <FeatureRow icon={Idea01Icon} label="Unlimited AI requests" />
+                <FeatureRow icon={PaintBoardIcon} label="Unlimited boards" />
+                <FeatureRow icon={DocumentAttachmentIcon} label="Unlimited document uploads" />
+                <FeatureRow icon={SparklesIcon} label="Advanced AI actions" />
+                <FeatureRow icon={Award04Icon} label="Priority support" />
               </div>
 
               {userPlan === "plus" ? (

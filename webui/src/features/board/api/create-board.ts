@@ -37,7 +37,7 @@ export const useCreateBoard = () => {
       const boards = cachedBoards ?? await listBoards()
 
       if (isBoardCreationLimited(userPlan, boards.length)) {
-        toast.error("Free plan allows 1 board. Upgrade to Plus for unlimited boards.")
+        toast.error("Free plan allows 1 board. Upgrade to Plus for unlimited limits, or self-host for your own unlimited setup.")
         throw new Error("board_limit_reached")
       }
 

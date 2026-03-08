@@ -7,6 +7,8 @@ import { useParseDocument } from "@/features/board/api/parse-document"
 import { useGraphStore } from "@/features/board/store/graph-store"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { CancelIcon, CheckmarkCircle03Icon, ReloadIcon } from "@hugeicons/core-free-icons"
+import { useAppStore } from "@/store"
+import { FREE_PLAN_DOCUMENT_LIMIT_TOOLTIP, isDocumentUploadLimited } from "@/features/board/lib/board-limit"
 
 export interface DocumentUploadDialogProps {
   open: boolean
@@ -46,13 +48,21 @@ export const DocumentUploadDialog = ({
 }: DocumentUploadDialogProps) => {
   const boardId = useGraphStore(state => state.boardId)
   const rootId = useGraphStore(state => state.rootId)
+  const nodes = useGraphStore(state => state.nodes)
+  const userPlan = useAppStore(state => state.userPlan)
   const [file, setFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const { parseDocumentAsync } = useParseDocument()
+  const documentCount = nodes.filter(n => n.data?.type === "document").length
+  const documentUploadLimited = isDocumentUploadLimited(userPlan, documentCount)
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!file || !boardId || submitting) return
+    if (documentUploadLimited) {
+      toast.error(FREE_PLAN_DOCUMENT_LIMIT_TOOLTIP)
+      return
+    }
 
     setSubmitting(true)
     const startedAt = Date.now()
@@ -105,7 +115,7 @@ export const DocumentUploadDialog = ({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={!file || !boardId || submitting}>
+            <Button type="submit" disabled={!file || !boardId || submitting || documentUploadLimited}>
               {submitting ? "Parsing…" : "Upload & Parse"}
             </Button>
           </div>

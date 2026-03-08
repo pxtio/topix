@@ -12,6 +12,8 @@ import { TopBar } from './top-bar'
 import { SlidePanel } from './slide-panel'
 import { CopilotSheet } from './copilot-sheet'
 import { updateBoard } from '../../api/update-board'
+import { useAppStore } from '@/store'
+import { isDocumentUploadLimited } from '../../lib/board-limit'
 
 
 type ViewMode = 'graph' | 'linear'
@@ -57,6 +59,7 @@ export const ActionPanel = memo(function ActionPanel({
   const boardId = useGraphStore(state => state.boardId)
   const boardVisibility = useGraphStore(state => state.boardVisibility)
   const nodes = useGraphStore(state => state.nodes)
+  const userPlan = useAppStore(state => state.userPlan)
   const setNodes = useGraphStore(state => state.setNodes)
   const setBoardVisibility = useGraphStore(state => state.setBoardVisibility)
   const setViewSlides = useGraphStore(state => state.setViewSlides)
@@ -68,6 +71,8 @@ export const ActionPanel = memo(function ActionPanel({
     shouldThrow: false,
   })
   const currentChatId = boardSearch?.currentChatId
+  const documentCount = nodes.filter(n => n.data?.type === 'document').length
+  const documentUploadLimited = isDocumentUploadLimited(userPlan, documentCount)
 
   useEffect(() => {
     setViewSlides(openSlidesPanel)
@@ -141,6 +146,7 @@ export const ActionPanel = memo(function ActionPanel({
           boardId={boardId}
           boardVisibility={boardVisibility}
           onUpdateVisibility={handleUpdateVisibility}
+          documentUploadLimited={documentUploadLimited}
         />
       )}
 

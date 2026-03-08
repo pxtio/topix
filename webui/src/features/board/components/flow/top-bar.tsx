@@ -29,6 +29,7 @@ import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import clsx from 'clsx'
+import { FREE_PLAN_DOCUMENT_LIMIT_TOOLTIP } from '../../lib/board-limit'
 
 import type { AddNoteNodeOptions } from '../../hooks/use-add-node'
 import type { NodeType } from '../../types/style'
@@ -58,6 +59,7 @@ type Props = {
   boardId?: string
   boardVisibility: 'private' | 'public'
   onUpdateVisibility: (visibility: 'private' | 'public') => Promise<void>
+  documentUploadLimited: boolean
 }
 
 
@@ -81,6 +83,7 @@ export const TopBar = memo(function TopBar({
   boardId,
   boardVisibility,
   onUpdateVisibility,
+  documentUploadLimited,
 }: Props) {
   const currentFolderDepth = useGraphStore(state => state.currentFolderDepth)
   const maxFolderDepth = useGraphStore(state => state.maxFolderDepth)
@@ -113,7 +116,7 @@ export const TopBar = memo(function TopBar({
     folder: isAtMaxFolderDepth
       ? (currentFolderDepth < 0 ? 'Resolving folder depth...' : `Max folder depth reached (${maxFolderDepth})`)
       : 'Folder',
-    document: 'Upload document',
+    document: documentUploadLimited ? FREE_PLAN_DOCUMENT_LIMIT_TOOLTIP : 'Upload document',
     shape: 'Shapes',
     connector: 'Connector',
     text: 'Text',
@@ -308,7 +311,7 @@ export const TopBar = memo(function TopBar({
                 <HugeiconsIcon icon={FolderAddIcon} className='size-4 shrink-0' strokeWidth={2} />
                 <span>Folder</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setOpenDocumentUpload(true)} className='gap-2 text-sm' disabled={!boardId}>
+              <DropdownMenuItem onSelect={() => setOpenDocumentUpload(true)} className='gap-2 text-sm' disabled={!boardId || documentUploadLimited}>
                 <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
                 <span>Document</span>
               </DropdownMenuItem>
@@ -359,11 +362,11 @@ export const TopBar = memo(function TopBar({
             <TooltipTrigger asChild>
               <Button
                 variant={null}
-                className={normalButtonClass}
+                className={clsx(normalButtonClass, documentUploadLimited && 'opacity-50')}
                 size='icon'
                 onClick={() => setOpenDocumentUpload(true)}
                 aria-label='Upload document'
-                disabled={!boardId}
+                disabled={!boardId || documentUploadLimited}
               >
                 <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
               </Button>

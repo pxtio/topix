@@ -49,9 +49,18 @@ const requireAuth = () => {
 
 const requireVerifiedAuth = async () => {
   requireAuth()
-  const status = await getEmailVerificationStatus()
-  if (status.enabled && !status.verified) {
-    throw redirect({ to: "/verify-email" })
+  try {
+    const status = await getEmailVerificationStatus()
+    if (status.enabled && !status.verified) {
+      throw redirect({ to: "/verify-email" })
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes("404") && message.includes("User not found")) {
+      clearTokens()
+      throw redirect({ to: "/signin" })
+    }
+    throw error
   }
 }
 

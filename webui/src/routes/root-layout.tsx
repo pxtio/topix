@@ -23,19 +23,25 @@ export function RootLayout() {
   const userId = useAppStore(s => s.userId)
   const setUserId = useAppStore(s => s.setUserId)
   const setUserEmail = useAppStore(s => s.setUserEmail)
+  const setUserPlan = useAppStore(s => s.setUserPlan)
+  const setEmailVerificationEnabled = useAppStore(s => s.setEmailVerificationEnabled)
+  const setEmailVerified = useAppStore(s => s.setEmailVerified)
 
   const onLogout = useCallback(() => {
     clearTokens()
     setUserId('root')
     setUserEmail('root@localhost')
+    setUserPlan('free')
+    setEmailVerificationEnabled(false)
+    setEmailVerified(true)
     navigate({ to: '/signin', replace: true })
-  }, [navigate, setUserEmail, setUserId])
+  }, [navigate, setEmailVerificationEnabled, setEmailVerified, setUserEmail, setUserId, setUserPlan])
 
   const isAuthed = userId !== 'root'
 
   // do not show shell on auth pages (prevents flicker / overlap)
   const onAuthPage = useMemo(
-    () => location.pathname === '/signin',
+    () => location.pathname === '/signin' || location.pathname === '/signup' || location.pathname === '/verify-email',
     [location.pathname]
   )
   const showShell = isAuthed && !onAuthPage

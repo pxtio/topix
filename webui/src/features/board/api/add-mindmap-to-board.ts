@@ -73,6 +73,7 @@ const applyAutoHeightForMindMapNodes = (nodes: NoteNode[]) =>
 export const useAddMindMapToBoard = () => {
   const { userId } = useAppStore()
   const boardId = useGraphStore(state => state.boardId)
+  const rootId = useGraphStore(state => state.rootId)
   const nodes = useGraphStore(useShallow(state => state.nodes))
   const edges = useGraphStore(useShallow(state => state.edges))
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
@@ -99,6 +100,9 @@ export const useAddMindMapToBoard = () => {
 
       for (const mindMap of boardMindmaps) {
         const { nodes: mindMapNodes, edges: mindMapEdges, useAnchors } = mindMap
+        mindMapNodes.forEach(node => {
+          node.data.parentId = rootId
+        })
 
         // mark as new (frontend only)
         mindMapNodes.forEach(n => { n.data.isNew = true })

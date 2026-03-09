@@ -44,6 +44,7 @@ INDEX_FIELDS = [
     ("chat_uid", "keyword"),
     # note, link
     ("graph_uid", "keyword"),
+    ("parent_id", "keyword"),
     # document
     ("document_uid", "keyword"),
     # subscription

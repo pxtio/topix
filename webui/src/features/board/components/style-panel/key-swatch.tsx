@@ -43,7 +43,7 @@ export const KeySwatch = ({
       onClick={onClick}
       onContextMenu={onContextMenu}
       className={cn(
-        "relative border border-border shadow-sm transition focus:outline-none focus:ring-2 focus:ring-secondary",
+        "relative border border-border shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
         SIZE_MAP[size],
         selected && "ring-2 ring-secondary",
         className

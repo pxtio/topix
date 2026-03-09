@@ -11,16 +11,18 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from topix.api.router import boards, chats, documents, files, finance, subscriptions, tools, users, utils
+from topix.api.router import billing, boards, chats, documents, files, finance, subscriptions, tools, users, utils
 from topix.config.config import Config
 from topix.datatypes.stage import StageEnum
 from topix.nlp.pipeline.parsing import ParsingPipeline
 from topix.setup import setup
 from topix.store.chat import ChatStore
+from topix.store.email_verification import EmailVerificationStore
 from topix.store.graph import GraphStore
 from topix.store.redis.store import RedisStore
 from topix.store.subscription import SubscriptionStore
 from topix.store.user import UserStore
+from topix.store.user_billing import UserBillingStore
 from topix.utils.logging import logging_config
 
 logging_config()
@@ -39,6 +41,10 @@ def create_app(stage: StageEnum):
         await app.user_store.open()
         app.chat_store = ChatStore()
         await app.chat_store.open()
+        app.user_billing_store = UserBillingStore()
+        await app.user_billing_store.open()
+        app.email_verification_store = EmailVerificationStore()
+        await app.email_verification_store.open()
         app.subscription_store = SubscriptionStore()
         await app.subscription_store.open()
         app.parser_pipeline = ParsingPipeline()
@@ -52,6 +58,8 @@ def create_app(stage: StageEnum):
         await app.graph_store.close()
         await app.user_store.close()
         await app.chat_store.close()
+        await app.user_billing_store.close()
+        await app.email_verification_store.close()
         await app.subscription_store.close()
         # Close Redis
         await app.redis_store.close()
@@ -73,6 +81,7 @@ def create_app(stage: StageEnum):
     app.include_router(tools.router)
     app.include_router(users.router)
     app.include_router(subscriptions.router)
+    app.include_router(billing.router)
     app.include_router(utils.router)
     app.include_router(finance.router)
     app.include_router(files.router)

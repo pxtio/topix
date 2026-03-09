@@ -92,6 +92,24 @@ async def list_users_by_graph_uid(
     return [(row['uid'], row['role']) for row in rows]
 
 
+async def get_graph_role_by_user_uid(
+    conn: asyncpg.Connection,
+    graph_uid: str,
+    user_uid: str,
+) -> str | None:
+    """Return user's role for a graph, or None when no access exists."""
+    graph_id = await get_graph_id_by_uid(conn, graph_uid)
+    user_id = await get_user_id_by_uid(conn, user_uid)
+    if graph_id is None or user_id is None:
+        return None
+
+    query = (
+        "SELECT role FROM graph_user "
+        "WHERE graph_id = $1 AND user_id = $2"
+    )
+    return await conn.fetchval(query, graph_id, user_id)
+
+
 async def remove_user_from_graph_by_uid(
     conn: asyncpg.Connection,
     user_uid: str,

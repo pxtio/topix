@@ -18,6 +18,7 @@ type ParseDocumentResponse = {
 export async function parseDocument(
   boardId: string,
   file: File,
+  rootId?: string,
 ): Promise<ParseDocumentResponse> {
   const form = new FormData()
   form.append("file", file)
@@ -25,7 +26,7 @@ export async function parseDocument(
   const res = await apiFetch<{ data: Record<string, unknown> }>({
     path: "/documents",
     method: "POST",
-    params: { graph_id: boardId },
+    params: { graph_id: boardId, root_id: rootId },
     body: form,
   })
 
@@ -47,11 +48,22 @@ export const useParseDocument = () => {
     mutationFn: async ({
       boardId,
       file,
+      rootId,
     }: {
       boardId: string
       file: File
-    }): Promise<ParseDocumentResponse> => parseDocument(boardId, file),
-    onSuccess: ({ notes, links }) => {
+      rootId?: string
+    }): Promise<ParseDocumentResponse> => parseDocument(boardId, file, rootId),
+    onSuccess: ({ notes, links }, { boardId, rootId }) => {
+      const firstNote = notes[0]
+      if (firstNote) {
+        const expectedParentId = rootId ?? undefined
+        const firstParentId = firstNote.parentId ?? undefined
+        if (firstNote.graphUid !== boardId || firstParentId !== expectedParentId) {
+          return
+        }
+      }
+
       const nodes = notes.map(convertNoteToNode)
       const nodesById = new Map(nodes.map(node => [node.id, node]))
       const edges: LinkEdge[] = []

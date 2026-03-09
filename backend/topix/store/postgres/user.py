@@ -9,15 +9,16 @@ from topix.datatypes.user import User
 async def create_user(conn: asyncpg.Connection, user: User) -> User:
     """Create a new user in the database."""
     query = (
-        "INSERT INTO users (uid, email, username, name, created_at, password_hash) "
-        "VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+        "INSERT INTO users (uid, email, username, name, created_at, password_hash, email_verified_at) "
+        "VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
     )
     try:
         user_id = await conn.fetchval(
             query,
             user.uid, user.email, user.username, user.name,
             user.created_at,
-            user.password_hash
+            user.password_hash,
+            user.email_verified_at,
         )
         user.id = user_id
         return user
@@ -36,7 +37,7 @@ async def create_user(conn: asyncpg.Connection, user: User) -> User:
 async def get_user_by_uid(conn: asyncpg.Connection, uid: str) -> User | None:
     """Fetch a user by their unique identifier (UID)."""
     query = (
-        "SELECT id, uid, email, username, name, created_at, "
+        "SELECT id, uid, email, username, name, email_verified_at, created_at, "
         "updated_at, deleted_at "
         "FROM users WHERE uid = $1"
     )
@@ -49,6 +50,7 @@ async def get_user_by_uid(conn: asyncpg.Connection, uid: str) -> User | None:
         email=row['email'],
         username=row['username'],
         name=row['name'],
+        email_verified_at=row["email_verified_at"].isoformat() if row["email_verified_at"] else None,
         created_at=row['created_at'].isoformat() if row['created_at'] else None,
         updated_at=row['updated_at'].isoformat() if row['updated_at'] else None,
         deleted_at=row['deleted_at'].isoformat() if row['deleted_at'] else None
@@ -58,7 +60,7 @@ async def get_user_by_uid(conn: asyncpg.Connection, uid: str) -> User | None:
 async def get_user_by_email(conn: asyncpg.Connection, email: str) -> User | None:
     """Fetch a user by their email."""
     query = (
-        "SELECT id, uid, email, username, name, created_at, "
+        "SELECT id, uid, email, username, name, email_verified_at, created_at, "
         "updated_at, deleted_at, password_hash "
         "FROM users WHERE email = $1"
     )
@@ -71,6 +73,7 @@ async def get_user_by_email(conn: asyncpg.Connection, email: str) -> User | None
         email=row['email'],
         username=row['username'],
         name=row['name'],
+        email_verified_at=row["email_verified_at"].isoformat() if row["email_verified_at"] else None,
         created_at=row['created_at'].isoformat() if row['created_at'] else None,
         updated_at=row['updated_at'].isoformat() if row['updated_at'] else None,
         deleted_at=row['deleted_at'].isoformat() if row['deleted_at'] else None,
@@ -87,7 +90,7 @@ async def update_user_by_uid(conn: asyncpg.Connection, uid: str, updated_data: d
         return
 
     # Build dynamic query with positional parameters
-    set_clauses = [f"{k} = ${i+1}" for i, k in enumerate(data.keys())]
+    set_clauses = [f"{k} = ${i + 1}" for i, k in enumerate(data.keys())]
     set_clause = ', '.join(set_clauses)
     values = list(data.values())
 
@@ -116,6 +119,19 @@ async def update_user_by_uid(conn: asyncpg.Connection, uid: str, updated_data: d
 async def delete_user_by_uid(conn: asyncpg.Connection, uid: str):
     """Soft delete a user by setting deleted_at to now."""
     query = "UPDATE users SET deleted_at = NOW() WHERE uid = $1"
+    await conn.execute(query, uid)
+
+
+async def mark_user_email_verified_by_uid(
+    conn: asyncpg.Connection,
+    uid: str,
+) -> None:
+    """Set email_verified_at for a user if not already set."""
+    query = (
+        "UPDATE users "
+        "SET email_verified_at = COALESCE(email_verified_at, NOW()), updated_at = NOW() "
+        "WHERE uid = $1"
+    )
     await conn.execute(query, uid)
 
 

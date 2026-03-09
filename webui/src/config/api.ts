@@ -1,6 +1,10 @@
 declare global {
   interface Window {
-    __APP_CONFIG__?: { apiBase?: string; googleClientId?: string }
+    __APP_CONFIG__?: {
+      apiBase?: string
+      googleClientId?: string
+      billingEnabled?: string
+    }
   }
 }
 

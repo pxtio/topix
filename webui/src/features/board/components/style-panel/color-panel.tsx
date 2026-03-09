@@ -197,7 +197,7 @@ export function ColorGrid({
   return (
     <div className="space-y-2">
       {/* Always 6 columns */}
-      <div className={cn("grid gap-1 grid-cols-10")}>
+      <div className={cn("grid gap-1 grid-cols-8")}>
         {FAMILIES
           .filter(f => allowTransparent || !f.transparent)
           .map(f => (

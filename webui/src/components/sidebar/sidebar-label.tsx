@@ -12,6 +12,7 @@ import { UNTITLED_LABEL } from "@/features/board/const"
 import { useGraphStore } from "@/features/board/store/graph-store"
 import { useGetNote } from "@/features/board/api/get-note"
 import { useUpdateNote } from "@/features/board/api/update-note"
+import { FolderBreadcrumb } from "@/features/board/components/flow/folder-breadcrumb"
 
 export const SidebarLabel = () => {
   const navigate = useNavigate()
@@ -24,6 +25,11 @@ export const SidebarLabel = () => {
   const subscriptionParams = useParams({ from: "/subscriptions/$id", shouldThrow: false })
   const chatId  = chatParams?.id
   const boardId = boardParams?.id
+  const boardRootId = useSearch({
+    from: "/boards/$id",
+    select: (s: { root_id?: string }) => s.root_id,
+    shouldThrow: false,
+  })
   const sheetBoardId = sheetParams?.id
   const sheetNoteId = sheetParams?.noteId
   const subscriptionId = subscriptionParams?.id
@@ -41,6 +47,8 @@ export const SidebarLabel = () => {
   const isDashboard = pathname === "/boards"
   const isNewChat = pathname === "/chats"
   const isSubscriptionsRoot = pathname === "/subscriptions"
+  const isSettings = pathname === "/settings"
+  const isSettingsBilling = pathname === "/settings/billing"
 
   const active = useMemo(() => {
     if (sheetBoardId && sheetNoteId) return { view: "sheet" as const, id: sheetNoteId, boardId: sheetBoardId }
@@ -51,8 +59,10 @@ export const SidebarLabel = () => {
     if (isNewChat) return { view: "new-chat" as const, id: undefined }
     if (isDashboard) return { view: "dashboard" as const, id: undefined }
     if (isSubscriptionsRoot) return { view: "subscriptions" as const, id: undefined }
+    if (isSettings) return { view: "settings" as const, id: undefined }
+    if (isSettingsBilling) return { view: "settings-billing" as const, id: undefined }
     return { view: "unknown" as const, id: undefined }
-  }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptionsRoot, isHome, sheetBoardId, sheetNoteId])
+  }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptionsRoot, isHome, sheetBoardId, sheetNoteId, isSettings, isSettingsBilling])
 
   // data
   const { data: chatList }  = useListChats({ graphUid: null })
@@ -60,6 +70,9 @@ export const SidebarLabel = () => {
   const { data: subscriptionList } = useListSubscriptions()
   const { updateBoard } = useUpdateBoard()
   const { updateChat }  = useUpdateChat()
+  const boardCanEdit = useGraphStore(state => state.boardCanEdit)
+  const boardLabel = useGraphStore(state => state.boardLabel)
+  const setBoardLabel = useGraphStore(state => state.setBoardLabel)
   const sheetNode = useGraphStore(state =>
     sheetNoteId ? state.nodes.find(n => n.id === sheetNoteId) : undefined
   )
@@ -75,7 +88,7 @@ export const SidebarLabel = () => {
   useEffect(() => {
     if (active.view === "board" && active.id) {
       const b = boardList?.find((x) => x.uid === active.id)
-      setLabel(b?.label ?? "")
+      setLabel(b?.label ?? boardLabel ?? "")
       return
     }
     if (active.view === "chat" && active.id) {
@@ -97,12 +110,21 @@ export const SidebarLabel = () => {
       setLabel(sheetLabel ?? "Sheet")
       return
     }
+    if (active.view === "settings") {
+      setLabel("Profile")
+      return
+    }
+    if (active.view === "settings-billing") {
+      setLabel("Billing")
+      return
+    }
     setLabel("")
-  }, [active.view, active.id, boardList, chatList, subscriptionList, sheetNode, fetchedSheet])
+  }, [active.view, active.id, boardList, boardLabel, chatList, subscriptionList, sheetNode, fetchedSheet])
 
   const handleSaveEdit = (newLabel: string) => {
     setLabel(newLabel)
     if (active.view === "board" && active.id) {
+      setBoardLabel(newLabel)
       updateBoard({ boardId: active.id, graphData: { label: newLabel } })
     }
     if (active.view === "chat" && active.id) {
@@ -168,6 +190,12 @@ export const SidebarLabel = () => {
   if (active.view === "dashboard")
     return <div className={wrapClass}>Dashboard</div>
 
+  if (active.view === "settings")
+    return <div className={wrapClass}>Profile</div>
+
+  if (active.view === "settings-billing")
+    return <div className={wrapClass}>Billing</div>
+
   // SUBSCRIPTIONS
   if (active.view === "subscriptions") {
     // /subscriptions            -> Subscriptions
@@ -194,14 +222,33 @@ export const SidebarLabel = () => {
 
   // BOARD
   if (active.view === "board" && active.id) {
+    if (boardRootId) {
+      return (
+        <div className={`${wrapClass} flex-1 min-w-0`}>
+          <FolderBreadcrumb
+            boardId={active.id}
+            rootId={boardRootId}
+            inline
+            boardLabel={label || UNTITLED_LABEL}
+          />
+        </div>
+      )
+    }
+
     return (
       <div className={`${wrapClass} flex-1 min-w-0`}>
-        <LabelEditor
-          key={`board:${active.id}`}
-          initialLabel={label}
-          onSave={handleSaveEdit}
-          className='flex-1 min-w-0'
-        />
+        {boardCanEdit ? (
+          <LabelEditor
+            key={`board:${active.id}`}
+            initialLabel={label}
+            onSave={handleSaveEdit}
+            className='min-w-0'
+          />
+        ) : (
+          <span className='flex-1 min-w-0 truncate sm:max-w-[24rem] max-w-[12.5rem]' title={label.trim() || UNTITLED_LABEL}>
+            {label.trim() || UNTITLED_LABEL}
+          </span>
+        )}
       </div>
     )
   }

@@ -15,6 +15,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/base.css'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { useShallow } from 'zustand/shallow'
 
 import { NodeView } from './node-view'
@@ -28,7 +29,7 @@ import { DefaultBoardView } from '../default-view'
 import { NodePlacementOverlay } from './node-placement-overlay'
 import { LinePlacementOverlay } from './line-placement-overlay'
 import { GraphContextMenu } from './graph-context-menu'
-import { NavigableMiniMap } from './navigable-minimap'
+import { ViewportControls } from './viewport-controls'
 
 import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
@@ -111,6 +112,7 @@ type GraphViewProps = {
   onPaneContextMenu?: ReactFlowProps<NoteNode, LinkEdge>['onPaneContextMenu']
   onNodeContextMenu?: ReactFlowProps<NoteNode, LinkEdge>['onNodeContextMenu']
   onEdgeDoubleClick?: ReactFlowProps<NoteNode, LinkEdge>['onEdgeDoubleClick']
+  onNodeDoubleClick?: ReactFlowProps<NoteNode, LinkEdge>['onNodeDoubleClick']
   children?: React.ReactNode
 }
 
@@ -136,6 +138,7 @@ function GraphView({
   onPaneContextMenu,
   onNodeContextMenu,
   onEdgeDoubleClick,
+  onNodeDoubleClick,
   children,
 }: GraphViewProps) {
   return (
@@ -163,6 +166,7 @@ function GraphView({
       onPaneContextMenu={onPaneContextMenu}
       onNodeContextMenu={onNodeContextMenu}
       onEdgeDoubleClick={onEdgeDoubleClick}
+      onNodeDoubleClick={onNodeDoubleClick}
       nodesDraggable={!isLocked}
       nodesConnectable={false}
       elementsSelectable={!isLocked}
@@ -220,6 +224,10 @@ export default function GraphEditor() {
   } = useReactFlow<NoteNode, LinkEdge>()
 
   const boardId = useGraphStore(state => state.boardId)
+  const boardCanEdit = useGraphStore(state => state.boardCanEdit)
+  const rootId = useGraphStore(state => state.rootId)
+  const scopeViewportKey = boardId ? `${boardId}:${rootId ?? 'root'}` : undefined
+  const navigate = useNavigate()
 
   const nodes = useGraphStore(useShallow(state => state.nodes))
   const edges = useGraphStore(useShallow(state => state.edges))
@@ -232,6 +240,9 @@ export default function GraphEditor() {
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
   const undo = useGraphStore(state => state.undo)
   const redo = useGraphStore(state => state.redo)
+  const canUndo = useGraphStore(state => state.historyPast.length > 0)
+  const canRedo = useGraphStore(state => state.historyFuture.length > 0)
+  const zoom = useGraphStore(state => state.zoom ?? 1)
 
   const isResizingNode = useGraphStore(state => state.isResizingNode)
   const isDragging = useGraphStore(state => state.isDragging)
@@ -247,7 +258,10 @@ export default function GraphEditor() {
   const setActiveSlideId = useGraphStore(state => state.setActiveSlideId)
   const setLastCursorPosition = useGraphStore(state => state.setLastCursorPosition)
   const boardBackground = useGraphStore(state => state.boardBackground)
+  const setBoardBackground = useGraphStore(state => state.setBoardBackground)
   const boardBackgroundTexture = useGraphStore(state => state.boardBackgroundTexture)
+  const setBoardBackgroundTexture = useGraphStore(state => state.setBoardBackgroundTexture)
+  const effectiveIsLocked = isLocked || !boardCanEdit
 
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
@@ -325,13 +339,15 @@ export default function GraphEditor() {
   const handlePaneDoubleClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       if (viewMode !== 'graph') return
+      // if user can't edit, dont allow adding nodes via double click
+      if (!boardCanEdit) return
       if (!screenToFlowPosition) return
       if ((event.target as HTMLElement | null)?.closest('.react-flow__node')) return
       if ((event.target as HTMLElement | null)?.closest('.react-flow__edge')) return
       const flowPoint = screenToFlowPosition({ x: event.clientX, y: event.clientY })
       addNoteNode({ nodeType: 'text', position: flowPoint })
     },
-    [viewMode, screenToFlowPosition, addNoteNode],
+    [viewMode, boardCanEdit, screenToFlowPosition, addNoteNode],
   )
 
   const handlePaneMouseMove = useCallback(
@@ -342,6 +358,25 @@ export default function GraphEditor() {
       setLastCursorPosition(flowPoint)
     },
     [viewMode, screenToFlowPosition, setLastCursorPosition],
+  )
+
+  const handleNodeDoubleClick = useCallback<NonNullable<ReactFlowProps<NoteNode, LinkEdge>['onNodeDoubleClick']>>(
+    (event, node) => {
+      if (!boardId) return
+      const nodeType = node.data?.style?.type
+      if (nodeType !== 'folder') return
+      const target = event.target as HTMLElement | null
+      if (target?.closest('[data-folder-label-edit="true"]')) return
+      navigate({
+        to: "/boards/$id",
+        params: { id: boardId },
+        search: (prev: Record<string, unknown>) => ({
+          ...prev,
+          root_id: node.id,
+        }),
+      })
+    },
+    [boardId, navigate],
   )
 
   const handlePanelAddNode = useCallback(
@@ -397,24 +432,27 @@ export default function GraphEditor() {
   // Initial viewport / restore saved viewport
   useEffect(() => {
     if (!viewportInitialized) return
-    if (!boardId || !graphViewports[boardId]) {
+    if (!scopeViewportKey || !graphViewports[scopeViewportKey]) {
       fitView({ padding: 0.2, maxZoom: 1 })
     }
-  }, [viewportInitialized, fitView, boardId, graphViewports])
+  }, [viewportInitialized, fitView, scopeViewportKey, graphViewports])
 
   const handleZoomIn = useCallback(() => zoomIn({ duration: 200 }), [zoomIn])
   const handleZoomOut = useCallback(() => zoomOut({ duration: 200 }), [zoomOut])
-  const handleFitView = useCallback(
-    () => fitView({ padding: 0.2, duration: 250 }),
-    [fitView],
-  )
   const handleResetZoom = useCallback(() => {
     zoomTo(1)
   }, [zoomTo])
 
   const handleToggleLock = useCallback(() => {
+    if (!boardCanEdit) return
     setIsLocked(value => !value)
-  }, [setIsLocked])
+  }, [boardCanEdit, setIsLocked])
+
+  useEffect(() => {
+    if (!boardCanEdit) {
+      setIsLocked(true)
+    }
+  }, [boardCanEdit])
 
   const getCurrentViewport = useCallback(() => {
     return rfInstanceRef.current?.getViewport?.() ?? null
@@ -449,12 +487,12 @@ export default function GraphEditor() {
   }, [fitView, setActiveSlideId, slides])
 
   const restoreViewport = useCallback(() => {
-    if (!boardId) return
-    const saved = graphViewports[boardId]
+    if (!scopeViewportKey) return
+    const saved = graphViewports[scopeViewportKey]
     if (saved && rfInstanceRef.current?.setViewport) {
       rfInstanceRef.current.setViewport(saved, { duration: 200 })
     }
-  }, [boardId, graphViewports])
+  }, [scopeViewportKey, graphViewports])
 
   useBoardShortcuts({
     enabled: presentationMode,
@@ -475,8 +513,8 @@ export default function GraphEditor() {
       setIsMoving(true)
     },
     onEnd: vp => {
-      if (boardId && !presentationMode) {
-        setGraphViewport(boardId, vp)
+      if (scopeViewportKey && !presentationMode) {
+        setGraphViewport(scopeViewportKey, vp)
       }
       setZoom(vp.zoom)
       setIsMoving(false)
@@ -566,8 +604,8 @@ export default function GraphEditor() {
 
   const handleInit = (instance: ReactFlowInstance<NoteNode, LinkEdge>) => {
     rfInstanceRef.current = instance
-    if (boardId) {
-      const saved = graphViewports[boardId]
+    if (scopeViewportKey) {
+      const saved = graphViewports[scopeViewportKey]
       if (saved) {
         // restore immediately, no animation
         instance.setViewport(saved, { duration: 0 })
@@ -578,20 +616,20 @@ export default function GraphEditor() {
 
   return (
     <div className="w-full h-full relative">
-      <ActionPanel
-        onAddNode={handlePanelAddNode}
-        onAddLine={handleAddLine}
-        enableSelection={enableSelection}
-        setEnableSelection={setEnableSelection}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onFitView={handleFitView}
-        onResetZoom={handleResetZoom}
-        isLocked={isLocked}
-        toggleLock={handleToggleLock}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-      />
+      {boardCanEdit ? (
+        <ActionPanel
+          onAddNode={handlePanelAddNode}
+          onAddLine={handleAddLine}
+          enableSelection={enableSelection}
+          setEnableSelection={setEnableSelection}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onResetZoom={handleResetZoom}
+          toggleLock={handleToggleLock}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+        />
+      ) : null}
 
       {/* Graph-only sidebar (style controls) */}
       {viewMode === 'graph' &&
@@ -600,7 +638,8 @@ export default function GraphEditor() {
         !isDragging &&
         !moving &&
         !isResizingNode &&
-        !isSelecting && (
+        !isSelecting &&
+        boardCanEdit && (
           <div className="absolute top-16 left-1 w-auto max-w-[300px] h-auto z-50">
             <GraphSidebar />
           </div>
@@ -624,7 +663,7 @@ export default function GraphEditor() {
                   onNodesDelete={onNodesDelete}
                   onEdgesDelete={onEdgesDelete}
                   enableSelection={enableSelection}
-                  isLocked={isLocked}
+                  isLocked={effectiveIsLocked}
                   onNodeDragStart={handleDragStart}
                   onNodeDragStop={handleDragStop}
                   onSelectionStart={handleSelectionStart}
@@ -635,6 +674,7 @@ export default function GraphEditor() {
                   onPaneContextMenu={onPaneContextMenu}
                   onNodeContextMenu={onNodeContextMenu}
                   onEdgeDoubleClick={handleEdgeDoubleClick}
+                  onNodeDoubleClick={handleNodeDoubleClick}
                 >
                   {backgroundVariant && (
                     <Background
@@ -651,8 +691,21 @@ export default function GraphEditor() {
                     !isDragging &&
                     !isResizingNode &&
                     !isSelecting && (
-                    <NavigableMiniMap
+                    <ViewportControls
                       nodes={nodes}
+                      onResetZoom={handleResetZoom}
+                      zoom={zoom}
+                      undo={undo}
+                      redo={redo}
+                      canUndo={canUndo}
+                      canRedo={canRedo}
+                      isLocked={effectiveIsLocked}
+                      toggleLock={handleToggleLock}
+                      boardBackground={boardBackground}
+                      boardBackgroundTexture={boardBackgroundTexture}
+                      onBoardBackgroundChange={setBoardBackground}
+                      onBoardBackgroundReset={() => setBoardBackground(null)}
+                      onBoardBackgroundTextureChange={setBoardBackgroundTexture}
                       onNavigate={handleMiniMapNavigate}
                       getCurrentViewport={getCurrentViewport}
                     />

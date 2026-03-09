@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 type Props = {
   nodes: NoteNode[]
   className?: string
+  wrapperClassName?: string
   onNavigate: (target: { x: number; y: number }, currentZoom: number) => void
   getCurrentViewport: () => Viewport | null
 }
@@ -15,7 +16,7 @@ type Props = {
 /**
  * A MiniMap component that allows navigating the main viewport by clicking on it.
  */
-export function NavigableMiniMap({ nodes, className, onNavigate, getCurrentViewport }: Props) {
+export function NavigableMiniMap({ nodes, className, wrapperClassName, onNavigate, getCurrentViewport }: Props) {
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const minimapClass = cn('!bg-sidebar overflow-hidden !relative !z-5 !p-0 !m-0', className)
 
@@ -79,7 +80,7 @@ export function NavigableMiniMap({ nodes, className, onNavigate, getCurrentViewp
     <div
       ref={wrapperRef}
       onClick={handleClick}
-      className='minimap-wrapper absolute bottom-4 left-4 p-0 overflow-hidden rounded-md'
+      className={cn('minimap-wrapper p-0 overflow-hidden rounded-md', wrapperClassName ?? 'absolute bottom-4 left-4')}
     >
       <MiniMap
         className={minimapClass}

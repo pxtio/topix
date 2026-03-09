@@ -14,6 +14,9 @@ import { ConfirmDeleteBoardAlert } from "./confirm-delete-board"
 import { useState } from "react"
 import { useListChats } from "@/features/agent/api/list-chats"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
+import { useAppStore } from "@/store"
+import { FREE_PLAN_BOARD_LIMIT_TOOLTIP, isBoardCreationLimited } from "@/features/board/lib/board-limit"
+import { useListBoards } from "@/features/board/api/list-boards"
 
 /**
  * Dashboard menu item component
@@ -47,12 +50,41 @@ export function DashboardMenuItem() {
  */
 export function NewBoardItem() {
   const { createBoardAsync } = useCreateBoard()
+  const { data: boards = [] } = useListBoards()
+  const userPlan = useAppStore(s => s.userPlan)
   const navigate = useNavigate()
+  const boardCreationLimited = isBoardCreationLimited(userPlan, boards.length)
 
   const handleClick = async () => {
+    if (boardCreationLimited) return
+
     const newId = await createBoardAsync()
     // Go to /boards/:id (no page refresh)
     navigate({ to: '/boards/$id', params: { id: newId } })
+  }
+
+  if (boardCreationLimited) {
+    return (
+      <SidebarMenuItem>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="block">
+              <SidebarMenuButton
+                className="text-xs text-secondary/60 font-medium transition-all cursor-not-allowed opacity-60"
+                disabled
+                onClick={handleClick}
+              >
+                <HugeiconsIcon icon={Edit01Icon} className="text-xs shrink-0 text-sidebar-icon-1/60" strokeWidth={2} />
+                <span>New Board</span>
+              </SidebarMenuButton>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="right" align="center" className="max-w-64">
+            <p className="text-xs">{FREE_PLAN_BOARD_LIMIT_TOOLTIP}</p>
+          </TooltipContent>
+        </Tooltip>
+      </SidebarMenuItem>
+    )
   }
 
   return (

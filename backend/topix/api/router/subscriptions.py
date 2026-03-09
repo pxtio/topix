@@ -9,7 +9,7 @@ from fastapi.params import Body, Path, Query
 
 from topix.api.datatypes.requests import AddSubscriptionRequest, NewsfeedUpdateRequest, SubscriptionUpdateRequest
 from topix.api.utils.decorators import with_standard_response
-from topix.api.utils.rate_limiter import rate_limiter
+from topix.api.utils.rate_limit.dependency import rate_limiter
 from topix.api.utils.security import get_current_user_uid
 from topix.store.subscription import SubscriptionStore
 

@@ -10,6 +10,7 @@ class NodeType(StrEnum):
     """Enumeration for node types."""
 
     RECTANGLE = "rectangle"
+    FOLDER = "folder"
     ELLIPSE = "ellipse"
     DIAMOND = "diamond"
     SHEET = "sheet"

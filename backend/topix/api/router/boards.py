@@ -2,12 +2,23 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from fastapi.params import Body, Path
 
-from topix.api.datatypes.requests import AddLinksRequest, AddNotesRequest, GraphUpdateRequest, LinkUpdateRequest, NoteUpdateRequest
+from topix.api.datatypes.requests import (
+    AddLinksRequest,
+    AddNotesRequest,
+    BoardVisibilityUpdateRequest,
+    GraphUpdateRequest,
+    LinkUpdateRequest,
+    NoteUpdateRequest,
+)
 from topix.api.utils.decorators import with_standard_response
-from topix.api.utils.security import get_current_user_uid
+from topix.api.utils.security import (
+    get_current_user_uid,
+    verify_board_member,
+    verify_board_read_access,
+)
 from topix.api.utils.thumbnail import load_png_as_data_url, save_thumbnail
 from topix.datatypes.graph.graph import Graph
 from topix.store.graph import GraphStore
@@ -43,6 +54,7 @@ async def update_graph(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_member)],
     body: Annotated[GraphUpdateRequest, Body(description="Graph update data")]
 ):
     """Update an existing graph by its ID."""
@@ -57,7 +69,8 @@ async def delete_graph(
     response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
-    user_id: Annotated[str, Depends(get_current_user_uid)]
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_member)],
 ):
     """Delete a graph by its ID."""
     store: GraphStore = request.app.graph_store
@@ -73,19 +86,30 @@ async def get_graph(
     response: Response,
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
-    user_id: Annotated[str, Depends(get_current_user_uid)]
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_read_access)],
+    root_id: Annotated[str | None, Query(description="Root node ID for subgraph (direct children only)")] = None,
 ):
     """Get a graph by its ID."""
     store: GraphStore = request.app.graph_store
 
-    graph = await store.get_graph(graph_uid=graph_id)
+    try:
+        graph = await store.get_graph(graph_uid=graph_id, root_id=root_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     if not graph:
         raise HTTPException(status_code=404, detail="Graph not found")
 
     if graph.thumbnail and graph.thumbnail.startswith("file://"):
         graph.thumbnail = load_png_as_data_url(graph.thumbnail)
 
-    return {"graph": graph.model_dump(exclude_none=True)}
+    role = await store.get_graph_role(graph_uid=graph_id, user_uid=user_id)
+    can_edit = role in {"owner", "member"}
+
+    return {
+        "graph": graph.model_dump(exclude_none=True),
+        "can_edit": can_edit,
+    }
 
 
 @router.get("/", include_in_schema=False)
@@ -117,6 +141,7 @@ async def add_notes_to_graph(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_member)],
     body: Annotated[AddNotesRequest, Body(description="Notes to add")]
 ):
     """Add notes to a graph."""
@@ -142,7 +167,8 @@ async def get_note(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     note_id: Annotated[str, Path(description="Note ID")],
-    user_id: Annotated[str, Depends(get_current_user_uid)]
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_read_access)],
 ):
     """Get a note from a graph."""
     store: GraphStore = request.app.graph_store
@@ -154,6 +180,27 @@ async def get_note(
     return {"note": notes[0].model_dump(exclude_none=True)}
 
 
+@router.get("/{graph_id}/notes/{note_id}/path", include_in_schema=False)
+@router.get("/{graph_id}/notes/{note_id}/path")
+@with_standard_response
+async def get_note_path(
+    response: Response,
+    request: Request,
+    graph_id: Annotated[str, Path(description="Graph ID")],
+    note_id: Annotated[str, Path(description="Note ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_read_access)],
+):
+    """Get full path from root to a note."""
+    store: GraphStore = request.app.graph_store
+
+    path = await store.get_node_path(graph_uid=graph_id, node_id=note_id)
+    if not path:
+        raise HTTPException(status_code=404, detail="Note path not found")
+
+    return {"path": [node.model_dump(exclude_none=True) for node in path]}
+
+
 @router.patch("/{graph_id}/notes/{note_id}/", include_in_schema=False)
 @router.patch("/{graph_id}/notes/{note_id}")
 @with_standard_response
@@ -163,6 +210,7 @@ async def update_note(
     graph_id: Annotated[str, Path(description="Graph ID")],
     note_id: Annotated[str, Path(description="Note ID")],
     user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_member)],
     body: Annotated[NoteUpdateRequest, Body(description="Note update data")]
 ):
     """Update a note or document node in a graph."""
@@ -180,7 +228,8 @@ async def remove_note_from_graph(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     note_id: Annotated[str, Path(description="Note ID")],
-    user_id: Annotated[str, Depends(get_current_user_uid)]
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_member)],
 ):
     """Remove notes from a graph."""
     store: GraphStore = request.app.graph_store
@@ -197,6 +246,7 @@ async def add_links_to_graph(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_member)],
     body: Annotated[AddLinksRequest, Body(description="Links to add")]
 ):
     """Add links to a graph."""
@@ -221,7 +271,8 @@ async def get_link(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     link_id: Annotated[str, Path(description="Link ID")],
-    user_id: Annotated[str, Depends(get_current_user_uid)]
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_read_access)],
 ):
     """Get a link from a graph."""
     store: GraphStore = request.app.graph_store
@@ -242,6 +293,7 @@ async def update_link(
     graph_id: Annotated[str, Path(description="Graph ID")],
     link_id: Annotated[str, Path(description="Link ID")],
     user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_member)],
     body: Annotated[LinkUpdateRequest, Body(description="Link update data")]
 ):
     """Update a link in a graph."""
@@ -259,7 +311,8 @@ async def remove_link_from_graph(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     link_id: Annotated[str, Path(description="Link ID")],
-    user_id: Annotated[str, Depends(get_current_user_uid)]
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_member)],
 ):
     """Remove links from a graph."""
     store: GraphStore = request.app.graph_store
@@ -275,6 +328,7 @@ async def save_graph_thumbnail(
     request: Request,
     graph_id: Annotated[str, Path(description="Graph ID")],
     user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_member)],
     file: UploadFile = File(...),
 ):
     """Save a thumbnail image for the graph."""
@@ -284,3 +338,20 @@ async def save_graph_thumbnail(
 
     await store.update_graph(graph_id, {"thumbnail": path})
     return {"path": path}
+
+
+@router.patch("/{graph_id}/visibility/", include_in_schema=False)
+@router.patch("/{graph_id}/visibility")
+@with_standard_response
+async def update_graph_visibility(
+    response: Response,
+    request: Request,
+    graph_id: Annotated[str, Path(description="Graph ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_member)],
+    body: Annotated[BoardVisibilityUpdateRequest, Body(description="Board visibility update data")],
+):
+    """Update board visibility."""
+    store: GraphStore = request.app.graph_store
+    await store.update_graph(graph_uid=graph_id, data={"visibility": body.visibility})
+    return {"message": "Board visibility updated successfully"}

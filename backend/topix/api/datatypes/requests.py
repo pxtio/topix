@@ -22,6 +22,25 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class EmailVerificationRequest(BaseModel):
+    """Request model for email verification token checks."""
+
+    token: str
+
+
+class BillingCheckoutRequest(BaseModel):
+    """Request model for creating a Stripe checkout session."""
+
+    success_url: str | None = None
+    cancel_url: str | None = None
+
+
+class BillingPortalRequest(BaseModel):
+    """Request model for creating a Stripe customer portal session."""
+
+    return_url: str | None = None
+
+
 class SendMessageRequest(BaseModel):
     """Request model for sending a message to a chat."""
 
@@ -63,6 +82,12 @@ class GraphUpdateRequest(BaseModel):
     """Request model for updating a graph."""
 
     data: dict
+
+
+class BoardVisibilityUpdateRequest(BaseModel):
+    """Request model for updating board visibility."""
+
+    visibility: Literal["private", "public"]
 
 
 class NoteUpdateRequest(BaseModel):

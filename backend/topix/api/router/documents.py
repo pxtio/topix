@@ -27,6 +27,7 @@ router = APIRouter(
 async def create_document_from_file(
     request: Request,
     graph_id: Annotated[str, Query(description="Graph ID")],
+    root_id: Annotated[str | None, Query(description="Root node ID for folder-scoped parsing")] = None,
     file: UploadFile = File(..., description="File to parse"),
     id: Annotated[str | None, Query(description="Optional ID for the parsed document")] = None,
 ):
@@ -54,6 +55,7 @@ async def create_document_from_file(
     )
     document, notes, links = await pipeline.save_to_store(
         graph_uid=graph_id,
+        root_id=root_id,
         document=document,
         chunks=chunks,
         notes=notes,

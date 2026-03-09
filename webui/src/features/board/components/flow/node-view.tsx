@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useState } from 'react'
 import {
   type ControlPosition,
   type NodeProps,
@@ -14,6 +14,7 @@ import { useContentMinHeight } from '../../hooks/use-content-min-height'
 import { ShapeChrome } from './shape-chrome'
 import { getShapeContentScale } from '../../utils/shape-content-scale'
 import { Grip } from 'lucide-react'
+import { FolderNode } from './folder-node'
 
 const CONNECTOR_GAP = 0
 type ResizeHandle = {
@@ -120,16 +121,13 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   const isDark = resolvedTheme === 'dark'
   const [isEditing, setIsEditing] = useState(false)
   const [isResizingLocal, setIsResizingLocal] = useState(false)
-  const [resizeGrace, setResizeGrace] = useState(false)
-  const wrapperRef = useRef<HTMLElement | null>(null)
-  const lastAppliedWrapperMinH = useRef<number | null>(null)
 
   const setIsResizingNode = useGraphStore(state => state.setIsResizingNode)
   const viewSlides = useGraphStore(state => state.viewSlides)
 
   const nodeType = data.style.type
   const isVisualNode = nodeType === 'image' || nodeType === 'icon' || nodeType === 'slide'
-  const shouldMeasureMinHeight = !isVisualNode && (isEditing || isResizingLocal || resizeGrace)
+  const shouldMeasureMinHeight = !isVisualNode && (isEditing || isResizingLocal)
 
   // Measure content with ResizeObserver only while editing/resizing.
   const contentScale = getShapeContentScale(nodeType)
@@ -162,49 +160,15 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
   const textColor = isDark ? darkModeDisplayHex(data.style.textColor) || undefined : data.style.textColor
 
   const handleResizeStart = () => {
-    setResizeGrace(false)
     setIsResizingLocal(true)
     setIsResizingNode(true)
   }
   const handleResizeEnd = () => {
     setIsResizingLocal(false)
     setIsResizingNode(false)
-    setResizeGrace(true)
   }
   const resizeMinWidth = isVisualNode ? 80 : 20
   const resizeMinHeight = isVisualNode ? 80 : innerMinH
-
-  // Keep React Flow wrapper minHeight in sync in display mode so AI-created nodes
-  // can expand without requiring edit/resize observer work.
-  useEffect(() => {
-    if (isVisualNode) return
-    if (shouldMeasureMinHeight) return
-
-    const measuredHeight = typeof height === 'number' && Number.isFinite(height) ? height : currentNodeHeight ?? 0
-    if (measuredHeight >= innerMinH - 2) return
-
-    const nextMinH = innerMinH
-    const prevMinH = lastAppliedWrapperMinH.current
-    if (prevMinH !== null && Math.abs(prevMinH - nextMinH) < 2) return
-
-    if (!wrapperRef.current) {
-      const sel = `.react-flow__node[data-id="${CSS?.escape ? CSS.escape(id) : id}"]`
-      wrapperRef.current = document.querySelector<HTMLElement>(sel)
-    }
-    const el = wrapperRef.current
-    if (el) {
-      // Display-mode auto sizing: rely on React Flow's observer rather than forcing
-      // updateNodeInternals on every mount burst.
-      el.style.minHeight = `${nextMinH}px`
-      lastAppliedWrapperMinH.current = nextMinH
-    }
-  }, [id, innerMinH, isVisualNode, shouldMeasureMinHeight, height, currentNodeHeight])
-
-  useEffect(() => {
-    if (!resizeGrace) return
-    const t = window.setTimeout(() => setResizeGrace(false), 220)
-    return () => window.clearTimeout(t)
-  }, [resizeGrace])
 
   if (nodeType === 'slide') {
     if (!viewSlides) return null
@@ -261,6 +225,34 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
         >
           {content}
         </ShapeChrome>
+      </div>
+    )
+  }
+
+  if (nodeType === 'folder') {
+    return (
+      <div className='border-none relative bg-transparent overflow-visible w-full h-full p-0'>
+        <div
+          className='absolute inset-0'
+          style={{
+            top: CONNECTOR_GAP,
+            right: CONNECTOR_GAP,
+            bottom: CONNECTOR_GAP,
+            left: CONNECTOR_GAP,
+          }}
+        >
+          <FolderNode id={id} data={data} />
+          <NodeStatusOverlay selected={selected} nodeType={nodeType} isNew={data.isNew} />
+        </div>
+
+        <ResizeHandles
+          selected={selected}
+          minHeight={resizeMinHeight}
+          minWidth={resizeMinWidth}
+          keepAspectRatio
+          onResizeStart={handleResizeStart}
+          onResizeEnd={handleResizeEnd}
+        />
       </div>
     )
   }

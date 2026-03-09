@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from topix.config.config import Config
 from topix.store.chat import ChatStore
+from topix.store.graph import GraphStore
 from topix.store.user import UserStore
 
 # access token expire time in minutes (default: 1 day)
@@ -130,3 +131,33 @@ async def verify_chat_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found")
     if chat.user_uid != user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permission error")
+
+
+async def verify_board_member(
+    request: Request,
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    graph_id: Annotated[str, Path(description="Graph ID")],
+) -> None:
+    """Verify that the user is owner/member of the board."""
+    graph_store: GraphStore = request.app.graph_store
+    role = await graph_store.get_graph_role(graph_uid=graph_id, user_uid=user_id)
+    if role not in {"owner", "member"}:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
+
+
+async def verify_board_read_access(
+    request: Request,
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    graph_id: Annotated[str, Path(description="Graph ID")],
+) -> None:
+    """Verify that the user can read the board (member or public)."""
+    graph_store: GraphStore = request.app.graph_store
+    role = await graph_store.get_graph_role(graph_uid=graph_id, user_uid=user_id)
+    if role in {"owner", "member"}:
+        return
+
+    graph = await graph_store.get_graph_metadata(graph_uid=graph_id)
+    if not graph or graph.deleted_at is not None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
+    if graph.visibility != "public":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
-import { decodeJwt } from "@/lib/decode-jwt"
+import { decodeJwt, resolveBillingPlan } from "@/lib/decode-jwt"
 import { useAppStore } from "@/store"
-import { googleSignin } from "@/api"
+import { getEmailVerificationStatus, googleSignin } from "@/api"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
@@ -15,6 +15,9 @@ export function SigninPage() {
   const navigate = useNavigate()
   const setUserId = useAppStore(s => s.setUserId)
   const setUserEmail = useAppStore(s => s.setUserEmail)
+  const setUserPlan = useAppStore(s => s.setUserPlan)
+  const setEmailVerificationEnabled = useAppStore(s => s.setEmailVerificationEnabled)
+  const setEmailVerified = useAppStore(s => s.setEmailVerified)
   const btnRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -28,6 +31,14 @@ export function SigninPage() {
         const p = decodeJwt(token.access_token)
         if (p.sub) setUserId(String(p.sub))
         if (typeof p.email === "string") setUserEmail(p.email)
+        setUserPlan(resolveBillingPlan(p))
+        const status = await getEmailVerificationStatus()
+        setEmailVerificationEnabled(status.enabled)
+        setEmailVerified(status.verified)
+        if (status.enabled && !status.verified) {
+          navigate({ to: "/verify-email", replace: true })
+          return
+        }
         navigate({ to: "/chats", replace: true })
       } catch (e) {
         setError((e as Error).message || "Unable to sign in")
@@ -35,7 +46,7 @@ export function SigninPage() {
         setLoading(false)
       }
     },
-    [navigate, setUserId, setUserEmail],
+    [navigate, setUserId, setUserEmail, setUserPlan, setEmailVerificationEnabled, setEmailVerified],
   )
 
   useEffect(() => {

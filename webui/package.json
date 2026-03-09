@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "dotenv -e ../.env -- vite",
-    "build": "dotenv -e ../.env -- tsc -b && vite build",
+    "dev": "dotenv -e ../${npm_config_envfile:-.env} -- vite",
+    "build": "dotenv -e ../${npm_config_envfile:-.env} -- tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "tauri-dev": "npx tauri dev",

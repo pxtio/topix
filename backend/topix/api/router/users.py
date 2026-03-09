@@ -242,6 +242,29 @@ async def resend_verification_email(
     return {"message": "Verification email sent"}
 
 
+@router.get("/email-verification-status")
+@with_standard_response
+async def get_email_verification_status(
+    response: Response,
+    request: Request,
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+):
+    """Return whether verification is enabled and whether current user is verified."""
+    enabled = is_email_verification_enabled()
+    if not enabled:
+        return {"enabled": False, "verified": True}
+
+    user_store: UserStore = request.app.user_store
+    user = await user_store.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return {
+        "enabled": True,
+        "verified": user.email_verified_at is not None,
+    }
+
+
 @router.post("/refresh")
 @with_standard_response
 async def refresh_access_token(

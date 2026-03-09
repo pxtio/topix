@@ -206,3 +206,68 @@ def test_signup_enabled_creates_verification_token(monkeypatch):
     assert payload["data"]["token"]["access_token"]
     assert len(email_store.saved) == 1
     assert len(sent_payloads) == 1
+
+
+def test_email_verification_status_returns_disabled(monkeypatch):
+    """Status endpoint should report disabled mode when feature flag is off."""
+    monkeypatch.delenv("EMAIL_VERIFICATION_ENABLED", raising=False)
+    client, _, _ = _build_client()
+
+    response = client.get("/users/email-verification-status")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "success"
+    assert payload["data"] == {"enabled": False, "verified": True}
+
+
+def test_email_verification_status_returns_unverified(monkeypatch):
+    """Status endpoint should report unverified user when enabled and not verified."""
+    monkeypatch.setenv("EMAIL_VERIFICATION_ENABLED", "true")
+    client, user_store, _ = _build_client(user_uid="u-4")
+    user_store._users_by_uid["u-4"] = User(
+        uid="u-4",
+        email="u4@test.com",
+        username="u-4",
+        password_hash="hash",
+    )
+
+    response = client.get("/users/email-verification-status")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "success"
+    assert payload["data"] == {"enabled": True, "verified": False}
+
+
+def test_email_verification_status_returns_verified(monkeypatch):
+    """Status endpoint should report verified user when enabled and verified."""
+    monkeypatch.setenv("EMAIL_VERIFICATION_ENABLED", "true")
+    client, user_store, _ = _build_client(user_uid="u-5")
+    user_store._users_by_uid["u-5"] = User(
+        uid="u-5",
+        email="u5@test.com",
+        username="u-5",
+        password_hash="hash",
+        email_verified_at=utc_now(),
+    )
+
+    response = client.get("/users/email-verification-status")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "success"
+    assert payload["data"] == {"enabled": True, "verified": True}
+
+
+def test_email_verification_status_missing_user(monkeypatch):
+    """Status endpoint should return 404 when authenticated user is missing."""
+    monkeypatch.setenv("EMAIL_VERIFICATION_ENABLED", "true")
+    client, _, _ = _build_client(user_uid="missing-user")
+
+    response = client.get("/users/email-verification-status")
+
+    assert response.status_code == 404
+    payload = response.json()
+    assert payload["status"] == "error"
+    assert payload["data"]["message"] == "User not found"

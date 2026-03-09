@@ -133,6 +133,7 @@ async def create_user(
                 resend_from_email=verification_config.resend_from_email,
                 to_email=new_user.email,
                 verification_url=verification_url,
+                ttl_hours=verification_config.ttl_hours,
             )
         except HTTPException:
             logging.exception("Failed to send verification email on signup for user %s", new_user.uid)
@@ -238,6 +239,7 @@ async def resend_verification_email(
         resend_from_email=verification_config.resend_from_email,
         to_email=user.email,
         verification_url=verification_url,
+        ttl_hours=verification_config.ttl_hours,
     )
     return {"message": "Verification email sent"}
 

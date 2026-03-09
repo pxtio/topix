@@ -180,4 +180,4 @@ async def send_email_verification_link(
 
 def utc_now() -> datetime:
     """Return current UTC timestamp."""
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(tzinfo=None)

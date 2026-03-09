@@ -294,14 +294,20 @@ export function extractInputOrQuery(step: ReasoningStep): string | null {
   // Case 1: input is directly a string
   if (typeof input === "string") return input
 
-  // Case 2: input is an object with a string query field
+  // Case 2: input is an object with a string query or url field
   if (
     typeof input === "object" &&
-    input !== null &&
-    "query" in input &&
-    typeof (input as Record<string, unknown>).query === "string"
+    input !== null
   ) {
-    return (input as { query: string }).query
+    const inputRecord = input as Record<string, unknown>
+
+    if ("query" in inputRecord && typeof inputRecord.query === "string") {
+      return inputRecord.query
+    }
+
+    if ("url" in inputRecord && typeof inputRecord.url === "string") {
+      return inputRecord.url
+    }
   }
 
   // Case 3: everything else → null
@@ -312,7 +318,7 @@ export function extractInputOrQuery(step: ReasoningStep): string | null {
 export function extractStepDescription(step: ReasoningStep): { reasoning: string, message: string, title: string, input?: string } {
   if (step.name !== "raw_message" && step.name !== "outline_generator") {
     let input: string | undefined = undefined
-    if (step.name === "web_search" || step.name === "memory_search") {
+    if (step.name === "web_search" || step.name === "memory_search" || step.name === "navigate") {
       input = extractInputOrQuery(step) || undefined
     }
     return { reasoning: step.thought || "", message: "", title: ToolNameDescription[step.name], input }

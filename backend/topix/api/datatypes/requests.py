@@ -16,6 +16,15 @@ class GoogleSigninRequest(BaseModel):
     id_token: str
 
 
+class UserSignupRequest(BaseModel):
+    """Request model for user signup."""
+
+    email: str
+    password: str
+    name: str
+    username: str
+
+
 class RefreshRequest(BaseModel):
     """Refresh token request model."""
 

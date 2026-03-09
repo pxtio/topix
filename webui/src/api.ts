@@ -239,6 +239,62 @@ export async function googleSignin(idToken: string): Promise<TokenPayload> {
 }
 
 
+export async function signin(username: string, password: string): Promise<TokenPayload> {
+  const url = new URL("/users/signin", API_URL)
+  const form = new URLSearchParams()
+  form.set("username", username)
+  form.set("password", password)
+
+  const res = await fetch(url.toString(), {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: form.toString(),
+  })
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Signin failed: ${text}`)
+  }
+
+  const json: unknown = await res.json()
+  const token = (json as { data?: { token?: TokenPayload }; token?: TokenPayload }).data?.token
+    ?? (json as { token?: TokenPayload }).token
+
+  if (!token?.access_token) throw new Error("Wrong password or username.")
+
+  setAccessToken(token.access_token)
+  if (token.refresh_token) setRefreshToken(token.refresh_token)
+
+  return token
+}
+
+
+/**
+ * Sign up a new user and store the returned tokens.
+ */
+export async function signup(body: {
+  email: string
+  password: string
+  name: string
+  username: string
+}): Promise<TokenPayload> {
+  const tokenWrap = await apiFetch<{ data: { token: TokenPayload } }>({
+    path: "/users/signup",
+    method: "POST",
+    body,
+    noAuth: true,
+  })
+
+  const token = tokenWrap?.data?.token
+  if (!token?.access_token) throw new Error("Bad signup payload")
+
+  setAccessToken(token.access_token)
+  if (token.refresh_token) setRefreshToken(token.refresh_token)
+
+  return token
+}
+
+
 /**
  * Refresh the access token using the stored refresh token.
  */

@@ -12,6 +12,7 @@ import { SigninPage } from "@/features/signin/screens/sign-in"
 import { SignupPage } from "@/features/signin/screens/sign-up"
 import { clearTokens, getAccessToken } from "@/features/signin/auth-storage"
 import { decodeJwt } from "@/lib/decode-jwt"
+import { getEmailVerificationStatus } from "@/api"
 import { SubscriptionsScreen } from "@/features/newsfeed/screens/subscriptions"
 import { NewsfeedsScreen } from "@/features/newsfeed/screens/newsfeeds"
 import { NewsfeedLinearPage } from "@/features/newsfeed/screens/newsfeed-linear-page"
@@ -21,6 +22,7 @@ import { DashboardScreen } from "@/features/board/screens/dashboard-screen"
 import { NotFoundPage } from "@/components/not-found"
 import { SettingsScreen } from "@/features/user-settings/screens/settings-screen"
 import { BillingScreen } from "@/features/user-settings/screens/billing-screen"
+import { VerifyEmailPage } from "@/features/signin/screens/verify-email"
 
 
 export const rootRoute = createRootRoute({
@@ -44,6 +46,15 @@ const requireAuth = () => {
   }
 }
 
+
+const requireVerifiedAuth = async () => {
+  requireAuth()
+  const status = await getEmailVerificationStatus()
+  if (status.enabled && !status.verified) {
+    throw redirect({ to: "/verify-email" })
+  }
+}
+
 // auth pages (unguarded)
 const signinRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -57,10 +68,17 @@ const signupRoute = createRoute({
   component: SignupPage,
 })
 
+const verifyEmailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/verify-email",
+  beforeLoad: requireAuth,
+  component: VerifyEmailPage,
+})
+
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  beforeLoad: requireAuth,
+  beforeLoad: requireVerifiedAuth,
   component: HomePage,
 })
 
@@ -75,7 +93,7 @@ export const NewChatUrl = "/chats"
 const chatsIndexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: NewChatUrl,
-  beforeLoad: requireAuth,
+  beforeLoad: requireVerifiedAuth,
   component: ChatScreen,
 })
 
@@ -84,7 +102,7 @@ export const ChatUrl = "/chats/$id"
 const chatRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: ChatUrl,
-  beforeLoad: requireAuth,
+  beforeLoad: requireVerifiedAuth,
   component: ChatScreen,
 })
 
@@ -93,7 +111,7 @@ export const DashboardUrl = "/boards"
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: DashboardUrl,
-  beforeLoad: requireAuth,
+  beforeLoad: requireVerifiedAuth,
   component: DashboardScreen,
 })
 
@@ -102,7 +120,7 @@ export const BoardUrl = "/boards/$id"
 const boardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: BoardUrl,
-  beforeLoad: requireAuth,
+  beforeLoad: requireVerifiedAuth,
   component: BoardScreen,
 })
 
@@ -111,7 +129,7 @@ export const SheetUrl = "/boards/$id/sheets/$noteId"
 const sheetRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: SheetUrl,
-  beforeLoad: requireAuth,
+  beforeLoad: requireVerifiedAuth,
   component: SheetScreen,
 })
 
@@ -120,7 +138,7 @@ export const SubscriptionsUrl = "/subscriptions"
 const subscriptionsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: SubscriptionsUrl,
-  beforeLoad: requireAuth,
+  beforeLoad: requireVerifiedAuth,
   component: SubscriptionsScreen,
 })
 
@@ -129,7 +147,7 @@ export const NewsfeedsUrl = "/subscriptions/$id"
 const newsfeedsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: NewsfeedsUrl,
-  beforeLoad: requireAuth,
+  beforeLoad: requireVerifiedAuth,
   component: NewsfeedsScreen,
 })
 
@@ -141,7 +159,7 @@ export const NewsfeedDetailUrl = "/subscriptions/$id/newsfeeds/$newsfeedId"
 const newsfeedDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: NewsfeedDetailUrl,
-  beforeLoad: requireAuth,
+  beforeLoad: requireVerifiedAuth,
   component: NewsfeedLinearPage
 })
 
@@ -149,7 +167,7 @@ export const SettingsUrl = "/settings"
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: SettingsUrl,
-  beforeLoad: requireAuth,
+  beforeLoad: requireVerifiedAuth,
   component: SettingsScreen,
 })
 
@@ -157,13 +175,14 @@ export const SettingsBillingUrl = "/settings/billing"
 const settingsBillingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: SettingsBillingUrl,
-  beforeLoad: requireAuth,
+  beforeLoad: requireVerifiedAuth,
   component: BillingScreen,
 })
 
 const routeTree = rootRoute.addChildren([
   signinRoute,
   signupRoute,
+  verifyEmailRoute,
   indexRoute,
   homeRoute,
   chatsIndexRoute,

@@ -19,6 +19,7 @@ class User(BaseModel):
     username: str
     name: str | None = None
     password_hash: str | None = None
+    email_verified_at: datetime | None = None
 
     created_at: datetime | None = Field(default_factory=datetime.now)
     updated_at: datetime | None = None

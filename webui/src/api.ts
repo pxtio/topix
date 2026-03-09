@@ -58,6 +58,12 @@ export type TokenPayload = {
 }
 
 
+export type EmailVerificationStatus = {
+  enabled: boolean
+  verified: boolean
+}
+
+
 /* ---------------------------
    Single-flight refresh logic
 ---------------------------- */
@@ -272,6 +278,42 @@ export async function refresh(): Promise<TokenPayload> {
     token_type: "bearer",
     refresh_token: getRefreshToken(),
   }
+}
+
+
+/**
+ * Fetch email verification status for the current authenticated user.
+ */
+export async function getEmailVerificationStatus(): Promise<EmailVerificationStatus> {
+  const res = await apiFetch<{ data: EmailVerificationStatus }>({
+    path: "/users/email-verification-status",
+    method: "GET",
+  })
+  return res.data
+}
+
+
+/**
+ * Request a verification email resend for the current authenticated user.
+ */
+export async function resendVerificationEmail(): Promise<void> {
+  await apiFetch<{ data: { message: string } }>({
+    path: "/users/resend-verification",
+    method: "POST",
+  })
+}
+
+
+/**
+ * Verify an email token received from the verification link.
+ */
+export async function verifyEmailToken(token: string): Promise<void> {
+  await apiFetch<{ data: { message: string } }, { token: string }>({
+    path: "/users/verify-email",
+    method: "POST",
+    body: { token },
+    noAuth: true,
+  })
 }
 
 

@@ -23,6 +23,8 @@ import { AlignCenter, AlignLeft, AlignRight } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ColorGrid } from './color-panel'
 import { useStyleDefaults } from '../../style-provider'
+import { useTheme } from '@/components/theme-provider'
+import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 
 /** Shared glyphs */
 const Section = ({ title, children }: { title: string, children: React.ReactNode }): ReactElement => (
@@ -39,6 +41,11 @@ const ColorDot = ({ color }: { color?: string | null }): ReactElement => (
     style={{ backgroundColor: color ?? 'transparent' }}
   />
 )
+
+
+/** Resolve style color to the same display color used on-canvas for current theme. */
+const resolveDisplayColor = (color: string | null | undefined, isDark: boolean): string | null =>
+  isDark ? darkModeDisplayHex(color) ?? color ?? null : color ?? null
 
 
 const RailButton = ({
@@ -279,6 +286,8 @@ export function StylePanel<T extends StyleLike>({
   includeLinkStyleAttributes = false,
   className
 }: StylePanelProps<T>): ReactElement {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const s = style
   type SettingKey =
     | 'strokeColor'
@@ -487,9 +496,9 @@ export function StylePanel<T extends StyleLike>({
   }
 
   const settingIndicator: Record<SettingKey, React.ReactNode> = {
-    strokeColor: <ColorDot color={s.strokeColor as string | undefined} />,
-    backgroundColor: <ColorDot color={(s as Style).backgroundColor ?? null} />,
-    textColor: <ColorDot color={s.textColor as string | undefined} />,
+    strokeColor: <ColorDot color={resolveDisplayColor(s.strokeColor as string | undefined, isDark)} />,
+    backgroundColor: <ColorDot color={resolveDisplayColor((s as Style).backgroundColor ?? null, isDark)} />,
+    textColor: <ColorDot color={resolveDisplayColor(s.textColor as string | undefined, isDark)} />,
     fillStyle: <FillGlyph kind={(s.fillStyle as FillStyle) ?? 'solid'} />,
     strokeWidth: <LineGlyph width={s.strokeWidth ?? 1} />,
     strokeStyle: <LineGlyph width={2} dash={(s.strokeStyle as StrokeStyle) === 'dashed' ? [6, 4] : (s.strokeStyle as StrokeStyle) === 'dotted' ? [1, 5] : undefined} />,

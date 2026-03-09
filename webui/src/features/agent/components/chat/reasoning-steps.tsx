@@ -8,6 +8,7 @@ import { ThinkingDots } from "@/components/loading-view"
 import { MiniLinkCard } from "../link-preview"
 import { cn } from "@/lib/utils"
 import { ProgressBar } from "@/components/progress-bar"
+import { toast } from "sonner"
 
 
 const ReasoningMessage = ({
@@ -34,6 +35,7 @@ const ReasoningStepViewImpl = ({
   isLoading
 }: { step: ReasoningStep, isLoading?: boolean }) => {
   const [viewMore, setViewMore] = useState<boolean>(false)
+  const [isInputCopied, setIsInputCopied] = useState<boolean>(false)
 
   const { reasoning, message, title, input } = extractStepDescription(step)
 
@@ -45,6 +47,13 @@ const ReasoningStepViewImpl = ({
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
     setViewMore(!viewMore)
+  }
+
+  const handleInputCopy = async (text: string) => {
+    await navigator.clipboard.writeText(text)
+    setIsInputCopied(true)
+    toast("Input copied to clipboard!")
+    setTimeout(() => setIsInputCopied(false), 1500)
   }
 
   const messageClass = 'transition-all w-full h-auto min-h-2 p-2 rounded-xl'
@@ -84,7 +93,7 @@ const ReasoningStepViewImpl = ({
       </div>
       <div className='relative flex-1 flex flex-col items-start rounded-lg text-xs'>
         <div className={messageClass}>
-           <div className='flex flex-col gap-2'>
+          <div className='flex flex-col gap-2'>
             <div>
               <h4 className='text-xs font-medium inline'>{title}</h4>
               {
@@ -103,10 +112,17 @@ const ReasoningStepViewImpl = ({
             }
             {
               viewMore && input && (
-                <span className='text-xs font-mono px-2 py-1 rounded-sm bg-sidebar-accent/50 border border-border flex flex-row items-center justify-start gap-1 w-auto mr-auto'>
-                  <HugeiconsIcon icon={Search01Icon} strokeWidth={2} className='size-3' />
-                  <span>{input}</span>
-                </span>
+                <button
+                  className='text-xs font-mono px-2 py-1 rounded-sm bg-sidebar-accent/50 border border-border inline-flex flex-row items-center justify-start gap-1 max-w-[240px] sm:max-w-[320px] w-auto mr-auto overflow-hidden cursor-copy hover:bg-sidebar-accent/70 transition-colors'
+                  onClick={() => void handleInputCopy(input)}
+                  title={input}
+                >
+                  <HugeiconsIcon icon={Search01Icon} strokeWidth={2} className='size-3 shrink-0' />
+                  <span className='truncate min-w-0 text-left'>{input}</span>
+                  {
+                    isInputCopied && <span className='text-[10px] text-primary shrink-0'>copied</span>
+                  }
+                </button>
               )
             }
             {

@@ -7,7 +7,7 @@ import os
 import secrets
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 import httpx
@@ -22,6 +22,38 @@ APP_BASE_URL_ENV = "APP_BASE_URL"
 
 DEFAULT_EMAIL_VERIFICATION_TTL_HOURS = 24
 DEFAULT_RESEND_COOLDOWN_SECONDS = 60
+
+
+def _build_verification_email_content(
+    verification_url: str,
+    ttl_hours: int,
+) -> tuple[str, str]:
+    """Build HTML and plain-text verification email bodies for better deliverability."""
+    expiration_label = f"{ttl_hours} hour{'s' if ttl_hours != 1 else ''}"
+
+    text_body = (
+        "Welcome to Dim0!\n\n"
+        "Please confirm your email address to finish setting up your account.\n\n"
+        f"Verify your email: {verification_url}\n\n"
+        f"This verification link expires in {expiration_label}.\n\n"
+        "If you did not create a Dim0 account, you can safely ignore this email."
+    )
+
+    html_body = (
+        "<div style=\"font-family: Arial, sans-serif; color: #111827; line-height: 1.6;\">"
+        "<p>Welcome to <strong>Dim0</strong>!</p>"
+        "<p>Please confirm your email address to finish setting up your account.</p>"
+        f"<p><a href=\"{verification_url}\" "
+        "style=\"display: inline-block; padding: 10px 16px; background: #111827; color: #ffffff; "
+        "text-decoration: none; border-radius: 6px; font-weight: 600;\">Verify email</a></p>"
+        "<p>If the button doesn't work, copy and paste this link into your browser:</p>"
+        f"<p><a href=\"{verification_url}\">{verification_url}</a></p>"
+        f"<p>This verification link expires in <strong>{expiration_label}</strong>.</p>"
+        "<p>If you did not create a Dim0 account, you can safely ignore this email.</p>"
+        "</div>"
+    )
+
+    return html_body, text_body
 
 
 @dataclass(frozen=True)
@@ -112,6 +144,7 @@ async def send_email_verification_link(
     resend_from_email: str,
     to_email: str,
     verification_url: str,
+    ttl_hours: int,
 ) -> None:
     """Send verification email through Resend REST API."""
     headers = {
@@ -121,12 +154,14 @@ async def send_email_verification_link(
     payload = {
         "from": resend_from_email,
         "to": [to_email],
-        "subject": "Verify your email",
-        "html": (
-            "<p>Welcome to Dim0.</p>"
-            f"<p>Please verify your email by clicking this link:</p><p><a href=\"{verification_url}\">Verify email</a></p>"
-        ),
+        "subject": "Verify your Dim0 email",
     }
+    html_body, text_body = _build_verification_email_content(
+        verification_url=verification_url,
+        ttl_hours=ttl_hours,
+    )
+    payload["html"] = html_body
+    payload["text"] = text_body
 
     async with httpx.AsyncClient(timeout=20.0) as client:
         response = await client.post(
@@ -145,4 +180,4 @@ async def send_email_verification_link(
 
 def utc_now() -> datetime:
     """Return current UTC timestamp."""
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)

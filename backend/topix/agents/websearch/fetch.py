@@ -6,6 +6,17 @@ from topix.agents.datatypes.tools import AgentToolName, tool_descriptions
 from topix.agents.tool_handler import ToolHandler
 from topix.agents.websearch.tools import fetch_content
 
+MAX_FETCH_CONTENT_CHARS = 20_000
+
+
+def _truncate_content(text: str, max_chars: int = MAX_FETCH_CONTENT_CHARS) -> str:
+    """Limit fetched content size to keep tool context bounded and predictable."""
+    if len(text) <= max_chars:
+        return text
+
+    truncated = text[:max_chars]
+    return f"{truncated}\n\n[TRUNCATED at {max_chars} chars from {len(text)} chars]"
+
 
 async def fetch_url(
     wrapper: RunContextWrapper[Context],
@@ -23,6 +34,7 @@ async def fetch_url(
     """
     try:
         content = await fetch_content(url, extract_depth="basic")
+        content = _truncate_content(str(content))
         return (
             f"<UrlContent"
             f"\n\turl='{url}'"

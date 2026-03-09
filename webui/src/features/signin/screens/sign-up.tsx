@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query"
 import { useNavigate, Link } from "@tanstack/react-router"
 import { decodeJwt, resolveBillingPlan } from "@/lib/decode-jwt"
 import { useAppStore } from "@/store"
-import { signup } from "@/api"
+import { getEmailVerificationStatus, signup } from "@/api"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -23,6 +23,8 @@ export function SignupPage() {
   const setUserId = useAppStore(s => s.setUserId)
   const setUserEmail = useAppStore(s => s.setUserEmail)
   const setUserPlan = useAppStore(s => s.setUserPlan)
+  const setEmailVerificationEnabled = useAppStore(s => s.setEmailVerificationEnabled)
+  const setEmailVerified = useAppStore(s => s.setEmailVerified)
 
   const [name, setName] = React.useState("")
   const [username, setUsername] = React.useState("")
@@ -34,11 +36,18 @@ export function SignupPage() {
 
   const mut = useMutation({
     mutationFn: () => signup({ email, password, name, username }),
-    onSuccess: token => {
+    onSuccess: async token => {
       const p = decodeJwt(token.access_token)
       if (p.sub) setUserId(String(p.sub))
       if (typeof p.email === "string") setUserEmail(p.email)
       setUserPlan(resolveBillingPlan(p))
+      const status = await getEmailVerificationStatus()
+      setEmailVerificationEnabled(status.enabled)
+      setEmailVerified(status.verified)
+      if (status.enabled && !status.verified) {
+        navigate({ to: "/verify-email", replace: true })
+        return
+      }
       navigate({ to: "/chats", replace: true })
     }
   })

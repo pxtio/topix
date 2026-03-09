@@ -9,9 +9,13 @@ export interface AppStore {
   userId: string
   userEmail: string
   userPlan: BillingPlan
+  emailVerificationEnabled: boolean
+  emailVerified: boolean
   setUserId: (userId: string) => void
   setUserEmail: (email: string) => void
   setUserPlan: (plan: BillingPlan) => void
+  setEmailVerificationEnabled: (enabled: boolean) => void
+  setEmailVerified: (verified: boolean) => void
 }
 
 
@@ -25,9 +29,17 @@ export const useAppStore = create<AppStore>((set) => ({
 
   userPlan: "free",
 
+  emailVerificationEnabled: false,
+
+  emailVerified: true,
+
   setUserId: (userId) => set({ userId }),
 
   setUserEmail: (userEmail) => set({ userEmail }),
 
   setUserPlan: (userPlan) => set({ userPlan }),
+
+  setEmailVerificationEnabled: (emailVerificationEnabled) => set({ emailVerificationEnabled }),
+
+  setEmailVerified: (emailVerified) => set({ emailVerified }),
 }))

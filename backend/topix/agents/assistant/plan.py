@@ -17,8 +17,8 @@ from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName, tool_descriptions
 from topix.agents.image.gen import generate_image_tool
 from topix.agents.memory.search import create_memory_search_tool
+from topix.agents.websearch.fetch import fetch_url_content_tool
 from topix.agents.websearch.handler import WebSearchHandler
-from topix.agents.websearch.navigate import NavigateAgent
 from topix.agents.widgets.finance import display_stock_widget_tool
 from topix.agents.widgets.image import display_image_search_widget_tool
 from topix.agents.widgets.weather import display_weather_widget_tool
@@ -74,12 +74,7 @@ class Plan(BaseAgent):
             )
 
         if config.navigate:
-            tools.append(
-                NavigateAgent.from_config(config.navigate).as_tool(
-                    tool_name=AgentToolName.NAVIGATE,
-                    tool_description=tool_descriptions.get(AgentToolName.NAVIGATE),
-                )
-            )
+            tools.append(fetch_url_content_tool)
 
         if config.image_generation:
             tools.append(generate_image_tool)

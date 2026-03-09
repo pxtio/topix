@@ -8,6 +8,7 @@ from topix.store.postgres.user import (
     delete_user_by_uid,
     get_user_by_email,
     get_user_by_uid,
+    mark_user_email_verified_by_uid,
     update_user_by_uid,
 )
 
@@ -50,6 +51,11 @@ class UserStore:
                 await _dangerous_hard_delete_user_by_uid(conn, user_uid)
             else:
                 await delete_user_by_uid(conn, user_uid)
+
+    async def mark_user_email_verified(self, user_uid: str):
+        """Mark a user email as verified."""
+        async with self._pg_pool.acquire() as conn:
+            await mark_user_email_verified_by_uid(conn, user_uid)
 
     async def close(self):
         """Close the database connection pool."""

@@ -25,6 +25,12 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class EmailVerificationRequest(BaseModel):
+    """Request model for email verification token checks."""
+
+    token: str
+
+
 class BillingCheckoutRequest(BaseModel):
     """Request model for creating a Stripe checkout session."""
 

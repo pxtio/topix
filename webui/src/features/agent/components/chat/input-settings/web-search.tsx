@@ -78,14 +78,18 @@ export const SearchEngineChoiceMenu = () => {
   )
 
   const defaultValue = enabledTools.includes("web_search") ? webSearchEngine : "-1"
+  const triggerLabel = enabledTools.includes("web_search")
+    ? `Web search (${WebSearchEngineName[webSearchEngine]})`
+    : "Web search"
 
   return (
     <Select onValueChange={handleEngineChange} defaultValue={defaultValue}>
       <Tooltip delayDuration={400}>
-        <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50">
+        <div className="w-full">
           <TooltipTrigger asChild>
-            <SelectTrigger className="w-auto rounded-full text-xs p-2 shadow-none hover:bg-accent [&>svg:not(.my-icon)]:hidden border border-transparent hover:border-border transition-colors" size="sm">
+            <SelectTrigger className="w-full rounded-md text-xs px-2 py-1.5 shadow-none hover:bg-accent [&>svg:not(.my-icon)]:hidden border border-transparent hover:border-border transition-colors justify-start gap-2" size="sm">
               <HugeiconsIcon icon={InternetIcon} className={iconClass} strokeWidth={2} />
+              <span className="text-xs">{triggerLabel}</span>
             </SelectTrigger>
           </TooltipTrigger>
         </div>

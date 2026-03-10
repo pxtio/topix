@@ -36,8 +36,8 @@ export const ToolsMenu = () => {
           Tools
         </TooltipContent>
       </Tooltip>
-      <PopoverContent align="start" side="top" className="w-auto p-2">
-        <div className="flex items-center gap-1">
+      <PopoverContent align="start" side="top" className="w-[220px] p-2">
+        <div className="flex flex-col gap-1">
           <SearchEngineChoiceMenu />
           <MemorySearchChoiceMenu />
           <CodeInterpreterChoiceMenu />

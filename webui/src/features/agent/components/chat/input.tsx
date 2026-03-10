@@ -198,7 +198,7 @@ export const InputBar = ({
     'transition-all flex flex-col items-center bg-transparent',
     isFloating
       ? clsx(
-        'absolute inset-x-0 p-4 z-20 gap-12',
+        'absolute inset-x-0 p-2 pb-0 sm:pb-0 sm:p-4 z-20 gap-12',
         chatId ? 'bottom-0' : 'bottom-1/2 transform translate-y-1/2'
       )
       : 'w-full mt-auto gap-4 px-4 pb-4'
@@ -253,7 +253,7 @@ export const InputBar = ({
             </div>
           </div>
 
-          <p className="mt-2 px-2 text-center text-[11px] text-muted-foreground/80">
+          <p className="p-1.5 sm:p-2 text-center text-[11px] text-muted-foreground/80 bg-auto">
             AI can make mistakes. Verify important details carefully.
           </p>
         </div>

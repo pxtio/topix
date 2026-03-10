@@ -3,7 +3,7 @@ import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub }
 import { useDeleteBoard } from "@/features/board/api/delete-board"
 import { trimText } from "@/lib/common"
 import { UNTITLED_LABEL } from "@/features/board/const"
-import { useNavigate, useRouterState } from "@tanstack/react-router"
+import { useNavigate, useParams, useRouterState, useSearch } from "@tanstack/react-router"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "../ui/context-menu"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { DashboardCircleAddIcon, Delete02Icon, Edit01Icon, NoteIcon } from "@hugeicons/core-free-icons"
@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { Minus, Plus } from "lucide-react"
 import { ChatMenuItem, NewChatItem } from "./chat"
 import { ConfirmDeleteBoardAlert } from "./confirm-delete-board"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useListChats } from "@/features/agent/api/list-chats"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
 import { useAppStore } from "@/store"
@@ -103,13 +103,27 @@ export function BoardItem({ boardId, label }: { boardId: string, label?: string 
   const { deleteBoard } = useDeleteBoard()
   const navigate = useNavigate()
   const pathname = useRouterState({ select: s => s.location.pathname })
+  const chatParams = useParams({ from: "/chats/$id", shouldThrow: false })
+  const boardSearch = useSearch({
+    from: "/boards/$id",
+    select: (s: { current_chat_id?: string }) => s.current_chat_id,
+    shouldThrow: false
+  })
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
   const { data: chats = [] } = useListChats({ graphUid: boardId })
+  const activeChatId = chatParams?.id ?? boardSearch
 
   const isActive =
     pathname === `/boards/${boardId}` ||
     pathname.startsWith(`/boards/${boardId}/`)
+  const hasActiveBoardChat = Boolean(activeChatId && chats.some(chat => chat.uid === activeChatId))
+
+  useEffect(() => {
+    if (!hasActiveBoardChat) return
+    setIsOpen(true)
+  }, [hasActiveBoardChat])
 
   const handleClick = () => {
     navigate({ to: "/boards/$id", params: { id: boardId } })
@@ -138,7 +152,8 @@ export function BoardItem({ boardId, label }: { boardId: string, label?: string 
     <SidebarMenuItem>
       <ContextMenu>
         <Collapsible
-          defaultOpen={false}
+          open={isOpen}
+          onOpenChange={setIsOpen}
           className="group/collapsible w-full"
         >
           <Tooltip>

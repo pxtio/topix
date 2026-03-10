@@ -65,9 +65,8 @@ export function RootLayout() {
               <SidebarInset className='overflow-hidden'>
                 <header className="flex h-16 shrink-0 items-center gap-2 p-4 absolute top-0 inset-x-0 z-50">
                   {!presentationMode && <SidebarTrigger className="-ml-1" />}
-                  {!presentationMode && (
-                    <div><SidebarLabel /></div>
-                  )}
+                  {!presentationMode && <div className="hidden md:block"><SidebarLabel /></div>}
+                  {!presentationMode && <div className="md:hidden"><SidebarLabel mobileContextOnly /></div>}
                 </header>
 
                 <div className="flex flex-1 w-full min-w-0">

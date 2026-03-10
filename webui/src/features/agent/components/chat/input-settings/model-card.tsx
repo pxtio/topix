@@ -100,10 +100,9 @@ export const ModelChoiceMenu = () => {
       <Tooltip delayDuration={400}>
         <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 border border-transparent hover:border-border transition-colors">
           <TooltipTrigger asChild>
-            <SelectTrigger className="w-auto rounded-full text-xs px-3 py-2 shadow-none border-none" size="sm">
+            <SelectTrigger className="w-auto rounded-full text-xs p-2 shadow-none border-none" size="sm" hideChevron>
               <div className="flex items-center gap-2">
                 <CurrentFamilyIcon size={16} />
-                <span className="truncate">{LlmName[llmModel]}</span>
               </div>
             </SelectTrigger>
           </TooltipTrigger>

@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Clock02Icon, Message02Icon, PlusSignIcon } from "@hugeicons/core-free-icons"
+import { ChatAdd01Icon, Clock02Icon, Message02Icon, PlusSignIcon } from "@hugeicons/core-free-icons"
 import { ThemedWelcome } from "./chat/welcome-message"
 import { useNavigate, useParams, useRouterState } from "@tanstack/react-router"
 
@@ -200,6 +200,19 @@ const ChatBody = ({
     })
   }
 
+  const handleNewChat = () => {
+    setChatId(undefined)
+
+    if (isBoardRoute) {
+      syncBoardUrl(undefined)
+      return
+    }
+
+    if (routerLocation.pathname?.startsWith("/chats/")) {
+      navigate({ to: "/chats" })
+    }
+  }
+
   return (
     <div className={chatClassName}>
       {showHistoricalChats && (
@@ -210,13 +223,23 @@ const ChatBody = ({
             setChatId(id)
             syncBoardUrl(id)
           }}
-          onNewChat={() => {
-            setChatId(undefined)
-            syncBoardUrl(undefined)
-          }}
+          onNewChat={handleNewChat}
           variant={historyVariant}
         />
       )}
+
+      <div className="absolute top-4 right-4 z-50 md:hidden">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full border border-border shadow-sm bg-accent hover:bg-background transition-colors"
+          onClick={handleNewChat}
+          aria-label="Create new chat"
+          title="Create new chat"
+        >
+          <HugeiconsIcon icon={ChatAdd01Icon} className="size-4" strokeWidth={2} />
+        </Button>
+      </div>
 
       <div className={cn(
         "flex-1 w-full min-h-0",

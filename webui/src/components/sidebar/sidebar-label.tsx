@@ -14,7 +14,7 @@ import { useGetNote } from "@/features/board/api/get-note"
 import { useUpdateNote } from "@/features/board/api/update-note"
 import { FolderBreadcrumb } from "@/features/board/components/flow/folder-breadcrumb"
 
-export const SidebarLabel = () => {
+export const SidebarLabel = ({ mobileContextOnly = false }: { mobileContextOnly?: boolean }) => {
   const navigate = useNavigate()
   const { updateNote } = useUpdateNote()
 
@@ -172,6 +172,18 @@ export const SidebarLabel = () => {
   // navigation helpers for clickable prefix
   const goBoard = (id: string) => navigate({ to: "/boards/$id", params: { id } })
   const goSubscriptionsRoot = () => navigate({ to: "/subscriptions" })
+
+  if (mobileContextOnly) {
+    if (active.view !== "chat" && active.view !== "new-chat") return null
+    return (
+      <div className="ml-auto">
+        <ContextBoard
+          contextBoardId={selectedBoardId}
+          boardAsContext={handleChangeContext}
+        />
+      </div>
+    )
+  }
 
   // UI pieces
   const wrapClass =

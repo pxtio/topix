@@ -1,6 +1,5 @@
 """Convert agent/function as FunctionTool object."""
 
-import asyncio
 import functools
 import inspect
 import json
@@ -37,7 +36,6 @@ from topix.agents.datatypes.stream import (
 )
 from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
 from topix.utils.common import gen_uid
-from topix.utils.web.favicon import fetch_meta_images_batch
 
 RAW_RESPONSE_EVENT = "raw_response_event"
 
@@ -361,29 +359,7 @@ class ToolHandler:
         annotations = []
 
         if isinstance(output, WebSearchOutput):
-            # Fetch favicons and cover images for the search results
             search_results = output.search_results
-
-            # run fetch meta info in background
-            async def _fetch_links_meta():
-                meta_images = await fetch_meta_images_batch(
-                    [result.url for result in search_results]
-                )
-
-                for result in search_results:
-                    if result.url in meta_images:
-                        result.favicon = (
-                            str(meta_images[result.url].favicon)
-                            if meta_images[result.url].favicon
-                            else None
-                        )
-                        result.cover_image = (
-                            str(meta_images[result.url].cover_image)
-                            if meta_images[result.url].cover_image
-                            else None
-                        )
-
-            asyncio.create_task(_fetch_links_meta())
 
             new_results = []
             for result in search_results:

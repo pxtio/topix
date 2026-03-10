@@ -8,8 +8,11 @@ import { ImageGenMenu } from "./image-gen"
 import { MemorySearchChoiceMenu } from "./memory-search"
 import { SearchEngineChoiceMenu } from "./web-search"
 
+type ToolsMenuProps = {
+  memorySearchAvailable?: boolean
+}
 
-export const ToolsMenu = () => {
+export const ToolsMenu = ({ memorySearchAvailable = true }: ToolsMenuProps) => {
   const buttonClass = clsx(
     "transition-all shrink-0 my-icon p-2 rounded-full",
     "hover:bg-accent dark:bg-input/30 dark:hover:bg-accent/50",
@@ -36,10 +39,10 @@ export const ToolsMenu = () => {
           Tools
         </TooltipContent>
       </Tooltip>
-      <PopoverContent align="start" side="top" className="w-auto p-2">
-        <div className="flex items-center gap-1">
+      <PopoverContent align="start" side="top" className="w-[220px] p-2">
+        <div className="flex flex-col gap-1">
           <SearchEngineChoiceMenu />
-          <MemorySearchChoiceMenu />
+          <MemorySearchChoiceMenu available={memorySearchAvailable} />
           <CodeInterpreterChoiceMenu />
           <ImageGenMenu />
         </div>

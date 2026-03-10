@@ -113,7 +113,7 @@ const ReasoningStepViewImpl = ({
             {
               viewMore && input && (
                 <button
-                  className='text-xs font-mono px-2 py-1 rounded-sm bg-sidebar-accent/50 border border-border inline-flex flex-row items-center justify-start gap-1 max-w-[240px] sm:max-w-[320px] w-auto mr-auto overflow-hidden cursor-copy hover:bg-sidebar-accent/70 transition-colors'
+                  className='text-xs font-mono px-2 py-1 rounded-sm bg-sidebar-accent/50 border border-border inline-flex flex-row items-center justify-start gap-1 max-w-[240px] sm:max-w-[270px] w-auto mr-auto overflow-hidden cursor-copy hover:bg-sidebar-accent/70 transition-colors'
                   onClick={() => void handleInputCopy(input)}
                   title={input}
                 >
@@ -249,7 +249,8 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
               bg-sidebar
               text-muted-foreground
               rounded-xl
-              shadow-md
+              border-border/30
+              border
             `}
           >
             <div className='font-medium text-base p-1 flex flex-row items-center justify-center gap-2'>

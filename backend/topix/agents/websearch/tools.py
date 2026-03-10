@@ -243,6 +243,7 @@ async def search_linkup(
                 url=result["url"],
                 title=result.get("name", ""),
                 content=result.get("content", ""),
+                favicon=result.get("favicon")
             )
             for result in results[:max_results]
         ]

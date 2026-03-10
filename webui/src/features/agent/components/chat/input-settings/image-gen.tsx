@@ -21,19 +21,23 @@ export const ImageGenMenu = () => {
   const tooltipText = isEnabled ? "Disable Image Generation" : "Enable Image Generation"
 
   const buttonClass = clsx(
-    "transition-all shrink-0 my-icon p-2 rounded-full hover:bg-accent dark:bg-input/30 dark:hover:bg-accent/50 border border-transparent hover:border-border transition-colors",
-    isEnabled ? '!text-secondary' : 'text-muted-foreground'
+    "transition-all w-full my-icon px-2 py-1.5 rounded-md hover:bg-accent dark:hover:bg-accent/50 border border-transparent hover:border-border transition-colors flex flex-row items-center gap-2 text-left text-muted-foreground"
+  )
+  const iconClass = clsx(
+    "size-4 shrink-0",
+    isEnabled ? "text-secondary" : "text-muted-foreground"
   )
 
   return (
     <Tooltip delayDuration={400}>
-      <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50">
+      <div className="w-full">
         <TooltipTrigger asChild>
           <button
             className={buttonClass}
             onClick={handleToggle}
           >
-            <HugeiconsIcon icon={AiImageIcon} className='size-4 shrink-0' strokeWidth={2} />
+            <HugeiconsIcon icon={AiImageIcon} className={iconClass} strokeWidth={2} />
+            <span className="text-xs">Image generation</span>
           </button>
         </TooltipTrigger>
       </div>

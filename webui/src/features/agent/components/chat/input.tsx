@@ -101,6 +101,8 @@ export const InputBar = ({
   const boardParams = useParams({ from: "/boards/$id", shouldThrow: false })
   const isBoardRoute = routerLocation.pathname?.startsWith("/boards/")
   const boardRouteId = boardParams?.id
+  const settingsBoardId = attachedBoardId ?? boardRouteId
+  const memorySearchAvailable = Boolean(settingsBoardId)
 
   const proceedSend = async (text: string, forceNewChat = false) => {
     const trimmed = text.trim()
@@ -109,7 +111,7 @@ export const InputBar = ({
     const createNewChat = forceNewChat || !chatId
     let id: string
 
-    const targetBoardId = attachedBoardId ?? boardRouteId
+    const targetBoardId = settingsBoardId
 
     if (createNewChat) {
       const newChatId = generateUuid()
@@ -203,9 +205,10 @@ export const InputBar = ({
   )
 
   const inboxClass = clsx(
-    'rounded-2xl relative flex flex-row items-center space-y-1 items-stretch text-card-foreground text-base p-2',
-    chatId ? 'bg-card backdrop-blur-lg supports-[backdrop-filter]:bg-card/70 dark:border dark:border-border/50 shadow-lg' :
+    'rounded-2xl relative flex flex-row items-center space-y-1 items-stretch text-card-foreground text-base p-2 border transition-colors transition-shadow',
+    chatId ? 'bg-accent backdrop-blur-lg supports-[backdrop-filter]:bg-accent/70 dark:border dark:border-border/50 shadow-lg' :
       'bg-accent text-sm shadow-xl',
+    'border-transparent hover:border-border/70 focus-within:border-border/70'
   )
 
   return (
@@ -218,7 +221,10 @@ export const InputBar = ({
       )}>
         <div className="relative w-full max-w-[800px] mx-auto">
           <div className="absolute -top-9 left-0 transform flex flex-row items-center gap-1">
-            <InputSettings showBoardContextOption={enableSelectionContext} />
+            <InputSettings
+              showBoardContextOption={enableSelectionContext}
+              memorySearchAvailable={memorySearchAvailable}
+            />
           </div>
 
           <div
@@ -246,6 +252,10 @@ export const InputBar = ({
               />
             </div>
           </div>
+
+          <p className="mt-2 px-2 text-center text-[11px] text-muted-foreground/80">
+            AI can make mistakes. Verify important details carefully.
+          </p>
         </div>
       </div>
 

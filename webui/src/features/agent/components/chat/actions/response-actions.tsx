@@ -15,7 +15,7 @@ export const ResponseActions = ({ message, saveAsIs = false }: { message: string
   const chat = chatList?.find((c) => c.uid === chatId)
   const attachedBoardId = chat?.graphUid
   return (
-    <div className="flex flex-row items-center gap-2">
+    <div className="flex flex-row items-center gap-2 ml-1">
       <CopyAnswer answer={message} />
       <SaveAsNote message={message} type="notify" saveAsIs={saveAsIs} boardId={attachedBoardId} />
       <SaveAsNote message={message} type="mapify" boardId={attachedBoardId} />

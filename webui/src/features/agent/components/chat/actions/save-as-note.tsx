@@ -188,7 +188,7 @@ export const SaveAsNote = ({
   const icon = type === "notify" ? NotebookIcon : type === "mapify" ? GitForkIcon : ChartBubbleIcon
 
   const buttonClass = clsx(
-    "relative transition-all text-xs text-secondary hover:bg-accent hover:shadow-xs font-medium flex flex-row items-center gap-2 p-1 rounded-md overflow-hidden",
+    "transition-all text-xs text-muted-foreground hover:text-foreground flex flex-row items-center gap-2 p-1 rounded-md",
     processing && "opacity-75 pointer-events-none"
   )
 

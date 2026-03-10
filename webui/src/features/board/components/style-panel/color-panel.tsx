@@ -230,6 +230,12 @@ export function ColorGrid({
           </div>
         </div>
       )}
+
+      {variant === "compact" && (
+        <p className="text-[11px] text-muted-foreground">
+          Right-click a color to view more shades.
+        </p>
+      )}
     </div>
   )
 }

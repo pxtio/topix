@@ -516,8 +516,8 @@ export function StylePanel<T extends StyleLike>({
   return (
     <Card className={cn('w-full bg-sidebar backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 shadow-md border border-border/60 rounded-lg py-0 px-0', className)}>
       <CardContent className='p-0 h-[420px]'>
-        <div className='h-full p-1 overflow-y-auto scrollbar-thin'>
-          <div className='space-y-0 pr-1'>
+        <div className='h-full p-1 overflow-y-auto scrollbar-thin [scrollbar-gutter:stable_both-edges]'>
+          <div className='space-y-0'>
             {settingKeys.map(key => (
               <Popover key={key}>
                 <PopoverTrigger asChild>

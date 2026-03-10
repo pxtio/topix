@@ -54,7 +54,7 @@ const HistoryList = ({
 }) => {
   if (variant === "dropdown") {
     return (
-      <div className="absolute top-0 w-full flex justify-start px-4 py-2 sm:px-8 z-10">
+      <div className="absolute top-0 w-full flex justify-start px-4 py-2 sm:px-8 z-50">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

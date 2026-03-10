@@ -1,4 +1,4 @@
-import { OpenAI, Gemini, Anthropic, DeepSeek, Mistral, Moonshot } from '@lobehub/icons'
+import { OpenAI, Gemini, DeepSeek, Mistral, Moonshot, Claude } from '@lobehub/icons'
 
 export const LlmModels = [
   "openai/gpt-5.2",
@@ -147,7 +147,7 @@ export const LlmFamilyMap: Record<LlmModel, LlmFamily> = {
 export const LlmFamilyIcon: Record<LlmFamily, React.ComponentType<{ size?: number | string, color?: string }>> = {
   openai: OpenAI,
   google: Gemini.Color,
-  anthropic: Anthropic,
+  anthropic: Claude.Color,
   mistralai: Mistral.Color,
   deepseek: DeepSeek.Color,
   moonshotai: Moonshot

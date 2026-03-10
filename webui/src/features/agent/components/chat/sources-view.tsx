@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import {
   Sheet,
   SheetContent,
@@ -12,113 +12,96 @@ import { LinkPreviewCard } from '../link-preview'
 import type { AgentResponse } from '../../types/stream'
 import { extractAnswerWebSources } from '../../utils/url'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Link04Icon } from '@hugeicons/core-free-icons'
-
-const CARD_WIDTH_PX = 160 // Tailwind w-40
-const GAP_PX = 8         // Tailwind gap-2
+import { Link02Icon, Link04Icon } from '@hugeicons/core-free-icons'
 
 /**
- * Component that renders a list of sources for a chat response
- * with responsive overflow "+N" that opens a side panel listing all sources.
+ * Compact sources pill that opens a full sources sheet on click.
  */
 export const SourcesView = ({ answer }: { answer: AgentResponse }) => {
   const annotations = extractAnswerWebSources(answer)
-
-
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const [containerWidth, setContainerWidth] = useState(0)
-
-  useEffect(() => {
-    if (!containerRef.current) return
-    const el = containerRef.current
-    const ro = new ResizeObserver(entries => {
-      const cr = entries[0]?.contentRect
-      if (cr) setContainerWidth(cr.width)
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-
-  const { visibleCount, extraCount } = useMemo(() => {
-    if (!containerWidth) return { visibleCount: 0, extraCount: annotations.length }
-
-    const perRow = Math.max(1, Math.floor((containerWidth + GAP_PX) / (CARD_WIDTH_PX + GAP_PX)))
-    const needsPill = annotations.length > perRow
-    const usableSlots = Math.max(1, needsPill ? perRow - 1 : perRow)
-
-    const visible = Math.min(usableSlots, annotations.length)
-    const extra = Math.max(0, annotations.length - visible)
-    return { visibleCount: visible, extraCount: extra }
-  }, [containerWidth, annotations.length])
+  const previewFavicons = useMemo(
+    () => annotations.slice(0, 3).map((annotation) => annotation.favicon).filter(Boolean) as string[],
+    [annotations]
+  )
 
   if (annotations.length === 0) return null
-  const visibleItems = annotations.slice(0, visibleCount)
 
   return (
     <div className='w-full mt-2 min-w-0'>
-      <div className='w-full border-b border-border p-2 flex items-center gap-2'>
-        <HugeiconsIcon icon={Link04Icon} className='size-5 shrink-0 text-primary' strokeWidth={2} />
-        <span className='text-base text-primary font-semibold'>Sources</span>
-      </div>
-
-      {/* Root must not overflow its parent */}
-      <div ref={containerRef} className='w-full px-2 py-3'>
-        <div className='flex items-stretch gap-2 flex-wrap md:flex-nowrap'>
-          {visibleItems.map((annotation, index) => (
-            <div key={index} className='shrink-0 w-40'>
-              <LinkPreviewCard annotation={annotation} className='shadow-xs' />
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button
+            variant='outline'
+            size='sm'
+            className='rounded-full !p-2 gap-1 !bg-transparent hover:bg-accent/60 border-border/60 shadow-none mb-1 ml-1'
+            title='Open sources'
+          >
+            <HugeiconsIcon icon={Link04Icon} className='size-4 shrink-0 text-primary' strokeWidth={2} />
+            <span className='text-xs font-mono text-primary'>Sources</span>
+            <div className='flex items-center -space-x-2'>
+              {previewFavicons.length > 0 ? (
+                previewFavicons.map((favicon, index) => (
+                  <span
+                    key={`${favicon}-${index}`}
+                    className='size-6 rounded-full border border-background bg-muted overflow-hidden'
+                  >
+                    <img
+                      src={favicon}
+                      alt='favicon'
+                      loading='lazy'
+                      decoding='async'
+                      referrerPolicy='no-referrer'
+                      className='size-full object-cover'
+                    />
+                  </span>
+                ))
+              ) : (
+                <span className='size-6 rounded-full border border-background bg-muted inline-flex items-center justify-center'>
+                  <HugeiconsIcon icon={Link02Icon} className='size-3 text-muted-foreground' strokeWidth={2} />
+                </span>
+              )}
+              {annotations.length > 3 && (
+                <span className='size-6 rounded-full border border-background bg-background inline-flex items-center justify-center text-[10px] font-medium text-muted-foreground'>
+                  +{annotations.length - 3}
+                </span>
+              )}
             </div>
-          ))}
+          </Button>
+        </SheetTrigger>
+        <SheetContent
+          side='right'
+          className='w-[min(92vw,680px)] p-0'
+        >
+          <div className='border-b border-border p-3 flex items-center gap-2'>
+            <HugeiconsIcon icon={Link04Icon} className='size-5 shrink-0 text-primary' strokeWidth={2} />
+            <div className='flex flex-col'>
+              <SheetTitle className='text-primary'>Sources</SheetTitle>
+              <SheetDescription className='text-muted-foreground'>
+                These are the links referenced by the answer. Click any card to open the original page.
+              </SheetDescription>
+            </div>
+          </div>
 
-          {extraCount > 0 && (
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className='shrink-0 rounded-lg px-3 h-8 md:h-9 font-medium text-sm bg-card cursor-pointer'
-                  title={`Show ${extraCount} more`}
-                >
-                  +{extraCount}
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side='right'
-                className='w-[min(92vw,680px)] p-0'
-              >
-                <div className='border-b border-border p-3 flex items-center gap-2'>
-                  <HugeiconsIcon icon={Link04Icon} className='size-5 shrink-0 text-primary' strokeWidth={2} />
-                  <div className='flex flex-col'>
-                    <SheetTitle className='text-primary'>Sources</SheetTitle>
-                    <SheetDescription className='text-muted-foreground'>
-                      These are the links referenced by the answer. Click any card to open the original page.
-                    </SheetDescription>
-                  </div>
+          <div className='h-[calc(100vh-4rem)] w-full scrollbar-thin overflow-y-auto'>
+            <div className='p-3 space-y-2 w-full'>
+              {annotations.map((annotation, i) => (
+                <div key={i} className='w-full'>
+                  <LinkPreviewCard
+                    annotation={annotation}
+                    className='w-full'
+                    useWideLayoutIfPossible={true}
+                    useSmallFontSize={false}
+                  />
                 </div>
-
-                <div className='h-[calc(100vh-4rem)] w-full scrollbar-thin overflow-y-auto'>
-                  <div className='p-3 space-y-2 w-full'>
-                    {annotations.map((annotation, i) => (
-                      <div key={i} className='w-full'>
-                        <LinkPreviewCard
-                          annotation={annotation}
-                          className='w-full'
-                          useWideLayoutIfPossible={true}
-                          useSmallFontSize={false}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </SheetContent>
-              <SheetHeader className='sr-only'>
-                {/* keeps a11y happy even though we render custom header above */}
-                <SheetTitle>Sources</SheetTitle>
-              </SheetHeader>
-            </Sheet>
-          )}
-        </div>
-      </div>
+              ))}
+            </div>
+          </div>
+        </SheetContent>
+        <SheetHeader className='sr-only'>
+          {/* keeps a11y happy even though we render custom header above */}
+          <SheetTitle>Sources</SheetTitle>
+        </SheetHeader>
+      </Sheet>
     </div>
   )
 }

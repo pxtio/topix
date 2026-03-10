@@ -32,13 +32,13 @@ export function CopilotSheet({
         showClose={false}
         // Keep the panel open when users click outside on the canvas.
         onInteractOutside={(event) => event.preventDefault()}
-        className="w-[420px] max-w-[92vw] bg-sidebar text-sidebar-foreground border-l border-border p-0"
+        className="w-[420px] max-w-[92vw] bg-sidebar text-sidebar-foreground border-l-0 p-0"
       >
         {/* Radix Dialog primitive requires an accessible title for content. */}
         <SheetHeader className="sr-only">
           <SheetTitle>Board Assistant</SheetTitle>
         </SheetHeader>
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-3 bg-sidebar">
+        <div className="px-4 py-3 flex items-center justify-between gap-3 bg-sidebar">
           <div className="flex items-center gap-2 text-sm font-medium">
             <BotMessageSquare className="size-4 text-sidebar-icon-4" strokeWidth={2} />
             Board Assistant

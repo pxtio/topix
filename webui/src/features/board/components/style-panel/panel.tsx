@@ -37,7 +37,7 @@ const Section = ({ title, children }: { title: string, children: React.ReactNode
 
 const ColorDot = ({ color }: { color?: string | null }): ReactElement => (
   <span
-    className='inline-flex size-6 rounded-full border border-border'
+    className='inline-flex size-6 rounded-full border border-border/60'
     style={{ backgroundColor: color ?? 'transparent' }}
   />
 )
@@ -62,7 +62,7 @@ const RailButton = ({
       'text-muted-foreground hover:text-foreground hover:bg-muted/30 hover:border-border/60'
     )}
   >
-    <span className='text-xs font-medium truncate'>{title}</span>
+    <span className='text-xs font-mono font-normal truncate'>{title}</span>
     <span className='inline-flex h-6 w-6 shrink-0 items-center justify-center'>
       {indicator}
     </span>
@@ -505,16 +505,16 @@ export function StylePanel<T extends StyleLike>({
     roughness: <WavyGlyph amount={(s.roughness ?? 0) * 4} />,
     roundness: <CornerGlyph r={(s.roundness ?? 0) === 2 ? 2 : 0} />,
     textAlign: (s.textAlign as TextAlign) === 'center' ? <AlignCenter className='size-4' /> : (s.textAlign as TextAlign) === 'right' ? <AlignRight className='size-4' /> : <AlignLeft className='size-4' />,
-    fontFamily: <span className='inline-flex size-6 rounded-full border border-border items-center justify-center text-xs font-medium'>Aa</span>,
-    fontSize: <span className='inline-flex size-6 rounded-full border border-border items-center justify-center text-[10px] font-medium'>{(s.fontSize as FontSize) ?? 'M'}</span>,
-    textStyle: <span className='inline-flex size-6 rounded-full border border-border items-center justify-center text-[10px] font-medium'>T</span>,
+    fontFamily: <span className='inline-flex size-6 rounded-full border border-border/60 items-center justify-center text-xs font-normal'>Aa</span>,
+    fontSize: <span className='inline-flex size-6 rounded-full border border-border/60 items-center justify-center text-[10px] font-normal'>{(s.fontSize as FontSize) ?? 'M'}</span>,
+    textStyle: <span className='inline-flex size-6 rounded-full border border-border/60 items-center justify-center text-[10px] font-normal'>T</span>,
     pathStyle: <PathStyleGlyph kind={(s as LinkStyle).pathStyle ?? 'bezier'} />,
     sourceArrowhead: <ArrowheadGlyph kind={(s as LinkStyle).sourceArrowhead ?? 'none'} />,
     targetArrowhead: <ArrowheadGlyph kind={(s as LinkStyle).targetArrowhead ?? 'arrow'} />,
   }
 
   return (
-    <Card className={cn('w-full bg-sidebar backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 shadow-md border border-border rounded-lg py-0 px-0', className)}>
+    <Card className={cn('w-full bg-sidebar backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 shadow-md border border-border/60 rounded-lg py-0 px-0', className)}>
       <CardContent className='p-0 h-[420px]'>
         <div className='h-full p-1 overflow-y-auto scrollbar-thin'>
           <div className='space-y-0 pr-1'>

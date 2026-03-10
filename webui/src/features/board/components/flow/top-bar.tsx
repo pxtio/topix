@@ -153,7 +153,7 @@ export const TopBar = memo(function TopBar({
 
   return (
     <div
-      className='absolute z-50 border border-border shadow-md backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/80 backdrop-saturate-150 bg-sidebar text-sidebar-foreground rounded-xl p-1 flex gap-1 right-2 top-1/2 -translate-y-1/2 flex-col items-center max-h-[82vh] overflow-y-auto md:left-1/2 md:right-auto md:top-2 md:-translate-x-1/2 md:-translate-y-0 md:flex-row md:items-center md:max-h-none md:overflow-visible'
+      className='absolute z-50 border border-border/60 shadow-md backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/80 backdrop-saturate-150 bg-sidebar text-sidebar-foreground rounded-xl p-1 flex gap-1 right-2 top-1/2 -translate-y-1/2 flex-col items-center max-h-[82vh] overflow-y-auto md:left-1/2 md:right-auto md:top-2 md:-translate-x-1/2 md:-translate-y-0 md:flex-row md:items-center md:max-h-none md:overflow-visible'
       role='toolbar'
       aria-label='Board top bar'
     >

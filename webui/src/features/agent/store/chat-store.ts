@@ -4,6 +4,8 @@ import type { LlmModel } from "../types/llm"
 import type { WebSearchEngine } from "../types/web"
 import { defaultServices, type Services } from "../types/services"
 
+const DEFAULT_LLM_MODEL: LlmModel = "openai/gpt-5.1"
+
 
 /**
  * Store for managing chat streams.
@@ -38,7 +40,7 @@ export interface ChatStore {
  * @returns A Zustand store with methods to add and clear chat streams.
  */
 export const useChatStore = create<ChatStore>((set) => ({
-  llmModel: "openai/gpt-5.1",
+  llmModel: DEFAULT_LLM_MODEL,
 
   webSearchEngine: "linkup",
 
@@ -76,9 +78,14 @@ export const useChatStore = create<ChatStore>((set) => ({
   ),
 
   syncDefaults: (services: Services) => {
+    const defaultLlm = services.llm.find((service) => (
+      service.name === DEFAULT_LLM_MODEL && service.available
+    ))
     const firstAvailableLlm = services.llm.find((service) => service.available)
-    if (firstAvailableLlm) {
-      set({ llmModel: firstAvailableLlm.name })
+    const selectedLlm = defaultLlm ?? firstAvailableLlm
+
+    if (selectedLlm) {
+      set({ llmModel: selectedLlm.name })
     }
 
     const firstAvailableSearch = services.search.find((service) => service.available)

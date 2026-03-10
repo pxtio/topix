@@ -203,9 +203,10 @@ export const InputBar = ({
   )
 
   const inboxClass = clsx(
-    'rounded-2xl relative flex flex-row items-center space-y-1 items-stretch text-card-foreground text-base p-2',
-    chatId ? 'bg-card backdrop-blur-lg supports-[backdrop-filter]:bg-card/70 dark:border dark:border-border/50 shadow-lg' :
+    'rounded-2xl relative flex flex-row items-center space-y-1 items-stretch text-card-foreground text-base p-2 border transition-colors transition-shadow',
+    chatId ? 'bg-accent backdrop-blur-lg supports-[backdrop-filter]:bg-accent/70 dark:border dark:border-border/50 shadow-lg' :
       'bg-accent text-sm shadow-xl',
+    'border-transparent hover:border-border/70 focus-within:border-border/70'
   )
 
   return (

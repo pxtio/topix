@@ -7,19 +7,23 @@ import { ToolsMenu } from "./tools-menu"
 
 interface InputSettingsProps {
   showBoardContextOption?: boolean
+  memorySearchAvailable?: boolean
 }
 
 
 /**
  * Component that renders input settings options for a chat interface.
  */
-export const InputSettings = ({ showBoardContextOption = false }: InputSettingsProps) => {
+export const InputSettings = ({
+  showBoardContextOption = false,
+  memorySearchAvailable = true,
+}: InputSettingsProps) => {
   useListAvailableServices()
 
   return (
     <>
       <ModelChoiceMenu />
-      <ToolsMenu />
+      <ToolsMenu memorySearchAvailable={memorySearchAvailable} />
       <DeepResearchChoiceMenu />
       {showBoardContextOption && <MessageBoardContextChoiceMenu />}
     </>

@@ -101,6 +101,8 @@ export const InputBar = ({
   const boardParams = useParams({ from: "/boards/$id", shouldThrow: false })
   const isBoardRoute = routerLocation.pathname?.startsWith("/boards/")
   const boardRouteId = boardParams?.id
+  const settingsBoardId = attachedBoardId ?? boardRouteId
+  const memorySearchAvailable = Boolean(settingsBoardId)
 
   const proceedSend = async (text: string, forceNewChat = false) => {
     const trimmed = text.trim()
@@ -109,7 +111,7 @@ export const InputBar = ({
     const createNewChat = forceNewChat || !chatId
     let id: string
 
-    const targetBoardId = attachedBoardId ?? boardRouteId
+    const targetBoardId = settingsBoardId
 
     if (createNewChat) {
       const newChatId = generateUuid()
@@ -219,7 +221,10 @@ export const InputBar = ({
       )}>
         <div className="relative w-full max-w-[800px] mx-auto">
           <div className="absolute -top-9 left-0 transform flex flex-row items-center gap-1">
-            <InputSettings showBoardContextOption={enableSelectionContext} />
+            <InputSettings
+              showBoardContextOption={enableSelectionContext}
+              memorySearchAvailable={memorySearchAvailable}
+            />
           </div>
 
           <div

@@ -252,6 +252,10 @@ export const InputBar = ({
               />
             </div>
           </div>
+
+          <p className="mt-2 px-2 text-center text-[11px] text-muted-foreground/80">
+            AI can make mistakes. Verify important details carefully.
+          </p>
         </div>
       </div>
 

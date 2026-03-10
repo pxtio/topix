@@ -245,6 +245,21 @@ export const TopBar = memo(function TopBar({
             <TooltipContent side='bottom' sideOffset={10}>{tooltipCopy.text}</TooltipContent>
           </Tooltip>
 
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={null}
+                className={normalButtonClass}
+                size='icon'
+                onClick={() => onAddNode({ nodeType: 'sheet' })}
+                aria-label='Add sticky note'
+              >
+                <HugeiconsIcon icon={Note02Icon} className='size-4 shrink-0' strokeWidth={2} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side='bottom' sideOffset={10}>{tooltipCopy.note}</TooltipContent>
+          </Tooltip>
+
           <Separator orientation="vertical" className='md:!h-6 hidden md:block' />
 
           <Tooltip>

@@ -7,7 +7,8 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from topix.api.datatypes.requests import EmailVerificationRequest, RefreshRequest, UserSignupRequest
+from topix.api.datatypes.requests import EmailVerificationRequest, GoogleSigninRequest, RefreshRequest, UserSignupRequest
+from topix.api.utils.auth_methods import is_google_connect_available
 from topix.api.utils.decorators import with_standard_response
 from topix.api.utils.email_verification import (
     DEFAULT_RESEND_COOLDOWN_SECONDS,
@@ -20,6 +21,7 @@ from topix.api.utils.email_verification import (
     send_email_verification_link,
     utc_now,
 )
+from topix.api.utils.google_connect import verify_google_id_token
 from topix.api.utils.rate_limit.token_plan import resolve_plan_for_token
 from topix.api.utils.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -47,22 +49,8 @@ router = APIRouter(
 ROTATE_REFRESH_TOKENS = True  # set False if you prefer not to rotate
 
 
-@router.post("/signin")
-@with_standard_response
-async def login_for_access_token(
-    request: Request,
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-):
-    """Signin for the user and return tokens."""
-    user_store: UserStore = request.app.user_store
-    user = await authenticate_user(user_store, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
+async def _issue_tokens(request: Request, user: User) -> dict:
+    """Issue access and refresh tokens for a signed-in user."""
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     plan = await resolve_plan_for_token(request, user.uid)
     access_token = create_access_token(
@@ -86,6 +74,84 @@ async def login_for_access_token(
             refresh_token=refresh_token
         ).model_dump(exclude_none=True)
     }
+
+
+@router.get("/auth-methods")
+@with_standard_response
+async def get_auth_methods():
+    """Return which authentication methods are currently available."""
+    return {
+        "local": True,
+        "google": is_google_connect_available(),
+    }
+
+
+@router.post("/signin")
+@with_standard_response
+async def login_for_access_token(
+    request: Request,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+):
+    """Signin for the user and return tokens."""
+    user_store: UserStore = request.app.user_store
+    user = await authenticate_user(user_store, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return await _issue_tokens(request, user)
+
+
+@router.post("/google-signin")
+@with_standard_response
+async def google_signin(
+    response: Response,
+    request: Request,
+    body: Annotated[GoogleSigninRequest, Body(description="Google sign-in token payload")],
+):
+    """Sign in with Google when the provider is enabled and configured."""
+    if not is_google_connect_available():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Google connect is not available",
+        )
+
+    payload = verify_google_id_token(body.id_token)
+    user_store: UserStore = request.app.user_store
+    user = await user_store.get_user_by_google_sub(payload["sub"])
+    if user is not None:
+        return await _issue_tokens(request, user)
+
+    existing_user = await user_store.get_user_by_email(payload["email"])
+    if existing_user is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists. Please sign in with your existing method first.",
+        )
+
+    new_user = User(
+        email=payload["email"],
+        username=payload["email"],
+        name=payload.get("name"),
+        auth_provider="google",
+        google_sub=payload["sub"],
+        google_email=payload["email"],
+        google_picture_url=payload.get("picture"),
+        google_linked_at=utc_now(),
+        email_verified_at=utc_now(),
+    )
+    try:
+        await user_store.add_user(new_user)
+    except Exception as exc:
+        logging.exception("Failed to create Google user")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Error when creating user",
+        ) from exc
+
+    return await _issue_tokens(request, new_user)
 
 
 @router.post("/signup")
@@ -138,29 +204,7 @@ async def create_user(
         except HTTPException:
             logging.exception("Failed to send verification email on signup for user %s", new_user.uid)
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    plan = await resolve_plan_for_token(request, new_user.uid)
-    access_token = create_access_token(
-        data={
-            "sub": new_user.uid,
-            "email": new_user.email,
-            "name": new_user.name,
-            "username": new_user.username,
-            "plan": plan,
-        },
-        expires_delta=access_token_expires,
-    )
-    refresh_token = create_refresh_token(
-        data={"sub": new_user.uid},
-        expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
-    )
-    return {
-        "token": Token(
-            access_token=access_token,
-            token_type="bearer",
-            refresh_token=refresh_token
-        ).model_dump(exclude_none=True)
-    }
+    return await _issue_tokens(request, new_user)
 
 
 @router.post("/verify-email")

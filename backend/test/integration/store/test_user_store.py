@@ -51,3 +51,31 @@ async def test_add_get_update_delete_user(config):
         assert hard_deleted is None
     finally:
         await user_store.close()
+
+
+@pytest.mark.asyncio
+async def test_get_user_by_google_sub_and_link_google_account(config):
+    """UserStore should support Google lookup and linking onto a local user."""
+    user_store = UserStore()
+    await user_store.open()
+    try:
+        user = make_test_user()
+        await user_store.add_user(user)
+
+        await user_store.link_google_account(
+            user.uid,
+            "google-sub-store-1",
+            user.email,
+            "https://example.com/store-avatar.png",
+        )
+
+        fetched = await user_store.get_user_by_google_sub("google-sub-store-1")
+        assert fetched is not None
+        assert fetched.uid == user.uid
+        assert fetched.auth_provider == "local_google"
+        assert fetched.google_email == user.email
+        assert fetched.google_picture_url == "https://example.com/store-avatar.png"
+
+        await user_store.delete_user(user.uid, hard_delete=True)
+    finally:
+        await user_store.close()

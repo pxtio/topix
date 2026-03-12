@@ -7,7 +7,9 @@ from topix.store.postgres.user import (
     create_user,
     delete_user_by_uid,
     get_user_by_email,
+    get_user_by_google_sub,
     get_user_by_uid,
+    link_google_account_by_uid,
     mark_user_email_verified_by_uid,
     update_user_by_uid,
 )
@@ -39,10 +41,35 @@ class UserStore:
         async with self._pg_pool.acquire() as conn:
             return await get_user_by_email(conn, email)
 
+
+    async def get_user_by_google_sub(self, google_sub: str) -> User | None:
+        """Retrieve a user by their linked Google subject identifier."""
+        async with self._pg_pool.acquire() as conn:
+            return await get_user_by_google_sub(conn, google_sub)
+
+
     async def update_user(self, user_uid: str, data: dict):
         """Update a user's information."""
         async with self._pg_pool.acquire() as conn:
             await update_user_by_uid(conn, user_uid, data)
+
+
+    async def link_google_account(
+        self,
+        user_uid: str,
+        google_sub: str,
+        google_email: str,
+        google_picture_url: str | None,
+    ):
+        """Link a Google identity to an existing user account."""
+        async with self._pg_pool.acquire() as conn:
+            await link_google_account_by_uid(
+                conn,
+                user_uid,
+                google_sub,
+                google_email,
+                google_picture_url,
+            )
 
     async def delete_user(self, user_uid: str, hard_delete: bool = False):
         """Delete a user by their UID."""

@@ -121,7 +121,7 @@ def test_auth_methods_reports_google_disabled_by_default(monkeypatch):
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "success"
-    assert payload["data"] == {"local": True, "google": False}
+    assert payload["data"] == {"local": True, "google": False, "google_client_id": None}
 
 
 def test_google_signin_rejects_when_google_connect_disabled(monkeypatch):
@@ -260,7 +260,11 @@ def test_auth_methods_reports_google_enabled_when_configured(monkeypatch):
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "success"
-    assert payload["data"] == {"local": True, "google": True}
+    assert payload["data"] == {
+        "local": True,
+        "google": True,
+        "google_client_id": "client-id.apps.googleusercontent.com",
+    }
 
 
 def test_auth_methods_hides_google_when_client_id_missing(monkeypatch):
@@ -274,7 +278,7 @@ def test_auth_methods_hides_google_when_client_id_missing(monkeypatch):
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "success"
-    assert payload["data"] == {"local": True, "google": False}
+    assert payload["data"] == {"local": True, "google": False, "google_client_id": None}
 
 
 def test_verify_email_marks_user_and_token_used(monkeypatch):

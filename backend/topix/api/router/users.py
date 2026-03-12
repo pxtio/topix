@@ -8,7 +8,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response, 
 from fastapi.security import OAuth2PasswordRequestForm
 
 from topix.api.datatypes.requests import EmailVerificationRequest, GoogleSigninRequest, RefreshRequest, UserSignupRequest
-from topix.api.utils.auth_methods import is_google_connect_available
+from topix.api.utils.auth_methods import get_google_client_id, is_google_connect_available
 from topix.api.utils.decorators import with_standard_response
 from topix.api.utils.email_verification import (
     DEFAULT_RESEND_COOLDOWN_SECONDS,
@@ -80,9 +80,11 @@ async def _issue_tokens(request: Request, user: User) -> dict:
 @with_standard_response
 async def get_auth_methods():
     """Return which authentication methods are currently available."""
+    google_available = is_google_connect_available()
     return {
         "local": True,
-        "google": is_google_connect_available(),
+        "google": google_available,
+        "google_client_id": get_google_client_id() if google_available else None,
     }
 
 

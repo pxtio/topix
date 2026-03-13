@@ -1,6 +1,6 @@
-import { cssVarToHex } from "../../utils/color"
+import { cssVarToHex, hexToRgb, rgbToHsl } from "../../utils/color"
 
-export const TAILWIND_HEX: Record<string, Record<number, string>> = {
+export const ORIGINAL_TAILWIND_HEX: Record<string, Record<number, string>> = {
   slate: { 50:"#f8fafc",100:"#f1f5f9",200:"#e2e8f0",300:"#cbd5e1",400:"#94a3b8",500:"#64748b",600:"#475569",700:"#334155",800:"#1e293b",900:"#0f172a",950:"#020617" },
   gray:   { 50:"#f9fafb",100:"#f3f4f6",200:"#e5e7eb",300:"#d1d5db",400:"#9ca3af",500:"#6b7280",600:"#4b5563",700:"#374151",800:"#1f2937",900:"#111827",950:"#030712" },
   stone:  { 50:"#fafaf9",100:"#f5f5f4",200:"#e7e5e4",300:"#d6d3d1",400:"#a8a29e",500:"#78716c",600:"#57534e",700:"#44403c",800:"#292524",900:"#1c1917",950:"#0c0a09" },
@@ -31,6 +31,140 @@ export const TailwindShades = [50,100,200,300,400,500,600,700,800,900,950] as co
 export type TailwindShade = typeof TailwindShades[number]
 
 /**
+ * Normalize any CSS color or hex-like string to a 7-char base hex (#rrggbb)
+ *
+ * - Supports CSS custom properties by resolving with cssVarToHex
+ * - Accepts 3- or 6-digit hex and truncates longer values to 6 digits
+ *
+ * @param c - CSS color string or hex
+ * @returns Normalized '#rrggbb' or null if input is invalid
+ */
+export function toBaseHex(c?: string | null) {
+  if (!c) return null
+  const hex = cssVarToHex(c) ?? c
+  if (!hex || !hex.startsWith('#')) return null
+  const h = hex.slice(1).toLowerCase()
+  const base = h.length === 3 ? h.split('').map(x => x + x).join('') : h.slice(0, 6)
+  return '#' + base
+}
+
+const PAPER_REFERENCE_HEX = "#f7f1e8"
+
+const PAPER_REFERENCE_HSL = (() => {
+  const { r, g, b } = hexToRgb(PAPER_REFERENCE_HEX)
+  return rgbToHsl(r, g, b)
+})()
+
+const SHADE_INDEX = new Map(TailwindShades.map((shade, index) => [shade, index]))
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, value))
+
+const mixHex = (a: string, b: string, amount: number) => {
+  const A = hexToRgb(a)
+  const B = hexToRgb(b)
+  const t = clamp(amount, 0, 1)
+  const toHex = (value: number) => Math.round(value).toString(16).padStart(2, "0")
+  return `#${
+    toHex(A.r * (1 - t) + B.r * t)
+  }${
+    toHex(A.g * (1 - t) + B.g * t)
+  }${
+    toHex(A.b * (1 - t) + B.b * t)
+  }`
+}
+
+const lerpAngle = (from: number, to: number, amount: number) => {
+  const delta = ((((to - from) % 360) + 540) % 360) - 180
+  return (from + delta * amount + 360) % 360
+}
+
+const hslToHex = (h: number, s: number, l: number) => {
+  const hue = ((h % 360) + 360) % 360
+  const sat = clamp(s, 0, 100) / 100
+  const light = clamp(l, 0, 100) / 100
+  const c = (1 - Math.abs(2 * light - 1)) * sat
+  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1))
+  const m = light - c / 2
+  let r = 0
+  let g = 0
+  let b = 0
+
+  if (hue < 60) {
+    r = c
+    g = x
+  } else if (hue < 120) {
+    r = x
+    g = c
+  } else if (hue < 180) {
+    g = c
+    b = x
+  } else if (hue < 240) {
+    g = x
+    b = c
+  } else if (hue < 300) {
+    r = x
+    b = c
+  } else {
+    r = c
+    b = x
+  }
+
+  const toHex = (value: number) =>
+    Math.round((value + m) * 255)
+      .toString(16)
+      .padStart(2, "0")
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+/**
+ * Warms a Tailwind color toward a fixed paper anchor while preserving family identity.
+ */
+export const adaptTailwindColor = (
+  hex: string,
+  shade: TailwindShade,
+) => {
+  const base = toBaseHex(hex)
+  if (!base) return hex
+
+  const shadeIndex = SHADE_INDEX.get(shade) ?? 0
+  const shadeProgress = shadeIndex / (TailwindShades.length - 1)
+  const paperBlend = 0.28 - shadeProgress * 0.14
+  const huePull = 0.06 + (1 - shadeProgress) * 0.06
+  const saturationScale = 0.9 - (1 - shadeProgress) * 0.08
+  const lightnessLift = 3 + (1 - shadeProgress) * 4
+
+  const mixed = mixHex(base, PAPER_REFERENCE_HEX, paperBlend)
+  const mixedRgb = hexToRgb(mixed)
+  const mixedHsl = rgbToHsl(mixedRgb.r, mixedRgb.g, mixedRgb.b)
+
+  return hslToHex(
+    lerpAngle(mixedHsl.h, PAPER_REFERENCE_HSL.h, huePull),
+    clamp(mixedHsl.s * saturationScale, 6, 92),
+    clamp(mixedHsl.l + lightnessLift, 18, 96),
+  )
+}
+
+/**
+ * Builds the paper-adapted Tailwind palette from the original Tailwind colors.
+ */
+const buildTailwindHex = (): Record<string, Record<number, string>> =>
+  Object.fromEntries(
+    Object.entries(ORIGINAL_TAILWIND_HEX).map(([family, shades]) => [
+      family,
+      Object.fromEntries(
+        Object.entries(shades).map(([shade, hex]) => [
+          Number(shade),
+          adaptTailwindColor(hex, Number(shade) as TailwindShade),
+        ]),
+      ),
+    ]),
+  ) as Record<string, Record<number, string>>
+
+export const TAILWIND_HEX = buildTailwindHex()
+
+/**
  * Build a palette for a given Tailwind shade across all supported families
  *
  * @param shade - Tailwind shade value (e.g., 200, 500)
@@ -45,6 +179,7 @@ export const buildPalette = (shade: TailwindShade) =>
 export const TAILWIND_50 = buildPalette(50)
 export const TAILWIND_200 = buildPalette(200)
 export const TAILWIND_300 = buildPalette(300)
+export const TAILWIND_400 = buildPalette(400)
 
 /**
  * Resolve a hex value given a Tailwind family and shade
@@ -97,25 +232,6 @@ export const FAMILIES: Family[] = [
 ]
 
 /* helpers */
-
-/**
- * Normalize any CSS color or hex-like string to a 7-char base hex (#rrggbb)
- *
- * - Supports CSS custom properties by resolving with cssVarToHex
- * - Accepts 3- or 6-digit hex and truncates longer values to 6 digits
- *
- * @param c - CSS color string or hex
- * @returns Normalized '#rrggbb' or null if input is invalid
- */
-export const toBaseHex = (c?: string | null) => {
-  if (!c) return null
-  const hex = cssVarToHex(c) ?? c
-  if (!hex || !hex.startsWith('#')) return null
-  const h = hex.slice(1).toLowerCase()
-  const base = h.length === 3 ? h.split('').map(x => x + x).join('') : h.slice(0, 6)
-  return '#' + base
-}
-
 
 /**
  * Compare two color strings for equality by normalizing to base hex

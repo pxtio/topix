@@ -6,7 +6,7 @@ import clsx from 'clsx'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 import { StickyNote } from '../notes/sticky-note'
-import { TAILWIND_300 } from '../../lib/colors/tailwind'
+import { TAILWIND_400 } from '../../lib/colors/tailwind'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import type { NoteWithPin } from './note-card'
 import { useGraphStore } from '../../store/graph-store'
@@ -27,7 +27,7 @@ type SheetNodeViewProps = {
   onOpenSticky: () => void
 }
 
-const COLOR_OPTIONS = [{ name: 'white', hex: '#ffffff' }, ...TAILWIND_300]
+const COLOR_OPTIONS = [{ name: 'white', hex: '#ffffff' }, ...TAILWIND_400]
 
 export const SheetNodeView = memo(function SheetNodeView({
   note,
@@ -152,7 +152,7 @@ export const SheetNodeView = memo(function SheetNodeView({
     <div className='group w-full h-full'>
       <div
         className={clsx(
-          'relative w-full h-full rounded-lg border-1 border-foreground/30 overflow-hidden',
+          'relative w-full h-full rounded-lg border-1 border-foreground/30 overflow-hidden paper-note-texture',
           isPinned && 'ring-2 ring-secondary border-secondary',
           !suspendContent && 'sticky-note-shadow',
         )}
@@ -183,8 +183,8 @@ export const SheetNodeView = memo(function SheetNodeView({
                     key={c.name}
                     className='h-6 w-6 rounded-full border border-border shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-secondary'
                     style={{ backgroundColor: c.resolved }}
-                    title={`${c.name}-300`}
-                    aria-label={`${c.name}-300`}
+                    title={`${c.name}-400`}
+                    aria-label={`${c.name}-400`}
                     onClick={() => handlePaletteClick(c.hex)}
                   />
                 ))}

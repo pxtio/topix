@@ -8,7 +8,7 @@ import { useGraphStore } from '../../store/graph-store'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon, Cancel01Icon, LinkSquare02Icon } from '@hugeicons/core-free-icons'
 import clsx from 'clsx'
-import { TAILWIND_300 } from '../../lib/colors/tailwind'
+import { TAILWIND_400 } from '../../lib/colors/tailwind'
 import { DialogDescription } from '@radix-ui/react-dialog'
 import { formatDistanceToNow } from '../../utils/date'
 import { useTheme } from '@/components/theme-provider'
@@ -126,7 +126,7 @@ export function LinearNoteCard({ node }: Props) {
   }, [boardId, navigate, node.data.graphUid, node.id])
 
   const cardClass = clsx(
-    'transition rounded-lg relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group border-1 border-foreground/30 sticky-note-shadow',
+    'transition rounded-lg relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group border-1 border-foreground/30 sticky-note-shadow paper-note-texture',
     isPinned
       ? 'ring-2 ring-secondary/60'
       : 'hover:ring-2 hover:ring-secondary/40'
@@ -162,7 +162,7 @@ export function LinearNoteCard({ node }: Props) {
             </PopoverTrigger>
             <PopoverContent align='start' className='w-auto p-2'>
               <div className='grid grid-cols-6 gap-2'>
-                {[{ name: 'white', hex: '#ffffff' }, ...TAILWIND_300].map(c => (
+                {[{ name: 'white', hex: '#ffffff' }, ...TAILWIND_400].map(c => (
                   <button
                     key={c.name}
                     className='h-6 w-6 rounded-md border border-border hover:brightness-95'

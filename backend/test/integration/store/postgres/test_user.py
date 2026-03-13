@@ -9,8 +9,10 @@ from topix.store.postgres.user import (
     _dangerous_hard_delete_user_by_uid,
     create_user,
     delete_user_by_uid,
+    get_user_by_google_sub,
     get_user_by_uid,
     get_user_id_by_uid,
+    link_google_account_by_uid,
     update_user_by_uid,
 )
 from topix.utils.common import gen_uid
@@ -76,3 +78,63 @@ async def test_user_crud(conn: asyncpg.Connection, user_uid: str):
     await _dangerous_hard_delete_user_by_uid(conn, user.uid)
     gone = await get_user_by_uid(conn, user.uid)
     assert gone is None
+
+
+@pytest.mark.asyncio
+async def test_google_user_fields_round_trip(conn: asyncpg.Connection):
+    """Should persist and reload Google-specific user identity fields."""
+    user = User(
+        email=f"{gen_uid()}@test.com",
+        username=f"user_{gen_uid()[:8]}",
+        name="Google User",
+        auth_provider="google",
+        google_sub="google-sub-1",
+        google_email="google-user@test.com",
+        google_picture_url="https://example.com/avatar.png",
+        email_verified_at=datetime.now().isoformat(),
+    )
+
+    created_user = await create_user(conn, user)
+    loaded = await get_user_by_google_sub(conn, "google-sub-1")
+
+    assert created_user.id is not None
+    assert loaded is not None
+    assert loaded.uid == user.uid
+    assert loaded.auth_provider == "google"
+    assert loaded.google_sub == "google-sub-1"
+    assert loaded.google_email == "google-user@test.com"
+    assert loaded.google_picture_url == "https://example.com/avatar.png"
+    assert loaded.password_hash is None
+
+    await _dangerous_hard_delete_user_by_uid(conn, user.uid)
+
+
+@pytest.mark.asyncio
+async def test_link_google_account_upgrades_existing_local_user(conn: asyncpg.Connection):
+    """Should link Google identity onto an existing local account."""
+    user = User(
+        email=f"{gen_uid()}@test.com",
+        username=f"user_{gen_uid()[:8]}",
+        name="Linked User",
+        password_hash="hashed_password",
+    )
+    await create_user(conn, user)
+
+    await link_google_account_by_uid(
+        conn,
+        user.uid,
+        "google-sub-2",
+        user.email,
+        "https://example.com/linked.png",
+    )
+    loaded = await get_user_by_uid(conn, user.uid)
+
+    assert loaded is not None
+    assert loaded.auth_provider == "local_google"
+    assert loaded.google_sub == "google-sub-2"
+    assert loaded.google_email == user.email
+    assert loaded.google_picture_url == "https://example.com/linked.png"
+    assert loaded.google_linked_at is not None
+    assert loaded.password_hash == "hashed_password"
+
+    await _dangerous_hard_delete_user_by_uid(conn, user.uid)

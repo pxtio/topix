@@ -19,6 +19,12 @@ class UserSignupRequest(BaseModel):
     username: str
 
 
+class GoogleSigninRequest(BaseModel):
+    """Request model for Google sign-in token exchange."""
+
+    id_token: str
+
+
 class RefreshRequest(BaseModel):
     """Refresh token request model."""
 

@@ -64,6 +64,26 @@ export type EmailVerificationStatus = {
 }
 
 
+export type AuthMethods = {
+  local: boolean
+  google: boolean
+  google_client_id?: string | null
+}
+
+
+async function readErrorMessage(res: Response, fallback: string): Promise<string> {
+  /** Read API error payloads and return a user-facing message. */
+  const text = await res.text()
+  if (!text) return fallback
+  try {
+    const parsed = JSON.parse(text) as { data?: { message?: string } }
+    return parsed.data?.message || fallback
+  } catch {
+    return text
+  }
+}
+
+
 /* ---------------------------
    Single-flight refresh logic
 ---------------------------- */
@@ -225,8 +245,8 @@ export async function signin(username: string, password: string): Promise<TokenP
   })
 
   if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Signin failed: ${text}`)
+    const message = await readErrorMessage(res, "Signin failed")
+    throw new Error(message)
   }
 
   const json: unknown = await res.json()
@@ -260,6 +280,47 @@ export async function signup(body: {
 
   const token = tokenWrap?.data?.token
   if (!token?.access_token) throw new Error("Bad signup payload")
+
+  setAccessToken(token.access_token)
+  if (token.refresh_token) setRefreshToken(token.refresh_token)
+
+  return token
+}
+
+
+/**
+ * Fetch which sign-in methods are currently available.
+ */
+export async function getAuthMethods(): Promise<AuthMethods> {
+  const res = await apiFetch<{ data: AuthMethods }>({
+    path: "/users/auth-methods",
+    method: "GET",
+    noAuth: true,
+  })
+  return res.data
+}
+
+
+/**
+ * Exchange a Google ID token for app JWT tokens.
+ */
+export async function googleSignin(idToken: string): Promise<TokenPayload> {
+  const res = await fetch(new URL("/users/google-signin", API_URL).toString(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id_token: idToken }),
+  })
+
+  if (!res.ok) {
+    const message = await readErrorMessage(res, "Google sign in failed")
+    throw new Error(message)
+  }
+
+  const json: unknown = await res.json()
+  const token = (json as { data?: { token?: TokenPayload }; token?: TokenPayload }).data?.token
+    ?? (json as { token?: TokenPayload }).token
+
+  if (!token?.access_token) throw new Error("Google sign in failed")
 
   setAccessToken(token.access_token)
   if (token.refresh_token) setRefreshToken(token.refresh_token)

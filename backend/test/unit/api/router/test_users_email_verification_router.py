@@ -17,13 +17,24 @@ class _FakeUserStore:
 
     def __init__(self):
         self._users_by_uid: dict[str, User] = {}
+        self._users_by_email: dict[str, User] = {}
+        self._users_by_google_sub: dict[str, User] = {}
         self.marked_verified: list[str] = []
 
     async def add_user(self, user: User):
         self._users_by_uid[user.uid] = user
+        self._users_by_email[user.email] = user
+        if user.google_sub:
+            self._users_by_google_sub[user.google_sub] = user
 
     async def get_user(self, user_uid: str) -> User | None:
         return self._users_by_uid.get(user_uid)
+
+    async def get_user_by_email(self, email: str) -> User | None:
+        return self._users_by_email.get(email)
+
+    async def get_user_by_google_sub(self, google_sub: str) -> User | None:
+        return self._users_by_google_sub.get(google_sub)
 
     async def mark_user_email_verified(self, user_uid: str):
         self.marked_verified.append(user_uid)
@@ -97,6 +108,177 @@ def test_verify_email_disabled_returns_success(monkeypatch):
     payload = response.json()
     assert payload["status"] == "success"
     assert payload["data"]["message"] == "Email verification is disabled"
+
+
+def test_auth_methods_reports_google_disabled_by_default(monkeypatch):
+    """Auth methods endpoint should only expose local auth by default."""
+    monkeypatch.delenv("GOOGLE_CONNECT_ENABLED", raising=False)
+    monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    client, _, _ = _build_client()
+
+    response = client.get("/users/auth-methods")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "success"
+    assert payload["data"] == {"local": True, "google": False, "google_client_id": None}
+
+
+def test_google_signin_rejects_when_google_connect_disabled(monkeypatch):
+    """Google signin should reject requests when the provider is unavailable."""
+    monkeypatch.delenv("GOOGLE_CONNECT_ENABLED", raising=False)
+    monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    client, _, _ = _build_client()
+
+    response = client.post("/users/google-signin", json={"id_token": "google-token"})
+
+    assert response.status_code == 404
+    payload = response.json()
+    assert payload["status"] == "error"
+    assert payload["data"]["message"] == "Google connect is not available"
+
+
+def test_google_signin_creates_new_google_user(monkeypatch):
+    """Google signin should create a new verified Google-backed user when email is new."""
+    monkeypatch.setenv("GOOGLE_CONNECT_ENABLED", "true")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "client-id.apps.googleusercontent.com")
+    monkeypatch.delenv("VITE_BILLING_ENABLED", raising=False)
+
+    def _fake_verify_google_id_token(id_token: str) -> dict:
+        assert id_token == "google-token"
+        return {
+            "sub": "google-sub-1",
+            "email": "google@test.com",
+            "email_verified": True,
+            "name": "Google User",
+            "picture": "https://example.com/avatar.png",
+        }
+
+    monkeypatch.setattr(
+        "topix.api.router.users.verify_google_id_token",
+        _fake_verify_google_id_token,
+    )
+
+    client, user_store, _ = _build_client()
+    response = client.post("/users/google-signin", json={"id_token": "google-token"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "success"
+    assert payload["data"]["token"]["access_token"]
+
+    created_user = user_store._users_by_email["google@test.com"]
+    assert created_user.auth_provider == "google"
+    assert created_user.google_sub == "google-sub-1"
+    assert created_user.google_email == "google@test.com"
+    assert created_user.google_picture_url == "https://example.com/avatar.png"
+    assert created_user.email_verified_at is not None
+
+
+def test_google_signin_returns_existing_google_user(monkeypatch):
+    """Google signin should reuse an already linked Google account."""
+    monkeypatch.setenv("GOOGLE_CONNECT_ENABLED", "true")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "client-id.apps.googleusercontent.com")
+    monkeypatch.delenv("VITE_BILLING_ENABLED", raising=False)
+
+    def _fake_verify_google_id_token(_: str) -> dict:
+        return {
+            "sub": "google-sub-2",
+            "email": "existing-google@test.com",
+            "email_verified": True,
+        }
+
+    monkeypatch.setattr(
+        "topix.api.router.users.verify_google_id_token",
+        _fake_verify_google_id_token,
+    )
+
+    existing_user = User(
+        email="existing-google@test.com",
+        username="existing-google",
+        auth_provider="google",
+        google_sub="google-sub-2",
+        google_email="existing-google@test.com",
+        email_verified_at=utc_now(),
+    )
+    client, user_store, _ = _build_client()
+    user_store._users_by_uid[existing_user.uid] = existing_user
+    user_store._users_by_email[existing_user.email] = existing_user
+    user_store._users_by_google_sub["google-sub-2"] = existing_user
+
+    response = client.post("/users/google-signin", json={"id_token": "google-token"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "success"
+    assert payload["data"]["token"]["access_token"]
+    assert len(user_store._users_by_email) == 1
+
+
+def test_google_signin_rejects_existing_local_email(monkeypatch):
+    """Google signin should reject when the email already belongs to a local account."""
+    monkeypatch.setenv("GOOGLE_CONNECT_ENABLED", "true")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "client-id.apps.googleusercontent.com")
+
+    def _fake_verify_google_id_token(_: str) -> dict:
+        return {
+            "sub": "google-sub-3",
+            "email": "local@test.com",
+            "email_verified": True,
+        }
+
+    monkeypatch.setattr(
+        "topix.api.router.users.verify_google_id_token",
+        _fake_verify_google_id_token,
+    )
+
+    existing_user = User(
+        email="local@test.com",
+        username="local-user",
+        password_hash="hash",
+    )
+    client, user_store, _ = _build_client()
+    user_store._users_by_uid[existing_user.uid] = existing_user
+    user_store._users_by_email[existing_user.email] = existing_user
+
+    response = client.post("/users/google-signin", json={"id_token": "google-token"})
+
+    assert response.status_code == 409
+    payload = response.json()
+    assert payload["status"] == "error"
+    assert payload["data"]["message"] == "An account with this email already exists. Please sign in with your existing method first."
+
+
+def test_auth_methods_reports_google_enabled_when_configured(monkeypatch):
+    """Auth methods endpoint should expose Google when enabled and configured."""
+    monkeypatch.setenv("GOOGLE_CONNECT_ENABLED", "true")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "client-id.apps.googleusercontent.com")
+    client, _, _ = _build_client()
+
+    response = client.get("/users/auth-methods")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "success"
+    assert payload["data"] == {
+        "local": True,
+        "google": True,
+        "google_client_id": "client-id.apps.googleusercontent.com",
+    }
+
+
+def test_auth_methods_hides_google_when_client_id_missing(monkeypatch):
+    """Auth methods endpoint should hide Google when client id is missing."""
+    monkeypatch.setenv("GOOGLE_CONNECT_ENABLED", "true")
+    monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    client, _, _ = _build_client()
+
+    response = client.get("/users/auth-methods")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "success"
+    assert payload["data"] == {"local": True, "google": False, "google_client_id": None}
 
 
 def test_verify_email_marks_user_and_token_used(monkeypatch):

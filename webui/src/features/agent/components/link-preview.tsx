@@ -92,7 +92,7 @@ export const LinkPreviewCard = ({
   }, [coverImage, coverOk, useWideLayoutIfPossible])
 
   const clName = cn(
-    "transition-all rounded-lg p-2 cursor-pointer bg-card hover:bg-accent hover:shadow-md block w-40",
+    "transition-all rounded-lg p-2 cursor-pointer border border-transparent bg-transparent hover:bg-accent hover:border-border block w-40",
     className
   )
 

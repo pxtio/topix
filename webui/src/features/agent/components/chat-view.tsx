@@ -111,7 +111,7 @@ const HistoryList = ({
   }
 
   return (
-    <div className="w-full max-w-[900px] mx-auto p-4 sm:p-8">
+    <div className="w-full max-w-[900px] mx-auto p-2 sm:p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="text-sm font-medium text-muted-foreground flex flex-row items-center gap-0">
           <HugeiconsIcon icon={Clock02Icon} className="size-4 mr-2 inline-block" strokeWidth={2} />

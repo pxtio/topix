@@ -196,7 +196,9 @@ export function SigninPage() {
                 {googleError ? (
                   <p className="text-sm text-destructive">{googleError}</p>
                 ) : null}
-                <div className="w-full min-h-11" ref={googleButtonRef} />
+                <div className="w-full h-9 overflow-hidden rounded-md border border-border bg-white flex items-center justify-center">
+                  <div className="w-full h-full flex items-center justify-center scale-[1.02] origin-center" ref={googleButtonRef} />
+                </div>
                 {googleSigninMutation.isPending ? (
                   <div className="flex items-center justify-center text-sm text-muted-foreground gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />

@@ -64,7 +64,7 @@ export async function renderGoogleSigninButton({
     type: "standard",
     theme: "outline",
     size: "large",
-    shape: "pill",
+    shape: "rectangular",
     text: "continue_with",
     width: element.clientWidth || 360,
   })

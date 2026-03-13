@@ -187,7 +187,7 @@ export function SigninPage() {
             {showSeparator ? (
               <div className="space-y-3">
                 <Separator />
-                <p className="text-center text-sm text-muted-foreground">or continue with</p>
+                <p className="text-center text-sm text-muted-foreground">or</p>
               </div>
             ) : null}
 

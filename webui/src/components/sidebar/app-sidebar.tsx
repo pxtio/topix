@@ -15,7 +15,6 @@ import { useAppStore } from '@/store'
 import { useListBoards } from '@/features/board/api/list-boards'
 import { Collapsible, CollapsibleTrigger } from '../ui/collapsible'
 import { CollapsibleContent } from '@radix-ui/react-collapsible'
-import { ScrollArea } from '../ui/scroll-area'
 import { ChatMenuItem, NewChatItem } from './chat'
 import { BoardItem, DashboardMenuItem, NewBoardItem } from './board'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -129,7 +128,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <ScrollArea ref={handleScrollAreaRef} className="min-h-0 flex-1">
+        <div ref={handleScrollAreaRef} className="min-h-0 flex-1">
           <div className="pb-2">
             <SidebarGroup>
               <SidebarGroupLabel><span>Workspace</span></SidebarGroupLabel>
@@ -173,7 +172,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
               </SidebarGroupContent>
             </SidebarGroup>
           </div>
-        </ScrollArea>
+        </div>
 
         <SidebarGroup className="shrink-0 border-t border-sidebar-border/50 pt-2">
           <SidebarGroupContent>

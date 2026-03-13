@@ -49,6 +49,7 @@ export const UserMessage = ({ message, isLatest }: { message: ChatMessage, isLat
             rounded-xl
             px-5 py-3
             whitespace-pre-wrap break-words
+            border border-border/70
           `}
         >
           {text}

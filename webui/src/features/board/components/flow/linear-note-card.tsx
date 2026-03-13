@@ -8,7 +8,7 @@ import { useGraphStore } from '../../store/graph-store'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete02Icon, PaintBoardIcon, PinIcon, PinOffIcon, Cancel01Icon, LinkSquare02Icon } from '@hugeicons/core-free-icons'
 import clsx from 'clsx'
-import { TAILWIND_200 } from '../../lib/colors/tailwind'
+import { TAILWIND_300 } from '../../lib/colors/tailwind'
 import { DialogDescription } from '@radix-ui/react-dialog'
 import { formatDistanceToNow } from '../../utils/date'
 import { useTheme } from '@/components/theme-provider'
@@ -126,7 +126,7 @@ export function LinearNoteCard({ node }: Props) {
   }, [boardId, navigate, node.data.graphUid, node.id])
 
   const cardClass = clsx(
-    'transition rounded-lg relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group border-1 border-foreground/50 sticky-note-shadow',
+    'transition rounded-lg relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group border-1 border-foreground/30 sticky-note-shadow',
     isPinned
       ? 'ring-2 ring-secondary/60'
       : 'hover:ring-2 hover:ring-secondary/40'
@@ -162,7 +162,7 @@ export function LinearNoteCard({ node }: Props) {
             </PopoverTrigger>
             <PopoverContent align='start' className='w-auto p-2'>
               <div className='grid grid-cols-6 gap-2'>
-                {[{ name: 'white', hex: '#ffffff' }, ...TAILWIND_200].map(c => (
+                {[{ name: 'white', hex: '#ffffff' }, ...TAILWIND_300].map(c => (
                   <button
                     key={c.name}
                     className='h-6 w-6 rounded-md border border-border hover:brightness-95'
@@ -202,7 +202,7 @@ export function LinearNoteCard({ node }: Props) {
         className='p-4 pt-8 md:p-6 md:pt-10 min-h-[100px] max-h-[225px] overflow-x-hidden overflow-y-auto scrollbar-thin text-foreground relative z-10 space-y-1'
         onClick={() => setOpen(true)}
       >
-        <div className='prose dark:prose-invert max-w-none min-w-0 origin-top-left scale-[0.8] w-[125%]'>
+        <div className='prose dark:prose-invert max-w-none min-w-0 origin-top-left scale-[0.64] w-[156.25%]'>
           <MarkdownView content={node.data.content?.markdown || ''} />
         </div>
       </div>

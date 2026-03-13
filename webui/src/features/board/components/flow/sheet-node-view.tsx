@@ -6,7 +6,7 @@ import clsx from 'clsx'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 import { StickyNote } from '../notes/sticky-note'
-import { TAILWIND_200 } from '../../lib/colors/tailwind'
+import { TAILWIND_300 } from '../../lib/colors/tailwind'
 import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
 import type { NoteWithPin } from './note-card'
 import { useGraphStore } from '../../store/graph-store'
@@ -27,7 +27,7 @@ type SheetNodeViewProps = {
   onOpenSticky: () => void
 }
 
-const COLOR_OPTIONS = [{ name: 'white', hex: '#ffffff' }, ...TAILWIND_200]
+const COLOR_OPTIONS = [{ name: 'white', hex: '#ffffff' }, ...TAILWIND_300]
 
 export const SheetNodeView = memo(function SheetNodeView({
   note,
@@ -152,14 +152,15 @@ export const SheetNodeView = memo(function SheetNodeView({
     <div className='group w-full h-full'>
       <div
         className={clsx(
-          'relative w-full h-full rounded-lg border-1 border-foreground/50 overflow-hidden sticky-note-shadow',
-          isPinned && 'ring-2 ring-secondary sticky-note-shadow border-secondary',
+          'relative w-full h-full rounded-lg border-1 border-foreground/30 overflow-hidden',
+          isPinned && 'ring-2 ring-secondary border-secondary',
+          !suspendContent && 'sticky-note-shadow',
         )}
         style={{ backgroundColor }}
       >
         <div
           className={clsx(
-            'absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end rounded-t-sm border-b border-foreground/30 transition-opacity',
+            'absolute top-0 inset-x-0 py-1 px-2 flex flex-row items-center gap-1 z-40 justify-end rounded-t-sm border-b border-foreground/50 transition-opacity',
             'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto',
             selected && 'opacity-100 pointer-events-auto',
           )}
@@ -182,8 +183,8 @@ export const SheetNodeView = memo(function SheetNodeView({
                     key={c.name}
                     className='h-6 w-6 rounded-full border border-border shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-secondary'
                     style={{ backgroundColor: c.resolved }}
-                    title={`${c.name}-200`}
-                    aria-label={`${c.name}-200`}
+                    title={`${c.name}-300`}
+                    aria-label={`${c.name}-300`}
                     onClick={() => handlePaletteClick(c.hex)}
                   />
                 ))}

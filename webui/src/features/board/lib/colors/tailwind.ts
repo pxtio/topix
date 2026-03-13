@@ -44,6 +44,7 @@ export const buildPalette = (shade: TailwindShade) =>
 
 export const TAILWIND_50 = buildPalette(50)
 export const TAILWIND_200 = buildPalette(200)
+export const TAILWIND_300 = buildPalette(300)
 
 /**
  * Resolve a hex value given a Tailwind family and shade

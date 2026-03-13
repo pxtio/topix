@@ -133,16 +133,17 @@ export const adaptTailwindColor = (
   const paperBlend = 0.28 - shadeProgress * 0.14
   const huePull = 0.06 + (1 - shadeProgress) * 0.06
   const saturationScale = 0.9 - (1 - shadeProgress) * 0.08
-  const lightnessLift = 3 + (1 - shadeProgress) * 4
 
   const mixed = mixHex(base, PAPER_REFERENCE_HEX, paperBlend)
   const mixedRgb = hexToRgb(mixed)
   const mixedHsl = rgbToHsl(mixedRgb.r, mixedRgb.g, mixedRgb.b)
+  const baseRgb = hexToRgb(base)
+  const baseHsl = rgbToHsl(baseRgb.r, baseRgb.g, baseRgb.b)
 
   return hslToHex(
     lerpAngle(mixedHsl.h, PAPER_REFERENCE_HSL.h, huePull),
     clamp(mixedHsl.s * saturationScale, 6, 92),
-    clamp(mixedHsl.l + lightnessLift, 18, 96),
+    clamp(baseHsl.l + (mixedHsl.l - baseHsl.l) * 0.18, 18, 96),
   )
 }
 

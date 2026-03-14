@@ -911,13 +911,13 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   boardId: undefined,
   rootId: undefined,
   currentFolderDepth: -1,
-  maxFolderDepth: 2,
+  maxFolderDepth: 1,
   setCurrentFolderDepth: (depth) => {
     const next = Number.isFinite(depth) ? Math.floor(depth) : -1
     set({ currentFolderDepth: next })
   },
   setFolderDepthFromPathLength: (pathLength) => set({
-    currentFolderDepth: Math.max(0, Math.floor(pathLength) - 1),
+    currentFolderDepth: Math.max(-1, Math.floor(pathLength) - 1),
   }),
 
   setGraphScope: ({ boardId, rootId }) => {
@@ -932,7 +932,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         ? {
             boardId,
             rootId,
-            currentFolderDepth: rootId ? -1 : 0,
+            currentFolderDepth: -1,
             historyPast: [],
             historyFuture: [],
             dragSnapshotNodes: null,
@@ -949,7 +949,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
         : {
             boardId,
             rootId,
-            currentFolderDepth: rootId ? -1 : 0,
+            currentFolderDepth: -1,
             boardBackground: getBoardBackground(boardId),
             boardBackgroundTexture: getBoardBackgroundTexture(boardId),
           }

@@ -94,6 +94,58 @@ const cloneAttachedPointIdsByNode = (source: Map<string, Set<string>>) =>
 const getScopeKey = ({ boardId, rootId }: GraphScope) =>
   boardId ? `${boardId}:${rootId ?? "root"}` : undefined
 
+const collectChangedNodeIds = (prevNodes: NoteNode[], nextNodes: NoteNode[]) => {
+  const prevById = new Map(prevNodes.map((node) => [node.id, node]))
+  const nextById = new Map(nextNodes.map((node) => [node.id, node]))
+  const changedIds = new Set<string>()
+
+  for (const [id, prevNode] of prevById.entries()) {
+    const nextNode = nextById.get(id)
+    if (!nextNode || nextNode !== prevNode) {
+      changedIds.add(id)
+    }
+  }
+
+  for (const id of nextById.keys()) {
+    if (!prevById.has(id)) {
+      changedIds.add(id)
+    }
+  }
+
+  return changedIds
+}
+
+const collectAffectedEdgeIdsForNodeChanges = (
+  prevNodes: NoteNode[],
+  nextNodes: NoteNode[],
+  edges: LinkEdge[],
+) => {
+  const changedNodeIds = collectChangedNodeIds(prevNodes, nextNodes)
+  if (changedNodeIds.size === 0) return new Set<string>()
+
+  const prevAttached = buildAttachedPointIdsByNode(prevNodes)
+  const nextAttached = buildAttachedPointIdsByNode(nextNodes)
+  const affectedNodeIds = new Set(changedNodeIds)
+
+  for (const nodeId of changedNodeIds) {
+    const prevPointIds = prevAttached.get(nodeId)
+    if (prevPointIds) {
+      for (const pointId of prevPointIds) affectedNodeIds.add(pointId)
+    }
+
+    const nextPointIds = nextAttached.get(nodeId)
+    if (nextPointIds) {
+      for (const pointId of nextPointIds) affectedNodeIds.add(pointId)
+    }
+  }
+
+  return new Set(
+    edges
+      .filter((edge) => affectedNodeIds.has(edge.source) || affectedNodeIds.has(edge.target))
+      .map((edge) => edge.id),
+  )
+}
+
 // Incrementally update node index for small change sets to avoid full rebuilds.
 const updateNodesById = (
   prev: Map<string, NoteNode>,
@@ -1916,6 +1968,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const nextEdges = patch.edges
       ? applyEdgePatches(state.edges, patch.edges, "undo")
       : state.edges
+    const affectedEdgeIds = collectAffectedEdgeIdsForNodeChanges(prevNodes, nextNodes, nextEdges)
 
     set({
       historyRecording: false,
@@ -1939,6 +1992,18 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       edges: get().edges,
       nodes: get().nodes,
     }))
+    if (affectedEdgeIds.size > 0) {
+      queueEdgesForPersistence(
+        () => ({
+          boardId: get().boardId,
+          rootId: get().rootId,
+          edges: get().edges,
+          nodes: get().nodes,
+        }),
+        new Set(),
+        affectedEdgeIds,
+      )
+    }
 
     setTimeout(() => set({ historyRecording: true }), 0)
   },
@@ -1958,6 +2023,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
     const nextEdges = patch.edges
       ? applyEdgePatches(state.edges, patch.edges, "redo")
       : state.edges
+    const affectedEdgeIds = collectAffectedEdgeIdsForNodeChanges(prevNodes, nextNodes, nextEdges)
 
     set({
       historyRecording: false,
@@ -1981,6 +2047,18 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       edges: get().edges,
       nodes: get().nodes,
     }))
+    if (affectedEdgeIds.size > 0) {
+      queueEdgesForPersistence(
+        () => ({
+          boardId: get().boardId,
+          rootId: get().rootId,
+          edges: get().edges,
+          nodes: get().nodes,
+        }),
+        new Set(),
+        affectedEdgeIds,
+      )
+    }
 
     setTimeout(() => set({ historyRecording: true }), 0)
   },

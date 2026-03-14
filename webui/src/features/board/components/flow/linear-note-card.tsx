@@ -126,7 +126,7 @@ export function LinearNoteCard({ node }: Props) {
   }, [boardId, navigate, node.data.graphUid, node.id])
 
   const cardClass = clsx(
-    'transition rounded-lg relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group border-1 border-foreground/30 sticky-note-shadow paper-note-texture',
+    'transition rounded-lg relative bg-background overflow-hidden cursor-pointer transition-all duration-200 group sticky-note-shadow paper-note-texture',
     isPinned
       ? 'ring-2 ring-secondary/60'
       : 'hover:ring-2 hover:ring-secondary/40'
@@ -199,7 +199,7 @@ export function LinearNoteCard({ node }: Props) {
 
       {/* content area */}
       <div
-        className='p-4 pt-8 md:p-6 md:pt-10 min-h-[100px] max-h-[225px] overflow-x-hidden overflow-y-auto scrollbar-thin text-foreground relative z-10 space-y-1'
+        className='p-2 pt-8 min-h-[100px] max-h-[225px] overflow-x-hidden overflow-y-auto scrollbar-thin text-foreground relative z-10 space-y-1'
         onClick={() => setOpen(true)}
       >
         <div className='prose dark:prose-invert max-w-none min-w-0 origin-top-left scale-[0.64] w-[156.25%]'>

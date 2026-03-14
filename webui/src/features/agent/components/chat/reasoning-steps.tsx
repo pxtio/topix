@@ -111,7 +111,7 @@ const ReasoningStepViewImpl = ({
               viewMore && reasoning !== "" && <ReasoningMessage reasoning={reasoning} />
             }
             {
-              viewMore && input && (
+              viewMore && input && step.name !== "code_interpreter" && (
                 <button
                   className='text-xs font-mono px-2 py-1 rounded-sm bg-sidebar-accent/50 border border-border inline-flex flex-row items-center justify-start gap-1 max-w-[240px] sm:max-w-[270px] w-auto mr-auto overflow-hidden cursor-copy hover:bg-sidebar-accent/70 transition-colors'
                   onClick={() => void handleInputCopy(input)}
@@ -122,6 +122,17 @@ const ReasoningStepViewImpl = ({
                   {
                     isInputCopied && <span className='text-[10px] text-primary shrink-0'>copied</span>
                   }
+                </button>
+              )
+            }
+            {
+              viewMore && input && step.name === "code_interpreter" && (
+                <button
+                  className='w-full text-left rounded-lg border border-border bg-sidebar-accent/40 p-3 font-mono text-[11px] leading-5 whitespace-pre-wrap break-words hover:bg-sidebar-accent/60 transition-colors'
+                  onClick={() => void handleInputCopy(input)}
+                  title='Copy code'
+                >
+                  {input}
                 </button>
               )
             }

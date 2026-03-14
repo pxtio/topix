@@ -5,6 +5,7 @@ import { useParams } from "@tanstack/react-router"
 import { UNTITLED_LABEL } from "@/features/board/const"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { AiChipIcon, PlusSignIcon } from "@hugeicons/core-free-icons"
+import { useAppStore } from "@/store"
 
 
 export interface ContextBoardProps {
@@ -19,7 +20,8 @@ export interface ContextBoardProps {
  * Context board selector component in chat interface
  */
 export const ContextBoard = ({ contextBoardId, boardAsContext }: ContextBoardProps) => {
-  const { data: boards } = useListBoards()
+  const userId = useAppStore(s => s.userId)
+  const { data: boards } = useListBoards(userId)
   const { updateChat } = useUpdateChat()
   const params = useParams({ from: "/chats/$id", shouldThrow: false })
   const chatId = params?.id

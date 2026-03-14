@@ -41,18 +41,18 @@ export const normalizeGraphUid = (graphUid?: string | null) => graphUid ?? "none
 
 const getGraphFromQueryKey = (queryKey: QueryKey): string | undefined => {
   if (!Array.isArray(queryKey)) return undefined
-  if (queryKey.length >= 4 && queryKey[1] === "infinite" && typeof queryKey[2] === "string") {
-    return queryKey[2]
+  if (queryKey.length >= 5 && queryKey[2] === "infinite" && typeof queryKey[3] === "string") {
+    return queryKey[3]
   }
-  if (queryKey.length >= 4 && typeof queryKey[3] === "string") {
-    return queryKey[3] as string
+  if (queryKey.length >= 5 && typeof queryKey[4] === "string") {
+    return queryKey[4] as string
   }
   return undefined
 }
 
 const getPageSizeFromQueryKey = (queryKey: QueryKey): number | undefined => {
-  if (Array.isArray(queryKey) && queryKey.length >= 4 && queryKey[1] === "infinite") {
-    const maybeNumber = queryKey[3]
+  if (Array.isArray(queryKey) && queryKey.length >= 5 && queryKey[2] === "infinite") {
+    const maybeNumber = queryKey[4]
     return typeof maybeNumber === "number" ? maybeNumber : undefined
   }
   return undefined

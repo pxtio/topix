@@ -55,6 +55,7 @@ const CHAT_HISTORY_PAGE_SIZE = 50
 
 export function AppSidebar({ onLogout }: AppSidebarProps) {
   const navigate = useNavigate()
+  const userId = useAppStore(s => s.userId)
   const userEmail = useAppStore(s => s.userEmail)
   const userPlan = useAppStore(s => s.userPlan)
 
@@ -71,9 +72,10 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
 
   const { data: chatPagesData, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteChats({
     pageSize: CHAT_HISTORY_PAGE_SIZE,
-    graphUid: "none"
+    graphUid: "none",
+    userId
   })
-  const { data: boards = [] } = useListBoards()
+  const { data: boards = [] } = useListBoards(userId)
   const { ref: sentinelRef, inView: isSentinelInView } = useCheckEleInView<HTMLDivElement>({
     root: scrollViewport,
     margin: '0px 0px -20% 0px'

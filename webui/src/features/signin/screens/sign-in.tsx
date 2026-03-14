@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate, Link } from "@tanstack/react-router"
 import { decodeJwt, resolveBillingPlan } from "@/lib/decode-jwt"
 import { useAppStore } from "@/store"
@@ -19,6 +19,7 @@ import { renderGoogleSigninButton } from "../lib/google-connect"
 
 export function SigninPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const setUserId = useAppStore(s => s.setUserId)
   const setUserEmail = useAppStore(s => s.setUserEmail)
   const setUserPlan = useAppStore(s => s.setUserPlan)
@@ -36,6 +37,7 @@ export function SigninPage() {
   })
 
   const completeSignin = React.useCallback(async (token: TokenPayload) => {
+    queryClient.clear()
     const p = decodeJwt(token.access_token)
     if (p.sub) setUserId(String(p.sub))
     if (typeof p.email === "string") setUserEmail(p.email)
@@ -48,7 +50,7 @@ export function SigninPage() {
       return
     }
     navigate({ to: "/chats", replace: true })
-  }, [navigate, setEmailVerificationEnabled, setEmailVerified, setUserEmail, setUserId, setUserPlan])
+  }, [navigate, queryClient, setEmailVerificationEnabled, setEmailVerified, setUserEmail, setUserId, setUserPlan])
 
   const localSigninMutation = useMutation({
     mutationFn: () => signin(email, password),

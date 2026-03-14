@@ -27,13 +27,14 @@ export async function createBoard(): Promise<string> {
  */
 export const useCreateBoard = () => {
   const queryClient = useQueryClient()
+  const userId = useAppStore(s => s.userId)
   const userPlan = useAppStore(s => s.userPlan)
 
   const { setGraphScope, setNodes, setEdges } = useGraphStore()
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const cachedBoards = queryClient.getQueryData<Graph[]>(["listBoards"])
+      const cachedBoards = queryClient.getQueryData<Graph[]>(["listBoards", userId])
       const boards = cachedBoards ?? await listBoards()
 
       if (isBoardCreationLimited(userPlan, boards.length)) {
@@ -42,7 +43,7 @@ export const useCreateBoard = () => {
       }
 
       const boardId = await createBoard()
-      queryClient.setQueryData(["listBoards"], (oldBoards: Graph[] | undefined) => {
+      queryClient.setQueryData(["listBoards", userId], (oldBoards: Graph[] | undefined) => {
         const newBoard = { uid: boardId } as Graph // Temporary ID until the server responds
         return [newBoard, ...(oldBoards || [])] // Prepend the new board to the list
       })

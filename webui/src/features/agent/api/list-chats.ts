@@ -49,18 +49,20 @@ export async function listChats(
  * @returns A query object containing the list of chats.
  */
 export const useListChats = ({
+  userId,
   offset = 0,
   limit = 100,
   graphUid = "none"
 }: {
+  userId: string,
   offset?: number,
   limit?: number,
   graphUid?: string | "none" | null
 }) => {
   return useQuery<Chat[]>({
-    queryKey: ["listChats", offset, limit, graphUid],
+    queryKey: ["listChats", userId, offset, limit, graphUid],
     queryFn: () => listChats(offset, limit, graphUid),
-    enabled: offset >= 0 && limit > 0,
+    enabled: !!userId && offset >= 0 && limit > 0,
     staleTime: 1000 * 60 * 5 // 5 minutes
   })
 }
@@ -69,20 +71,23 @@ export const useListChats = ({
  * Infinite chat list hook for incremental fetching (e.g., chat history sidebar).
  */
 export const useInfiniteChats = ({
+  userId,
   graphUid = "none",
   pageSize = 20
 }: {
+  userId: string,
   graphUid?: string | "none" | null,
   pageSize?: number
-} = {}) => {
+}) => {
   const normalizedGraphUid = graphUid ?? "none"
-  return useInfiniteQuery<Chat[], Error, InfiniteData<Chat[]>, [string, string, string | "none", number], number>({
-    queryKey: ["listChats", "infinite", normalizedGraphUid, pageSize],
+  return useInfiniteQuery<Chat[], Error, InfiniteData<Chat[]>, [string, string, string, string | "none", number], number>({
+    queryKey: ["listChats", userId, "infinite", normalizedGraphUid, pageSize],
     initialPageParam: 0,
     queryFn: ({ pageParam = 0 }) => listChats(pageParam, pageSize, normalizedGraphUid),
     getNextPageParam: (lastPage, allPages) => (
       lastPage.length === pageSize ? allPages.length * pageSize : undefined
     ),
+    enabled: !!userId,
     staleTime: 1000 * 60 * 5,
   })
 }

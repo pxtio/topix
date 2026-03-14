@@ -2,6 +2,7 @@ import type { Graph } from "../types/board"
 import snakecaseKeys from "snakecase-keys"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/api"
+import { useAppStore } from "@/store"
 
 
 /**
@@ -30,6 +31,7 @@ export async function updateBoard(
  */
 export const useUpdateBoard = () => {
   const queryClient = useQueryClient()
+  const userId = useAppStore(s => s.userId)
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -39,7 +41,7 @@ export const useUpdateBoard = () => {
       boardId: string
       graphData: Partial<Graph>
     }) => {
-      queryClient.setQueryData(["listBoards"], (oldBoards: Graph[] | undefined) => {
+      queryClient.setQueryData(["listBoards", userId], (oldBoards: Graph[] | undefined) => {
         return oldBoards?.map(board =>
           board.uid === boardId ? { ...board, ...{ ...graphData, uid: boardId } } : board
         )

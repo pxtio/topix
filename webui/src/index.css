@@ -317,3 +317,15 @@
     }
   }
 }
+
+@media (max-width: 768px) {
+  .milkdown .ProseMirror.virtual-cursor-enabled.editor {
+    padding-inline: max(0.875rem, env(safe-area-inset-left)) max(0.875rem, env(safe-area-inset-right)) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .milkdown .ProseMirror.virtual-cursor-enabled.editor {
+    padding-inline: max(0.75rem, env(safe-area-inset-left)) max(0.75rem, env(safe-area-inset-right)) !important;
+  }
+}

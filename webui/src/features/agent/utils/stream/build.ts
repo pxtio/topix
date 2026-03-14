@@ -9,7 +9,6 @@ import { simpleTransform } from "./transform"
 import type {
   WebSearchOutput,
   MemorySearchOutput,
-  CodeInterpreterOutput,
   ToolOutput,
   Annotation,
   UrlAnnotation
@@ -33,7 +32,6 @@ type StepAccum = {
   state: ToolExecutionState
   eventMessages: string[]
   annotations: Annotation[]
-  executedCode?: string
   dirty?: boolean
 }
 
@@ -60,12 +58,12 @@ const makeToolOutput = (acc: StepAccum): ToolOutput => {
     return { type: "memory_search", answer: outputText, references: refs }
   }
   if (acc.name === "code_interpreter") {
-    const files = acc.annotations.filter(a => a.type === "file") as CodeInterpreterOutput["annotations"]
     return {
       type: "code_interpreter",
-      answer: outputText,
-      executedCode: acc.executedCode ?? "",
-      annotations: files
+      status: acc.state === "failed" ? "error" : "success",
+      stdout: outputText,
+      stderr: "",
+      durationMs: 0
     }
   }
 
@@ -308,6 +306,10 @@ export function extractInputOrQuery(step: ReasoningStep): string | null {
     if ("url" in inputRecord && typeof inputRecord.url === "string") {
       return inputRecord.url
     }
+
+    if ("code" in inputRecord && typeof inputRecord.code === "string") {
+      return inputRecord.code
+    }
   }
 
   // Case 3: everything else → null
@@ -318,9 +320,24 @@ export function extractInputOrQuery(step: ReasoningStep): string | null {
 export function extractStepDescription(step: ReasoningStep): { reasoning: string, message: string, title: string, input?: string } {
   if (step.name !== "raw_message" && step.name !== "outline_generator") {
     let input: string | undefined = undefined
-    if (step.name === "web_search" || step.name === "memory_search" || step.name === "navigate") {
+    if (
+      step.name === "web_search" ||
+      step.name === "memory_search" ||
+      step.name === "navigate" ||
+      step.name === "code_interpreter"
+    ) {
       input = extractInputOrQuery(step) || undefined
     }
+
+    if (step.name === "code_interpreter" && typeof step.output !== "string") {
+      return {
+        reasoning: step.thought || "",
+        message: "",
+        title: ToolNameDescription[step.name],
+        input
+      }
+    }
+
     return { reasoning: step.thought || "", message: "", title: ToolNameDescription[step.name], input }
   }
   const reasoningOutLoud = (step.output as string) || ""

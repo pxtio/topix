@@ -6,7 +6,6 @@ from typing import Annotated, Literal, Union
 from pydantic import BaseModel
 
 from topix.agents.datatypes.annotations import (
-    FileAnnotation,
     RefAnnotation,
     SearchResult,
 )
@@ -151,20 +150,21 @@ class CodeInterpreterOutput(BaseModel):
     """Output from code interpreter tool."""
 
     type: Literal["code_interpreter"] = "code_interpreter"
-    answer: str
-    executed_code: str
-    annotations: list[FileAnnotation]
+    status: Literal["success", "error", "timeout"]
+    stdout: str = ""
+    stderr: str = ""
+    duration_ms: int
 
     def __str__(self) -> str:
         """To string method."""
-        result = f"I executed the following code:\n```\n{self.executed_code}\n```\n"
+        result = f"Execution status: {self.status}\nDuration: {self.duration_ms}ms"
 
-        result += f"The result was: {self.answer}"
+        if self.stdout:
+            result += f"\n\nstdout:\n{self.stdout}"
 
-        if self.annotations:
-            result += "\n\nGenerated files:\n"
-            for annotation in self.annotations:
-                result += annotation.model_dump_json() + "\n"
+        if self.stderr:
+            result += f"\n\nstderr:\n{self.stderr}"
+
         return result
 
 

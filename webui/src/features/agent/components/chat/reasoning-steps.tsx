@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { ToolNameIcon, type AgentResponse, type ReasoningStep } from "../../types/stream"
 import { extractStepDescription, getWebSearchUrls } from "../../utils/stream/build"
+import type { CodeInterpreterOutput } from "../../types/tool-outputs"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { IdeaIcon, Search01Icon, Tick01Icon } from "@hugeicons/core-free-icons"
 import { ThinkingDots } from "@/components/loading-view"
@@ -26,6 +27,45 @@ const ReasoningMessage = ({
 }
 
 
+const CodeInterpreterResult = ({
+  output
+}: { output: CodeInterpreterOutput }) => {
+  const stdout = output.stdout.trim()
+  const stderr = output.stderr.trim()
+
+  if (!stdout && !stderr) {
+    return null
+  }
+
+  const blockClass = "w-full rounded-lg border p-3 font-mono text-[11px] leading-5 whitespace-pre-wrap break-words"
+
+  return (
+    <div className='w-full flex flex-col gap-2'>
+      {
+        stdout !== "" && (
+          <div className='w-full flex flex-col gap-1'>
+            <span className='text-[11px] font-medium text-muted-foreground'>stdout</span>
+            <div className={cn(blockClass, "border-border bg-sidebar-accent/40 text-card-foreground")}>
+              {stdout}
+            </div>
+          </div>
+        )
+      }
+      {
+        stderr !== "" && (
+          <div className='w-full flex flex-col gap-1'>
+            <span className='text-[11px] font-medium text-destructive'>stderr</span>
+            <div className={cn(blockClass, "border-destructive/30 bg-destructive/5 text-destructive")}>
+              {stderr}
+            </div>
+          </div>
+        )
+      }
+    </div>
+  )
+}
+
+
 /**
  * ReasoningStepView component displays a single reasoning step.
  * @param {ReasoningStep} step - The reasoning step to display.
@@ -38,6 +78,9 @@ const ReasoningStepViewImpl = ({
   const [isInputCopied, setIsInputCopied] = useState<boolean>(false)
 
   const { reasoning, message, title, input } = extractStepDescription(step)
+  const codeInterpreterOutput = step.name === "code_interpreter" && typeof step.output !== "string"
+    ? step.output as CodeInterpreterOutput
+    : null
 
   const sources = useMemo(() => {
     if (!viewMore) return []
@@ -111,7 +154,7 @@ const ReasoningStepViewImpl = ({
               viewMore && reasoning !== "" && <ReasoningMessage reasoning={reasoning} />
             }
             {
-              viewMore && input && (
+              viewMore && input && step.name !== "code_interpreter" && (
                 <button
                   className='text-xs font-mono px-2 py-1 rounded-sm bg-sidebar-accent/50 border border-border inline-flex flex-row items-center justify-start gap-1 max-w-[240px] sm:max-w-[270px] w-auto mr-auto overflow-hidden cursor-copy hover:bg-sidebar-accent/70 transition-colors'
                   onClick={() => void handleInputCopy(input)}
@@ -126,10 +169,26 @@ const ReasoningStepViewImpl = ({
               )
             }
             {
+              viewMore && input && step.name === "code_interpreter" && (
+                <button
+                  className='w-full text-left rounded-lg border border-border bg-sidebar-accent/40 p-3 font-mono text-[11px] leading-5 whitespace-pre-wrap break-words hover:bg-sidebar-accent/60 transition-colors'
+                  onClick={() => void handleInputCopy(input)}
+                  title='Copy code'
+                >
+                  {input}
+                </button>
+              )
+            }
+            {
               viewMore && message !== "" && (
                 <span className={spanMessageClass}>
                   {message}
                 </span>
+              )
+            }
+            {
+              viewMore && codeInterpreterOutput && (
+                <CodeInterpreterResult output={codeInterpreterOutput} />
               )
             }
             {

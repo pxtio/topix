@@ -237,7 +237,7 @@ const sanitizeToolOutput = (output: ToolOutput): ToolOutput => {
     case "memory_search":
       return { type: "memory_search", answer: "", references: [] }
     case "code_interpreter":
-      return { type: "code_interpreter", answer: "", executedCode: "", annotations: [] }
+      return { type: "code_interpreter", status: "success", stdout: "", stderr: "", durationMs: 0 }
     case "display_weather_widget":
       return { type: "display_weather_widget", city: "" }
     case "display_stock_widget":

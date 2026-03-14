@@ -1,9 +1,8 @@
 """Google connect token verification helpers."""
 
+from fastapi import HTTPException, status
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
-
-from fastapi import HTTPException, status
 
 from topix.api.utils.auth_methods import get_google_client_id
 

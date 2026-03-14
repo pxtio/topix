@@ -9,12 +9,12 @@ from agents import (
     ModelSettings,
 )
 
-from topix.agents.assistant.code_interpreter import CodeInterpreter
+from topix.agents.assistant.code import run_code_tool
 from topix.agents.base import BaseAgent
 from topix.agents.config import PlanConfig
 from topix.agents.datatypes.context import ReasoningContext
 from topix.agents.datatypes.model_enum import ModelEnum
-from topix.agents.datatypes.tools import AgentToolName, tool_descriptions
+from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.image.gen import generate_image_tool
 from topix.agents.memory.search import create_memory_search_tool
 from topix.agents.websearch.fetch import fetch_url_content_tool
@@ -66,12 +66,7 @@ class Plan(BaseAgent):
         ]
 
         if config.code_interpreter:
-            tools.append(
-                CodeInterpreter.from_config(config.code_interpreter).as_tool(
-                    tool_name=AgentToolName.CODE_INTERPRETER,
-                    tool_description=tool_descriptions.get(AgentToolName.CODE_INTERPRETER),
-                )
-            )
+            tools.append(run_code_tool)
 
         if config.navigate:
             tools.append(fetch_url_content_tool)

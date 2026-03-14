@@ -41,9 +41,10 @@ export interface MemorySearchOutput {
 
 export interface CodeInterpreterOutput {
   type: "code_interpreter"
-  answer: string
-  executedCode: string
-  annotations: FileAnnotation[]
+  status: "success" | "error" | "timeout"
+  stdout: string
+  stderr: string
+  durationMs: number
 }
 
 export interface WeatherWidgetOutput {

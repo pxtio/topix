@@ -16,6 +16,7 @@ import { useNavigate } from "@tanstack/react-router"
 import clsx from "clsx"
 import { useState } from "react"
 import { toast } from "sonner"
+import { useAppStore } from "@/store"
 
 
 // Spinner icon for loading state
@@ -56,9 +57,10 @@ export const SaveAsNote = ({
   useAnchors = false,
 }: SaveAsNoteProps) => {
   const [processing, setProcessing] = useState<boolean>(false)
+  const userId = useAppStore(s => s.userId)
 
   const { convertToMindMapAsync } = useConvertToMindMap()
-  const { data: boardList } = useListBoards()
+  const { data: boardList } = useListBoards(userId)
   const { createBoardAsync } = useCreateBoard()
 
   const navigate = useNavigate()

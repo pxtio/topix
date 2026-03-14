@@ -5,6 +5,7 @@ import { SidebarLabel } from "@/components/sidebar/sidebar-label"
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { StyleDefaultsProvider } from '@/features/board/style-provider'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { useAppStore } from '@/store'
 import { clearTokens } from '@/features/signin/auth-storage'
@@ -17,6 +18,7 @@ export function RootLayout() {
   useAuth()
 
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { location } = useRouterState()
 
   // Zustand state
@@ -29,13 +31,14 @@ export function RootLayout() {
 
   const onLogout = useCallback(() => {
     clearTokens()
+    queryClient.clear()
     setUserId('root')
     setUserEmail('root@localhost')
     setUserPlan('free')
     setEmailVerificationEnabled(false)
     setEmailVerified(true)
     navigate({ to: '/signin', replace: true })
-  }, [navigate, setEmailVerificationEnabled, setEmailVerified, setUserEmail, setUserId, setUserPlan])
+  }, [navigate, queryClient, setEmailVerificationEnabled, setEmailVerified, setUserEmail, setUserId, setUserPlan])
 
   const isAuthed = userId !== 'root'
 

@@ -41,10 +41,11 @@ export async function listBoards(): Promise<Graph[]> {
  *
  * @returns A query object containing the list of boards.
  */
-export const useListBoards = () => {
+export const useListBoards = (userId: string) => {
   return useQuery<Graph[]>({
-    queryKey: ["listBoards"],
+    queryKey: ["listBoards", userId],
     queryFn: () => listBoards(),
+    enabled: !!userId,
     staleTime: 1000 * 60 * 5 // 5 minutes
   })
 }

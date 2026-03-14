@@ -13,10 +13,12 @@ import { useGraphStore } from "@/features/board/store/graph-store"
 import { useGetNote } from "@/features/board/api/get-note"
 import { useUpdateNote } from "@/features/board/api/update-note"
 import { FolderBreadcrumb } from "@/features/board/components/flow/folder-breadcrumb"
+import { useAppStore } from "@/store"
 
 export const SidebarLabel = ({ mobileContextOnly = false }: { mobileContextOnly?: boolean }) => {
   const navigate = useNavigate()
   const { updateNote } = useUpdateNote()
+  const userId = useAppStore(s => s.userId)
 
   // route params
   const chatParams  = useParams({ from: "/chats/$id", shouldThrow: false })
@@ -65,8 +67,8 @@ export const SidebarLabel = ({ mobileContextOnly = false }: { mobileContextOnly?
   }, [boardId, chatId, subscriptionId, isNewChat, isDashboard, isSubscriptionsRoot, isHome, sheetBoardId, sheetNoteId, isSettings, isSettingsBilling])
 
   // data
-  const { data: chatList }  = useListChats({ graphUid: null })
-  const { data: boardList } = useListBoards()
+  const { data: chatList }  = useListChats({ graphUid: null, userId })
+  const { data: boardList } = useListBoards(userId)
   const { data: subscriptionList } = useListSubscriptions()
   const { updateBoard } = useUpdateBoard()
   const { updateChat }  = useUpdateChat()

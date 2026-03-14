@@ -50,7 +50,8 @@ export function DashboardMenuItem() {
  */
 export function NewBoardItem() {
   const { createBoardAsync } = useCreateBoard()
-  const { data: boards = [] } = useListBoards()
+  const userId = useAppStore(s => s.userId)
+  const { data: boards = [] } = useListBoards(userId)
   const userPlan = useAppStore(s => s.userPlan)
   const navigate = useNavigate()
   const boardCreationLimited = isBoardCreationLimited(userPlan, boards.length)
@@ -101,6 +102,7 @@ export function NewBoardItem() {
 /** Existing board item */
 export function BoardItem({ boardId, label }: { boardId: string, label?: string }) {
   const { deleteBoard } = useDeleteBoard()
+  const userId = useAppStore(s => s.userId)
   const navigate = useNavigate()
   const pathname = useRouterState({ select: s => s.location.pathname })
   const chatParams = useParams({ from: "/chats/$id", shouldThrow: false })
@@ -112,7 +114,7 @@ export function BoardItem({ boardId, label }: { boardId: string, label?: string 
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
-  const { data: chats = [] } = useListChats({ graphUid: boardId })
+  const { data: chats = [] } = useListChats({ graphUid: boardId, userId })
   const activeChatId = chatParams?.id ?? boardSearch
 
   const isActive =

@@ -4,13 +4,15 @@ import { BoardCard, NewBoardCard } from "./board-card"
 import { ThemedWelcome } from "@/features/agent/components/chat/welcome-message"
 import type { Graph } from "../types/board"
 import { cn } from "@/lib/utils"
+import { useAppStore } from "@/store"
 
 
 /**
  * Dashboard component displaying user's boards, styled like SubscriptionsPage.
  */
 export const Dashboard = ({ className, hideTitle = false }: { className?: string; hideTitle?: boolean }) => {
-  const { data: boards, isLoading, isError } = useListBoards()
+  const userId = useAppStore(s => s.userId)
+  const { data: boards, isLoading, isError } = useListBoards(userId)
 
   const pageClassName = cn("w-full h-full", className)
 

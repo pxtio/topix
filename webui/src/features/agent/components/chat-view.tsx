@@ -17,6 +17,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { ChatAdd01Icon, Clock02Icon, Message02Icon, PlusSignIcon } from "@hugeicons/core-free-icons"
 import { ThemedWelcome } from "./chat/welcome-message"
 import { useNavigate, useParams, useRouterState } from "@tanstack/react-router"
+import { useAppStore } from "@/store"
 
 type ChatProps = {
   chatId?: string
@@ -162,7 +163,8 @@ const ChatBody = ({
   enableSelectionContext = false,
 }: ChatProps) => {
   const { chatId, setChatId } = useChat()
-  const { data: chatList = [] } = useListChats({ graphUid: initialBoardId })
+  const userId = useAppStore(s => s.userId)
+  const { data: chatList = [] } = useListChats({ graphUid: initialBoardId, userId })
   const navigate = useNavigate()
   const routerLocation = useRouterState({ select: (s) => s.location })
   const boardParams = useParams({ from: "/boards/$id", shouldThrow: false })

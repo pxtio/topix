@@ -11,8 +11,10 @@ from typing import Literal
 from agents import RunContextWrapper
 from daytona import (
     AsyncDaytona,
+    AsyncSandbox,
     CreateSandboxFromImageParams,
     CreateSandboxFromSnapshotParams,
+    DaytonaConfig,
     Image,
 )
 
@@ -23,7 +25,7 @@ from topix.agents.tool_handler import ToolHandler
 
 logger = logging.getLogger(__name__)
 
-MAX_CONCURRENT_CODE_RUNS = int(os.getenv("CODE_INTERPRETER_MAX_CONCURRENT_RUNS", "10"))
+MAX_CONCURRENT_CODE_RUNS = int(os.getenv("CODE_INTERPRETER_MAX_CONCURRENT_RUNS", "20"))
 CODE_RUN_TIMEOUT_SECONDS = int(os.getenv("CODE_INTERPRETER_TIMEOUT_SECONDS", "60"))
 CODE_RUN_SEMAPHORE = asyncio.Semaphore(MAX_CONCURRENT_CODE_RUNS)
 REQUIRED_DAYTONA_ENV_VARS = (
@@ -38,11 +40,17 @@ class DaytonaSandboxManager:
 
     def __init__(self):
         """Initialize the sandbox manager with environment-backed defaults."""
-        self._client = AsyncDaytona()
+        daytona_config = DaytonaConfig(
+            api_key=os.getenv("DAYTONA_API_KEY"),
+            api_url=os.getenv("DAYTONA_API_URL"),
+            target=os.getenv("DAYTONA_TARGET", "eu")
+        )
+
+        self._client = AsyncDaytona(config=daytona_config)
         self._image = os.getenv("DAYTONA_IMAGE")
         self._snapshot = os.getenv("DAYTONA_SNAPSHOT")
 
-    async def create(self):
+    async def create(self) -> AsyncSandbox:
         """Create a sandbox for the current execution."""
         if self._snapshot:
             params = CreateSandboxFromSnapshotParams(
@@ -64,11 +72,11 @@ class DaytonaSandboxManager:
         )
         return await self._client.create(params)
 
-    async def destroy(self, sandbox: object) -> None:
+    async def destroy(self, sandbox: AsyncSandbox) -> None:
         """Destroy the sandbox after execution completes."""
         await sandbox.delete(timeout=CODE_RUN_TIMEOUT_SECONDS)
 
-    async def run_code(self, sandbox: object, code: str) -> tuple[str, str]:
+    async def run_code(self, sandbox: AsyncSandbox, code: str) -> tuple[str, str]:
         """Execute Python code inside the sandbox and capture stdio."""
         response = await sandbox.process.code_run(
             code,
@@ -80,6 +88,10 @@ class DaytonaSandboxManager:
         if getattr(response, "exit_code", 0) != 0:
             stderr = getattr(response, "result", "") or "Execution failed."
         return stdout, stderr
+
+    async def close(self):
+        """Close the Daytona client."""
+        await self._client.close()
 
 
 def _derive_status(stderr: str, timed_out: bool) -> Literal["success", "error", "timeout"]:
@@ -135,6 +147,8 @@ async def run_code(
             if sandbox is not None:
                 with contextlib.suppress(Exception):
                     await sandbox_manager.destroy(sandbox)
+                with contextlib.suppress(Exception):
+                    await sandbox_manager.close()
 
     duration_ms = int((time.perf_counter() - started_at) * 1000)
 

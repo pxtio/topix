@@ -87,7 +87,7 @@ export const TopBar = memo(function TopBar({
 }: Props) {
   const currentFolderDepth = useGraphStore(state => state.currentFolderDepth)
   const maxFolderDepth = useGraphStore(state => state.maxFolderDepth)
-  const isAtMaxFolderDepth = currentFolderDepth < 0 || currentFolderDepth >= maxFolderDepth
+  const isAtMaxFolderDepth = currentFolderDepth >= maxFolderDepth
   const normalButtonClass = 'transition-colors text-card-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground p-2.5 rounded-lg flex items-center justify-center gap-2'
   const activeButtonClass = clsx(normalButtonClass, 'bg-sidebar-primary text-secondary')
   const [openShareDialog, setOpenShareDialog] = useState(false)
@@ -114,7 +114,7 @@ export const TopBar = memo(function TopBar({
     select: 'Selection mode',
     note: 'Sticky note',
     folder: isAtMaxFolderDepth
-      ? (currentFolderDepth < 0 ? 'Resolving folder depth...' : `Max folder depth reached (${maxFolderDepth})`)
+      ? `Max folder depth reached (${maxFolderDepth})`
       : 'Folder',
     document: documentUploadLimited ? FREE_PLAN_DOCUMENT_LIMIT_TOOLTIP : 'Upload document',
     shape: 'Shapes',

@@ -38,7 +38,7 @@ export function FolderBreadcrumb({
 
   useEffect(() => {
     if (!rootId) {
-      setCurrentFolderDepth(0)
+      setCurrentFolderDepth(-1)
       return
     }
     setFolderDepthFromPathLength(path.length)

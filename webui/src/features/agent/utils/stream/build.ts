@@ -9,7 +9,6 @@ import { simpleTransform } from "./transform"
 import type {
   WebSearchOutput,
   MemorySearchOutput,
-  CodeInterpreterOutput,
   ToolOutput,
   Annotation,
   UrlAnnotation
@@ -331,17 +330,9 @@ export function extractStepDescription(step: ReasoningStep): { reasoning: string
     }
 
     if (step.name === "code_interpreter" && typeof step.output !== "string") {
-      const output = step.output as CodeInterpreterOutput
-      const parts = [
-        `Status: ${output.status}`,
-        output.durationMs > 0 ? `Duration: ${output.durationMs}ms` : "",
-        output.stdout ? `stdout:\n${output.stdout}` : "",
-        output.stderr ? `stderr:\n${output.stderr}` : ""
-      ].filter(Boolean)
-
       return {
         reasoning: step.thought || "",
-        message: parts.join("\n\n"),
+        message: "",
         title: ToolNameDescription[step.name],
         input
       }

@@ -2,6 +2,8 @@
  * @file Style types for the board feature.
  */
 
+import { resolveFamilyShade } from "../lib/colors/tailwind"
+
 /**
  * Type of node in the board.
  */
@@ -167,6 +169,33 @@ export interface LinkStyle extends BaseStyle {
 }
 
 
+const TRANSPARENT_HEX = "#00000000"
+
+
+const BLACK_HEX = "#000000"
+
+
+const ORANGE_200 = resolveFamilyShade("orange", 200) ?? "#fed7aa"
+
+
+const BLUE_200 = resolveFamilyShade("blue", 200) ?? "#bfdbfe"
+
+
+const BLUE_400 = resolveFamilyShade("blue", 400) ?? "#60a5fa"
+
+
+const STONE_200 = resolveFamilyShade("stone", 200) ?? "#e7e5e4"
+
+
+const STONE_800 = resolveFamilyShade("stone", 800) ?? "#292524"
+
+
+const TEAL_200 = resolveFamilyShade("teal", 200) ?? "#99f6e4"
+
+
+const SLATE_400 = resolveFamilyShade("slate", 400) ?? "#94a3b8"
+
+
 /**
  * Default style for nodes in the board.
  */
@@ -178,12 +207,12 @@ export const createDefaultStyle = ({
   const defaultOptions = {
     type: type,
     angle: 0.0,
-    strokeColor: "#00000000",
+    strokeColor: TRANSPARENT_HEX,
     strokeWidth: 2,
     strokeStyle: "solid",
-    backgroundColor: "#fed7aa",
+    backgroundColor: ORANGE_200,
     fillStyle: "solid",
-    textColor: "#000000",
+    textColor: BLACK_HEX,
     textStyle: "normal",
     opacity: 100,
     groupIds: []
@@ -202,7 +231,7 @@ export const createDefaultStyle = ({
         fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "center",
-        backgroundColor: "#bfdbfe",
+        backgroundColor: BLUE_200,
       } as Style
     case "thought-cloud":
       return {
@@ -212,7 +241,7 @@ export const createDefaultStyle = ({
         fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "center",
-        backgroundColor: "#e7e5e4"
+        backgroundColor: STONE_200
       } as Style
     case "capsule":
       return {
@@ -222,7 +251,7 @@ export const createDefaultStyle = ({
         fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "center",
-        backgroundColor: "#99f6e4"
+        backgroundColor: TEAL_200
       } as Style
     case "ellipse":
       return {
@@ -252,7 +281,7 @@ export const createDefaultStyle = ({
         fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "left",
-        backgroundColor: "#bfdbfe"
+        backgroundColor: BLUE_400
       } as Style
     case "text":
       return {
@@ -262,7 +291,7 @@ export const createDefaultStyle = ({
         fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "left",
-        backgroundColor: "#00000000"
+        backgroundColor: TRANSPARENT_HEX
       } as Style
     case "image":
       return {
@@ -272,8 +301,8 @@ export const createDefaultStyle = ({
         fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "center",
-        backgroundColor: "#00000000",
-        strokeColor: "#00000000",
+        backgroundColor: TRANSPARENT_HEX,
+        strokeColor: TRANSPARENT_HEX,
       } as Style
     case "icon":
       return {
@@ -283,8 +312,8 @@ export const createDefaultStyle = ({
         fontFamily: "handwriting",
         fontSize: "M",
         textAlign: "center",
-        backgroundColor: "#00000000",
-        strokeColor: "#00000000",
+        backgroundColor: TRANSPARENT_HEX,
+        strokeColor: TRANSPARENT_HEX,
       } as Style
     case "slide":
       return {
@@ -294,8 +323,8 @@ export const createDefaultStyle = ({
         fontFamily: "sans-serif",
         fontSize: "M",
         textAlign: "left",
-        backgroundColor: "#00000000",
-        strokeColor: "#94a3b8",
+        backgroundColor: TRANSPARENT_HEX,
+        strokeColor: SLATE_400,
         strokeStyle: "dashed",
         opacity: 90,
       } as Style
@@ -309,10 +338,10 @@ export const createDefaultStyle = ({
 export const createDefaultLinkStyle = (): LinkStyle => ({
   type: "arrow",
   angle: 0.0,
-  strokeColor: "#292524",
+  strokeColor: STONE_800,
   strokeWidth: 2,
   strokeStyle: "solid",
-  backgroundColor: "#00000000",
+  backgroundColor: TRANSPARENT_HEX,
   fillStyle: "solid",
   roughness: 1,
   roundness: 0,
@@ -321,7 +350,7 @@ export const createDefaultLinkStyle = (): LinkStyle => ({
   fontFamily: "handwriting",
   fontSize: "M",
   textAlign: "center",
-  textColor: "#000000",
+  textColor: BLACK_HEX,
   textStyle: "normal",
   sourceArrowhead: "none",
   targetArrowhead: "arrow-filled",

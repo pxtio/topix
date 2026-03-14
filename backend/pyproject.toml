@@ -12,6 +12,7 @@ dependencies = [
     "aiohttp>=3.12.13",
     "bcrypt>=4.3.0",
     "cloudscraper==1.2.71",
+    "daytona==0.151.0",
     "doppler-sdk>=1.3.0",
     "igraph>=1.0.0",
     "fastapi==0.128.0",

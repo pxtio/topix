@@ -26,6 +26,11 @@ logger = logging.getLogger(__name__)
 MAX_CONCURRENT_CODE_RUNS = int(os.getenv("CODE_INTERPRETER_MAX_CONCURRENT_RUNS", "10"))
 CODE_RUN_TIMEOUT_SECONDS = int(os.getenv("CODE_INTERPRETER_TIMEOUT_SECONDS", "60"))
 CODE_RUN_SEMAPHORE = asyncio.Semaphore(MAX_CONCURRENT_CODE_RUNS)
+REQUIRED_DAYTONA_ENV_VARS = (
+    "DAYTONA_API_KEY",
+    "DAYTONA_API_URL",
+    "DAYTONA_TARGET",
+)
 
 
 class DaytonaSandboxManager:
@@ -86,12 +91,30 @@ def _derive_status(stderr: str, timed_out: bool) -> Literal["success", "error", 
     return "success"
 
 
+def _get_missing_daytona_env_vars() -> list[str]:
+    """Return the Daytona env vars required to enable the tool but currently unset."""
+    return [name for name in REQUIRED_DAYTONA_ENV_VARS if not os.getenv(name)]
+
+
 async def run_code(
     _wrapper: RunContextWrapper[Context],
     code: str,
 ) -> CodeInterpreterOutput:
     """Run Python code in a short-lived Daytona sandbox with strict cleanup."""
     started_at = time.perf_counter()
+    missing_env_vars = _get_missing_daytona_env_vars()
+
+    if missing_env_vars:
+        return CodeInterpreterOutput(
+            status="error",
+            stdout="",
+            stderr=(
+                "Code interpreter is unavailable because Daytona is not fully configured. "
+                f"Missing env vars: {', '.join(missing_env_vars)}"
+            ),
+            duration_ms=int((time.perf_counter() - started_at) * 1000),
+        )
+
     sandbox_manager = DaytonaSandboxManager()
     sandbox = None
     stdout = ""

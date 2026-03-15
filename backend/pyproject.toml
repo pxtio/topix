@@ -37,6 +37,7 @@ dependencies = [
     "selectolax>=0.3.34",
     "httpx>=0.28.1",
     "pypdf>=6.3.0",
+    "zstandard>=0.23.0",
 ]
 
 [project.optional-dependencies]

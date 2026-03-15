@@ -216,7 +216,7 @@ async def update_note(
     """Update a note or document node in a graph."""
     store: GraphStore = request.app.graph_store
 
-    await store.update_node(node_id=note_id, data=body.data)
+    await store.update_node(node_id=note_id, data=body.data, user_uid=user_id)
     return {"message": "Note updated successfully"}
 
 
@@ -234,7 +234,7 @@ async def remove_note_from_graph(
     """Remove notes from a graph."""
     store: GraphStore = request.app.graph_store
 
-    await store.delete_node(node_id=note_id)
+    await store.delete_node(node_id=note_id, user_uid=user_id)
     return {"message": "Note removed from board successfully"}
 
 

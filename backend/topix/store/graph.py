@@ -13,6 +13,7 @@ from qdrant_client.models import (
 from topix.datatypes.graph.graph import Graph
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
+from topix.store.note_revision import NoteRevisionStore
 from topix.store.postgres.graph import (
     _dangerous_hard_delete_graph_by_uid,
     create_graph,
@@ -38,10 +39,13 @@ class GraphStore:
         """Initialize the GraphStore."""
         self._content_store = ContentStore.from_config()
         self._pg_pool = None
+        self._note_revision_store: NoteRevisionStore | None = None
 
     async def open(self):
         """Open the database connection pool."""
         self._pg_pool = await create_pool()
+        self._note_revision_store = NoteRevisionStore(self._pg_pool)
+        await self._note_revision_store.ensure_table()
 
     async def add_notes(self, nodes: list[Note]):
         """Add nodes to the graph."""
@@ -49,17 +53,34 @@ class GraphStore:
         # TODO(folder): reject invalid parent assignments and cycles on create.
         await self._content_store.add(nodes)
 
-    async def update_node(self, node_id: str, data: dict):
+    async def update_node(self, node_id: str, data: dict, user_uid: str | None = None):
         """Update a node in the graph."""
         # TODO(folder): validate parent_id exists and belongs to the same graph.
         # TODO(folder): reject self-parent and cyclic reparent operations.
+        existing_nodes = await self.get_nodes([node_id])
+        if existing_nodes and self._note_revision_store is not None:
+            note_to_snapshot = existing_nodes[0].model_copy(deep=True)
+
+            def _log_task_result(task: asyncio.Task) -> None:
+                try:
+                    task.result()
+                except Exception as e:
+                    logger.exception("Background save_note_snapshot failed", exc_info=e)
+
+            task = asyncio.create_task(
+                self._note_revision_store.save_note_snapshot(note_to_snapshot, user_uid=user_uid)
+            )
+            task.add_done_callback(_log_task_result)
         data["id"] = node_id
         await self._content_store.update([data])
 
-    async def delete_node(self, node_id: str, hard_delete: bool = True):
+    async def delete_node(self, node_id: str, hard_delete: bool = True, user_uid: str | None = None):
         """Delete a node from the graph."""
         # TODO(folder): cascade-delete descendants when folder/subtree semantics are enabled.
         # For now this deletes only the requested node.
+        existing_nodes = await self.get_nodes([node_id])
+        if existing_nodes and self._note_revision_store is not None:
+            await self._note_revision_store.save_note_snapshot(existing_nodes[0], user_uid=user_uid)
         await self._content_store.delete([node_id], hard_delete=hard_delete)
 
         # deleted associated chunks

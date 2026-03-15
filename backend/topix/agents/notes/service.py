@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import random
+
 from topix.datatypes.note.note import Note
 from topix.datatypes.note.style import FontFamily, NodeType, StrokeStyle, Style, TextAlign
 from topix.datatypes.property import PositionProperty, SizeProperty
@@ -11,11 +13,20 @@ from topix.store.graph import GraphStore
 DEFAULT_NOTE_GAP = 80
 DEFAULT_CHILD_OFFSET_X = 40
 DEFAULT_CHILD_OFFSET_Y = 80
+WARM_TAILWIND_300_HEX = [
+    "#a4def0",  # blue
+    "#90eaed",  # sky
+    "#7ce9d8",  # cyan
+    "#71deb2",  # teal
+    "#80dca2",  # emerald
+    "#d9c1f3",  # violet
+]
 
 
 def build_default_note_style(note_type: NodeType) -> Style:
     """Return the backend default style for a given note type."""
     style = Style(type=note_type)
+    style.background_color = random.choice(WARM_TAILWIND_300_HEX)
 
     if note_type == NodeType.SHEET:
         style.roughness = 0
@@ -37,12 +48,12 @@ def get_default_note_size(note_type: NodeType) -> tuple[int, int]:
     if note_type == NodeType.SHEET:
         return 300, 300
     if note_type == NodeType.TEXT:
-        return 150, 20
+        return 300, 20
     if note_type == NodeType.SLIDE:
         return 960, 540
     if note_type == NodeType.FOLDER:
         return 150, 150
-    return 50, 50
+    return 400, 400
 
 
 async def compute_note_position(

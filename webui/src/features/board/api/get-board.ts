@@ -31,6 +31,54 @@ export async function getBoard(
 
 
 /**
+ * Reload a board into the graph store, including derived point nodes and edges.
+ */
+export async function reloadBoardIntoStore(
+  boardId: string,
+  rootId?: string,
+): Promise<boolean> {
+  const {
+    setNodes,
+    setEdges,
+    setBoardVisibility,
+    setBoardCanEdit,
+    setBoardLabel,
+  } = useGraphStore.getState()
+
+  const { graph, canEdit } = await getBoard(boardId, rootId)
+  const { nodes: notes, edges: links, visibility } = graph
+  const nodes = (notes ?? []).map(convertNoteToNode)
+  const nodesById = new Map(nodes.map(node => [node.id, node]))
+  const edges: LinkEdge[] = []
+  const pointNodes: NoteNode[] = []
+
+  for (const link of links ?? []) {
+    const { edge, points } = convertLinkToEdgeWithPoints(link, nodesById)
+    edges.push(edge)
+    if (points.length) {
+      pointNodes.push(...points)
+    }
+  }
+
+  const loadedNodes = [...nodes, ...pointNodes]
+  const readonlyNodes = canEdit
+    ? loadedNodes
+    : loadedNodes.map(node => ({
+        ...node,
+        draggable: false,
+        selectable: false,
+      }))
+
+  setNodes(readonlyNodes)
+  setEdges(edges)
+  setBoardVisibility(visibility ?? "private")
+  setBoardCanEdit(canEdit)
+  setBoardLabel(graph.label ?? "")
+  return true
+}
+
+
+/**
  * Custom hook to fetch a board by its ID for the user.
  */
 export const useGetBoard = () => {
@@ -40,11 +88,6 @@ export const useGetBoard = () => {
       const {
         boardId,
         rootId,
-        setNodes,
-        setEdges,
-        setBoardVisibility,
-        setBoardCanEdit,
-        setBoardLabel,
         isLoading,
         setIsLoading,
       } = useGraphStore.getState()
@@ -52,36 +95,7 @@ export const useGetBoard = () => {
       if (isLoading) return false
       setIsLoading(true)
       try {
-        const { graph, canEdit } = await getBoard(boardId, rootId)
-        const { nodes: notes, edges: links, visibility } = graph
-        const nodes = (notes ?? []).map(convertNoteToNode)
-        const nodesById = new Map(nodes.map(node => [node.id, node]))
-        const edges: LinkEdge[] = []
-        const pointNodes: NoteNode[] = []
-
-        for (const link of links ?? []) {
-          const { edge, points } = convertLinkToEdgeWithPoints(link, nodesById)
-          edges.push(edge)
-          if (points.length) {
-            pointNodes.push(...points)
-          }
-        }
-
-        const loadedNodes = [...nodes, ...pointNodes]
-        const readonlyNodes = canEdit
-          ? loadedNodes
-          : loadedNodes.map(node => ({
-              ...node,
-              draggable: false,
-              selectable: false,
-            }))
-
-        setNodes(readonlyNodes)
-        setEdges(edges)
-        setBoardVisibility(visibility ?? "private")
-        setBoardCanEdit(canEdit)
-        setBoardLabel(graph.label ?? "")
-        return true
+        return await reloadBoardIntoStore(boardId, rootId)
       } finally {
         setIsLoading(false)
       }

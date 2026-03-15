@@ -4,8 +4,7 @@ import { useMutation } from "@tanstack/react-query"
 import { apiFetch } from "@/api"
 
 import { useGraphStore } from "../store/graph-store"
-import { convertLinkToEdgeWithPoints, convertNoteToNode } from "../utils/graph"
-import { getBoard } from "./get-board"
+import { reloadBoardIntoStore } from "./get-board"
 
 
 type RestoreLatestNoteResponse = {
@@ -43,45 +42,10 @@ export const useRestoreLatestNote = () => {
     }) => {
       const restored = await restoreLatestNote(boardId, noteId)
 
-      const {
-        boardId: activeBoardId,
-        rootId,
-        setNodes,
-        setEdges,
-        setBoardVisibility,
-        setBoardCanEdit,
-        setBoardLabel,
-      } = useGraphStore.getState()
+      const { boardId: activeBoardId, rootId } = useGraphStore.getState()
 
       if (activeBoardId === boardId) {
-        const { graph, canEdit } = await getBoard(boardId, rootId)
-        const nodes = (graph.nodes ?? []).map(convertNoteToNode)
-        const nodesById = new Map(nodes.map(node => [node.id, node]))
-        const edges = []
-        const pointNodes = []
-
-        for (const link of graph.edges ?? []) {
-          const { edge, points } = convertLinkToEdgeWithPoints(link, nodesById)
-          edges.push(edge)
-          if (points.length) {
-            pointNodes.push(...points)
-          }
-        }
-
-        const loadedNodes = [...nodes, ...pointNodes]
-        const readonlyNodes = canEdit
-          ? loadedNodes
-          : loadedNodes.map(node => ({
-              ...node,
-              draggable: false,
-              selectable: false,
-            }))
-
-        setNodes(readonlyNodes)
-        setEdges(edges)
-        setBoardVisibility(graph.visibility ?? "private")
-        setBoardCanEdit(canEdit)
-        setBoardLabel(graph.label ?? "")
+        await reloadBoardIntoStore(boardId, rootId)
       }
 
       return restored

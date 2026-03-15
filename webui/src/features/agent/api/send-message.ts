@@ -10,6 +10,8 @@ import { buildResponse } from "../utils/stream/build"
 import { fetchWithAuthRaw } from "@/api"
 import type { ToolOutput } from "../types/tool-outputs"
 import { trimResponseAnnotations } from "../utils/annotations"
+import { useGraphStore } from "@/features/board/store/graph-store"
+import { reloadBoardIntoStore } from "@/features/board/api/get-board"
 
 
 /**
@@ -112,6 +114,7 @@ export const useSendMessage = () => {
       } as ChatMessage
 
       const newMessages = [newUserMessage, newAssistantPlaceholder]
+      let shouldRefreshActiveBoard = false
 
       try {
         queryClient.setQueryData<ChatMessage[]>(
@@ -133,6 +136,10 @@ export const useSendMessage = () => {
 
           const safeResponse = trimResponseAnnotations(
             sanitizeResponseForStreaming(rep, isStop)
+          )
+          shouldRefreshActiveBoard ||= safeResponse.steps.some((step) =>
+            (step.name === "create_note" || step.name === "edit_note") &&
+            typeof step.output !== "string"
           )
           const step = safeResponse.steps[0]
           const responseId = step.id
@@ -198,6 +205,12 @@ export const useSendMessage = () => {
       } finally {
         setIsStreaming(false)
         await queryClient.invalidateQueries({ queryKey: key, exact: true })
+        if (shouldRefreshActiveBoard) {
+          const { boardId: activeBoardId, rootId } = useGraphStore.getState()
+          if (activeBoardId) {
+            await reloadBoardIntoStore(activeBoardId, rootId)
+          }
+        }
       }
     }
   })

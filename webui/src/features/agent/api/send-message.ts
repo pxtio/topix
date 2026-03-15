@@ -117,8 +117,6 @@ export const useSendMessage = () => {
       } as ChatMessage
 
       const newMessages = [newUserMessage, newAssistantPlaceholder]
-      let noteToolOutputs: Array<CreateNoteOutput | EditNoteOutput> = []
-
       try {
         queryClient.setQueryData<ChatMessage[]>(
           key,
@@ -140,9 +138,6 @@ export const useSendMessage = () => {
           const safeResponse = trimResponseAnnotations(
             sanitizeResponseForStreaming(rep, isStop)
           )
-          noteToolOutputs = collectNoteToolOutputs(safeResponse.steps)
-          const step = safeResponse.steps[0]
-          const responseId = step.id
 
           if (!setNewAssistantMessageId) {
             setNewAssistantMessageId = true
@@ -154,15 +149,7 @@ export const useSendMessage = () => {
                 if (!oldMessages || oldMessages.length === 0) {
                   msgs = [...newMessages]
                 }
-                return msgs.map((m) => {
-                  if (m.id === tmpId) {
-                    return {
-                      ...m,
-                      id: responseId
-                    } as ChatMessage
-                  }
-                  return m
-                })
+                return msgs
               }
             )
           } else {
@@ -179,7 +166,7 @@ export const useSendMessage = () => {
                   if (lastStep.name === 'synthesizer' || lastStep.name === 'answer_reformulate') {
                     content = typeof lastStep.output === 'string' ? lastStep.output : ''
                   }
-                  if (m.id === responseId) {
+                  if (m.id === tmpId) {
                     return {
                       ...m,
                       content: { markdown: content },
@@ -205,6 +192,19 @@ export const useSendMessage = () => {
       } finally {
         setIsStreaming(false)
         await queryClient.invalidateQueries({ queryKey: key, exact: true })
+        const messages = queryClient.getQueryData<ChatMessage[]>(key) ?? []
+
+        const userMessageIndex = messages.findIndex(
+          (message) => message.id === payload.messageId && message.role === "user",
+        )
+        const completedMessage = userMessageIndex >= 0
+          ? messages.slice(userMessageIndex + 1).find((message) => message.role === "assistant")
+          : undefined
+
+        const noteToolOutputs = collectNoteToolOutputs(
+          completedMessage?.properties.reasoning?.reasoning ?? [],
+        )
+
         if (noteToolOutputs.length > 0) {
           const {
             boardId: activeBoardId,
@@ -267,10 +267,6 @@ const sanitizeToolOutput = (output: ToolOutput): ToolOutput => {
       return { type: "memory_search", answer: "", references: [] }
     case "code_interpreter":
       return { type: "code_interpreter", status: "success", stdout: "", stderr: "", durationMs: 0 }
-    case "create_note":
-      return { type: "create_note", noteId: "", graphUid: "", label: "", noteType: "rectangle", parentId: null }
-    case "edit_note":
-      return { type: "edit_note", noteId: "", graphUid: "", label: "", noteType: "rectangle", parentId: null }
     case "display_weather_widget":
       return { type: "display_weather_widget", city: "" }
     case "display_stock_widget":

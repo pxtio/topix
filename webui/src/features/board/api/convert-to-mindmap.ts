@@ -20,8 +20,12 @@ export async function convertToMindMap(
   answer: string,
   toolType: "notify" | "mapify" | "schemify" | "summify" | "quizify" | "drawify"
 ): Promise<{ notes: Note[], links: Link[] }> {
+  const path = toolType === "drawify"
+    ? "/tools/drawify"
+    : `/tools/mindmaps:${toolType}`
+
   const res = await apiFetch<{ data: Record<string, unknown> }>({
-    path: `/tools/mindmaps:${toolType}`,
+    path,
     method: "POST",
     body: { answer }
   })

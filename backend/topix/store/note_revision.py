@@ -49,6 +49,21 @@ def compress_snapshot(snapshot_bytes: bytes) -> tuple[str, bytes]:
     return "zstd", compressor.compress(snapshot_bytes)
 
 
+def decompress_snapshot(compression: str, snapshot_compressed: bytes) -> bytes:
+    """Decompress a stored snapshot payload."""
+    if compression != "zstd":
+        raise ValueError(f"Unsupported snapshot compression: {compression}")
+    decompressor = zstd.ZstdDecompressor()
+    return decompressor.decompress(snapshot_compressed)
+
+
+def deserialize_note_snapshot(compression: str, snapshot_compressed: bytes) -> Note:
+    """Deserialize a compressed snapshot back into a note model."""
+    snapshot_bytes = decompress_snapshot(compression, snapshot_compressed)
+    snapshot_dict = json.loads(snapshot_bytes.decode("utf-8"))
+    return Note.model_validate(snapshot_dict)
+
+
 class NoteRevisionStore:
     """Persist and prune note snapshots for later restore workflows."""
 
@@ -114,3 +129,8 @@ class NoteRevisionStore:
         """Return note snapshots from newest to oldest."""
         async with self.pool.acquire() as conn:
             return await list_note_revision_rows(conn, note_id)
+
+    async def get_latest_note_revision(self, note_id: str) -> NoteRevisionRecord | None:
+        """Return the latest stored revision for a note."""
+        async with self.pool.acquire() as conn:
+            return await get_latest_note_revision(conn, note_id)

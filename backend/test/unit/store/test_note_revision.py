@@ -15,6 +15,8 @@ from topix.store.note_revision import (
     NoteRevisionStore,
     compress_snapshot,
     compute_snapshot_hash,
+    decompress_snapshot,
+    deserialize_note_snapshot,
     serialize_note_snapshot,
 )
 
@@ -72,6 +74,24 @@ def test_compress_snapshot_round_trips_with_zstd() -> None:
 
     assert compression == "zstd"
     assert restored == snapshot
+
+
+def test_deserialize_note_snapshot_restores_note_model() -> None:
+    """Compressed snapshots should deserialize back into a note."""
+    note = _build_note()
+    compression, compressed = compress_snapshot(serialize_note_snapshot(note))
+
+    restored = deserialize_note_snapshot(compression, compressed)
+
+    assert restored.id == note.id
+    assert restored.graph_uid == note.graph_uid
+    assert restored.content == note.content
+
+
+def test_decompress_snapshot_rejects_unknown_compression() -> None:
+    """Unsupported compression labels should fail loudly."""
+    with pytest.raises(ValueError, match="Unsupported snapshot compression"):
+        decompress_snapshot("gzip", b"payload")
 
 
 @pytest.mark.asyncio

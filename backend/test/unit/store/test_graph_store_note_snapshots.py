@@ -11,6 +11,7 @@ import pytest
 from topix.datatypes.note.note import Note
 from topix.datatypes.resource import RichText
 from topix.store.graph import GraphStore
+from topix.store.note_revision import compress_snapshot, serialize_note_snapshot
 
 
 def _build_store() -> GraphStore:
@@ -104,3 +105,49 @@ async def test_delete_node_snapshots_before_delete(monkeypatch) -> None:
     assert len(created_tasks) == 1
     await asyncio.gather(*created_tasks)
     store._content_store.delete_by_filters.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_restore_latest_note_revision_updates_existing_note() -> None:
+    """Restoring a note should snapshot the current state and write the full revision payload."""
+    store = _build_store()
+    current_note = _build_note()
+    restored_note = current_note.model_copy(deep=True)
+    restored_note.label = RichText(markdown="Restored")
+    compression, snapshot_compressed = compress_snapshot(serialize_note_snapshot(restored_note))
+    store.get_nodes = AsyncMock(return_value=[current_note])
+    store._content_store.update = AsyncMock()
+    store._note_revision_store = AsyncMock()
+    store._note_revision_store.get_latest_note_revision.return_value = type(
+        "LatestRevision",
+        (),
+        {
+            "compression": compression,
+            "snapshot_compressed": snapshot_compressed,
+        },
+    )()
+
+    result = await store.restore_latest_note_revision(current_note.id, user_uid="root")
+
+    assert result is not None
+    assert result.label == restored_note.label
+    store._note_revision_store.save_note_snapshot.assert_awaited_once_with(current_note, user_uid="root")
+    store._content_store.update.assert_awaited_once()
+    payload = store._content_store.update.await_args.args[0][0]
+    assert payload["id"] == restored_note.id
+    assert payload["deleted_at"] is None
+    assert payload["label"]["markdown"] == "Restored"
+
+
+@pytest.mark.asyncio
+async def test_restore_latest_note_revision_returns_none_without_snapshot() -> None:
+    """Restoring should no-op cleanly when no revision exists yet."""
+    store = _build_store()
+    store._note_revision_store = AsyncMock()
+    store._note_revision_store.get_latest_note_revision.return_value = None
+    store.get_nodes = AsyncMock()
+
+    result = await store.restore_latest_note_revision("missing-note", user_uid="root")
+
+    assert result is None
+    store.get_nodes.assert_not_called()

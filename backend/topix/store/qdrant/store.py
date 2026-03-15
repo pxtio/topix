@@ -128,7 +128,7 @@ class ContentStore:
                 await self.client.create_payload_index(
                     collection_name=self.collection,
                     field_name=field_name,
-                    field_type=field_type,
+                    field_schema=field_type,
                 )
 
     async def drop_collection(self) -> None:

@@ -108,6 +108,53 @@ async def test_delete_node_snapshots_before_delete(monkeypatch) -> None:
 
 
 @pytest.mark.asyncio
+async def test_patch_note_merges_full_payload_before_update(monkeypatch) -> None:
+    """Patching a note should merge nested fields into the full note payload."""
+    store = _build_store()
+    note = _build_note()
+    note.properties.node_position.position.x = 12
+    note.properties.node_position.position.y = 24
+    store.get_nodes = AsyncMock(return_value=[note])
+    store._content_store.update = AsyncMock()
+    store._note_revision_store = AsyncMock()
+
+    created_tasks: list[asyncio.Task] = []
+    original_create_task = asyncio.create_task
+
+    def track_task(coro):
+        task = original_create_task(coro)
+        created_tasks.append(task)
+        return task
+
+    monkeypatch.setattr(asyncio, "create_task", track_task)
+
+    result = await store.patch_note(
+        note.id,
+        {
+            "label": {"markdown": "Patched"},
+            "properties": {"node_position": {"position": {"x": 99}}},
+        },
+        user_uid="root",
+    )
+
+    assert result is not None
+    assert result.id == note.id
+    assert result.label is not None
+    assert result.label.markdown == "Patched"
+    assert result.properties.node_position.position.x == 99
+    assert result.properties.node_position.position.y == 24
+    store._content_store.update.assert_awaited_once()
+    payload = store._content_store.update.await_args.args[0][0]
+    assert payload["label"]["markdown"] == "Patched"
+    assert payload["properties"]["node_position"]["position"]["x"] == 99
+    assert payload["properties"]["node_position"]["position"]["y"] == 24
+
+    assert len(created_tasks) == 1
+    await asyncio.gather(*created_tasks)
+    store._note_revision_store.save_note_snapshot.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_restore_latest_note_revision_updates_existing_note() -> None:
     """Restoring a note should snapshot the current state and write the full revision payload."""
     store = _build_store()

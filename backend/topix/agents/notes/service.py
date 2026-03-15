@@ -83,12 +83,12 @@ async def compute_note_position(
 async def build_note(
     graph_store: GraphStore,
     graph_uid: str,
-    label: str,
-    content: str | None,
+    label: str | None,
+    content: str,
     note_type: NodeType,
     parent_id: str | None,
 ) -> Note:
-    """Build a new note with frontend-aligned defaults and automatic placement."""
+    """Build a new note with content-first defaults and automatic placement."""
     width, height = get_default_note_size(note_type)
     position = await compute_note_position(
         graph_store=graph_store,
@@ -100,8 +100,8 @@ async def build_note(
         graph_uid=graph_uid,
         parent_id=parent_id,
         style=build_default_note_style(note_type),
-        label=RichText(markdown=label),
-        content=RichText(markdown=content) if content is not None else None,
+        label=RichText(markdown=label) if label else None,
+        content=RichText(markdown=content),
     )
     note.properties.node_position = PositionProperty(position=position)
     note.properties.node_size = SizeProperty(

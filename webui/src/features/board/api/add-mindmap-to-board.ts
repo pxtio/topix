@@ -24,7 +24,7 @@ const applyAutoHeightForMindMapNodes = (nodes: NoteNode[]) =>
   nodes.map(node => {
     if (!isAutoSizedTextNode(node)) return node
 
-    const markdown = node.data.label?.markdown ?? ''
+    const markdown = node.data.content?.markdown ?? node.data.label?.markdown ?? ''
     if (!markdown.trim()) return node
     if (markdown.includes('$$')) return node
 

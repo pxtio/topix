@@ -13,12 +13,6 @@ from topix.datatypes.note.style import NodeType
 from topix.store.graph import GraphStore
 
 
-def _set_required_fields(tool: FunctionTool, required: list[str]) -> FunctionTool:
-    """Override the generated schema so optional tool args stay optional."""
-    tool.params_json_schema["required"] = required
-    return tool
-
-
 def create_create_note_tool(
     graph_store: GraphStore,
     graph_uid: str,
@@ -28,15 +22,15 @@ def create_create_note_tool(
 
     async def create_note(
         _wrapper: RunContextWrapper[Context],
-        label: str,
-        content: str | None = None,
+        content: str,
+        label: str | None = None,
         note_type: NodeType = NodeType.RECTANGLE,
     ) -> CreateNoteOutput:
         """Create a note in the current board scope.
 
         Args:
-            label (str): Visible title shown on the note.
-            content (str | None): Optional markdown body stored inside the note.
+            content (str): Main markdown body of the note. This is the most important text.
+            label (str | None): Optional short title stored separately from the main body.
             note_type (NodeType): Visual note shape to create, such as rectangle or sheet.
 
         """
@@ -58,13 +52,10 @@ def create_create_note_tool(
             parent_id=root_id,
         )
 
-    return _set_required_fields(
-        ToolHandler.convert_func_to_tool(
-            create_note,
-            tool_name=AgentToolName.CREATE_NOTE,
-            tool_description=None,
-        ),
-        ["label"],
+    return ToolHandler.convert_func_to_tool(
+        create_note,
+        tool_name=AgentToolName.CREATE_NOTE,
+        tool_description=None,
     )
 
 
@@ -85,8 +76,8 @@ def create_edit_note_tool(
 
         Args:
             note_id (str): Exact id of the note to update.
-            label (str | None): Optional replacement title for the note.
-            content (str | None): Optional replacement markdown body for the note.
+            content (str | None): Optional replacement markdown body. This is the main note text.
+            label (str | None): Optional replacement short title stored separately from the body.
             note_type (NodeType | None): Optional replacement visual note shape.
 
         """
@@ -116,16 +107,13 @@ def create_edit_note_tool(
         return EditNoteOutput(
             note_id=updated_note.id,
             graph_uid=graph_uid,
-            label=updated_note.label.markdown if updated_note.label else "",
+            label=updated_note.label.markdown if updated_note.label else None,
             note_type=updated_note.style.type,
             parent_id=updated_note.parent_id,
         )
 
-    return _set_required_fields(
-        ToolHandler.convert_func_to_tool(
-            edit_note,
-            tool_name=AgentToolName.EDIT_NOTE,
-            tool_description=None,
-        ),
-        ["note_id"],
+    return ToolHandler.convert_func_to_tool(
+        edit_note,
+        tool_name=AgentToolName.EDIT_NOTE,
+        tool_description=None,
     )

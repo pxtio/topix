@@ -175,7 +175,7 @@ class CreateNoteOutput(BaseModel):
     type: Literal["create_note"] = "create_note"
     note_id: Annotated[str, "The unique id of the created note."]
     graph_uid: Annotated[str, "The board id where the note was created."]
-    label: Annotated[str, "The note label stored on the created note."]
+    label: Annotated[str | None, "Optional short title stored separately from the note body."]
     note_type: Annotated[NodeType, "The final node type used for the created note."]
     parent_id: Annotated[
         str | None,
@@ -189,7 +189,7 @@ class EditNoteOutput(BaseModel):
     type: Literal["edit_note"] = "edit_note"
     note_id: Annotated[str, "The unique id of the edited note."]
     graph_uid: Annotated[str, "The board id where the note belongs."]
-    label: Annotated[str, "The note label after the edit is applied."]
+    label: Annotated[str | None, "Optional short title after the edit is applied."]
     note_type: Annotated[NodeType, "The final node type after the edit."]
     parent_id: Annotated[
         str | None,

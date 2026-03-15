@@ -115,7 +115,7 @@ class SchemifyAgent(BaseAgent):
 def _convert_snode_to_note(snode: SNode) -> Note:
     """Convert SNode to Note."""
     return Note(
-        label=RichText(markdown=snode.label),
+        content=RichText(markdown=snode.label),
     )
 
 

@@ -37,8 +37,8 @@ async def test_build_note_uses_frontend_aligned_defaults() -> None:
     note = await build_note(
         graph_store=graph_store,
         graph_uid="graph-1",
-        label="Sheet note",
         content="hello",
+        label="Sheet note",
         note_type=NodeType.SHEET,
         parent_id=None,
     )
@@ -59,7 +59,7 @@ async def test_create_note_tool_uses_root_scope_by_default() -> None:
 
     result = await tool.on_invoke_tool(
         RunContextWrapper(Context()),
-        json.dumps({"label": "New note"}),
+        json.dumps({"content": "New note content", "label": "New note"}),
     )
 
     assert result.type == "create_note"
@@ -70,6 +70,8 @@ async def test_create_note_tool_uses_root_scope_by_default() -> None:
     created_note = graph_store.add_notes.await_args.args[0][0]
     assert created_note.graph_uid == "graph-1"
     assert created_note.parent_id == "folder-1"
+    assert created_note.content is not None
+    assert created_note.content.markdown == "New note content"
     assert created_note.properties.node_size.size.width == get_default_note_size(NodeType.RECTANGLE)[0]
 
 
@@ -109,20 +111,21 @@ async def test_edit_note_tool_updates_only_requested_fields() -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_note_tool_schema_only_requires_label() -> None:
-    """Create note tool should expose only label as required input."""
+async def test_create_note_tool_schema_hides_parent_scope_args() -> None:
+    """Create note tool should not expose internal board-scope args."""
     tool = create_create_note_tool(DummyGraphStore(), "graph-1", root_id="folder-1")
 
-    assert tool.params_json_schema["required"] == ["label"]
     assert "parent_id" not in tool.params_json_schema["properties"]
+    assert "content" in tool.params_json_schema["properties"]
+    assert "label" in tool.params_json_schema["properties"]
+    assert "content" in tool.params_json_schema.get("required", [])
 
 
 @pytest.mark.asyncio
-async def test_edit_note_tool_schema_only_requires_note_id() -> None:
-    """Edit note tool should expose only note_id as required input."""
+async def test_edit_note_tool_schema_hides_parent_scope_args() -> None:
+    """Edit note tool should not expose internal board-scope args."""
     tool = create_edit_note_tool(DummyGraphStore(), "graph-1")
 
-    assert tool.params_json_schema["required"] == ["note_id"]
     assert "parent_id" not in tool.params_json_schema["properties"]
 
 

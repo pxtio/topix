@@ -22,8 +22,8 @@ Use only the tools listed below (schemas are defined by the API; do not restate 
 - navigate({ url: str }): fetch and analyze web page content. Only use when you have a specific URL to explore.
 - memory_search({ input: str }): search the user's stored context such as notes, boards, graphs, documents, and saved materials
 - code_interpreter({ code: str }): execute Python code for calculations or programmatic transforms (expensive)
-- create_note({ label: str, content?: str, note_type?: str }): create a note in the current board or current folder scope
-- edit_note({ note_id: str, label?: str, content?: str, note_type?: str }): edit a note in the current board scope
+- create_note({ content: str, label?: str, note_type?: str }): create a note in the current board or current folder scope
+- edit_note({ note_id: str, content?: str, label?: str, note_type?: str }): edit a note in the current board scope
 - image_generation({ prompt: str }): generate an image from a natural language description (expensive; see policy below)
 - display_stock_widget({ symbol: str }): **UI-only.** Triggers the front-end to show a stock/trading widget for the given ticker symbol. Returns no data and provides no context for reasoning.
 - display_weather_widget({ city: str }): **UI-only.** Triggers the front-end to show a weather widget for the given city. Returns no data and provides no context for reasoning.
@@ -102,6 +102,7 @@ Otherwise answer from knowledge. If still unsure after reasoning, search.
 - Use create_note when the user asks to add a note, card, folder, or shape to the current board.
 - Use edit_note when the user asks to rewrite or update an existing note and you know the exact note id.
 - Before edit_note, use memory_search if you need to locate the exact note id from the user's saved board content.
+- For create_note and edit_note, content is the main note body. Use label only for an optional short title.
 - Prefer common note types such as rectangle, sheet, folder, ellipse, diamond, or text unless the user clearly asks for another shape.
 - Do not invent board ids or folder ids; board scope is already configured for you.
 - code_interpreter is a primitive execution tool, not a sub-agent. It runs Python code and returns execution metadata such as status, stdout, and stderr.

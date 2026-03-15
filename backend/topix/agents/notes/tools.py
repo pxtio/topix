@@ -29,7 +29,8 @@ def create_create_note_tool(
         """Create a note in the current board scope.
 
         Write short, concise note content, ideally a single paragraph. Content may use
-        simple markdown such as bold, italic, underline, lists, or links, but avoid headings.
+        simple markdown such as bold, italic, underline, lists, or links to highlight
+        important keywords or short phrases, but avoid headings.
 
         Args:
             content (str): Main markdown body of the note. This is the most important text.
@@ -78,7 +79,8 @@ def create_edit_note_tool(
         """Edit a note already present in the current board scope.
 
         Keep note content short and concise, ideally a single paragraph. Content may use
-        simple markdown such as bold, italic, underline, lists, or links, but avoid headings.
+        simple markdown such as bold, italic, underline, lists, or links to highlight
+        important keywords or short phrases, but avoid headings.
 
         Args:
             note_id (str): Exact id of the note to update.

@@ -156,7 +156,7 @@ async def test_patch_note_merges_full_payload_before_update(monkeypatch) -> None
 
 @pytest.mark.asyncio
 async def test_restore_latest_note_revision_updates_existing_note() -> None:
-    """Restoring a note should snapshot the current state and write the full revision payload."""
+    """Restoring a note should consume the latest snapshot and write it back."""
     store = _build_store()
     current_note = _build_note()
     restored_note = current_note.model_copy(deep=True)
@@ -165,7 +165,7 @@ async def test_restore_latest_note_revision_updates_existing_note() -> None:
     store.get_nodes = AsyncMock(return_value=[current_note])
     store._content_store.update = AsyncMock()
     store._note_revision_store = AsyncMock()
-    store._note_revision_store.get_latest_note_revision.return_value = type(
+    store._note_revision_store.pop_latest_note_revision.return_value = type(
         "LatestRevision",
         (),
         {
@@ -178,7 +178,7 @@ async def test_restore_latest_note_revision_updates_existing_note() -> None:
 
     assert result is not None
     assert result.label == restored_note.label
-    store._note_revision_store.save_note_snapshot.assert_awaited_once_with(current_note, user_uid="root")
+    store._note_revision_store.pop_latest_note_revision.assert_awaited_once_with(current_note.id)
     store._content_store.update.assert_awaited_once()
     payload = store._content_store.update.await_args.args[0][0]
     assert payload["id"] == restored_note.id
@@ -191,7 +191,7 @@ async def test_restore_latest_note_revision_returns_none_without_snapshot() -> N
     """Restoring should no-op cleanly when no revision exists yet."""
     store = _build_store()
     store._note_revision_store = AsyncMock()
-    store._note_revision_store.get_latest_note_revision.return_value = None
+    store._note_revision_store.pop_latest_note_revision.return_value = None
     store.get_nodes = AsyncMock()
 
     result = await store.restore_latest_note_revision("missing-note", user_uid="root")

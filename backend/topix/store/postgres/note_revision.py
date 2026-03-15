@@ -165,3 +165,17 @@ async def list_note_revisions(
         note_id,
     )
     return [_row_to_note_revision(row) for row in rows]
+
+
+async def delete_note_revision(
+    conn: asyncpg.Connection,
+    revision_id: str,
+) -> None:
+    """Delete a stored note revision by its id."""
+    await conn.execute(
+        """
+        DELETE FROM note_revisions
+        WHERE id = $1
+        """,
+        revision_id,
+    )

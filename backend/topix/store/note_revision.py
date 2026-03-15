@@ -14,6 +14,7 @@ from topix.datatypes.note.note import Note
 from topix.store.postgres.note_revision import (
     NoteRevisionRecord,
     create_note_revisions_table,
+    delete_note_revision,
     get_latest_note_revision,
     insert_note_revision,
     prune_note_revisions,
@@ -134,3 +135,13 @@ class NoteRevisionStore:
         """Return the latest stored revision for a note."""
         async with self.pool.acquire() as conn:
             return await get_latest_note_revision(conn, note_id)
+
+    async def pop_latest_note_revision(self, note_id: str) -> NoteRevisionRecord | None:
+        """Return and delete the latest stored revision for a note."""
+        async with self.pool.acquire() as conn:
+            latest = await get_latest_note_revision(conn, note_id)
+            if latest is None:
+                return None
+
+            await delete_note_revision(conn, latest.id)
+            return latest

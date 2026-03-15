@@ -145,17 +145,15 @@ class GraphStore:
         task.add_done_callback(_log_task_result)
 
     async def restore_latest_note_revision(self, node_id: str, user_uid: str | None = None) -> Note | None:
-        """Restore the latest saved revision for a note and return the restored note."""
+        """Undo the latest saved revision for a note and return the restored note."""
         if self._note_revision_store is None:
             return None
 
-        revision = await self._note_revision_store.get_latest_note_revision(node_id)
+        revision = await self._note_revision_store.pop_latest_note_revision(node_id)
         if revision is None:
             return None
 
         current_nodes = await self.get_nodes([node_id])
-        if current_nodes:
-            await self._note_revision_store.save_note_snapshot(current_nodes[0], user_uid=user_uid)
 
         restored_note = deserialize_note_snapshot(revision.compression, revision.snapshot_compressed)
         payload = restored_note.model_dump(exclude_none=False)

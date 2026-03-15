@@ -212,3 +212,41 @@ async def test_save_note_snapshot_inserts_when_latest_is_old(monkeypatch) -> Non
     await store.save_note_snapshot(note, user_uid="root")
 
     assert calls == ["insert", "prune"]
+
+
+@pytest.mark.asyncio
+async def test_pop_latest_note_revision_deletes_consumed_snapshot(monkeypatch) -> None:
+    """Popping the latest revision should delete it after returning it."""
+    note = _build_note()
+    pool = _DummyPool()
+    store = NoteRevisionStore(pool)
+    calls: list[str] = []
+    latest = type(
+        "LatestRevision",
+        (),
+        {
+            "id": "rev-1",
+            "created_at": datetime.now(UTC),
+            "snapshot_hash": "hash-1",
+            "compression": "zstd",
+            "snapshot_compressed": b"payload",
+        },
+    )()
+
+    async def fake_get_latest(conn, note_id):
+        assert conn is pool.conn
+        assert note_id == note.id
+        return latest
+
+    async def fake_delete(conn, revision_id):
+        assert conn is pool.conn
+        assert revision_id == "rev-1"
+        calls.append("delete")
+
+    monkeypatch.setattr(note_revision_module, "get_latest_note_revision", fake_get_latest)
+    monkeypatch.setattr(note_revision_module, "delete_note_revision", fake_delete)
+
+    popped = await store.pop_latest_note_revision(note.id)
+
+    assert popped is latest
+    assert calls == ["delete"]

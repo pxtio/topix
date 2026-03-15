@@ -7,6 +7,8 @@ import type {
 import { RAW_MESSAGE, ToolNameDescription, isMainResponse } from "../../types/stream"
 import { simpleTransform } from "./transform"
 import type {
+  CreateNoteOutput,
+  EditNoteOutput,
   WebSearchOutput,
   MemorySearchOutput,
   ToolOutput,
@@ -64,6 +66,26 @@ const makeToolOutput = (acc: StepAccum): ToolOutput => {
       stdout: outputText,
       stderr: "",
       durationMs: 0
+    }
+  }
+  if (acc.name === "create_note") {
+    return {
+      type: "create_note",
+      noteId: "",
+      graphUid: "",
+      label: "",
+      noteType: "rectangle",
+      parentId: null,
+    }
+  }
+  if (acc.name === "edit_note") {
+    return {
+      type: "edit_note",
+      noteId: "",
+      graphUid: "",
+      label: "",
+      noteType: "rectangle",
+      parentId: null,
     }
   }
 
@@ -333,6 +355,32 @@ export function extractStepDescription(step: ReasoningStep): { reasoning: string
       return {
         reasoning: step.thought || "",
         message: "",
+        title: ToolNameDescription[step.name],
+        input
+      }
+    }
+
+    if (step.name === "create_note" && typeof step.output !== "string") {
+      const output = step.output as CreateNoteOutput
+      const typeLabel = output.noteType.replace(/-/g, " ")
+      return {
+        reasoning: step.thought || "",
+        message: output.label
+          ? `Created ${typeLabel} note "${output.label}".`
+          : `Created ${typeLabel} note.`,
+        title: ToolNameDescription[step.name],
+        input
+      }
+    }
+
+    if (step.name === "edit_note" && typeof step.output !== "string") {
+      const output = step.output as EditNoteOutput
+      const typeLabel = output.noteType.replace(/-/g, " ")
+      return {
+        reasoning: step.thought || "",
+        message: output.label
+          ? `Updated note "${output.label}" as ${typeLabel}.`
+          : `Updated note as ${typeLabel}.`,
         title: ToolNameDescription[step.name],
         input
       }

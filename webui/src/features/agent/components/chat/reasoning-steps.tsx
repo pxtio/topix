@@ -2,14 +2,16 @@ import { memo, useMemo, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { ToolNameIcon, type AgentResponse, type ReasoningStep } from "../../types/stream"
 import { extractStepDescription, getWebSearchUrls } from "../../utils/stream/build"
-import type { CodeInterpreterOutput } from "../../types/tool-outputs"
+import type { CodeInterpreterOutput, CreateNoteOutput, EditNoteOutput } from "../../types/tool-outputs"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { IdeaIcon, Search01Icon, Tick01Icon } from "@hugeicons/core-free-icons"
+import { IdeaIcon, Search01Icon, Tick01Icon, UndoIcon } from "@hugeicons/core-free-icons"
 import { ThinkingDots } from "@/components/loading-view"
 import { MiniLinkCard } from "../link-preview"
 import { cn } from "@/lib/utils"
 import { ProgressBar } from "@/components/progress-bar"
 import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import { useRestoreLatestNote } from "@/features/board/api/restore-latest-note"
 
 
 const ReasoningMessage = ({
@@ -66,6 +68,47 @@ const CodeInterpreterResult = ({
 }
 
 
+const NoteToolResult = ({
+  output,
+  canUndo,
+  onUndo,
+  isUndoing,
+}: {
+  output: CreateNoteOutput | EditNoteOutput
+  canUndo: boolean
+  onUndo?: () => Promise<void>
+  isUndoing: boolean
+}) => {
+  const typeLabel = output.noteType.replace(/-/g, " ")
+
+  return (
+    <div className='w-full rounded-lg border border-border bg-sidebar-accent/40 p-3'>
+      <div className='text-[11px] font-medium text-muted-foreground'>note</div>
+      <div className='mt-1 text-xs text-card-foreground whitespace-pre-line'>
+        <span className='font-medium'>{output.label || "Untitled note"}</span>
+        {` • ${typeLabel}`}
+      </div>
+      {
+        canUndo && onUndo && (
+          <div className='mt-3'>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void onUndo()}
+              disabled={isUndoing}
+              className='h-7 px-2 text-[11px]'
+            >
+              <HugeiconsIcon icon={UndoIcon} className='mr-1 size-3' strokeWidth={2} />
+              {isUndoing ? "Undoing..." : "Undo"}
+            </Button>
+          </div>
+        )
+      }
+    </div>
+  )
+}
+
+
 /**
  * ReasoningStepView component displays a single reasoning step.
  * @param {ReasoningStep} step - The reasoning step to display.
@@ -76,11 +119,19 @@ const ReasoningStepViewImpl = ({
 }: { step: ReasoningStep, isLoading?: boolean }) => {
   const [viewMore, setViewMore] = useState<boolean>(false)
   const [isInputCopied, setIsInputCopied] = useState<boolean>(false)
+  const [isUndoing, setIsUndoing] = useState(false)
 
   const { reasoning, message, title, input } = extractStepDescription(step)
   const codeInterpreterOutput = step.name === "code_interpreter" && typeof step.output !== "string"
     ? step.output as CodeInterpreterOutput
     : null
+  const noteToolOutput = (
+    (step.name === "create_note" || step.name === "edit_note") &&
+    typeof step.output !== "string"
+  )
+    ? step.output as CreateNoteOutput | EditNoteOutput
+    : null
+  const { restoreLatestNoteAsync } = useRestoreLatestNote()
 
   const sources = useMemo(() => {
     if (!viewMore) return []
@@ -97,6 +148,24 @@ const ReasoningStepViewImpl = ({
     setIsInputCopied(true)
     toast("Input copied to clipboard!")
     setTimeout(() => setIsInputCopied(false), 1500)
+  }
+
+  const handleUndoNoteEdit = async () => {
+    if (!noteToolOutput || step.name !== "edit_note") return
+
+    try {
+      setIsUndoing(true)
+      await restoreLatestNoteAsync({
+        boardId: noteToolOutput.graphUid,
+        noteId: noteToolOutput.noteId,
+      })
+      toast("Note restored")
+    } catch (error) {
+      console.error(error)
+      toast.error("Could not undo note edit")
+    } finally {
+      setIsUndoing(false)
+    }
   }
 
   const messageClass = 'transition-all w-full h-auto min-h-2 p-2 rounded-xl'
@@ -189,6 +258,16 @@ const ReasoningStepViewImpl = ({
             {
               viewMore && codeInterpreterOutput && (
                 <CodeInterpreterResult output={codeInterpreterOutput} />
+              )
+            }
+            {
+              viewMore && noteToolOutput && (
+                <NoteToolResult
+                  output={noteToolOutput}
+                  canUndo={step.name === "edit_note" && Boolean(noteToolOutput.noteId && noteToolOutput.graphUid)}
+                  onUndo={step.name === "edit_note" ? handleUndoNoteEdit : undefined}
+                  isUndoing={isUndoing}
+                />
               )
             }
             {

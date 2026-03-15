@@ -238,6 +238,10 @@ const sanitizeToolOutput = (output: ToolOutput): ToolOutput => {
       return { type: "memory_search", answer: "", references: [] }
     case "code_interpreter":
       return { type: "code_interpreter", status: "success", stdout: "", stderr: "", durationMs: 0 }
+    case "create_note":
+      return { type: "create_note", noteId: "", graphUid: "", label: "", noteType: "rectangle", parentId: null }
+    case "edit_note":
+      return { type: "edit_note", noteId: "", graphUid: "", label: "", noteType: "rectangle", parentId: null }
     case "display_weather_widget":
       return { type: "display_weather_widget", city: "" }
     case "display_stock_widget":

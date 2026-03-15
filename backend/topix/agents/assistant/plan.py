@@ -17,12 +17,14 @@ from topix.agents.datatypes.model_enum import ModelEnum
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.image.gen import generate_image_tool
 from topix.agents.memory.search import create_memory_search_tool
+from topix.agents.notes.tools import create_create_note_tool, create_edit_note_tool
 from topix.agents.websearch.fetch import fetch_url_content_tool
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.agents.widgets.finance import display_stock_widget_tool
 from topix.agents.widgets.image import display_image_search_widget_tool
 from topix.agents.widgets.weather import display_weather_widget_tool
 from topix.api.utils.common import iso_to_clear_date
+from topix.store.graph import GraphStore
 from topix.store.qdrant.store import ContentStore
 
 
@@ -55,7 +57,15 @@ class Plan(BaseAgent):
         super().__post_init__()
 
     @classmethod
-    def from_config(cls, content_store: ContentStore, config: PlanConfig, memory_filters: dict | None = None) -> Plan:
+    def from_config(
+        cls,
+        content_store: ContentStore,
+        config: PlanConfig,
+        memory_filters: dict | None = None,
+        graph_store: GraphStore | None = None,
+        graph_uid: str | None = None,
+        root_id: str | None = None,
+    ) -> Plan:
         """Create an instance of Plan from configuration."""
         tools = [
             display_stock_widget_tool,
@@ -67,6 +77,10 @@ class Plan(BaseAgent):
 
         if config.code_interpreter:
             tools.append(run_code_tool)
+
+        if graph_store is not None and graph_uid is not None:
+            tools.append(create_create_note_tool(graph_store, graph_uid, root_id=root_id))
+            tools.append(create_edit_note_tool(graph_store, graph_uid))
 
         if config.navigate:
             tools.append(fetch_url_content_tool)

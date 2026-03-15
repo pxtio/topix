@@ -55,6 +55,7 @@ class SendMessageRequest(BaseModel):
 
     message_id: str | None = None
     query: str
+    root_id: str | None = None
     model: str = "openai/gpt-4.1"
     web_search_engine: WebSearchOption = WebSearchOption.PERPLEXITY
     force_tool: AgentToolName | None = None
@@ -63,6 +64,8 @@ class SendMessageRequest(BaseModel):
         AgentToolName.WEB_SEARCH,
         AgentToolName.MEMORY_SEARCH,
         AgentToolName.CODE_INTERPRETER,
+        AgentToolName.CREATE_NOTE,
+        AgentToolName.EDIT_NOTE,
         AgentToolName.NAVIGATE,
         AgentToolName.IMAGE_GENERATION,
         AgentToolName.DISPLAY_STOCK_WIDGET,

@@ -25,6 +25,7 @@ from topix.api.utils.resilient_streaming import with_streaming_resilient_ndjson
 from topix.api.utils.security import get_current_user_uid, verify_chat_user
 from topix.datatypes.chat.chat import Chat
 from topix.store.chat import ChatStore
+from topix.store.graph import GraphStore
 from topix.utils.common import gen_uid
 
 logger = logging.getLogger(__name__)
@@ -161,6 +162,7 @@ async def send_message(
 ):
     """Send a message to a chat."""
     chat_store: ChatStore = request.app.chat_store
+    graph_store: GraphStore = request.app.graph_store
     session = AssistantSession(session_id=chat_id, chat_store=chat_store)
 
     if body.use_deep_research:
@@ -183,13 +185,24 @@ async def send_message(
 
         enabled_tools = body.enabled_tools or []
         if memory_filters is None:
-            # if no graph_uid, disable memory search tool
-            enabled_tools = [tool for tool in enabled_tools if tool != "memory_search"]
+            # if no graph_uid, disable tools that require a board scope
+            enabled_tools = [
+                tool
+                for tool in enabled_tools
+                if tool not in {
+                    "memory_search",
+                    "create_note",
+                    "edit_note",
+                }
+            ]
 
         assistant: AssistantManager = AssistantManager.from_config(
             content_store=chat_store._content_store,
             config=assistant_config,
-            memory_filters=memory_filters
+            memory_filters=memory_filters,
+            graph_store=graph_store if chat.graph_uid else None,
+            graph_uid=chat.graph_uid,
+            root_id=body.root_id,
         )
 
         assistant.plan_agent.set_enabled_tools(enabled_tools)

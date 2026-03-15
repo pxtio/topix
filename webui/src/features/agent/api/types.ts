@@ -10,6 +10,7 @@ import type { WebSearchEngine } from "../types/web"
 export interface SendMessageRequestPayload {
   query: string
   messageId: string
+  rootId?: string
   model: LlmModel
   webSearchEngine: WebSearchEngine
   enabledTools?: ToolName[]

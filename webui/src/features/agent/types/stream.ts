@@ -1,6 +1,6 @@
 import type { IconSvgElement } from "@hugeicons/react"
 import type { Annotation, ToolOutput } from "./tool-outputs"
-import { AiBrowserIcon, AiImageIcon, Album02Icon, ChipIcon, DashboardBrowsingIcon, GlobalSearchIcon, Search01Icon, SourceCodeIcon, TextAlignLeftIcon, ThermometerWarmIcon } from "@hugeicons/core-free-icons"
+import { AiBrowserIcon, AiImageIcon, Album02Icon, ChipIcon, DashboardBrowsingIcon, GlobalSearchIcon, NoteIcon, PencilEditIcon, Search01Icon, SourceCodeIcon, TextAlignLeftIcon, ThermometerWarmIcon } from "@hugeicons/core-free-icons"
 
 /**
  * Represents the type of streaming message in the agent response.
@@ -86,6 +86,8 @@ export type ToolName =
   | "web_search"
   | "memory_search"
   | "code_interpreter"
+  | "create_note"
+  | "edit_note"
   | "navigate"
   | "raw_message"
   | "outline_generator"
@@ -102,6 +104,8 @@ export const ToolNameDescription: Record<ToolName, string> = {
   "web_search": "Search the web",
   "memory_search": "Search memory",
   "code_interpreter": "Interpret code",
+  "create_note": "Create note",
+  "edit_note": "Edit note",
   "navigate": "Fetch and analyze web page content",
   "raw_message": "Reasoning",
   "outline_generator": "Generate an outline for the topic",
@@ -118,6 +122,8 @@ export const ToolNameIcon: Record<string, IconSvgElement> = {
   "memory_search": ChipIcon,
   "navigate": AiBrowserIcon,
   "code_interpreter": SourceCodeIcon,
+  "create_note": NoteIcon,
+  "edit_note": PencilEditIcon,
   "outline_generator": TextAlignLeftIcon,
   "web_collector": GlobalSearchIcon,
   "image_generation": AiImageIcon,

@@ -74,6 +74,7 @@ export const InputBar = ({
       ))
     })
   )
+  const rootId = useGraphStore((state) => state.rootId)
 
   const selectedNodeCount = selectedNodes.length
   const messageContext = useMemo(() => {
@@ -140,6 +141,7 @@ export const InputBar = ({
     const payload: SendMessageRequestPayload = {
       query: trimmed,
       messageId: generateUuid(),
+      rootId,
       model: llmModel,
       webSearchEngine,
       enabledTools,

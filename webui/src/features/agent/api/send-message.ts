@@ -11,7 +11,10 @@ import { fetchWithAuthRaw } from "@/api"
 import type { ToolOutput } from "../types/tool-outputs"
 import { trimResponseAnnotations } from "../utils/annotations"
 import { useGraphStore } from "@/features/board/store/graph-store"
-import { reloadBoardIntoStore } from "@/features/board/api/get-board"
+import { getBoardNote } from "@/features/board/api/get-board"
+import { convertNoteToNode } from "@/features/board/utils/graph"
+import type { NoteNode } from "@/features/board/types/flow"
+import type { CreateNoteOutput, EditNoteOutput } from "../types/tool-outputs"
 
 
 /**
@@ -114,7 +117,7 @@ export const useSendMessage = () => {
       } as ChatMessage
 
       const newMessages = [newUserMessage, newAssistantPlaceholder]
-      let shouldRefreshActiveBoard = false
+      let noteToolOutputs: Array<CreateNoteOutput | EditNoteOutput> = []
 
       try {
         queryClient.setQueryData<ChatMessage[]>(
@@ -137,10 +140,7 @@ export const useSendMessage = () => {
           const safeResponse = trimResponseAnnotations(
             sanitizeResponseForStreaming(rep, isStop)
           )
-          shouldRefreshActiveBoard ||= safeResponse.steps.some((step) =>
-            (step.name === "create_note" || step.name === "edit_note") &&
-            typeof step.output !== "string"
-          )
+          noteToolOutputs = collectNoteToolOutputs(safeResponse.steps)
           const step = safeResponse.steps[0]
           const responseId = step.id
 
@@ -205,10 +205,26 @@ export const useSendMessage = () => {
       } finally {
         setIsStreaming(false)
         await queryClient.invalidateQueries({ queryKey: key, exact: true })
-        if (shouldRefreshActiveBoard) {
-          const { boardId: activeBoardId, rootId } = useGraphStore.getState()
+        if (noteToolOutputs.length > 0) {
+          const {
+            boardId: activeBoardId,
+            setNodesPersist,
+          } = useGraphStore.getState()
+
           if (activeBoardId) {
-            await reloadBoardIntoStore(activeBoardId, rootId)
+            for (const output of noteToolOutputs) {
+              if (output.graphUid !== activeBoardId || !output.noteId) continue
+
+              try {
+                const note = await getBoardNote(activeBoardId, output.noteId)
+                const fetchedNode = convertNoteToNode(note)
+                setNodesPersist((prevNodes) =>
+                  applyRemoteNoteNode(prevNodes, fetchedNode, output.type === "create_note"),
+                { persist: false })
+              } catch (error) {
+                console.error("Failed to apply remote note update locally:", error)
+              }
+            }
           }
         }
       }
@@ -266,4 +282,61 @@ const sanitizeToolOutput = (output: ToolOutput): ToolOutput => {
     default:
       return output
   }
+}
+
+const collectNoteToolOutputs = (steps: ReasoningStep[]): Array<CreateNoteOutput | EditNoteOutput> =>
+  steps.flatMap((step) => {
+    if (
+      (step.name === "create_note" || step.name === "edit_note") &&
+      typeof step.output !== "string"
+    ) {
+      return [step.output as CreateNoteOutput | EditNoteOutput]
+    }
+    return []
+  })
+
+const applyRemoteNoteNode = (
+  prevNodes: NoteNode[],
+  nextNode: NoteNode,
+  selectNode: boolean,
+): NoteNode[] => {
+  const existingNode = prevNodes.find((node) => node.id === nextNode.id)
+  const baseNode = existingNode
+    ? {
+        ...nextNode,
+        selected: existingNode.selected,
+        dragging: existingNode.dragging,
+        measured: existingNode.measured ?? nextNode.measured,
+      }
+    : nextNode
+
+  if (existingNode) {
+    return prevNodes.map((node) =>
+      node.id === nextNode.id
+        ? {
+            ...baseNode,
+            selected: selectNode ? true : baseNode.selected,
+          }
+        : (selectNode ? { ...node, selected: false } : node)
+    )
+  }
+
+  const maxZ = prevNodes.reduce((acc, node) => {
+    const kind = (node.data as { kind?: string }).kind
+    const nodeType = (node.data as { style?: { type?: string } }).style?.type
+    if (kind === "point" || nodeType === "slide") return acc
+    return Math.max(acc, node.zIndex ?? 0)
+  }, 0)
+
+  const appendedNode = {
+    ...baseNode,
+    selected: selectNode,
+    zIndex: baseNode.data.style?.type === "slide" ? -1000 : maxZ + 1,
+  }
+
+  const clearedNodes = selectNode
+    ? prevNodes.map((node) => ({ ...node, selected: false }))
+    : prevNodes
+
+  return [...clearedNodes, appendedNode]
 }

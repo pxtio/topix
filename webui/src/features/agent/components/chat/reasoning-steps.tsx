@@ -342,7 +342,7 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
               rounded-xl
             `}
           >
-            <div className='font-medium text-base p-1 flex flex-row items-center justify-center gap-2'>
+            <div className='text-base p-1 flex flex-row items-center justify-center gap-2'>
               <TreeThinkingIndicator message={titleMessage} isStopped={!isStreaming} />
               <span
                 className='transition-all text-xs text-accent-foreground hover:text-card-foreground'

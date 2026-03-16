@@ -5,11 +5,11 @@ import { extractStepDescription, getWebSearchUrls } from "../../utils/stream/bui
 import type { CodeInterpreterOutput, CreateNoteOutput, EditNoteOutput } from "../../types/tool-outputs"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { IdeaIcon, Search01Icon, Tick01Icon } from "@hugeicons/core-free-icons"
-import { ThinkingDots } from "@/components/loading-view"
 import { MiniLinkCard } from "../link-preview"
 import { cn } from "@/lib/utils"
 import { ProgressBar } from "@/components/progress-bar"
 import { toast } from "sonner"
+import { TreeThinkingIndicator } from "./tree-thinking-indicator"
 
 
 const ReasoningMessage = ({
@@ -308,8 +308,8 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
       {
         (!isOpen || isStreaming) ? (
           <div className='w-full flex flex-col items-center gap-2'>
-            <div className='w-full p-4 text-left flex flex-row items-center gap-2'>
-              <ThinkingDots message={titleMessage} isStopped={!isStreaming} />
+            <div className='w-full p-2 text-left flex flex-row items-center gap-2'>
+              <TreeThinkingIndicator message={titleMessage} isStopped={!isStreaming} />
               {
                 !isStreaming && (
                   <span
@@ -336,16 +336,14 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
             className={`
               relative
               w-full
-              p-3
+              p-2
               bg-sidebar
               text-muted-foreground
               rounded-xl
-              border-border/30
-              border
             `}
           >
             <div className='font-medium text-base p-1 flex flex-row items-center justify-center gap-2'>
-              <ThinkingDots message={titleMessage} isStopped={!isStreaming} />
+              <TreeThinkingIndicator message={titleMessage} isStopped={!isStreaming} />
               <span
                 className='transition-all text-xs text-accent-foreground hover:text-card-foreground'
                 onClick={() => setIsOpen(!isOpen)}
@@ -371,7 +369,7 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
                 />)
               }
               <div
-                className='absolute left-[0.975rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
+                className='absolute left-[0.975rem] top-1 w-[1px] h-[calc(100%-1rem)] bg-border rounded-lg z-10'
               />
             </div>
           </div>

@@ -39,7 +39,7 @@ const EMPTY_MESSAGES: ChatMessage[] = []
  */
 const TrailingAssistantIndicator = ({ isStreaming }: { isStreaming: boolean }) => {
   return (
-    <div className='w-full flex justify-start'>
+    <div className='w-full flex justify-start mt-2'>
       <div className='min-h-9'>
         <TreeAgentIcon isStopped={!isStreaming} />
       </div>

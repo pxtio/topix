@@ -11,7 +11,7 @@ const DotLottieReact = lazy(async () => {
  * TreeAgentIcon renders the assistant tree animation and freezes it on the last frame when stopped.
  */
 export function TreeAgentIcon({
-  size = 36,
+  size = 40,
   isStopped = false
 }: {
   size?: number

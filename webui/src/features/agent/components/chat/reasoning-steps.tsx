@@ -8,8 +8,8 @@ import { IdeaIcon, Search01Icon, Tick01Icon } from "@hugeicons/core-free-icons"
 import { MiniLinkCard } from "../link-preview"
 import { cn } from "@/lib/utils"
 import { ProgressBar } from "@/components/progress-bar"
+import { ShinyText } from "@/components/animations/shiny-text"
 import { toast } from "sonner"
-import { TreeThinkingIndicator } from "./tree-thinking-indicator"
 
 
 const ReasoningMessage = ({
@@ -309,11 +309,24 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
         (!isOpen || isStreaming) ? (
           <div className='w-full flex flex-col items-center gap-2'>
             <div className='w-full p-2 text-left flex flex-row items-center gap-2'>
-              <TreeThinkingIndicator message={titleMessage} isStopped={!isStreaming} />
+              {
+                isStreaming ? (
+                  <ShinyText
+                    text={titleMessage}
+                    disabled={false}
+                    speed={1}
+                    className='text-sm text-foreground/50'
+                  />
+                ) : (
+                  <span className='text-sm text-muted-foreground'>
+                    {titleMessage}
+                  </span>
+                )
+              }
               {
                 !isStreaming && (
                   <span
-                    className='transition-all text-xs text-accent-foreground hover:text-card-foreground'
+                    className='transition-all text-xs text-muted-foreground hover:text-card-foreground'
                     onClick={() => setIsOpen(!isOpen)}
                   >
                     <ChevronDown className='w-4 h-4 flex-shrink-0' />
@@ -343,9 +356,9 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
             `}
           >
             <div className='text-base p-1 flex flex-row items-center justify-center gap-2'>
-              <TreeThinkingIndicator message={titleMessage} isStopped={!isStreaming} />
+              <span className='text-sm text-muted-foreground'>{titleMessage}</span>
               <span
-                className='transition-all text-xs text-accent-foreground hover:text-card-foreground'
+                className='transition-all text-xs text-muted-foreground hover:text-card-foreground'
                 onClick={() => setIsOpen(!isOpen)}
               >
                 <ChevronUp className='w-4 h-4 flex-shrink-0' />

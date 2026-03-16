@@ -1,6 +1,4 @@
 import { Suspense, lazy } from "react"
-import { ShinyText } from "@/components/animations/shiny-text"
-import { cn } from "@/lib/utils"
 
 
 const DotLottieReact = lazy(async () => {
@@ -10,12 +8,19 @@ const DotLottieReact = lazy(async () => {
 
 
 /**
- * TreeAnimation renders the reasoning animation from the public animations directory.
+ * TreeAgentIcon renders the assistant tree animation and freezes it on the last frame when stopped.
  */
-function TreeAnimation({ size = 36 }: { size?: number }) {
+export function TreeAgentIcon({
+  size = 36,
+  isStopped = false
+}: {
+  size?: number
+  isStopped?: boolean
+}) {
   const src = `${import.meta.env.BASE_URL}animations/Tree.lottie`
   const frameStyle = { width: size, height: size }
   const playerStyle = { width: size * 4, height: size * 1.5 }
+  const lastFrame = 8
 
   return (
     <Suspense fallback={<div style={frameStyle} className='shrink-0' />}>
@@ -24,47 +29,29 @@ function TreeAnimation({ size = 36 }: { size?: number }) {
         className='relative shrink-0 overflow-hidden'
       >
         <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[54%]'>
-          <DotLottieReact src={src} autoplay loop style={playerStyle} />
+          {
+            isStopped ? (
+              <DotLottieReact
+                key='tree-stopped'
+                src={src}
+                autoplay={false}
+                loop={false}
+                segment={[lastFrame, lastFrame]}
+                useFrameInterpolation={false}
+                style={playerStyle}
+              />
+            ) : (
+              <DotLottieReact
+                key='tree-streaming'
+                src={src}
+                autoplay
+                loop
+                style={playerStyle}
+              />
+            )
+          }
         </div>
       </div>
     </Suspense>
-  )
-}
-
-
-/**
- * TreeThinkingIndicator shows the tree Lottie while reasoning and a static icon when finished.
- */
-export function TreeThinkingIndicator({
-  message,
-  isStopped = false,
-  className
-}: {
-  message: string
-  isStopped?: boolean
-  className?: string
-}) {
-  return (
-    <div className={cn("flex flex-row items-center gap-2", className)}>
-      {
-        !isStopped && (
-          <div className='shrink-0'>
-            <TreeAnimation />
-          </div>
-        )
-      }
-      {
-        !isStopped ? (
-          <ShinyText
-            text={message}
-            disabled={isStopped}
-            speed={1}
-            className='font-medium text-sm text-foreground/50'
-          />
-        ) : (
-          <span className='font-medium text-sm text-accent-foreground'>{message}</span>
-        )
-      }
-    </div>
   )
 }

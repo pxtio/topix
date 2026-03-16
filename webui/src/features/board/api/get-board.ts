@@ -5,6 +5,7 @@ import { useGraphStore } from "../store/graph-store"
 import { convertLinkToEdgeWithPoints, convertNoteToNode } from "../utils/graph"
 import type { LinkEdge, NoteNode } from "../types/flow"
 import { apiFetch } from "@/api"
+import type { Note } from "../types/note"
 
 
 /**
@@ -40,11 +41,6 @@ export const useGetBoard = () => {
       const {
         boardId,
         rootId,
-        setNodes,
-        setEdges,
-        setBoardVisibility,
-        setBoardCanEdit,
-        setBoardLabel,
         isLoading,
         setIsLoading,
       } = useGraphStore.getState()
@@ -52,6 +48,14 @@ export const useGetBoard = () => {
       if (isLoading) return false
       setIsLoading(true)
       try {
+        const {
+          setNodes,
+          setEdges,
+          setBoardVisibility,
+          setBoardCanEdit,
+          setBoardLabel,
+        } = useGraphStore.getState()
+
         const { graph, canEdit } = await getBoard(boardId, rootId)
         const { nodes: notes, edges: links, visibility } = graph
         const nodes = (notes ?? []).map(convertNoteToNode)
@@ -93,4 +97,20 @@ export const useGetBoard = () => {
     getBoardAsync: mutation.mutateAsync,
     ...mutation,
   }
+}
+
+
+/**
+ * Fetch a single note from a board.
+ */
+export async function getBoardNote(
+  boardId: string,
+  noteId: string,
+): Promise<Note> {
+  const res = await apiFetch<{ data: Record<string, unknown> }>({
+    path: `/boards/${boardId}/notes/${noteId}`,
+    method: "GET",
+  })
+  const data = camelcaseKeys(res.data, { deep: true })
+  return data.note as Note
 }

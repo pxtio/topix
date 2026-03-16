@@ -4,7 +4,7 @@ import type { LlmModel } from "../types/llm"
 import type { WebSearchEngine } from "../types/web"
 import { defaultServices, type Services } from "../types/services"
 
-const DEFAULT_LLM_MODEL: LlmModel = "openai/gpt-5.1"
+const DEFAULT_LLM_MODEL: LlmModel = "openai/gpt-5.1-chat-latest"
 
 
 /**
@@ -48,6 +48,8 @@ export const useChatStore = create<ChatStore>((set) => ({
     "web_search",
     "memory_search",
     "code_interpreter",
+    "create_note",
+    "edit_note",
     "navigate",
     "image_generation",
     "display_stock_widget",
@@ -93,7 +95,14 @@ export const useChatStore = create<ChatStore>((set) => ({
       set({ webSearchEngine: firstAvailableSearch.name as WebSearchEngine })
     }
     // init with default available tools
-    const enabledTools: ToolName[] = ["memory_search", "display_stock_widget", "display_weather_widget", "display_image_search_widget"]
+    const enabledTools: ToolName[] = [
+      "memory_search",
+      "create_note",
+      "edit_note",
+      "display_stock_widget",
+      "display_weather_widget",
+      "display_image_search_widget"
+    ]
     if (services.code.filter((service) => service.available).length > 0) {
       enabledTools.push("code_interpreter")
     }

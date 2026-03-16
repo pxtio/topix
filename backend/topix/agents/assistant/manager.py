@@ -24,6 +24,7 @@ from topix.agents.utils.text import post_process_url_citations
 from topix.datatypes.chat.chat import Message
 from topix.datatypes.property import ReasoningProperty, TextProperty
 from topix.datatypes.resource import RichText
+from topix.store.graph import GraphStore
 from topix.store.qdrant.store import ContentStore
 from topix.utils.common import gen_uid
 
@@ -50,12 +51,18 @@ class AssistantManager:
         content_store: ContentStore,
         config: AssistantManagerConfig,
         memory_filters: dict | None = None,
+        graph_store: GraphStore | None = None,
+        graph_uid: str | None = None,
+        root_id: str | None = None,
     ) -> AssistantManager:
         """Create an instance of AssistantManager from configuration."""
         plan_agent = Plan.from_config(
             content_store,
             config.plan,
             memory_filters=memory_filters,
+            graph_store=graph_store,
+            graph_uid=graph_uid,
+            root_id=root_id,
         )
         query_rewrite_agent = QueryRewrite.from_config(config.query_rewrite)
         synthesis_agent = AnswerReformulate.from_config(config.synthesis)

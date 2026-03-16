@@ -111,7 +111,7 @@ const NoteDisplayContent = memo(function NoteDisplayContent({
   return (
     <Shape
       nodeType={note.style.type}
-      value={labelEditing ? labelDraft : (note.label?.markdown || '')}
+      value={labelEditing ? labelDraft : (note.content?.markdown || note.label?.markdown || '')}
       labelEditing={labelEditing}
       onChange={onLabelChange}
       textareaRef={textareaRef}
@@ -255,6 +255,7 @@ export const NodeCard = memo(({
   const isSheet = note.style.type === 'sheet'
   const isText = note.style.type === 'text'
   const navigate = useNavigate()
+  const nonSheetDisplayValue = note.content?.markdown || note.label?.markdown || ''
 
   const [internalOpen, setInternalOpen] = useState(false)
   const dialogOpen = isSheet ? (typeof open === 'boolean' ? open : internalOpen) : false
@@ -268,7 +269,9 @@ export const NodeCard = memo(({
   const sheetTitleInputRef = useRef<HTMLInputElement | null>(null)
 
   // local draft that controls the textarea while editing
-  const [labelDraft, setLabelDraft] = useState<string>(note.label?.markdown || '')
+  const [labelDraft, setLabelDraft] = useState<string>(
+    isSheet ? note.label?.markdown || '' : nonSheetDisplayValue
+  )
   const [debouncedLabelDraft, setDebouncedLabelDraft] = useState<string>(labelDraft)
 
   // selection cache for resilient caret restore if remounts happen
@@ -306,8 +309,10 @@ export const NodeCard = memo(({
 
   // keep draft in sync when not editing or when external value changes
   useEffect(() => {
-    if (!labelEditing) setLabelDraft(note.label?.markdown || '')
-  }, [labelEditing, note.label?.markdown])
+    if (!labelEditing) {
+      setLabelDraft(isSheet ? note.label?.markdown || '' : nonSheetDisplayValue)
+    }
+  }, [isSheet, labelEditing, nonSheetDisplayValue, note.label?.markdown])
 
   useEffect(() => {
     if (!labelEditing) return
@@ -384,15 +389,18 @@ export const NodeCard = memo(({
 
   useEffect(() => {
     if (!labelEditing) return
-    if (debouncedLabelDraft === (note.label?.markdown || '')) return
+    const currentValue = isSheet ? (note.label?.markdown || '') : nonSheetDisplayValue
+    if (debouncedLabelDraft === currentValue) return
     updateNodeByIdPersist(note.id, (node) => {
       const data = node.data as NoteNode['data']
       return {
         ...node,
-        data: { ...data, label: { markdown: debouncedLabelDraft } }
+        data: isSheet
+          ? { ...data, label: { markdown: debouncedLabelDraft } }
+          : { ...data, content: { markdown: debouncedLabelDraft } }
       }
     })
-  }, [debouncedLabelDraft, labelEditing, note.id, note.label?.markdown, updateNodeByIdPersist])
+  }, [debouncedLabelDraft, isSheet, labelEditing, nonSheetDisplayValue, note.id, note.label?.markdown, updateNodeByIdPersist])
 
   // handlers
   const handleLabelChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {

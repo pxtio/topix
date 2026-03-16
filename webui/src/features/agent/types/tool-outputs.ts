@@ -47,6 +47,24 @@ export interface CodeInterpreterOutput {
   durationMs: number
 }
 
+export interface CreateNoteOutput {
+  type: "create_note"
+  noteId: string
+  graphUid: string
+  label: string
+  noteType: string
+  parentId?: string | null
+}
+
+export interface EditNoteOutput {
+  type: "edit_note"
+  noteId: string
+  graphUid: string
+  label: string
+  noteType: string
+  parentId?: string | null
+}
+
 export interface WeatherWidgetOutput {
   type: "display_weather_widget"
   city: string
@@ -72,6 +90,8 @@ export type ToolOutput =
   | WebSearchOutput
   | MemorySearchOutput
   | CodeInterpreterOutput
+  | CreateNoteOutput
+  | EditNoteOutput
   | WeatherWidgetOutput
   | StockWidgetOutput
   | ImageSearchWidgetOutput

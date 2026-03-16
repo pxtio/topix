@@ -2,13 +2,13 @@ import { memo, useMemo, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import { ToolNameIcon, type AgentResponse, type ReasoningStep } from "../../types/stream"
 import { extractStepDescription, getWebSearchUrls } from "../../utils/stream/build"
-import type { CodeInterpreterOutput } from "../../types/tool-outputs"
+import type { CodeInterpreterOutput, CreateNoteOutput, EditNoteOutput } from "../../types/tool-outputs"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { IdeaIcon, Search01Icon, Tick01Icon } from "@hugeicons/core-free-icons"
-import { ThinkingDots } from "@/components/loading-view"
 import { MiniLinkCard } from "../link-preview"
 import { cn } from "@/lib/utils"
 import { ProgressBar } from "@/components/progress-bar"
+import { ShinyText } from "@/components/animations/shiny-text"
 import { toast } from "sonner"
 
 
@@ -66,6 +66,25 @@ const CodeInterpreterResult = ({
 }
 
 
+const NoteToolResult = ({
+  output,
+}: {
+  output: CreateNoteOutput | EditNoteOutput
+}) => {
+  const typeLabel = output.noteType.replace(/-/g, " ")
+
+  return (
+    <div className='w-full rounded-lg border border-border bg-sidebar-accent/40 p-3'>
+      <div className='text-[11px] font-medium text-muted-foreground'>note</div>
+      <div className='mt-1 text-xs text-card-foreground whitespace-pre-line'>
+        <span className='font-medium'>{output.label || "Untitled note"}</span>
+        {` • ${typeLabel}`}
+      </div>
+    </div>
+  )
+}
+
+
 /**
  * ReasoningStepView component displays a single reasoning step.
  * @param {ReasoningStep} step - The reasoning step to display.
@@ -80,6 +99,12 @@ const ReasoningStepViewImpl = ({
   const { reasoning, message, title, input } = extractStepDescription(step)
   const codeInterpreterOutput = step.name === "code_interpreter" && typeof step.output !== "string"
     ? step.output as CodeInterpreterOutput
+    : null
+  const noteToolOutput = (
+    (step.name === "create_note" || step.name === "edit_note") &&
+    typeof step.output !== "string"
+  )
+    ? step.output as CreateNoteOutput | EditNoteOutput
     : null
 
   const sources = useMemo(() => {
@@ -192,6 +217,13 @@ const ReasoningStepViewImpl = ({
               )
             }
             {
+              viewMore && noteToolOutput && (
+                <NoteToolResult
+                  output={noteToolOutput}
+                />
+              )
+            }
+            {
               viewMore && sources && sources.length > 0 &&
               <div className='w-full flex flex-row flex-wrap items-start gap-1 mt-2'>
                 {
@@ -276,12 +308,25 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
       {
         (!isOpen || isStreaming) ? (
           <div className='w-full flex flex-col items-center gap-2'>
-            <div className='w-full p-4 text-left flex flex-row items-center gap-2'>
-              <ThinkingDots message={titleMessage} isStopped={!isStreaming} />
+            <div className='w-full p-2 text-left flex flex-row items-center gap-2'>
+              {
+                isStreaming ? (
+                  <ShinyText
+                    text={titleMessage}
+                    disabled={false}
+                    speed={1}
+                    className='text-sm text-foreground/50'
+                  />
+                ) : (
+                  <span className='text-sm text-muted-foreground'>
+                    {titleMessage}
+                  </span>
+                )
+              }
               {
                 !isStreaming && (
                   <span
-                    className='transition-all text-xs text-accent-foreground hover:text-card-foreground'
+                    className='transition-all text-xs text-muted-foreground hover:text-card-foreground'
                     onClick={() => setIsOpen(!isOpen)}
                   >
                     <ChevronDown className='w-4 h-4 flex-shrink-0' />
@@ -304,18 +349,16 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
             className={`
               relative
               w-full
-              p-3
+              p-2
               bg-sidebar
               text-muted-foreground
               rounded-xl
-              border-border/30
-              border
             `}
           >
-            <div className='font-medium text-base p-1 flex flex-row items-center justify-center gap-2'>
-              <ThinkingDots message={titleMessage} isStopped={!isStreaming} />
+            <div className='text-base p-1 flex flex-row items-center justify-center gap-2'>
+              <span className='text-sm text-muted-foreground'>{titleMessage}</span>
               <span
-                className='transition-all text-xs text-accent-foreground hover:text-card-foreground'
+                className='transition-all text-xs text-muted-foreground hover:text-card-foreground'
                 onClick={() => setIsOpen(!isOpen)}
               >
                 <ChevronUp className='w-4 h-4 flex-shrink-0' />
@@ -339,7 +382,7 @@ export const ReasoningStepsView = ({ isStreaming, response, estimatedDurationSec
                 />)
               }
               <div
-                className='absolute left-[0.975rem] top-0 w-[1px] h-full bg-border rounded-lg z-10'
+                className='absolute left-[0.975rem] top-1 w-[1px] h-[calc(100%-1rem)] bg-border rounded-lg z-10'
               />
             </div>
           </div>

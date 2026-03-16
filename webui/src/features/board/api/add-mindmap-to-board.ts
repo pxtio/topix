@@ -1,5 +1,4 @@
 import { useMindMapStore } from '@/features/agent/store/mindmap-store'
-import { useAppStore } from '@/store'
 import { useMutation } from '@tanstack/react-query'
 import { useGraphStore } from '../store/graph-store'
 import { displaceNodes } from '../utils/flow-view'
@@ -24,7 +23,7 @@ const applyAutoHeightForMindMapNodes = (nodes: NoteNode[]) =>
   nodes.map(node => {
     if (!isAutoSizedTextNode(node)) return node
 
-    const markdown = node.data.label?.markdown ?? ''
+    const markdown = node.data.content?.markdown ?? node.data.label?.markdown ?? ''
     if (!markdown.trim()) return node
     if (markdown.includes('$$')) return node
 
@@ -71,7 +70,6 @@ const applyAutoHeightForMindMapNodes = (nodes: NoteNode[]) =>
  * and persisting to the backend.
  */
 export const useAddMindMapToBoard = () => {
-  const { userId } = useAppStore()
   const boardId = useGraphStore(state => state.boardId)
   const rootId = useGraphStore(state => state.rootId)
   const nodes = useGraphStore(useShallow(state => state.nodes))
@@ -83,7 +81,7 @@ export const useAddMindMapToBoard = () => {
 
   const mutation = useMutation({
     mutationFn: async (): Promise<boolean> => {
-      if (!boardId || !userId) {
+      if (!boardId) {
         return false
       }
 

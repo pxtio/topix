@@ -11,6 +11,7 @@ from topix.agents.datatypes.annotations import (
 )
 from topix.agents.datatypes.drawn_graph import DrawnGraph
 from topix.agents.mindmap.schemify.datatypes import SchemaOutput
+from topix.datatypes.note.style import NodeType
 
 
 class DisplayWeatherWidgetOutput(BaseModel):
@@ -168,6 +169,34 @@ class CodeInterpreterOutput(BaseModel):
         return result
 
 
+class CreateNoteOutput(BaseModel):
+    """Output from create note tool."""
+
+    type: Literal["create_note"] = "create_note"
+    note_id: Annotated[str, "The unique id of the created note."]
+    graph_uid: Annotated[str, "The board id where the note was created."]
+    label: Annotated[str | None, "Optional short title stored separately from the note body."]
+    note_type: Annotated[NodeType, "The final node type used for the created note."]
+    parent_id: Annotated[
+        str | None,
+        "The folder/root note id used as the created note parent, if any."
+    ] = None
+
+
+class EditNoteOutput(BaseModel):
+    """Output from edit note tool."""
+
+    type: Literal["edit_note"] = "edit_note"
+    note_id: Annotated[str, "The unique id of the edited note."]
+    graph_uid: Annotated[str, "The board id where the note belongs."]
+    label: Annotated[str | None, "Optional short title after the edit is applied."]
+    note_type: Annotated[NodeType, "The final node type after the edit."]
+    parent_id: Annotated[
+        str | None,
+        "The parent folder/root note id after the edit, if any."
+    ] = None
+
+
 class MemorySearchOutput(BaseModel):
     """Output from memory search tool."""
 
@@ -184,8 +213,9 @@ class MemorySearchOutput(BaseModel):
         formatted = "Memory search Results:\n\n"
         for reference in self.references:
             if reference.label or reference.content:
-                url = f"/{reference.ref_type}/{reference.ref_id[:5]}"
-                formatted += f"\n<Source\n  id=\"{reference.ref_id}\"\n  url=\"{url}\""
+                note_id = reference.ref_id
+                url = f"/{reference.ref_type}/{note_id[:5]}"
+                formatted += f"\n<Source\n  id=\"{note_id}\"\n  url=\"{url}\""
                 if reference.label:
                     formatted += f"\n  label=\"{reference.label}\""
                 formatted += (
@@ -207,6 +237,8 @@ class ImageGenerationOutput(BaseModel):
 type ToolOutput = Union[
     str,
     CodeInterpreterOutput,
+    CreateNoteOutput,
+    EditNoteOutput,
     WebSearchOutput,
     MemorySearchOutput,
     NotifyOutput,

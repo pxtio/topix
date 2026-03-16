@@ -55,6 +55,9 @@ import {
 // --- helpers ---
 
 type Updater<T> = T | ((prev: T) => T)
+type PersistOptions = {
+  persist?: boolean
+}
 type GraphScope = {
   boardId?: string
   rootId?: string
@@ -919,7 +922,7 @@ export interface GraphStore {
   setNodes: (nodes: Updater<NoteNode[]>) => void
   setEdges: (edges: Updater<LinkEdge[]>) => void
 
-  setNodesPersist: (nodes: Updater<NoteNode[]>) => void
+  setNodesPersist: (nodes: Updater<NoteNode[]>, options?: PersistOptions) => void
   /**
    * Persist-scoped single node mutation.
    * Mirrors setNodesPersist semantics (history + debounced persistence),
@@ -1086,9 +1089,10 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
 
   // --- set + background diff + debounced persist ---
 
-  setNodesPersist: (nodesOrUpdater) => {
+  setNodesPersist: (nodesOrUpdater, options) => {
     const recording = get().historyRecording
     const scopeKey = getScopeKey(get())
+    const shouldPersist = options?.persist !== false
     const prevNodes = get().nodes
 
     const nextNodes =
@@ -1114,11 +1118,13 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
       }
     }
 
-    scheduleNodePersistFromDiff(prevNodes, nextNodes, scopeKey, () => ({
-      boardId: get().boardId,
-      rootId: get().rootId,
-      nodes: get().nodes,
-    }))
+    if (shouldPersist) {
+      scheduleNodePersistFromDiff(prevNodes, nextNodes, scopeKey, () => ({
+        boardId: get().boardId,
+        rootId: get().rootId,
+        nodes: get().nodes,
+      }))
+    }
   },
 
   /**

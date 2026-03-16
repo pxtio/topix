@@ -47,14 +47,29 @@ class Message(Resource):
         default_factory=MessageProperties
     )
 
+    def _compact_reasoning(self) -> str:
+        """Compact reasoning into a short string for display."""
+        steps = self.properties.reasoning.reasoning
+        if not steps:
+            return ""
+
+        steps_str = " -> ".join(
+            step.to_compact_step_description() for step in steps if step.name
+        )
+
+        return f"<Reasoning>\n\n{steps_str}\n\n</Reasoning>\n\n" if steps_str else ""
+
     def to_chat_message(self) -> dict[str, str]:
         """Convert to a chat message format."""
         content = ""
+        reasoning = self._compact_reasoning()
         if self.content:
             if isinstance(self.content, dict):
                 content = self.content.get("markdown", "")
             else:
                 content = self.content.markdown if self.content else ""
+
+        content = f"{reasoning}{content}" if reasoning else content
 
         # If there is message-level context, prepend it to the content in a special format
         if self.role == MessageRole.USER and self.properties.context.text:

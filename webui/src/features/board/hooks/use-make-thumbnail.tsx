@@ -77,7 +77,6 @@ export async function saveThumbnailFromNodes(boardId: string, nodes: NodeBounds[
     const blob = await res.blob()
 
     await saveThumbnail({ boardId, blob })
-    console.log("[saveThumbnailFromNodes] thumbnail saved successfully")
   } catch (err) {
     console.error("[saveThumbnailFromNodes] failed", err)
   } finally {

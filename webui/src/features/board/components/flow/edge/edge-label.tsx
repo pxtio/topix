@@ -63,7 +63,7 @@ export const EdgeLabel = memo(function EdgeLabel({
           />
         ) : (
           <div
-            className={`text-center px-2 py-1 bg-transparent text-base text-card-foreground max-w-[200px] ${fontFamilyClass}`}
+            className={`text-center bg-transparent text-base text-card-foreground max-w-[200px] ${fontFamilyClass}`}
             style={{ color: labelColor ?? 'inherit' }}
           >
             <LiteMarkdown text={labelText} />

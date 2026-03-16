@@ -70,8 +70,9 @@ def _arrowhead_from_label(kind: str) -> Arrowhead:
 
 
 def _convert_drawn_node(node: DrawnNode, z_index: int) -> Note:
+    """Convert a drawn node into a content-first board note."""
     note = Note(
-        label=RichText(markdown=node.label) if node.label else None,
+        content=RichText(markdown=node.label) if node.label else None,
     )
     note.style.type = _node_type_from_drawn(node.type)
     note.style.font_size = _font_size_from_label(node.font_size)

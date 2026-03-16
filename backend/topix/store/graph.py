@@ -13,6 +13,7 @@ from qdrant_client.models import (
 from topix.datatypes.graph.graph import Graph
 from topix.datatypes.note.link import Link
 from topix.datatypes.note.note import Note
+from topix.store.note_revision import NoteRevisionStore, deserialize_note_snapshot
 from topix.store.postgres.graph import (
     _dangerous_hard_delete_graph_by_uid,
     create_graph,
@@ -38,10 +39,13 @@ class GraphStore:
         """Initialize the GraphStore."""
         self._content_store = ContentStore.from_config()
         self._pg_pool = None
+        self._note_revision_store: NoteRevisionStore | None = None
 
     async def open(self):
         """Open the database connection pool."""
         self._pg_pool = await create_pool()
+        self._note_revision_store = NoteRevisionStore(self._pg_pool)
+        await self._note_revision_store.ensure_table()
 
     async def add_notes(self, nodes: list[Note]):
         """Add nodes to the graph."""
@@ -49,17 +53,71 @@ class GraphStore:
         # TODO(folder): reject invalid parent assignments and cycles on create.
         await self._content_store.add(nodes)
 
-    async def update_node(self, node_id: str, data: dict):
+    def _schedule_note_snapshot(self, note: Note, user_uid: str | None = None) -> None:
+        """Persist a note snapshot in the background when revision storage is enabled."""
+        if self._note_revision_store is None:
+            return
+
+        note_to_snapshot = note.model_copy(deep=True)
+
+        def _log_task_result(task: asyncio.Task) -> None:
+            try:
+                task.result()
+            except Exception as e:
+                logger.exception("Background save_note_snapshot failed", exc_info=e)
+
+        task = asyncio.create_task(
+            self._note_revision_store.save_note_snapshot(note_to_snapshot, user_uid=user_uid)
+        )
+        task.add_done_callback(_log_task_result)
+
+    @staticmethod
+    def _deep_merge_dict(base: dict, patch: dict) -> dict:
+        """Recursively merge a patch dict into an existing payload dict."""
+        merged = dict(base)
+        for key, value in patch.items():
+            if isinstance(value, dict) and isinstance(merged.get(key), dict):
+                merged[key] = GraphStore._deep_merge_dict(merged[key], value)
+            else:
+                merged[key] = value
+        return merged
+
+    async def patch_note(self, node_id: str, data: dict, user_uid: str | None = None) -> Note | None:
+        """Patch a note by merging the update into the full stored note payload."""
+        existing_nodes = await self.get_nodes([node_id])
+        if not existing_nodes:
+            return None
+
+        existing_note = existing_nodes[0]
+        self._schedule_note_snapshot(existing_note, user_uid=user_uid)
+
+        merged_payload = self._deep_merge_dict(
+            existing_note.model_dump(exclude_none=False),
+            data,
+        )
+        merged_payload["id"] = node_id
+        merged_note = Note.model_validate(merged_payload)
+
+        await self._content_store.update([merged_note.model_dump(exclude_none=False)])
+        return merged_note
+
+    async def update_node(self, node_id: str, data: dict, user_uid: str | None = None):
         """Update a node in the graph."""
         # TODO(folder): validate parent_id exists and belongs to the same graph.
         # TODO(folder): reject self-parent and cyclic reparent operations.
+        existing_nodes = await self.get_nodes([node_id])
+        if existing_nodes and self._note_revision_store is not None:
+            self._schedule_note_snapshot(existing_nodes[0], user_uid=user_uid)
         data["id"] = node_id
         await self._content_store.update([data])
 
-    async def delete_node(self, node_id: str, hard_delete: bool = True):
+    async def delete_node(self, node_id: str, hard_delete: bool = True, user_uid: str | None = None):
         """Delete a node from the graph."""
         # TODO(folder): cascade-delete descendants when folder/subtree semantics are enabled.
         # For now this deletes only the requested node.
+        existing_nodes = await self.get_nodes([node_id])
+        if existing_nodes and self._note_revision_store is not None:
+            await self._note_revision_store.save_note_snapshot(existing_nodes[0], user_uid=user_uid)
         await self._content_store.delete([node_id], hard_delete=hard_delete)
 
         # deleted associated chunks
@@ -85,6 +143,28 @@ class GraphStore:
             hard_delete=hard_delete
         ))
         task.add_done_callback(_log_task_result)
+
+    async def restore_latest_note_revision(self, node_id: str, user_uid: str | None = None) -> Note | None:
+        """Undo the latest saved revision for a note and return the restored note."""
+        if self._note_revision_store is None:
+            return None
+
+        revision = await self._note_revision_store.pop_latest_note_revision(node_id)
+        if revision is None:
+            return None
+
+        current_nodes = await self.get_nodes([node_id])
+
+        restored_note = deserialize_note_snapshot(revision.compression, revision.snapshot_compressed)
+        payload = restored_note.model_dump(exclude_none=False)
+        payload["id"] = restored_note.id
+
+        if current_nodes:
+            await self._content_store.update([payload])
+        else:
+            await self._content_store.add([restored_note])
+
+        return restored_note
 
     async def get_nodes(self, node_ids: list[str]) -> list[Note]:
         """Retrieve nodes by their IDs."""

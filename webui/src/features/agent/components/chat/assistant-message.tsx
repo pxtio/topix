@@ -26,7 +26,7 @@ export const AssistantMessage = ({
   const resp = { steps: message.properties?.reasoning?.reasoning || [], isDeepResearch, sentAt: message.sentAt }
 
   const messageClass = clsx(
-    "w-full p-2 space-y-2 min-w-0",
+    "w-full p-2 pb-0 min-w-0",
     isSynthesis && "rounded-xl border border-border/50 shadow-sm p-6",
     isSynthesis && !message.streaming && "overflow-y-auto scrollbar-thin max-h-[800px]"
   )
@@ -81,7 +81,7 @@ export const AssistantMessage = ({
   }, [resp.steps])
 
   return (
-    <div className='w-full space-y-2'>
+    <div className='w-full space-y-1'>
       <ReasoningStepsView
         response={resp}
         isStreaming={message.streaming || false}

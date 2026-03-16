@@ -341,7 +341,7 @@ export const createDefaultStyle = ({
         fontSize: "S",
         textAlign: "left",
         backgroundColor: ROSE_PINE_LIGHT,
-        strokeColor: SLATE_400,
+        strokeColor: TRANSPARENT_HEX,
         opacity: 100,
       } as Style
   }

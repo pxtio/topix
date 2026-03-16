@@ -46,6 +46,7 @@ def build_default_note_style(note_type: NodeType) -> Style:
         style.text_align = TextAlign.LEFT
         style.roughness = 0
         style.roundness = 1
+        style.stroke_color = "#00000000"
 
     return style
 

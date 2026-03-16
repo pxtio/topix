@@ -26,6 +26,7 @@ export type NoteWithPin = Note & { pinned?: boolean; autoEdit?: boolean }
 type NodeCardProps = {
   note: NoteWithPin
   selected: boolean
+  dragging?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
   onLabelEditingChange?: (editing: boolean) => void
@@ -244,6 +245,7 @@ const SheetDialogContent = memo(function SheetDialogContent({
 export const NodeCard = memo(({
   note,
   selected,
+  dragging,
   open,
   onOpenChange,
   onLabelEditingChange,
@@ -498,7 +500,7 @@ export const NodeCard = memo(({
           onDoubleClick={onDoubleClick}
           onPointerDown={stopDragging}
         >
-          <CodeSandboxNode note={note} selected={selected} />
+          <CodeSandboxNode note={note} selected={selected} dragging={dragging} />
         </LabelContainer>
       )
     }

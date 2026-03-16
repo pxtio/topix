@@ -24,6 +24,7 @@ export type NodeType =
   | "thought-cloud"
   | "capsule"
   | "layered-diamond"
+  | "code-sandbox"
 
 /**
  * Stroke style for the node.
@@ -196,6 +197,9 @@ const TEAL_200 = resolveFamilyShade("teal", 200) ?? "#99f6e4"
 const SLATE_400 = resolveFamilyShade("slate", 400) ?? "#94a3b8"
 
 
+const ROSE_PINE_LIGHT = "#faf4ed"
+
+
 /**
  * Default style for nodes in the board.
  */
@@ -327,6 +331,18 @@ export const createDefaultStyle = ({
         strokeColor: SLATE_400,
         strokeStyle: "dashed",
         opacity: 90,
+      } as Style
+    case "code-sandbox":
+      return {
+        ...defaultOptions,
+        roughness: 0,
+        roundness: 1,
+        fontFamily: "monospace",
+        fontSize: "S",
+        textAlign: "left",
+        backgroundColor: ROSE_PINE_LIGHT,
+        strokeColor: SLATE_400,
+        opacity: 100,
       } as Style
   }
 }

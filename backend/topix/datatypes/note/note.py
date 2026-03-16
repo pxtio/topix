@@ -65,6 +65,9 @@ class NoteProperties(ResourceProperties):
     slide_number: NumberProperty = Field(
         default_factory=lambda: NumberProperty()
     )
+    programming_language: TextProperty = Field(
+        default_factory=lambda: TextProperty(text="python")
+    )
 
 
 class Note(Resource):

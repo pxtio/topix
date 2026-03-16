@@ -23,7 +23,7 @@ import {
   Tag01Icon,
   TextIcon,
 } from '@hugeicons/core-free-icons'
-import { BotMessageSquare, ChevronDown, Cloud, Layers, Sparkles } from 'lucide-react'
+import { BotMessageSquare, ChevronDown, Cloud, Code2, Layers, Sparkles } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -105,6 +105,7 @@ export const TopBar = memo(function TopBar({
     { nodeType: 'tag', label: 'Tag', icon: <HugeiconsIcon icon={LabelIcon} className='size-4 shrink-0' strokeWidth={2} /> },
     { nodeType: 'thought-cloud', label: 'Cloud', icon: <Cloud className='w-4 h-4 shrink-0' /> },
     { nodeType: 'capsule', label: 'Capsule', icon: <HugeiconsIcon icon={Tag01Icon} className='size-4 shrink-0' strokeWidth={2} /> },
+    { nodeType: 'code-sandbox', label: 'Code sandbox', icon: <Code2 className='w-4 h-4 shrink-0' /> },
   ]
 
   const tooltipCopy = {

@@ -39,6 +39,13 @@ def build_default_note_style(note_type: NodeType) -> Style:
         style.background_color = "#00000000"
         style.stroke_style = StrokeStyle.DASHED
         style.font_family = FontFamily.SANS_SERIF
+    elif note_type == NodeType.CODE_SANDBOX:
+        style.background_color = "#faf4ed"
+        style.text_color = "#575279"
+        style.font_family = FontFamily.MONOSPACE
+        style.text_align = TextAlign.LEFT
+        style.roughness = 0
+        style.roundness = 1
 
     return style
 
@@ -53,6 +60,8 @@ def get_default_note_size(note_type: NodeType) -> tuple[int, int]:
         return 960, 540
     if note_type == NodeType.FOLDER:
         return 150, 150
+    if note_type == NodeType.CODE_SANDBOX:
+        return 320, 320
     return 400, 400
 
 
@@ -118,4 +127,6 @@ async def build_note(
     note.properties.node_size = SizeProperty(
         size=SizeProperty.Size(width=width, height=height)
     )
+    if note_type == NodeType.CODE_SANDBOX:
+        note.properties.programming_language.text = "python"
     return note

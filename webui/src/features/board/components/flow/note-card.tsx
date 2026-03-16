@@ -16,6 +16,7 @@ import { SheetEditor } from '../sheet/sheet-editor'
 import { SheetUrl } from '@/routes'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { LinkSquare02Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
+import { CodeSandboxNode } from './code-sandbox-node'
 
 export type NoteWithPin = Note & { pinned?: boolean; autoEdit?: boolean }
 
@@ -253,6 +254,7 @@ export const NodeCard = memo(({
   onCanvasRenderReadyChange,
 }: NodeCardProps) => {
   const isSheet = note.style.type === 'sheet'
+  const isCodeSandbox = note.style.type === 'code-sandbox'
   const isText = note.style.type === 'text'
   const navigate = useNavigate()
   const nonSheetDisplayValue = note.content?.markdown || note.label?.markdown || ''
@@ -488,6 +490,19 @@ export const NodeCard = memo(({
   }, [updateStyle])
 
   if (!isSheet) {
+    if (isCodeSandbox) {
+      return (
+        <LabelContainer
+          className={labelClass}
+          textColor={textColor}
+          onDoubleClick={onDoubleClick}
+          onPointerDown={stopDragging}
+        >
+          <CodeSandboxNode note={note} selected={selected} />
+        </LabelContainer>
+      )
+    }
+
     return (
       <LabelContainer
         className={labelClass}

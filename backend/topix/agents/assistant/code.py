@@ -108,16 +108,8 @@ def _get_missing_daytona_env_vars() -> list[str]:
     return [name for name in REQUIRED_DAYTONA_ENV_VARS if not os.getenv(name)]
 
 
-async def run_code(
-    _wrapper: RunContextWrapper[Context],
-    code: str,
-) -> CodeInterpreterOutput:
-    """Run Python code in an isolated Daytona sandbox and return execution results.
-
-    The tool executes one short-lived Python run, captures stdout/stderr, and always
-    attempts sandbox cleanup after execution. Use explicit ``print(...)`` statements
-    in the provided code because bare final expressions are not auto-displayed.
-    """
+async def execute_python_code(code: str) -> CodeInterpreterOutput:
+    """Run Python code in an isolated Daytona sandbox and return execution results."""
     started_at = time.perf_counter()
     missing_env_vars = _get_missing_daytona_env_vars()
 
@@ -163,6 +155,19 @@ async def run_code(
         stderr=stderr,
         duration_ms=duration_ms,
     )
+
+
+async def run_code(
+    _wrapper: RunContextWrapper[Context],
+    code: str,
+) -> CodeInterpreterOutput:
+    """Run Python code in an isolated Daytona sandbox and return execution results.
+
+    The tool executes one short-lived Python run, captures stdout/stderr, and always
+    attempts sandbox cleanup after execution. Use explicit ``print(...)`` statements
+    in the provided code because bare final expressions are not auto-displayed.
+    """
+    return await execute_python_code(code)
 
 
 run_code_tool = ToolHandler.convert_func_to_tool(

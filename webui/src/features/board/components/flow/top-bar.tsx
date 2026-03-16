@@ -105,7 +105,6 @@ export const TopBar = memo(function TopBar({
     { nodeType: 'tag', label: 'Tag', icon: <HugeiconsIcon icon={LabelIcon} className='size-4 shrink-0' strokeWidth={2} /> },
     { nodeType: 'thought-cloud', label: 'Cloud', icon: <Cloud className='w-4 h-4 shrink-0' /> },
     { nodeType: 'capsule', label: 'Capsule', icon: <HugeiconsIcon icon={Tag01Icon} className='size-4 shrink-0' strokeWidth={2} /> },
-    { nodeType: 'code-sandbox', label: 'Code sandbox', icon: <Code2 className='w-4 h-4 shrink-0' /> },
   ]
 
   const tooltipCopy = {
@@ -330,6 +329,10 @@ export const TopBar = memo(function TopBar({
               <DropdownMenuItem onSelect={() => setOpenDocumentUpload(true)} className='gap-2 text-sm' disabled={!boardId || documentUploadLimited}>
                 <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
                 <span>Document</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onAddNode({ nodeType: 'code-sandbox' })} className='gap-2 text-sm'>
+                <Code2 className='size-4 shrink-0' strokeWidth={2} />
+                <span>Code sandbox</span>
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setOpenAiSpark(true)} className='gap-2 text-sm' disabled={!boardId}>
                 <Sparkles className='size-4 shrink-0 text-secondary' strokeWidth={2} />

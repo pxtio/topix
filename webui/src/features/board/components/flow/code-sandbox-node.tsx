@@ -54,6 +54,13 @@ hljs.registerLanguage("python", python)
 const highlightPython = (code: string) => hljs.highlight(code || " ", { language: "python" }).value
 
 
+const normalizeCode = (code: string) => code
+  .split("\n")
+  .map(line => line.replace(/[ \t]+$/g, ""))
+  .join("\n")
+  .replace(/\n+$/g, "")
+
+
 /**
  * Read-only board preview plus dialog editor/executor for Python code sandbox notes.
  */
@@ -89,11 +96,12 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
     if (!open) return
 
     const timer = window.setTimeout(() => {
+      const normalizedCode = normalizeCode(codeDraft)
       updateNodeByIdPersist(note.id, node => ({
         ...node,
         data: {
           ...node.data,
-          content: { markdown: codeDraft },
+          content: { markdown: normalizedCode },
           properties: {
             ...node.data.properties,
             programmingLanguage: { type: "text", text: "python" },
@@ -117,11 +125,16 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
 
     setIsExecuting(true)
     try {
+      const normalizedCode = normalizeCode(codeDraft)
+      if (normalizedCode !== codeDraft) {
+        setCodeDraft(normalizedCode)
+      }
+
       updateNodeByIdPersist(note.id, node => ({
         ...node,
         data: {
           ...node.data,
-          content: { markdown: codeDraft },
+          content: { markdown: normalizedCode },
           properties: {
             ...node.data.properties,
             programmingLanguage: { type: "text", text: "python" },
@@ -130,7 +143,7 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
       }))
 
       await updateNote(note.graphUid, note.id, {
-        content: { markdown: codeDraft },
+        content: { markdown: normalizedCode },
         properties: {
           programmingLanguage: { type: "text", text: "python" },
         } as Note["properties"],
@@ -270,7 +283,7 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
                   stdout
                 </div>
                 <pre
-                  className="h-full overflow-auto scrollbar-thin px-4 pb-4 whitespace-pre-wrap break-words font-mono text-xs leading-5"
+                  className="h-full overflow-auto overflow-x-auto scrollbar-thin px-4 pb-4 whitespace-pre-wrap break-all font-mono text-xs leading-5"
                   style={{ color: palette.text }}
                 >
                   {result.stdout || "No stdout"}
@@ -282,7 +295,7 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
                   stderr
                 </div>
                 <pre
-                  className="h-full overflow-auto scrollbar-thin px-4 pb-4 whitespace-pre-wrap break-words font-mono text-xs leading-5"
+                  className="h-full overflow-auto overflow-x-auto scrollbar-thin px-4 pb-4 whitespace-pre-wrap break-all font-mono text-xs leading-5"
                   style={{ color: result.stderr ? palette.danger : palette.muted }}
                 >
                   {result.stderr || "No stderr"}

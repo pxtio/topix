@@ -83,6 +83,25 @@ class FakeSandboxManager:
         return stdout, stderr
 
 
+class RecordingDaytonaClient:
+    """Capture sandbox creation params for assertions."""
+
+    def __init__(self):
+        """Initialize the recorded params list."""
+        self.params = []
+        self.timeouts = []
+
+    async def create(self, params, *, timeout=60):
+        """Record the provided params and return a fake sandbox."""
+        self.params.append(params)
+        self.timeouts.append(timeout)
+        return FakeSandbox(FakeResponse())
+
+    async def close(self):
+        """Match the async client interface used by the manager."""
+        return None
+
+
 @pytest.mark.asyncio
 async def test_run_code_returns_error_when_daytona_env_is_missing(monkeypatch):
     """Missing Daytona env vars should make the tool unavailable."""
@@ -149,3 +168,24 @@ async def test_run_code_deletes_sandbox_when_runtime_raises(monkeypatch):
     assert result.status == "error"
     assert "network failure" in result.stderr
     assert manager.sandbox.delete_calls == [code_module.CODE_RUN_TIMEOUT_SECONDS]
+
+
+@pytest.mark.asyncio
+async def test_daytona_sandbox_manager_applies_short_lived_sandbox_defaults(monkeypatch):
+    """Sandbox creation should enforce ephemeral isolated defaults."""
+    client = RecordingDaytonaClient()
+    monkeypatch.setenv("DAYTONA_API_KEY", "configured")
+    monkeypatch.setenv("DAYTONA_API_URL", "https://example.test")
+    monkeypatch.setenv("DAYTONA_TARGET", "eu")
+    monkeypatch.setattr(code_module, "AsyncDaytona", lambda config: client)
+
+    manager = code_module.DaytonaSandboxManager()
+    await manager.create()
+
+    params = client.params[0]
+    assert params.language == "python"
+    assert params.auto_stop_interval == code_module.SANDBOX_AUTO_STOP_INTERVAL_MINUTES
+    assert params.network_block_all is True
+    assert params.ephemeral is True
+    assert params.auto_delete_interval == 0
+    assert client.timeouts == [code_module.SANDBOX_CREATE_TIMEOUT_SECONDS]

@@ -27,6 +27,8 @@ logger = logging.getLogger(__name__)
 
 MAX_CONCURRENT_CODE_RUNS = int(os.getenv("CODE_INTERPRETER_MAX_CONCURRENT_RUNS", "20"))
 CODE_RUN_TIMEOUT_SECONDS = int(os.getenv("CODE_INTERPRETER_TIMEOUT_SECONDS", "60"))
+SANDBOX_CREATE_TIMEOUT_SECONDS = int(os.getenv("CODE_INTERPRETER_CREATE_TIMEOUT_SECONDS", "30"))
+SANDBOX_AUTO_STOP_INTERVAL_MINUTES = int(os.getenv("CODE_INTERPRETER_AUTO_STOP_MINUTES", "5"))
 CODE_RUN_SEMAPHORE = asyncio.Semaphore(MAX_CONCURRENT_CODE_RUNS)
 REQUIRED_DAYTONA_ENV_VARS = (
     "DAYTONA_API_KEY",
@@ -50,27 +52,36 @@ class DaytonaSandboxManager:
         self._image = os.getenv("DAYTONA_IMAGE")
         self._snapshot = os.getenv("DAYTONA_SNAPSHOT")
 
+    def _sandbox_kwargs(self) -> dict[str, object]:
+        """Return shared sandbox creation defaults for short-lived code runs."""
+        return {
+            "language": "python",
+            "auto_stop_interval": SANDBOX_AUTO_STOP_INTERVAL_MINUTES,
+            "network_block_all": True,
+            "ephemeral": True,
+        }
+
     async def create(self) -> AsyncSandbox:
         """Create a sandbox for the current execution."""
         if self._snapshot:
             params = CreateSandboxFromSnapshotParams(
-                language="python",
                 snapshot=self._snapshot,
+                **self._sandbox_kwargs(),
             )
-            return await self._client.create(params)
+            return await self._client.create(params, timeout=SANDBOX_CREATE_TIMEOUT_SECONDS)
 
         if self._image:
             params = CreateSandboxFromImageParams(
-                language="python",
                 image=self._image,
+                **self._sandbox_kwargs(),
             )
-            return await self._client.create(params)
+            return await self._client.create(params, timeout=SANDBOX_CREATE_TIMEOUT_SECONDS)
 
         params = CreateSandboxFromImageParams(
-            language="python",
             image=Image.debian_slim("3.13"),
+            **self._sandbox_kwargs(),
         )
-        return await self._client.create(params)
+        return await self._client.create(params, timeout=SANDBOX_CREATE_TIMEOUT_SECONDS)
 
     async def destroy(self, sandbox: AsyncSandbox) -> None:
         """Destroy the sandbox after execution completes."""

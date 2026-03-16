@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from fastapi.params import Body, Path
 
+from topix.agents.assistant.code import execute_python_code
 from topix.api.datatypes.requests import (
     AddLinksRequest,
     AddNotesRequest,
@@ -20,7 +21,6 @@ from topix.api.utils.security import (
     verify_board_read_access,
 )
 from topix.api.utils.thumbnail import load_png_as_data_url, save_thumbnail
-from topix.agents.assistant.code import execute_python_code
 from topix.datatypes.graph.graph import Graph
 from topix.datatypes.note.style import NodeType
 from topix.store.graph import GraphStore

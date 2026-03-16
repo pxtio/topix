@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react"
+import { ShinyText } from "@/components/animations/shiny-text"
 import { cn } from "@/lib/utils"
 
 
@@ -11,7 +12,7 @@ const DotLottieReact = lazy(async () => {
 /**
  * TreeAnimation renders the reasoning animation from the public animations directory.
  */
-function TreeAnimation({ size = 42 }: { size?: number }) {
+function TreeAnimation({ size = 36 }: { size?: number }) {
   const src = `${import.meta.env.BASE_URL}animations/Tree.lottie`
   const frameStyle = { width: size, height: size }
   const playerStyle = { width: size * 4, height: size * 1.5 }
@@ -52,9 +53,18 @@ export function TreeThinkingIndicator({
           </div>
         )
       }
-      <span className="text-sm text-muted-foreground">
-        {message}
-      </span>
+      {
+        !isStopped ? (
+          <ShinyText
+            text={message}
+            disabled={isStopped}
+            speed={1}
+            className='font-medium text-sm text-foreground/50'
+          />
+        ) : (
+          <span className='font-medium text-sm text-accent-foreground'>{message}</span>
+        )
+      }
     </div>
   )
 }

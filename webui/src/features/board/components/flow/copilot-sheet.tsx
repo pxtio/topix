@@ -32,13 +32,13 @@ export function CopilotSheet({
         showClose={false}
         // Keep the panel open when users click outside on the canvas.
         onInteractOutside={(event) => event.preventDefault()}
-        className="w-[420px] max-w-[92vw] bg-sidebar text-sidebar-foreground border-l-0 p-0"
+        className="w-[420px] max-w-[92vw] bg-background text-sidebar-foreground border-l-1 border-border/70 p-0 shadow-sm"
       >
         {/* Radix Dialog primitive requires an accessible title for content. */}
         <SheetHeader className="sr-only">
           <SheetTitle>Board Assistant</SheetTitle>
         </SheetHeader>
-        <div className="px-4 py-3 flex items-center justify-between gap-3 bg-sidebar">
+        <div className="px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <BotMessageSquare className="size-4 text-sidebar-icon-4" strokeWidth={2} />
             Board Assistant
@@ -64,7 +64,7 @@ export function CopilotSheet({
             </Button>
           </div>
         </div>
-        <div className="flex-1 relative bg-sidebar overflow-y-auto scrollbar-thin">
+        <div className="flex-1 relative overflow-y-auto scrollbar-thin">
           {/* Keep chat behavior unchanged: board-scoped thread when boardId is available. */}
           {boardId ? (
             <Chat

@@ -1,0 +1,89 @@
+.code-sandbox-theme .hljs {
+  background: transparent;
+}
+
+.code-sandbox-theme-dark .hljs {
+  color: #e0def4;
+}
+
+.code-sandbox-theme-dark .hljs-comment,
+.code-sandbox-theme-dark .hljs-quote {
+  color: #6e6a86;
+}
+
+.code-sandbox-theme-dark .hljs-keyword,
+.code-sandbox-theme-dark .hljs-selector-tag,
+.code-sandbox-theme-dark .hljs-literal,
+.code-sandbox-theme-dark .hljs-type {
+  color: #c4a7e7;
+}
+
+.code-sandbox-theme-dark .hljs-string,
+.code-sandbox-theme-dark .hljs-meta .hljs-string {
+  color: #f6c177;
+}
+
+.code-sandbox-theme-dark .hljs-number,
+.code-sandbox-theme-dark .hljs-symbol,
+.code-sandbox-theme-dark .hljs-bullet {
+  color: #ebbcba;
+}
+
+.code-sandbox-theme-dark .hljs-title,
+.code-sandbox-theme-dark .hljs-title.function_ {
+  color: #9ccfd8;
+}
+
+.code-sandbox-theme-dark .hljs-variable,
+.code-sandbox-theme-dark .hljs-attr,
+.code-sandbox-theme-dark .hljs-template-variable {
+  color: #e0def4;
+}
+
+.code-sandbox-theme-dark .hljs-built_in,
+.code-sandbox-theme-dark .hljs-doctag {
+  color: #c4a7e7;
+}
+
+.code-sandbox-theme-light .hljs {
+  color: #575279;
+}
+
+.code-sandbox-theme-light .hljs-comment,
+.code-sandbox-theme-light .hljs-quote {
+  color: #9893a5;
+}
+
+.code-sandbox-theme-light .hljs-keyword,
+.code-sandbox-theme-light .hljs-selector-tag,
+.code-sandbox-theme-light .hljs-literal,
+.code-sandbox-theme-light .hljs-type {
+  color: #907aa9;
+}
+
+.code-sandbox-theme-light .hljs-string,
+.code-sandbox-theme-light .hljs-meta .hljs-string {
+  color: #ea9d34;
+}
+
+.code-sandbox-theme-light .hljs-number,
+.code-sandbox-theme-light .hljs-symbol,
+.code-sandbox-theme-light .hljs-bullet {
+  color: #d7827e;
+}
+
+.code-sandbox-theme-light .hljs-title,
+.code-sandbox-theme-light .hljs-title.function_ {
+  color: #286983;
+}
+
+.code-sandbox-theme-light .hljs-variable,
+.code-sandbox-theme-light .hljs-attr,
+.code-sandbox-theme-light .hljs-template-variable {
+  color: #575279;
+}
+
+.code-sandbox-theme-light .hljs-built_in,
+.code-sandbox-theme-light .hljs-doctag {
+  color: #907aa9;
+}

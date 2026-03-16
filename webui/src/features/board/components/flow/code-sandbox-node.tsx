@@ -1,14 +1,19 @@
 import { memo, useEffect, useMemo, useState } from "react"
+import { ComputerTerminal01Icon, Loading02Icon, PlayIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import hljs from "highlight.js/lib/core"
+import python from "highlight.js/lib/languages/python"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { useTheme } from "@/components/theme-provider"
-import { Play, SquareTerminal } from "lucide-react"
 
 import { executeCodeNote, type CodeExecutionResult } from "../../api/execute-code-note"
 import { updateNote } from "../../api/update-note"
 import { useGraphStore } from "../../store/graph-store"
 import type { Note } from "../../types/note"
+import { CodeArea } from "./code-area"
+import "./code-sandbox-node.css"
 
 
 type CodeSandboxNodeProps = {
@@ -42,6 +47,11 @@ const EMPTY_RESULT: CodeExecutionResult = {
   stderr: "",
   durationMs: 0,
 }
+
+hljs.registerLanguage("python", python)
+
+
+const highlightPython = (code: string) => hljs.highlight(code || " ", { language: "python" }).value
 
 
 /**
@@ -99,6 +109,7 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
     () => codeDraft || note.content?.markdown || "# Write Python here",
     [codeDraft, note.content?.markdown],
   )
+  const previewHtml = useMemo(() => highlightPython(codePreview), [codePreview])
   const suspendPreview = Boolean(isMoving || dragging)
 
   const handleExecute = async () => {
@@ -148,16 +159,17 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
         title="Open Python sandbox"
       >
         <div
-          className="relative w-full h-full overflow-auto scrollbar-thin p-3"
+          className={`code-sandbox-theme relative w-full h-full overflow-auto scrollbar-thin p-3 ${isDark ? "code-sandbox-theme-dark" : "code-sandbox-theme-light"}`}
           style={{
             backgroundColor: palette.bg,
             color: palette.text,
           }}
         >
           {!suspendPreview && (
-            <pre className="min-h-full whitespace-pre-wrap break-words text-[11px] leading-5 font-mono">
-              {codePreview}
-            </pre>
+            <pre
+              className="hljs min-h-full whitespace-pre-wrap break-words text-[11px] leading-5 font-mono bg-transparent p-0"
+              dangerouslySetInnerHTML={{ __html: previewHtml }}
+            />
           )}
           {suspendPreview && (
             <div
@@ -180,7 +192,7 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className="sm:max-w-5xl h-[85vh] flex flex-col p-0 overflow-hidden"
+          className="sm:max-w-5xl h-[85vh] flex flex-col p-0 overflow-hidden gap-0"
           showCloseButton={false}
           onPointerDown={(event) => event.stopPropagation()}
           onDoubleClick={(event) => event.stopPropagation()}
@@ -188,14 +200,14 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
         >
           <DialogTitle className="sr-only">Python sandbox</DialogTitle>
           <div
-            className="flex items-center justify-between px-4 py-3"
+            className="flex items-center justify-between px-4 py-3 border-b border-border/70"
             style={{
               backgroundColor: palette.panel,
               color: palette.text,
             }}
           >
             <div className="flex items-center gap-2 min-w-0">
-              <SquareTerminal className="size-4" />
+              <HugeiconsIcon icon={ComputerTerminal01Icon} className="size-4 shrink-0" strokeWidth={2} />
               <span className="text-sm font-semibold">Python sandbox</span>
               <span
                 className="text-xs font-medium"
@@ -215,8 +227,12 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
                 disabled={isExecuting}
                 className="gap-2"
               >
-                <Play className="size-4" />
-                {isExecuting ? "Executing..." : "Execute"}
+                {isExecuting ? (
+                  <HugeiconsIcon icon={Loading02Icon} className="size-4 shrink-0 animate-spin" strokeWidth={2} />
+                ) : (
+                  <HugeiconsIcon icon={PlayIcon} className="size-4 shrink-0" strokeWidth={2} />
+                )}
+                {isExecuting ? "Running" : "Execute"}
               </Button>
             </div>
           </div>
@@ -228,18 +244,11 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
                 backgroundColor: palette.bg,
               }}
             >
-              <textarea
+              <CodeArea
                 value={codeDraft}
-                onChange={(event) => setCodeDraft(event.target.value)}
-                spellCheck={false}
-                onPointerDown={(event) => event.stopPropagation()}
-                onDoubleClick={(event) => event.stopPropagation()}
-                onClick={(event) => event.stopPropagation()}
-                className="w-full h-full resize-none border-0 bg-transparent p-4 outline-none scrollbar-thin font-mono text-sm leading-6"
-                style={{
-                  color: palette.text,
-                }}
-                placeholder="# Write Python here"
+                isDark={isDark}
+                textColor={palette.text}
+                onChange={setCodeDraft}
               />
             </div>
 
@@ -256,7 +265,7 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
                 Last run {result.durationMs > 0 ? `• ${result.durationMs} ms` : ""}
               </div>
 
-              <div className="min-h-0">
+              <div className="min-h-0 border-t border-border/70">
                 <div className="px-4 py-2 text-xs font-semibold" style={{ color: palette.accent }}>
                   stdout
                 </div>
@@ -268,7 +277,7 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
                 </pre>
               </div>
 
-              <div className="min-h-0">
+              <div className="min-h-0 border-t border-border/70">
                 <div className="px-4 py-2 text-xs font-semibold" style={{ color: palette.danger }}>
                   stderr
                 </div>

@@ -32,13 +32,13 @@ export const UserMessage = ({ message, isLatest }: { message: ChatMessage, isLat
   return (
     <>
       <div className="h-4" ref={ref} />
-      <div className={`relative group w-auto max-w-[75%] min-w-0 ml-auto ${contextText ? "pb-9" : "pb-6"}`}>
+      <div className={`relative group w-auto max-w-[75%] min-w-0 ml-auto ${contextText ? "pb-12" : "pb-9"}`}>
         <span className="absolute -top-8 right-0 block min-w-[150px] text-right text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity p-2">
           {sentLabel}
         </span>
         <CopyUserMessageButton
           text={text}
-          className="absolute -bottom-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute bottom-2 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
         />
         <div
           className={`

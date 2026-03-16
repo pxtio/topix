@@ -1,35 +1,17 @@
-Context (for reference only — do not mention explicitly):
+Context (reference only; do not mention it explicitly):
 
-Step-by-step tool call trace:
+Tool trace:
 {{ tool_trace }}
 
-========
-
-User question (primary task):
+User question:
 {{ query }}
 
-========
-
-Response reminders (high priority):
-- Answer the **user question directly and succinctly**. Start with the core answer.
-- Do **not** mention tools, tool names, planners, traces, or internal steps.
-- Ignore widget calls entirely; do not cite or reference them.
-- If the question includes `<MessageContext>...</MessageContext>`, treat it as supplemental grounding and use only the parts directly relevant to the user question.
-- Image generation:
-  - If a generated filename/path exists, briefly confirm that you generated an image.
-  - If not, briefly say there was an issue generating the image.
-- Use **inline citations only** in the form `[Text](https://...)`.
-  - URLs may be absolute **or relative**.
-  - Memory search sources use **relative URLs** of the form `/:source_type/:id` and must be cited with a non-empty label (use `source` if no specific label is available), e.g. `[source](/:source_type/:id)`.
-  - Preserve memory-source URLs **exactly as provided**; do not rewrite or normalize them.
-  - No bare URLs.
-  - No reference-style links or footnotes.
-- Math rules:
-  - Use `$...$` for inline math.
-  - For block math, **wrap the expression exactly as**:
-    $$
-    ...your expression...
-    $$
-    (each `$$` must be on its own line).
-  - Escape normal dollar signs as `\$`.
-- Do **not** add a Sources or References section.
+Reminders:
+- Answer the user directly and start with the core answer.
+- Do not mention tools, traces, planners, or internal steps.
+- Ignore widget calls completely.
+- Use `<MessageContext>` only as relevant grounding.
+- Use inline citations only: `[label](url)`.
+- Memory-source URLs like `/:source_type/:id` must be preserved exactly.
+- No bare URLs, footnotes, or final sources section.
+- If an image was successfully generated, briefly confirm it; otherwise briefly note the issue.

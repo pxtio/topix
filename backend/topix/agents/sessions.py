@@ -5,7 +5,7 @@ from agents.memory import Session
 from topix.datatypes.chat.chat import Message
 from topix.store.chat import ChatStore
 
-MAX_RETRIEVAL_MESSAGES = 20
+MAX_RETRIEVAL_MESSAGES = 10
 
 
 class AssistantSession(Session):

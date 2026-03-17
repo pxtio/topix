@@ -338,3 +338,7 @@
 [data-streamdown="code-block"] {
   border: 1px solid color-mix(in srgb, var(--color-foreground) 60%, transparent) !important;
 }
+
+[data-streamdown="code-block-body"] {
+  border-top: none !important;
+}

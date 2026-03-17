@@ -148,6 +148,10 @@ function Td(props: React.TdHTMLAttributes<HTMLTableCellElement>) {
   )
 }
 
+function Thead(props: React.HTMLAttributes<HTMLTableSectionElement>) {
+  return <thead className="bg-transparent" {...props} />
+}
+
 function Tbody(props: React.HTMLAttributes<HTMLTableSectionElement>) {
   return <tbody className="bg-transparent" {...props} />
 }
@@ -174,6 +178,7 @@ const components = {
   th: Th,
   td: Td,
   hr: Hr,
+  thead: Thead,
   tbody: Tbody,
   b: (props: React.HTMLAttributes<HTMLElement>) => <b className="font-semibold" {...props} />,
   strong: (props: React.HTMLAttributes<HTMLElement>) => <strong className="font-semibold" {...props} />,

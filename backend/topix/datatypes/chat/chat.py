@@ -54,7 +54,9 @@ class Message(Resource):
             return ""
 
         steps_str = " -> ".join(
-            step.to_compact_step_description() for step in steps if step.name
+            step.to_compact_step_description()
+            for step in steps
+            if step.to_compact_step_description()
         )
 
         return f"<Reasoning>\n\n{steps_str}\n\n</Reasoning>\n\n" if steps_str else ""

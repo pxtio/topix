@@ -132,8 +132,6 @@ class AssistantManagerConfig(BaseModel):
     """Manager Config class."""
 
     plan: PlanConfig
-    synthesis: BaseAgentConfig
-    query_rewrite: BaseAgentConfig
 
     @staticmethod
     def from_yaml(filepath: str | None = None):
@@ -168,7 +166,6 @@ class AssistantManagerConfig(BaseModel):
     def set_model(self, model: str):
         """Switch the plan model."""
         self.plan.model = model
-        self.synthesis.model = model
 
     def set_reasoning(self, effort: Literal["low", "medium", "high"] | None):
         """Set the reasoning."""

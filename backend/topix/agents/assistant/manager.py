@@ -6,12 +6,9 @@ import re
 
 from collections.abc import AsyncGenerator
 
-from topix.agents.assistant.answer_reformulate import AnswerReformulate
 from topix.agents.assistant.plan import Plan
-from topix.agents.assistant.query_rewrite import QueryRewrite
 from topix.agents.config import AssistantManagerConfig
 from topix.agents.datatypes.context import ReasoningContext
-from topix.agents.datatypes.inputs import QueryRewriteInput
 from topix.agents.datatypes.stream import (
     AgentStreamMessage,
     ContentType,
@@ -36,14 +33,10 @@ class AssistantManager:
 
     def __init__(
         self,
-        query_rewrite_agent: QueryRewrite,
         plan_agent: Plan,
-        synthesis_agent: AnswerReformulate,
     ):
         """Init method."""
-        self.query_rewrite_agent = query_rewrite_agent
         self.plan_agent = plan_agent
-        self.synthesis_agent = synthesis_agent
 
     @classmethod
     def from_config(
@@ -64,17 +57,14 @@ class AssistantManager:
             graph_uid=graph_uid,
             root_id=root_id,
         )
-        query_rewrite_agent = QueryRewrite.from_config(config.query_rewrite)
-        synthesis_agent = AnswerReformulate.from_config(config.synthesis)
 
-        return cls(query_rewrite_agent, plan_agent, synthesis_agent)
+        return cls(plan_agent)
 
     async def _compose_input(
         self,
         context: ReasoningContext,
         query: str,
         session: AssistantSession | None = None,
-        rephrase_query: bool = False,
         message_context: str | None = None,
     ) -> list[dict[str, str]]:
         if message_context is not None and message_context.strip() != "":
@@ -87,16 +77,7 @@ class AssistantManager:
             history = await session.get_items()
             if history:
                 context.chat_history = history
-                if rephrase_query:
-                    # launch query rewrite:
-                    query_input = QueryRewriteInput(query=query, chat_history=history)
-                    new_query = await AgentRunner.run(
-                        self.query_rewrite_agent,
-                        input=query_input,
-                    )
-                else:
-                    new_query = query
-                return history + [{"role": "user", "content": new_query}]
+                return history + [{"role": "user", "content": query}]
             else:
                 return [{"role": "user", "content": query}]
         return [{"role": "user", "content": query}]
@@ -160,7 +141,6 @@ class AssistantManager:
         session: AssistantSession | None = None,
         message_id: str | None = None,
         max_turns: int = 5,
-        rephrase_query: bool = False,
         message_context: str | None = None
     ) -> str:
         """Run the assistant agent with the provided context and query."""
@@ -168,7 +148,6 @@ class AssistantManager:
             context,
             query,
             session,
-            rephrase_query=rephrase_query,
             message_context=message_context
         )
 
@@ -184,15 +163,13 @@ class AssistantManager:
             await session.add_items([user_message])
 
         # launch plan:
+        res = ""
         try:
             res = await AgentRunner.run(
                 self.plan_agent, input=agent_input, context=context, max_turns=max_turns
             )
         except Exception:
             logger.info(f"Max turns exceeded: {max_turns}", exc_info=True)
-
-        # launch synthesis:
-        res = await AgentRunner.run(self.synthesis_agent, input=agent_input, context=context)
 
         if session:
             await session.add_items(
@@ -210,7 +187,6 @@ class AssistantManager:
         session: AssistantSession | None = None,
         message_id: str | None = None,
         max_turns: int = 8,
-        rephrase_query: bool = False,
         message_context: str | None = None
     ) -> AsyncGenerator[AgentStreamMessage, str]:
         """Run the assistant agent with the provided context and query.
@@ -227,7 +203,6 @@ class AssistantManager:
             context,
             query,
             session,
-            rephrase_query=rephrase_query,
             message_context=message_context
         )
 
@@ -241,7 +216,8 @@ class AssistantManager:
                 user_message.properties.context = TextProperty(text=message_context)
             await session.add_items([user_message])
 
-        # launch plan:
+        final_answer = ""
+
         try:
             res = AgentRunner.run_streamed(
                 self.plan_agent, input=agent_input, context=context, max_turns=max_turns
@@ -249,6 +225,12 @@ class AssistantManager:
 
             async for message in res:
                 if isinstance(message, AgentStreamMessage):
+                    if message.type == StreamingMessageType.STREAM_MESSAGE:
+                        if message.content and message.content.type in [
+                            ContentType.MESSAGE,
+                            ContentType.TOKEN,
+                        ]:
+                            final_answer += message.content.text
                     yield message
         except Exception as e:
             logger.error(
@@ -256,30 +238,9 @@ class AssistantManager:
                 exc_info=True,
             )
 
-        # Launch the synthesis agent:
-        res = AgentRunner.run_streamed(
-            self.synthesis_agent,
-            input=agent_input,
-            context=context,
-            name=AgentToolName.ANSWER_REFORMULATE
-        )
-
-        final_answer = ""
-        async for message in res:
-            if isinstance(message, AgentStreamMessage) and message.type == StreamingMessageType.STREAM_MESSAGE:
-                if message.content and message.content.type in [
-                    ContentType.MESSAGE,
-                    ContentType.TOKEN,
-                ]:
-                    final_answer += message.content.text
-                yield message
-
         final_answer = await self._postprocess_answer(final_answer, context)
 
         if session:
-            if not context.tool_calls:
-                raise Exception("No steps created during streaming!")
-
             await session.add_items(
                 [
                     Message(

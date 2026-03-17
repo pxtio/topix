@@ -30,6 +30,7 @@ import { NodePlacementOverlay } from './node-placement-overlay'
 import { LinePlacementOverlay } from './line-placement-overlay'
 import { GraphContextMenu } from './graph-context-menu'
 import { ViewportControls } from './viewport-controls'
+import { NodeSurfaceHost } from './node-surface-host'
 
 import { useGraphStore } from '../../store/graph-store'
 import type { LinkEdge, NoteNode } from '../../types/flow'
@@ -746,6 +747,8 @@ export default function GraphEditor() {
           disableNext={!canNext}
         />
       )}
+
+      <NodeSurfaceHost />
     </div>
   )
 }

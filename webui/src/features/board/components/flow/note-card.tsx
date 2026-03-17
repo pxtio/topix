@@ -1,79 +1,39 @@
-// components/flow/node-label.tsx
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { Note, NoteProperties } from '../../types/note'
-import type { NoteNode } from '../../types/flow'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { clsx } from 'clsx'
-import { useNavigate } from '@tanstack/react-router'
-import { Button } from '@/components/ui/button'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { clsx } from "clsx"
 
-import { Shape } from '../notes/shape'
-import { darkModeDisplayHex } from '../../lib/colors/dark-variants'
-import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from '../../types/style'
-import { useGraphStore } from '../../store/graph-store'
-import { SheetNodeView } from './sheet-node-view'
-import { SheetEditor } from '../sheet/sheet-editor'
-import { SheetUrl } from '@/routes'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { LinkSquare02Icon, Cancel01Icon } from '@hugeicons/core-free-icons'
-import { CodeSandboxNode } from './code-sandbox-node'
+import { Shape } from "../notes/shape"
+import { SheetNodeView } from "./sheet-node-view"
+import { CodeSandboxNode } from "./code-sandbox-node"
+import { useGraphStore } from "../../store/graph-store"
+import { darkModeDisplayHex } from "../../lib/colors/dark-variants"
+import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from "../../types/style"
+import type { NoteNode } from "../../types/flow"
+import type { Note, NoteProperties } from "../../types/note"
+
 
 export type NoteWithPin = Note & { pinned?: boolean; autoEdit?: boolean }
 
-/**
- * Props for the root node card renderer used inside a flow node.
- */
+
 type NodeCardProps = {
   note: NoteWithPin
   selected: boolean
   dragging?: boolean
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
   onLabelEditingChange?: (editing: boolean) => void
   isDark: boolean
   contentRef: React.RefObject<HTMLDivElement | null>
   nodeWidth?: number
   nodeHeight?: number
-  // Bubble up canvas render readiness so NodeView can gate min-height measurement.
   onCanvasRenderReadyChange?: (ready: boolean) => void
 }
 
-/**
- * Shared wrapper props for the note label container.
- */
 type LabelContainerProps = {
   className: string
   textColor?: string
   onDoubleClick: () => void
-  onPointerDown: (e: React.PointerEvent) => void
+  onPointerDown: (event: React.PointerEvent) => void
   children: React.ReactNode
 }
 
-/**
- * Generic label wrapper used by both sheet and non-sheet node content.
- */
-const LabelContainer = memo(function LabelContainer({
-  className,
-  textColor,
-  onDoubleClick,
-  onPointerDown,
-  children,
-}: LabelContainerProps) {
-  return (
-    <div
-      className={className}
-      onDoubleClick={onDoubleClick}
-      onPointerDown={onPointerDown}
-      style={{ color: textColor || 'inherit' }}
-    >
-      {children}
-    </div>
-  )
-})
-
-/**
- * Props for rendering non-sheet note display content.
- */
 type NoteDisplayContentProps = {
   note: NoteWithPin
   labelEditing: boolean
@@ -87,8 +47,32 @@ type NoteDisplayContentProps = {
   onCanvasRenderReadyChange?: (ready: boolean) => void
 }
 
+
 /**
- * Display-only renderer for note content (shape + label markdown or editor).
+ * Shared wrapper for interactive node content.
+ */
+const LabelContainer = memo(function LabelContainer({
+  className,
+  textColor,
+  onDoubleClick,
+  onPointerDown,
+  children,
+}: LabelContainerProps) {
+  return (
+    <div
+      className={className}
+      onDoubleClick={onDoubleClick}
+      onPointerDown={onPointerDown}
+      style={{ color: textColor || "inherit" }}
+    >
+      {children}
+    </div>
+  )
+})
+
+
+/**
+ * Display renderer for standard note content and inline editing.
  */
 const NoteDisplayContent = memo(function NoteDisplayContent({
   note,
@@ -102,10 +86,11 @@ const NoteDisplayContent = memo(function NoteDisplayContent({
   nodeHeight,
   onCanvasRenderReadyChange,
 }: NoteDisplayContentProps) {
-  const fontFamily = note.style.type === 'sheet' ? 'sans-serif' : note.style.fontFamily
-  const icon = note.properties.iconData?.type === "icon" && note.properties.iconData.icon?.type === "icon"
-    ? note.properties.iconData.icon.icon
-    : undefined
+  const fontFamily = note.style.type === "sheet" ? "sans-serif" : note.style.fontFamily
+  const icon =
+    note.properties.iconData?.type === "icon" && note.properties.iconData.icon?.type === "icon"
+      ? note.properties.iconData.icon.icon
+      : undefined
   const imageUrl = note.properties.imageUrl?.image?.url
   const renderWidth = nodeWidth ?? note.properties.nodeSize?.size?.width
   const renderHeight = nodeHeight ?? note.properties.nodeSize?.size?.height
@@ -113,7 +98,7 @@ const NoteDisplayContent = memo(function NoteDisplayContent({
   return (
     <Shape
       nodeType={note.style.type}
-      value={labelEditing ? labelDraft : (note.content?.markdown || note.label?.markdown || '')}
+      value={labelEditing ? labelDraft : note.content?.markdown || note.label?.markdown || ""}
       labelEditing={labelEditing}
       onChange={onLabelChange}
       textareaRef={textareaRef}
@@ -121,7 +106,7 @@ const NoteDisplayContent = memo(function NoteDisplayContent({
       styleHelpers={{
         text: textStyleToTwClass(note.style.textStyle),
         font: fontFamilyToTwClass(fontFamily),
-        size: fontSizeToTwClass(note.style.fontSize)
+        size: fontSizeToTwClass(note.style.fontSize),
       }}
       contentRef={contentRef}
       icon={icon}
@@ -137,148 +122,35 @@ const NoteDisplayContent = memo(function NoteDisplayContent({
   )
 })
 
-/**
- * Props for the sheet modal content area.
- */
-type SheetDialogContentProps = {
-  titleEditing: boolean
-  titleDraft: string
-  displayTitle: string
-  titleInputRef: React.RefObject<HTMLInputElement | null>
-  onTitleDraftChange: (value: string) => void
-  onStopTitleEdit: (save: boolean) => void
-  onStartTitleEdit: () => void
-  value: string
-  onSave: (markdown: string) => void
-  onOpenFullView: () => void
-  onClose: () => void
-}
 
 /**
- * Sheet dialog body with toolbar actions and editor content.
+ * Root node card renderer used inside flow nodes.
  */
-const SheetDialogContent = memo(function SheetDialogContent({
-  titleEditing,
-  titleDraft,
-  displayTitle,
-  titleInputRef,
-  onTitleDraftChange,
-  onStopTitleEdit,
-  onStartTitleEdit,
-  value,
-  onSave,
-  onOpenFullView,
-  onClose,
-}: SheetDialogContentProps) {
-  return (
-    <DialogContent className='sm:max-w-4xl h-3/4 flex flex-col items-center text-left p-2' showCloseButton={false}>
-      <div className='w-full flex items-center justify-between gap-2 px-2 pt-1'>
-        <div className='min-w-0 flex-1 pr-2'>
-          {titleEditing ? (
-            <input
-              ref={titleInputRef}
-              value={titleDraft}
-              onChange={e => onTitleDraftChange(e.target.value)}
-              onBlur={() => onStopTitleEdit(true)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  onStopTitleEdit(true)
-                }
-                if (e.key === 'Escape') {
-                  e.preventDefault()
-                  onStopTitleEdit(false)
-                }
-              }}
-              className='w-full bg-transparent text-sm font-semibold text-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
-              placeholder='Untitled note'
-            />
-          ) : (
-            <button
-              type='button'
-              onClick={onStartTitleEdit}
-              className='block max-w-full truncate text-left text-sm font-semibold text-foreground hover:underline'
-              title={displayTitle}
-            >
-              {displayTitle}
-            </button>
-          )}
-          <DialogTitle className="sr-only">Sheet</DialogTitle>
-        </div>
-        <div className='flex items-center gap-2'>
-          <Button
-            variant={'ghost'}
-            size='icon-sm'
-            onClick={onOpenFullView}
-            title='Open full view'
-            aria-label='Open full view'
-          >
-            <HugeiconsIcon icon={LinkSquare02Icon} className="size-4" strokeWidth={2} />
-          </Button>
-          <Button
-            variant='ghost'
-            size='icon-sm'
-            onClick={onClose}
-            title='Close'
-            aria-label='Close'
-          >
-            <HugeiconsIcon icon={Cancel01Icon} className="size-4" strokeWidth={2} />
-          </Button>
-        </div>
-      </div>
-
-      <div className='flex-1 flex items-center w-full h-full min-h-0 min-w-0'>
-        <div className='h-full w-full min-w-0 overflow-y-auto overflow-x-hidden scrollbar-thin'>
-          <SheetEditor
-            value={value}
-            onSave={onSave}
-          />
-        </div>
-      </div>
-    </DialogContent>
-  )
-})
-
-/**
- * NodeCard: orchestrates note rendering, in-place editing, and sheet dialog behavior.
- */
-export const NodeCard = memo(({
+export const NodeCard = memo(function NodeCard({
   note,
   selected,
   dragging,
-  open,
-  onOpenChange,
   onLabelEditingChange,
   isDark,
   contentRef,
   nodeWidth,
   nodeHeight,
   onCanvasRenderReadyChange,
-}: NodeCardProps) => {
-  const isSheet = note.style.type === 'sheet'
-  const isCodeSandbox = note.style.type === 'code-sandbox'
-  const isText = note.style.type === 'text'
-  const navigate = useNavigate()
-  const nonSheetDisplayValue = note.content?.markdown || note.label?.markdown || ''
+}: NodeCardProps) {
+  const isSheet = note.style.type === "sheet"
+  const isCodeSandbox = note.style.type === "code-sandbox"
+  const isText = note.style.type === "text"
+  const nonSheetDisplayValue = note.content?.markdown || note.label?.markdown || ""
 
-  const [internalOpen, setInternalOpen] = useState(false)
-  const dialogOpen = isSheet ? (typeof open === 'boolean' ? open : internalOpen) : false
-
-  const setNodesPersist = useGraphStore(state => state.setNodesPersist)
-  const updateNodeByIdPersist = useGraphStore(state => state.updateNodeByIdPersist)
-  const setEdgesPersist = useGraphStore(state => state.setEdgesPersist)
+  const setNodesPersist = useGraphStore((state) => state.setNodesPersist)
+  const updateNodeByIdPersist = useGraphStore((state) => state.updateNodeByIdPersist)
+  const setEdgesPersist = useGraphStore((state) => state.setEdgesPersist)
+  const openNodeSurface = useGraphStore((state) => state.openNodeSurface)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const [labelEditing, setLabelEditing] = useState(false)
-  const sheetTitleInputRef = useRef<HTMLInputElement | null>(null)
-
-  // local draft that controls the textarea while editing
-  const [labelDraft, setLabelDraft] = useState<string>(
-    isSheet ? note.label?.markdown || '' : nonSheetDisplayValue
-  )
-  const [debouncedLabelDraft, setDebouncedLabelDraft] = useState<string>(labelDraft)
-
-  // selection cache for resilient caret restore if remounts happen
+  const [labelDraft, setLabelDraft] = useState<string>(nonSheetDisplayValue)
+  const [debouncedLabelDraft, setDebouncedLabelDraft] = useState<string>(nonSheetDisplayValue)
   const selRef = useRef<{ start: number; end: number } | null>(null)
 
   const textColor = isDark ? darkModeDisplayHex(note.style.textColor) || undefined : note.style.textColor
@@ -286,210 +158,174 @@ export const NodeCard = memo(({
     ? darkModeDisplayHex(note.style.backgroundColor) || note.style.backgroundColor
     : note.style.backgroundColor
   const isPinned = note.properties.pinned.boolean === true
-  const fontFamily = note.style.type === 'sheet' ? 'sans-serif' : note.style.fontFamily
-  const displayTitle = note.label?.markdown?.trim() || 'Untitled note'
+  const fontFamily = note.style.type === "sheet" ? "sans-serif" : note.style.fontFamily
+  const displayTitle = note.label?.markdown?.trim() || "Untitled note"
 
   const labelClass = useMemo(
     () =>
       clsx(
-        'relative bg-transparent overflow-visible flex items-center justify-center',
+        "relative bg-transparent overflow-visible flex items-center justify-center",
         isSheet
           ? `w-[360px] ${fontFamilyToTwClass(fontFamily)}`
           : isText
-          ? 'w-full h-full p-0'
-          : 'w-full h-full p-1'
+            ? "w-full h-full p-0"
+            : "w-full h-full p-1",
       ),
-    [isSheet, isText, fontFamily]
+    [fontFamily, isSheet, isText],
   )
 
-  const setDialogOpen = useCallback(
-    (v: boolean) => {
-      if (!isSheet) return
-      if (typeof open === 'boolean') onOpenChange?.(v)
-      else setInternalOpen(v)
-    },
-    [isSheet, open, onOpenChange]
-  )
-
-  // keep draft in sync when not editing or when external value changes
   useEffect(() => {
     if (!labelEditing) {
-      setLabelDraft(isSheet ? note.label?.markdown || '' : nonSheetDisplayValue)
+      setLabelDraft(nonSheetDisplayValue)
+      setDebouncedLabelDraft(nonSheetDisplayValue)
     }
-  }, [isSheet, labelEditing, nonSheetDisplayValue, note.label?.markdown])
+  }, [labelEditing, nonSheetDisplayValue])
 
   useEffect(() => {
     if (!labelEditing) return
-    const t = window.setTimeout(() => {
+
+    const timer = window.setTimeout(() => {
       setDebouncedLabelDraft(labelDraft)
     }, 300)
-    return () => window.clearTimeout(t)
+
+    return () => window.clearTimeout(timer)
   }, [labelDraft, labelEditing])
 
-  // notify parent when label edit mode changes
   useEffect(() => {
     onLabelEditingChange?.(labelEditing)
   }, [labelEditing, onLabelEditingChange])
 
-  // leave editing state if deselected or dialog is closed by selection change
   useEffect(() => {
     if (!selected) {
       setLabelEditing(false)
-      setDialogOpen(false)
     }
-  }, [selected, setDialogOpen])
+  }, [selected])
 
   useEffect(() => {
     if (!isText || !note.autoEdit) return
+
     setLabelEditing(true)
-    updateNodeByIdPersist(note.id, (node) => {
-      const data = node.data as NoteNode['data']
-      return { ...node, data: { ...data, autoEdit: false } }
-    })
+    updateNodeByIdPersist(note.id, (node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        autoEdit: false,
+      },
+    }))
   }, [isText, note.autoEdit, note.id, updateNodeByIdPersist])
 
-  // focus and put caret at end when entering edit mode
   useEffect(() => {
     if (!labelEditing) return
-    const el = textareaRef.current
-    if (!el) return
-    el.focus()
-    const len = el.value.length
+    const element = textareaRef.current
+    if (!element) return
+
+    element.focus()
+    const length = element.value.length
     try {
-      el.setSelectionRange(len, len)
+      element.setSelectionRange(length, length)
     } catch {
-      console.warn('Failed to set selection range')
+      console.warn("Failed to set selection range")
     }
   }, [labelEditing])
 
-  useEffect(() => {
-    if (!isSheet || !labelEditing) return
-    const id = requestAnimationFrame(() => {
-      sheetTitleInputRef.current?.focus()
-      sheetTitleInputRef.current?.select()
-    })
-    return () => cancelAnimationFrame(id)
-  }, [isSheet, labelEditing])
-
-  // robust caret restore in case the node remounts while typing
   useLayoutEffect(() => {
     if (!labelEditing) return
-    const el = textareaRef.current
-    const sel = selRef.current
-    if (!el || !sel) return
+    const element = textareaRef.current
+    const selection = selRef.current
+    if (!element || !selection) return
 
     const restore = () => {
       try {
-        el.setSelectionRange(sel.start, sel.end)
+        element.setSelectionRange(selection.start, selection.end)
       } catch {
-        console.warn('Failed to restore selection range')
+        console.warn("Failed to restore selection range")
       }
     }
 
     restore()
-    const id = requestAnimationFrame(restore)
-    return () => cancelAnimationFrame(id)
+    const frameId = requestAnimationFrame(restore)
+    return () => cancelAnimationFrame(frameId)
   }, [labelDraft, labelEditing])
 
   useEffect(() => {
-    if (!labelEditing) return
-    const currentValue = isSheet ? (note.label?.markdown || '') : nonSheetDisplayValue
-    if (debouncedLabelDraft === currentValue) return
-    updateNodeByIdPersist(note.id, (node) => {
-      const data = node.data as NoteNode['data']
-      return {
-        ...node,
-        data: isSheet
-          ? { ...data, label: { markdown: debouncedLabelDraft } }
-          : { ...data, content: { markdown: debouncedLabelDraft } }
-      }
-    })
-  }, [debouncedLabelDraft, isSheet, labelEditing, nonSheetDisplayValue, note.id, note.label?.markdown, updateNodeByIdPersist])
+    if (!labelEditing || debouncedLabelDraft === nonSheetDisplayValue) return
 
-  // handlers
+    updateNodeByIdPersist(note.id, (node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        content: { markdown: debouncedLabelDraft },
+      },
+    }))
+  }, [debouncedLabelDraft, labelEditing, nonSheetDisplayValue, note.id, updateNodeByIdPersist])
+
   const handleLabelChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const next = event.target.value
-
-    // capture selection before any possible remount
     selRef.current = {
       start: event.target.selectionStart ?? next.length,
-      end: event.target.selectionEnd ?? next.length
+      end: event.target.selectionEnd ?? next.length,
     }
-
-    // 1) update draft so the textarea stays stable
     setLabelDraft(next)
   }, [])
 
-  const handleNoteChange = useCallback((markdown: string) => {
+  const updateStyle = useCallback((next: Partial<Note["style"]>) => {
     updateNodeByIdPersist(note.id, (node) => {
-      const data = node.data as NoteNode['data']
-      return { ...node, data: { ...data, content: { markdown } } }
-    })
-  }, [note.id, updateNodeByIdPersist])
-
-  const handleOpenFullView = useCallback(() => {
-    if (!note.graphUid) return
-    navigate({ to: SheetUrl, params: { id: note.graphUid, noteId: note.id } })
-  }, [navigate, note.graphUid, note.id])
-
-  const updateStyle = useCallback((next: Partial<Note['style']>) => {
-    updateNodeByIdPersist(note.id, (node) => {
-      const data = node.data as NoteNode['data']
-      const prevStyle = data.style as Note['style']
-      return { ...node, data: { ...data, style: { ...prevStyle, ...next } } }
-    })
-  }, [note.id, updateNodeByIdPersist])
-
-  const stopDragging = useCallback((e: React.PointerEvent) => {
-    if (labelEditing) e.stopPropagation()
-  }, [labelEditing])
-
-  const onDoubleClick = useCallback(() => {
-    if (isSheet) return
-    setLabelEditing(true)
-  }, [isSheet])
-
-  const openDialogFromSticky = useCallback(() => {
-    setDialogOpen(true)
-  }, [setDialogOpen])
-
-  const startSheetTitleEdit = useCallback((e?: React.MouseEvent) => {
-    e?.stopPropagation()
-    setLabelEditing(true)
-  }, [])
-
-  const stopSheetTitleEdit = useCallback((save: boolean) => {
-    if (!save) {
-      setLabelDraft(note.label?.markdown || '')
-    }
-    setLabelEditing(false)
-  }, [note.label?.markdown])
-
-  const onTogglePin = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    updateNodeByIdPersist(note.id, (node) => {
-      const data = node.data as NoteNode['data']
-      const props = data.properties as NoteProperties
-      const nextPinned = !isPinned
+      const data = node.data as NoteNode["data"]
       return {
         ...node,
         data: {
           ...data,
-          properties: { ...props, pinned: { type: 'boolean', boolean: nextPinned } }
-        }
+          style: {
+            ...data.style,
+            ...next,
+          },
+        },
+      }
+    })
+  }, [note.id, updateNodeByIdPersist])
+
+  const stopDragging = useCallback((event: React.PointerEvent) => {
+    if (labelEditing) {
+      event.stopPropagation()
+    }
+  }, [labelEditing])
+
+  const handleLabelDoubleClick = useCallback(() => {
+    if (!isSheet) {
+      setLabelEditing(true)
+    }
+  }, [isSheet])
+
+  const handleTogglePin = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation()
+    updateNodeByIdPersist(note.id, (node) => {
+      const props = node.data.properties as NoteProperties
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          properties: {
+            ...props,
+            pinned: { type: "boolean", boolean: !isPinned },
+          },
+        },
       }
     })
   }, [isPinned, note.id, updateNodeByIdPersist])
 
-  const onDelete = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    setNodesPersist(nds => nds.filter(n => n.id !== note.id))
-    setEdgesPersist?.(eds => eds.filter(edge => edge.source !== note.id && edge.target !== note.id))
-  }, [note.id, setNodesPersist, setEdgesPersist])
+  const handleDelete = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation()
+    setNodesPersist((nodes) => nodes.filter((node) => node.id !== note.id))
+    setEdgesPersist((edges) => edges.filter((edge) => edge.source !== note.id && edge.target !== note.id))
+  }, [note.id, setEdgesPersist, setNodesPersist])
 
-  const onPickPalette = useCallback((hex: string) => {
+  const handlePickPalette = useCallback((hex: string) => {
     updateStyle({ backgroundColor: hex })
   }, [updateStyle])
+
+  const handleOpenSheet = useCallback(() => {
+    openNodeSurface(note.id, "sheet")
+  }, [note.id, openNodeSurface])
 
   if (!isSheet) {
     if (isCodeSandbox) {
@@ -497,10 +333,10 @@ export const NodeCard = memo(({
         <LabelContainer
           className={labelClass}
           textColor={textColor}
-          onDoubleClick={onDoubleClick}
+          onDoubleClick={handleLabelDoubleClick}
           onPointerDown={stopDragging}
         >
-          <CodeSandboxNode note={note} selected={selected} dragging={dragging} />
+          <CodeSandboxNode note={note} dragging={dragging} />
         </LabelContainer>
       )
     }
@@ -509,15 +345,15 @@ export const NodeCard = memo(({
       <LabelContainer
         className={labelClass}
         textColor={textColor}
-        onDoubleClick={onDoubleClick}
+        onDoubleClick={handleLabelDoubleClick}
         onPointerDown={stopDragging}
       >
         <NoteDisplayContent
           note={note}
           labelEditing={labelEditing}
           labelDraft={labelDraft}
-          onLabelChange={handleLabelChange}
           textareaRef={textareaRef}
+          onLabelChange={handleLabelChange}
           contentRef={contentRef}
           textColor={textColor}
           nodeWidth={nodeWidth}
@@ -529,76 +365,37 @@ export const NodeCard = memo(({
   }
 
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <LabelContainer
-        className={labelClass}
-        textColor={textColor}
-        onDoubleClick={onDoubleClick}
-        onPointerDown={stopDragging}
-      >
-        <div className='relative w-full h-full'>
-          <SheetNodeView
-            note={note}
-            selected={selected}
-            dragging={dragging}
-            isDark={isDark}
-            isPinned={isPinned}
-            backgroundColor={sheetBackgroundColor}
-            onPickPalette={onPickPalette}
-            onTogglePin={onTogglePin}
-            onDelete={onDelete}
-            onOpenSticky={openDialogFromSticky}
-          />
-          <div className='absolute left-1/2 top-full mt-4 w-full -translate-x-1/2 px-2'>
-            {labelEditing ? (
-              <input
-                ref={sheetTitleInputRef}
-                value={labelDraft}
-                onChange={e => setLabelDraft(e.target.value)}
-                onBlur={() => stopSheetTitleEdit(true)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    stopSheetTitleEdit(true)
-                  }
-                  if (e.key === 'Escape') {
-                    e.preventDefault()
-                    stopSheetTitleEdit(false)
-                  }
-                }}
-                onMouseDown={e => e.stopPropagation()}
-                onClick={e => e.stopPropagation()}
-                className='w-full bg-transparent text-center text-sm font-semibold text-card-foreground border-0 border-b border-foreground/30 focus:border-secondary focus:outline-none px-0 py-0.5'
-                placeholder='Untitled note'
-              />
-            ) : (
-              <button
-                type='button'
-                onMouseDown={e => e.stopPropagation()}
-                onClick={startSheetTitleEdit}
-                className='block w-full truncate text-center text-sm font-semibold text-card-foreground hover:underline'
-                title={displayTitle}
-              >
-                {displayTitle}
-              </button>
-            )}
-          </div>
+    <LabelContainer
+      className={labelClass}
+      textColor={textColor}
+      onDoubleClick={handleLabelDoubleClick}
+      onPointerDown={stopDragging}
+    >
+      <div className="relative w-full h-full">
+        <SheetNodeView
+          note={note}
+          selected={selected}
+          dragging={dragging}
+          isDark={isDark}
+          isPinned={isPinned}
+          backgroundColor={sheetBackgroundColor}
+          onPickPalette={handlePickPalette}
+          onTogglePin={handleTogglePin}
+          onDelete={handleDelete}
+          onOpenSticky={handleOpenSheet}
+        />
+        <div className="absolute left-1/2 top-full mt-4 w-full -translate-x-1/2 px-2">
+          <button
+            type="button"
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={handleOpenSheet}
+            className="block w-full truncate text-center text-sm font-semibold text-card-foreground hover:underline"
+            title={displayTitle}
+          >
+            {displayTitle}
+          </button>
         </div>
-      </LabelContainer>
-
-      <SheetDialogContent
-        titleEditing={labelEditing}
-        titleDraft={labelDraft}
-        displayTitle={displayTitle}
-        titleInputRef={sheetTitleInputRef}
-        onTitleDraftChange={setLabelDraft}
-        onStopTitleEdit={stopSheetTitleEdit}
-        onStartTitleEdit={startSheetTitleEdit}
-        value={note.content?.markdown || ''}
-        onSave={handleNoteChange}
-        onOpenFullView={handleOpenFullView}
-        onClose={() => setDialogOpen(false)}
-      />
-    </Dialog>
+      </div>
+    </LabelContainer>
   )
 })

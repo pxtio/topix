@@ -3,9 +3,6 @@
 @import "tw-animate-css";
 @source "../node_modules/streamdown/dist/index.js";
 
-[data-streamdown="code-block-header"] {
-  background: transparent !important;
-}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -332,4 +329,12 @@
   .milkdown .ProseMirror.virtual-cursor-enabled.editor {
     padding-inline: max(0.75rem, env(safe-area-inset-left)) max(0.75rem, env(safe-area-inset-right)) !important;
   }
+}
+
+[data-streamdown="code-block-header"] {
+  background: transparent !important;
+}
+
+[data-streamdown="code-block"] {
+  border: 1px solid color-mix(in srgb, var(--color-foreground) 60%, transparent) !important;
 }

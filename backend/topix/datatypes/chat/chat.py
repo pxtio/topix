@@ -83,6 +83,12 @@ class Message(Resource):
             "content": content
         }
 
+    def to_embeddable(self) -> list[str]:
+        """Convert the message to a string that can be embedded in a vector database."""
+        content = self.content.markdown if self.content else ""
+        reasoning = self._compact_reasoning()
+        return [f"{reasoning}\n\n{content}".strip() if reasoning else content.strip()]
+
 
 class Chat(BaseModel):
     """Chat object representing a conversation."""

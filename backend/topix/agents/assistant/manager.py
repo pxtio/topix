@@ -9,11 +9,13 @@ from collections.abc import AsyncGenerator
 from topix.agents.assistant.plan import Plan
 from topix.agents.config import AssistantManagerConfig
 from topix.agents.datatypes.context import ReasoningContext
+from topix.agents.datatypes.reasoning_step import ReasoningStep
 from topix.agents.datatypes.stream import (
     AgentStreamMessage,
     ContentType,
     StreamingMessageType,
 )
+from topix.agents.datatypes.tool_call import ToolCall
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
@@ -188,7 +190,7 @@ class AssistantManager:
         message_id: str | None = None,
         max_turns: int = 8,
         message_context: str | None = None
-    ) -> AsyncGenerator[AgentStreamMessage, str]:
+    ) -> AsyncGenerator[AgentStreamMessage | ToolCall, str]:
         """Run the assistant agent with the provided context and query.
 
         If a session is provided, use it to store the user query and retrieve the chat history.
@@ -216,7 +218,39 @@ class AssistantManager:
                 user_message.properties.context = TextProperty(text=message_context)
             await session.add_items([user_message])
 
-        final_answer = ""
+        current_message_buffer: list[str] = []
+        current_reasoning_buffer: list[str] = []
+        persisted_steps: list[ReasoningStep | ToolCall] = []
+        current_raw_tool_id: str | None = None
+        reasoning_step_index = 0
+
+        def flush_current_buffers() -> None:
+            """Flush the current text buffers into one persisted reasoning step."""
+            nonlocal reasoning_step_index, current_raw_tool_id
+
+            message = "".join(current_message_buffer)
+            reasoning = "".join(current_reasoning_buffer)
+            if not message and not reasoning:
+                return
+
+            step_prefix = current_raw_tool_id or "raw_message"
+            persisted_steps.append(
+                ReasoningStep(
+                    id=f"{step_prefix}:{reasoning_step_index}",
+                    reasoning=reasoning,
+                    message=message,
+                )
+            )
+            reasoning_step_index += 1
+            current_message_buffer.clear()
+            current_reasoning_buffer.clear()
+
+        def build_message_content() -> str:
+            """Build the persisted assistant message content from reasoning steps."""
+            return "".join(
+                step.message for step in persisted_steps
+                if isinstance(step, ReasoningStep)
+            )
 
         try:
             res = AgentRunner.run_streamed(
@@ -224,34 +258,60 @@ class AssistantManager:
             )
 
             async for message in res:
-                if isinstance(message, AgentStreamMessage):
-                    if message.type == StreamingMessageType.STREAM_MESSAGE:
-                        if message.content and message.content.type in [
-                            ContentType.MESSAGE,
-                            ContentType.TOKEN,
-                        ]:
-                            final_answer += message.content.text
+                if isinstance(message, ToolCall):
+                    flush_current_buffers()
+                    persisted_steps.append(message)
                     yield message
+                    continue
+
+                if message.tool_name == AgentToolName.RAW_MESSAGE:
+                    current_raw_tool_id = message.tool_id
+                    if (
+                        message.content
+                        and message.content.type in [ContentType.MESSAGE, ContentType.TOKEN]
+                    ):
+                        if message.type == StreamingMessageType.STREAM_MESSAGE:
+                            current_message_buffer.append(message.content.text)
+                        elif message.type == StreamingMessageType.STREAM_REASONING_MESSAGE:
+                            current_reasoning_buffer.append(message.content.text)
+
+                    if message.is_stop:
+                        flush_current_buffers()
+
+                yield message
         except Exception as e:
             logger.error(
                 f"Plan agent execution error {e}, may due to Max turns exceeded",
                 exc_info=True,
             )
 
-        final_answer = await self._postprocess_answer(final_answer, context)
+        flush_current_buffers()
+
+        final_reasoning_step = next(
+            (
+                step
+                for step in reversed(persisted_steps)
+                if isinstance(step, ReasoningStep) and step.message
+            ),
+            None,
+        )
+        if final_reasoning_step is not None:
+            final_reasoning_step.message = await self._postprocess_answer(
+                final_reasoning_step.message,
+                context,
+            )
+
+        persisted_content = build_message_content()
 
         if session:
             await session.add_items(
                 [
                     Message(
                         role="assistant",
-                        content=RichText(markdown=final_answer),
+                        content=RichText(markdown=persisted_content),
                         properties={
                             "reasoning": ReasoningProperty(
-                                reasoning=[
-                                    step.model_dump(exclude_none=True)
-                                    for step in context.tool_calls
-                                ]
+                                reasoning=persisted_steps
                             )
                         },
                     )

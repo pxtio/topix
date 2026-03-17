@@ -116,7 +116,7 @@ function Img(props: React.ImgHTMLAttributes<HTMLImageElement>) {
 }
 
 function Tr(props: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className="m-0 border-t p-0 even:bg-muted" {...props} />
+  return <tr className="m-0 border-t p-0 bg-transparent" {...props} />
 }
 
 function Th(props: React.ThHTMLAttributes<HTMLTableCellElement>) {
@@ -126,6 +126,7 @@ function Th(props: React.ThHTMLAttributes<HTMLTableCellElement>) {
         border-b px-4 py-2 text-left font-bold
         [&[align=center]]:text-center [&[align=right]]:text-right
         whitespace-nowrap
+        bg-transparent
       "
       {...props}
     />
@@ -140,10 +141,15 @@ function Td(props: React.TdHTMLAttributes<HTMLTableCellElement>) {
         [&[align=center]]:text-center [&[align=right]]:text-right
         align-top
         break-words
+        bg-transparent
       "
       {...props}
     />
   )
+}
+
+function Tbody(props: React.HTMLAttributes<HTMLTableSectionElement>) {
+  return <tbody className="bg-transparent" {...props} />
 }
 
 function Hr(props: React.HTMLAttributes<HTMLHRElement>) {
@@ -168,6 +174,7 @@ const components = {
   th: Th,
   td: Td,
   hr: Hr,
+  tbody: Tbody,
   b: (props: React.HTMLAttributes<HTMLElement>) => <b className="font-semibold" {...props} />,
   strong: (props: React.HTMLAttributes<HTMLElement>) => <strong className="font-semibold" {...props} />,
   em: (props: React.HTMLAttributes<HTMLElement>) => <em className="italic" {...props} />,

@@ -35,6 +35,7 @@ from topix.agents.datatypes.stream import (
     StreamingMessageType,
 )
 from topix.agents.datatypes.tool_call import ToolCall, ToolCallState
+from topix.agents.datatypes.tools import AgentToolName
 from topix.utils.common import gen_uid
 
 RAW_RESPONSE_EVENT = "raw_response_event"
@@ -314,9 +315,23 @@ class ToolHandler:
         output: ToolOutput,
         llm_response: RunResultStreaming | RunResult | None = None,
     ):
-        """Log the output of either agent or callable function."""
+        """Log the completed output and stop signal for a tool or agent run."""
         # Extract the thoughts message from the raw response:
         await cls._process_tool_output(context, output, tool_id, tool_name)
+
+        if tool_name == AgentToolName.RAW_MESSAGE:
+            await context._message_queue.put(
+                AgentStreamMessage(
+                    content=Content(
+                        type=ContentType.STATUS,
+                        text="",
+                    ),
+                    is_stop=True,
+                    tool_id=tool_id,
+                    tool_name=tool_name,
+                )
+            )
+            return
 
         if llm_response:
             thought = ToolHandler._extract_thoughts(llm_response)

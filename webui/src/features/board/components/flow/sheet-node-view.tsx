@@ -229,13 +229,13 @@ export const SheetNodeView = memo(function SheetNodeView({
                   style={{ backgroundColor: isDark ? "rgba(31,29,46,0.62)" : "rgba(255,250,243,0.72)" }}
                 >
                   <div
-                    className='rounded-full px-3 py-1 text-base font-medium'
+                    className='rounded-full px-3 py-1 text-base font-medium font-handwriting'
                     style={{
                       color: isDark ? "#908caa" : "#797593",
                       backgroundColor: isDark ? "rgba(64,61,82,0.72)" : "rgba(223,218,217,0.8)",
                     }}
                   >
-                    Moving sheet...
+                    Moving Sticky Note...
                   </div>
                 </div>
               )}

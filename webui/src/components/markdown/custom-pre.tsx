@@ -9,7 +9,7 @@ export function Pre(props: React.HTMLAttributes<HTMLPreElement>) {
         "w-full min-w-0 max-w-full",
         "mk-scroll overflow-x-auto",
         "rounded-2xl bg-transparent",
-        "text-sm",
+        "text-base",
         props.className
       )}
     />

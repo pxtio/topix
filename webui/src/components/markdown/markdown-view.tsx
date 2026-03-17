@@ -116,16 +116,17 @@ function Img(props: React.ImgHTMLAttributes<HTMLImageElement>) {
 }
 
 function Tr(props: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className="m-0 border-t p-0 even:bg-muted" {...props} />
+  return <tr className="m-0 border-t border-foreground/60 p-0 bg-transparent" {...props} />
 }
 
 function Th(props: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
       className="
-        border-b px-4 py-2 text-left font-bold
+        border-b border-foreground/60 px-4 py-2 text-left font-bold
         [&[align=center]]:text-center [&[align=right]]:text-right
         whitespace-nowrap
+        bg-transparent
       "
       {...props}
     />
@@ -140,14 +141,23 @@ function Td(props: React.TdHTMLAttributes<HTMLTableCellElement>) {
         [&[align=center]]:text-center [&[align=right]]:text-right
         align-top
         break-words
+        bg-transparent
       "
       {...props}
     />
   )
 }
 
+function Thead(props: React.HTMLAttributes<HTMLTableSectionElement>) {
+  return <thead className="bg-transparent" {...props} />
+}
+
+function Tbody(props: React.HTMLAttributes<HTMLTableSectionElement>) {
+  return <tbody className="bg-transparent" {...props} />
+}
+
 function Hr(props: React.HTMLAttributes<HTMLHRElement>) {
-  return <hr className="my-6 border-muted-foreground/20" {...props} />
+  return <hr className="my-6 border-foreground/20 bg-muted/10" {...props} />
 }
 
 /** components map — fully typed and safe */
@@ -168,6 +178,8 @@ const components = {
   th: Th,
   td: Td,
   hr: Hr,
+  thead: Thead,
+  tbody: Tbody,
   b: (props: React.HTMLAttributes<HTMLElement>) => <b className="font-semibold" {...props} />,
   strong: (props: React.HTMLAttributes<HTMLElement>) => <strong className="font-semibold" {...props} />,
   em: (props: React.HTMLAttributes<HTMLElement>) => <em className="italic" {...props} />,

@@ -18,6 +18,7 @@ export interface NoteProperties {
   iconData: IconProperty
   slideName?: TextProperty
   slideNumber?: NumberProperty
+  programmingLanguage?: TextProperty
   mimeType?: TextProperty
   status?: KeywordProperty
   summary?: TextProperty
@@ -76,6 +77,8 @@ export const DEFAULT_SLIDE_HEIGHT = 540
 
 export const DEFAULT_FOLDER_WIDTH = 150
 export const DEFAULT_FOLDER_HEIGHT = 150
+export const DEFAULT_CODE_SANDBOX_WIDTH = 320
+export const DEFAULT_CODE_SANDBOX_HEIGHT = 320
 
 
 /**
@@ -91,6 +94,8 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     { width: DEFAULT_SLIDE_WIDTH, height: DEFAULT_SLIDE_HEIGHT }
     : type === 'folder' ?
     { width: DEFAULT_FOLDER_WIDTH, height: DEFAULT_FOLDER_HEIGHT }
+    : type === 'code-sandbox' ?
+    { width: DEFAULT_CODE_SANDBOX_WIDTH, height: DEFAULT_CODE_SANDBOX_HEIGHT }
     : { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT }
 
   return {
@@ -123,6 +128,7 @@ export const createDefaultNoteProperties = ({ type = 'rectangle' }: { type?: Nod
     iconData: { type: "icon" },
     slideName: { type: "text" },
     slideNumber: { type: "number" },
+    programmingLanguage: { type: "text", text: "python" },
   }
 }
 
@@ -149,8 +155,16 @@ export const createDefaultNote = ({
     createdAt: new Date().toISOString(),
     graphUid: boardId,
     style: { ...createDefaultStyle({ type: nodeType }) },
-    minWidth: nodeType === 'folder' ? DEFAULT_FOLDER_WIDTH : DEFAULT_NOTE_WIDTH,
-    minHeight: nodeType === 'folder' ? DEFAULT_FOLDER_HEIGHT : DEFAULT_NOTE_HEIGHT,
+    minWidth: nodeType === 'folder'
+      ? DEFAULT_FOLDER_WIDTH
+      : nodeType === 'code-sandbox'
+      ? DEFAULT_CODE_SANDBOX_WIDTH
+      : DEFAULT_NOTE_WIDTH,
+    minHeight: nodeType === 'folder'
+      ? DEFAULT_FOLDER_HEIGHT
+      : nodeType === 'code-sandbox'
+      ? DEFAULT_CODE_SANDBOX_HEIGHT
+      : DEFAULT_NOTE_HEIGHT,
     properties: createDefaultNoteProperties({ type: nodeType }),
     roughSeed
   }

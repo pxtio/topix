@@ -37,6 +37,7 @@ export default defineConfig({
             if (id.includes("@codemirror")) return "codemirror"
             if (id.includes("framer-motion")) return "framer-motion"
             if (id.includes("recharts")) return "recharts"
+            if (id.includes("highlightjs")) return "highlightjs"
             if (
               id.includes("/node_modules/prosemirror-") ||
               id.includes("/node_modules/@prosemirror/") ||

@@ -32,13 +32,13 @@ export const UserMessage = ({ message, isLatest }: { message: ChatMessage, isLat
   return (
     <>
       <div className="h-4" ref={ref} />
-      <div className={`relative group w-auto max-w-[75%] min-w-0 ml-auto ${contextText ? "pb-12" : "pb-9"}`}>
+      <div className={`relative group w-auto max-w-[75%] min-w-0 ml-auto mb-10 ${contextText ? "pb-3" : "pb-0"}`}>
         <span className="absolute -top-8 right-0 block min-w-[150px] text-right text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity p-2">
           {sentLabel}
         </span>
         <CopyUserMessageButton
           text={text}
-          className="absolute bottom-2 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute -bottom-1 transform translate-y-[100%] right-1 opacity-0 group-hover:opacity-100 transition-opacity"
         />
         <div
           className={`
@@ -47,7 +47,7 @@ export const UserMessage = ({ message, isLatest }: { message: ChatMessage, isLat
             text-card-foreground text-base
             text-left
             rounded-xl
-            px-5 py-3
+            p-2
             whitespace-pre-wrap break-words
             border border-border/70
           `}
@@ -55,7 +55,7 @@ export const UserMessage = ({ message, isLatest }: { message: ChatMessage, isLat
           {text}
         </div>
         {contextText && (
-          <div className="absolute bottom-3 left-1">
+          <div className="absolute bottom-3 transform translate-y-[100%] left-1">
             <Popover>
               <PopoverTrigger asChild>
                 <button

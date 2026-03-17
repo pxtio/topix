@@ -31,6 +31,9 @@ def create_create_note_tool(
         Write short, concise note content, ideally a single paragraph. Content may use
         simple markdown such as bold, italic, underline, lists, or links to highlight
         important keywords or short phrases, but avoid headings.
+        If the user explicitly asks for a code note, runnable Python snippet, sandbox,
+        or executable code node, create a `code-sandbox` note and put the Python code
+        in `content` instead of creating a normal text note.
 
         Args:
             content (str): Main markdown body of the note. This is the most important text.
@@ -81,6 +84,9 @@ def create_edit_note_tool(
         Keep note content short and concise, ideally a single paragraph. Content may use
         simple markdown such as bold, italic, underline, lists, or links to highlight
         important keywords or short phrases, but avoid headings.
+        If the user explicitly wants the note to become a code note, runnable Python
+        snippet, sandbox, or executable code node, set `note_type` to `code-sandbox`
+        and store the Python code in `content`.
 
         Args:
             note_id (str): Exact id of the note to update.

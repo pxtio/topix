@@ -116,7 +116,7 @@ const SlideFrame = memo(function SlideFrame({ slideName }: SlideFrameProps) {
 /**
  * Node view component for rendering a note node in the graph.
  */
-function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>) {
+function NodeViewBase({ id, data, selected, width, height, dragging }: NodeProps<NoteNode>) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const [isEditing, setIsEditing] = useState(false)
@@ -194,6 +194,7 @@ function NodeViewBase({ id, data, selected, width, height }: NodeProps<NoteNode>
       <NodeCard
         note={data}
         selected={selected}
+        dragging={dragging}
         isDark={isDark}
         contentRef={contentRef}
         onLabelEditingChange={setIsEditing}

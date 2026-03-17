@@ -81,6 +81,14 @@ export const ShapeChrome = memo(({
     )
   }
 
+  if (type === 'code-sandbox') {
+    return (
+      <div className={clsx('bg-transparent w-full h-full', className)} style={{ ...wrapperStyle }}>
+        {children}
+      </div>
+    )
+  }
+
   const baseWrapperClass = clsx('relative w-full h-full', frameClass, className)
   const shapeProps = {
     rounded,

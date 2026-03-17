@@ -58,6 +58,14 @@ type Updater<T> = T | ((prev: T) => T)
 type PersistOptions = {
   persist?: boolean
 }
+
+export type NodeSurfaceKind = "sheet" | "code-sandbox"
+
+export type OpenNodeSurface = {
+  nodeId: string
+  kind: NodeSurfaceKind
+}
+
 type GraphScope = {
   boardId?: string
   rootId?: string
@@ -918,6 +926,9 @@ export interface GraphStore {
   setBoardCanEdit: (canEdit: boolean) => void
   boardLabel: string
   setBoardLabel: (label: string) => void
+  activeNodeSurface: OpenNodeSurface | null
+  openNodeSurface: (nodeId: string, kind: NodeSurfaceKind) => void
+  closeNodeSurface: () => void
 
   setNodes: (nodes: Updater<NoteNode[]>) => void
   setEdges: (edges: Updater<LinkEdge[]>) => void
@@ -1000,6 +1011,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
             boardVisibility: "private",
             boardCanEdit: true,
             boardLabel: "",
+            activeNodeSurface: null,
           }
         : {
             boardId,
@@ -1044,6 +1056,7 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   boardVisibility: "private",
   boardCanEdit: true,
   boardLabel: "",
+  activeNodeSurface: null,
   setBoardBackground: (color) => {
     const boardId = get().boardId
     if (!boardId) return
@@ -1069,6 +1082,8 @@ export const useGraphStore = create<GraphStore>((set, get) => ({
   setBoardVisibility: (visibility) => set({ boardVisibility: visibility }),
   setBoardCanEdit: (canEdit) => set({ boardCanEdit: canEdit }),
   setBoardLabel: (label) => set({ boardLabel: label }),
+  openNodeSurface: (nodeId, kind) => set({ activeNodeSurface: { nodeId, kind } }),
+  closeNodeSurface: () => set({ activeNodeSurface: null }),
 
   // --- flexible setters ---
 

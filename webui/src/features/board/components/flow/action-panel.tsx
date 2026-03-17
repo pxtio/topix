@@ -101,6 +101,7 @@ export const ActionPanel = memo(function ActionPanel({
       { key: 'o', handler: () => onAddNode({ nodeType: 'ellipse' }) },
       { key: 'd', handler: () => onAddNode({ nodeType: 'diamond' }) },
       { key: 't', handler: () => onAddNode({ nodeType: 'text' }) },
+      { key: 'y', handler: () => onAddNode({ nodeType: 'code-sandbox' }) },
       { key: 'g', handler: () => setOpenIconSearch(true) },
       { key: 'i', handler: () => setOpenImageSearch(true) },
       { key: 'c', handler: () => boardId && setOpenChatDialog(true) },

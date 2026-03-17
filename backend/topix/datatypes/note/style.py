@@ -25,6 +25,7 @@ class NodeType(StrEnum):
     LAYERED_CIRCLE = "layered-circle"
     TAG = "tag"
     SLIDE = "slide"
+    CODE_SANDBOX = "code-sandbox"
 
 
 class StrokeStyle(StrEnum):

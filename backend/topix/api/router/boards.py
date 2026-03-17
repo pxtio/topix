@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from fastapi.params import Body, Path
 
+from topix.agents.assistant.code import execute_python_code
 from topix.api.datatypes.requests import (
     AddLinksRequest,
     AddNotesRequest,
@@ -21,6 +22,7 @@ from topix.api.utils.security import (
 )
 from topix.api.utils.thumbnail import load_png_as_data_url, save_thumbnail
 from topix.datatypes.graph.graph import Graph
+from topix.datatypes.note.style import NodeType
 from topix.store.graph import GraphStore
 
 router = APIRouter(
@@ -178,6 +180,35 @@ async def get_note(
         raise HTTPException(status_code=404, detail="Note not found")
 
     return {"note": notes[0].model_dump(exclude_none=True)}
+
+
+@router.post("/{graph_id}/notes/{note_id}:execute", include_in_schema=False)
+@router.post("/{graph_id}/notes/{note_id}:execute")
+@with_standard_response
+async def execute_note_code(
+    response: Response,
+    request: Request,
+    graph_id: Annotated[str, Path(description="Graph ID")],
+    note_id: Annotated[str, Path(description="Note ID")],
+    user_id: Annotated[str, Depends(get_current_user_uid)],
+    _: Annotated[None, Depends(verify_board_member)],
+):
+    """Execute Python code stored in a code sandbox note."""
+    store: GraphStore = request.app.graph_store
+
+    notes = await store.get_nodes(node_ids=[note_id])
+    if not notes:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    note = notes[0]
+    if note.graph_uid != graph_id:
+        raise HTTPException(status_code=404, detail="Note not found")
+    if note.style.type != NodeType.CODE_SANDBOX:
+        raise HTTPException(status_code=400, detail="Note is not a code sandbox")
+
+    code = note.content.markdown if note.content else ""
+    result = await execute_python_code(code)
+    return result.model_dump(exclude_none=True)
 
 
 @router.get("/{graph_id}/notes/{note_id}/path", include_in_schema=False)

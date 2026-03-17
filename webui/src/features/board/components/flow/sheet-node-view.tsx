@@ -12,12 +12,13 @@ import type { NoteWithPin } from './note-card'
 import { useGraphStore } from '../../store/graph-store'
 
 const RESUME_DELAY = 180
-const MIN_HEIGHT = 250
-const MAX_HEIGHT = 400
+const MIN_HEIGHT = 320
+const MAX_HEIGHT = 500
 
 type SheetNodeViewProps = {
   note: NoteWithPin
   selected: boolean
+  dragging?: boolean
   isDark: boolean
   isPinned: boolean
   backgroundColor?: string
@@ -32,6 +33,7 @@ const COLOR_OPTIONS = [{ name: 'white', hex: '#ffffff' }, ...TAILWIND_400]
 export const SheetNodeView = memo(function SheetNodeView({
   note,
   selected,
+  dragging,
   isDark,
   isPinned,
   backgroundColor,
@@ -40,9 +42,8 @@ export const SheetNodeView = memo(function SheetNodeView({
   onDelete,
   onOpenSticky
 }: SheetNodeViewProps) {
-  const suspendContent = useGraphStore(
-    state => state.isMoving
-  )
+  const isMoving = useGraphStore(state => state.isMoving)
+  const suspendContent = Boolean(isMoving || dragging)
   const [hidden, setHidden] = useState(false)
   const [contentReady, setContentReady] = useState(false)
   const resumeTimeoutRef = useRef<number | null>(null)
@@ -220,7 +221,25 @@ export const SheetNodeView = memo(function SheetNodeView({
           onClick={onOpenSticky}
         >
           {hidden || !contentReady ? (
-            <div className='w-full h-full' aria-hidden='true' />
+            <div className='relative w-full h-full' aria-hidden='true'>
+              <div className='w-full h-full' />
+              {suspendContent && (
+                <div
+                  className='absolute inset-0 flex items-center justify-center'
+                  style={{ backgroundColor: isDark ? "rgba(31,29,46,0.62)" : "rgba(255,250,243,0.72)" }}
+                >
+                  <div
+                    className='rounded-full px-3 py-1 text-base font-medium font-handwriting'
+                    style={{
+                      color: isDark ? "#908caa" : "#797593",
+                      backgroundColor: isDark ? "rgba(64,61,82,0.72)" : "rgba(223,218,217,0.8)",
+                    }}
+                  >
+                    Moving Sticky Note...
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <div ref={contentRef}>
               <StickyNote content={note.content?.markdown || ''} />

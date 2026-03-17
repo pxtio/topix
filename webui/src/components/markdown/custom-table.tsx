@@ -44,7 +44,7 @@ export const CustomTable: React.FC<CustomTableProps> = ({
     >
       <table
         className={cn(
-          'text-base border-b w-max max-w-none min-w-[480px] md:min-w-[640px]',
+          'text-base border-b border-foreground/60 w-max max-w-none min-w-[480px] md:min-w-[640px]',
           className
         )}
         {...props}

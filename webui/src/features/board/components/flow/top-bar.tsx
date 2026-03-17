@@ -23,7 +23,7 @@ import {
   Tag01Icon,
   TextIcon,
 } from '@hugeicons/core-free-icons'
-import { BotMessageSquare, ChevronDown, Cloud, Layers, Sparkles } from 'lucide-react'
+import { BotMessageSquare, ChevronDown, Cloud, Code2, Layers, Sparkles } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -329,6 +329,10 @@ export const TopBar = memo(function TopBar({
               <DropdownMenuItem onSelect={() => setOpenDocumentUpload(true)} className='gap-2 text-sm' disabled={!boardId || documentUploadLimited}>
                 <HugeiconsIcon icon={GoogleDocIcon} className='size-4 shrink-0' strokeWidth={2} />
                 <span>Document</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onAddNode({ nodeType: 'code-sandbox' })} className='gap-2 text-sm'>
+                <Code2 className='size-4 shrink-0' strokeWidth={2} />
+                <span>Code sandbox</span>
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setOpenAiSpark(true)} className='gap-2 text-sm' disabled={!boardId}>
                 <Sparkles className='size-4 shrink-0 text-secondary' strokeWidth={2} />

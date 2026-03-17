@@ -540,6 +540,7 @@ export const NodeCard = memo(({
           <SheetNodeView
             note={note}
             selected={selected}
+            dragging={dragging}
             isDark={isDark}
             isPinned={isPinned}
             backgroundColor={sheetBackgroundColor}

@@ -42,12 +42,8 @@ export function highlightPython(code: string) {
 
 
 /**
- * Normalize code without touching meaningful Python indentation.
+ * Normalize code while preserving user-authored line content.
  */
 export function normalizeCode(code: string) {
-  return code
-    .split("\n")
-    .map((line) => line.replace(/[ \t]+$/g, ""))
-    .join("\n")
-    .replace(/\n+$/g, "")
+  return code.replace(/\n+$/g, "")
 }

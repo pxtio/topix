@@ -32,7 +32,7 @@ export function CopilotSheet({
         showClose={false}
         // Keep the panel open when users click outside on the canvas.
         onInteractOutside={(event) => event.preventDefault()}
-        className="md:w-[600px] md:max-w-[92vw] w-full bg-background text-sidebar-foreground border-l-1 border-border/70 p-0 shadow-sm"
+        className="md:w-[540px] md:max-w-[92vw] w-full bg-background text-sidebar-foreground border-l-1 border-border/70 p-0 shadow-sm"
       >
         {/* Radix Dialog primitive requires an accessible title for content. */}
         <SheetHeader className="sr-only">

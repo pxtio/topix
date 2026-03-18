@@ -1,8 +1,105 @@
-import { useMemo } from "react"
-import { isReasoningTextStep, type AgentResponse } from "../../types/stream"
+import { useMemo, useState } from "react"
+import { isReasoningTextStep, isToolCallStep, type AgentResponse, type ReasoningTextStep, type ToolCallStep } from "../../types/stream"
 import { ReasoningStepRow } from "./reasoning-step-row"
 import { ToolStepRow } from "./tool-step-row"
-import { buildToolStepWidgetAttachments } from "./tool-step-widgets"
+import { buildToolStepWidgetAttachments, type ToolStepWidgetAttachment } from "./tool-step-widgets"
+import { ArrowUp01Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Ellipsis } from "lucide-react"
+
+
+type TimelineItem =
+  | {
+    type: "reasoning"
+    key: string
+    step: ReasoningTextStep
+  }
+  | {
+    type: "tool"
+    key: string
+    step: ToolCallStep
+    index: number
+  }
+  | {
+    type: "tool_block"
+    key: string
+    hidden: Array<{ step: ToolCallStep, index: number }>
+    visible: { step: ToolCallStep, index: number }
+  }
+
+
+/**
+ * Renders the collapsed header for a repeated same-tool block.
+ */
+const CollapsedToolBlockRow = ({
+  isExpanded,
+  onClick,
+}: {
+  isExpanded: boolean
+  onClick: () => void
+}) => {
+  return (
+    <button
+      type='button'
+      className='relative w-full p-2 flex flex-row items-start justify-start gap-2 text-muted-foreground'
+      onClick={onClick}
+      aria-label='Show repeated tool calls'
+    >
+      <div className='absolute w-[1px] h-full top-0 left-[0.98rem] bg-border' />
+      <div className='relative flex-shrink-0'>
+        <div className='relative z-20 mt-2 -ml-1 rounded-full bg-background w-6 h-6 flex items-center justify-center'>
+          {isExpanded ? (
+            <HugeiconsIcon icon={ArrowUp01Icon} className='size-4' strokeWidth={2} />
+          ) : (
+            <Ellipsis className='size-4' strokeWidth={2} />
+          )}
+        </div>
+      </div>
+      <div className='relative flex-1 min-h-8' />
+    </button>
+  )
+}
+
+
+/**
+ * Renders one consecutive same-tool block with a collapsible dots row.
+ */
+const ToolStepBlock = ({
+  hidden,
+  visible,
+  isStreaming,
+  widgetAttachments,
+}: {
+  hidden: Array<{ step: ToolCallStep, index: number }>
+  visible: { step: ToolCallStep, index: number }
+  isStreaming: boolean
+  widgetAttachments: Map<number, ToolStepWidgetAttachment>
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  return (
+    <>
+      <CollapsedToolBlockRow
+        isExpanded={isExpanded}
+        onClick={() => setIsExpanded((value) => !value)}
+      />
+      {isExpanded && hidden.map(({ step, index }) => (
+        <ToolStepRow
+          key={step.id}
+          step={step}
+          isStreaming={isStreaming}
+          attachment={widgetAttachments.get(index)}
+        />
+      ))}
+      <ToolStepRow
+        key={visible.step.id}
+        step={visible.step}
+        isStreaming={isStreaming}
+        attachment={widgetAttachments.get(visible.index)}
+      />
+    </>
+  )
+}
 
 
 export interface ReasoningStepsViewProps {
@@ -25,21 +122,83 @@ export const ReasoningStepsView = ({ isStreaming, response }: ReasoningStepsView
     [isStreaming, response.steps]
   )
 
+  const timelineItems = useMemo<TimelineItem[]>(() => {
+    const items: TimelineItem[] = []
+
+    let index = 0
+    while (index < response.steps.length) {
+      const step = response.steps[index]
+
+      if (isReasoningTextStep(step)) {
+        items.push({
+          type: "reasoning",
+          key: step.id,
+          step,
+        })
+        index += 1
+        continue
+      }
+
+      const hidden: Array<{ step: ToolCallStep, index: number }> = []
+      let end = index
+
+      while (end + 1 < response.steps.length) {
+        const nextStep = response.steps[end + 1]
+        if (!isToolCallStep(nextStep) || nextStep.name !== step.name) {
+          break
+        }
+        hidden.push({ step: response.steps[end] as ToolCallStep, index: end })
+        end += 1
+      }
+
+      if (hidden.length > 0) {
+        items.push({
+          type: "tool_block",
+          key: `${step.id}-block`,
+          hidden,
+          visible: {
+            step: response.steps[end] as ToolCallStep,
+            index: end,
+          },
+        })
+      } else {
+        items.push({
+          type: "tool",
+          key: step.id,
+          step,
+          index,
+        })
+      }
+
+      index = end + 1
+    }
+
+    return items
+  }, [response.steps])
+
   return (
     <div className='w-full flex flex-col items-start'>
-      {response.steps.map((step, index) => (
-        isReasoningTextStep(step) ? (
+      {timelineItems.map((item) => (
+        item.type === "reasoning" ? (
           <ReasoningStepRow
-            key={step.id}
-            step={step}
+            key={item.key}
+            step={item.step}
             isStreaming={isStreaming}
+          />
+        ) : item.type === "tool_block" ? (
+          <ToolStepBlock
+            key={item.key}
+            hidden={item.hidden}
+            visible={item.visible}
+            isStreaming={isStreaming}
+            widgetAttachments={widgetAttachments}
           />
         ) : (
           <ToolStepRow
-            key={step.id}
-            step={step}
+            key={item.key}
+            step={item.step}
             isStreaming={isStreaming}
-            attachment={widgetAttachments.get(index)}
+            attachment={widgetAttachments.get(item.index)}
           />
         )
       ))}

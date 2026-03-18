@@ -130,8 +130,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <div ref={handleScrollAreaRef} className="min-h-0 flex-1">
-          <div className="pb-2">
+        <div ref={handleScrollAreaRef} className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
+          <div className="pb-0">
             <SidebarGroup>
               <SidebarGroupLabel><span>Workspace</span></SidebarGroupLabel>
               <SidebarGroupContent>

@@ -3,6 +3,7 @@ import type { ReasoningTextStep } from "../../types/stream"
 import { ArrowDown01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ShinyText } from "@/components/animations/shiny-text"
+import { MarkdownView } from "@/components/markdown/markdown-view"
 
 
 /**
@@ -25,8 +26,8 @@ export const ReasoningStepRow = ({
   return (
     <div className='w-full py-1 px-2'>
       {step.message !== "" ? (
-        <div className='text-base whitespace-pre-wrap text-card-foreground'>
-          {step.message}
+        <div className='text-base text-card-foreground'>
+          <MarkdownView content={step.message} isStreaming={isStreaming} />
         </div>
       ) : isStreaming ? (
         <ShinyText
@@ -50,8 +51,8 @@ export const ReasoningStepRow = ({
             />
           </button>
           {viewMore && (
-            <div className='mt-2 text-base whitespace-pre-wrap text-muted-foreground italic'>
-              {step.reasoning}
+            <div className='mt-2 text-base text-muted-foreground italic'>
+              <MarkdownView content={step.reasoning} />
             </div>
           )}
         </div>

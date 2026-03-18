@@ -135,6 +135,13 @@ const flushStep = (s: StepAccum) => {
 }
 
 
+/**
+ * Builds a readable fallback title when a tool name is not in the display map.
+ */
+const getToolTitle = (toolName: ToolName) =>
+  ToolNameDescription[toolName] || toolName.replaceAll("_", " ")
+
+
 export async function* buildResponse(
   chunks: AsyncGenerator<Record<string, unknown>>,
   opts: BuildResponseOptions = {}
@@ -219,6 +226,10 @@ export async function* buildResponse(
   }
 
   for await (const rawChunk of chunks) {
+    if (rawChunk.type === "tool_call") {
+      continue
+    }
+
     const chunk = simpleTransform(rawChunk)
     const isRaw = chunk.toolName === RAW_MESSAGE
 
@@ -330,7 +341,7 @@ export function extractStepDescription(step: ReasoningStep): { reasoning: string
     return {
       reasoning: step.reasoning || "",
       message: step.message || "",
-      title: step.message ? "Response" : ToolNameDescription[RAW_MESSAGE],
+      title: step.message ? "Response" : getToolTitle(RAW_MESSAGE),
     }
   }
 
@@ -348,7 +359,7 @@ export function extractStepDescription(step: ReasoningStep): { reasoning: string
     return {
       reasoning: step.thought || "",
       message: "",
-      title: ToolNameDescription[step.name],
+      title: getToolTitle(step.name),
       input
     }
   }
@@ -361,7 +372,7 @@ export function extractStepDescription(step: ReasoningStep): { reasoning: string
       message: output.label
         ? `Created ${typeLabel} note "${output.label}".`
         : `Created ${typeLabel} note.`,
-      title: ToolNameDescription[step.name],
+      title: getToolTitle(step.name),
       input
     }
   }
@@ -374,12 +385,12 @@ export function extractStepDescription(step: ReasoningStep): { reasoning: string
       message: output.label
         ? `Updated note "${output.label}" as ${typeLabel}.`
         : `Updated note as ${typeLabel}.`,
-      title: ToolNameDescription[step.name],
+      title: getToolTitle(step.name),
       input
     }
   }
 
-  return { reasoning: step.thought || "", message: "", title: ToolNameDescription[step.name], input }
+  return { reasoning: step.thought || "", message: "", title: getToolTitle(step.name), input }
 }
 
 

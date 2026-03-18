@@ -6,9 +6,10 @@ import {
   Album02Icon,
   ChipIcon,
   DashboardBrowsingIcon,
+  EarthIcon,
+  NoteAddIcon,
+  NoteEditIcon,
   NoteIcon,
-  PencilEditIcon,
-  Search01Icon,
   SourceCodeIcon,
   ThermometerWarmIcon,
 } from "@hugeicons/core-free-icons"
@@ -94,13 +95,19 @@ export interface AgentResponse {
  * Agent tool names enum.
  */
 export type ToolName =
+  | "answer_reformulate"
   | "web_search"
   | "memory_search"
   | "code_interpreter"
   | "create_note"
   | "edit_note"
+  | "outline_generator"
+  | "web_collector"
+  | "synthesizer"
   | "navigate"
   | "raw_message"
+  | "image_description"
+  | "topic_illustrator"
   | "image_generation"
   | "display_weather_widget"
   | "display_stock_widget"
@@ -108,13 +115,19 @@ export type ToolName =
 
 
 export const ToolNameDescription: Record<ToolName, string> = {
+  answer_reformulate: "Reformulate answer",
   web_search: "Search the web",
   memory_search: "Search memory",
   code_interpreter: "Interpret code",
   create_note: "Create note",
   edit_note: "Edit note",
+  outline_generator: "Generate outline",
+  web_collector: "Collect web content",
+  synthesizer: "Synthesize response",
   navigate: "Fetch and analyze web page content",
   raw_message: "Reasoning",
+  image_description: "Describe image",
+  topic_illustrator: "Illustrate topic",
   image_generation: "Generate images based on prompts",
   display_weather_widget: "Display weather information",
   display_stock_widget: "Display stock information",
@@ -123,12 +136,18 @@ export const ToolNameDescription: Record<ToolName, string> = {
 
 
 export const ToolNameIcon: Record<string, IconSvgElement> = {
-  web_search: Search01Icon,
+  answer_reformulate: NoteIcon,
+  web_search: EarthIcon,
   memory_search: ChipIcon,
+  outline_generator: NoteIcon,
+  web_collector: AiBrowserIcon,
+  synthesizer: NoteIcon,
   navigate: AiBrowserIcon,
   code_interpreter: SourceCodeIcon,
-  create_note: NoteIcon,
-  edit_note: PencilEditIcon,
+  create_note: NoteAddIcon,
+  edit_note: NoteEditIcon,
+  image_description: AiImageIcon,
+  topic_illustrator: AiImageIcon,
   image_generation: AiImageIcon,
   display_weather_widget: ThermometerWarmIcon,
   display_stock_widget: DashboardBrowsingIcon,

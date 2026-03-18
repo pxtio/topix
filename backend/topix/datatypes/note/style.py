@@ -26,6 +26,7 @@ class NodeType(StrEnum):
     TAG = "tag"
     SLIDE = "slide"
     CODE_SANDBOX = "code-sandbox"
+    WIDGET = "widget"
 
 
 class StrokeStyle(StrEnum):

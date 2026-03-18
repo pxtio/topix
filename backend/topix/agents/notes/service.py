@@ -13,20 +13,23 @@ from topix.store.graph import GraphStore
 DEFAULT_NOTE_GAP = 80
 DEFAULT_CHILD_OFFSET_X = 40
 DEFAULT_CHILD_OFFSET_Y = 80
-WARM_TAILWIND_300_HEX = [
-    "#a4def0",  # blue
-    "#90eaed",  # sky
-    "#7ce9d8",  # cyan
-    "#71deb2",  # teal
-    "#80dca2",  # emerald
-    "#d9c1f3",  # violet
+DEFAULT_NOTE_COLORS_HEX = [
+    "#baa193",
+    "#ec9952",
+    "#e8bf2f",
+    "#ea80aa",
+    "#5dd271",
+    "#42c698",
+    "#eb8de5",
+    "#f08085",
+    "#76cbeb",
 ]
 
 
 def build_default_note_style(note_type: NodeType) -> Style:
     """Return the backend default style for a given note type."""
     style = Style(type=note_type)
-    style.background_color = random.choice(WARM_TAILWIND_300_HEX)
+    style.background_color = random.choice(DEFAULT_NOTE_COLORS_HEX)
 
     if note_type == NodeType.SHEET:
         style.roughness = 0
@@ -47,6 +50,13 @@ def build_default_note_style(note_type: NodeType) -> Style:
         style.roughness = 0
         style.roundness = 1
         style.stroke_color = "#00000000"
+    elif note_type == NodeType.WIDGET:
+        style.background_color = "#faf4ed"
+        style.text_color = "#575279"
+        style.text_align = TextAlign.LEFT
+        style.roughness = 0
+        style.roundness = 1
+        style.stroke_color = "#00000000"
 
     return style
 
@@ -63,6 +73,8 @@ def get_default_note_size(note_type: NodeType) -> tuple[int, int]:
         return 150, 150
     if note_type == NodeType.CODE_SANDBOX:
         return 320, 320
+    if note_type == NodeType.WIDGET:
+        return 360, 260
     return 400, 400
 
 

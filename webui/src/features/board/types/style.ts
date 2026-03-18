@@ -25,6 +25,7 @@ export type NodeType =
   | "capsule"
   | "layered-diamond"
   | "code-sandbox"
+  | "widget"
 
 /**
  * Stroke style for the node.
@@ -333,11 +334,12 @@ export const createDefaultStyle = ({
         opacity: 90,
       } as Style
     case "code-sandbox":
+    case "widget":
       return {
         ...defaultOptions,
         roughness: 0,
         roundness: 1,
-        fontFamily: "monospace",
+        fontFamily: type === "widget" ? "sans-serif" : "monospace",
         fontSize: "S",
         textAlign: "left",
         backgroundColor: ROSE_PINE_LIGHT,

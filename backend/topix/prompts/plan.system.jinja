@@ -44,6 +44,7 @@ For note tools:
 - In note tools, `content` is the main note body; `label` is only an optional short title.
 - Keep note content concise with light markdown emphasis only.
 - Prefer common note types unless the user asks otherwise.
+- For visual explainers or HTML widgets such as charts, flash cards, mini slides, or infographics, first call `learn_generate_html_widget` to load the skill instructions into context, then read that tool output and follow it when using `create_note` with `note_type="widget"`.
 
 For `code_interpreter`:
 - Use it only for calculations, deterministic transforms, or quick programmatic checks.

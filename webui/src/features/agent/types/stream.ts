@@ -10,6 +10,7 @@ import {
   NoteAddIcon,
   NoteEditIcon,
   NoteIcon,
+  AnalyticsUpIcon,
   SearchList01Icon,
   SourceCodeIcon,
   ThermometerWarmIcon,
@@ -114,6 +115,7 @@ export type ToolName =
   | "display_weather_widget"
   | "display_stock_widget"
   | "display_image_search_widget"
+  | "learn_generate_html_widget"
 
 
 export const ToolNameDescription: Record<ToolName, string> = {
@@ -134,6 +136,7 @@ export const ToolNameDescription: Record<ToolName, string> = {
   display_weather_widget: "Display weather information",
   display_stock_widget: "Display stock information",
   display_image_search_widget: "Search for images from the web",
+  learn_generate_html_widget: "Learn widget and visual explainer skill",
 }
 
 
@@ -154,6 +157,7 @@ export const ToolNameIcon: Record<string, IconSvgElement> = {
   display_weather_widget: ThermometerWarmIcon,
   display_stock_widget: DashboardBrowsingIcon,
   display_image_search_widget: Album02Icon,
+  learn_generate_html_widget: AnalyticsUpIcon,
 }
 
 

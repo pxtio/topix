@@ -24,6 +24,7 @@ class AgentToolName(StrEnum):
     DISPLAY_STOCK_WIDGET = "display_stock_widget"
     DISPLAY_WEATHER_WIDGET = "display_weather_widget"
     DISPLAY_IMAGE_SEARCH_WIDGET = "display_image_search_widget"
+    LEARN_GENERATE_HTML_WIDGET = "learn_generate_html_widget"
 
     RAW_MESSAGE = "raw_message"
 
@@ -59,5 +60,9 @@ tool_descriptions = {
     AgentToolName.DISPLAY_STOCK_WIDGET: "Display a stock widget",
     AgentToolName.DISPLAY_WEATHER_WIDGET: "Display a weather widget",
     AgentToolName.DISPLAY_IMAGE_SEARCH_WIDGET: "Display an image search widget",
+    AgentToolName.LEARN_GENERATE_HTML_WIDGET: (
+        "Learn how to create visual explainers and interactive "
+        "HTML widgets such as charts, flash cards, mini slides, and infographics"
+    ),
     AgentToolName.IMAGE_GENERATION: "Generate images based on text prompts",
 }

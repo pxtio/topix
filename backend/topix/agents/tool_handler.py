@@ -9,6 +9,7 @@ from typing import Any, Awaitable, Callable, Type
 
 from agents import (
     Agent,
+    AgentBase,
     FunctionTool,
     RunContextWrapper,
     Runner,
@@ -44,6 +45,8 @@ RAW_RESPONSE_EVENT = "raw_response_event"
 class ToolHandler:
     """Convert agent/function as FunctionTool object."""
 
+    ToolEnabled = bool | Callable[[RunContextWrapper[Any], AgentBase], Any]
+
     @classmethod
     def convert_agent_to_tool(
         cls,
@@ -53,6 +56,7 @@ class ToolHandler:
         max_turns: int = 5,
         streamed: bool = False,
         input_type: Type | None = None,
+        is_enabled: ToolEnabled = True,
     ) -> FunctionTool:
         """Convert agent object to a function.
 
@@ -64,6 +68,7 @@ class ToolHandler:
             max_turns: The maximum number of turns for the tool.
             streamed: Whether to stream the output.
             input_type: The type of the input for the agent. If provided, it will be used to annotate the input in the function signature.
+            is_enabled: Whether the tool is exposed to the model for the current run.
 
         Returns:
             The FunctionTool object.
@@ -73,11 +78,16 @@ class ToolHandler:
             func=cls.convert_agent_to_func(agent, tool_name, max_turns, streamed, input_type=input_type),
             name_override=tool_name,
             description_override=tool_description if tool_description else None,
+            is_enabled=is_enabled,
         )
 
     @classmethod
     def convert_func_to_tool(
-        cls, func: Callable, tool_name: str, tool_description: str = ""
+        cls,
+        func: Callable,
+        tool_name: str,
+        tool_description: str = "",
+        is_enabled: ToolEnabled = True,
     ) -> FunctionTool:
         """Convert function to a function tool.
 
@@ -95,11 +105,18 @@ class ToolHandler:
         function_tool = ToolHandler.convert_func_to_tool(my_function, "my_function")
         ```
 
+        Args:
+            func: The wrapped function tool implementation.
+            tool_name: The tool name exposed to the model.
+            tool_description: Optional model-facing tool description.
+            is_enabled: Whether the tool is exposed to the model for the current run.
+
         """
         return function_tool(
             func=cls._process_func(func, tool_name),
             name_override=tool_name,
             description_override=tool_description if tool_description else None,
+            is_enabled=is_enabled,
         )
 
     @classmethod

@@ -29,6 +29,7 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
   const isDark = resolvedTheme === "dark"
   const palette = isDark ? ROSE_PINE_DARK : ROSE_PINE_LIGHT
   const isMoving = useGraphStore((state) => state.isMoving)
+  const boardCanEdit = useGraphStore((state) => state.boardCanEdit)
   const openNodeSurface = useGraphStore((state) => state.openNodeSurface)
 
   const codePreview = note.content?.markdown || "# Write Python here"
@@ -39,8 +40,11 @@ export const CodeSandboxNode = memo(function CodeSandboxNode({
     <button
       type="button"
       className="w-full h-full text-left rounded-2xl overflow-hidden shadow-sm"
-      onClick={() => openNodeSurface(note.id, "code-sandbox")}
-      title="Open Python sandbox"
+      onClick={() => {
+        if (!boardCanEdit) return
+        openNodeSurface(note.id, "code-sandbox")
+      }}
+      title={boardCanEdit ? "Open Python sandbox" : "Python sandbox preview"}
     >
       <div
         className={`code-sandbox-theme relative w-full h-full overflow-auto scrollbar-thin p-3 ${isDark ? "code-sandbox-theme-dark" : "code-sandbox-theme-light"}`}

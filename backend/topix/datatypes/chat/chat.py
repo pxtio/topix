@@ -59,7 +59,7 @@ class Message(Resource):
             if step.to_compact_step_description()
         )
 
-        return f"<Reasoning>\n\n{steps_str}\n\n</Reasoning>\n\n" if steps_str else ""
+        return f"<Reasoning>\n\n{steps_str}\n\n</Reasoning>" if steps_str else ""
 
     def to_chat_message(self) -> dict[str, str]:
         """Convert to a chat message format."""
@@ -71,7 +71,7 @@ class Message(Resource):
             else:
                 content = self.content.markdown if self.content else ""
 
-        content = f"{reasoning}{content}" if reasoning else content
+        content = f"{reasoning}\n\n{content}".strip() if reasoning else content.strip()
 
         # If there is message-level context, prepend it to the content in a special format
         if self.role == MessageRole.USER and self.properties.context.text:

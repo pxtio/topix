@@ -15,6 +15,7 @@ import { getBoardNote } from "@/features/board/api/get-board"
 import { convertNoteToNode } from "@/features/board/utils/graph"
 import type { NoteNode } from "@/features/board/types/flow"
 import type { CreateNoteOutput, EditNoteOutput } from "../types/tool-outputs"
+import { isReasoningTextStep, isToolCallStep } from "../types/stream"
 
 
 /**
@@ -161,11 +162,10 @@ export const useSendMessage = () => {
                   msgs = [...newMessages]
                 }
                 return msgs.map((m) => {
-                  const lastStep = safeResponse.steps[safeResponse.steps.length - 1]
-                  let content = ""
-                  if (lastStep.name === 'synthesizer' || lastStep.name === 'answer_reformulate') {
-                    content = typeof lastStep.output === 'string' ? lastStep.output : ''
-                  }
+                  const content = safeResponse.steps
+                    .filter(isReasoningTextStep)
+                    .map((step) => step.message)
+                    .join("")
                   if (m.id === tmpId) {
                     return {
                       ...m,
@@ -248,6 +248,13 @@ const sanitizeResponseForStreaming = (response: AgentResponse, isStop: boolean):
 }
 
 const sanitizeStep = (step: ReasoningStep): ReasoningStep => {
+  if (isReasoningTextStep(step)) {
+    return {
+      ...step,
+      reasoning: "",
+    }
+  }
+
   const eventMessages = step.eventMessages.slice(-STREAMING_EVENT_CAP)
   const output = typeof step.output === "string" ? step.output : sanitizeToolOutput(step.output)
   return {
@@ -282,6 +289,7 @@ const sanitizeToolOutput = (output: ToolOutput): ToolOutput => {
 
 const collectNoteToolOutputs = (steps: ReasoningStep[]): Array<CreateNoteOutput | EditNoteOutput> =>
   steps.flatMap((step) => {
+    if (!isToolCallStep(step)) return []
     if (
       (step.name === "create_note" || step.name === "edit_note") &&
       typeof step.output !== "string"

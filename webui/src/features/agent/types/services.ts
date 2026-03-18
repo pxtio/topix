@@ -49,7 +49,7 @@ export const defaultServices: () => Services = () => ({
     // { name: "openai/gpt-4.1", available: false, provider: "openai" },
     // { name: "openai/gpt-4o", available: false, provider: "openai" },
     { name: "openrouter/anthropic/claude-opus-4.6", available: false, provider: "openrouter" },
-    { name: "openrouter/anthropic/claude-opus-4.5", available: false, provider: "openrouter" },
+    // { name: "openrouter/anthropic/claude-opus-4.5", available: false, provider: "openrouter" },
     // { name: "openrouter/anthropic/claude-opus-4.1", available: false, provider: "openrouter" },
     { name: "openrouter/anthropic/claude-sonnet-4.5", available: false, provider: "openrouter" },
     { name: "openrouter/anthropic/claude-haiku-4.5", available: false, provider: "openrouter" },

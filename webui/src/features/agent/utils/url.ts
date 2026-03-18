@@ -1,6 +1,7 @@
 import { getDomain } from 'tldts'
 import type { AgentResponse } from '../types/stream'
 import type { UrlAnnotation, WebSearchOutput } from '../types/tool-outputs'
+import { isToolCallStep } from '../types/stream'
 
 /**
  * Extracts the main domain from a URL or hostname.
@@ -14,7 +15,7 @@ export function extractMainDomain(input: string): string | null {
 export function extractAnswerWebSources(answer: AgentResponse): UrlAnnotation[] {
   const sources: UrlAnnotation[] = []
   for (const step of answer.steps) {
-    if (step.name === "web_search") {
+    if (isToolCallStep(step) && step.name === "web_search" && typeof step.output !== "string") {
       const output = step.output as WebSearchOutput
       output.searchResults.forEach(result => {
         const exist = sources.find(s => s.url === result.url)

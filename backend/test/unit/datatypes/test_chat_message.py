@@ -1,6 +1,7 @@
 """Unit tests for chat message reasoning formatting."""
 
 from topix.agents.datatypes.outputs import CreateNoteOutput, WebSearchOutput
+from topix.agents.datatypes.reasoning_step import ReasoningStep
 from topix.agents.datatypes.tool_call import MAX_ARGUMENTS_LENGTH, ToolCall
 from topix.agents.datatypes.tools import AgentToolName
 from topix.datatypes.chat.chat import Message, MessageProperties
@@ -65,6 +66,46 @@ def test_message_to_chat_message_includes_reasoning_and_content():
     assert chat_message["role"] == "assistant"
     assert chat_message["content"].startswith("<Reasoning>\n\ncreate_note(")
     assert "Final answer body" in chat_message["content"]
+
+
+def test_reasoning_step_to_compact_step_description_merges_reasoning_and_message():
+    """Reasoning steps should compact both reasoning and visible message text."""
+    step = ReasoningStep(
+        reasoning="Need one quick search",
+        message="Checking the latest numbers",
+    )
+
+    assert (
+        step.to_compact_step_description()
+        == "Need one quick search / Checking the latest numbers"
+    )
+
+
+def test_message_to_chat_message_supports_mixed_reasoning_steps():
+    """Mixed reasoning/tool step lists should remain compact and ordered."""
+    reasoning_step = ReasoningStep(
+        reasoning="Need one quick search",
+        message="Checking the latest numbers",
+    )
+    tool_step = ToolCall(
+        id="step-3b",
+        name=AgentToolName.WEB_SEARCH,
+        output=WebSearchOutput(search_results=[]),
+        arguments={"query": "latest inflation france"},
+    )
+    message = Message(
+        role="assistant",
+        content=RichText(markdown="Inflation slowed."),
+        properties=MessageProperties(
+            reasoning=ReasoningProperty(reasoning=[reasoning_step, tool_step]),
+        ),
+    )
+
+    chat_message = message.to_chat_message()
+
+    assert "Need one quick search / Checking the latest numbers" in chat_message["content"]
+    assert "web_search({ query: 'latest inflation france' })" in chat_message["content"]
+    assert chat_message["content"].endswith("Inflation slowed.")
 
 
 def test_user_message_to_chat_message_keeps_context_prefix():

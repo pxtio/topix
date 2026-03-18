@@ -1,108 +1,37 @@
-import { MarkdownView } from "@/components/markdown/markdown-view"
 import { ReasoningStepsView } from "./reasoning-steps"
 import type { ChatMessage } from "../../types/chat"
 import { ResponseActions } from "./actions/response-actions"
-import clsx from "clsx"
-import { SourcesView } from "./sources-view"
-import { WeatherCard } from "@/features/widgets/components/weather-card"
-import TradingCard from "@/features/widgets/components/trading-card"
 import { useMemo } from "react"
-import ImageSearchStrip from "@/features/widgets/components/image-card"
-import { ImageGenView } from "./image-gen-view"
+import { isReasoningTextStep } from "../../types/stream"
+import { SourcesView } from "./sources-view"
 
 
 /**
- * Component that renders the assistant's message in the chat.
+ * Renders the assistant message as a single merged process view.
  */
 export const AssistantMessage = ({
   message,
 }: {
   message: ChatMessage
 }) => {
-  const content = message.content
-  const lastStep = message.properties?.reasoning?.reasoning.slice(-1)[0]
-  const isSynthesis = lastStep?.name === 'synthesizer'
-  const isDeepResearch = message.isDeepResearch || isSynthesis
-  const resp = { steps: message.properties?.reasoning?.reasoning || [], isDeepResearch, sentAt: message.sentAt }
+  const steps = message.properties?.reasoning?.reasoning || []
+  const resp = { steps, sentAt: message.sentAt, isDeepResearch: message.isDeepResearch }
 
-  const messageClass = clsx(
-    "w-full p-2 pb-0 min-w-0",
-    isSynthesis && "rounded-xl border border-border/50 shadow-sm p-6",
-    isSynthesis && !message.streaming && "overflow-y-auto scrollbar-thin max-h-[800px]"
+  const responseMarkdown = useMemo(
+    () => steps.filter(isReasoningTextStep).map((step) => step.message).join(""),
+    [steps]
   )
 
-  const lastStepMessage = message.content ? (
-    <div className={messageClass}>
-      <MarkdownView content={content.markdown} isStreaming={message.streaming} />
-    </div>
-  ) : null
-
-  const cities = useMemo(() => {
-    if (!message.streaming && !isDeepResearch) {
-      const cities = resp.steps.filter(step => step.name === 'display_weather_widget').map(
-        step => (typeof step.output === 'object' && 'city' in step.output ? step.output.city : null)
-      )
-      return cities.filter((c): c is string => c !== null)
-    }
-    return []
-  }, [message, isDeepResearch, resp.steps])
-
-  const tradingSymbols = useMemo(() => {
-    if (!message.streaming && !isDeepResearch) {
-      const stockSymbols = resp.steps.filter(step => step.name === 'display_stock_widget').map(
-        step => (typeof step.output === 'object' && 'symbol' in step.output ? step.output.symbol : null)
-      )
-      return stockSymbols.filter((s): s is string => s !== null)
-    }
-    return []
-  }, [message, isDeepResearch, resp.steps])
-
-  // retrieve first image search query from reasoning steps
-  const imageUrls = useMemo(() => {
-    if (!message.streaming && !isDeepResearch) {
-      const imgStep = resp.steps.find(step => step.name === 'display_image_search_widget')
-      if (imgStep && typeof imgStep.output === 'object' && 'images' in imgStep.output) {
-        return imgStep.output.images as string[]
-      }
-    }
-    return null
-  }, [message, isDeepResearch, resp.steps])
-
-  const { includeImageGeneration, filename } = useMemo(() => {
-    if (resp.steps.filter(step => step.name === 'image_generation').length > 0) {
-      const includeImageGeneration = true
-      const lastImageGenStep = resp.steps.filter(step => step.name === 'image_generation').slice(-1)[0]
-      const filename = typeof lastImageGenStep.output === 'object' && 'imageUrls' in lastImageGenStep.output && lastImageGenStep.output.imageUrls.length > 0
-        ? (lastImageGenStep.output.imageUrls[0] as string)
-        : undefined
-      return { includeImageGeneration, filename }
-    }
-    return { includeImageGeneration: false, filename: undefined }
-  }, [resp.steps])
-
   return (
-    <div className='w-full space-y-1'>
+    <div className='w-full space-y-2'>
       <ReasoningStepsView
         response={resp}
         isStreaming={message.streaming || false}
-        estimatedDurationSeconds={isDeepResearch ? 180 : undefined}
       />
-      {
-        includeImageGeneration && (
-          <div>
-            <ImageGenView filename={filename} />
-          </div>
-        )
-      }
-      { imageUrls && <ImageSearchStrip images={imageUrls} /> }
-      { cities.length > 0 && <WeatherCard cities={cities} /> }
-      { tradingSymbols.length > 0 && <TradingCard symbols={tradingSymbols} initialRange="1d" /> }
-      {lastStepMessage}
-      {!message.streaming && resp && <SourcesView answer={resp} />}
-      {!message.streaming && (
+      {!message.streaming && <SourcesView answer={resp} />}
+      {!message.streaming && responseMarkdown && (
         <ResponseActions
-          message={message.content.markdown}
-          saveAsIs={isSynthesis}
+          message={responseMarkdown}
         />
       )}
     </div>

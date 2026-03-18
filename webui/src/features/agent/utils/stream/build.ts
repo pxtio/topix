@@ -1,10 +1,5 @@
-import type {
-  AgentResponse,
-  ReasoningStep,
-  ToolExecutionState,
-  ToolName
-} from "../../types/stream"
-import { RAW_MESSAGE, ToolNameDescription, isMainResponse } from "../../types/stream"
+import type { AgentResponse, ReasoningStep, ToolCallStep, ToolExecutionState, ToolName } from "../../types/stream"
+import { RAW_MESSAGE, ToolNameDescription, isReasoningTextToolName } from "../../types/stream"
 import { simpleTransform } from "./transform"
 import type {
   CreateNoteOutput,
@@ -18,19 +13,13 @@ import type {
 
 type BlockKind = "raw" | "tools" | null
 
-// final steps that should stream output
-const isFinalAnswerStep = (name: ToolName) =>
-  name === "synthesizer" || name === "answer_reformulate"
-
 type StepAccum = {
   id: string
   name: ToolName
-  // fragment buffers (only used for final answer steps)
-  thoughtBuf: string[]
-  outputBuf: string[]
-  // canonical accumulated strings (only for final steps)
-  thoughtStr: string
-  outputStr: string
+  reasoningBuf: string[]
+  messageBuf: string[]
+  reasoning: string
+  message: string
   state: ToolExecutionState
   eventMessages: string[]
   annotations: Annotation[]
@@ -45,25 +34,24 @@ type BuildResponseOptions = {
   annotationsCap?: number
 }
 
+
 /**
- * Build the final tool output for a reasoning step (uses canonical strings only for final steps).
+ * Builds a lightweight preview tool output for streaming.
  */
 const makeToolOutput = (acc: StepAccum): ToolOutput => {
-  const outputText = acc.outputStr
-
   if (acc.name === "web_search") {
     const urls = acc.annotations.filter(a => a.type === "url") as WebSearchOutput["searchResults"]
-    return { type: "web_search", answer: outputText, searchResults: urls }
+    return { type: "web_search", answer: "", searchResults: urls }
   }
   if (acc.name === "memory_search") {
     const refs = acc.annotations.filter(a => a.type === "reference") as MemorySearchOutput["references"]
-    return { type: "memory_search", answer: outputText, references: refs }
+    return { type: "memory_search", answer: "", references: refs }
   }
   if (acc.name === "code_interpreter") {
     return {
       type: "code_interpreter",
       status: acc.state === "failed" ? "error" : "success",
-      stdout: outputText,
+      stdout: "",
       stderr: "",
       durationMs: 0
     }
@@ -89,22 +77,41 @@ const makeToolOutput = (acc: StepAccum): ToolOutput => {
     }
   }
 
-  return outputText
+  return ""
 }
 
-const toReasoningStep = (acc: StepAccum): ReasoningStep => ({
-  id: acc.id,
-  name: acc.name,
-  thought: acc.thoughtStr,
-  output: makeToolOutput(acc),
-  state: acc.state,
-  eventMessages: acc.eventMessages
-})
+
+/**
+ * Converts one streaming accumulator into a renderable step.
+ */
+const toReasoningStep = (acc: StepAccum): ReasoningStep => {
+  if (isReasoningTextToolName(acc.name)) {
+    return {
+      type: "reasoning_step",
+      id: acc.id,
+      reasoning: acc.reasoning,
+      message: acc.message,
+      isSynthesis: acc.name === "synthesizer",
+    }
+  }
+
+  return {
+    type: "tool_call",
+    id: acc.id,
+    name: acc.name,
+    thought: acc.reasoning,
+    output: makeToolOutput(acc),
+    state: acc.state,
+    eventMessages: acc.eventMessages,
+  } satisfies ToolCallStep
+}
+
 
 const pushCapped = <T>(arr: T[], item: T, cap: number) => {
   arr.push(item)
   if (cap > 0 && arr.length > cap) arr.splice(0, arr.length - cap)
 }
+
 
 const pushManyCapped = <T>(arr: T[], items: T[], cap: number) => {
   if (!items.length) return
@@ -112,20 +119,29 @@ const pushManyCapped = <T>(arr: T[], items: T[], cap: number) => {
   if (cap > 0 && arr.length > cap) arr.splice(0, arr.length - cap)
 }
 
-// only final steps accumulate text
-const flushStep = (s: StepAccum) => {
-  if (!isFinalAnswerStep(s.name)) return
 
-  if (s.thoughtBuf.length) {
-    s.thoughtStr += (s.thoughtBuf.length === 1 ? s.thoughtBuf[0] : s.thoughtBuf.join(""))
-    s.thoughtBuf.length = 0
+/**
+ * Flushes buffered reasoning/message fragments into canonical strings.
+ */
+const flushStep = (s: StepAccum) => {
+  if (s.reasoningBuf.length) {
+    s.reasoning += s.reasoningBuf.length === 1 ? s.reasoningBuf[0] : s.reasoningBuf.join("")
+    s.reasoningBuf.length = 0
   }
 
-  if (s.outputBuf.length) {
-    s.outputStr += (s.outputBuf.length === 1 ? s.outputBuf[0] : s.outputBuf.join(""))
-    s.outputBuf.length = 0
+  if (s.messageBuf.length) {
+    s.message += s.messageBuf.length === 1 ? s.messageBuf[0] : s.messageBuf.join("")
+    s.messageBuf.length = 0
   }
 }
+
+
+/**
+ * Builds a readable fallback title when a tool name is not in the display map.
+ */
+const getToolTitle = (toolName: ToolName) =>
+  ToolNameDescription[toolName] || toolName.replaceAll("_", " ")
+
 
 export async function* buildResponse(
   chunks: AsyncGenerator<Record<string, unknown>>,
@@ -150,7 +166,7 @@ export async function* buildResponse(
   let shouldBurstYield = false
 
   const stepKeyFor = (toolId: string, toolName: ToolName) =>
-    isMainResponse(toolName) ? `${toolId}::raw:${rawBlockIndex}` : toolId
+    isReasoningTextToolName(toolName) ? `${toolId}:${rawBlockIndex}` : toolId
 
   const ensureStep = (toolId: string, toolName: ToolName) => {
     const key = stepKeyFor(toolId, toolName)
@@ -160,10 +176,10 @@ export async function* buildResponse(
       step = {
         id: key,
         name: toolName,
-        thoughtBuf: [],
-        outputBuf: [],
-        thoughtStr: "",
-        outputStr: "",
+        reasoningBuf: [],
+        messageBuf: [],
+        reasoning: "",
+        message: "",
         state: "started",
         eventMessages: [],
         annotations: [],
@@ -178,23 +194,11 @@ export async function* buildResponse(
     return step
   }
 
-  const completeAll = () => {
-    for (const id of order) {
-      const s = stepsById.get(id)!
-      if (s.state !== "failed") s.state = "completed"
-      s.dirty = true
-    }
-  }
-
-  const completeLastRawIfAny = () => {
-    for (let i = order.length - 1; i >= 0; i--) {
-      const s = stepsById.get(order[i])!
-      if (s.name === RAW_MESSAGE || isMainResponse(s.name)) {
-        if (s.state !== "failed") s.state = "completed"
-        s.dirty = true
-        break
-      }
-    }
+  const completeStep = (toolId: string, failed = false) => {
+    const step = stepsById.get(toolId)
+    if (!step) return
+    step.state = failed ? "failed" : "completed"
+    step.dirty = true
   }
 
   const maybeYield = async (force = false) => {
@@ -223,23 +227,23 @@ export async function* buildResponse(
   }
 
   for await (const rawChunk of chunks) {
+    if (rawChunk.type === "tool_call") {
+      continue
+    }
+
     const chunk = simpleTransform(rawChunk)
-    const isRaw = isMainResponse(chunk.toolName)
+    const isRaw = isReasoningTextToolName(chunk.toolName)
 
-    if (isRaw && chunk.content?.type === "status") continue
+    if (chunk.content?.type === "status" && isReasoningTextToolName(chunk.toolName)) continue
 
-    // block switching
     if (currentBlock === null) {
       currentBlock = isRaw ? "raw" : "tools"
       if (currentBlock === "raw") rawBlockIndex++
-      shouldBurstYield = true
     } else if (currentBlock === "tools" && isRaw) {
-      completeAll()
       currentBlock = "raw"
       rawBlockIndex++
       shouldBurstYield = true
     } else if (currentBlock === "raw" && !isRaw) {
-      completeLastRawIfAny()
       currentBlock = "tools"
       shouldBurstYield = true
     }
@@ -249,27 +253,22 @@ export async function* buildResponse(
     if (chunk.content) {
       const { type, text, annotations } = chunk.content
 
-      // only final steps keep annotations
-      if (annotations?.length && isFinalAnswerStep(step.name)) {
+      if (annotations?.length && !isReasoningTextToolName(chunk.toolName)) {
         pushManyCapped(step.annotations, annotations, annotationsCap)
         step.dirty = true
-        shouldBurstYield = true
       }
 
-      // only final steps accumulate text
-      if (type === "token") {
-        if (isFinalAnswerStep(step.name)) {
-          step.outputBuf.push(text)
-          bufferedChars += text.length
-          step.dirty = true
+      if (type === "token" || type === "message") {
+        if (isReasoningTextToolName(chunk.toolName)) {
+          if (chunk.type === "stream_reasoning_message") {
+            step.reasoningBuf.push(text)
+          } else {
+            step.messageBuf.push(text)
+          }
         }
-      } else if (type === "message") {
-        if (isFinalAnswerStep(step.name)) {
-          step.outputBuf.push(text)
-          bufferedChars += text.length
-          step.dirty = true
-        }
-      } else if (type === "status" && !isRaw) {
+        bufferedChars += text.length
+        step.dirty = true
+      } else if (type === "status" && !isReasoningTextToolName(chunk.toolName)) {
         pushCapped(step.eventMessages, text, eventMessagesCap)
         const t = text.toLowerCase()
         const prev = step.state
@@ -281,44 +280,41 @@ export async function* buildResponse(
       }
     }
 
+    if (chunk.isStop) {
+      completeStep(chunk.toolId, chunk.isStop === "error")
+      shouldBurstYield = true
+    }
+
     const maybe = await maybeYield(false)
     if (maybe) yield maybe
   }
 
-  if (currentBlock === "raw") completeLastRawIfAny()
-  if (currentBlock === "tools") completeAll()
-
   for (const id of order) {
-    const s = stepsById.get(id)!
-    flushStep(s)
+    const step = stepsById.get(id)!
+    flushStep(step)
+    if (step.state !== "failed") step.state = "completed"
   }
 
   const finalResp: AgentResponse = {
-    steps: Array.from(order, id => {
-      const s = stepsById.get(id)!
-      if (s.state !== "failed") s.state = "completed"
-      return toReasoningStep(s)
-    })
+    steps: order.map((id) => toReasoningStep(stepsById.get(id)!))
   }
 
   yield { response: finalResp, isStop: true }
 }
 
 
-export function extractInputOrQuery(step: ReasoningStep): string | null {
+/**
+ * Extracts a short input/query string for display from a tool call step.
+ */
+export function extractInputOrQuery(step: ToolCallStep): string | null {
   const args = step.arguments
   if (!args) return null
 
   const input = args.input
 
-  // Case 1: input is directly a string
   if (typeof input === "string") return input
 
-  // Case 2: input is an object with a string query or url field
-  if (
-    typeof input === "object" &&
-    input !== null
-  ) {
+  if (typeof input === "object" && input !== null) {
     const inputRecord = input as Record<string, unknown>
 
     if ("query" in inputRecord && typeof inputRecord.query === "string") {
@@ -334,66 +330,85 @@ export function extractInputOrQuery(step: ReasoningStep): string | null {
     }
   }
 
-  // Case 3: everything else → null
   return null
 }
 
 
+/**
+ * Builds display text for one step in the merged assistant timeline.
+ */
 export function extractStepDescription(step: ReasoningStep): { reasoning: string, message: string, title: string, input?: string } {
-  if (step.name !== "raw_message" && step.name !== "outline_generator") {
-    let input: string | undefined = undefined
-    if (
-      step.name === "web_search" ||
-      step.name === "memory_search" ||
-      step.name === "navigate" ||
-      step.name === "code_interpreter"
-    ) {
-      input = extractInputOrQuery(step) || undefined
+  if (step.type === "reasoning_step") {
+    return {
+      reasoning: step.reasoning || "",
+      message: step.message || "",
+      title: step.message ? "Response" : getToolTitle(RAW_MESSAGE),
     }
-
-    if (step.name === "code_interpreter" && typeof step.output !== "string") {
-      return {
-        reasoning: step.thought || "",
-        message: "",
-        title: ToolNameDescription[step.name],
-        input
-      }
-    }
-
-    if (step.name === "create_note" && typeof step.output !== "string") {
-      const output = step.output as CreateNoteOutput
-      const typeLabel = output.noteType.replace(/-/g, " ")
-      return {
-        reasoning: step.thought || "",
-        message: output.label
-          ? `Created ${typeLabel} note "${output.label}".`
-          : `Created ${typeLabel} note.`,
-        title: ToolNameDescription[step.name],
-        input
-      }
-    }
-
-    if (step.name === "edit_note" && typeof step.output !== "string") {
-      const output = step.output as EditNoteOutput
-      const typeLabel = output.noteType.replace(/-/g, " ")
-      return {
-        reasoning: step.thought || "",
-        message: output.label
-          ? `Updated note "${output.label}" as ${typeLabel}.`
-          : `Updated note as ${typeLabel}.`,
-        title: ToolNameDescription[step.name],
-        input
-      }
-    }
-
-    return { reasoning: step.thought || "", message: "", title: ToolNameDescription[step.name], input }
   }
-  const reasoningOutLoud = (step.output as string) || ""
-  return { reasoning: step.thought || "", message: reasoningOutLoud, title: ToolNameDescription[step.name] }
+
+  let input: string | undefined = undefined
+  if (
+    step.name === "web_search" ||
+    step.name === "memory_search" ||
+    step.name === "navigate" ||
+    step.name === "code_interpreter"
+  ) {
+    input = extractInputOrQuery(step) || undefined
+  }
+
+  if (step.name === "code_interpreter" && typeof step.output !== "string") {
+    return {
+      reasoning: step.thought || "",
+      message: "",
+      title: getToolTitle(step.name),
+      input
+    }
+  }
+
+  if (step.name === "create_note" && typeof step.output !== "string") {
+    const output = step.output as CreateNoteOutput
+    const typeLabel = output.noteType.replace(/-/g, " ")
+    return {
+      reasoning: step.thought || "",
+      message: output.label
+        ? `Created ${typeLabel} note "${output.label}".`
+        : `Created ${typeLabel} note.`,
+      title: getToolTitle(step.name),
+      input
+    }
+  }
+
+  if (step.name === "edit_note" && typeof step.output !== "string") {
+    const output = step.output as EditNoteOutput
+    const typeLabel = output.noteType.replace(/-/g, " ")
+    return {
+      reasoning: step.thought || "",
+      message: output.label
+        ? `Updated note "${output.label}" as ${typeLabel}.`
+        : `Updated note as ${typeLabel}.`,
+      title: getToolTitle(step.name),
+      input
+    }
+  }
+
+  if (isReasoningTextToolName(step.name)) {
+    return {
+      reasoning: step.thought || "",
+      message: typeof step.output === "string" ? step.output : "",
+      title: getToolTitle(step.name),
+      input
+    }
+  }
+
+  return { reasoning: step.thought || "", message: "", title: getToolTitle(step.name), input }
 }
 
+
+/**
+ * Extracts URL annotations from a web search tool step.
+ */
 export function getWebSearchUrls(step: ReasoningStep): UrlAnnotation[] {
-  if (step.name === "web_search" && typeof step.output !== "string") {
+  if (step.type === "tool_call" && step.name === "web_search" && typeof step.output !== "string") {
     const out = step.output as WebSearchOutput
     return out.searchResults
   }

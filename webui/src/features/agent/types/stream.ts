@@ -1,6 +1,20 @@
 import type { IconSvgElement } from "@hugeicons/react"
 import type { Annotation, ToolOutput } from "./tool-outputs"
-import { AiBrowserIcon, AiImageIcon, Album02Icon, ChipIcon, DashboardBrowsingIcon, GlobalSearchIcon, NoteIcon, PencilEditIcon, Search01Icon, SourceCodeIcon, TextAlignLeftIcon, ThermometerWarmIcon } from "@hugeicons/core-free-icons"
+import {
+  AiBrowserIcon,
+  AiImageIcon,
+  Album02Icon,
+  ChipIcon,
+  DashboardBrowsingIcon,
+  EarthIcon,
+  NoteAddIcon,
+  NoteEditIcon,
+  NoteIcon,
+  SearchList01Icon,
+  SourceCodeIcon,
+  ThermometerWarmIcon,
+} from "@hugeicons/core-free-icons"
+
 
 /**
  * Represents the type of streaming message in the agent response.
@@ -21,43 +35,38 @@ export type ToolExecutionState = "started" | "completed" | "failed"
 
 
 /**
- * Represents a delta in the streaming response.
- *
- * @property content - The content of the delta, which is a string that can represent a part of the message being streamed.
- */
-export interface StreamDelta {
-    content: string
-}
-
-
-/**
  * Represents a message in the agent streaming response.
- *
- * @property toolId - The ID of the tool that generated the message.
- * @property toolName - The name of the tool that generated the message.
- * @property content - The content of the message, which can be of type StreamingContentType and contains text.
- * @property is_stop - A boolean indicating whether the streaming has stopped.
- *
- * This interface is used to represent messages that are part of a stream from an agent, typically in a conversational AI context.
- * It includes information about the tool that generated the message, the type of content being streamed, and whether the streaming has stopped.
  */
 export interface AgentStreamMessage {
-    type: StreamingMessageType
-    toolId: string
-    toolName: ToolName
-    content?: {
-      type: StreamingContentType
-      text: string
-      annotations: Annotation[]
-    }
-    isStop: boolean
+  type: StreamingMessageType
+  toolId: string
+  toolName: ToolName
+  content?: {
+    type: StreamingContentType
+    text: string
+    annotations: Annotation[]
+  }
+  isStop: boolean | "error"
 }
 
 
 /**
- * ReasoningStep represents a step in the agent's reasoning process.
+ * Represents a persisted reasoning text step.
  */
-export interface ReasoningStep {
+export interface ReasoningTextStep {
+  type: "reasoning_step"
+  id: string
+  reasoning: string
+  message: string
+  isSynthesis?: boolean
+}
+
+
+/**
+ * Represents a structured tool call step.
+ */
+export interface ToolCallStep {
+  type: "tool_call"
   id: string
   name: ToolName
   thought: string
@@ -66,6 +75,12 @@ export interface ReasoningStep {
   eventMessages: string[]
   arguments?: { input: unknown }
 }
+
+
+/**
+ * Represents one ordered item in the assistant process.
+ */
+export type ReasoningStep = ReasoningTextStep | ToolCallStep
 
 
 /**
@@ -79,7 +94,7 @@ export interface AgentResponse {
 
 
 /**
- * Agent tool names enum
+ * Agent tool names enum.
  */
 export type ToolName =
   | "answer_reformulate"
@@ -88,11 +103,13 @@ export type ToolName =
   | "code_interpreter"
   | "create_note"
   | "edit_note"
-  | "navigate"
-  | "raw_message"
   | "outline_generator"
   | "web_collector"
   | "synthesizer"
+  | "navigate"
+  | "raw_message"
+  | "image_description"
+  | "topic_illustrator"
   | "image_generation"
   | "display_weather_widget"
   | "display_stock_widget"
@@ -100,42 +117,92 @@ export type ToolName =
 
 
 export const ToolNameDescription: Record<ToolName, string> = {
-  "answer_reformulate": "Write final answer",
-  "web_search": "Search the web",
-  "memory_search": "Search memory",
-  "code_interpreter": "Interpret code",
-  "create_note": "Create note",
-  "edit_note": "Edit note",
-  "navigate": "Fetch and analyze web page content",
-  "raw_message": "Reasoning",
-  "outline_generator": "Generate an outline for the topic",
-  "web_collector": "Collect information from the web",
-  "synthesizer": "Synthesize information from multiple sources",
-  "image_generation": "Generate images based on prompts",
-  "display_weather_widget": "Display weather information",
-  "display_stock_widget": "Display stock information",
-  "display_image_search_widget": "Search for images from the web",
+  answer_reformulate: "Reformulate answer",
+  web_search: "Search the web",
+  memory_search: "Search memory",
+  code_interpreter: "Interpret code",
+  create_note: "Create note",
+  edit_note: "Edit note",
+  outline_generator: "Generate outline",
+  web_collector: "Collect web content",
+  synthesizer: "Synthesize response",
+  navigate: "Fetch and analyze web page content",
+  raw_message: "Reasoning",
+  image_description: "Describe image",
+  topic_illustrator: "Illustrate topic",
+  image_generation: "Generate images based on prompts",
+  display_weather_widget: "Display weather information",
+  display_stock_widget: "Display stock information",
+  display_image_search_widget: "Search for images from the web",
 }
+
 
 export const ToolNameIcon: Record<string, IconSvgElement> = {
-  "web_search": Search01Icon,
-  "memory_search": ChipIcon,
-  "navigate": AiBrowserIcon,
-  "code_interpreter": SourceCodeIcon,
-  "create_note": NoteIcon,
-  "edit_note": PencilEditIcon,
-  "outline_generator": TextAlignLeftIcon,
-  "web_collector": GlobalSearchIcon,
-  "image_generation": AiImageIcon,
-  "display_weather_widget": ThermometerWarmIcon,
-  "display_stock_widget": DashboardBrowsingIcon,
-  "display_image_search_widget": Album02Icon,
+  answer_reformulate: NoteIcon,
+  web_search: EarthIcon,
+  memory_search: ChipIcon,
+  outline_generator: SearchList01Icon,
+  web_collector: AiBrowserIcon,
+  synthesizer: NoteIcon,
+  navigate: AiBrowserIcon,
+  code_interpreter: SourceCodeIcon,
+  create_note: NoteAddIcon,
+  edit_note: NoteEditIcon,
+  image_description: AiImageIcon,
+  topic_illustrator: AiImageIcon,
+  image_generation: AiImageIcon,
+  display_weather_widget: ThermometerWarmIcon,
+  display_stock_widget: DashboardBrowsingIcon,
+  display_image_search_widget: Album02Icon,
 }
 
-// The RAW_MESSAGE tool name is used to indicate raw messages in the stream.
+
 export const RAW_MESSAGE: ToolName = "raw_message"
 
 
-export function isMainResponse(toolName: ToolName): boolean {
-  return toolName === "raw_message" || toolName === "synthesizer" || toolName === "outline_generator" || toolName === "answer_reformulate"
+/**
+ * Checks whether a tool name should be rendered as reasoning/message text.
+ */
+export const isReasoningTextToolName = (toolName: ToolName) =>
+  toolName === "raw_message" ||
+  toolName === "answer_reformulate" ||
+  toolName === "synthesizer"
+
+
+/**
+ * Normalizes text-like tool steps into reasoning text steps for rendering.
+ */
+export const normalizeReasoningStep = (step: ReasoningStep): ReasoningStep => {
+  if (step.type !== "tool_call" || !isReasoningTextToolName(step.name)) {
+    return step
+  }
+
+  return {
+    type: "reasoning_step",
+    id: step.id,
+    reasoning: step.thought || "",
+    message: typeof step.output === "string" ? step.output : "",
+    isSynthesis: step.name === "synthesizer",
+  }
 }
+
+
+/**
+ * Normalizes a mixed step list so text-like tool steps render as reasoning text.
+ */
+export const normalizeReasoningSteps = (steps: ReasoningStep[]) =>
+  steps.map(normalizeReasoningStep)
+
+
+/**
+ * Checks whether a reasoning step is a text step.
+ */
+export const isReasoningTextStep = (step: ReasoningStep): step is ReasoningTextStep =>
+  step.type === "reasoning_step"
+
+
+/**
+ * Checks whether a reasoning step is a tool call step.
+ */
+export const isToolCallStep = (step: ReasoningStep): step is ToolCallStep =>
+  step.type === "tool_call"

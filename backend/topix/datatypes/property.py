@@ -10,6 +10,7 @@ from typing import Annotated, Literal, Type
 from pydantic import BaseModel, Field
 
 from topix.agents.datatypes.annotations import SearchResult
+from topix.agents.datatypes.reasoning_step import ReasoningStep
 from topix.agents.datatypes.tool_call import ToolCall
 from topix.datatypes.mime import MimeTypeEnum
 from topix.utils.common import gen_uid
@@ -192,7 +193,7 @@ class ReasoningProperty(Property):
     """Property for agent's reasoning steps."""
 
     type: Literal[PropertyType.REASONING] = PropertyType.REASONING
-    reasoning: list[ToolCall] = []
+    reasoning: list[ToolCall | ReasoningStep] = []
 
 
 class MultiSourceProperty(Property):

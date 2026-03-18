@@ -1,5 +1,6 @@
 import type { AgentResponse, ReasoningStep } from "../types/stream"
 import type { ToolOutput, UrlAnnotation } from "../types/tool-outputs"
+import { isToolCallStep } from "../types/stream"
 
 export const ANNOTATION_CONTENT_LIMIT = 50
 
@@ -11,10 +12,16 @@ export const trimResponseAnnotations = (response: AgentResponse): AgentResponse 
 export const trimReasoningSteps = (steps: ReasoningStep[]): ReasoningStep[] =>
   steps.map(trimReasoningStep)
 
-const trimReasoningStep = (step: ReasoningStep): ReasoningStep => ({
-  ...step,
-  output: trimToolOutputContent(step.output)
-})
+const trimReasoningStep = (step: ReasoningStep): ReasoningStep => {
+  if (!isToolCallStep(step)) {
+    return step
+  }
+
+  return {
+    ...step,
+    output: trimToolOutputContent(step.output)
+  }
+}
 
 export const trimToolOutputContent = (output: ToolOutput): ToolOutput => {
   if (typeof output === "string") {
@@ -24,7 +31,7 @@ export const trimToolOutputContent = (output: ToolOutput): ToolOutput => {
   if (output.type === "web_search") {
     return {
       ...output,
-      searchResults: output.searchResults.map(trimUrlAnnotationContent)
+      searchResults: (output.searchResults || []).map(trimUrlAnnotationContent)
     }
   }
 

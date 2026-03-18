@@ -6,6 +6,10 @@ import pytest
 
 from pydantic import TypeAdapter, ValidationError
 
+from topix.agents.datatypes.outputs import WebSearchOutput
+from topix.agents.datatypes.reasoning_step import ReasoningStep
+from topix.agents.datatypes.tool_call import ToolCall
+from topix.agents.datatypes.tools import AgentToolName
 from topix.datatypes.property import (
     DataProperty,
     IconProperty,
@@ -14,6 +18,7 @@ from topix.datatypes.property import (
     MultiTextProperty,
     NumberProperty,
     PropertyType,
+    ReasoningProperty,
     TextProperty,
 )
 
@@ -84,3 +89,21 @@ def test_data_property_rejects_unknown_type():
 
     with pytest.raises(ValidationError):
         adapter.validate_python({"type": "not_a_property", "value": "nope"})
+
+
+def test_reasoning_property_accepts_reasoning_steps_and_tool_calls():
+    """ReasoningProperty should support the new mixed reasoning step union."""
+    prop = ReasoningProperty(
+        reasoning=[
+            ReasoningStep(reasoning="Need more context", message="Checking one detail"),
+            ToolCall(
+                id="tool-1",
+                name=AgentToolName.WEB_SEARCH,
+                output=WebSearchOutput(search_results=[]),
+                arguments={"query": "latest gdp france"},
+            ),
+        ]
+    )
+
+    assert isinstance(prop.reasoning[0], ReasoningStep)
+    assert isinstance(prop.reasoning[1], ToolCall)

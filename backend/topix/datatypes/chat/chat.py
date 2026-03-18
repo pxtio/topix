@@ -54,10 +54,12 @@ class Message(Resource):
             return ""
 
         steps_str = " -> ".join(
-            step.to_compact_step_description() for step in steps if step.name
+            step.to_compact_step_description()
+            for step in steps
+            if step.to_compact_step_description()
         )
 
-        return f"<Reasoning>\n\n{steps_str}\n\n</Reasoning>\n\n" if steps_str else ""
+        return f"<Reasoning>\n\n{steps_str}\n\n</Reasoning>" if steps_str else ""
 
     def to_chat_message(self) -> dict[str, str]:
         """Convert to a chat message format."""
@@ -69,7 +71,7 @@ class Message(Resource):
             else:
                 content = self.content.markdown if self.content else ""
 
-        content = f"{reasoning}{content}" if reasoning else content
+        content = f"{reasoning}\n\n{content}".strip() if reasoning else content.strip()
 
         # If there is message-level context, prepend it to the content in a special format
         if self.role == MessageRole.USER and self.properties.context.text:
@@ -80,6 +82,12 @@ class Message(Resource):
             "role": self.role,
             "content": content
         }
+
+    def to_embeddable(self) -> list[str]:
+        """Convert the message to a string that can be embedded in a vector database."""
+        content = self.content.markdown if self.content else ""
+        reasoning = self._compact_reasoning()
+        return [f"{reasoning}\n\n{content}".strip() if reasoning else content.strip()]
 
 
 class Chat(BaseModel):

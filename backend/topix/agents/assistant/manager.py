@@ -6,17 +6,16 @@ import re
 
 from collections.abc import AsyncGenerator
 
-from topix.agents.assistant.answer_reformulate import AnswerReformulate
 from topix.agents.assistant.plan import Plan
-from topix.agents.assistant.query_rewrite import QueryRewrite
 from topix.agents.config import AssistantManagerConfig
 from topix.agents.datatypes.context import ReasoningContext
-from topix.agents.datatypes.inputs import QueryRewriteInput
+from topix.agents.datatypes.reasoning_step import ReasoningStep
 from topix.agents.datatypes.stream import (
     AgentStreamMessage,
     ContentType,
     StreamingMessageType,
 )
+from topix.agents.datatypes.tool_call import ToolCall
 from topix.agents.datatypes.tools import AgentToolName
 from topix.agents.run import AgentRunner
 from topix.agents.sessions import AssistantSession
@@ -36,14 +35,10 @@ class AssistantManager:
 
     def __init__(
         self,
-        query_rewrite_agent: QueryRewrite,
         plan_agent: Plan,
-        synthesis_agent: AnswerReformulate,
     ):
         """Init method."""
-        self.query_rewrite_agent = query_rewrite_agent
         self.plan_agent = plan_agent
-        self.synthesis_agent = synthesis_agent
 
     @classmethod
     def from_config(
@@ -64,17 +59,14 @@ class AssistantManager:
             graph_uid=graph_uid,
             root_id=root_id,
         )
-        query_rewrite_agent = QueryRewrite.from_config(config.query_rewrite)
-        synthesis_agent = AnswerReformulate.from_config(config.synthesis)
 
-        return cls(query_rewrite_agent, plan_agent, synthesis_agent)
+        return cls(plan_agent)
 
     async def _compose_input(
         self,
         context: ReasoningContext,
         query: str,
         session: AssistantSession | None = None,
-        rephrase_query: bool = False,
         message_context: str | None = None,
     ) -> list[dict[str, str]]:
         if message_context is not None and message_context.strip() != "":
@@ -87,16 +79,7 @@ class AssistantManager:
             history = await session.get_items()
             if history:
                 context.chat_history = history
-                if rephrase_query:
-                    # launch query rewrite:
-                    query_input = QueryRewriteInput(query=query, chat_history=history)
-                    new_query = await AgentRunner.run(
-                        self.query_rewrite_agent,
-                        input=query_input,
-                    )
-                else:
-                    new_query = query
-                return history + [{"role": "user", "content": new_query}]
+                return history + [{"role": "user", "content": query}]
             else:
                 return [{"role": "user", "content": query}]
         return [{"role": "user", "content": query}]
@@ -160,7 +143,6 @@ class AssistantManager:
         session: AssistantSession | None = None,
         message_id: str | None = None,
         max_turns: int = 5,
-        rephrase_query: bool = False,
         message_context: str | None = None
     ) -> str:
         """Run the assistant agent with the provided context and query."""
@@ -168,7 +150,6 @@ class AssistantManager:
             context,
             query,
             session,
-            rephrase_query=rephrase_query,
             message_context=message_context
         )
 
@@ -184,15 +165,13 @@ class AssistantManager:
             await session.add_items([user_message])
 
         # launch plan:
+        res = ""
         try:
             res = await AgentRunner.run(
                 self.plan_agent, input=agent_input, context=context, max_turns=max_turns
             )
         except Exception:
             logger.info(f"Max turns exceeded: {max_turns}", exc_info=True)
-
-        # launch synthesis:
-        res = await AgentRunner.run(self.synthesis_agent, input=agent_input, context=context)
 
         if session:
             await session.add_items(
@@ -210,9 +189,8 @@ class AssistantManager:
         session: AssistantSession | None = None,
         message_id: str | None = None,
         max_turns: int = 8,
-        rephrase_query: bool = False,
         message_context: str | None = None
-    ) -> AsyncGenerator[AgentStreamMessage, str]:
+    ) -> AsyncGenerator[AgentStreamMessage | ToolCall, str]:
         """Run the assistant agent with the provided context and query.
 
         If a session is provided, use it to store the user query and retrieve the chat history.
@@ -227,7 +205,6 @@ class AssistantManager:
             context,
             query,
             session,
-            rephrase_query=rephrase_query,
             message_context=message_context
         )
 
@@ -241,56 +218,100 @@ class AssistantManager:
                 user_message.properties.context = TextProperty(text=message_context)
             await session.add_items([user_message])
 
-        # launch plan:
+        current_message_buffer: list[str] = []
+        current_reasoning_buffer: list[str] = []
+        persisted_steps: list[ReasoningStep | ToolCall] = []
+        current_raw_tool_id: str | None = None
+        reasoning_step_index = 0
+
+        def flush_current_buffers() -> None:
+            """Flush the current text buffers into one persisted reasoning step."""
+            nonlocal reasoning_step_index, current_raw_tool_id
+
+            message = "".join(current_message_buffer)
+            reasoning = "".join(current_reasoning_buffer)
+            if not message and not reasoning:
+                return
+
+            step_prefix = current_raw_tool_id or "raw_message"
+            persisted_steps.append(
+                ReasoningStep(
+                    id=f"{step_prefix}:{reasoning_step_index}",
+                    reasoning=reasoning,
+                    message=message,
+                )
+            )
+            reasoning_step_index += 1
+            current_message_buffer.clear()
+            current_reasoning_buffer.clear()
+
+        def build_message_content() -> str:
+            """Build the persisted assistant message content from reasoning steps."""
+            return "".join(
+                step.message for step in persisted_steps
+                if isinstance(step, ReasoningStep)
+            )
+
         try:
             res = AgentRunner.run_streamed(
                 self.plan_agent, input=agent_input, context=context, max_turns=max_turns
             )
 
             async for message in res:
-                if isinstance(message, AgentStreamMessage):
+                if isinstance(message, ToolCall):
+                    flush_current_buffers()
+                    persisted_steps.append(message)
                     yield message
+                    continue
+
+                if message.tool_name == AgentToolName.RAW_MESSAGE:
+                    current_raw_tool_id = message.tool_id
+                    if (
+                        message.content
+                        and message.content.type in [ContentType.MESSAGE, ContentType.TOKEN]
+                    ):
+                        if message.type == StreamingMessageType.STREAM_MESSAGE:
+                            current_message_buffer.append(message.content.text)
+                        elif message.type == StreamingMessageType.STREAM_REASONING_MESSAGE:
+                            current_reasoning_buffer.append(message.content.text)
+
+                    if message.is_stop:
+                        flush_current_buffers()
+
+                yield message
         except Exception as e:
             logger.error(
                 f"Plan agent execution error {e}, may due to Max turns exceeded",
                 exc_info=True,
             )
 
-        # Launch the synthesis agent:
-        res = AgentRunner.run_streamed(
-            self.synthesis_agent,
-            input=agent_input,
-            context=context,
-            name=AgentToolName.ANSWER_REFORMULATE
+        flush_current_buffers()
+
+        final_reasoning_step = next(
+            (
+                step
+                for step in reversed(persisted_steps)
+                if isinstance(step, ReasoningStep) and step.message
+            ),
+            None,
         )
+        if final_reasoning_step is not None:
+            final_reasoning_step.message = await self._postprocess_answer(
+                final_reasoning_step.message,
+                context,
+            )
 
-        final_answer = ""
-        async for message in res:
-            if isinstance(message, AgentStreamMessage) and message.type == StreamingMessageType.STREAM_MESSAGE:
-                if message.content and message.content.type in [
-                    ContentType.MESSAGE,
-                    ContentType.TOKEN,
-                ]:
-                    final_answer += message.content.text
-                yield message
-
-        final_answer = await self._postprocess_answer(final_answer, context)
+        persisted_content = build_message_content()
 
         if session:
-            if not context.tool_calls:
-                raise Exception("No steps created during streaming!")
-
             await session.add_items(
                 [
                     Message(
                         role="assistant",
-                        content=RichText(markdown=final_answer),
+                        content=RichText(markdown=persisted_content),
                         properties={
                             "reasoning": ReasoningProperty(
-                                reasoning=[
-                                    step.model_dump(exclude_none=True)
-                                    for step in context.tool_calls
-                                ]
+                                reasoning=persisted_steps
                             )
                         },
                     )

@@ -28,12 +28,9 @@ def create_create_note_tool(
     ) -> CreateNoteOutput:
         """Create a note in the current board scope.
 
-        Write short, concise note content, ideally a single paragraph. Content may use
-        simple markdown such as bold, italic, underline, lists, or links to highlight
-        important keywords or short phrases, but avoid headings.
-        If the user explicitly asks for a code note, runnable Python snippet, sandbox,
-        or executable code node, create a `code-sandbox` note and put the Python code
-        in `content` instead of creating a normal text note.
+        Keep content short and concise, with only light markdown when helpful.
+        If the user asks for a sticky note or post-it, use `note_type="sheet"`.
+        If the user asks for a code note or runnable snippet, use `code-sandbox` and put the code in `content`.
 
         Args:
             content (str): Main markdown body of the note. This is the most important text.
@@ -81,12 +78,9 @@ def create_edit_note_tool(
     ) -> EditNoteOutput:
         """Edit a note already present in the current board scope.
 
-        Keep note content short and concise, ideally a single paragraph. Content may use
-        simple markdown such as bold, italic, underline, lists, or links to highlight
-        important keywords or short phrases, but avoid headings.
-        If the user explicitly wants the note to become a code note, runnable Python
-        snippet, sandbox, or executable code node, set `note_type` to `code-sandbox`
-        and store the Python code in `content`.
+        Keep content short and concise, with only light markdown when helpful.
+        If the user wants the note to become a code note or runnable snippet, set `note_type` to `code-sandbox` and store the code in `content`.
+        If the user wants the note to become a sticky note or post-it, set `note_type` to `sheet`.
 
         Args:
             note_id (str): Exact id of the note to update.

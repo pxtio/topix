@@ -2,7 +2,7 @@ import camelcaseKeys from "camelcase-keys"
 import type { ChatMessage, MessageRole } from "../types/chat"
 import { useQuery } from "@tanstack/react-query"
 import { apiFetch } from "@/api"
-import type { ToolExecutionState, ToolName } from "../types/stream"
+import { normalizeReasoningSteps, type ReasoningStep, type ToolExecutionState, type ToolName } from "../types/stream"
 import type { ToolOutput } from "../types/tool-outputs"
 import { trimReasoningSteps } from "../utils/annotations"
 
@@ -22,15 +22,25 @@ interface ListMessagesResponse {
       properties: {
         reasoning: {
           type: "reasoning",
-          reasoning: {
-            id: string
-            name: ToolName
-            thought: string
-            output: ToolOutput
-            state: ToolExecutionState
-            event_messages: string[]
-            arguments?: { input: unknown }
-          }[]
+          reasoning: Array<
+            | {
+              type: "reasoning_step"
+              id: string
+              reasoning: string
+              message: string
+              is_synthesis?: boolean
+            }
+            | {
+              type: "tool_call"
+              id: string
+              name: ToolName
+              thought: string
+              output: ToolOutput
+              state: ToolExecutionState
+              event_messages: string[]
+              arguments?: { input: unknown }
+            }
+          >
         }
         context?: {
           type: "text"
@@ -59,6 +69,14 @@ export async function listMessages(
   })
   return res.data.messages.map((message) => {
     const normalized = camelcaseKeys(message, { deep: true }) as ChatMessage
+    if (normalized.properties?.reasoning?.reasoning) {
+      normalized.properties.reasoning = {
+        type: "reasoning",
+        reasoning: normalizeReasoningSteps(
+          normalized.properties.reasoning.reasoning as ReasoningStep[]
+        ),
+      }
+    }
     return trimMessageAnnotations(normalized)
   })
 }

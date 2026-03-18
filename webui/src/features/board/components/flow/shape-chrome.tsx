@@ -81,7 +81,7 @@ export const ShapeChrome = memo(({
     )
   }
 
-  if (type === 'code-sandbox') {
+  if (type === 'code-sandbox' || type === 'widget') {
     return (
       <div className={clsx('bg-transparent w-full h-full', className)} style={{ ...wrapperStyle }}>
         {children}

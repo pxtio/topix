@@ -15,6 +15,7 @@ import {
   Hold02Icon,
   Image02Icon,
   LabelIcon,
+  Layout01Icon,
   LeftToRightListBulletIcon,
   Note02Icon,
   MoreHorizontalIcon,
@@ -333,6 +334,10 @@ export const TopBar = memo(function TopBar({
               <DropdownMenuItem onSelect={() => onAddNode({ nodeType: 'code-sandbox' })} className='gap-2 text-sm'>
                 <Code2 className='size-4 shrink-0' strokeWidth={2} />
                 <span>Code sandbox</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onAddNode({ nodeType: 'widget' })} className='gap-2 text-sm'>
+                <HugeiconsIcon icon={Layout01Icon} className='size-4 shrink-0' strokeWidth={2} />
+                <span>Widget</span>
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setOpenAiSpark(true)} className='gap-2 text-sm' disabled={!boardId}>
                 <Sparkles className='size-4 shrink-0 text-secondary' strokeWidth={2} />

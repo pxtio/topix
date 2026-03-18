@@ -35,7 +35,8 @@ export function LinearNoteCard({ node }: Props) {
   const isPinned = node.data.properties.pinned.boolean
   const isSheet = node.data.style.type === 'sheet'
   const isCodeSandbox = node.data.style.type === 'code-sandbox'
-  const usesHostedSurface = isSheet || isCodeSandbox
+  const isWidget = node.data.style.type === 'widget'
+  const usesHostedSurface = isSheet || isCodeSandbox || isWidget
   const title = node.data.label?.markdown?.trim() || ''
   const displayTitle = title || 'Untitled note'
   const { text: timeAgo, tooltip: fullDate } = formatDistanceToNow(node.data.updatedAt)
@@ -103,8 +104,8 @@ export function LinearNoteCard({ node }: Props) {
   }, [boardId, node.id, setNodesPersist, setEdgesPersist])
 
   const handleOpenSurface = useCallback(() => {
-    openNodeSurface(node.id, isCodeSandbox ? 'code-sandbox' : 'sheet')
-  }, [isCodeSandbox, node.id, openNodeSurface])
+    openNodeSurface(node.id, isCodeSandbox ? 'code-sandbox' : isWidget ? 'widget' : 'sheet')
+  }, [isCodeSandbox, isWidget, node.id, openNodeSurface])
 
   const cardClass = clsx(
     'transition rounded-lg relative bg-background overflow-hidden transition-all duration-200 group sticky-note-shadow paper-note-texture',
@@ -192,6 +193,17 @@ export function LinearNoteCard({ node }: Props) {
           <pre className='whitespace-pre-wrap break-all font-mono text-sm leading-5 text-foreground/90'>
             {node.data.content?.markdown || '# Write Python here'}
           </pre>
+        ) : isWidget ? (
+          <div className='h-full min-h-[140px] overflow-hidden rounded-md border border-border/60 bg-card'>
+            <iframe
+              title='Widget preview'
+              srcDoc={node.data.content?.markdown || ''}
+              sandbox='allow-scripts'
+              loading='lazy'
+              referrerPolicy='no-referrer'
+              className='pointer-events-none h-full w-full border-0 bg-white'
+            />
+          </div>
         ) : (
           <div className='prose dark:prose-invert max-w-none min-w-0 origin-top-left scale-[0.64] w-[156.25%]'>
             <MarkdownView content={node.data.content?.markdown || ''} />
@@ -213,6 +225,7 @@ export function LinearNoteCard({ node }: Props) {
     onTogglePin,
     timeAgo,
     usesHostedSurface,
+    isWidget,
   ])
 
   const CardShell = (

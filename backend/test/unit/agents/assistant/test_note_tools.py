@@ -52,6 +52,25 @@ async def test_build_note_uses_frontend_aligned_defaults() -> None:
 
 
 @pytest.mark.asyncio
+async def test_build_widget_note_uses_widget_defaults() -> None:
+    """Widget notes should use dedicated widget defaults."""
+    graph_store = DummyGraphStore()
+
+    note = await build_note(
+        graph_store=graph_store,
+        graph_uid="graph-1",
+        content="<div>widget</div>",
+        label="Widget note",
+        note_type=NodeType.WIDGET,
+        parent_id=None,
+    )
+
+    assert note.style.type == NodeType.WIDGET
+    assert note.properties.node_size.size.width == 360
+    assert note.properties.node_size.size.height == 260
+
+
+@pytest.mark.asyncio
 async def test_create_note_tool_uses_root_scope_by_default() -> None:
     """Create note should default to the current root folder when parent_id is omitted."""
     graph_store = DummyGraphStore()

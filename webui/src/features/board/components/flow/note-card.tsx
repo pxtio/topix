@@ -4,6 +4,7 @@ import { clsx } from "clsx"
 import { Shape } from "../notes/shape"
 import { SheetNodeView } from "./sheet-node-view"
 import { CodeSandboxNode } from "./code-sandbox-node"
+import { WidgetNode } from "./widget-node"
 import { useGraphStore } from "../../store/graph-store"
 import { darkModeDisplayHex } from "../../lib/colors/dark-variants"
 import { fontFamilyToTwClass, fontSizeToTwClass, textStyleToTwClass } from "../../types/style"
@@ -139,6 +140,7 @@ export const NodeCard = memo(function NodeCard({
 }: NodeCardProps) {
   const isSheet = note.style.type === "sheet"
   const isCodeSandbox = note.style.type === "code-sandbox"
+  const isWidget = note.style.type === "widget"
   const isText = note.style.type === "text"
   const nonSheetDisplayValue = note.content?.markdown || note.label?.markdown || ""
 
@@ -337,6 +339,19 @@ export const NodeCard = memo(function NodeCard({
           onPointerDown={stopDragging}
         >
           <CodeSandboxNode note={note} dragging={dragging} />
+        </LabelContainer>
+      )
+    }
+
+    if (isWidget) {
+      return (
+        <LabelContainer
+          className={labelClass}
+          textColor={textColor}
+          onDoubleClick={handleLabelDoubleClick}
+          onPointerDown={stopDragging}
+        >
+          <WidgetNode note={note} dragging={dragging} />
         </LabelContainer>
       )
     }

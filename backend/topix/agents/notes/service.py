@@ -47,6 +47,13 @@ def build_default_note_style(note_type: NodeType) -> Style:
         style.roughness = 0
         style.roundness = 1
         style.stroke_color = "#00000000"
+    elif note_type == NodeType.WIDGET:
+        style.background_color = "#faf4ed"
+        style.text_color = "#575279"
+        style.text_align = TextAlign.LEFT
+        style.roughness = 0
+        style.roundness = 1
+        style.stroke_color = "#00000000"
 
     return style
 
@@ -63,6 +70,8 @@ def get_default_note_size(note_type: NodeType) -> tuple[int, int]:
         return 150, 150
     if note_type == NodeType.CODE_SANDBOX:
         return 320, 320
+    if note_type == NodeType.WIDGET:
+        return 360, 260
     return 400, 400
 
 

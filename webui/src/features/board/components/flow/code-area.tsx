@@ -1,9 +1,18 @@
 import { useCallback, useMemo, useRef } from "react"
 import hljs from "highlight.js/lib/core"
+import html from "highlight.js/lib/languages/xml"
+import javascript from "highlight.js/lib/languages/javascript"
 import python from "highlight.js/lib/languages/python"
+import typescript from "highlight.js/lib/languages/typescript"
 
 
 hljs.registerLanguage("python", python)
+hljs.registerLanguage("html", html)
+hljs.registerLanguage("javascript", javascript)
+hljs.registerLanguage("typescript", typescript)
+
+
+export type CodeAreaLanguage = "python" | "html" | "javascript" | "typescript"
 
 
 type CodeAreaProps = {
@@ -11,13 +20,16 @@ type CodeAreaProps = {
   isDark: boolean
   textColor: string
   onChange: (value: string) => void
+  language?: CodeAreaLanguage
+  placeholder?: string
 }
 
 
 const TAB = "  "
 
 
-const highlightPython = (code: string) => hljs.highlight(code || " ", { language: "python" }).value
+const highlightCode = (code: string, language: CodeAreaLanguage) =>
+  hljs.highlight(code || " ", { language }).value
 
 
 const getLineIndentation = (text: string) => {
@@ -27,12 +39,19 @@ const getLineIndentation = (text: string) => {
 
 
 /**
- * Lightweight Python editor with highlighted preview and custom tab indentation.
+ * Lightweight code editor with highlighted preview and custom tab indentation.
  */
-export function CodeArea({ value, isDark, textColor, onChange }: CodeAreaProps) {
+export function CodeArea({
+  value,
+  isDark,
+  textColor,
+  onChange,
+  language = "python",
+  placeholder = "# Write Python here",
+}: CodeAreaProps) {
   const highlightedEditorRef = useRef<HTMLPreElement | null>(null)
 
-  const editorHtml = useMemo(() => highlightPython(value), [value])
+  const editorHtml = useMemo(() => highlightCode(value, language), [language, value])
 
   /**
    * Insert indentation and preserve current line indentation for new lines.
@@ -59,12 +78,17 @@ export function CodeArea({ value, isDark, textColor, onChange }: CodeAreaProps) 
     const beforeCursor = textarea.value.slice(0, start)
     const currentLine = beforeCursor.slice(beforeCursor.lastIndexOf("\n") + 1)
     const indentation = getLineIndentation(currentLine)
-    const extraIndent = currentLine.trimEnd().endsWith(":") ? TAB : ""
+    const trimmedLine = currentLine.trimEnd()
+    const extraIndent = language === "python"
+      ? (trimmedLine.endsWith(":") ? TAB : "")
+      : language === "javascript" || language === "typescript"
+        ? (trimmedLine.endsWith("{") ? TAB : "")
+        : ""
 
     textarea.setRangeText(`\n${indentation}${extraIndent}`, start, end, "end")
     const nativeEvent = new Event("input", { bubbles: true })
     textarea.dispatchEvent(nativeEvent)
-  }, [])
+  }, [language])
 
   /**
    * Keep the hidden highlighted layer aligned with the textarea viewport.
@@ -98,7 +122,7 @@ export function CodeArea({ value, isDark, textColor, onChange }: CodeAreaProps) 
         style={{
           caretColor: textColor,
         }}
-        placeholder="# Write Python here"
+        placeholder={placeholder}
       />
     </div>
   )

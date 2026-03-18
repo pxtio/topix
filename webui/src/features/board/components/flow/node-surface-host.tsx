@@ -3,6 +3,7 @@ import { memo, useEffect } from "react"
 import { useGraphStore } from "../../store/graph-store"
 import { CodeSandboxDialog } from "./code-sandbox-dialog"
 import { SheetNodeDialog } from "./sheet-node-dialog"
+import { WidgetDialog } from "./widget-dialog"
 
 
 /**
@@ -25,6 +26,10 @@ export const NodeSurfaceHost = memo(function NodeSurfaceHost() {
 
   if (activeNodeSurface.kind === "sheet") {
     return <SheetNodeDialog nodeId={activeNodeSurface.nodeId} />
+  }
+
+  if (activeNodeSurface.kind === "widget") {
+    return <WidgetDialog nodeId={activeNodeSurface.nodeId} />
   }
 
   return <CodeSandboxDialog nodeId={activeNodeSurface.nodeId} />

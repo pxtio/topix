@@ -59,7 +59,7 @@ type PersistOptions = {
   persist?: boolean
 }
 
-export type NodeSurfaceKind = "sheet" | "code-sandbox"
+export type NodeSurfaceKind = "sheet" | "code-sandbox" | "widget"
 
 export type OpenNodeSurface = {
   nodeId: string

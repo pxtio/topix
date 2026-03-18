@@ -205,7 +205,7 @@ export const ToolStepRow = ({
           )}
         </div>
       </div>
-      <div className='relative flex-1 flex flex-col items-start rounded-lg text-sm'>
+      <div className='relative flex-1 flex flex-col items-start rounded-lg text-sm max-w-[94%]'>
         <div className={messageClass}>
           <div className='flex flex-col gap-2'>
             <div>

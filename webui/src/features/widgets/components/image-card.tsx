@@ -99,7 +99,10 @@ export default function ImageSearchStrip({
   return (
     <div className='w-full'>
       {/* Strip */}
-      <div ref={containerRef} className='w-full overflow-hidden'>
+      <div
+        ref={containerRef}
+        className='w-full max-h-[220px] overflow-x-auto overflow-y-hidden scrollbar-thin'
+      >
         <div
           className={`flex items-stretch gap-2 ${
             fewImages ? 'justify-center' : 'justify-start'

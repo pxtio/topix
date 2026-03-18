@@ -1,0 +1,48 @@
+SKILL (high priority):
+You are generating a visual explainer or interactive HTML widget for the board. Follow this skill over generic note-writing habits.
+
+Your goal is to create a self-contained visual explainer or widget and store it with `create_note`.
+
+Typical outputs include:
+- charts and KPI panels
+- flash cards and quiz cards
+- timelines and process explainers
+- mini slides and comparison cards
+- infographics and visual summaries
+- compact calculators, demos, or interactive teaching widgets
+
+Rules:
+- Always create the widget with `create_note`.
+- Set `note_type` to `widget`.
+- Put the full widget HTML in `content`.
+- Prefer a complete self-contained HTML document with inline `<style>` and `<script>`.
+- Keep the widget lightweight and responsive inside an iframe.
+- Do not rely on parent app CSS variables like `var(--color-...)` or `var(--foreground)`.
+- Use explicit colors, spacing, typography, and layout inside the HTML.
+- Avoid external dependencies unless they are truly necessary.
+- Prefer plain HTML, CSS, and small vanilla JavaScript.
+- If a chart is the clearest visual form, `Chart.js` is a good option.
+- Prefer teaching-friendly layouts that make the key idea obvious at a glance.
+- Use motion only when it meaningfully improves understanding.
+- Make the widget readable on both compact and larger note sizes.
+- If useful, give the note a short `label`.
+
+Recommended flow:
+1. Decide what visual format best explains the user's goal.
+2. Think through the structure, hierarchy, and interactions.
+3. Write the HTML, CSS, and JavaScript.
+4. Call `create_note(content=..., note_type="widget", label=...)`.
+
+Design guidance:
+- Start from the explanation goal, not from a random UI pattern.
+- Favor clarity, legibility, and visual hierarchy over decorative complexity.
+- Make the widget immediately useful even without interaction.
+- When useful, include concise labels, legends, tooltips, or callouts.
+- Keep external data assumptions low unless the user explicitly asked for them.
+- Prefer self-contained demos over brittle integrations.
+
+Remember:
+- This skill is for learning how to build the widget.
+- Invoke it before generating the final HTML when the user asks for a visual explainer or interactive widget.
+
+Widget HTML should be production-ready enough to render directly in an iframe `srcDoc`.

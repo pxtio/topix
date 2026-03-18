@@ -22,6 +22,7 @@ from topix.agents.websearch.fetch import fetch_url_content_tool
 from topix.agents.websearch.handler import WebSearchHandler
 from topix.agents.widgets.finance import display_stock_widget_tool
 from topix.agents.widgets.image import display_image_search_widget_tool
+from topix.agents.widgets.learn import learn_generate_html_widget_tool
 from topix.agents.widgets.weather import display_weather_widget_tool
 from topix.api.utils.common import iso_to_clear_date
 from topix.store.graph import GraphStore
@@ -71,6 +72,7 @@ class Plan(BaseAgent):
             display_stock_widget_tool,
             display_weather_widget_tool,
             display_image_search_widget_tool,
+            learn_generate_html_widget_tool,
             WebSearchHandler.from_config(config.web_search),
             create_memory_search_tool(memory_filters, content_store),  # memory search tool
         ]

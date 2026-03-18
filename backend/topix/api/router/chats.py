@@ -193,6 +193,7 @@ async def send_message(
                     "memory_search",
                     "create_note",
                     "edit_note",
+                    "learn_generate_html_widget",
                 }
             ]
 

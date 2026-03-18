@@ -2,6 +2,8 @@
 
 import pytest
 
+from agents import RunContextWrapper
+
 from topix.agents.datatypes.context import Context
 from topix.agents.datatypes.outputs import CodeInterpreterOutput
 from topix.agents.datatypes.stream import AgentStreamMessage
@@ -56,3 +58,25 @@ async def test_log_output_keeps_tool_call_for_real_tool():
     assert queued[0].id == "tool-1"
     assert isinstance(queued[1], AgentStreamMessage)
     assert queued[1].is_stop is True
+
+
+def test_convert_func_to_tool_preserves_is_enabled_callable():
+    """Function tool conversion should pass through runtime enable checks."""
+
+    def is_enabled(wrapper: RunContextWrapper[Context], agent) -> bool:
+        return wrapper.context is not None and agent is not None
+
+    async def sample_tool(
+        _wrapper: RunContextWrapper[Context],
+        input: str,
+    ) -> str:
+        """Return the provided input."""
+        return input
+
+    tool = ToolHandler.convert_func_to_tool(
+        sample_tool,
+        tool_name=AgentToolName.MEMORY_SEARCH,
+        is_enabled=is_enabled,
+    )
+
+    assert tool.is_enabled is is_enabled

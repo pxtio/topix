@@ -19,6 +19,8 @@ Rules:
 - Keep the widget lightweight and responsive inside an iframe.
 - Do not rely on parent app CSS variables like `var(--color-...)` or `var(--foreground)`.
 - Use explicit colors, spacing, typography, and layout inside the HTML.
+- Prefer `system-ui` for the main font family unless the design strongly needs something else.
+- Use warm, muted colors inspired by the rose-pine palette rather than harsh pure blacks or saturated neon tones.
 - Avoid external dependencies unless they are truly necessary.
 - Prefer plain HTML, CSS, and small vanilla JavaScript.
 - If a chart is the clearest visual form, `Chart.js` is a good option.
@@ -37,6 +39,7 @@ Design guidance:
 - Start from the explanation goal, not from a random UI pattern.
 - Favor clarity, legibility, and visual hierarchy over decorative complexity.
 - Make the widget immediately useful even without interaction.
+- Keep the visual system calm, warm, and editorial rather than flashy.
 - When useful, include concise labels, legends, tooltips, or callouts.
 - Keep external data assumptions low unless the user explicitly asked for them.
 - Prefer self-contained demos over brittle integrations.

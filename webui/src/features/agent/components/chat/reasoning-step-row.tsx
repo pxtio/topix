@@ -4,6 +4,7 @@ import { ArrowDown01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ShinyText } from "@/components/animations/shiny-text"
 import { MarkdownView } from "@/components/markdown/markdown-view"
+import { cn } from "@/lib/utils"
 
 
 /**
@@ -18,15 +19,31 @@ export const ReasoningStepRow = ({
 }) => {
   const [viewMore, setViewMore] = useState(false)
   const hasReasoningDetails = !isStreaming && step.reasoning !== ""
+  const isSynthesis = step.isSynthesis === true
 
   if (!isStreaming && step.message === "" && step.reasoning === "") {
     return null
   }
 
+  const divClass = cn(
+    "w-full py-1 px-2",
+    isSynthesis && "rounded-xl md:p-4 p-2 shadow-sm border border-border/60 bg-card/70",
+    !isStreaming && isSynthesis && "max-h-[70vh] overflow-y-auto pr-1 scrollbar-thin"
+  )
+
   return (
-    <div className='w-full py-1 px-2'>
+    <div
+      className={divClass}
+    >
+      {isSynthesis && (
+        <div className='pb-2 text-center text-sm font-medium text-muted-foreground font-mono'>
+          Synthesis
+        </div>
+      )}
       {step.message !== "" ? (
-        <div className='text-base text-card-foreground'>
+        <div
+          className="text-base text-card-foreground"
+        >
           <MarkdownView content={step.message} isStreaming={isStreaming} />
         </div>
       ) : isStreaming ? (

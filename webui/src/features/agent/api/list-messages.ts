@@ -2,7 +2,7 @@ import camelcaseKeys from "camelcase-keys"
 import type { ChatMessage, MessageRole } from "../types/chat"
 import { useQuery } from "@tanstack/react-query"
 import { apiFetch } from "@/api"
-import type { ReasoningStep, ToolExecutionState, ToolName } from "../types/stream"
+import { normalizeReasoningSteps, type ReasoningStep, type ToolExecutionState, type ToolName } from "../types/stream"
 import type { ToolOutput } from "../types/tool-outputs"
 import { trimReasoningSteps } from "../utils/annotations"
 
@@ -28,6 +28,7 @@ interface ListMessagesResponse {
               id: string
               reasoning: string
               message: string
+              is_synthesis?: boolean
             }
             | {
               type: "tool_call"
@@ -71,7 +72,9 @@ export async function listMessages(
     if (normalized.properties?.reasoning?.reasoning) {
       normalized.properties.reasoning = {
         type: "reasoning",
-        reasoning: normalized.properties.reasoning.reasoning as ReasoningStep[],
+        reasoning: normalizeReasoningSteps(
+          normalized.properties.reasoning.reasoning as ReasoningStep[]
+        ),
       }
     }
     return trimMessageAnnotations(normalized)

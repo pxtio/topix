@@ -15,7 +15,7 @@ import { getBoardNote } from "@/features/board/api/get-board"
 import { convertNoteToNode } from "@/features/board/utils/graph"
 import type { NoteNode } from "@/features/board/types/flow"
 import type { CreateNoteOutput, EditNoteOutput } from "../types/tool-outputs"
-import { isReasoningTextStep, isToolCallStep } from "../types/stream"
+import { isReasoningTextStep, isToolCallStep, normalizeReasoningSteps } from "../types/stream"
 
 
 /**
@@ -240,10 +240,16 @@ export const useSendMessage = () => {
 const STREAMING_EVENT_CAP = 10
 
 const sanitizeResponseForStreaming = (response: AgentResponse, isStop: boolean): AgentResponse => {
-  if (isStop) return response
+  const normalizedSteps = normalizeReasoningSteps(response.steps)
+  if (isStop) {
+    return {
+      ...response,
+      steps: normalizedSteps,
+    }
+  }
   return {
     ...response,
-    steps: response.steps.map((step) => sanitizeStep(step))
+    steps: normalizedSteps.map((step) => sanitizeStep(step))
   }
 }
 

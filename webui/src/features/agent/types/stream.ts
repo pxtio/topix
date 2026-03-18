@@ -10,6 +10,7 @@ import {
   NoteAddIcon,
   NoteEditIcon,
   NoteIcon,
+  SearchList01Icon,
   SourceCodeIcon,
   ThermometerWarmIcon,
 } from "@hugeicons/core-free-icons"
@@ -57,6 +58,7 @@ export interface ReasoningTextStep {
   id: string
   reasoning: string
   message: string
+  isSynthesis?: boolean
 }
 
 
@@ -139,7 +141,7 @@ export const ToolNameIcon: Record<string, IconSvgElement> = {
   answer_reformulate: NoteIcon,
   web_search: EarthIcon,
   memory_search: ChipIcon,
-  outline_generator: NoteIcon,
+  outline_generator: SearchList01Icon,
   web_collector: AiBrowserIcon,
   synthesizer: NoteIcon,
   navigate: AiBrowserIcon,
@@ -156,6 +158,40 @@ export const ToolNameIcon: Record<string, IconSvgElement> = {
 
 
 export const RAW_MESSAGE: ToolName = "raw_message"
+
+
+/**
+ * Checks whether a tool name should be rendered as reasoning/message text.
+ */
+export const isReasoningTextToolName = (toolName: ToolName) =>
+  toolName === "raw_message" ||
+  toolName === "answer_reformulate" ||
+  toolName === "synthesizer"
+
+
+/**
+ * Normalizes text-like tool steps into reasoning text steps for rendering.
+ */
+export const normalizeReasoningStep = (step: ReasoningStep): ReasoningStep => {
+  if (step.type !== "tool_call" || !isReasoningTextToolName(step.name)) {
+    return step
+  }
+
+  return {
+    type: "reasoning_step",
+    id: step.id,
+    reasoning: step.thought || "",
+    message: typeof step.output === "string" ? step.output : "",
+    isSynthesis: step.name === "synthesizer",
+  }
+}
+
+
+/**
+ * Normalizes a mixed step list so text-like tool steps render as reasoning text.
+ */
+export const normalizeReasoningSteps = (steps: ReasoningStep[]) =>
+  steps.map(normalizeReasoningStep)
 
 
 /**

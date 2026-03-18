@@ -1,5 +1,5 @@
 import type { AgentResponse, ReasoningStep, ToolCallStep, ToolExecutionState, ToolName } from "../../types/stream"
-import { RAW_MESSAGE, ToolNameDescription } from "../../types/stream"
+import { RAW_MESSAGE, ToolNameDescription, isReasoningTextToolName } from "../../types/stream"
 import { simpleTransform } from "./transform"
 import type {
   CreateNoteOutput,
@@ -85,12 +85,13 @@ const makeToolOutput = (acc: StepAccum): ToolOutput => {
  * Converts one streaming accumulator into a renderable step.
  */
 const toReasoningStep = (acc: StepAccum): ReasoningStep => {
-  if (acc.name === RAW_MESSAGE) {
+  if (isReasoningTextToolName(acc.name)) {
     return {
       type: "reasoning_step",
       id: acc.id,
       reasoning: acc.reasoning,
       message: acc.message,
+      isSynthesis: acc.name === "synthesizer",
     }
   }
 
@@ -165,7 +166,7 @@ export async function* buildResponse(
   let shouldBurstYield = false
 
   const stepKeyFor = (toolId: string, toolName: ToolName) =>
-    toolName === RAW_MESSAGE ? `${toolId}:${rawBlockIndex}` : toolId
+    isReasoningTextToolName(toolName) ? `${toolId}:${rawBlockIndex}` : toolId
 
   const ensureStep = (toolId: string, toolName: ToolName) => {
     const key = stepKeyFor(toolId, toolName)
@@ -231,9 +232,9 @@ export async function* buildResponse(
     }
 
     const chunk = simpleTransform(rawChunk)
-    const isRaw = chunk.toolName === RAW_MESSAGE
+    const isRaw = isReasoningTextToolName(chunk.toolName)
 
-    if (chunk.content?.type === "status" && chunk.toolName === RAW_MESSAGE) continue
+    if (chunk.content?.type === "status" && isReasoningTextToolName(chunk.toolName)) continue
 
     if (currentBlock === null) {
       currentBlock = isRaw ? "raw" : "tools"
@@ -252,13 +253,13 @@ export async function* buildResponse(
     if (chunk.content) {
       const { type, text, annotations } = chunk.content
 
-      if (annotations?.length && chunk.toolName !== RAW_MESSAGE) {
+      if (annotations?.length && !isReasoningTextToolName(chunk.toolName)) {
         pushManyCapped(step.annotations, annotations, annotationsCap)
         step.dirty = true
       }
 
       if (type === "token" || type === "message") {
-        if (chunk.toolName === RAW_MESSAGE) {
+        if (isReasoningTextToolName(chunk.toolName)) {
           if (chunk.type === "stream_reasoning_message") {
             step.reasoningBuf.push(text)
           } else {
@@ -267,7 +268,7 @@ export async function* buildResponse(
         }
         bufferedChars += text.length
         step.dirty = true
-      } else if (type === "status" && chunk.toolName !== RAW_MESSAGE) {
+      } else if (type === "status" && !isReasoningTextToolName(chunk.toolName)) {
         pushCapped(step.eventMessages, text, eventMessagesCap)
         const t = text.toLowerCase()
         const prev = step.state
@@ -385,6 +386,15 @@ export function extractStepDescription(step: ReasoningStep): { reasoning: string
       message: output.label
         ? `Updated note "${output.label}" as ${typeLabel}.`
         : `Updated note as ${typeLabel}.`,
+      title: getToolTitle(step.name),
+      input
+    }
+  }
+
+  if (isReasoningTextToolName(step.name)) {
+    return {
+      reasoning: step.thought || "",
+      message: typeof step.output === "string" ? step.output : "",
       title: getToolTitle(step.name),
       input
     }

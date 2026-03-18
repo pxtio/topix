@@ -62,11 +62,12 @@ export const WidgetNode = memo(function WidgetNode({
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === "dark"
   const [rendererSize, setRendererSize] = useState<{ width: number; height: number } | null>(null)
-  const { boardId, rootId, graphViewports, isMoving } = useGraphStore(useShallow((state) => ({
+  const { boardId, rootId, graphViewports, isMoving, boardCanEdit } = useGraphStore(useShallow((state) => ({
     boardId: state.boardId,
     rootId: state.rootId,
     graphViewports: state.graphViewports,
     isMoving: state.isMoving,
+    boardCanEdit: state.boardCanEdit,
   })))
   const openNodeSurface = useGraphStore((state) => state.openNodeSurface)
   const html = note.content?.markdown?.trim() || ""
@@ -99,8 +100,11 @@ export const WidgetNode = memo(function WidgetNode({
     <button
       type="button"
       className="relative w-full h-full overflow-hidden rounded-2xl border border-border/60 bg-card text-left shadow-sm"
-      onClick={() => openNodeSurface(note.id, "widget")}
-      title="Open widget"
+      onClick={() => {
+        if (!boardCanEdit) return
+        openNodeSurface(note.id, "widget")
+      }}
+      title={boardCanEdit ? "Open widget" : "Widget preview"}
     >
       {html && !suspendPreview ? (
         <WidgetIframe

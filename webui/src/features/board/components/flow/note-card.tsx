@@ -147,6 +147,7 @@ export const NodeCard = memo(function NodeCard({
   const setNodesPersist = useGraphStore((state) => state.setNodesPersist)
   const updateNodeByIdPersist = useGraphStore((state) => state.updateNodeByIdPersist)
   const setEdgesPersist = useGraphStore((state) => state.setEdgesPersist)
+  const boardCanEdit = useGraphStore((state) => state.boardCanEdit)
   const openNodeSurface = useGraphStore((state) => state.openNodeSurface)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -326,8 +327,9 @@ export const NodeCard = memo(function NodeCard({
   }, [updateStyle])
 
   const handleOpenSheet = useCallback(() => {
+    if (!boardCanEdit) return
     openNodeSurface(note.id, "sheet")
-  }, [note.id, openNodeSurface])
+  }, [boardCanEdit, note.id, openNodeSurface])
 
   if (!isSheet) {
     if (isCodeSandbox) {

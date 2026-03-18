@@ -21,6 +21,7 @@ export function LinearNoteCard({ node }: Props) {
   const titleInputRef = useRef<HTMLInputElement | null>(null)
 
   const boardId = useGraphStore(state => state.boardId)
+  const boardCanEdit = useGraphStore(state => state.boardCanEdit)
   const openNodeSurface = useGraphStore(state => state.openNodeSurface)
 
   const setNodesPersist = useGraphStore(state => state.setNodesPersist)
@@ -104,12 +105,13 @@ export function LinearNoteCard({ node }: Props) {
   }, [boardId, node.id, setNodesPersist, setEdgesPersist])
 
   const handleOpenSurface = useCallback(() => {
+    if (!boardCanEdit) return
     openNodeSurface(node.id, isCodeSandbox ? 'code-sandbox' : isWidget ? 'widget' : 'sheet')
-  }, [isCodeSandbox, isWidget, node.id, openNodeSurface])
+  }, [boardCanEdit, isCodeSandbox, isWidget, node.id, openNodeSurface])
 
   const cardClass = clsx(
     'transition rounded-lg relative bg-background overflow-hidden transition-all duration-200 group sticky-note-shadow paper-note-texture',
-    usesHostedSurface && 'cursor-pointer',
+    usesHostedSurface && boardCanEdit && 'cursor-pointer',
     isPinned
       ? 'ring-2 ring-secondary/60'
       : 'hover:ring-2 hover:ring-secondary/40'
@@ -238,7 +240,10 @@ export function LinearNoteCard({ node }: Props) {
           <button
             type='button'
             onClick={handleOpenSurface}
-            className='block w-full truncate text-center text-sm font-semibold text-foreground hover:underline'
+            className={clsx(
+              'block w-full truncate text-center text-sm font-semibold text-foreground',
+              boardCanEdit && 'hover:underline'
+            )}
             title={isCodeSandbox ? 'Python sandbox' : displayTitle}
           >
             {isCodeSandbox ? 'Python sandbox' : displayTitle}

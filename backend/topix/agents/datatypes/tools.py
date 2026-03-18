@@ -60,6 +60,9 @@ tool_descriptions = {
     AgentToolName.DISPLAY_STOCK_WIDGET: "Display a stock widget",
     AgentToolName.DISPLAY_WEATHER_WIDGET: "Display a weather widget",
     AgentToolName.DISPLAY_IMAGE_SEARCH_WIDGET: "Display an image search widget",
-    AgentToolName.LEARN_GENERATE_HTML_WIDGET: "Learn how to create visual explainers and interactive HTML widgets such as charts, flash cards, mini slides, and infographics",
+    AgentToolName.LEARN_GENERATE_HTML_WIDGET: (
+        "Learn how to create visual explainers and interactive "
+        "HTML widgets such as charts, flash cards, mini slides, and infographics"
+    ),
     AgentToolName.IMAGE_GENERATION: "Generate images based on text prompts",
 }

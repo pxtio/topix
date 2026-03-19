@@ -4,7 +4,7 @@ import type { LlmModel } from "../types/llm"
 import type { WebSearchEngine } from "../types/web"
 import { defaultServices, type Services } from "../types/services"
 
-const DEFAULT_LLM_MODEL: LlmModel = "openrouter/anthropic/claude-haiku-4.5"
+const DEFAULT_LLM_MODEL: LlmModel = "openai/gpt-5.4-nano"
 
 
 /**

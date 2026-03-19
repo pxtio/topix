@@ -13,6 +13,9 @@ class OpenAIModel(str, Enum):
     GPT_5 = "openai/gpt-5"
     GPT_5_MINI = "openai/gpt-5-mini"
     GPT_5_NANO = "openai/gpt-5-nano"
+    GPT_5_4 = "openai/gpt-5.4"
+    GPT_5_4_MINI = "openai/gpt-5.4-mini"
+    GPT_5_4_NANO = "openai/gpt-5.4-nano"
     GPT_5_1_CHAT = "openai/gpt-5.1-chat-latest"
     GPT_5_1 = "openai/gpt-5.1"
     GPT_5_2 = "openai/gpt-5.2"
@@ -32,7 +35,7 @@ class OpenRouterModel(str, Enum):
 
     CLAUDE_OPUS_4_6 = "openrouter/anthropic/claude-opus-4.6"
     CLAUDE_OPUS_4_5 = "openrouter/anthropic/claude-opus-4.5"
-    CLAUDE_SONNET_4 = "openrouter/anthropic/claude-sonnet-4.5"
+    CLAUDE_SONNET_4_6 = "openrouter/anthropic/claude-sonnet-4.6"
     CLAUDE_OPUS_4_1 = "openrouter/anthropic/claude-opus-4.1"
     CLAUDE_HAIKU = "openrouter/anthropic/claude-3.5-haiku"
     DEEPSEEK_CHAT = "openrouter/deepseek/deepseek-chat-v3.1"
@@ -61,7 +64,15 @@ def support_temperature(model: str) -> bool:
     Temperature is possibly not supported in reasoning models due to
     introduced newer parameters like `verbosity` or `reasoning_effort`.
     """
-    if model in [OpenAIModel.GPT_5, OpenAIModel.GPT_5_MINI, OpenAIModel.GPT_5_NANO, OpenAIModel.GPT_5_1_CHAT]:
+    if model in [
+        OpenAIModel.GPT_5,
+        OpenAIModel.GPT_5_MINI,
+        OpenAIModel.GPT_5_NANO,
+        OpenAIModel.GPT_5_4,
+        OpenAIModel.GPT_5_4_MINI,
+        OpenAIModel.GPT_5_4_NANO,
+        OpenAIModel.GPT_5_1_CHAT,
+    ]:
         return False
     return True
 
@@ -75,6 +86,9 @@ def support_reasoning(model: str) -> bool:
         OpenAIModel.GPT_5,
         OpenAIModel.GPT_5_MINI,
         OpenAIModel.GPT_5_NANO,
+        OpenAIModel.GPT_5_4,
+        OpenAIModel.GPT_5_4_MINI,
+        OpenAIModel.GPT_5_4_NANO,
 
         # Gemini reasoning-capable
         GeminiModel.GEMINI_2_5_FLASH,
@@ -109,6 +123,9 @@ def support_penalties(model: str) -> bool:
         OpenAIModel.GPT_5,
         OpenAIModel.GPT_5_MINI,
         OpenAIModel.GPT_5_NANO,
+        OpenAIModel.GPT_5_4,
+        OpenAIModel.GPT_5_4_MINI,
+        OpenAIModel.GPT_5_4_NANO,
         GeminiModel.GEMINI_2_5_FLASH,
         GeminiModel.GEMINI_2_5_PRO,
     ]:

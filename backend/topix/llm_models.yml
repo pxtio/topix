@@ -38,6 +38,21 @@ gpt-5:
   provider: openai
   tier: pro
 
+gpt-5.4:
+  model: gpt-5.4
+  provider: openai
+  tier: pro
+
+gpt-5.4-mini:
+  model: gpt-5.4-mini
+  provider: openai
+  tier: lite
+
+gpt-5.4-nano:
+  model: gpt-5.4-nano
+  provider: openai
+  tier: lite
+
 gpt-5-mini:
   model: gpt-5-mini
   provider: openai
@@ -66,9 +81,9 @@ claude-opus-4.5:
   provider: anthropic
   tier: pro
 
-claude-sonnet-4.5:
-  model: claude-sonnet-4-5
-  openrouter_model: anthropic/claude-sonnet-4.5
+claude-sonnet-4.6:
+  model: claude-sonnet-4-6
+  openrouter_model: anthropic/claude-sonnet-4.6
   provider: anthropic
   tier: pro
 

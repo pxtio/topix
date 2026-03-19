@@ -54,7 +54,7 @@ export const ReasoningStepRow = ({
             />
           </button>
           {viewMore && (
-            <div className='mt-2 origin-top-left scale-[0.94] text-muted-foreground rounded-lg border border-border p-2 bg-sidebar shadow-sm'>
+            <div className='mt-2 text-muted-foreground rounded-lg border border-border p-2 bg-sidebar shadow-sm'>
               <MarkdownView content={step.reasoning} />
             </div>
           )}
@@ -71,7 +71,7 @@ export const ReasoningStepRow = ({
           text='Thinking'
           disabled={false}
           speed={1}
-          className='text-base text-foreground/50'
+          className='text-small text-foreground/50'
         />
       ) : null}
     </div>

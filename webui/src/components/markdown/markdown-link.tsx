@@ -2,6 +2,7 @@ import React from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Link02Icon } from "@hugeicons/core-free-icons"
+import { cn } from "@/lib/utils"
 
 const boardLinkRe = /^\/boards\/([^/]+)\/([^/]+)\/([^/]+)$/
 
@@ -37,12 +38,17 @@ export function MarkdownLink({ children, href, ...rest }: MarkdownLinkProps) {
   const target = isExternal ? "_blank" : rest.target
   const rel = isExternal ? "noreferrer" : rest.rel
 
+  const clName = cn(
+    "transition-all inline-block leading-none align-text-bottom text-muted-foreground/70 hover:text-muted-foreground text-xs font-mono bg-card hover:bg-accent rounded-lg",
+    isExternal ? "border border-border px-1 py-0.5" : "p-1",
+  )
+
   return (
     <a
       href={href}
       target={target}
       rel={rel}
-      className="transition-all inline-block leading-none align-text-bottom p-1 text-muted-foreground text-xs font-mono font-medium bg-card hover:bg-accent rounded-lg"
+      className={clName}
       onClick={onClick}
       {...rest}
     >

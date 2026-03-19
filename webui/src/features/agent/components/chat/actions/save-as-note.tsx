@@ -10,6 +10,7 @@ import { useConvertToMindMap } from "@/features/board/api/convert-to-mindmap"
 import { useCreateBoard } from "@/features/board/api/create-board"
 import { useListBoards } from "@/features/board/api/list-boards"
 import { UNTITLED_LABEL } from "@/features/board/const"
+import { useGraphStore } from "@/features/board/store/graph-store"
 import { CancelIcon, ChartBubbleIcon, CheckmarkCircle03Icon, GitForkIcon, NotebookIcon, ReloadIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useNavigate } from "@tanstack/react-router"
@@ -58,12 +59,26 @@ export const SaveAsNote = ({
 }: SaveAsNoteProps) => {
   const [processing, setProcessing] = useState<boolean>(false)
   const userId = useAppStore(s => s.userId)
+  const rootId = useGraphStore(state => state.rootId)
 
   const { convertToMindMapAsync } = useConvertToMindMap()
   const { data: boardList } = useListBoards(userId)
   const { createBoardAsync } = useCreateBoard()
 
   const navigate = useNavigate()
+
+  /**
+   * Navigate to a board, preserving the current subfolder context when present.
+   */
+  const goToBoard = (targetBoardId: string) => {
+    navigate({
+      to: '/boards/$id',
+      params: { id: targetBoardId },
+      search: rootId
+        ? (prev: Record<string, unknown>) => ({ ...prev, root_id: rootId })
+        : undefined,
+    })
+  }
 
   const ensureMessage = () => {
     if (!message.trim()) {
@@ -101,26 +116,26 @@ export const SaveAsNote = ({
         useAnchors
       })
       window.clearInterval(timer)
+      toast.dismiss(id)
       const finalElapsed = formatElapsed()
       toast.success(`Notes updated. (${finalElapsed})`, {
-        id,
         icon: <SuccessIcon />,
-        duration: undefined,
+        duration: 3000,
         action: {
           label: "Go to board",
           onClick: () => {
-            navigate({ to: '/boards/$id', params: { id: boardId } })
+            goToBoard(boardId)
           }
         }
       })
     } catch (error) {
       console.error("Error converting to mind map:", error)
       window.clearInterval(timer)
+      toast.dismiss(id)
       const finalElapsed = formatElapsed()
       toast.error(`Failed to rewrite. (${finalElapsed})`, {
-        id,
         icon: <ErrorIcon />,
-        duration: undefined
+        duration: 4000
       })
     } finally {
       window.clearInterval(timer)
@@ -154,17 +169,17 @@ export const SaveAsNote = ({
       const boardId = await createBoardAsync()
       await convertToMindMapAsync({ boardId, answer: message, toolType: type, saveAsIs, useAnchors })
       window.clearInterval(timer)
+      toast.dismiss(id)
       const finalElapsed = formatElapsed()
       toast.success(
         `Notes updated. (${finalElapsed})`,
         {
-          id,
           icon: <SuccessIcon />,
-          duration: undefined,
+          duration: 3000,
           action: {
             label: "Go to board",
             onClick: () => {
-              navigate({ to: '/boards/$id', params: { id: boardId } })
+              goToBoard(boardId)
             }
           }
         }
@@ -172,13 +187,13 @@ export const SaveAsNote = ({
     } catch (error) {
       console.error("Error creating board or converting to mind map:", error)
       window.clearInterval(timer)
+      toast.dismiss(id)
       const finalElapsed = formatElapsed()
       toast.error(
         `Could not create the board or rewrite. (${finalElapsed})`,
         {
-          id,
           icon: <ErrorIcon />,
-          duration: undefined
+          duration: 4000
         })
     } finally {
       window.clearInterval(timer)

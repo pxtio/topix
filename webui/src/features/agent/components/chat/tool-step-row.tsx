@@ -23,11 +23,11 @@ const ReasoningMessage = ({
 }: { reasoning: string }) => {
   return (
     <div className='text-muted-foreground p-0 space-y-1 italic'>
-      <div className='flex items-center gap-2 font-medium cursor-pointer text-sm'>
+      <div className='flex items-center gap-2 font-medium cursor-pointer text-xs'>
         <HugeiconsIcon icon={IdeaIcon} className='size-4' strokeWidth={2} />
         <span>Thought</span>
       </div>
-      <span className='text-base'>{reasoning}</span>
+      <span className='text-sm'>{reasoning}</span>
     </div>
   )
 }
@@ -46,13 +46,13 @@ const CodeInterpreterResult = ({
     return null
   }
 
-  const blockClass = "w-full rounded-lg border p-3 font-mono text-sm leading-6 whitespace-pre-wrap break-words"
+  const blockClass = "w-full rounded-lg border p-3 font-mono text-xs leading-5 whitespace-pre-wrap break-words"
 
   return (
     <div className='w-full flex flex-col gap-2'>
       {stdout !== "" && (
         <div className='w-full flex flex-col gap-1'>
-          <span className='text-sm font-medium text-muted-foreground'>stdout</span>
+          <span className='text-xs font-medium text-muted-foreground'>stdout</span>
           <div className={cn(blockClass, "border-border bg-sidebar-accent/40 text-card-foreground")}>
             {stdout}
           </div>
@@ -60,7 +60,7 @@ const CodeInterpreterResult = ({
       )}
       {stderr !== "" && (
         <div className='w-full flex flex-col gap-1'>
-          <span className='text-sm font-medium text-destructive'>stderr</span>
+          <span className='text-xs font-medium text-destructive'>stderr</span>
           <div className={cn(blockClass, "border-destructive/30 bg-destructive/5 text-destructive")}>
             {stderr}
           </div>
@@ -83,8 +83,8 @@ const NoteToolResult = ({
 
   return (
     <div className='w-full rounded-lg border border-border bg-sidebar-accent/40 p-3'>
-      <div className='text-sm font-medium text-muted-foreground'>note</div>
-      <div className='mt-1 text-base text-card-foreground whitespace-pre-line'>
+      <div className='text-xs font-medium text-muted-foreground'>note</div>
+      <div className='mt-1 text-sm text-card-foreground whitespace-pre-line'>
         <span className='font-medium'>{output.label || "Untitled note"}</span>
         {` • ${typeLabel}`}
       </div>
@@ -165,7 +165,7 @@ export const ToolStepRow = ({
 
   const isLoading = isStreaming || step.state === "started"
   const messageClass = "transition-all w-full h-auto min-h-2 p-2 rounded-xl"
-  const spanMessageClass = "text-base text-card-foreground whitespace-pre-line"
+  const spanMessageClass = "text-sm text-card-foreground whitespace-pre-line"
   const stepIcon = ToolNameIcon[step.name]
   const successIcon = stepIcon || Tick01Icon
   const successDivClass = cn(
@@ -209,10 +209,10 @@ export const ToolStepRow = ({
         <div className={messageClass}>
           <div className='flex flex-col gap-2'>
             <div>
-              <h4 className='text-sm font-medium block h-6 leading-6'>{title}</h4>
+              <h4 className='text-sm font-normal text-muted-foreground block h-6 leading-6'>{title}</h4>
               {canExpand && !viewMore && (
                 <button
-                  className='text-sm text-secondary font-sans hover:underline'
+                  className='text-xs text-secondary font-sans hover:underline'
                   onClick={() => setViewMore(true)}
                 >
                   Show details
@@ -227,7 +227,7 @@ export const ToolStepRow = ({
             {inlineDetail}
             {canExpand && viewMore && input && step.name !== "code_interpreter" && (
               <button
-                className='text-sm font-mono px-2 py-1 rounded-sm bg-sidebar-accent/50 border border-border inline-flex flex-row items-center justify-start gap-1 max-w-[260px] sm:max-w-[320px] w-auto mr-auto overflow-hidden cursor-copy hover:bg-sidebar-accent/70 transition-colors'
+                className='text-xs font-mono px-2 py-1 rounded-sm bg-sidebar-accent/50 border border-border inline-flex flex-row items-center justify-start gap-1 max-w-[260px] sm:max-w-[320px] w-auto mr-auto overflow-hidden cursor-copy hover:bg-sidebar-accent/70 transition-colors'
                 onClick={() => void handleInputCopy(input)}
                 title={input}
               >
@@ -238,7 +238,7 @@ export const ToolStepRow = ({
             )}
             {canExpand && viewMore && input && step.name === "code_interpreter" && (
               <button
-                className='w-full text-left rounded-lg border border-border bg-sidebar-accent/40 p-3 font-mono text-sm leading-6 whitespace-pre-wrap break-words hover:bg-sidebar-accent/60 transition-colors'
+                className='w-full text-left rounded-lg border border-border bg-sidebar-accent/40 p-3 font-mono text-xs leading-5 whitespace-pre-wrap break-words hover:bg-sidebar-accent/60 transition-colors'
                 onClick={() => void handleInputCopy(input)}
                 title='Copy code'
               >
@@ -258,7 +258,7 @@ export const ToolStepRow = ({
             )}
             {canExpand && viewMore && (
               <button
-                className='text-sm text-secondary font-sans hover:underline ml-2'
+                className='text-xs text-secondary font-sans hover:underline ml-2'
                 onClick={() => setViewMore(false)}
               >
                 Show less

@@ -10,7 +10,7 @@ import {
   LlmFamilyIcon,
   type LlmFamily,
 } from "@/features/agent/types/llm"
-import { AiNetworkIcon, SquareLock01Icon } from "@hugeicons/core-free-icons"
+import { SquareLock01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { clsx } from "clsx"
 import { useShallow } from "zustand/shallow"
@@ -27,6 +27,10 @@ const LlmFamilyLabel: Record<LlmFamily, string> = {
   "z-ai": "Z.ai",
   qwen: "Qwen",
   moonshotai: "Moonshot",
+}
+
+type ModelChoiceMenuProps = {
+  display?: "icon" | "row"
 }
 
 /**
@@ -61,7 +65,7 @@ const ModelCard: React.FC<{ model: LlmModel; available?: boolean }> = ({ model, 
  * from a dropdown menu. It uses the Select component from the UI library
  * to create a styled dropdown with model options.
  */
-export const ModelChoiceMenu = () => {
+export const ModelChoiceMenu = ({ display = "icon" }: ModelChoiceMenuProps) => {
   const { llmModel, setLlmModel } = useChatStore()
 
   const availableModels = useChatStore(
@@ -83,14 +87,32 @@ export const ModelChoiceMenu = () => {
     modelsByFamily[family]!.push(model)
   }
 
+  const currentFamily = LlmFamilyMap[llmModel]
+  const CurrentFamilyIcon = LlmFamilyIcon[currentFamily]
+  const isRow = display === "row"
+  const triggerClassName = isRow
+    ? "w-full rounded-md text-xs px-2 py-1.5 shadow-none hover:bg-accent [&>svg:not(.my-icon)]:hidden border border-transparent hover:border-border transition-colors justify-start gap-2 text-muted-foreground"
+    : "w-auto rounded-full text-xs p-2 shadow-none border-none"
+
   return (
     <Select onValueChange={handleModelChange} value={llmModel}>
       <Tooltip delayDuration={400}>
-        <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 border border-transparent hover:border-border transition-colors">
+        <div className={clsx(
+          isRow ? "w-full" : "rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 border border-transparent hover:border-border transition-colors"
+        )}>
           <TooltipTrigger asChild>
-            <SelectTrigger className="w-auto rounded-full text-xs p-2 shadow-none border-none" size="sm" hideChevron>
+            <SelectTrigger className={triggerClassName} size="sm" hideChevron>
               <div className="flex items-center gap-2">
-                <HugeiconsIcon icon={AiNetworkIcon} strokeWidth={2} className='size-4 shrink-0' />
+                {
+                  isRow ? (
+                    <>
+                      <CurrentFamilyIcon size={16} />
+                      <span className="text-xs truncate">Core LLM ({LlmName[llmModel]})</span>
+                    </>
+                  ) : (
+                    <CurrentFamilyIcon size={16} />
+                  )
+                }
               </div>
             </SelectTrigger>
           </TooltipTrigger>

@@ -1,10 +1,8 @@
-import { Badge } from "@/components/ui/badge"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useChatStore } from "@/features/agent/store/chat-store"
 import {
-  LlmBadge,
   LlmDescription,
   LlmName,
   type LlmModel,
@@ -12,7 +10,7 @@ import {
   LlmFamilyIcon,
   type LlmFamily,
 } from "@/features/agent/types/llm"
-import { SquareLock01Icon } from "@hugeicons/core-free-icons"
+import { AiNetworkIcon, SquareLock01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { clsx } from "clsx"
 import { useShallow } from "zustand/shallow"
@@ -42,19 +40,10 @@ const ModelCard: React.FC<{ model: LlmModel; available?: boolean }> = ({ model, 
     available === false ? "text-muted-foreground cursor-not-allowed pointer-events-none" : "",
   )
 
-  const badge = LlmBadge[model]
-
-  const badgeClass = clsx(
-    "text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-full border text-muted-foreground bg-transparent border-muted-foreground/20",
-  )
-
   return (
     <HoverCard openDelay={200}>
       <HoverCardTrigger className={clss}>
         <span className="truncate">{LlmName[model]}</span>
-        <Badge variant="outline" className={badgeClass}>
-          {badge}
-        </Badge>
       </HoverCardTrigger>
       <HoverCardContent
         className="w-48 rounded-xl border border-border bg-popover text-popover-foreground shadow text-sm"
@@ -94,9 +83,6 @@ export const ModelChoiceMenu = () => {
     modelsByFamily[family]!.push(model)
   }
 
-  const currentFamily = LlmFamilyMap[llmModel]
-  const CurrentFamilyIcon = LlmFamilyIcon[currentFamily]
-
   return (
     <Select onValueChange={handleModelChange} value={llmModel}>
       <Tooltip delayDuration={400}>
@@ -104,7 +90,7 @@ export const ModelChoiceMenu = () => {
           <TooltipTrigger asChild>
             <SelectTrigger className="w-auto rounded-full text-xs p-2 shadow-none border-none" size="sm" hideChevron>
               <div className="flex items-center gap-2">
-                <CurrentFamilyIcon size={16} />
+                <HugeiconsIcon icon={AiNetworkIcon} strokeWidth={2} className='size-4 shrink-0' />
               </div>
             </SelectTrigger>
           </TooltipTrigger>

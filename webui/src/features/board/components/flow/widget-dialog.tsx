@@ -5,7 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTheme } from "@/components/theme-provider"
 
 import { useGraphStore } from "../../store/graph-store"
@@ -87,35 +87,41 @@ export const WidgetDialog = memo(function WidgetDialog({
             </TabsList>
           </div>
 
-          <TabsContent value="rendered" className="min-h-0 flex-1 bg-background m-0">
-            {html ? (
-              <WidgetIframe
-                html={html}
-                title="Widget"
-                className="h-full w-full border-0 bg-white"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
-                Widget HTML is empty.
-              </div>
-            )}
-          </TabsContent>
+          <div className="relative min-h-0 flex-1">
+            <div
+              className={activeTab === "rendered" ? "flex h-full flex-col" : "hidden h-full"}
+            >
+              {html ? (
+                <WidgetIframe
+                  html={html}
+                  title="Widget"
+                  className="h-full w-full border-0 bg-white"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                  Widget HTML is empty.
+                </div>
+              )}
+            </div>
 
-          <TabsContent value="code" className="min-h-0 flex-1 bg-background m-0">
-            <CodeArea
-              value={htmlDraft}
-              isDark={isDark}
-              textColor="var(--foreground)"
-              onChange={setHtmlDraft}
-              language="html"
-              placeholder={`<!doctype html>
+            <div
+              className={activeTab === "code" ? "flex h-full flex-col bg-background" : "hidden h-full"}
+            >
+              <CodeArea
+                value={htmlDraft}
+                isDark={isDark}
+                textColor="var(--foreground)"
+                onChange={setHtmlDraft}
+                language="html"
+                placeholder={`<!doctype html>
 <html>
   <body>
     <h1>Hello widget</h1>
   </body>
 </html>`}
-            />
-          </TabsContent>
+              />
+            </div>
+          </div>
         </Tabs>
       </DialogContent>
     </Dialog>

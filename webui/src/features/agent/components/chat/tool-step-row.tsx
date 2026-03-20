@@ -163,7 +163,7 @@ export const ToolStepRow = ({
     setTimeout(() => setIsInputCopied(false), 1500)
   }
 
-  const isLoading = isStreaming || step.state === "started"
+  const isLoading = isStreaming && step.state === "started"
   const messageClass = "transition-all w-full h-auto min-h-2 p-2 rounded-xl"
   const spanMessageClass = "text-sm text-card-foreground whitespace-pre-line"
   const stepIcon = ToolNameIcon[step.name]
@@ -193,7 +193,7 @@ export const ToolStepRow = ({
       <div className='relative flex-shrink-0'>
         <div className='relative z-20 mt-2 -ml-1 rounded-full bg-background w-6 h-6'>
           {isLoading && (
-            <div className='absolute animate-ping w-3 h-3 rounded-full bg-primary/75 z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' />
+            <div className='absolute animate-ping w-3 h-3 rounded-full bg-accent-foreground/75 z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' />
           )}
           {!isLoading && (
             <div className={successDivClass}>
@@ -201,7 +201,7 @@ export const ToolStepRow = ({
             </div>
           )}
           {isLoading && (
-            <div className='absolute w-2 h-2 rounded-full bg-primary z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' />
+            <div className='absolute w-2 h-2 rounded-full bg-accent-foreground z-20 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2' />
           )}
         </div>
       </div>

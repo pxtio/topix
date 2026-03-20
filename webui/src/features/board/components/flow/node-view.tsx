@@ -151,7 +151,10 @@ function NodeViewBase({ id, data, selected, width, height, dragging }: NodeProps
 
   const isPinned = data.properties.pinned.boolean
 
-  const nodeClass = 'w-full h-full relative font-handwriting drag-handle pointer-events-auto bg-transparent'
+  const nodeClass = clsx(
+    'w-full h-full relative font-handwriting pointer-events-auto bg-transparent',
+    nodeType !== 'widget' && 'drag-handle',
+  )
   const rounded = data.style.roundness > 0 ? 'rounded-2xl' : 'none'
   const frameClass = clsx('rounded-lg', isPinned && 'ring-2 ring-secondary')
 

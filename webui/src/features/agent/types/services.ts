@@ -40,7 +40,7 @@ export type ServiceName = typeof SERVICE_NAMES[number]
 export const defaultServices: () => Services = () => ({
   llm: [
     { name: "openai/gpt-5.2", available: false, provider: "openai" },
-    { name: "openai/gpt-5.2-chat", available: false, provider: "openai" },
+    { name: "openai/gpt-5.2-chat-latest", available: false, provider: "openai" },
     { name: "openai/gpt-5.1", available: false, provider: "openai" },
     { name: "openai/gpt-5.1-chat-latest", available: false, provider: "openai" },
     { name: "openai/gpt-5.4", available: false, provider: "openai" },
@@ -63,6 +63,8 @@ export const defaultServices: () => Services = () => ({
     { name: "openrouter/mistralai/mistral-medium-3.1", available: false, provider: "openrouter" },
     { name: "openrouter/deepseek/deepseek-v3.2", available: false, provider: "openrouter" },
     // { name: "openrouter/deepseek/deepseek-chat-v3.1", available: false, provider: "openrouter" },
+    { name: "openrouter/z-ai/glm-4.7", available: false, provider: "openrouter" },
+    { name: "openrouter/qwen/qwen3.5-plus-02-15", available: false, provider: "openrouter" },
     { name: "openrouter/moonshotai/kimi-k2-thinking", available: false, provider: "openrouter" },
   ],
   search: [

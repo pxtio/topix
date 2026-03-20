@@ -71,7 +71,7 @@ export const ReasoningStepRow = ({
           text='Thinking'
           disabled={false}
           speed={1}
-          className='text-small text-foreground/50'
+          className='text-sm text-foreground/50'
         />
       ) : null}
     </div>

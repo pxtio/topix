@@ -26,6 +26,8 @@ const LlmFamilyLabel: Record<LlmFamily, string> = {
   anthropic: "Anthropic Claude",
   mistralai: "Mistral",
   deepseek: "DeepSeek",
+  "z-ai": "Z.ai",
+  qwen: "Qwen",
   moonshotai: "Moonshot",
 }
 

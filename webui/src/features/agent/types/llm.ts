@@ -1,8 +1,8 @@
-import { OpenAI, Gemini, DeepSeek, Mistral, Moonshot, Claude } from '@lobehub/icons'
+import { OpenAI, Gemini, DeepSeek, Mistral, Moonshot, Claude, Qwen, ZAI } from '@lobehub/icons'
 
 export const LlmModels = [
   "openai/gpt-5.2",
-  "openai/gpt-5.2-chat",
+  "openai/gpt-5.2-chat-latest",
   "openai/gpt-5.1",
   "openai/gpt-5.1-chat-latest",
   "openai/gpt-4o",
@@ -25,6 +25,8 @@ export const LlmModels = [
   "openrouter/mistralai/mistral-medium-3.1",
   "openrouter/deepseek/deepseek-v3.2",
   "openrouter/deepseek/deepseek-chat-v3.1",
+  "openrouter/z-ai/glm-4.7",
+  "openrouter/qwen/qwen3.5-plus-02-15",
   "openrouter/moonshotai/kimi-k2-thinking"
 ] as const
 
@@ -32,7 +34,7 @@ export type LlmModel = typeof LlmModels[number]
 
 export const LlmName: Record<LlmModel, string> = {
   "openai/gpt-5.2": "GPT-5.2",
-  "openai/gpt-5.2-chat": "GPT-5.2 Chat",
+  "openai/gpt-5.2-chat-latest": "GPT-5.2 Chat",
   "openai/gpt-5.1-chat-latest": "GPT-5.1 Chat",
   "openai/gpt-5.1": "GPT-5.1",
   "openai/gpt-4o": "GPT-4o",
@@ -55,12 +57,14 @@ export const LlmName: Record<LlmModel, string> = {
   "openrouter/mistralai/mistral-medium-3.1": "Mistral Medium",
   "openrouter/deepseek/deepseek-v3.2": "DeepSeek",
   "openrouter/deepseek/deepseek-chat-v3.1": "DeepSeek Chat",
+  "openrouter/z-ai/glm-4.7": "GLM-4.7",
+  "openrouter/qwen/qwen3.5-plus-02-15": "Qwen 3.5 Plus",
   "openrouter/moonshotai/kimi-k2-thinking": "Kimi K2 Thinking"
 }
 
 export const LlmDescription: Record<LlmModel, string> = {
   "openai/gpt-5.2": "Next-generation model offering advanced reasoning and broader skill coverage",
-  "openai/gpt-5.2-chat": "Latest GPT-5.2 model optimized for chat applications with enhanced capabilities",
+  "openai/gpt-5.2-chat-latest": "Latest GPT-5.2 model optimized for chat applications with enhanced capabilities",
   "openai/gpt-5.1": "Next-generation model offering advanced reasoning and broader skill coverage",
   "openai/gpt-5.1-chat-latest": "Latest GPT-5.1 model optimized for chat applications with enhanced capabilities",
   "openai/gpt-4o": "High-quality, fast, and capable model with strong reasoning and low latency",
@@ -83,6 +87,8 @@ export const LlmDescription: Record<LlmModel, string> = {
   "openrouter/mistralai/mistral-medium-3.1": "Efficient Mistral model offering strong multilingual and structured reasoning",
   "openrouter/deepseek/deepseek-v3.2": "Advanced open-source model with strong performance across various tasks",
   "openrouter/deepseek/deepseek-chat-v3.1": "High-performance open-source model with advanced reasoning and adaptability",
+  "openrouter/z-ai/glm-4.7": "Fast general-purpose model from Z.ai with strong reasoning and coding ability",
+  "openrouter/qwen/qwen3.5-plus-02-15": "Versatile Qwen model tuned for strong multilingual reasoning and tool use",
   "openrouter/moonshotai/kimi-k2-thinking": "Innovative model focused on creative problem-solving and dynamic thinking"
 }
 
@@ -93,7 +99,7 @@ export type LlmTier = typeof LlmTiers[number]
 
 export const LlmBadge: Record<LlmModel, LlmTier> = {
   "openai/gpt-5.2": "Elite",
-  "openai/gpt-5.2-chat": "Elite",
+  "openai/gpt-5.2-chat-latest": "Elite",
   "openai/gpt-5.1-chat-latest": "Elite",
   "openai/gpt-5.1": "Elite",
   "openai/gpt-4o": "Balanced",
@@ -116,6 +122,8 @@ export const LlmBadge: Record<LlmModel, LlmTier> = {
   "openrouter/mistralai/mistral-medium-3.1": "Balanced",
   "openrouter/deepseek/deepseek-v3.2": "Balanced",
   "openrouter/deepseek/deepseek-chat-v3.1": "Balanced",
+  "openrouter/z-ai/glm-4.7": "Balanced",
+  "openrouter/qwen/qwen3.5-plus-02-15": "Balanced",
   "openrouter/moonshotai/kimi-k2-thinking": "Balanced"
 }
 
@@ -125,6 +133,8 @@ export const LlmFamilies = [
   "anthropic",
   "mistralai",
   "deepseek",
+  "z-ai",
+  "qwen",
   "moonshotai"
 ]
 
@@ -132,7 +142,7 @@ export type LlmFamily = typeof LlmFamilies[number]
 
 export const LlmFamilyMap: Record<LlmModel, LlmFamily> = {
   "openai/gpt-5.2": "openai",
-  "openai/gpt-5.2-chat": "openai",
+  "openai/gpt-5.2-chat-latest": "openai",
   "openai/gpt-5.1-chat-latest": "openai",
   "openai/gpt-5.1": "openai",
   "openai/gpt-4o": "openai",
@@ -155,6 +165,8 @@ export const LlmFamilyMap: Record<LlmModel, LlmFamily> = {
   "openrouter/mistralai/mistral-medium-3.1": "mistralai",
   "openrouter/deepseek/deepseek-v3.2": "deepseek",
   "openrouter/deepseek/deepseek-chat-v3.1": "deepseek",
+  "openrouter/z-ai/glm-4.7": "z-ai",
+  "openrouter/qwen/qwen3.5-plus-02-15": "qwen",
   "openrouter/moonshotai/kimi-k2-thinking": "moonshotai"
 }
 
@@ -165,5 +177,7 @@ export const LlmFamilyIcon: Record<LlmFamily, React.ComponentType<{ size?: numbe
   anthropic: Claude.Color,
   mistralai: Mistral.Color,
   deepseek: DeepSeek.Color,
+  "z-ai": ZAI,
+  qwen: Qwen.Color,
   moonshotai: Moonshot
 }

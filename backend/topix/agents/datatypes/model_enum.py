@@ -19,7 +19,7 @@ class OpenAIModel(str, Enum):
     GPT_5_1_CHAT = "openai/gpt-5.1-chat-latest"
     GPT_5_1 = "openai/gpt-5.1"
     GPT_5_2 = "openai/gpt-5.2"
-    GPT_5_2_CHAT = "openai/gpt-5.2-chat"
+    GPT_5_2_CHAT = "openai/gpt-5.2-chat-latest"
 
 
 class GeminiModel(str, Enum):
@@ -41,6 +41,8 @@ class OpenRouterModel(str, Enum):
     DEEPSEEK_CHAT = "openrouter/deepseek/deepseek-chat-v3.1"
     MISTRAL_MEDIUM = "openrouter/mistralai/mistral-medium-3.1"
     GEMINI_2_5_FLASH = "openrouter/google/gemini-2.5-flash"
+    GLM_4_7 = "openrouter/z-ai/glm-4.7"
+    QWEN_3_5_PLUS = "openrouter/qwen/qwen3.5-plus-02-15"
 
 
 class PerplexityModel(str, Enum):
@@ -86,6 +88,8 @@ def support_reasoning(model: str) -> bool:
         OpenAIModel.GPT_5,
         OpenAIModel.GPT_5_MINI,
         OpenAIModel.GPT_5_NANO,
+        OpenAIModel.GPT_5_2,
+        OpenAIModel.GPT_5_2_CHAT,
         OpenAIModel.GPT_5_4,
         OpenAIModel.GPT_5_4_MINI,
         OpenAIModel.GPT_5_4_NANO,
@@ -108,7 +112,14 @@ def support_reasoning_effort_instant_mode(model: str) -> bool:
 
 def support_reasoning_effort_none(model: str) -> bool:
     """Check if the model supports 'none' reasoning effort."""
-    return model in [OpenAIModel.GPT_5_1]
+    return model in [
+        OpenAIModel.GPT_5_1,
+        OpenAIModel.GPT_5_4,
+        OpenAIModel.GPT_5_4_MINI,
+        OpenAIModel.GPT_5_4_NANO,
+        OpenAIModel.GPT_5_2,
+        OpenAIModel.GPT_5_2_CHAT
+    ]
 
 
 def support_penalties(model: str) -> bool:

@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useState } from "react"
 import type { Viewport } from "@xyflow/react"
 
-import { Layout01Icon } from "@hugeicons/core-free-icons"
+import { Layout01Icon, Maximize01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { useTheme } from "@/components/theme-provider"
 import { useShallow } from "zustand/react/shallow"
@@ -97,20 +97,28 @@ export const WidgetNode = memo(function WidgetNode({
   const suspendPreview = Boolean(isMoving || dragging || !isVisibleInViewport)
 
   return (
-    <button
-      type="button"
+    <div
       className="relative w-full h-full overflow-hidden rounded-2xl border border-border/60 bg-card text-left shadow-sm"
-      onClick={() => {
-        if (!boardCanEdit) return
-        openNodeSurface(note.id, "widget")
-      }}
-      title={boardCanEdit ? "Open widget" : "Widget preview"}
     >
+      {boardCanEdit && (
+        <button
+          type="button"
+          className="absolute right-2 top-2 z-20 flex size-8 items-center justify-center rounded-full border border-border/70 bg-background/90 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-accent hover:text-foreground"
+          onClick={(event) => {
+            event.stopPropagation()
+            openNodeSurface(note.id, "widget")
+          }}
+          title="Open widget"
+          aria-label="Open widget"
+        >
+          <HugeiconsIcon icon={Maximize01Icon} className="size-4 shrink-0" strokeWidth={2} />
+        </button>
+      )}
       {html && !suspendPreview ? (
         <WidgetIframe
           html={html}
           title="Widget"
-          className="pointer-events-none h-full w-full border-0 bg-white"
+          className="h-full w-full border-0 bg-white"
         />
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-4 text-center text-sm text-muted-foreground">
@@ -134,6 +142,6 @@ export const WidgetNode = memo(function WidgetNode({
           </div>
         </div>
       )}
-    </button>
+    </div>
   )
 })

@@ -162,25 +162,26 @@ export const useAiSparkActions = () => {
         await convertToMindMapAsync({ boardId, answer, toolType, useAnchors })
       }
       window.clearInterval(timer)
+      toast.dismiss(toastId)
       const finalElapsed = formatElapsed()
       toast.success(`Added to board. (${finalElapsed})`, {
-        id: toastId,
         icon: <HugeiconsIcon icon={CheckmarkCircle03Icon} className="size-4" strokeWidth={2} />,
+        duration: 3000,
       })
       return true
     } catch (error) {
       console.error("AI action failed:", error)
       window.clearInterval(timer)
+      toast.dismiss(toastId)
       const finalElapsed = formatElapsed()
       toast.error(`Could not complete the action. (${finalElapsed})`, {
-        id: toastId,
         icon: <HugeiconsIcon icon={CancelIcon} className="size-4" strokeWidth={2} />,
+        duration: 4000,
       })
       return false
     } finally {
       window.clearInterval(timer)
       setProcessingKey(null)
-      toast.dismiss(toastId)
     }
   }
 

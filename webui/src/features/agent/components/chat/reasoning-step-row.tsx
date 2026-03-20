@@ -40,6 +40,26 @@ export const ReasoningStepRow = ({
           Synthesis
         </div>
       )}
+      {hasReasoningDetails && (
+        <div className='mt-2 mb-2'>
+          <button
+            className='inline-flex items-center gap-1 text-sm font-normal text-muted-foreground'
+            onClick={() => setViewMore((value) => !value)}
+          >
+            <span>Reasoning</span>
+            <HugeiconsIcon
+              icon={viewMore ? ArrowDown01Icon : ArrowRight01Icon}
+              className='size-4'
+              strokeWidth={2}
+            />
+          </button>
+          {viewMore && (
+            <div className='mt-2 text-muted-foreground rounded-lg border border-border p-2 bg-sidebar shadow-sm'>
+              <MarkdownView content={step.reasoning} />
+            </div>
+          )}
+        </div>
+      )}
       {step.message !== "" ? (
         <div
           className="text-base text-card-foreground"
@@ -51,29 +71,9 @@ export const ReasoningStepRow = ({
           text='Thinking'
           disabled={false}
           speed={1}
-          className='text-base text-foreground/50'
+          className='text-sm text-foreground/50'
         />
       ) : null}
-      {hasReasoningDetails && (
-        <div className='mt-2'>
-          <button
-            className='inline-flex items-center gap-1 text-base font-semibold text-card-foreground'
-            onClick={() => setViewMore((value) => !value)}
-          >
-            <span>Reasoning</span>
-            <HugeiconsIcon
-              icon={viewMore ? ArrowDown01Icon : ArrowRight01Icon}
-              className='size-4'
-              strokeWidth={2}
-            />
-          </button>
-          {viewMore && (
-            <div className='mt-2 text-base text-muted-foreground italic'>
-              <MarkdownView content={step.reasoning} />
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }

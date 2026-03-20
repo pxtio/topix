@@ -483,7 +483,9 @@ MODEL_DICT = {
     "gemini-2.5-flash": "openrouter/google/gemini-2.5-flash",
     "deepseek-chat-v3.1": "openrouter/deepseek/deepseek-chat-v3.1",
     "mistral-medium-3.1": "openrouter/mistralai/mistral-medium-3.1",
-    "claude-sonnet-4.5": "openrouter/anthropic/claude-sonnet-4.5",
+    "claude-sonnet-4.6": "openrouter/anthropic/claude-sonnet-4.6",
+    "glm-4.7": "openrouter/z-ai/glm-4.7",
+    "qwen3.5-plus-02-15": "openrouter/qwen/qwen3.5-plus-02-15",
 }
 
 
@@ -513,7 +515,9 @@ def _select_options() -> tuple[Literal["assistant", "deep_research"], str, str]:
             "gemini-2.5-flash",
             "deepseek-chat-v3.1",
             "mistral-medium-3.1",
-            "claude-sonnet-4.5",
+            "claude-sonnet-4.6",
+            "glm-4.7",
+            "qwen3.5-plus-02-15",
         ],
         qmark="?",
         style=questionary.Style(

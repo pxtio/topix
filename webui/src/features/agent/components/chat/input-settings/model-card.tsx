@@ -1,10 +1,8 @@
-import { Badge } from "@/components/ui/badge"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useChatStore } from "@/features/agent/store/chat-store"
 import {
-  LlmBadge,
   LlmDescription,
   LlmName,
   type LlmModel,
@@ -26,7 +24,13 @@ const LlmFamilyLabel: Record<LlmFamily, string> = {
   anthropic: "Anthropic Claude",
   mistralai: "Mistral",
   deepseek: "DeepSeek",
+  "z-ai": "Z.ai",
+  qwen: "Qwen",
   moonshotai: "Moonshot",
+}
+
+type ModelChoiceMenuProps = {
+  display?: "icon" | "row"
 }
 
 /**
@@ -40,19 +44,10 @@ const ModelCard: React.FC<{ model: LlmModel; available?: boolean }> = ({ model, 
     available === false ? "text-muted-foreground cursor-not-allowed pointer-events-none" : "",
   )
 
-  const badge = LlmBadge[model]
-
-  const badgeClass = clsx(
-    "text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-full border text-muted-foreground bg-transparent border-muted-foreground/20",
-  )
-
   return (
     <HoverCard openDelay={200}>
       <HoverCardTrigger className={clss}>
         <span className="truncate">{LlmName[model]}</span>
-        <Badge variant="outline" className={badgeClass}>
-          {badge}
-        </Badge>
       </HoverCardTrigger>
       <HoverCardContent
         className="w-48 rounded-xl border border-border bg-popover text-popover-foreground shadow text-sm"
@@ -70,7 +65,7 @@ const ModelCard: React.FC<{ model: LlmModel; available?: boolean }> = ({ model, 
  * from a dropdown menu. It uses the Select component from the UI library
  * to create a styled dropdown with model options.
  */
-export const ModelChoiceMenu = () => {
+export const ModelChoiceMenu = ({ display = "icon" }: ModelChoiceMenuProps) => {
   const { llmModel, setLlmModel } = useChatStore()
 
   const availableModels = useChatStore(
@@ -94,15 +89,30 @@ export const ModelChoiceMenu = () => {
 
   const currentFamily = LlmFamilyMap[llmModel]
   const CurrentFamilyIcon = LlmFamilyIcon[currentFamily]
+  const isRow = display === "row"
+  const triggerClassName = isRow
+    ? "w-full rounded-md text-xs px-2 py-1.5 shadow-none hover:bg-accent [&>svg:not(.my-icon)]:hidden border border-transparent hover:border-border transition-colors justify-start gap-2 text-muted-foreground"
+    : "w-auto rounded-full text-xs p-2 shadow-none border-none"
 
   return (
     <Select onValueChange={handleModelChange} value={llmModel}>
       <Tooltip delayDuration={400}>
-        <div className="rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 border border-transparent hover:border-border transition-colors">
+        <div className={clsx(
+          isRow ? "w-full" : "rounded-full bg-background backdrop-blur-md supports-[backdrop-filter]:bg-sidebar/50 border border-transparent hover:border-border transition-colors"
+        )}>
           <TooltipTrigger asChild>
-            <SelectTrigger className="w-auto rounded-full text-xs p-2 shadow-none border-none" size="sm" hideChevron>
+            <SelectTrigger className={triggerClassName} size="sm" hideChevron>
               <div className="flex items-center gap-2">
-                <CurrentFamilyIcon size={16} />
+                {
+                  isRow ? (
+                    <>
+                      <CurrentFamilyIcon size={16} />
+                      <span className="text-xs truncate">Core LLM ({LlmName[llmModel]})</span>
+                    </>
+                  ) : (
+                    <CurrentFamilyIcon size={16} />
+                  )
+                }
               </div>
             </SelectTrigger>
           </TooltipTrigger>
